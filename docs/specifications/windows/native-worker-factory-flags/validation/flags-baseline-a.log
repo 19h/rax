@@ -1,0 +1,21 @@
+   Compiling vm-memory v0.17.1 (/Users/int/Library/Caches/assist-process-emulation/native-worker-factory-flags-20261019/flags-source/vendor/vm-memory)
+   Compiling linux-loader v0.13.2 (https://github.com/19h/linux-loader?rev=f745b555942c4e840a784bca61e6f3976d101960#f745b555)
+   Compiling rax v0.1.0 (/Users/int/Library/Caches/assist-process-emulation/native-worker-factory-flags-20261019/flags-source)
+error[E0618]: expected function, found `&mut u32`
+   --> src/user/windows/process/sched/tests/services_tests/worker_factory_flags_tests.rs:219:17
+    |
+112 |                 maximum,
+    |                 ------- `maximum` has type `&mut u32`
+...
+219 |                 maximum(p, handle),
+    |                 ^^^^^^^-----------
+    |                 |
+    |                 call expression requires function
+    |
+   ::: src/user/windows/process/sched/tests/services_tests/worker_factory_set_tests.rs:70:1
+    |
+ 70 | pub(super) fn maximum(p: &Proc, handle: u64) -> u32 {
+    | --------------------------------------------------- this function of the same name is available here, but it's shadowed by the local binding
+
+For more information about this error, try `rustc --explain E0618`.
+error: could not compile `rax` (lib test) due to 1 previous error

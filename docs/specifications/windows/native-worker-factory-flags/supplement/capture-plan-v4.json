@@ -1,0 +1,15 @@
+{
+  "utc": "2026-10-19T09:11:00.425175+00:00",
+  "scope": "Supplemental class13 controls for the installed whoami factory stack sizing; compiled product/test inputs remain frozen.",
+  "source-sha256": "6850ea46c973efcd147f6cc219068ef708c2022cf8eb07716e4729973c429972",
+  "factory-maxima": [
+    1,
+    512
+  ],
+  "stack-reserve-bytes": 524288,
+  "stack-commit-bytes": 8192,
+  "cases-per-profile": 650,
+  "total-cases": 2600,
+  "basis": "Both candidates returnclass13success then stopclass2; whoami observation has reserve524288/commit8192, smoke1048576/4096.",
+  "bound": "Dormant controls only; active worker effects and constructor flag default unknown."
+}

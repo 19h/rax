@@ -1,0 +1,66 @@
+{
+  "utc": "2026-10-19T08:51:48.437925+00:00",
+  "base": "9e243946c5c4e8df0bcbc93d94d1337ec8d62171",
+  "acceptance": [
+    "Implement measured NtSetInformationWorkerFactory class13 for dormant modeled factories: exact length4, ULONG capture before typed/access validation, right0x4, unchanged native/WoW64 four-argument transport.",
+    "Retain each last successful opaque flags request independently of hard/soft limits, binding count, constructor fields and internal references; None means no recorded guest request, not a guessed native default.",
+    "Preserve one-shot guard capture, readonly/unaligned/boundary behavior, failure atomicity, alias lifetime and unsupported classes.",
+    "Replay all2600 independent v2 native rows; strategic state/lifecycle/guard/interleaving tests and actual installed native/WoW64 leaf checks; tests-only baseline must compile and fail first.",
+    "Frozen-source full macOS/Linux/native-Windows/CAPI/integration/all-target and actual retained-consumer checks, ordinary guests, portable proof, exact red semantic commit and paired linear pushes."
+  ],
+  "assumptions": [
+    {
+      "id": "A1",
+      "assumption": "The change covers dormant factories; successful class13 requests do not create workers in the recorded native controls.",
+      "basis": "2600 native rows at maxima1/512 and observed reserve1MiB/commit4096B, each TotalWorkerCount0 before/after. Actual guest call requestsvalue1,length4,maximum512 before activation.",
+      "dependent-result": "Record accepted request without inventing active-worker effects.",
+      "stress-test": "All32one-hot bits, zero, combined masks, signed/unsigned extremes, all access/type/input/guard cases; future activation remains explicit unsupported contract.",
+      "falsification-probe": "A matching dormant native control creates workers or changes captured basic information.",
+      "status": "retained"
+    },
+    {
+      "id": "A2",
+      "assumption": "A last-successful-request field is bookkeeping, not an exposed native default or independently observed flags getter.",
+      "basis": "PHNT marksclass13setter ULONG; all native before/after basic bytes unchanged and constructor flags default not queried.",
+      "dependent-result": "Option<u32> None initially, Some(value) only after full successful validation; query/basic state and independent limits remain unchanged.",
+      "stress-test": "Zero andUINT32_MAX retained, aliases share state, failed requests preserveprior, hard/soft/binding interleaving.",
+      "falsification-probe": "A native query supplies a flags default/value or class13 alters a modeled basic field.",
+      "status": "retained"
+    }
+  ],
+  "surface-map": {
+    "native-service": "affected: addclass13 selector to existing four-argument setter with measured validation order",
+    "object-state": "affected: public Rust Object::WorkerFactory gains optional last successful request; constructors/exhaustive patterns/tests updated",
+    "guest-memory": "existing4byte capture/guard adapter reused; no new copy mechanism",
+    "lifecycle": "existing factory port/process references and aliases preserved; no host factory forwarding or guest worker activation added",
+    "platforms": "shared semantics compile/run on all three hosts; actual installed Windows and WoW64 leaves run natively on Windows",
+    "ABI": "public Rust enum source shape changes; opaque CAPI1.14.0 layouts and Assist ABI unchanged",
+    "UI/persistence/transport/defaults/dependencies": "unaffected: no settings/schema/wire/UI/pin/default change"
+  },
+  "bounded-scope": [
+    {
+      "impact": "high",
+      "finding": "Ordinary guests still stop at class13; successful guest exit remains unproved.",
+      "blocks-full-goal": true,
+      "action": "Run actual retained-owner guests after implementation and continue to next frontier."
+    },
+    {
+      "impact": "high",
+      "finding": "Active-worker effects and native constructor flag default remain unknown.",
+      "blocks-group": false,
+      "action": "Scope this group to captured dormant requests; do not claim activation/effective flag policy."
+    },
+    {
+      "impact": "medium",
+      "finding": "Four native ABI profiles share one physical ARM64 kernel; exact five Windows lowerer failures and retained Assist ABI184/current-product bounds remain.",
+      "blocks-group": false,
+      "action": "Retain native/platform/consumer qualifications and strict failure-set checks."
+    },
+    {
+      "impact": "low",
+      "finding": "Initial tests-only baseline A failed compilation due to a fixture binding shadowing a helper; it is not regression evidence.",
+      "blocks-group": false,
+      "action": "Preserve A source/log/record; corrected baseline B must compile and demonstrate actual three assertion failures."
+    }
+  ]
+}

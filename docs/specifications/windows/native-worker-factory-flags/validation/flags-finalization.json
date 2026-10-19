@@ -1,0 +1,23 @@
+{
+  "state": "failed",
+  "pid": 29078,
+  "steps": [
+    {
+      "name": "records",
+      "argv": [
+        "/opt/homebrew/opt/python@3.15/bin/python3.15",
+        "-B",
+        "/Users/int/Library/Caches/assist-process-emulation/native-worker-factory-flags-20261019/finalize-flags-records.py"
+      ],
+      "exit-code": 1,
+      "log": "flags-finalization-records.log",
+      "bytes": 1992,
+      "sha256": "3b1acd8e2961f9f6e08bda9006550525ed7c8a1714b8d09f079e5824fa7c2627"
+    }
+  ],
+  "utc": "2026-10-19T09:19:56.553166+00:00",
+  "child-pid": 29513,
+  "exit-code": 1,
+  "error": "Traceback (most recent call last):\n  File \"/Users/int/Library/Caches/assist-process-emulation/native-worker-factory-flags-20261019/run-flags-finalization.py\", line 60, in <module>\n    run('records', [sys.executable, '-B', str(P / 'finalize-flags-records.py')])\n    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/int/Library/Caches/assist-process-emulation/native-worker-factory-flags-20261019/run-flags-finalization.py\", line 37, in run\n    assert code == 0, name\n           ^^^^^^^^^\nAssertionError: records\n",
+  "completed-utc": "2026-10-19T09:23:33.383283+00:00"
+}

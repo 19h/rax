@@ -1,0 +1,1358 @@
+{
+  "files": [
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/native/native-worker-factory-flags-v2-arm64-build.log",
+      "bytes": 36,
+      "sha256": "63fafe8d54384343e93baed823a4b46bd734789c9ab5182689b0adf0aec52d01",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/native/native-worker-factory-flags-v2-arm64-source-after.json",
+      "bytes": 256,
+      "sha256": "eff0f767cfa0770ae46b47deaeec613351d8ded47cce7030d81f7d2f1ae6697e",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/native/native-worker-factory-flags-v2-arm64.log",
+      "bytes": 566170,
+      "sha256": "b3b8c4ce0cd691f2d17683b8e9d55b7b651fc942ea97aa4b4ddee7eca6d0faee",
+      "warning-count": 651,
+      "line-ranges": [
+        [
+          1,
+          651
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/native/native-worker-factory-flags-v2-driver.log",
+      "bytes": 964,
+      "sha256": "81157a84a41f6d110e3d629b61f37581444b3f76aa427bed1014db5bce060e17",
+      "warning-count": 16,
+      "line-ranges": [
+        [
+          1,
+          16
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/native/native-worker-factory-flags-v2-launch.json",
+      "bytes": 449,
+      "sha256": "f401f6a69560c10a0c6884a25d40d3c2802861d21b5276ae895c12820543dba0",
+      "warning-count": 9,
+      "line-ranges": [
+        [
+          1,
+          9
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/native/native-worker-factory-flags-v2-modules-after.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/native/native-worker-factory-flags-v2-modules-before.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/native/native-worker-factory-flags-v2-outcomes.json",
+      "bytes": 528,
+      "sha256": "87510e28ce9fe8971e997505c136abdbfd1a931e3665b0d4a44cfe4a6595b982",
+      "warning-count": 22,
+      "line-ranges": [
+        [
+          1,
+          22
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/native/native-worker-factory-flags-v2-x64-build.log",
+      "bytes": 36,
+      "sha256": "63fafe8d54384343e93baed823a4b46bd734789c9ab5182689b0adf0aec52d01",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/native/native-worker-factory-flags-v2-x64-source-after.json",
+      "bytes": 254,
+      "sha256": "7b6b56bf5bd89322749da36a9ed8408287d393123db7ae8d030e6d07b605f680",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/native/native-worker-factory-flags-v2-x64.log",
+      "bytes": 566170,
+      "sha256": "9b04f5957905a57d0d59d419206d0b229ef6f6dee6023c4bda2c31c091a05d8d",
+      "warning-count": 651,
+      "line-ranges": [
+        [
+          1,
+          651
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/native/native-worker-factory-flags-v2-x86-build.log",
+      "bytes": 36,
+      "sha256": "63fafe8d54384343e93baed823a4b46bd734789c9ab5182689b0adf0aec52d01",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/native/native-worker-factory-flags-v2-x86-laa-build.log",
+      "bytes": 36,
+      "sha256": "63fafe8d54384343e93baed823a4b46bd734789c9ab5182689b0adf0aec52d01",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/native/native-worker-factory-flags-v2-x86-laa-source-after.json",
+      "bytes": 258,
+      "sha256": "5acb10df2cc1c8757df7ba83c97dbd8a80ecc2e8e62048ce815a6a27e77ebfd9",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/native/native-worker-factory-flags-v2-x86-laa.log",
+      "bytes": 564870,
+      "sha256": "788ba14e8372efcf5822b3cd21e312de11e1f40956410cb083998cc551b3ba87",
+      "warning-count": 651,
+      "line-ranges": [
+        [
+          1,
+          651
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/native/native-worker-factory-flags-v2-x86-source-after.json",
+      "bytes": 254,
+      "sha256": "bdcd360ec9085c019239bd103ae62eea7171bc6c465e364595a9d51d30e74c97",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/native/native-worker-factory-flags-v2-x86.log",
+      "bytes": 564870,
+      "sha256": "4a1ef4683e39599238785948b93145ff14f89afd13bce91f119d4950db8e566d",
+      "warning-count": 651,
+      "line-ranges": [
+        [
+          1,
+          651
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/native/native-worker-factory-flags-v3-arm64-build.log",
+      "bytes": 36,
+      "sha256": "960844b69a4fc32b7d1d5b2d7899ab411a9524ce4bd69d54e2de900c15f6ee77",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/native/native-worker-factory-flags-v3-arm64-source-after.json",
+      "bytes": 256,
+      "sha256": "ab195c749149acd44dbf88192ce3321b0960e149793d800aaddec098ed432d00",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/native/native-worker-factory-flags-v3-arm64.log",
+      "bytes": 7830,
+      "sha256": "a32f6743048279405de5bdfc7e5d9803489787aeb40be14d122c16a29daa447e",
+      "warning-count": 10,
+      "line-ranges": [
+        [
+          1,
+          10
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/native/native-worker-factory-flags-v3-driver.log",
+      "bytes": 964,
+      "sha256": "81157a84a41f6d110e3d629b61f37581444b3f76aa427bed1014db5bce060e17",
+      "warning-count": 16,
+      "line-ranges": [
+        [
+          1,
+          16
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/native/native-worker-factory-flags-v3-launch.json",
+      "bytes": 375,
+      "sha256": "888015f95076e722a7921c3890129b5a2782fdda6e7d972635d900714c6198da",
+      "warning-count": 9,
+      "line-ranges": [
+        [
+          1,
+          9
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/native/native-worker-factory-flags-v3-modules-after.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/native/native-worker-factory-flags-v3-modules-before.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/native/native-worker-factory-flags-v3-outcomes.json",
+      "bytes": 528,
+      "sha256": "03c5773f0a34db4b34aeb080d734e5b983a6c72769b86d71684a6faf7ae1b8b0",
+      "warning-count": 22,
+      "line-ranges": [
+        [
+          1,
+          22
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/native/native-worker-factory-flags-v3-x64-build.log",
+      "bytes": 36,
+      "sha256": "960844b69a4fc32b7d1d5b2d7899ab411a9524ce4bd69d54e2de900c15f6ee77",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/native/native-worker-factory-flags-v3-x64-source-after.json",
+      "bytes": 254,
+      "sha256": "4711fb7d435cc08c7c995f7e6d0e1742cd887937ec3e36d7b5ca972ba8afcd92",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/native/native-worker-factory-flags-v3-x64.log",
+      "bytes": 7830,
+      "sha256": "c679de2439bacfe51f1d9097413d3e3c67ff57f2fbdd4a0ec22289dca0707366",
+      "warning-count": 10,
+      "line-ranges": [
+        [
+          1,
+          10
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/native/native-worker-factory-flags-v3-x86-build.log",
+      "bytes": 36,
+      "sha256": "960844b69a4fc32b7d1d5b2d7899ab411a9524ce4bd69d54e2de900c15f6ee77",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/native/native-worker-factory-flags-v3-x86-laa-build.log",
+      "bytes": 36,
+      "sha256": "960844b69a4fc32b7d1d5b2d7899ab411a9524ce4bd69d54e2de900c15f6ee77",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/native/native-worker-factory-flags-v3-x86-laa-source-after.json",
+      "bytes": 258,
+      "sha256": "05e6c74bd8cfc7c1d0a5dc16766fb44f3a12c1fd8a736f1bec0f18e76f8c250a",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/native/native-worker-factory-flags-v3-x86-laa.log",
+      "bytes": 7812,
+      "sha256": "caf2e6831c3692b96b81b72ecc950b987ef9dde6b89ea408025d4a8fb223c505",
+      "warning-count": 10,
+      "line-ranges": [
+        [
+          1,
+          10
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/native/native-worker-factory-flags-v3-x86-source-after.json",
+      "bytes": 254,
+      "sha256": "d9be985eb454a08c2be0f81b0d0093bed2a5ac3c50b0918e4254ccb119d0bdc6",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/native/native-worker-factory-flags-v3-x86.log",
+      "bytes": 7812,
+      "sha256": "b5d9e3bc2b75736a70e95472745cc3a52530e33daa6dc98852261efd149d4413",
+      "warning-count": 10,
+      "line-ranges": [
+        [
+          1,
+          10
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/supplement/native-worker-factory-flags-v4-arm64-build.log",
+      "bytes": 36,
+      "sha256": "95ef5aa0dde6d86a5b2710fa219738b9c055315761ec9024e4e6325444daffd2",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/supplement/native-worker-factory-flags-v4-arm64-source-after.json",
+      "bytes": 256,
+      "sha256": "a864c3729aac1047abb4c97a5be498bcf546764fe5a31377bc3b521e543d22c2",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/supplement/native-worker-factory-flags-v4-arm64.log",
+      "bytes": 566170,
+      "sha256": "9e5c0e318d3abf84a4de32cebb197fe19ccae84ad156dc24f79402db6eb4577a",
+      "warning-count": 651,
+      "line-ranges": [
+        [
+          1,
+          651
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/supplement/native-worker-factory-flags-v4-driver.log",
+      "bytes": 964,
+      "sha256": "81157a84a41f6d110e3d629b61f37581444b3f76aa427bed1014db5bce060e17",
+      "warning-count": 16,
+      "line-ranges": [
+        [
+          1,
+          16
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/supplement/native-worker-factory-flags-v4-launch.json",
+      "bytes": 450,
+      "sha256": "b600e39baf6184e762ed9bd7d5fe828a4a9f379f6f0287a018fdae255cd3aa3e",
+      "warning-count": 9,
+      "line-ranges": [
+        [
+          1,
+          9
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/supplement/native-worker-factory-flags-v4-modules-after.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/supplement/native-worker-factory-flags-v4-modules-before.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/supplement/native-worker-factory-flags-v4-outcomes.json",
+      "bytes": 528,
+      "sha256": "9e3267e7264d70b22b51f4e60eca3f183eb316a4ae4bfe537b98199a84d7a8de",
+      "warning-count": 22,
+      "line-ranges": [
+        [
+          1,
+          22
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/supplement/native-worker-factory-flags-v4-x64-build.log",
+      "bytes": 36,
+      "sha256": "95ef5aa0dde6d86a5b2710fa219738b9c055315761ec9024e4e6325444daffd2",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/supplement/native-worker-factory-flags-v4-x64-source-after.json",
+      "bytes": 254,
+      "sha256": "04e2bca9750832f9b33c1672962817e8d2cbdc71505404966b20a2e0ff2911f7",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/supplement/native-worker-factory-flags-v4-x64.log",
+      "bytes": 566170,
+      "sha256": "3a418da13b87ef2c4ef367fda279e01f414a97a3712ab85d8ba71c2d8df2d499",
+      "warning-count": 651,
+      "line-ranges": [
+        [
+          1,
+          651
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/supplement/native-worker-factory-flags-v4-x86-build.log",
+      "bytes": 36,
+      "sha256": "95ef5aa0dde6d86a5b2710fa219738b9c055315761ec9024e4e6325444daffd2",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/supplement/native-worker-factory-flags-v4-x86-laa-build.log",
+      "bytes": 36,
+      "sha256": "95ef5aa0dde6d86a5b2710fa219738b9c055315761ec9024e4e6325444daffd2",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/supplement/native-worker-factory-flags-v4-x86-laa-source-after.json",
+      "bytes": 258,
+      "sha256": "d19d8d6eba784a29e27d116c4cefa9991cfe66f5db667592ff9e7e55cb20ff57",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/supplement/native-worker-factory-flags-v4-x86-laa.log",
+      "bytes": 564870,
+      "sha256": "2a0a7fcf2c4d8fed78dee1e6da8809326b1c4fe746088b6f1745fbd1e461cd48",
+      "warning-count": 651,
+      "line-ranges": [
+        [
+          1,
+          651
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/supplement/native-worker-factory-flags-v4-x86-source-after.json",
+      "bytes": 254,
+      "sha256": "83d5eae7a9aafadb36aabaaed2e66d1cd526219308129b2dc848aab01f6ea1cb",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/supplement/native-worker-factory-flags-v4-x86.log",
+      "bytes": 564870,
+      "sha256": "2212392e0f7c9a24323bff8144894034a0b01b5b7813f62bcf5b12f5b26d0c6b",
+      "warning-count": 651,
+      "line-ranges": [
+        [
+          1,
+          651
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/validation/flags-baseline-b.log",
+      "bytes": 4038,
+      "sha256": "ae6ec6cabe059a66ac64e9be305eaa3f54c38b7d0ec8303b52090b5eb83dd931",
+      "warning-count": 3,
+      "line-ranges": [
+        [
+          6,
+          6
+        ],
+        [
+          13,
+          13
+        ],
+        [
+          19,
+          19
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/validation/flags-candidate-epoch1-focus.log",
+      "bytes": 2445,
+      "sha256": "0cf42ac4f2ead1ecca20930fcfaffc77bb288df1900270a195c65a5f22c772bb",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          33,
+          33
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/validation/flags-candidate-epoch1-run.json",
+      "bytes": 7065,
+      "sha256": "f51ba7d05a4eb5d2a5be672a5d7b90522c75feff00f1d70d1a9d7cf038f2e213",
+      "warning-count": 189,
+      "line-ranges": [
+        [
+          1,
+          189
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/validation/flags-final-check-windows.json",
+      "bytes": 1405,
+      "sha256": "57b3a0dd29993e3ef9ba800643d55916e64bcbc02de2f84e1438fbf0c611fd15",
+      "warning-count": 35,
+      "line-ranges": [
+        [
+          1,
+          35
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/validation/flags-final-check-windows.log",
+      "bytes": 337,
+      "sha256": "63c432001dc285ad1fec9012de05aea185d40fa39ad34e78781056248016ec9b",
+      "warning-count": 14,
+      "line-ranges": [
+        [
+          1,
+          14
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/validation/flags-linux-epoch1-capi.log",
+      "bytes": 14068,
+      "sha256": "6a91841b58522004a1dfe3cbbfd7e748fafdf2b74ad17797dbfd143b2bb833fb",
+      "warning-count": 2,
+      "line-ranges": [
+        [
+          97,
+          97
+        ],
+        [
+          205,
+          205
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF.",
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/validation/flags-linux-epoch1-focus.log",
+      "bytes": 1519,
+      "sha256": "af64a787975220cbf80205406ac78ebdd50ff9a091bb38777ec078184273a632",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          16,
+          16
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/validation/flags-linux-epoch1-full.log",
+      "bytes": 840794,
+      "sha256": "18e8a2b7e958ed9b119acd3ca31db72fa1c310eb711c3e6a7ee1a8ff0b8e54b2",
+      "warning-count": 6,
+      "line-ranges": [
+        [
+          1967,
+          1967
+        ],
+        [
+          5471,
+          5471
+        ],
+        [
+          5492,
+          5492
+        ],
+        [
+          5503,
+          5503
+        ],
+        [
+          5517,
+          5517
+        ],
+        [
+          8390,
+          8390
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF.",
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/validation/flags-linux-epoch1-integration.log",
+      "bytes": 35852,
+      "sha256": "2bce571bd9fb7ece54e4cea8918b2c197d18b0f091d72d6e01d31d6ba059d87f",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          558,
+          558
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/validation/flags-macos-epoch1-capi.log",
+      "bytes": 14312,
+      "sha256": "902d4817a860dbfcc4a4b302e7d477996d9e719b21d7f747fb9f26d5dfa79e8a",
+      "warning-count": 2,
+      "line-ranges": [
+        [
+          97,
+          97
+        ],
+        [
+          205,
+          205
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF.",
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/validation/flags-macos-epoch1-full.log",
+      "bytes": 840800,
+      "sha256": "9798ae61aaab3cc8750d1582897b4f81ab10486ba3c9e2dc57480733ce07e247",
+      "warning-count": 6,
+      "line-ranges": [
+        [
+          1933,
+          1933
+        ],
+        [
+          5419,
+          5419
+        ],
+        [
+          5440,
+          5440
+        ],
+        [
+          5451,
+          5451
+        ],
+        [
+          5465,
+          5465
+        ],
+        [
+          8358,
+          8358
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF.",
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/validation/flags-macos-epoch1-integration.log",
+      "bytes": 36065,
+      "sha256": "38865c66682029321944ce04d99a8f1927e64bc51b47dd0e11e7852c979d2be9",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          558,
+          558
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/validation/flags-native-epoch1-capi.log",
+      "bytes": 15038,
+      "sha256": "1477639a06673160dee243cce3aae6af9cc38dab8e3a8c57c8b85f82c3185123",
+      "warning-count": 2,
+      "line-ranges": [
+        [
+          115,
+          115
+        ],
+        [
+          223,
+          223
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF.",
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/validation/flags-native-epoch1-focus.log",
+      "bytes": 2348,
+      "sha256": "70fdccb9cd5f57432c926b50734c3273a67842a7a8b951aad7df7aabc1520db1",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          32,
+          32
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/validation/flags-native-epoch1-full.log",
+      "bytes": 806837,
+      "sha256": "32cabf00dfbbed59236119a073c3ad7b37001385f5deb5e72663dfb9559c075a",
+      "warning-count": 11,
+      "line-ranges": [
+        [
+          1950,
+          1950
+        ],
+        [
+          4866,
+          4866
+        ],
+        [
+          4876,
+          4876
+        ],
+        [
+          4883,
+          4883
+        ],
+        [
+          4889,
+          4889
+        ],
+        [
+          5418,
+          5418
+        ],
+        [
+          5460,
+          5460
+        ],
+        [
+          5481,
+          5481
+        ],
+        [
+          5492,
+          5492
+        ],
+        [
+          5506,
+          5506
+        ],
+        [
+          6272,
+          6272
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/validation/flags-native-epoch1-gates.json",
+      "bytes": 5962,
+      "sha256": "a086dde04f3f2693f465df5407533cb10e4b96bf23954a199ae423fd264d0dec",
+      "warning-count": 163,
+      "line-ranges": [
+        [
+          1,
+          163
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/validation/flags-native-epoch1-integration.log",
+      "bytes": 1872,
+      "sha256": "2598fb8fba4571645092ee6238684a255761667a530fed1540932f3b18fc5af7",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          36,
+          36
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/validation/flags-native-owning-epoch1-archive-after.log",
+      "bytes": 182,
+      "sha256": "3eca258bbe2b5bda0aea54e40096c2ff780059320a85e34e3c4a7870b6bc2a05",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/validation/flags-native-owning-epoch1-archive-before.log",
+      "bytes": 182,
+      "sha256": "3eca258bbe2b5bda0aea54e40096c2ff780059320a85e34e3c4a7870b6bc2a05",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/validation/flags-native-owning-epoch1-cpp.log",
+      "bytes": 3385,
+      "sha256": "b6874ba805010918410dab721b57b03f106df3d40f54e11213f5668ac0288ac0",
+      "warning-count": 54,
+      "line-ranges": [
+        [
+          1,
+          54
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/validation/flags-native-owning-epoch1.json",
+      "bytes": 5144,
+      "sha256": "1a416fb394a672cadb136cb5d9e629d92b6f9ef12bb0f268f439b617073d2816",
+      "warning-count": 125,
+      "line-ranges": [
+        [
+          1,
+          125
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/validation/flags-owner-epoch1-build.log",
+      "bytes": 241,
+      "sha256": "77027ce0b25d2e321d7341c6fe2a80236a2837874cb1de4f2079588d47f29dc9",
+      "warning-count": 4,
+      "line-ranges": [
+        [
+          1,
+          4
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/validation/flags-owner-epoch1-launch.json",
+      "bytes": 7833,
+      "sha256": "a7d9e0febb3e9f0908a20f56bce8bd2165a8367d17161c3e65b45fa622c682c1",
+      "warning-count": 211,
+      "line-ranges": [
+        [
+          1,
+          211
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/validation/flags-prototype-a.log",
+      "bytes": 1475,
+      "sha256": "5435982f143b045dde0c211216a0b87b30d5c655272e3fd826c6a7c5c00eeaab",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          14,
+          14
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/validation/native-flags-epoch1-final-owning-archive-identities.json",
+      "bytes": 110717,
+      "sha256": "1174d28eee8ea709883964c1579e7eb5a6893895337b75b168e3975bc0ed57be",
+      "warning-count": 2797,
+      "line-ranges": [
+        [
+          1,
+          2797
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/validation/native-flags-epoch1-pre-cpp-archives.json",
+      "bytes": 110720,
+      "sha256": "e169e9664bd14469abb837257e43cb58305a337ea88f34ec6505b5a4e5e52b73",
+      "warning-count": 2797,
+      "line-ranges": [
+        [
+          1,
+          2797
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/validation/timer2-native-host-identity.json",
+      "bytes": 944,
+      "sha256": "824a29ad03161b2a10662cadb0d57b47f90c14184ef317e2840b770e8e79e2f3",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    }
+  ],
+  "other-owned-paths-pass": true
+}

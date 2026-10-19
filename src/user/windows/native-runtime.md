@@ -2632,3 +2632,22 @@ advance 8,728 turns to unsupported `NtSetInformationWorkerFactory` class 13.
 Neither emulated guest has demonstrated successful exit; the full process
 objective remains incomplete. Retained Assist ABI 184 consumer validation
 does not establish a full current GUI/plugin/package build.
+
+### Dormant worker-factory flags requests (2026-10-19)
+
+Class13/WorkerFactoryFlags captures an exact4byte ULONG before typed factory
+and right0x4 validation, using the existing guarded-memory/four-argument
+native/WoW64 adapter. An optional last-successful request shares alias lifetime
+without changing hard/soft requests, binding count or constructor references.
+None is an unrecorded request, not a guessed native flags default. Active-worker
+effects remain unknown; public CAPI1.14.0/defaults/dependency pins are unchanged.
+The native5236observations, six shared/seven Windows focused tests, full
+three-host gates, retained consumers, assumptions and portable evidence reside
+in `docs/specifications/windows/native-worker-factory-flags/`.
+
+The actual retained-owner core is 503567976 bytes, SHA-256
+`cf6535695c29c81e2154db9bdb7e92da5c8fe784140e93bfa0e8ef3fddbf196d`. Both ordinary guests returnclass13success with retained
+value1 and advance496turns to unsupported NtSetInformationWorkerFactory class2.
+Neither emulated guest demonstrates successful exit. Full process support and
+whole-current-root GUI/plugin/package validation remain incomplete; retained
+Assist RustABI184 consumers are recorded separately.

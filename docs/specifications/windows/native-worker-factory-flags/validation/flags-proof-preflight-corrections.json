@@ -1,0 +1,8 @@
+{
+  "utc": "2026-10-19T13:44:04.479297+00:00",
+  "initial-checker-sha256": "58ba84a672d33a02d11a5b0e6ca0248062b6119caeeb301004b6b4d81f66d092",
+  "corrected-checker-sha256": "d1aa649c3b8792a1619b891961a938de8d3f6d6453e27bd14b898a75493ad586",
+  "correction": "Replace inherited Microsoft URL restriction with the exact pinned PHNT file/URL used by this group. Native and compiled-source evidence unchanged. Initial finalized runtime append had not occurred.",
+  "initial-run": "flags-finalization.json",
+  "initial-log": "flags-finalization-records.log"
+}

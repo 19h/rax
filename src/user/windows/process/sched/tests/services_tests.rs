@@ -1287,3 +1287,6 @@ fn installed_native_range_query_executes_the_selected_leaf_and_actual_return() {
 
 #[path = "services_tests/wnf_query_tests.rs"]
 mod wnf_query_tests;
+
+#[path = "services_tests/worker_factory_flags_tests.rs"]
+mod worker_factory_flags_tests;

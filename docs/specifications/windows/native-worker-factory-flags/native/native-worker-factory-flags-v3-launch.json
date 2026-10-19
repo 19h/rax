@@ -1,0 +1,9 @@
+{
+  "pid": 3340,
+  "utc": "2026-10-19T08:57:48.562577+00:00",
+  "state": "finished",
+  "scope": "Controlled native class13 requests after dormant hard/soft/binding setters; only task-owned factories/private ports, no posted completions or unrelated host state changes.",
+  "child-pid": 2412,
+  "exit-code": 0,
+  "completed-utc": "2026-10-19T08:57:56.851482+00:00"
+}

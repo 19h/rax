@@ -199,6 +199,9 @@ pub enum Object {
         /// no request has been recorded; the native constructor default is
         /// unknown. This does not imply an effective active-worker limit.
         soft_maximum: Option<u32>,
+        /// Last accepted class13 ULONG request; no effective flag policy is inferred.
+        /// None records no guest request, not a native constructor default.
+        flags_request: Option<u32>,
         /// Measured class7 BindingCount, initially zero. Class3 zero requests
         /// set all bits; nonzero requests add a signed delta with saturation.
         binding_count: u32,
@@ -722,6 +725,7 @@ mod tests {
             parameter: 0,
             maximum: 0,
             soft_maximum: None,
+            flags_request: None,
             binding_count: 0,
             reserve: 65536,
             commit: 4096,

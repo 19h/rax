@@ -151,6 +151,7 @@ fn construct(c: &mut Ctx, r: &Request, attrs: Option<Attributes>) -> ApiResult {
             parameter: r.parameter,
             maximum: r.maximum,
             soft_maximum: None,
+            flags_request: None,
             binding_count: 0,
             // Native constructor defaults are independent of the executable's PE
             // stack sizes. Nonzero requests are stored without rounding/probing.
@@ -167,7 +168,7 @@ pub(super) fn set_information(c: &mut Ctx) -> ApiResult {
 
 fn set_properties(c: &mut Ctx) -> ApiResult {
     let (handle, class, input, length) = (c.ptr(0)?, c.u32(1)?, c.ptr(2)?, c.u32(3)?);
-    if !matches!(class, 3 | 5 | 14) {
+    if !matches!(class, 3 | 5 | 13 | 14) {
         return Err(c.unsupported(format!("NtSetInformationWorkerFactory class {class}")));
     }
     // The installed native/WoW64 entries check exact ULONG size and capture
@@ -191,6 +192,7 @@ fn set_properties(c: &mut Ctx) -> ApiResult {
     let Some(Object::WorkerFactory {
         maximum: hard,
         soft_maximum: soft,
+        flags_request: flags,
         binding_count: bindings,
         ..
     }) = c.p.objects.obj_mut(id)
@@ -208,11 +210,15 @@ fn set_properties(c: &mut Ctx) -> ApiResult {
         };
     } else if class == 5 {
         *hard = value;
-    } else {
+    } else if class == 14 {
         // Native class14 accepts the unsigned request without changing the
         // basic-query hard maximum. Record it independently; activation and
         // the constructor's unqueried soft default are separate contracts.
         *soft = Some(value);
+    } else {
+        // Class13 leaves captured dormant basic state unchanged. Retain the
+        // accepted request only; native default and active effects are unknown.
+        *flags = Some(value);
     }
     Flow::ret(0)
 }

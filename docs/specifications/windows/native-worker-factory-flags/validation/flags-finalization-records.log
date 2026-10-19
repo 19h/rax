@@ -1,0 +1,31 @@
+collected 104 validation files
+{
+  "native-setter-cases": 2600,
+  "native-interleaving-controls": 36,
+  "native-ABI-profiles": 4,
+  "physical-Windows-kernels": 1,
+  "bound-native-files": 64
+}
+{
+  "native-second-stack-cases": 2600,
+  "compiled-input-changes": false
+}
+Traceback (most recent call last):
+  File "/Users/int/Library/Caches/assist-process-emulation/native-worker-factory-flags-20261019/check-flags-validation.py", line 250, in <module>
+    main()
+    ~~~~^^
+  File "/Users/int/Library/Caches/assist-process-emulation/native-worker-factory-flags-20261019/check-flags-validation.py", line 246, in main
+    print(json.dumps(check(args.source, evidence), indent=2))
+                     ~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/int/Library/Caches/assist-process-emulation/native-worker-factory-flags-20261019/check-flags-validation.py", line 62, in check
+    assert row['url'].startswith('https://learn.microsoft.com/')
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError
+Traceback (most recent call last):
+  File "/Users/int/Library/Caches/assist-process-emulation/native-worker-factory-flags-20261019/finalize-flags-records.py", line 40, in <module>
+    subprocess.run([sys.executable, '-B', str(Q / 'check-flags-validation.py'), str(R)], check=True)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.15/3.15.0/Frameworks/Python.framework/Versions/3.15/lib/python3.15/subprocess.py", line 692, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '['/opt/homebrew/opt/python@3.15/bin/python3.15', '-B', '/Users/int/Library/Caches/assist-process-emulation/native-worker-factory-flags-20261019/check-flags-validation.py', '/Users/int/Library/Caches/assist-process-emulation/native-worker-factory-flags-20261019/flags-source']' returned non-zero exit status 1.

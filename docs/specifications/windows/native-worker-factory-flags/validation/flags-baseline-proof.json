@@ -1,0 +1,11 @@
+{
+  "state": "expected-regression-failed",
+  "exit-code": 101,
+  "passed": 0,
+  "failed": 3,
+  "record": "flags-baseline-b.json",
+  "record-sha256": "773e0f0cef7e86cf82e858653bfca7b5d33dd431a6037e025b9458cc7c18630b",
+  "log": "flags-baseline-b.log",
+  "log-sha256": "ae6ec6cabe059a66ac64e9be305eaa3f54c38b7d0ec8303b52090b5eb83dd931",
+  "scope": "B genuinely compiled and failed three class13 assertions; A compiler failure excluded."
+}

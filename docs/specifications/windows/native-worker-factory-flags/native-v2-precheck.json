@@ -1,0 +1,43 @@
+{
+  "scope": "Prospective native control precheck; buffer/order statuses not yet converted to replay corpus and no flags implementation exists.",
+  "cases": 2600,
+  "profiles": [
+    {
+      "profile": "arm64",
+      "cases": 650,
+      "value-cases": 74,
+      "all-value-patterns-success": true,
+      "all-basic-before-after-identical": true,
+      "all-total-workers-zero": true,
+      "all-handle-counts-balanced": true
+    },
+    {
+      "profile": "x64",
+      "cases": 650,
+      "value-cases": 74,
+      "all-value-patterns-success": true,
+      "all-basic-before-after-identical": true,
+      "all-total-workers-zero": true,
+      "all-handle-counts-balanced": true
+    },
+    {
+      "profile": "x86",
+      "cases": 650,
+      "value-cases": 74,
+      "all-value-patterns-success": true,
+      "all-basic-before-after-identical": true,
+      "all-total-workers-zero": true,
+      "all-handle-counts-balanced": true
+    },
+    {
+      "profile": "x86-laa",
+      "cases": 650,
+      "value-cases": 74,
+      "all-value-patterns-success": true,
+      "all-basic-before-after-identical": true,
+      "all-total-workers-zero": true,
+      "all-handle-counts-balanced": true
+    }
+  ],
+  "source-sha256": "f04b1e330502754d3978480b91edbc40aa837fdb1d66e3c78f0bf4e35ff1db59"
+}

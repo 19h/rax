@@ -1,0 +1,24 @@
+{
+  "utc": "2026-10-19T08:57:48.303478+00:00",
+  "source-sha256": "f57bb467f88b6672240f5208298d3646562b5922091c8a76dca6e4d68e21cb22",
+  "scope": "Class13 native independence controls after existing modeled setters; active-worker effects excluded.",
+  "constructor": {
+    "maximum": 512,
+    "reserve": 1048576,
+    "commit": 4096
+  },
+  "seeds": [
+    "unchanged constructor",
+    "class5hard1 + class14soft768",
+    "class5hard1 + class14soft768 + class3bindingdelta4"
+  ],
+  "class13values": [
+    0,
+    1,
+    4294967295
+  ],
+  "expected-cases-per-profile": 9,
+  "expected-total-cases": 36,
+  "queried-binding-offset-bytes": 32,
+  "queried-hard-maximum-offset-bytes": 40
+}

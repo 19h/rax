@@ -1,0 +1,76 @@
+{
+  "controls": [
+    {
+      "name": "supplement-status",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "filtered-full",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "native-failure-mask",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "capi-empty",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "integration-empty",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "all-targets-removed",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "baseline-success",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "ctest-progress",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "consumer-not-executed",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "core-feature-drift",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "empty-archives",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "guest-exit-confusion",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "ordinary-turn-drift",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "source-hash-drift",
+      "rejected": true,
+      "error-type": "AssertionError"
+    }
+  ],
+  "all-rejected": true,
+  "scope": "Logical controls rebind mutated log hashes and result metadata, so rejection cannot rely only on the outer log digest."
+}

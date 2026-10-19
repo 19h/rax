@@ -1,0 +1,24 @@
+{
+  "utc": "2026-10-19T08:39:10.990231+00:00",
+  "scope": "Controlled class13 capture with observed guest constructor sizing and two dormant hard maxima; no flags implementation.",
+  "source": "native-worker-factory-flags-v2.cpp",
+  "source-sha256": "f04b1e330502754d3978480b91edbc40aa837fdb1d66e3c78f0bf4e35ff1db59",
+  "factory-maxima": [
+    1,
+    512
+  ],
+  "stack-reserve-bytes": 1048576,
+  "stack-commit-bytes": 4096,
+  "posted-completions": 0,
+  "expected-cases-per-profile": 650,
+  "expected-total-cases": 2600,
+  "observed-guest-request": {
+    "class": 13,
+    "value": 1,
+    "length": 4,
+    "maximum": 512,
+    "reserve": 1048576,
+    "commit": 4096
+  },
+  "bound": "TotalWorkerCount must remain zero before and after every call; active-worker effects remain unknown."
+}

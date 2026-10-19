@@ -1,0 +1,59 @@
+{
+  "scope": "Dormant WorkerFactoryFlags requests; full process objective remains active.",
+  "assumptions": [
+    {
+      "id": "A1",
+      "assumption": "The change covers dormant factories; successful class13 requests do not create workers in the recorded native controls.",
+      "basis": "2600 native rows at maxima1/512 and observed reserve1MiB/commit4096B, each TotalWorkerCount0 before/after. Actual guest call requestsvalue1,length4,maximum512 before activation.; native v3 interleaving36controls preserve basic state and v4 second-stack2600controls confirm the same contract at524288/8192bytes; actual owner returnsclass13success with retained1.",
+      "dependent-result": "Record accepted request without inventing active-worker effects.",
+      "stress-test": "All32one-hot bits, zero, combined masks, signed/unsigned extremes, all access/type/input/guard cases; future activation remains explicit unsupported contract.",
+      "falsification-probe": "A matching dormant native control creates workers or changes captured basic information.",
+      "status": "confirmed within captured dormant contexts; active-worker effects remain unknown"
+    },
+    {
+      "id": "A2",
+      "assumption": "A last-successful-request field is bookkeeping, not an exposed native default or independently observed flags getter.",
+      "basis": "PHNT marksclass13setter ULONG; all native before/after basic bytes unchanged and constructor flags default not queried.",
+      "dependent-result": "Option<u32> None initially, Some(value) only after full successful validation; query/basic state and independent limits remain unchanged.",
+      "stress-test": "Zero andUINT32_MAX retained, aliases share state, failed requests preserveprior, hard/soft/binding interleaving.",
+      "falsification-probe": "A native query supplies a flags default/value or class13 alters a modeled basic field.",
+      "status": "retained: request bookkeeping only; native default and effective/active flag policy remain unknown"
+    }
+  ],
+  "bounded-scope": [
+    {
+      "impact": "high",
+      "finding": "Both ordinary guests returnclass13success and retain1, then advance496turns to unsupported class2; no successful guest exit.",
+      "blocks-full-goal": true,
+      "action": "Run actual retained-owner guests after implementation and continue to next frontier.",
+      "evidence": "validation/ordinary-program-summary.json"
+    },
+    {
+      "impact": "high",
+      "finding": "Active-worker effects and native constructor flag default remain unknown.",
+      "blocks-group": false,
+      "action": "Scope this group to captured dormant requests; do not claim activation/effective flag policy."
+    },
+    {
+      "impact": "medium",
+      "finding": "Four native ABI profiles share one physical ARM64 kernel; exact five Windows lowerer failures and retained Assist ABI184/current-product bounds remain.",
+      "blocks-group": false,
+      "action": "Retain native/platform/consumer qualifications and strict failure-set checks."
+    },
+    {
+      "impact": "low",
+      "finding": "Initial tests-only baseline A failed compilation due to a fixture binding shadowing a helper; it is not regression evidence.",
+      "blocks-group": false,
+      "action": "Preserve A source/log/record; corrected baseline B must compile and demonstrate actual three assertion failures."
+    }
+  ],
+  "surface-map": {
+    "native-service": "affected: addclass13 selector to existing four-argument setter with measured validation order",
+    "object-state": "affected: public Rust Object::WorkerFactory gains optional last successful request; constructors/exhaustive patterns/tests updated",
+    "guest-memory": "existing4byte capture/guard adapter reused; no new copy mechanism",
+    "lifecycle": "existing factory port/process references and aliases preserved; no host factory forwarding or guest worker activation added",
+    "platforms": "shared semantics compile/run on all three hosts; actual installed Windows and WoW64 leaves run natively on Windows",
+    "ABI": "public Rust enum source shape changes; opaque CAPI1.14.0 layouts and Assist ABI unchanged",
+    "UI/persistence/transport/defaults/dependencies": "unaffected: no settings/schema/wire/UI/pin/default change"
+  }
+}

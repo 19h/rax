@@ -1,0 +1,7 @@
+{
+  "utc": "2026-10-19T09:05:41.881158+00:00",
+  "path": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/vendor/rax",
+  "before": "/Users/int/Library/Caches/assist-process-emulation/native-filesystem-registry-20261019/filesystem-source",
+  "after": "/Users/int/Library/Caches/assist-process-emulation/native-worker-factory-flags-20261019/flags-source",
+  "scope": "Task-owned retained Assist tree only; shared main HEAD/index/submodule remain untouched."
+}

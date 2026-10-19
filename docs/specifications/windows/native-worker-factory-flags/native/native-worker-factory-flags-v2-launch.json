@@ -1,0 +1,9 @@
+{
+  "pid": 1860,
+  "utc": "2026-10-19T08:39:11.180892+00:00",
+  "state": "finished",
+  "scope": "Controlled native NtSetInformationWorkerFactory class13 exploration with task-owned dormant factories, maximum1/512, observed stack reserve1MiB/commit4096B and private completion ports; no host registry, Assist state or security policy changes.",
+  "child-pid": 10172,
+  "exit-code": 0,
+  "completed-utc": "2026-10-19T08:39:25.465068+00:00"
+}

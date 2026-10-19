@@ -1,0 +1,35 @@
+   Compiling rax v0.1.0 (/Users/int/Library/Caches/assist-process-emulation/native-worker-factory-flags-20261019/flags-source)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 09s
+     Running unittests src/lib.rs (/Users/int/Library/Caches/assist-process-emulation/native-wait-20261019/target-macos-wait-epoch3/debug/deps/rax-dd79f0cd9ae9bb68)
+
+running 3 tests
+test user::windows::process::sched::tests::services_tests::worker_factory_flags_tests::native_worker_factory_flags_accepts_measured_unsigned_requests_all_abis ... 
+thread 'user::windows::process::sched::tests::services_tests::worker_factory_flags_tests::native_worker_factory_flags_accepts_measured_unsigned_requests_all_abis' (10355597) panicked at src/user/windows/process/sched/tests/services_tests/worker_factory_flags_tests.rs:20:13:
+assertion `left == right` failed
+  left: Fail("native NTDLL service NtSetInformationWorkerFactory: Unimplemented(\"NtSetInformationWorkerFactory: NtSetInformationWorkerFactory class 13\")")
+ right: Continue
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+test user::windows::process::sched::tests::services_tests::worker_factory_flags_tests::native_worker_factory_flags_length_capture_type_and_right_priority_all_abis ... 
+thread 'user::windows::process::sched::tests::services_tests::worker_factory_flags_tests::native_worker_factory_flags_length_capture_type_and_right_priority_all_abis' (10355600) panicked at src/user/windows/process/sched/tests/services_tests/worker_factory_flags_tests.rs:53:13:
+assertion `left == right` failed
+  left: Fail("native NTDLL service NtSetInformationWorkerFactory: Unimplemented(\"NtSetInformationWorkerFactory: NtSetInformationWorkerFactory class 13\")")
+ right: Continue
+FAILED
+test user::windows::process::sched::tests::services_tests::worker_factory_flags_tests::native_worker_factory_flags_replays_all_2600_native_rows ... 
+thread 'user::windows::process::sched::tests::services_tests::worker_factory_flags_tests::native_worker_factory_flags_replays_all_2600_native_rows' (10355601) panicked at src/user/windows/process/sched/tests/services_tests/worker_factory_flags_tests.rs:201:13:
+assertion `left == right` failed: arm64/{"handle-mode": "0", "total-before": "0", "class": "13", "case": "0", "maximum-after": "00000001", "before": "00000000000000000000000000000000809C10D8FFFFFFFF000000010000000000000000000000000100000000000000000000000000000000000000000000000000000000000000B014F686F77F000000000000000000008C16000000000000000010000000000000100000000000000000000000000000A5A5A5A5A5A5A5A5", "returned-before": "120", "query-after": "00000000", "value": "00000000", "label": "value", "maximum-before": "00000001", "protection": "00000004", "handles-after": "49", "returned-after": "120", "length": "00000004", "mode": "0", "total-after": "0", "status": "00000000", "handles-before": "49", "after": "00000000000000000000000000000000809C10D8FFFFFFFF000000010000000000000000000000000100000000000000000000000000000000000000000000000000000000000000B014F686F77F000000000000000000008C16000000000000000010000000000000100000000000000000000000000000A5A5A5A5A5A5A5A5", "query-before": "00000000", "width": "8", "exception": "00000000"}
+  left: Fail("native NTDLL service NtSetInformationWorkerFactory: Unimplemented(\"NtSetInformationWorkerFactory: NtSetInformationWorkerFactory class 13\")")
+ right: Continue
+FAILED
+
+failures:
+
+failures:
+    user::windows::process::sched::tests::services_tests::worker_factory_flags_tests::native_worker_factory_flags_accepts_measured_unsigned_requests_all_abis
+    user::windows::process::sched::tests::services_tests::worker_factory_flags_tests::native_worker_factory_flags_length_capture_type_and_right_priority_all_abis
+    user::windows::process::sched::tests::services_tests::worker_factory_flags_tests::native_worker_factory_flags_replays_all_2600_native_rows
+
+test result: FAILED. 0 passed; 3 failed; 0 ignored; 0 measured; 8027 filtered out; finished in 0.02s
+
+error: test failed, to rerun pass `--lib`

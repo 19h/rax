@@ -1,0 +1,63 @@
+{
+  "actual-core": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-owned\\debug\\deps\\librax-934115059aa64c85.rlib",
+    "bytes": 503567976,
+    "sha256": "cf6535695c29c81e2154db9bdb7e92da5c8fe784140e93bfa0e8ef3fddbf196d",
+    "members": 20,
+    "structural-member-walk": "pass"
+  },
+  "programs": [
+    {
+      "program": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-flags-candidate-epoch1\\tests\\fixtures\\user\\windows\\bin\\arm64\\smoke.exe",
+        "bytes": 3584,
+        "sha256": "325730e33e981784bff4a60bc6f342cf95c2735e85042c89748fc471cbe7781b"
+      },
+      "log": "flags-owner-epoch1-0.log",
+      "log-sha256": "1f83855d215931a0d959a8bd39c78ad28b946ef35103255e94bd15b1506ed18d",
+      "controller-exit-code": 0,
+      "former-stop-turn": 2898318,
+      "new-terminal-turn": 2898814,
+      "additional-observer-turns": 496,
+      "terminal-result": "Complete(Internal(\"native NTDLL service NtSetInformationWorkerFactory: Unimplemented(\\\"NtSetInformationWorkerFactory: NtSetInformationWorkerFactory class 2\\\")\"))",
+      "guest-exit-success": false,
+      "native-before": {
+        "exit-code": 0,
+        "stdout-hex": "",
+        "stderr-hex": ""
+      },
+      "native-after": {
+        "exit-code": 0,
+        "stdout-hex": "",
+        "stderr-hex": ""
+      }
+    },
+    {
+      "program": {
+        "path": "C:\\Windows\\System32\\whoami.exe",
+        "bytes": 84480,
+        "sha256": "48fde190b002a5a4c4b8b19db014377263ba94220f23a4f0a117fec082d46bf6"
+      },
+      "log": "flags-owner-epoch1-1.log",
+      "log-sha256": "2d5ce279234cce53a63ad823c98e9c99042e56c7432aa1805dce8a4a2bf1f9c5",
+      "controller-exit-code": 0,
+      "former-stop-turn": 2900603,
+      "new-terminal-turn": 2901099,
+      "additional-observer-turns": 496,
+      "terminal-result": "Complete(Internal(\"native NTDLL service NtSetInformationWorkerFactory: Unimplemented(\\\"NtSetInformationWorkerFactory: NtSetInformationWorkerFactory class 2\\\")\"))",
+      "guest-exit-success": false,
+      "native-before": {
+        "exit-code": 0,
+        "stdout-hex": "6e7420617574686f726974795c73797374656d0d0a",
+        "stderr-hex": ""
+      },
+      "native-after": {
+        "exit-code": 0,
+        "stdout-hex": "6e7420617574686f726974795c73797374656d0d0a",
+        "stderr-hex": ""
+      }
+    }
+  ],
+  "ordinary-guest-exit-success": false,
+  "scope": "Both guests return class13 success and retain flags request1, then reach unsupported class2. Native controls exit0; controller exit0 does not mean guest success."
+}

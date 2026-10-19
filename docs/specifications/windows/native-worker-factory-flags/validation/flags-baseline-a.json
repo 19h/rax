@@ -1,0 +1,59 @@
+{
+  "state": "failed",
+  "utc": "2026-10-19T08:49:29.936785+00:00",
+  "inputs": [
+    {
+      "path": "src/user/windows/objects.rs",
+      "sha256": "9ecf4a4ed8d473a2bcce383b045bd29e5766a63f577904dd02df28ca85877318",
+      "bytes": 28117
+    },
+    {
+      "path": "src/user/windows/dll/native/worker_factory.rs",
+      "sha256": "f42ab5e6a6df14a9cb9bfa8be5ce9dfe1b7d77c2d571a815d9080a91d6c0c7ff",
+      "bytes": 7366
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests.rs",
+      "sha256": "54645eafb36f8a1aec16b18eea8eca63cc1b79e608c66a8f03f63ad2d44a5d7d",
+      "bytes": 48969
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/worker_factory_set_tests.rs",
+      "sha256": "3a80ff1c92912487e652f31520f645451702a4914f1851c7aa167c3bb439517a",
+      "bytes": 11661
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/worker_factory_create_replay_tests.rs",
+      "sha256": "78241c2d1ff9c4f1ee7e2b09b0aecb5fe8d65d29e469addba351a64d170f1506",
+      "bytes": 14591
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/worker_factory_create_tests.rs",
+      "sha256": "c464ab2c14544a407cfcc803eb6dc13f18eeea91488953c98baebb5437e2740a",
+      "bytes": 7620
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/worker_factory_flags_tests.rs",
+      "sha256": "d597c863a74f0aab330bf87ac4d3c25416274b3c26bbb8ea46cf06c435f6052b",
+      "bytes": 9135
+    }
+  ],
+  "argv": [
+    "cargo",
+    "+1.95.0",
+    "test",
+    "--locked",
+    "--offline",
+    "--no-default-features",
+    "--lib",
+    "native_worker_factory_flags",
+    "--",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "exit-code": 101,
+  "log": "flags-baseline-a.log",
+  "bytes": 1260,
+  "sha256": "2982fbcb0cd0c3a7dc72053673b1edb128df33db80482a274326e2b121858cc3",
+  "results": []
+}

@@ -1,0 +1,17 @@
+{
+  "state": "finished",
+  "host": "macos",
+  "argv": [
+    "/opt/homebrew/opt/python@3.15/bin/python3.15",
+    "-B",
+    "/Users/int/Library/Caches/assist-process-emulation/native-worker-factory-flags-20261019/run-flags-proof-checks.py",
+    "/Users/int/Library/Caches/assist-process-emulation/native-worker-factory-flags-20261019/flags-source"
+  ],
+  "checked-envelope-files": 212,
+  "utc": "2026-10-19T13:44:25.460017+00:00",
+  "exit-code": 0,
+  "log": "flags-final-check-macos.log",
+  "bytes": 323,
+  "sha256": "1ec59d8712c90fc27815bb46c9899705fa0825c49d225c76ede6af71e9f7132e",
+  "completed-utc": "2026-10-19T13:44:27.234910+00:00"
+}

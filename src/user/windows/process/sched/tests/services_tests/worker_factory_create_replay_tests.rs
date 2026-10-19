@@ -262,6 +262,7 @@ fn replay(arch: WinArch, text: &str, expected_rows: usize) -> (usize, usize) {
                 parameter,
                 maximum,
                 soft_maximum,
+                flags_request,
                 binding_count,
                 reserve,
                 commit,
@@ -282,6 +283,10 @@ fn replay(arch: WinArch, text: &str, expected_rows: usize) -> (usize, usize) {
             assert_eq!(
                 *soft_maximum, None,
                 "constructor has no recorded soft request"
+            );
+            assert_eq!(
+                *flags_request, None,
+                "constructor has no recorded flags request"
             );
             assert_eq!(*binding_count, 0, "native constructor BindingCount");
             let worker = bytes(row["worker"]);

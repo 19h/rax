@@ -1,0 +1,66 @@
+{
+  "state": "finished",
+  "utc": "2026-10-19T08:56:11.039531+00:00",
+  "inputs": [
+    {
+      "path": "src/user/windows/objects.rs",
+      "sha256": "dcb2e1f47c4334c303325c1459153ac2a374edf7512d5d82b38ba941700cd25c",
+      "bytes": 28350
+    },
+    {
+      "path": "src/user/windows/dll/native/worker_factory.rs",
+      "sha256": "73797537373e0f2984384b6fe2e8a82ae313f7ef80840bf0c6bf42dcd5aff846",
+      "bytes": 7650
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests.rs",
+      "sha256": "54645eafb36f8a1aec16b18eea8eca63cc1b79e608c66a8f03f63ad2d44a5d7d",
+      "bytes": 48969
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/worker_factory_set_tests.rs",
+      "sha256": "6a63cca2e79b15891856dec4f8d360818143d99dd91d0f9886923cffae4f70b8",
+      "bytes": 11690
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/worker_factory_create_replay_tests.rs",
+      "sha256": "ed014697b3c01964ade95c96f1ac15f373d287fed4fcd388bf202030a6690e13",
+      "bytes": 14759
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/worker_factory_create_tests.rs",
+      "sha256": "79be469782b0cca4e6aa3b6f6538f3e74aed88af1d6540f45eb04e97cf291c0a",
+      "bytes": 7657
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/worker_factory_flags_tests.rs",
+      "sha256": "da0a1fae9d34abac44ad626d222421d26905fe013ec4380332c0e58300ad3f28",
+      "bytes": 14502
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/worker_factory_flags_leaf_tests.rs",
+      "sha256": "93d2413393bd09c57ea11062f58a8b3679b3cdec1e3fc7621d61dee4aaee3d68",
+      "bytes": 4456
+    }
+  ],
+  "argv": [
+    "cargo",
+    "+1.95.0",
+    "test",
+    "--locked",
+    "--offline",
+    "--no-default-features",
+    "--lib",
+    "native_worker_factory_flags",
+    "--",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "exit-code": 0,
+  "log": "flags-prototype-a.log",
+  "bytes": 1475,
+  "sha256": "5435982f143b045dde0c211216a0b87b30d5c655272e3fd826c6a7c5c00eeaab",
+  "results": [
+    "ok. 6 passed; 0 failed; 0 ignored; 0 measured; 8027 filtered out; finished in 6.51s"
+  ]
+}

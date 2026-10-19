@@ -1,0 +1,46 @@
+{
+  "utc": "2026-10-19T13:45:45.080351+00:00",
+  "checked-evidence-files": 212,
+  "original-envelope-sha256": "1bd94b256b8ad576af579208b5b8184d8cbae771a80939ccf4877520d5818b55",
+  "proof-archive": {
+    "archive": "flags-final-proof.tar.gz",
+    "bytes": 2183650,
+    "sha256": "5046777584c6f10444453e52331e4bdd09002b55a362a98f8a1a34e9ab4f3dc3",
+    "bound-evidence-files": 212,
+    "members": 214,
+    "scope": "Final evidence and appended runtime engineering record only; native verifier detaches all overwritten hardlinks before extraction."
+  },
+  "receipts": [
+    {
+      "path": "flags-final-check-macos.json",
+      "bytes": 639,
+      "sha256": "415a5353056f25d7336445c2f9aeb165f7c478e8f89056621e62407dce29629a"
+    },
+    {
+      "path": "flags-final-check-macos.log",
+      "bytes": 323,
+      "sha256": "1ec59d8712c90fc27815bb46c9899705fa0825c49d225c76ede6af71e9f7132e"
+    },
+    {
+      "path": "flags-final-check-linux.json",
+      "bytes": 841,
+      "sha256": "a87632ec23e5b90ad5a319a817ee3a3afc9e885564e4dbf9d0eb022c8c41a5de"
+    },
+    {
+      "path": "flags-final-check-linux.log",
+      "bytes": 323,
+      "sha256": "1ec59d8712c90fc27815bb46c9899705fa0825c49d225c76ede6af71e9f7132e"
+    },
+    {
+      "path": "flags-final-check-windows.json",
+      "bytes": 1405,
+      "sha256": "57b3a0dd29993e3ef9ba800643d55916e64bcbc02de2f84e1438fbf0c611fd15"
+    },
+    {
+      "path": "flags-final-check-windows.log",
+      "bytes": 337,
+      "sha256": "63c432001dc285ad1fec9012de05aea185d40fa39ad34e78781056248016ec9b"
+    }
+  ],
+  "scope": "Receipts check the original212-file envelope. Later receipt/scope/initial-proof-correction/whitespace-audit records do not verify themselves; final envelope binds their preserved bytes. Compiled inputs and original validated evidence remain unchanged."
+}

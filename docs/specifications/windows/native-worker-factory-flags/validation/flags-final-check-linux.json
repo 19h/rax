@@ -1,0 +1,29 @@
+{
+  "state": "finished",
+  "host": "linux",
+  "argv": [
+    "docker",
+    "run",
+    "--rm",
+    "--platform",
+    "linux/amd64",
+    "-v",
+    "/Users/int/Library/Caches/assist-process-emulation/native-worker-factory-flags-20261019/flags-source:/source:ro",
+    "-v",
+    "/Users/int/Library/Caches/assist-process-emulation/native-worker-factory-flags-20261019:/validation:ro",
+    "-w",
+    "/source",
+    "assist-rax-validation-rustfmt:1.95-bullseye-20261015",
+    "python3",
+    "-B",
+    "/validation/run-flags-proof-checks.py",
+    "/source"
+  ],
+  "checked-envelope-files": 212,
+  "utc": "2026-10-19T13:44:25.460003+00:00",
+  "exit-code": 0,
+  "log": "flags-final-check-linux.log",
+  "bytes": 323,
+  "sha256": "1ec59d8712c90fc27815bb46c9899705fa0825c49d225c76ede6af71e9f7132e",
+  "completed-utc": "2026-10-19T13:44:32.887289+00:00"
+}

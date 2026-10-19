@@ -1,0 +1,150 @@
+{
+  "scope": "Post-freeze supplemental native controls for the second observed guest constructor stack sizing; no Rust/test/build input changed.",
+  "files": [
+    {
+      "path": "capture-plan-v4.json",
+      "bytes": 659,
+      "sha256": "713f148d492c0d65083620d3320305c8053ee7cb91589ea8f46b4d680fbe9931"
+    },
+    {
+      "path": "native-worker-factory-flags-v4-arm64-after.json",
+      "bytes": 542,
+      "sha256": "5acd982c7462bc3fa63de4fe72ef29f084d15211dddc408a9c62c44f6a2da1ed"
+    },
+    {
+      "path": "native-worker-factory-flags-v4-arm64-before.json",
+      "bytes": 542,
+      "sha256": "5acd982c7462bc3fa63de4fe72ef29f084d15211dddc408a9c62c44f6a2da1ed"
+    },
+    {
+      "path": "native-worker-factory-flags-v4-arm64-build.log",
+      "bytes": 36,
+      "sha256": "95ef5aa0dde6d86a5b2710fa219738b9c055315761ec9024e4e6325444daffd2"
+    },
+    {
+      "path": "native-worker-factory-flags-v4-arm64-source-after.json",
+      "bytes": 256,
+      "sha256": "a864c3729aac1047abb4c97a5be498bcf546764fe5a31377bc3b521e543d22c2"
+    },
+    {
+      "path": "native-worker-factory-flags-v4-arm64.log",
+      "bytes": 566170,
+      "sha256": "9e5c0e318d3abf84a4de32cebb197fe19ccae84ad156dc24f79402db6eb4577a"
+    },
+    {
+      "path": "native-worker-factory-flags-v4-driver.log",
+      "bytes": 964,
+      "sha256": "81157a84a41f6d110e3d629b61f37581444b3f76aa427bed1014db5bce060e17"
+    },
+    {
+      "path": "native-worker-factory-flags-v4-launch.json",
+      "bytes": 450,
+      "sha256": "b600e39baf6184e762ed9bd7d5fe828a4a9f379f6f0287a018fdae255cd3aa3e"
+    },
+    {
+      "path": "native-worker-factory-flags-v4-modules-after.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05"
+    },
+    {
+      "path": "native-worker-factory-flags-v4-modules-before.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05"
+    },
+    {
+      "path": "native-worker-factory-flags-v4-outcomes.json",
+      "bytes": 528,
+      "sha256": "9e3267e7264d70b22b51f4e60eca3f183eb316a4ae4bfe537b98199a84d7a8de"
+    },
+    {
+      "path": "native-worker-factory-flags-v4-x64-after.json",
+      "bytes": 534,
+      "sha256": "f844e0d9e72744996e7c72721b7d9e7bc28683d68996f21f0ebd1bcbf0abb66a"
+    },
+    {
+      "path": "native-worker-factory-flags-v4-x64-before.json",
+      "bytes": 534,
+      "sha256": "f844e0d9e72744996e7c72721b7d9e7bc28683d68996f21f0ebd1bcbf0abb66a"
+    },
+    {
+      "path": "native-worker-factory-flags-v4-x64-build.log",
+      "bytes": 36,
+      "sha256": "95ef5aa0dde6d86a5b2710fa219738b9c055315761ec9024e4e6325444daffd2"
+    },
+    {
+      "path": "native-worker-factory-flags-v4-x64-source-after.json",
+      "bytes": 254,
+      "sha256": "04e2bca9750832f9b33c1672962817e8d2cbdc71505404966b20a2e0ff2911f7"
+    },
+    {
+      "path": "native-worker-factory-flags-v4-x64.log",
+      "bytes": 566170,
+      "sha256": "3a418da13b87ef2c4ef367fda279e01f414a97a3712ab85d8ba71c2d8df2d499"
+    },
+    {
+      "path": "native-worker-factory-flags-v4-x86-after.json",
+      "bytes": 532,
+      "sha256": "17dcea3c49591475f99720ead7f521225c83ac7763d8a210b970814017189a83"
+    },
+    {
+      "path": "native-worker-factory-flags-v4-x86-before.json",
+      "bytes": 532,
+      "sha256": "17dcea3c49591475f99720ead7f521225c83ac7763d8a210b970814017189a83"
+    },
+    {
+      "path": "native-worker-factory-flags-v4-x86-build.log",
+      "bytes": 36,
+      "sha256": "95ef5aa0dde6d86a5b2710fa219738b9c055315761ec9024e4e6325444daffd2"
+    },
+    {
+      "path": "native-worker-factory-flags-v4-x86-laa-after.json",
+      "bytes": 546,
+      "sha256": "d8453144cfbad496de1ae658c6b9b67f2bcb27d52ee131ee2e2930cbb6c09178"
+    },
+    {
+      "path": "native-worker-factory-flags-v4-x86-laa-before.json",
+      "bytes": 546,
+      "sha256": "d8453144cfbad496de1ae658c6b9b67f2bcb27d52ee131ee2e2930cbb6c09178"
+    },
+    {
+      "path": "native-worker-factory-flags-v4-x86-laa-build.log",
+      "bytes": 36,
+      "sha256": "95ef5aa0dde6d86a5b2710fa219738b9c055315761ec9024e4e6325444daffd2"
+    },
+    {
+      "path": "native-worker-factory-flags-v4-x86-laa-source-after.json",
+      "bytes": 258,
+      "sha256": "d19d8d6eba784a29e27d116c4cefa9991cfe66f5db667592ff9e7e55cb20ff57"
+    },
+    {
+      "path": "native-worker-factory-flags-v4-x86-laa.log",
+      "bytes": 564870,
+      "sha256": "2a0a7fcf2c4d8fed78dee1e6da8809326b1c4fe746088b6f1745fbd1e461cd48"
+    },
+    {
+      "path": "native-worker-factory-flags-v4-x86-source-after.json",
+      "bytes": 254,
+      "sha256": "83d5eae7a9aafadb36aabaaed2e66d1cd526219308129b2dc848aab01f6ea1cb"
+    },
+    {
+      "path": "native-worker-factory-flags-v4-x86.log",
+      "bytes": 564870,
+      "sha256": "2212392e0f7c9a24323bff8144894034a0b01b5b7813f62bcf5b12f5b26d0c6b"
+    },
+    {
+      "path": "native-worker-factory-flags-v4.cpp",
+      "bytes": 7826,
+      "sha256": "6850ea46c973efcd147f6cc219068ef708c2022cf8eb07716e4729973c429972"
+    },
+    {
+      "path": "native-worker-factory-flags-v4.ps1",
+      "bytes": 2633,
+      "sha256": "5d5c272d248d20dae7955b5531a50263a2656249ff01eec0e955368de4a6031c"
+    },
+    {
+      "path": "run-native-worker-factory-flags-v4.py",
+      "bytes": 1338,
+      "sha256": "f13b5e4874f1bb1a366a9239c234c427af39f03f18cdbf6aa67c748a8365955e"
+    }
+  ]
+}

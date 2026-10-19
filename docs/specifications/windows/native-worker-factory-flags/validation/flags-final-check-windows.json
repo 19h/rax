@@ -1,0 +1,35 @@
+{
+  "state": "finished",
+  "pid": 1832,
+  "utc": "2026-10-19T13:44:25.759098+00:00",
+  "steps": [
+    {
+      "name": "native",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\verify-flags-epoch1\\docs\\specifications\\windows\\native-worker-factory-flags\\check_native.py",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\verify-flags-epoch1\\docs\\specifications\\windows\\native-worker-factory-flags"
+      ],
+      "exit-code": 0
+    },
+    {
+      "name": "validation",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\verify-flags-epoch1\\docs\\specifications\\windows\\native-worker-factory-flags\\check_validation.py",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\verify-flags-epoch1"
+      ],
+      "exit-code": 0
+    }
+  ],
+  "checked-envelope-files": 212,
+  "scope": "New verification tree; all extracted proof/runtime documents detach from immutable parent hardlinks.",
+  "complete-inputs": 24045,
+  "exit-code": 0,
+  "log": "flags-final-check-windows.log",
+  "bytes": 337,
+  "sha256": "63c432001dc285ad1fec9012de05aea185d40fa39ad34e78781056248016ec9b",
+  "completed-utc": "2026-10-19T13:44:53.763263+00:00"
+}

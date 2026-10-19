@@ -1,0 +1,189 @@
+{
+  "state": "finished",
+  "pid": 9496,
+  "source-epoch": 1,
+  "utc": "2026-10-19T09:03:35.587718+00:00",
+  "steps": [
+    {
+      "name": "focus",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "native_worker_factory_flags",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "log": "flags-candidate-epoch1-focus.log",
+      "bytes": 2445,
+      "sha256": "0cf42ac4f2ead1ecca20930fcfaffc77bb288df1900270a195c65a5f22c772bb"
+    },
+    {
+      "name": "build",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "build",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "--message-format=json"
+      ],
+      "exit-code": 0,
+      "log": "flags-candidate-epoch1-build.log",
+      "bytes": 90594,
+      "sha256": "b6343d41a35c8391bf4c78a150206cb7189221e2d7955f2911c642a4cf904326"
+    },
+    {
+      "name": "observer-build",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\rustc.exe",
+        "--edition=2024",
+        "--crate-name",
+        "flags_candidate_owner_epoch1",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\flags-candidate-owner-epoch1.rs",
+        "-C",
+        "target-feature=+crt-static",
+        "--extern",
+        "rax=C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-owned\\debug\\librax.rlib",
+        "-L",
+        "dependency=C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-owned\\debug\\deps",
+        "-o",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\flags-candidate-owner-epoch1.exe"
+      ],
+      "exit-code": 0,
+      "log": "flags-candidate-epoch1-observer-build.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "ordinary-0",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\flags-candidate-owner-epoch1.exe",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-flags-candidate-epoch1\\tests\\fixtures\\user\\windows\\bin\\arm64\\smoke.exe"
+      ],
+      "exit-code": 0,
+      "log": "flags-candidate-epoch1-ordinary-0.log",
+      "bytes": 8050,
+      "sha256": "46a0805a2b9b1053ffd36518af035ada4e8d1af6d949761a432af8d0a2c93310"
+    },
+    {
+      "name": "ordinary-1",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\flags-candidate-owner-epoch1.exe",
+        "C:\\Windows\\System32\\whoami.exe"
+      ],
+      "exit-code": 0,
+      "log": "flags-candidate-epoch1-ordinary-1.log",
+      "bytes": 7725,
+      "sha256": "8ffb721fa1ef1e5e9b90476b89b3f8a5bcc294b4ab7053dc6af46e234bc882fb"
+    }
+  ],
+  "scope": "Candidate dormant WorkerFactoryFlags exploration: six shared tests passed; seven native focused tests and normal no-default core build/ordinary continuation run here. Full three-host, C API and retained owning validation remain pending.",
+  "disk-free-before": 4922396672,
+  "child-pid": 6668,
+  "core-before": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-owned\\debug\\librax.rlib",
+    "bytes": 503917278,
+    "sha256": "66d45545167104c717e6da8bc1585d9e4f70627568f4ccf9a95002a7e52ac18a"
+  },
+  "observer-before": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\flags-candidate-owner-epoch1.rs",
+    "bytes": 15252,
+    "sha256": "f52a3911114dda42c281156e15c66afb6647cfa4408602f5f5a79d5163c9ff64"
+  },
+  "executable-before": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\flags-candidate-owner-epoch1.exe",
+    "bytes": 26965504,
+    "sha256": "e014dc7313e86f5f6a921faf421a2a937c51020db942e8dbc84e56cbd61ef34d"
+  },
+  "runtime-before": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e"
+    },
+    {
+      "path": "C:\\Windows\\System32\\KernelBase.dll",
+      "bytes": 7213728,
+      "sha256": "6b2fa508ac4f9bce5d7351676485d1dc5b5236cd9656034e2fec1eaba3b82bc9"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\KernelBase.dll",
+      "bytes": 3073488,
+      "sha256": "e9c414d7c6bd2c6fde608f31b2f31da3c2014c801b3764a30ee42abd1e9c2d58"
+    },
+    {
+      "path": "C:\\Windows\\System32\\kernel32.dll",
+      "bytes": 1500304,
+      "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\kernel32.dll",
+      "bytes": 696392,
+      "sha256": "9c9a0c54a79ea712bb533fcc79ba9935ed9f9d3f777fd65cf62d9cec6699b9df"
+    }
+  ],
+  "outcomes": [
+    {
+      "program-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-flags-candidate-epoch1\\tests\\fixtures\\user\\windows\\bin\\arm64\\smoke.exe",
+        "bytes": 3584,
+        "sha256": "325730e33e981784bff4a60bc6f342cf95c2735e85042c89748fc471cbe7781b"
+      },
+      "native-before": {
+        "exit-code": 0,
+        "stdout-hex": "",
+        "stderr-hex": ""
+      },
+      "program-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-flags-candidate-epoch1\\tests\\fixtures\\user\\windows\\bin\\arm64\\smoke.exe",
+        "bytes": 3584,
+        "sha256": "325730e33e981784bff4a60bc6f342cf95c2735e85042c89748fc471cbe7781b"
+      },
+      "native-after": {
+        "exit-code": 0,
+        "stdout-hex": "",
+        "stderr-hex": ""
+      },
+      "log": "flags-candidate-epoch1-ordinary-0.log",
+      "log-sha256": "46a0805a2b9b1053ffd36518af035ada4e8d1af6d949761a432af8d0a2c93310"
+    },
+    {
+      "program-before": {
+        "path": "C:\\Windows\\System32\\whoami.exe",
+        "bytes": 84480,
+        "sha256": "48fde190b002a5a4c4b8b19db014377263ba94220f23a4f0a117fec082d46bf6"
+      },
+      "native-before": {
+        "exit-code": 0,
+        "stdout-hex": "6e7420617574686f726974795c73797374656d0d0a",
+        "stderr-hex": ""
+      },
+      "program-after": {
+        "path": "C:\\Windows\\System32\\whoami.exe",
+        "bytes": 84480,
+        "sha256": "48fde190b002a5a4c4b8b19db014377263ba94220f23a4f0a117fec082d46bf6"
+      },
+      "native-after": {
+        "exit-code": 0,
+        "stdout-hex": "6e7420617574686f726974795c73797374656d0d0a",
+        "stderr-hex": ""
+      },
+      "log": "flags-candidate-epoch1-ordinary-1.log",
+      "log-sha256": "8ffb721fa1ef1e5e9b90476b89b3f8a5bcc294b4ab7053dc6af46e234bc882fb"
+    }
+  ],
+  "exit-code": 0,
+  "completed-utc": "2026-10-19T09:09:49.351288+00:00"
+}

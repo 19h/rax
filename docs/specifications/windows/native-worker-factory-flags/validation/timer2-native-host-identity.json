@@ -1,0 +1,32 @@
+{
+  "utc": "2026-10-19T04:36:21.934197+00:00",
+  "machine": "ARM64",
+  "python": "3.14.0 (tags/v3.14.0:ebf955d, Oct  7 2025, 10:57:41) [MSC v.1944 64 bit (ARM64)]",
+  "pointer-bytes": 8,
+  "windows-version": {
+    "major": 10,
+    "minor": 0,
+    "build": 29683,
+    "platform": 2,
+    "service-pack": "",
+    "platform-version": [
+      10,
+      0,
+      29683
+    ]
+  },
+  "source-sha256": "5ade1f4d6f320ce0874ad8429e0f7a4fdd57f5596fb034285b6363f98a518d43",
+  "runtime-modules": [
+    {
+      "path": "C:/Windows/System32/ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+    },
+    {
+      "path": "C:/Windows/SysWOW64/ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e"
+    }
+  ],
+  "scope": "Read-only host identity; all four producer ABI profiles share this kernel."
+}

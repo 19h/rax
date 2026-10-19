@@ -1,0 +1,19 @@
+{
+  "utc": "2026-10-19T08:45:51.138496+00:00",
+  "base": "9e243946c5c4e8df0bcbc93d94d1337ec8d62171",
+  "source-root": "/Users/int/Library/Caches/assist-process-emulation/native-worker-factory-flags-20261019/flags-source",
+  "baseline-status": "## HEAD (no branch)\n",
+  "source-owned-paths": [
+    "src/user/windows/objects.rs",
+    "src/user/windows/dll/native/worker_factory.rs",
+    "src/user/windows/process/sched/tests/services_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/worker_factory_set_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/worker_factory_create_replay_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/worker_factory_create_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/worker_factory_flags_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/worker_factory_flags_leaf_tests.rs",
+    "src/user/windows/native-runtime.md"
+  ],
+  "evidence-prefix": "docs/specifications/windows/native-worker-factory-flags/",
+  "scope": "Measured dormant WorkerFactoryFlags class13 request capture/order/grants and retained successful request; no guessed constructor default or active-worker effects. Public CAPI1.14.0 remains opaque."
+}

@@ -1,0 +1,14 @@
+{
+  "native-setter-cases": 2600,
+  "native-interleaving-controls": 36,
+  "native-ABI-profiles": 4,
+  "physical-Windows-kernels": 1,
+  "bound-native-files": 64
+}
+{
+  "source-inputs": 24045,
+  "three-host-full-gates": "pass",
+  "retained-consumers": "pass",
+  "ordinary-programs": 2,
+  "ordinary-guest-exit-success": false
+}

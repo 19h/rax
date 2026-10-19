@@ -1,0 +1,9 @@
+{
+  "scope": "Independent diagnostic linked to the completed FileSystem retained-owner core; observe class13 input and owned object before the explicit unsupported result. Original final FileSystem observer remains unchanged.",
+  "source": "worker-flags-frontier-v1.rs",
+  "source-sha256": "54324aad848d45870b864a4c271a51c9deb40beaf2d8dbd7eef3346eb6f82734",
+  "core-record": "native-filesystem-epoch1-final-owning-archive-identities.json",
+  "service": 433,
+  "class": 13,
+  "guest-memory-read-bytes": 4
+}

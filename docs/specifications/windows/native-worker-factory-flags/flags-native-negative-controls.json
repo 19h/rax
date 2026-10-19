@@ -1,0 +1,79 @@
+{
+  "state": "finished",
+  "controls": [
+    {
+      "name": "success-status",
+      "rejected": true,
+      "failure-type": "AssertionError",
+      "outer-envelope-rebound": true
+    },
+    {
+      "name": "duplicate-case",
+      "rejected": true,
+      "failure-type": "AssertionError",
+      "outer-envelope-rebound": true
+    },
+    {
+      "name": "missing-case",
+      "rejected": true,
+      "failure-type": "AssertionError",
+      "outer-envelope-rebound": true
+    },
+    {
+      "name": "guard-not-consumed",
+      "rejected": true,
+      "failure-type": "AssertionError",
+      "outer-envelope-rebound": true
+    },
+    {
+      "name": "buffer-length-drift",
+      "rejected": true,
+      "failure-type": "AssertionError",
+      "outer-envelope-rebound": true
+    },
+    {
+      "name": "constructor-hard-drift",
+      "rejected": true,
+      "failure-type": "AssertionError",
+      "outer-envelope-rebound": true
+    },
+    {
+      "name": "basic-query-size-drift",
+      "rejected": true,
+      "failure-type": "AssertionError",
+      "outer-envelope-rebound": true
+    },
+    {
+      "name": "sequence-status",
+      "rejected": true,
+      "failure-type": "AssertionError",
+      "outer-envelope-rebound": true
+    },
+    {
+      "name": "PE-machine-drift",
+      "rejected": true,
+      "failure-type": "AssertionError",
+      "outer-envelope-rebound": true
+    },
+    {
+      "name": "producer-failed",
+      "rejected": true,
+      "failure-type": "AssertionError",
+      "outer-envelope-rebound": true
+    },
+    {
+      "name": "module-identity-drift",
+      "rejected": true,
+      "failure-type": "AssertionError",
+      "outer-envelope-rebound": true
+    },
+    {
+      "name": "source-identity-drift",
+      "rejected": true,
+      "failure-type": "AssertionError",
+      "outer-envelope-rebound": true
+    }
+  ],
+  "rejected": 12,
+  "scope": "Each intentional logical corruption has its file and outer manifest hashes rebound before checking."
+}
