@@ -1,0 +1,1271 @@
+{
+  "utc": "2026-10-19T14:45:58.226969+00:00",
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 8004,
+      "sha256": "f1a7e5e01f6a741e5a4380a73ddaf7412c4606f95dec9aedc90f6c16c0a8a229"
+    },
+    {
+      "path": "capture-plan-v3.json",
+      "bytes": 363,
+      "sha256": "b24973db865d71d6decb398c3505bb8b7d47f296e55f47d5e7b1190e79fb6eb3"
+    },
+    {
+      "path": "check_native.py",
+      "bytes": 8600,
+      "sha256": "1349659820a6cdeb5b60f4e97bbfcbef1091a8478a03652e57cb2483ded5d90c"
+    },
+    {
+      "path": "check_validation.py",
+      "bytes": 17485,
+      "sha256": "749560d4f5dc5a015c78254e08f41c25abe8185127c2d298ebbde135c403d34d"
+    },
+    {
+      "path": "frontier-plan.json",
+      "bytes": 418,
+      "sha256": "0239497b63fd78f4162ef8cc1ad909d813d527444b761ecb87f600d7912c0041"
+    },
+    {
+      "path": "idle-epoch2-correction.json",
+      "bytes": 740,
+      "sha256": "3e4054936e66ab724b9d8ac0f9aca768b8cd9b54ad0ceda111399570b670c496"
+    },
+    {
+      "path": "idle-native-negative-controls.json",
+      "bytes": 1693,
+      "sha256": "1d5d546c9b381377f95b63123bee44c3598592aade4163d98ec9ddec0af083e4"
+    },
+    {
+      "path": "idle-ownership.json",
+      "bytes": 1135,
+      "sha256": "8498fc353820d5be69424a19decb113cd924ba0aea5c7f066dd08b700f673124"
+    },
+    {
+      "path": "idle-plan.json",
+      "bytes": 5319,
+      "sha256": "2c8f1e47689b96aabf84cdf806825e5e5215db1d25634a97bb9ed5bb934bcaae"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v1-arm64-after.json",
+      "bytes": 540,
+      "sha256": "65366d0a07d9a67e9a7cf04d51dae4231d05ffdf7be1f6d0b30581fa769d4f87"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v1-arm64-before.json",
+      "bytes": 540,
+      "sha256": "65366d0a07d9a67e9a7cf04d51dae4231d05ffdf7be1f6d0b30581fa769d4f87"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v1-arm64-build.log",
+      "bytes": 35,
+      "sha256": "cf43f916d8eb3e1e406b13f43d280d5fb300799e90449499b7ab8b0cf35236f2"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v1-arm64-source-after.json",
+      "bytes": 254,
+      "sha256": "7b7f2a39b1e4dd00b31035da77fbbf468997143fd402084c0f0f75cc04bc79ec"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v1-arm64.log",
+      "bytes": 562026,
+      "sha256": "8cb4351a6fff03862de8f838229e369089b25e03775b64239b4febb606dc8393"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v1-driver.log",
+      "bytes": 964,
+      "sha256": "81157a84a41f6d110e3d629b61f37581444b3f76aa427bed1014db5bce060e17"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v1-launch.json",
+      "bytes": 391,
+      "sha256": "7f223aecd62b283c14d5875833c033b9853ed6508a47bba19b527401154dda08"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v1-modules-after.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v1-modules-before.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v1-outcomes.json",
+      "bytes": 524,
+      "sha256": "7944d7bfca0037c76db4383ac9148c43e7c06d4911d03cfc577e7f87c1abf3c1"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v1-x64-after.json",
+      "bytes": 532,
+      "sha256": "c5b435657d3a005ba3f16764e9c8fbe5440549fd054b03aa5ea3920372f15b47"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v1-x64-before.json",
+      "bytes": 532,
+      "sha256": "c5b435657d3a005ba3f16764e9c8fbe5440549fd054b03aa5ea3920372f15b47"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v1-x64-build.log",
+      "bytes": 35,
+      "sha256": "cf43f916d8eb3e1e406b13f43d280d5fb300799e90449499b7ab8b0cf35236f2"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v1-x64-source-after.json",
+      "bytes": 252,
+      "sha256": "9516f9ec248d439cf2027aef5bf683a1b78b89ccb7f5d5bd674717ea9b3476fa"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v1-x64.log",
+      "bytes": 562026,
+      "sha256": "c7e326e9938187fbf1de50f0ece8c1951c5ca5dd065d3022d830c98f6da07c35"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v1-x86-after.json",
+      "bytes": 530,
+      "sha256": "f029cbca54a763e0b5508b0e7b888471c345207ca2ab07d33819bb8be2106979"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v1-x86-before.json",
+      "bytes": 530,
+      "sha256": "f029cbca54a763e0b5508b0e7b888471c345207ca2ab07d33819bb8be2106979"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v1-x86-build.log",
+      "bytes": 35,
+      "sha256": "cf43f916d8eb3e1e406b13f43d280d5fb300799e90449499b7ab8b0cf35236f2"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v1-x86-laa-after.json",
+      "bytes": 544,
+      "sha256": "2e077308ed755753ce301f4baedcfdbb3720a46cf8644a9b44d355c211fe0aa5"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v1-x86-laa-before.json",
+      "bytes": 544,
+      "sha256": "2e077308ed755753ce301f4baedcfdbb3720a46cf8644a9b44d355c211fe0aa5"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v1-x86-laa-build.log",
+      "bytes": 35,
+      "sha256": "cf43f916d8eb3e1e406b13f43d280d5fb300799e90449499b7ab8b0cf35236f2"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v1-x86-laa-source-after.json",
+      "bytes": 256,
+      "sha256": "378ff9ac3118a8b71cc9135fb3089c1d7d7b0302d740f4230ba90f7f63482f93"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v1-x86-laa.log",
+      "bytes": 560746,
+      "sha256": "595ef3a02dc2f1d09b3b020ca293f8b9e597f3982236d38ecf670f1620d83555"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v1-x86-source-after.json",
+      "bytes": 252,
+      "sha256": "37b75551a06150c3c90bcb1f02a81d7e24a730dcf25f6474fa2bc39c0fba5356"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v1-x86.log",
+      "bytes": 560746,
+      "sha256": "71b2904a3ae9d17c8c13d2260be6044d95a14b5e396052ebb4ce1bcb005af24d"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v1.cpp",
+      "bytes": 7875,
+      "sha256": "7cf3a2d712aec67d83038d3127644aaa17b6cc6ccf319b805995854e2d8814c4"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v1.ps1",
+      "bytes": 2619,
+      "sha256": "1716fa9ab562a28508fce3899750677ed5ace1a22fbf952aaf96d230faf0a164"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v2-arm64-after.json",
+      "bytes": 540,
+      "sha256": "f6018d47399aad7569fab6743583cd041a0f27bccbac100a09b5705f1988b851"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v2-arm64-before.json",
+      "bytes": 540,
+      "sha256": "f6018d47399aad7569fab6743583cd041a0f27bccbac100a09b5705f1988b851"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v2-arm64-build.log",
+      "bytes": 35,
+      "sha256": "ab8d95df8acd26ba4fb25380897fa30d150337f542424b1e3d8f7eb05cbc9cb1"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v2-arm64-source-after.json",
+      "bytes": 254,
+      "sha256": "e4658d24be69a1d6988b1027d42ceca27db1c7c0328fba04b34f79c4d8001dab"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v2-arm64.log",
+      "bytes": 949515,
+      "sha256": "af3ed3d60043bb3970543390a74955a6fd6a3f37974ab42a1971039a71850b72"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v2-driver.log",
+      "bytes": 964,
+      "sha256": "81157a84a41f6d110e3d629b61f37581444b3f76aa427bed1014db5bce060e17"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v2-launch.json",
+      "bytes": 392,
+      "sha256": "96fa31214c1aab46847a934ac3557b74633303b7a75ad23fad6645048bb92983"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v2-modules-after.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v2-modules-before.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v2-outcomes.json",
+      "bytes": 524,
+      "sha256": "ba8c27349b358672043ee518ef638413a5ff549d4f195b249fc7a75fc9cb7b59"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v2-x64-after.json",
+      "bytes": 532,
+      "sha256": "dfb7e0e5e1bcd6a372d579167b372b42a1692f6dadf9f2dc2ae41c1c21240e35"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v2-x64-before.json",
+      "bytes": 532,
+      "sha256": "dfb7e0e5e1bcd6a372d579167b372b42a1692f6dadf9f2dc2ae41c1c21240e35"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v2-x64-build.log",
+      "bytes": 35,
+      "sha256": "ab8d95df8acd26ba4fb25380897fa30d150337f542424b1e3d8f7eb05cbc9cb1"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v2-x64-source-after.json",
+      "bytes": 252,
+      "sha256": "42dcf41d3b340810736ca87ce7bf5acd9d3975e8ed9b93c1b4610c5a58b7e948"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v2-x64.log",
+      "bytes": 949515,
+      "sha256": "6316160df40e062cd83b4b05041b8a60830335989fe3849a069828aa5b94ef61"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v2-x86-after.json",
+      "bytes": 530,
+      "sha256": "ef802c0c538efc69b29aa7e43b1f200ac88e7307a0653d4acf5bddb0e2294677"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v2-x86-before.json",
+      "bytes": 530,
+      "sha256": "ef802c0c538efc69b29aa7e43b1f200ac88e7307a0653d4acf5bddb0e2294677"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v2-x86-build.log",
+      "bytes": 35,
+      "sha256": "ab8d95df8acd26ba4fb25380897fa30d150337f542424b1e3d8f7eb05cbc9cb1"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v2-x86-laa-after.json",
+      "bytes": 544,
+      "sha256": "d93fda36f347e1e4c268239ca445a1700b3f0761c62cb5918b8fba03c88dab93"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v2-x86-laa-before.json",
+      "bytes": 544,
+      "sha256": "d93fda36f347e1e4c268239ca445a1700b3f0761c62cb5918b8fba03c88dab93"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v2-x86-laa-build.log",
+      "bytes": 35,
+      "sha256": "ab8d95df8acd26ba4fb25380897fa30d150337f542424b1e3d8f7eb05cbc9cb1"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v2-x86-laa-source-after.json",
+      "bytes": 256,
+      "sha256": "4e7f785b6f78f7c598108bdab95e1e1d133fdedaee83183f3c87a266878b71bd"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v2-x86-laa.log",
+      "bytes": 947379,
+      "sha256": "654338c933cc151be50ccaf86245069bcf8b03322c749690ca127d5f1eb93d00"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v2-x86-source-after.json",
+      "bytes": 252,
+      "sha256": "93020336fff809d3045026f3293a1c646165da1272c6ef47ace9524e76c1681e"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v2-x86.log",
+      "bytes": 947379,
+      "sha256": "a0637d1514b194123d76be8b3d002cba0e01616959254900e4c678d172f825e9"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v2.cpp",
+      "bytes": 8045,
+      "sha256": "20825d5a564a57c81e66351284a9e811f73fcd5741b75e472d5e3a6e9d5899e0"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v2.ps1",
+      "bytes": 2619,
+      "sha256": "aa7806a33d618fc4d373f11fd5ddeb77c96e06a7651d64a48d88d76b79f66c42"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v3-arm64-after.json",
+      "bytes": 540,
+      "sha256": "9e617c9901adef356d3bd7a171f61fbc366b7975710b719e4b4098f5fda8d319"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v3-arm64-before.json",
+      "bytes": 540,
+      "sha256": "9e617c9901adef356d3bd7a171f61fbc366b7975710b719e4b4098f5fda8d319"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v3-arm64-build.log",
+      "bytes": 35,
+      "sha256": "fa9c924e3154cece9b770373ab0023492eba8840fad30f93c793021ab38f6c8c"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v3-arm64-source-after.json",
+      "bytes": 254,
+      "sha256": "b9d31b8744df3c0ee04c2e4fdfcc8e1e8e742c06200b92de03c57898a334ba07"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v3-arm64.log",
+      "bytes": 478278,
+      "sha256": "d2474481843a8c3c6d02ee959c67161df9769aebaefa5b4ebdce75d97d3330a4"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v3-driver.log",
+      "bytes": 964,
+      "sha256": "81157a84a41f6d110e3d629b61f37581444b3f76aa427bed1014db5bce060e17"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v3-launch.json",
+      "bytes": 391,
+      "sha256": "12617c8ae787a6be67efb6fe161390d1c91d9a50d844a7fe84963279b3d97fc2"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v3-modules-after.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v3-modules-before.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v3-outcomes.json",
+      "bytes": 524,
+      "sha256": "fff66eba941d464c1603a8483feb6b6062156695465537df15b99191775ce717"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v3-x64-after.json",
+      "bytes": 532,
+      "sha256": "8d7d65e9e3149c015303a6facf25e6994bc68c7e9c391b2b5912254a68be6e82"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v3-x64-before.json",
+      "bytes": 532,
+      "sha256": "8d7d65e9e3149c015303a6facf25e6994bc68c7e9c391b2b5912254a68be6e82"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v3-x64-build.log",
+      "bytes": 35,
+      "sha256": "fa9c924e3154cece9b770373ab0023492eba8840fad30f93c793021ab38f6c8c"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v3-x64-source-after.json",
+      "bytes": 252,
+      "sha256": "cce511c65bd7f3412c057b3f40182afa32216e5e4ea71c2fc977d453ff18709c"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v3-x64.log",
+      "bytes": 478278,
+      "sha256": "42db1300ba73f96f115957a4982cf1c41a2da147800577824d60eb1fc7699fdf"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v3-x86-after.json",
+      "bytes": 530,
+      "sha256": "34407fdc7f620029972b0359ea70490d74fa1398236b9b995fb85fbb951a984f"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v3-x86-before.json",
+      "bytes": 530,
+      "sha256": "34407fdc7f620029972b0359ea70490d74fa1398236b9b995fb85fbb951a984f"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v3-x86-build.log",
+      "bytes": 35,
+      "sha256": "fa9c924e3154cece9b770373ab0023492eba8840fad30f93c793021ab38f6c8c"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v3-x86-laa-after.json",
+      "bytes": 544,
+      "sha256": "4077ffc2bc414332cc57fccee7c45b51f10b8cc37bf3f31317997e1ad380ae33"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v3-x86-laa-before.json",
+      "bytes": 544,
+      "sha256": "4077ffc2bc414332cc57fccee7c45b51f10b8cc37bf3f31317997e1ad380ae33"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v3-x86-laa-build.log",
+      "bytes": 35,
+      "sha256": "fa9c924e3154cece9b770373ab0023492eba8840fad30f93c793021ab38f6c8c"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v3-x86-laa-source-after.json",
+      "bytes": 256,
+      "sha256": "0c8509e198cce0c3ead3fb253e7374647690f3d9480d823a1973d5a461cb6b3a"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v3-x86-laa.log",
+      "bytes": 477222,
+      "sha256": "651bcd85b695785e5f8fccb4ce2f3782c8afca8b7e0b722d6044ead8dc9e8bcd"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v3-x86-source-after.json",
+      "bytes": 252,
+      "sha256": "764852eef040bc604c98f207a7b319f0fa78040cdb1efb5555b5ef6721c8a5e6"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v3-x86.log",
+      "bytes": 477222,
+      "sha256": "7baabde1cbdc867ab241064d58ee1496226e2636837de0a891f3308179d9c166"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v3.cpp",
+      "bytes": 8468,
+      "sha256": "043ef3d693205372c790e1de735776af71bd1b92ee46b686fa6a71b8e6e1b19d"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v3.ps1",
+      "bytes": 2619,
+      "sha256": "5c3d541db1198471290a049e6a12e801ac68d3f57bb77b5e03e41bb9e2ff0c46"
+    },
+    {
+      "path": "native-manifest.json",
+      "bytes": 15068,
+      "sha256": "d5de18bce4d3aad385d3790b0b5d3a6e93a58582691696c55807effa79fa8dd2"
+    },
+    {
+      "path": "native-v1-precheck.json",
+      "bytes": 970,
+      "sha256": "e8244ab6cc91816f639d2af7d2b1896b6fd34e46442a5262e9aa635a0c670a94"
+    },
+    {
+      "path": "native-v2-precheck.json",
+      "bytes": 898,
+      "sha256": "34dc525979d53220e5037f8990da71df0dee19c34f2369d0713a2c0bb646dfc5"
+    },
+    {
+      "path": "phnt-ntexapi.h",
+      "bytes": 386368,
+      "sha256": "0510ac40fa1690cd73bed8afe3ed602aaa7bb6870ab95ea9aaba36ce1f4c3d53"
+    },
+    {
+      "path": "primary-retrieval.json",
+      "bytes": 407,
+      "sha256": "13647e85a0da358cb6ec48491b6b375d0cb94269928ce18bbcf93beb1afb95f9"
+    },
+    {
+      "path": "run-idle-native-negatives.py",
+      "bytes": 4689,
+      "sha256": "e9731930dd530eb947841289bb8b2ab1b19be803546be06f30f48484a38d1071"
+    },
+    {
+      "path": "run-native-worker-factory-idle-v1.py",
+      "bytes": 1275,
+      "sha256": "c2ccb7e347752b11ff4a4255c50a89bf945f0dcb3983acd19884648f02a11e9c"
+    },
+    {
+      "path": "run-native-worker-factory-idle-v2.py",
+      "bytes": 1275,
+      "sha256": "fb63534aeff3934c32364e3e0f07ed238b160baecd6b426bce51571d9507bdd2"
+    },
+    {
+      "path": "run-native-worker-factory-idle-v3.py",
+      "bytes": 1265,
+      "sha256": "932a4f3d5c3ccabadbad68bb84189f384382e5c2e66791e74c7d71e7d3bb24e2"
+    },
+    {
+      "path": "validation/README.pending.md",
+      "bytes": 6753,
+      "sha256": "699db17e0cdbcea82ccffa408427622db6530498118689ae65d15a990309a4f4"
+    },
+    {
+      "path": "validation/README.reviewed-source.pending.md",
+      "bytes": 7039,
+      "sha256": "3e90a7b149fbe813e638614eeb040ff9d1fc183635c651c00fe97c3efa130d5c"
+    },
+    {
+      "path": "validation/baseline-services_tests.rs",
+      "bytes": 49057,
+      "sha256": "e63a5807888a21c3bccdcddc9156c15f3483cf69fb8a37da7a47868e139160e7"
+    },
+    {
+      "path": "validation/baseline-worker_factory_idle_tests.rs",
+      "bytes": 12864,
+      "sha256": "af004957004bc2996805e94fc04593775fdeb308abfc55a085f9590dff724d84"
+    },
+    {
+      "path": "validation/build-idle-proof.py",
+      "bytes": 1842,
+      "sha256": "e1719540c9d5098217f393b27d292c8c8cf9a189dba4dcfdbe4cde88de17a2db"
+    },
+    {
+      "path": "validation/capture-timer2-host-identity.py",
+      "bytes": 1001,
+      "sha256": "5ade1f4d6f320ce0874ad8429e0f7a4fdd57f5596fb034285b6363f98a518d43"
+    },
+    {
+      "path": "validation/check-idle-validation-before-cache-review.py",
+      "bytes": 16274,
+      "sha256": "1c0b09ececb87bcecbb2982d2da33afd532a3f56da1c707dfbbc9fe49136b010"
+    },
+    {
+      "path": "validation/check-idle-validation-initial.py",
+      "bytes": 16270,
+      "sha256": "714eb0178392490f3881e2cd661fb31deda761b60f6678265bc0e6f54e062461"
+    },
+    {
+      "path": "validation/check-idle-validation.py",
+      "bytes": 17485,
+      "sha256": "749560d4f5dc5a015c78254e08f41c25abe8185127c2d298ebbde135c403d34d"
+    },
+    {
+      "path": "validation/collect-idle-archives-epoch2.py",
+      "bytes": 3338,
+      "sha256": "957b1c042026d081e6dd6b7b81bb2191fc3c4e1621c5fe37ad1e63e67d0d33b1"
+    },
+    {
+      "path": "validation/collect-idle-evidence-initial.py",
+      "bytes": 4570,
+      "sha256": "737a2c80939dc3bfab7e6dfadfcb5a4c3dabc3245c25ed7c4aa16765fc4ac9e1"
+    },
+    {
+      "path": "validation/collect-idle-evidence.py",
+      "bytes": 5059,
+      "sha256": "c42f44daabf479ce85db9e760e0bf6718d44360d1e33a1acbf17f123dfc4efbd"
+    },
+    {
+      "path": "validation/engineering-source-updates.json",
+      "bytes": 388,
+      "sha256": "130bc08d83a1eec3d7a869b2675b1b76d1dc8556159f3eaabe1ca08a48eacb01"
+    },
+    {
+      "path": "validation/epoch1-worker_factory_idle_leaf_tests.rs",
+      "bytes": 5182,
+      "sha256": "cd07d6063e1f7edd14269c43ae060090f0007d1bda7c871029374b40e8be2ff6"
+    },
+    {
+      "path": "validation/final-assumptions.json",
+      "bytes": 5203,
+      "sha256": "e5ddc13910347ecf81d8934527c9acef9dc4fa8e41e45e1b6dc5d86c3f8cc300"
+    },
+    {
+      "path": "validation/finalize-idle-records-resume.py",
+      "bytes": 10221,
+      "sha256": "cb6171e910bd2cc69c4b94305a770bc2061fb19b55279bed487c3944c2d2bd8e"
+    },
+    {
+      "path": "validation/finalize-idle-records.py",
+      "bytes": 9884,
+      "sha256": "67d2371c35675938aa5c471aa8eab97e536809eb7128a07e4fffd859c82a3e07"
+    },
+    {
+      "path": "validation/freeze-idle-candidate-epoch1.py",
+      "bytes": 4162,
+      "sha256": "aa4f719d28a6291d3b05b93ac88c8857fa2ffde90723070bbc5f8db96b78a0a7"
+    },
+    {
+      "path": "validation/freeze-idle-candidate-epoch2.py",
+      "bytes": 4050,
+      "sha256": "e0156beddfa7932d45c274d23a36212fd7485204f903b5437a357d86c30031d1"
+    },
+    {
+      "path": "validation/idle-baseline-a.json",
+      "bytes": 1974,
+      "sha256": "441ab6d14d8e6b5006270721de5643c383be1a7f1ce30fffa0b3e358c3c8933c"
+    },
+    {
+      "path": "validation/idle-baseline-a.log",
+      "bytes": 4322,
+      "sha256": "cbcd7596730f3142fcbf08b805a0c132908dd55c9982063937cc5c6af84f849d"
+    },
+    {
+      "path": "validation/idle-baseline-proof.json",
+      "bytes": 522,
+      "sha256": "e47b350eee4fd195e81329db14962cec031013109646fa357b93e751963d5df7"
+    },
+    {
+      "path": "validation/idle-candidate-epoch1-archive.json",
+      "bytes": 30745,
+      "sha256": "598513d60b282a68be5ed296cb4b085e577fe6ecf09b795206d8f67a6222fc72"
+    },
+    {
+      "path": "validation/idle-candidate-epoch1-focus.log",
+      "bytes": 3006,
+      "sha256": "88473e30db41a6d722f310f19f47cc45b07d15586f85fb2725073326712e2a80"
+    },
+    {
+      "path": "validation/idle-candidate-epoch1-run.json",
+      "bytes": 1664,
+      "sha256": "93bfd00f93846444294ed45e16d6a7a1465a19e0dd180d27c6912025b0853f86"
+    },
+    {
+      "path": "validation/idle-candidate-epoch1.json",
+      "bytes": 5635727,
+      "sha256": "fdee2cbfc67f37e4ce175e158023b547d4fe597cd8418097dba09212cb8280fa"
+    },
+    {
+      "path": "validation/idle-candidate-epoch2-archive.json",
+      "bytes": 684,
+      "sha256": "e26a086c06d40d454a6c37fd1a99ddba14742e743744c25db752f33f8a1d566a"
+    },
+    {
+      "path": "validation/idle-candidate-epoch2-build.log",
+      "bytes": 90583,
+      "sha256": "4a0ac71538786e769d8695978def7344e7ac79c9c4adef08337fc1d88ee3e61a"
+    },
+    {
+      "path": "validation/idle-candidate-epoch2-focus.log",
+      "bytes": 2446,
+      "sha256": "c0524a7927e79766a8171c1de0b28f0101484adeca2bef55f6897f6ba11251ee"
+    },
+    {
+      "path": "validation/idle-candidate-epoch2-observer-build.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "validation/idle-candidate-epoch2-ordinary-0.log",
+      "bytes": 8690,
+      "sha256": "ff8b45e08e04d1a91a42eb419f24e4cc20c8f0efbfa958f35512cb47f706eb0d"
+    },
+    {
+      "path": "validation/idle-candidate-epoch2-ordinary-1.log",
+      "bytes": 8368,
+      "sha256": "81f544890b40944f331f838f58499bee8a39909dc2add96cc9e4889e6673ce0d"
+    },
+    {
+      "path": "validation/idle-candidate-epoch2-run.json",
+      "bytes": 7053,
+      "sha256": "df27446aa4006e889b6d7ab1f787e20ee03d5d55c4c40fe1d1e4af1ee616e338"
+    },
+    {
+      "path": "validation/idle-candidate-epoch2.json",
+      "bytes": 5635973,
+      "sha256": "38781bbab1d6d21e43c91525108dd35f4ae6dd8bb981fd5856278085bfd6d087"
+    },
+    {
+      "path": "validation/idle-candidate-owner-epoch2.rs",
+      "bytes": 16376,
+      "sha256": "469995c1f87a903ad8722a4dc9e351d6436e46b0c9dacdabef278238518c3c02"
+    },
+    {
+      "path": "validation/idle-epoch2-correction.json",
+      "bytes": 740,
+      "sha256": "3e4054936e66ab724b9d8ac0f9aca768b8cd9b54ad0ceda111399570b670c496"
+    },
+    {
+      "path": "validation/idle-final-check-linux.json",
+      "bytes": 859,
+      "sha256": "6a3065170b8dad3dd63d5cf95dc348dc6bff9b138cc8d856cf88cf84dbb79d40"
+    },
+    {
+      "path": "validation/idle-final-check-linux.log",
+      "bytes": 293,
+      "sha256": "6f8883899d3e008694c29d9bb539b3793d97a74aaff1b37def5553a2d9fb5093"
+    },
+    {
+      "path": "validation/idle-final-check-macos.json",
+      "bytes": 657,
+      "sha256": "7e0c88f81a71a2cd586bb9f9cc65a884f7f796fce38372d5da890659b91d2237"
+    },
+    {
+      "path": "validation/idle-final-check-macos.log",
+      "bytes": 293,
+      "sha256": "6f8883899d3e008694c29d9bb539b3793d97a74aaff1b37def5553a2d9fb5093"
+    },
+    {
+      "path": "validation/idle-final-check-windows.json",
+      "bytes": 1421,
+      "sha256": "d6831c36ce972c35b78c5dc422252873fb28dbf89bf1bf68c2d8d69c97bf4c39"
+    },
+    {
+      "path": "validation/idle-final-check-windows.log",
+      "bytes": 307,
+      "sha256": "6e2e2a6ced3fbf082344da0c539dc33ad0d9bb5a11812dcea936bcf23f9a1b89"
+    },
+    {
+      "path": "validation/idle-final-negative-controls-17.json",
+      "bytes": 2046,
+      "sha256": "da75dc602d6c1fcbb6020691dd4480bbb1b763657e635caf5c75eb644ef91871"
+    },
+    {
+      "path": "validation/idle-final-negative-controls.json",
+      "bytes": 2394,
+      "sha256": "0c01bfa0e9164cee2873612304f2c07f9b7a6580542e0ccedf316082913a47ec"
+    },
+    {
+      "path": "validation/idle-final-observer-plan.json",
+      "bytes": 663,
+      "sha256": "61a2346ed75fafd5c8272cffbc37f25e33f840883b7f3e3b29b3ce4b730f1686"
+    },
+    {
+      "path": "validation/idle-finalization-b-records.log",
+      "bytes": 2586,
+      "sha256": "fda00c92c2f082696df204c1db8337d13ad95184a5edd0151c86f527cad0f82d"
+    },
+    {
+      "path": "validation/idle-finalization-b.json",
+      "bytes": 1227,
+      "sha256": "5538de6a05436d4308f2f6ac3cfb8006d75ad4e44dc47b3475a672b3b052fceb"
+    },
+    {
+      "path": "validation/idle-finalization-c-proof-archive.log",
+      "bytes": 321,
+      "sha256": "166286ee71f5725cc390706938003026bb89c0a25c408bfb77516a080f76d4ef"
+    },
+    {
+      "path": "validation/idle-finalization-c-records.log",
+      "bytes": 449,
+      "sha256": "257009f8326b2a8d0dddc01db6b44ae950cedfbd0c18cf42c074b594087bf14e"
+    },
+    {
+      "path": "validation/idle-finalization-c.json",
+      "bytes": 1684,
+      "sha256": "f2f437c377e4aa2f317121f1e2e458e6d72843c7bd16729992a96486e85da64f"
+    },
+    {
+      "path": "validation/idle-finalization-records.log",
+      "bytes": 1999,
+      "sha256": "90d2d131b68d67366987c35feaceb16aa0c93ed8852a8a994c12adc9c5584eda"
+    },
+    {
+      "path": "validation/idle-finalization.json",
+      "bytes": 1221,
+      "sha256": "5a92df37561d2c0d4c939ae1e911f54a65137a8e809a534768ed82f4d91f3b1d"
+    },
+    {
+      "path": "validation/idle-linux-epoch2-all-targets.log",
+      "bytes": 72,
+      "sha256": "0b53209db424367e80c52cd8cde8b75e37af110438a0efde777104a1463956de"
+    },
+    {
+      "path": "validation/idle-linux-epoch2-capi.log",
+      "bytes": 14029,
+      "sha256": "9fd8f978582964a808af7eceff1666e946161a0fb7f2b62c06332aba7ab312c6"
+    },
+    {
+      "path": "validation/idle-linux-epoch2-focus.log",
+      "bytes": 1524,
+      "sha256": "f612b87d3ba77df7b57774ce019729f750402fd91a7c5ded90667a6ef8260106"
+    },
+    {
+      "path": "validation/idle-linux-epoch2-full.log",
+      "bytes": 841791,
+      "sha256": "d55914cbd9fabc242f91e57aa6944c7c24e1f8b286a8581d2bad6f1b5413404f"
+    },
+    {
+      "path": "validation/idle-linux-epoch2-gates.json",
+      "bytes": 7819,
+      "sha256": "a7e980920ea73da9ec19543a8a866fdf845eb392e905bc7feb5ab28c924970c6"
+    },
+    {
+      "path": "validation/idle-linux-epoch2-integration.log",
+      "bytes": 35809,
+      "sha256": "b2f9d7a37fc75fdfb62581b9930209d6f415b807cc934e58f1b64460bd2c5659"
+    },
+    {
+      "path": "validation/idle-macos-epoch2-all-targets.log",
+      "bytes": 72,
+      "sha256": "22e0df986057b9ba5be07526ac5fb348862a3dedef42108383cc3e088acbb889"
+    },
+    {
+      "path": "validation/idle-macos-epoch2-capi.log",
+      "bytes": 14047,
+      "sha256": "5bbba745162350ac9ebb22210905995788e177d79ac2a90589018c5b1d39f90e"
+    },
+    {
+      "path": "validation/idle-macos-epoch2-full.log",
+      "bytes": 842228,
+      "sha256": "6bfacee8f728f6c25d4f1939df8c9de3bcdb6efedfc81800a9cb230ddd001da7"
+    },
+    {
+      "path": "validation/idle-macos-epoch2-gates.json",
+      "bytes": 2829,
+      "sha256": "718cc78b8138de4878d39380e26656001cf11ce98592870c37765c37faec7885"
+    },
+    {
+      "path": "validation/idle-macos-epoch2-integration.log",
+      "bytes": 35938,
+      "sha256": "34be48c3605619084e2bcf4a7be54feecbb3ae2ceb2c0c3e706935aa16d9e464"
+    },
+    {
+      "path": "validation/idle-native-epoch2-all-targets.log",
+      "bytes": 1008,
+      "sha256": "b6521b7022f57f234b5c3823553cc119e984ec84defd4cf2d16fcbd6fc6d6205"
+    },
+    {
+      "path": "validation/idle-native-epoch2-capi.log",
+      "bytes": 15037,
+      "sha256": "10aee44386f2ae1c90843fa205b3c1ce6327e67e7484e99c3142faa33d7474ea"
+    },
+    {
+      "path": "validation/idle-native-epoch2-focus.log",
+      "bytes": 2350,
+      "sha256": "85bd7a420d947fbf85ce20b3672f880aec0b842b3aba0f59aee0752ad4e643e9"
+    },
+    {
+      "path": "validation/idle-native-epoch2-full.log",
+      "bytes": 808024,
+      "sha256": "7db76810723e70f17608df9d9ba386c502aa785130178ad5191aeb816233f3f8"
+    },
+    {
+      "path": "validation/idle-native-epoch2-gates.json",
+      "bytes": 5944,
+      "sha256": "60ecb622283ab21e651428c733841f3b39fcbfddc0fd38b3aa3894b22b0f6abb"
+    },
+    {
+      "path": "validation/idle-native-epoch2-integration.log",
+      "bytes": 1871,
+      "sha256": "aa5965d3d0ebc56638c68c42163a021878a79ebb56be94254bfa52498f7467a5"
+    },
+    {
+      "path": "validation/idle-native-epoch2-toolchain.log",
+      "bytes": 36,
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5"
+    },
+    {
+      "path": "validation/idle-native-owning-epoch2-archive-after.log",
+      "bytes": 182,
+      "sha256": "bbd2e726b7876b211379fc2e412719465feda20714fd220d6ebf94c7cfd841ab"
+    },
+    {
+      "path": "validation/idle-native-owning-epoch2-archive-before.log",
+      "bytes": 182,
+      "sha256": "bbd2e726b7876b211379fc2e412719465feda20714fd220d6ebf94c7cfd841ab"
+    },
+    {
+      "path": "validation/idle-native-owning-epoch2-artifacts-after.log",
+      "bytes": 127707,
+      "sha256": "5624f3d3b9887dc632dc8058c67da206c138e734c0b133ce0b4516e20f439033"
+    },
+    {
+      "path": "validation/idle-native-owning-epoch2-artifacts-before.log",
+      "bytes": 130767,
+      "sha256": "07d2925b9d91da6706f6be16a8eb56786e1c6f6769428edcad98cf3f0c549492"
+    },
+    {
+      "path": "validation/idle-native-owning-epoch2-cpp.log",
+      "bytes": 3385,
+      "sha256": "cc61a127486083574cb49f72c371fd9ecb03f7f3f3e883732c328740ae52ad54"
+    },
+    {
+      "path": "validation/idle-native-owning-epoch2-toolchain.log",
+      "bytes": 36,
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5"
+    },
+    {
+      "path": "validation/idle-native-owning-epoch2.json",
+      "bytes": 5121,
+      "sha256": "d86eab242b53a8b21aa57a1babd57844775b6dbd0cc8f1707ed57207a559055f"
+    },
+    {
+      "path": "validation/idle-native-pipeline.json",
+      "bytes": 2078,
+      "sha256": "a1f088e7ed80eb70fc60cdb29411433c59875efe04fe2939df96b480d9916869"
+    },
+    {
+      "path": "validation/idle-owned-cpp-build-epoch2.py",
+      "bytes": 2698,
+      "sha256": "942eead4cf5f351e4d099d124f8c0ecc91ad250124b2d7e38b4598f96038264c"
+    },
+    {
+      "path": "validation/idle-owner-epoch2-0.log",
+      "bytes": 9294,
+      "sha256": "edcb56caf01c4a751ec7bbcb6ba597d1900222551ae81fca1bdc73b4db82df6b"
+    },
+    {
+      "path": "validation/idle-owner-epoch2-1.log",
+      "bytes": 8974,
+      "sha256": "2f359329ee6413c4f89af70cc92a0b3f881614af27b1ac16744d2319b48a0b34"
+    },
+    {
+      "path": "validation/idle-owner-epoch2-build.log",
+      "bytes": 241,
+      "sha256": "77027ce0b25d2e321d7341c6fe2a80236a2837874cb1de4f2079588d47f29dc9"
+    },
+    {
+      "path": "validation/idle-owner-epoch2-build.ps1",
+      "bytes": 1013,
+      "sha256": "302413dd84cbe36d6233c351ba2f7f40d880d4065250b197031e376d558c8731"
+    },
+    {
+      "path": "validation/idle-owner-epoch2-launch.json",
+      "bytes": 7822,
+      "sha256": "5ee4eb172ccbf8f02814f539ea59b062ef62865c27ac7681d92306cadcd7ac9e"
+    },
+    {
+      "path": "validation/idle-owner-epoch2.rs",
+      "bytes": 18506,
+      "sha256": "3c3f596cf2343c4f0c8c9a7e0b75b8ceb6533b7b81cbacba5db713f3a9d29e7d"
+    },
+    {
+      "path": "validation/idle-ownership.json",
+      "bytes": 1135,
+      "sha256": "8498fc353820d5be69424a19decb113cd924ba0aea5c7f066dd08b700f673124"
+    },
+    {
+      "path": "validation/idle-owning-source-hashes-epoch2.json",
+      "bytes": 109375,
+      "sha256": "bcb9a231ef5a14d0f804ab45f7402663ffe05ebdb43c87fabb8da89d7fb762c1"
+    },
+    {
+      "path": "validation/idle-plan.json",
+      "bytes": 5319,
+      "sha256": "2c8f1e47689b96aabf84cdf806825e5e5215db1d25634a97bb9ed5bb934bcaae"
+    },
+    {
+      "path": "validation/idle-proof-cache-review.json",
+      "bytes": 767,
+      "sha256": "71b002a2a53f9552053bb433d41c16e49e62815aa2c2b85b4cb7fbe4ee6da997"
+    },
+    {
+      "path": "validation/idle-proof-preflight-corrections-b.json",
+      "bytes": 696,
+      "sha256": "c6094f023dd36ca82742c6335f4b06b2a7b4224649b1e4970e7a10b4560b0e5b"
+    },
+    {
+      "path": "validation/idle-proof-preflight-corrections.json",
+      "bytes": 1196,
+      "sha256": "77d3a542a37df758008d8db26865929803d5a69343e013dd00fd2f1a0c61f2f4"
+    },
+    {
+      "path": "validation/idle-prototype-a.json",
+      "bytes": 2192,
+      "sha256": "1595a0be54ac950271252787c78f7a820e36cbcb34ff93c812f70ea37ccc08b1"
+    },
+    {
+      "path": "validation/idle-prototype-a.log",
+      "bytes": 1486,
+      "sha256": "44e1f1e17afb3da70b0d570b96793567634a92a0da663a2e1867eaf9f1ae3543"
+    },
+    {
+      "path": "validation/idle-prototype-b.json",
+      "bytes": 2192,
+      "sha256": "9dbafc95082c57bd29c898feb51a0da7f3a25505023afd39f0644634661be15b"
+    },
+    {
+      "path": "validation/idle-prototype-b.log",
+      "bytes": 1352,
+      "sha256": "9841859a37d9f74e37081b658cac89ff783a5b4877a781d419e1ea7f312215b2"
+    },
+    {
+      "path": "validation/idle-retained-link-preparation-epoch2.json",
+      "bytes": 379,
+      "sha256": "d77350cddb85ea09e39cea902cae5db4feca65bef96d7bab9d7e4ecf0df57c46"
+    },
+    {
+      "path": "validation/idle-retained-link-preparation.json",
+      "bytes": 423,
+      "sha256": "9437711c8be474589ca9413a0b4de6b45233fda6c27824a118525b63fd0c4dde"
+    },
+    {
+      "path": "validation/idle-reviewed-source-epoch2.json",
+      "bytes": 5635876,
+      "sha256": "318ebfb7ab13bd38244a5a973568990d153e6f034044778eeb3896cba96be100"
+    },
+    {
+      "path": "validation/idle-source-preflight-corrections.json",
+      "bytes": 778,
+      "sha256": "5768b9796459c88ef1a303d1af1c8236dc989f9f9b66a983bc532d933411a614"
+    },
+    {
+      "path": "validation/idle-workspace-format.json",
+      "bytes": 314,
+      "sha256": "c703e92df0cf1aceb153a29cfc1e04376c86b55408cc29859e19d10849149783"
+    },
+    {
+      "path": "validation/idle-workspace-format.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "validation/linux-idle-epoch2-final-owning-archive-identities.json",
+      "bytes": 110636,
+      "sha256": "6779c9ac158f8a4f0c674d8368a61870c3ba3f646b010e0464d50c1e92437f5a"
+    },
+    {
+      "path": "validation/linux-idle-epoch2-owning-archive-before.log",
+      "bytes": 180,
+      "sha256": "8335b22940a82fd262f97e5a3b8c8e18b98199a935cad81bb276e54473e23153"
+    },
+    {
+      "path": "validation/linux-idle-epoch2-owning-archive-identities.log",
+      "bytes": 180,
+      "sha256": "8335b22940a82fd262f97e5a3b8c8e18b98199a935cad81bb276e54473e23153"
+    },
+    {
+      "path": "validation/linux-idle-epoch2-owning-artifacts.log",
+      "bytes": 159806,
+      "sha256": "d20f1f8940ffbfd58e1ab8d2c6b5fa3f9d5ed22e39321434a9c0069813da42ee"
+    },
+    {
+      "path": "validation/linux-idle-epoch2-owning-commands.json",
+      "bytes": 7243,
+      "sha256": "100150cb233e823de6ddee6bde43bd464cd48e00d18a3a461d8c6787960e0e00"
+    },
+    {
+      "path": "validation/linux-idle-epoch2-owning-cpp.log",
+      "bytes": 1944,
+      "sha256": "dcc5b232dce420d47aab8ba29bbb65f6da0404381f0eb813662cc78733927a02"
+    },
+    {
+      "path": "validation/linux-idle-epoch2-owning-gates.json",
+      "bytes": 9110,
+      "sha256": "0cedb1ae3fd3b400ba8aa84912cd0589f8327773bd25d15942474222a898e090"
+    },
+    {
+      "path": "validation/linux-idle-epoch2-owning-shipping.log",
+      "bytes": 160155,
+      "sha256": "70cecb8680d039bee227c30570bd5e9c713b333a263451b9deaa2107f0b75bdc"
+    },
+    {
+      "path": "validation/linux-idle-epoch2-pre-cpp-archive-identities.json",
+      "bytes": 110637,
+      "sha256": "a0cbaa3eebd6caab762fc39abccf42f7eae6ae98ae372573008a02065cf4b5fd"
+    },
+    {
+      "path": "validation/macos-idle-epoch2-final-owning-archive-identities.json",
+      "bytes": 112038,
+      "sha256": "24c9acbb4b76da14f37cca69f0603b9435fc6f830a1b6c5e7396f1df76ffc08e"
+    },
+    {
+      "path": "validation/macos-idle-epoch2-linkage.json",
+      "bytes": 1957,
+      "sha256": "e10fc8a4cd78c1ccc498af25c1f573c279f5e33041f50d636cc549f9e96159e6"
+    },
+    {
+      "path": "validation/macos-idle-epoch2-owning-archive-before.log",
+      "bytes": 180,
+      "sha256": "a9c68399527881e9cd84f292d14866ba100fce6effb01f3a8b66a615496b21ea"
+    },
+    {
+      "path": "validation/macos-idle-epoch2-owning-archive-identities.log",
+      "bytes": 180,
+      "sha256": "a9c68399527881e9cd84f292d14866ba100fce6effb01f3a8b66a615496b21ea"
+    },
+    {
+      "path": "validation/macos-idle-epoch2-owning-artifacts.log",
+      "bytes": 131080,
+      "sha256": "5b7f53c15f8b1da26fdb10079118065ae760ed3cee311b40786cc9665a163741"
+    },
+    {
+      "path": "validation/macos-idle-epoch2-owning-build.log",
+      "bytes": 32919,
+      "sha256": "e00735c6ae0790bcd1c1be3675d4df313207fc8772d5c3b0c661f015001802c1"
+    },
+    {
+      "path": "validation/macos-idle-epoch2-owning-commands.json",
+      "bytes": 5878,
+      "sha256": "50c767cad7b32eebef3454f3ebc68aa1dbe377b41cbeb71344f7729ea7f56608"
+    },
+    {
+      "path": "validation/macos-idle-epoch2-owning-ctest.log",
+      "bytes": 1273,
+      "sha256": "9d7de04efa455e079e34d53cdc10c97ff223f8abcb2badc854b46d103a820d43"
+    },
+    {
+      "path": "validation/macos-idle-epoch2-owning-gates.json",
+      "bytes": 8311,
+      "sha256": "f1d3af5acca64a7e0066d3312c3c8842ff937d0004e199fbf8569c6aed5dcc7c"
+    },
+    {
+      "path": "validation/macos-idle-epoch2-owning-prime-artifacts.log",
+      "bytes": 131845,
+      "sha256": "c1473a7581a0d3fb764e72d82ef8e980199940e0d8964dcd595d6dedb960359c"
+    },
+    {
+      "path": "validation/macos-idle-epoch2-owning-protected-assist-cli.log",
+      "bytes": 42,
+      "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+    },
+    {
+      "path": "validation/macos-idle-epoch2-owning-protected-assist-mcp.log",
+      "bytes": 42,
+      "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+    },
+    {
+      "path": "validation/macos-idle-epoch2-pre-cpp-archive-identities.json",
+      "bytes": 112046,
+      "sha256": "310e1ddfbbcfb047bd3ae01aef57fba9f859fb76eaa0e688207cf38a2897aa65"
+    },
+    {
+      "path": "validation/native-idle-epoch2-final-owning-archive-identities.json",
+      "bytes": 114167,
+      "sha256": "e35641fe64df361eecd432e1e49e55803df9f7f9ae36116db1bde1177ff24888"
+    },
+    {
+      "path": "validation/native-idle-epoch2-pre-cpp-archives.json",
+      "bytes": 114170,
+      "sha256": "07318f946066f95d9559400af99a2ab8599cd4882703479d833a92b196183268"
+    },
+    {
+      "path": "validation/ordinary-program-summary.json",
+      "bytes": 2525,
+      "sha256": "93493431f12881347ef998fad45f02a800983888007be9506ef368fb5cd4671f"
+    },
+    {
+      "path": "validation/owning-linux-cpp-build-idle-epoch2.py",
+      "bytes": 2198,
+      "sha256": "5d0bb65a5247cd6c34753156aee8539f1010be167f76d244193de30fa6e32941"
+    },
+    {
+      "path": "validation/quality-gates.json",
+      "bytes": 1799,
+      "sha256": "362528ef2dd3ec0cc81fbcbfe3bdd1e560a6e75265cdb5aa2ea0411a653dc207"
+    },
+    {
+      "path": "validation/run-idle-baseline-a.py",
+      "bytes": 1469,
+      "sha256": "6534d2668a649423269e639fc22db5ecb9a72cd946ce8d822e18358d6341de09"
+    },
+    {
+      "path": "validation/run-idle-candidate-epoch1.py",
+      "bytes": 7595,
+      "sha256": "f71194ef5ba8b72d63bcc68ad7747f6b92371a97da4148fb2b0d8113d6025b9e"
+    },
+    {
+      "path": "validation/run-idle-candidate-epoch2.py",
+      "bytes": 7594,
+      "sha256": "93882eabf60442adbd19079a0af7ac6db4e65f81a23aa83afa5d572436f87540"
+    },
+    {
+      "path": "validation/run-idle-final-unix-check.py",
+      "bytes": 1637,
+      "sha256": "16709d113e31d2e03aa13ba85e315542b23d2f80971444f1b99b3302a94a193e"
+    },
+    {
+      "path": "validation/run-idle-final-windows-check.py",
+      "bytes": 3472,
+      "sha256": "ff86e5f186266709d90c85e1bff272765414a9c1bf904536a210d94b31ec252c"
+    },
+    {
+      "path": "validation/run-idle-finalization-b.py",
+      "bytes": 4694,
+      "sha256": "31853d0fdbe3121bb1b7a1034a0ab035ba05c71f5181c0177314630c68c91b61"
+    },
+    {
+      "path": "validation/run-idle-finalization-c.py",
+      "bytes": 4701,
+      "sha256": "ebe2f6e76b66d31661157b550a31b3d85f32e1f2532828501adb1e2d42e14bff"
+    },
+    {
+      "path": "validation/run-idle-native-epoch2.py",
+      "bytes": 5869,
+      "sha256": "e4120864c211ecb775c63671c55329a5334aadbe3b488eb2b4e1162866c54702"
+    },
+    {
+      "path": "validation/run-idle-native-negatives.py",
+      "bytes": 4768,
+      "sha256": "78fe18cdfdd3738f19739dde1956f3ebbca8b6d35e4acb11d34c022fc594908e"
+    },
+    {
+      "path": "validation/run-idle-native-owning-epoch2.py",
+      "bytes": 5420,
+      "sha256": "6a4cf7c2600314f2c55bf2ea5c843e974d51c32f0257a0d64274889e19a5798c"
+    },
+    {
+      "path": "validation/run-idle-native-pipeline-epoch2.py",
+      "bytes": 2824,
+      "sha256": "dbf6b739214d03ca9a7364cf60c4c22481486e6cb4d5fb085879153c6bcec889"
+    },
+    {
+      "path": "validation/run-idle-owner-epoch2.py",
+      "bytes": 4623,
+      "sha256": "c38db65e19053c805547cadc35e3b88a2ba4f695bfc8b3376b2277fa36168ad7"
+    },
+    {
+      "path": "validation/run-idle-owning-epoch2.py",
+      "bytes": 3534,
+      "sha256": "e29faa87d4f9673c575d7d247b72c0e564ef6fe056ec7a4379cecdf71209d09a"
+    },
+    {
+      "path": "validation/run-idle-proof-checks.py",
+      "bytes": 403,
+      "sha256": "7d142ffbeba4cdb997c784d66db7bdf47e155297c072ba1a99748631b678b338"
+    },
+    {
+      "path": "validation/run-idle-proof-review-d.py",
+      "bytes": 3730,
+      "sha256": "9b47b6cd894ed2e689be750875687a89858b66f0dfb5b4fb68d4af740e0761e1"
+    },
+    {
+      "path": "validation/run-idle-unix-epoch2.py",
+      "bytes": 4149,
+      "sha256": "3c06838ebe83f03485dee55e5a1d2977bb67cc2c148616b02c528a34ae46088d"
+    },
+    {
+      "path": "validation/runtime-append.pending.md",
+      "bytes": 1453,
+      "sha256": "9961a18757ac6d0642c73e0c515c8b18e84fb0fd5106455e646a78b93646c814"
+    },
+    {
+      "path": "validation/source-review-exclusions.json",
+      "bytes": 1002,
+      "sha256": "5f93ff325bbbd89c816e948509c986c4df8f335296c4cfe565c09cef44a2f7de"
+    },
+    {
+      "path": "validation/stress-idle-validation-initial.py",
+      "bytes": 4904,
+      "sha256": "e3370cd3dc30f26cded8381e518dfb856a8b0bc1be3edbe279befd07ec70df7b"
+    },
+    {
+      "path": "validation/stress-idle-validation.py",
+      "bytes": 5600,
+      "sha256": "d56a29efdcfc478c84d054fab396f221801ae3b3d224321e8ede8cb48ce10b49"
+    },
+    {
+      "path": "validation/summary.json",
+      "bytes": 3336,
+      "sha256": "d9fe898e1c9ac58a00e0909fbd0bb93012cd1c41278939f18c77ae596cd72a0c"
+    },
+    {
+      "path": "validation/timer2-native-host-identity.json",
+      "bytes": 944,
+      "sha256": "824a29ad03161b2a10662cadb0d57b47f90c14184ef317e2840b770e8e79e2f3"
+    },
+    {
+      "path": "validation/verbatim-whitespace-exceptions.json",
+      "bytes": 42337,
+      "sha256": "44b0e0c924105e23e8406409e6075d2598cb0e80b2d46da550d6c136beceadfb"
+    },
+    {
+      "path": "validation/verification-scope.json",
+      "bytes": 969,
+      "sha256": "e00fd32b6d8573c552dd97e8004b6166e36b76fd1b32f658c8e09495effbb15c"
+    },
+    {
+      "path": "validation/wait-idle-owner-epoch2.py",
+      "bytes": 461,
+      "sha256": "2c4b0bc6423cd4afb6ca33a6caf719384ba17f8a862493070ef384863294a4d4"
+    },
+    {
+      "path": "validation/windows-existing-failures.json",
+      "bytes": 482,
+      "sha256": "2476eeeaa1e9d69fd40bbe2df86206a5a5c3268381059bc5a59be0b30b366910"
+    }
+  ],
+  "scope": "Bound evidence files; manifest excludes itself. Verification receipts added later are documented with their original checked-envelope scope."
+}

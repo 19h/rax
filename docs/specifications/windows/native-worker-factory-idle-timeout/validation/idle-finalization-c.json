@@ -1,0 +1,35 @@
+{
+  "state": "failed",
+  "pid": 8275,
+  "steps": [
+    {
+      "name": "records",
+      "argv": [
+        "/opt/homebrew/opt/python@3.15/bin/python3.15",
+        "-B",
+        "/Users/int/Library/Caches/assist-process-emulation/native-worker-factory-idle-timeout-20261019/finalize-idle-records-resume.py"
+      ],
+      "exit-code": 0,
+      "log": "idle-finalization-c-records.log",
+      "bytes": 449,
+      "sha256": "257009f8326b2a8d0dddc01db6b44ae950cedfbd0c18cf42c074b594087bf14e"
+    },
+    {
+      "name": "proof-archive",
+      "argv": [
+        "/opt/homebrew/opt/python@3.15/bin/python3.15",
+        "-B",
+        "/Users/int/Library/Caches/assist-process-emulation/native-worker-factory-idle-timeout-20261019/build-idle-proof.py"
+      ],
+      "exit-code": 1,
+      "log": "idle-finalization-c-proof-archive.log",
+      "bytes": 321,
+      "sha256": "166286ee71f5725cc390706938003026bb89c0a25c408bfb77516a080f76d4ef"
+    }
+  ],
+  "utc": "2026-10-19T14:37:56.097032+00:00",
+  "child-pid": 8406,
+  "exit-code": 1,
+  "error": "Traceback (most recent call last):\n  File \"/Users/int/Library/Caches/assist-process-emulation/native-worker-factory-idle-timeout-20261019/run-idle-finalization-c.py\", line 65, in <module>\n    run('proof-archive', [sys.executable, '-B', str(P / 'build-idle-proof.py')])\n    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/int/Library/Caches/assist-process-emulation/native-worker-factory-idle-timeout-20261019/run-idle-finalization-c.py\", line 37, in run\n    assert code == 0, name\n           ^^^^^^^^^\nAssertionError: proof-archive\n",
+  "completed-utc": "2026-10-19T14:38:20.218071+00:00"
+}

@@ -186,6 +186,7 @@ fn native_worker_factory_create_owns_dependencies_through_duplicate_and_final_cl
                 maximum: 0,
                 soft_maximum: None,
                 flags_request: None,
+                idle_timeout: None,
                 binding_count: 0,
                 reserve: 65536,
                 commit: 4096,

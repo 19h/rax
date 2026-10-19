@@ -1,0 +1,61 @@
+{
+  "state": "failed",
+  "utc": "2026-10-19T13:55:52.716883+00:00",
+  "inputs": [
+    {
+      "path": "src/user/windows/objects.rs",
+      "sha256": "dcb2e1f47c4334c303325c1459153ac2a374edf7512d5d82b38ba941700cd25c",
+      "bytes": 28350
+    },
+    {
+      "path": "src/user/windows/dll/native/worker_factory.rs",
+      "sha256": "73797537373e0f2984384b6fe2e8a82ae313f7ef80840bf0c6bf42dcd5aff846",
+      "bytes": 7650
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests.rs",
+      "sha256": "e63a5807888a21c3bccdcddc9156c15f3483cf69fb8a37da7a47868e139160e7",
+      "bytes": 49057
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/worker_factory_set_tests.rs",
+      "sha256": "6a63cca2e79b15891856dec4f8d360818143d99dd91d0f9886923cffae4f70b8",
+      "bytes": 11690
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/worker_factory_create_replay_tests.rs",
+      "sha256": "ed014697b3c01964ade95c96f1ac15f373d287fed4fcd388bf202030a6690e13",
+      "bytes": 14759
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/worker_factory_create_tests.rs",
+      "sha256": "79be469782b0cca4e6aa3b6f6538f3e74aed88af1d6540f45eb04e97cf291c0a",
+      "bytes": 7657
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/worker_factory_idle_tests.rs",
+      "sha256": "af004957004bc2996805e94fc04593775fdeb308abfc55a085f9590dff724d84",
+      "bytes": 12864
+    }
+  ],
+  "argv": [
+    "cargo",
+    "+1.95.0",
+    "test",
+    "--locked",
+    "--offline",
+    "--no-default-features",
+    "--lib",
+    "native_worker_factory_idle",
+    "--",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "exit-code": 101,
+  "log": "idle-baseline-a.log",
+  "bytes": 4322,
+  "sha256": "cbcd7596730f3142fcbf08b805a0c132908dd55c9982063937cc5c6af84f849d",
+  "results": [
+    "FAILED. 0 passed; 3 failed; 0 ignored; 0 measured; 8033 filtered out; finished in 0.02s"
+  ]
+}

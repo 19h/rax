@@ -1,0 +1,14 @@
+{
+  "native-observations": 8944,
+  "ABI-profiles": 4,
+  "physical-kernels": 1,
+  "bound-native-files": 81,
+  "active-workers": 0
+}
+{
+  "source-inputs": 24312,
+  "three-host-full-gates": "pass",
+  "retained-consumers": "pass",
+  "ordinary-programs": 2,
+  "ordinary-guest-exit-success": false
+}

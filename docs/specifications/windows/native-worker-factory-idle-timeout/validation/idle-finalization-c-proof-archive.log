@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/Users/int/Library/Caches/assist-process-emulation/native-worker-factory-idle-timeout-20261019/build-idle-proof.py", line 8, in <module>
+    assert '__pycache__' not in p.parts and not p.is_symlink()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

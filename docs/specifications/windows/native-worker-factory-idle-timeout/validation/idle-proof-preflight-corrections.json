@@ -1,0 +1,11 @@
+{
+  "utc": "2026-10-19T14:35:21.611535+00:00",
+  "scope": "Evidence checker only: blanket flags->idle filename adaptation also changed four exact pre-existing lowerer test names from with_flags to with_idle. Restore the authoritative five names from the published parent checker/native baseline. No RAX/test/build/source snapshot change. Initial attempt failed before any engineering append.",
+  "initial-checker-sha256": "714eb0178392490f3881e2cd661fb31deda761b60f6678265bc0e6f54e062461",
+  "corrected-checker-sha256": "1c0b09ececb87bcecbb2982d2da33afd532a3f56da1c707dfbbc9fe49136b010",
+  "failure-evidence": [
+    "idle-finalization.json",
+    "idle-finalization-records.log"
+  ],
+  "corrected-names-block": "FAILURES = {\n    'smir::lower::aarch64::tests::bit::lowers_bzhi_x_imm_index_at_width_with_flags_sets_carry',\n    'smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_all_ones_with_flags_as_movn_sets_carry',\n    'smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_with_flags_sets_carry',\n    'smir::lower::aarch64::tests::bit::lowers_bzhi_x_with_flags_and_low_byte_index_guards',\n    'smir::lower::aarch64::tests::vector::lowers_vector_fp16_arithmetic_runtime',\n}\n"
+}

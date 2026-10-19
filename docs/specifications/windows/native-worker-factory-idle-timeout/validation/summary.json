@@ -1,0 +1,97 @@
+{
+  "utc": "2026-10-19T14:38:20.153545+00:00",
+  "source-epoch": 2,
+  "source-inputs": 24312,
+  "source-bytes": 1752710101,
+  "core-counts": {
+    "macos": [
+      8037,
+      0,
+      2
+    ],
+    "linux": [
+      8031,
+      0,
+      2
+    ],
+    "windows": [
+      7499,
+      5,
+      2
+    ]
+  },
+  "shared-focus": 6,
+  "windows-focus": 7,
+  "capi-each": 183,
+  "native-observations": 8944,
+  "native-negative-controls": 14,
+  "validation-negative-controls": 20,
+  "owning-selected-inputs": 554,
+  "ordinary-programs": {
+    "actual-core": {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-owned\\debug\\deps\\librax-934115059aa64c85.rlib",
+      "bytes": 503929600,
+      "sha256": "b912928105f461adf0bf338d7ade0815b1557f379d0fa21c2728a93856804835",
+      "members": 20,
+      "structural-member-walk": "pass"
+    },
+    "programs": [
+      {
+        "program": {
+          "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-idle-candidate-epoch2\\tests\\fixtures\\user\\windows\\bin\\arm64\\smoke.exe",
+          "bytes": 3584,
+          "sha256": "325730e33e981784bff4a60bc6f342cf95c2735e85042c89748fc471cbe7781b"
+        },
+        "log": "idle-owner-epoch2-0.log",
+        "log-sha256": "edcb56caf01c4a751ec7bbcb6ba597d1900222551ae81fca1bdc73b4db82df6b",
+        "controller-exit-code": 0,
+        "former-stop-turn": 2898814,
+        "new-terminal-turn": 2899173,
+        "additional-observer-turns": 359,
+        "terminal-result": "Complete(Internal(\"native NTDLL service NtQuerySecurityAttributesToken (0x167) at 0x7fff38a426b0 is not implemented\"))",
+        "guest-exit-success": false,
+        "native-before": {
+          "exit-code": 0,
+          "stdout-hex": "",
+          "stderr-hex": ""
+        },
+        "native-after": {
+          "exit-code": 0,
+          "stdout-hex": "",
+          "stderr-hex": ""
+        }
+      },
+      {
+        "program": {
+          "path": "C:\\Windows\\System32\\whoami.exe",
+          "bytes": 84480,
+          "sha256": "48fde190b002a5a4c4b8b19db014377263ba94220f23a4f0a117fec082d46bf6"
+        },
+        "log": "idle-owner-epoch2-1.log",
+        "log-sha256": "2f359329ee6413c4f89af70cc92a0b3f881614af27b1ac16744d2319b48a0b34",
+        "controller-exit-code": 0,
+        "former-stop-turn": 2901099,
+        "new-terminal-turn": 2901458,
+        "additional-observer-turns": 359,
+        "terminal-result": "Complete(Internal(\"native NTDLL service NtQuerySecurityAttributesToken (0x167) at 0x7fff38a426b0 is not implemented\"))",
+        "guest-exit-success": false,
+        "native-before": {
+          "exit-code": 0,
+          "stdout-hex": "6e7420617574686f726974795c73797374656d0d0a",
+          "stderr-hex": ""
+        },
+        "native-after": {
+          "exit-code": 0,
+          "stdout-hex": "6e7420617574686f726974795c73797374656d0d0a",
+          "stderr-hex": ""
+        }
+      }
+    ],
+    "ordinary-guest-exit-success": false,
+    "scope": "Both guests return class2 success and retain normalized -300000000 ticks, then advance359 turns to unsupported NtQuerySecurityAttributesToken. Native controls exit0; controller exit0 does not mean guest success."
+  },
+  "full-process-objective-complete": false,
+  "original-snapshot-inputs": 24313,
+  "original-snapshot-bytes": 1752724333,
+  "excluded-generated-cache-files": 1
+}

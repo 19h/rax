@@ -1,0 +1,35 @@
+{
+  "scope": "Prospective native capture; exact length/copy/value/access semantics still require priority and clamp boundary probes before implementation.",
+  "profiles": [
+    {
+      "profile": "arm64",
+      "cases": 640,
+      "all-nontimeout-basic-bytes-stable": true,
+      "all-workers-zero": true,
+      "handles-balanced": true
+    },
+    {
+      "profile": "x64",
+      "cases": 640,
+      "all-nontimeout-basic-bytes-stable": true,
+      "all-workers-zero": true,
+      "handles-balanced": true
+    },
+    {
+      "profile": "x86",
+      "cases": 640,
+      "all-nontimeout-basic-bytes-stable": true,
+      "all-workers-zero": true,
+      "handles-balanced": true
+    },
+    {
+      "profile": "x86-laa",
+      "cases": 640,
+      "all-nontimeout-basic-bytes-stable": true,
+      "all-workers-zero": true,
+      "handles-balanced": true
+    }
+  ],
+  "total-cases": 2560,
+  "source-sha256": "7cf3a2d712aec67d83038d3127644aaa17b6cc6ccf319b805995854e2d8814c4"
+}

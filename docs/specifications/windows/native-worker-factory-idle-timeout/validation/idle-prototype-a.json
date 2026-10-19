@@ -1,0 +1,66 @@
+{
+  "state": "finished",
+  "utc": "2026-10-19T13:58:56.363460+00:00",
+  "inputs": [
+    {
+      "path": "src/user/windows/objects.rs",
+      "sha256": "933794cbf0b0c990353e5e0ce7b592d1413833bf1895c47f2a77ccadaff3fafa",
+      "bytes": 28655
+    },
+    {
+      "path": "src/user/windows/dll/native/worker_factory.rs",
+      "sha256": "7645f59624de6c0a4f447903a7cd46e4eed8e55d11456196d31436aa21cb612d",
+      "bytes": 8913
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests.rs",
+      "sha256": "e63a5807888a21c3bccdcddc9156c15f3483cf69fb8a37da7a47868e139160e7",
+      "bytes": 49057
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/worker_factory_set_tests.rs",
+      "sha256": "c4a40e4d0c5d49e7d2e020ffda0e6d5093e430eb23e4b7147993a0b596ef724b",
+      "bytes": 11718
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/worker_factory_create_replay_tests.rs",
+      "sha256": "f13b9377fb07622741a79b23002b7532be8c1cd0ea50f052cc78885dad8a1202",
+      "bytes": 14924
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/worker_factory_create_tests.rs",
+      "sha256": "dd12fd764132a5ad31762f35aa736e29e35ac0202ecefece5ee8763d127a0188",
+      "bytes": 7693
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/worker_factory_idle_tests.rs",
+      "sha256": "7d5937646cf3225fe493d2543aa62a922463ea4a6f1080b0b174be712f47dbda",
+      "bytes": 18709
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/worker_factory_idle_leaf_tests.rs",
+      "sha256": "1b1be65bf4d095569fe9b27ffb3c4206cc58220fd629003e94095c131a937cb3",
+      "bytes": 5063
+    }
+  ],
+  "argv": [
+    "cargo",
+    "+1.95.0",
+    "test",
+    "--locked",
+    "--offline",
+    "--no-default-features",
+    "--lib",
+    "native_worker_factory_idle",
+    "--",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "exit-code": 0,
+  "log": "idle-prototype-a.log",
+  "bytes": 1486,
+  "sha256": "44e1f1e17afb3da70b0d570b96793567634a92a0da663a2e1867eaf9f1ae3543",
+  "results": [
+    "ok. 6 passed; 0 failed; 0 ignored; 0 measured; 8033 filtered out; finished in 23.43s"
+  ]
+}

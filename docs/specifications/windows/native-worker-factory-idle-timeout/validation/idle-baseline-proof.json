@@ -1,0 +1,13 @@
+{
+  "compiled": true,
+  "passed": 0,
+  "failed": 3,
+  "log-sha256": "cbcd7596730f3142fcbf08b805a0c132908dd55c9982063937cc5c6af84f849d",
+  "source-record": "idle-baseline-a.json",
+  "scope": "Three test functions actually execute and fail because class2 returns Unsupported; no compiler failure counted.",
+  "state": "expected-regression-failed",
+  "record": "idle-baseline-a.json",
+  "record-sha256": "441ab6d14d8e6b5006270721de5643c383be1a7f1ce30fffa0b3e358c3c8933c",
+  "log": "idle-baseline-a.log",
+  "exit-code": 101
+}

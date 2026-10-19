@@ -1,0 +1,11 @@
+{
+  "scope": "Read-only final actual-owner observer adds six arguments and bounded Unicode attribute names for new service0x167. Candidate observer and all compiled RAX/test/build inputs are unchanged. Owner controller not started when updated; hashes fail closed.",
+  "before-sha256": "469995c1f87a903ad8722a4dc9e351d6436e46b0c9dacdabef278238518c3c02",
+  "final-sha256": "3c3f596cf2343c4f0c8c9a7e0b75b8ceb6533b7b81cbacba5db713f3a9d29e7d",
+  "service": 359,
+  "observed-guest-pc": "0x7fff38a426b0",
+  "maximum-decoded-attributes": 16,
+  "maximum-name-read-bytes": 4096,
+  "native-entry": "NtQuerySecurityAttributesToken",
+  "candidate-observer-unchanged": true
+}

@@ -1290,3 +1290,6 @@ mod wnf_query_tests;
 
 #[path = "services_tests/worker_factory_flags_tests.rs"]
 mod worker_factory_flags_tests;
+
+#[path = "services_tests/worker_factory_idle_tests.rs"]
+mod worker_factory_idle_tests;

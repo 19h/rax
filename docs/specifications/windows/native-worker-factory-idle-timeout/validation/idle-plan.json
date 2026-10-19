@@ -1,0 +1,77 @@
+{
+  "utc": "2026-10-19T13:52:34.777843+00:00",
+  "acceptance": [
+    "Native class2 behavior reproduced without host worker activation",
+    "Length -> four-byte alignment -> eight-byte capture -> type/access -> signed validation -> clamp and atomic state update",
+    "No unsupported result for measured class2 requests on any guest ABI",
+    "Existing class3/5/13/14 and object references preserved",
+    "Strategic tests first and compiled preimplementation failures captured",
+    "Full relevant three-host gates and actual-owning ordinary-program replays",
+    "Exact owned publication via red then linear paired root pins and two remotes; full objective remains active until ordinary process success"
+  ],
+  "assumptions": [
+    {
+      "id": "A1",
+      "assumption": "Recorded class2 kernel behavior is the compatibility contract for the installed Windows build.",
+      "basis": "Four ABI profiles on one ARM64 Windows 10.0.29683 kernel; source/PE/module identity capture.",
+      "dependent-result": "Length/alignment/priority/clamping implementation.",
+      "stress-test": "All native buffer, access, signed boundary and cross-page controls.",
+      "falsification-probe": "Independent native checker rejects a rebound inconsistent status or normalized basic field.",
+      "status": "retained; no other kernel claimed"
+    },
+    {
+      "id": "A2",
+      "assumption": "No modeled request can be represented as None without inventing constructor timeout.",
+      "basis": "Existing dormant worker model has no queried default; native current default is not universal.",
+      "dependent-result": "Optional normalized timeout field and constructor initialization.",
+      "stress-test": "Unchanged state on every failed request; aliases and other setters.",
+      "falsification-probe": "Constructor/alias tests observe Some before any successful class2 call.",
+      "status": "retained"
+    },
+    {
+      "id": "A3",
+      "assumption": "Shared memory read and one-shot guard handling implement the measured class2 capture order.",
+      "basis": "Existing checked Mem.u64 and guard_result; additional crossing native controls will test this.",
+      "dependent-result": "Reuse of memory adapter.",
+      "stress-test": "Two-page guards/noaccess combinations and misalignment before guard.",
+      "falsification-probe": "Native replay status or protection differs for a page-crossing case.",
+      "status": "retained pending capture/replay"
+    }
+  ],
+  "surface-map": {
+    "direct-decode": "unaffected: no dispatch, opcode, state, lowering or backend implementation changes",
+    "direct-execute": "unaffected: no dispatch, opcode, state, lowering or backend implementation changes",
+    "cpu-state": "unaffected: no dispatch, opcode, state, lowering or backend implementation changes",
+    "SMIR-lift": "unaffected: no dispatch, opcode, state, lowering or backend implementation changes",
+    "SMIR-IR": "unaffected: no dispatch, opcode, state, lowering or backend implementation changes",
+    "SMIR-interpreter": "unaffected: no dispatch, opcode, state, lowering or backend implementation changes",
+    "optimizer": "unaffected: no dispatch, opcode, state, lowering or backend implementation changes",
+    "native-lowering": "unaffected: no dispatch, opcode, state, lowering or backend implementation changes",
+    "JIT-runtime": "unaffected: no dispatch, opcode, state, lowering or backend implementation changes",
+    "backend": "unaffected: no dispatch, opcode, state, lowering or backend implementation changes",
+    "machine-device": "unaffected: no dispatch, opcode, state, lowering or backend implementation changes",
+    "oracle-analysis": "unaffected: no dispatch, opcode, state, lowering or backend implementation changes",
+    "user-process": "affected: native worker-factory class2 and shared guest object state",
+    "memory-MMU": "consumer affected: existing checked 8-byte read and guard adapter; adapter unchanged unless independent replay disproves compatibility",
+    "Rust-public-API": "affected: source-visible WorkerFactory enum field; all constructors/matches and consumers audited",
+    "C-ABI": "unaffected: opaque user process handles; no header/layout/version/defaults change",
+    "tests-docs": "affected: shared semantics, native leaves, native independent controls, engineering records",
+    "platforms-targets": "all three hosts compile/run shared interpreter semantics; native Windows entry/WoW leaves run on Windows; CAPI and actual retained Assist consumers checked across macOS/Linux/Windows"
+  },
+  "bounded-findings": [
+    {
+      "impact": "high",
+      "item": "Ordinary Windows guests have not exited; class2 is current stop.",
+      "evidence": "frontier-plan.json and actual flags owner records",
+      "blocks-full-goal": true
+    },
+    {
+      "impact": "medium",
+      "item": "Five known Windows lowerer failures precede this group.",
+      "evidence": "Prior published flags full gate exact failure list",
+      "blocks-this-semantic-group": false
+    }
+  ],
+  "time-units": "Signed relative LARGE_INTEGER in 100 ns ticks: -300000000 * 100 ns = -30 s; clamp interval [-6000000000,-10000000] ticks = [-600,-1] s. Do not negate i64::MIN.",
+  "algorithm": "Fixed-size input/state O(1) time and O(1) space, excluding existing object lookup O(log n)."
+}

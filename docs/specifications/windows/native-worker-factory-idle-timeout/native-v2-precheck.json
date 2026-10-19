@@ -1,0 +1,35 @@
+{
+  "scope": "Prospective native clamp and precedence controls; no product timeout implementation.",
+  "profiles": [
+    {
+      "profile": "arm64",
+      "cases": 1068,
+      "changes-confined-to-idle-timeout": true,
+      "workers-zero": true,
+      "handles-balanced": true
+    },
+    {
+      "profile": "x64",
+      "cases": 1068,
+      "changes-confined-to-idle-timeout": true,
+      "workers-zero": true,
+      "handles-balanced": true
+    },
+    {
+      "profile": "x86",
+      "cases": 1068,
+      "changes-confined-to-idle-timeout": true,
+      "workers-zero": true,
+      "handles-balanced": true
+    },
+    {
+      "profile": "x86-laa",
+      "cases": 1068,
+      "changes-confined-to-idle-timeout": true,
+      "workers-zero": true,
+      "handles-balanced": true
+    }
+  ],
+  "total-cases": 4272,
+  "source-sha256": "20825d5a564a57c81e66351284a9e811f73fcd5741b75e472d5e3a6e9d5899e0"
+}

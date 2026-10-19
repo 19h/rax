@@ -152,6 +152,7 @@ fn construct(c: &mut Ctx, r: &Request, attrs: Option<Attributes>) -> ApiResult {
             maximum: r.maximum,
             soft_maximum: None,
             flags_request: None,
+            idle_timeout: None,
             binding_count: 0,
             // Native constructor defaults are independent of the executable's PE
             // stack sizes. Nonzero requests are stored without rounding/probing.
@@ -168,15 +169,33 @@ pub(super) fn set_information(c: &mut Ctx) -> ApiResult {
 
 fn set_properties(c: &mut Ctx) -> ApiResult {
     let (handle, class, input, length) = (c.ptr(0)?, c.u32(1)?, c.ptr(2)?, c.u32(3)?);
-    if !matches!(class, 3 | 5 | 13 | 14) {
+    if !matches!(class, 2 | 3 | 5 | 13 | 14) {
         return Err(c.unsupported(format!("NtSetInformationWorkerFactory class {class}")));
     }
-    // The installed native/WoW64 entries check exact ULONG size and capture
-    // the input before handle lookup. Unaligned and readonly inputs are valid.
-    if length != 4 {
-        return Flow::ret(STATUS_INFO_LENGTH_MISMATCH.into());
-    }
-    let value = c.mem().u32(input)?;
+    let value = if class == 2 {
+        // The installed WoW64 wrapper accepts any length >= 8, captures only
+        // LARGE_INTEGER, and forwards a fixed-size native request. Native64
+        // requires exactly 8. Both check ULONG alignment before the read.
+        let invalid_length = if c.arch() == WinArch::X86 {
+            length < 8
+        } else {
+            length != 8
+        };
+        if invalid_length {
+            return Flow::ret(STATUS_INFO_LENGTH_MISMATCH.into());
+        }
+        if input % 4 != 0 {
+            return Flow::ret(STATUS_DATATYPE_MISALIGNMENT.into());
+        }
+        c.mem().u64(input)?
+    } else {
+        // These ULONG classes require exactly 4 bytes on native and WoW64;
+        // their readonly and unaligned input pointers are accepted.
+        if length != 4 {
+            return Flow::ret(STATUS_INFO_LENGTH_MISMATCH.into());
+        }
+        u64::from(c.mem().u32(input)?)
+    };
     if handle == c.arch().ptr(u64::MAX) || handle == c.arch().ptr(u64::MAX - 1) {
         return Flow::ret(STATUS_OBJECT_TYPE_MISMATCH.into());
     }
@@ -189,36 +208,46 @@ fn set_properties(c: &mut Ctx) -> ApiResult {
     if c.p.objects.access(handle).unwrap_or(0) & 4 == 0 {
         return Flow::ret(STATUS_ACCESS_DENIED.into());
     }
+    // Signed interval validation follows type/access validation. In particular,
+    // zero on a denied handle returns ACCESS_DENIED, not INVALID_PARAMETER.
+    if class == 2 && value as i64 >= 0 {
+        return Flow::ret(STATUS_INVALID_PARAMETER.into());
+    }
     let Some(Object::WorkerFactory {
         maximum: hard,
         soft_maximum: soft,
         flags_request: flags,
+        idle_timeout,
         binding_count: bindings,
         ..
     }) = c.p.objects.obj_mut(id)
     else {
         unreachable!("validated worker factory")
     };
-    if class == 3 {
+    if class == 2 {
+        // Relative 100 ns ticks: negative 600 s through negative 1 s. Clamp
+        // signed values directly so i64::MIN never needs to be negated.
+        *idle_timeout = Some((value as i64).clamp(-6_000_000_000, -10_000_000));
+    } else if class == 3 {
         // The installed kernel treats zero as the all-bits count, while
         // nonzero ULONG bit patterns are signed deltas. Do not wrap either
         // bound, reinterpret this as overwrite, or infer activation policy.
         *bindings = if value == 0 {
             u32::MAX
         } else {
-            bindings.saturating_add_signed(value as i32)
+            bindings.saturating_add_signed(value as u32 as i32)
         };
     } else if class == 5 {
-        *hard = value;
+        *hard = value as u32;
     } else if class == 14 {
         // Native class14 accepts the unsigned request without changing the
         // basic-query hard maximum. Record it independently; activation and
         // the constructor's unqueried soft default are separate contracts.
-        *soft = Some(value);
+        *soft = Some(value as u32);
     } else {
         // Class13 leaves captured dormant basic state unchanged. Retain the
         // accepted request only; native default and active effects are unknown.
-        *flags = Some(value);
+        *flags = Some(value as u32);
     }
     Flow::ret(0)
 }

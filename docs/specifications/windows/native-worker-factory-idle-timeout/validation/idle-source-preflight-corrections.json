@@ -1,0 +1,8 @@
+{
+  "scope": "Before source freeze/full gates: explicit import for handle_stop in Windows-only leaf, whose parent now uses explicit imports; macOS shared prototype does not compile this cfg-only leaf. Also renamed old_soft to old_idle.",
+  "path": "src/user/windows/process/sched/tests/services_tests/worker_factory_idle_leaf_tests.rs",
+  "prototype-leaf-sha256": "1b1be65bf4d095569fe9b27ffb3c4206cc58220fd629003e94095c131a937cb3",
+  "final-leaf-sha256": "cd07d6063e1f7edd14269c43ae060090f0007d1bda7c871029374b40e8be2ff6",
+  "compiled-shared-prototype-unchanged": true,
+  "freezer-preflight": "An assertion rejected an overly broad parent-manifest token replacement before any freezer file or source epoch was created; corrected to exact separate parent and candidate names."
+}

@@ -1,0 +1,19 @@
+{
+  "checked-envelope-files": 244,
+  "proof-archive": {
+    "archive": "idle-final-proof.tar.gz",
+    "bytes": 4593275,
+    "sha256": "71571abf5e4c6d7d0a2be670db079ec3a282bbd9bd412f7f8e92bb35f0e27b6d",
+    "bound-evidence-files": 244,
+    "members": 246,
+    "scope": "Final evidence and appended runtime engineering record only; native verifier detaches all overwritten hardlinks before extraction."
+  },
+  "receipts": "Each of the three receipts verifies the same original 244-file envelope. Every original checked file remains byte-identical.",
+  "later-additions": [
+    "three receipt/log pairs",
+    "this verification-scope record",
+    "reviewed-source README template preserving the earlier pending template",
+    "verbatim whitespace audit at exact staging"
+  ],
+  "scope": "Receipt additions and final manifest extension do not claim recursive self-verification. No Rust/test/build/source-reference/fixture/ABI changes follow the compiled gates or proof."
+}

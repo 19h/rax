@@ -1,0 +1,125 @@
+{
+  "pid": 5864,
+  "state": "finished",
+  "utc": "2026-10-19T14:17:46.656870+00:00",
+  "source-epoch": 2,
+  "steps": [
+    {
+      "name": "toolchain",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "--version"
+      ],
+      "exit-code": 0,
+      "started-utc": "2026-10-19T14:17:47.174953+00:00",
+      "log": "idle-native-owning-epoch2-toolchain.log",
+      "bytes": 36,
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5"
+    },
+    {
+      "name": "artifacts-before",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "build",
+        "--locked",
+        "--offline",
+        "--features",
+        "rax",
+        "--message-format=json"
+      ],
+      "exit-code": 0,
+      "started-utc": "2026-10-19T14:17:47.201722+00:00",
+      "log": "idle-native-owning-epoch2-artifacts-before.log",
+      "bytes": 130767,
+      "sha256": "07d2925b9d91da6706f6be16a8eb56786e1c6f6769428edcad98cf3f0c549492"
+    },
+    {
+      "name": "archive-before",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\collect-idle-archives-epoch2.py",
+        "--host",
+        "windows",
+        "--source",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-idle-candidate-epoch2",
+        "--manifest",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\idle-owning-source-hashes-epoch2.json",
+        "--messages",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\idle-native-owning-epoch2-artifacts-before.log",
+        "--output",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-idle-epoch2-pre-cpp-archives.json"
+      ],
+      "exit-code": 0,
+      "started-utc": "2026-10-19T14:21:10.763383+00:00",
+      "log": "idle-native-owning-epoch2-archive-before.log",
+      "bytes": 182,
+      "sha256": "bbd2e726b7876b211379fc2e412719465feda20714fd220d6ebf94c7cfd841ab"
+    },
+    {
+      "name": "cpp",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\idle-owned-cpp-build-epoch2.py"
+      ],
+      "exit-code": 0,
+      "started-utc": "2026-10-19T14:21:15.009995+00:00",
+      "log": "idle-native-owning-epoch2-cpp.log",
+      "bytes": 3385,
+      "sha256": "cc61a127486083574cb49f72c371fd9ecb03f7f3f3e883732c328740ae52ad54"
+    },
+    {
+      "name": "artifacts-after",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "build",
+        "--locked",
+        "--offline",
+        "--features",
+        "rax",
+        "--message-format=json"
+      ],
+      "exit-code": 0,
+      "started-utc": "2026-10-19T14:22:05.252627+00:00",
+      "log": "idle-native-owning-epoch2-artifacts-after.log",
+      "bytes": 127707,
+      "sha256": "5624f3d3b9887dc632dc8058c67da206c138e734c0b133ce0b4516e20f439033"
+    },
+    {
+      "name": "archive-after",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\collect-idle-archives-epoch2.py",
+        "--host",
+        "windows",
+        "--source",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-idle-candidate-epoch2",
+        "--manifest",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\idle-owning-source-hashes-epoch2.json",
+        "--messages",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\idle-native-owning-epoch2-artifacts-after.log",
+        "--output",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-idle-epoch2-final-owning-archive-identities.json"
+      ],
+      "exit-code": 0,
+      "started-utc": "2026-10-19T14:22:05.634662+00:00",
+      "log": "idle-native-owning-epoch2-archive-after.log",
+      "bytes": 182,
+      "sha256": "bbd2e726b7876b211379fc2e412719465feda20714fd220d6ebf94c7cfd841ab"
+    }
+  ],
+  "junction": {
+    "before": "\\\\?\\C:\\Windows\\Temp\\assist-native-rax-20261010\\src-flags-candidate-epoch1",
+    "after": "\\\\?\\C:\\Windows\\Temp\\assist-native-rax-20261010\\src-idle-candidate-epoch2"
+  },
+  "verified-source-inputs": 554,
+  "compared-cpp-inputs": 8,
+  "current-step": "archive-after",
+  "child-pid": 6116,
+  "exit-code": 0,
+  "post-source-inputs": 554,
+  "qualification": "Actual current Cargo archives, selected554 inputs, matching archive identities before and after five C++ consumers. Retained Assist Rust ABI184; eight C++ inputs were compared to root ABI264; no whole current-root GUI/plugin/package claim.",
+  "completed-utc": "2026-10-19T14:22:10.179484+00:00"
+}

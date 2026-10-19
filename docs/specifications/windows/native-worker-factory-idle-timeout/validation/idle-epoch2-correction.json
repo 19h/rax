@@ -1,0 +1,12 @@
+{
+  "utc": "2026-10-19T14:06:41.039668+00:00",
+  "epoch": 2,
+  "prior-epoch": 1,
+  "base": "b325144aea85b2ab0bc90a5c69be6e3c0300a652",
+  "change": "Three explicit NTSTATUS imports in Windows-only idle leaf; four E0425 occurrences in epoch1. No shared code or assertion weakening.",
+  "path": "src/user/windows/process/sched/tests/services_tests/worker_factory_idle_leaf_tests.rs",
+  "before-sha256": "cd07d6063e1f7edd14269c43ae060090f0007d1bda7c871029374b40e8be2ff6",
+  "after-sha256": "7e5521448c41658603df8910242bbbdc29969b1d2fc1e9ce99820929f25150f3",
+  "prior-native-record": "idle-candidate-epoch1-run.json",
+  "scope": "Epoch1 source preserved, including concurrently running non-Windows gates. Epoch2 is a fresh isolated worktree."
+}

@@ -1,0 +1,17 @@
+collected 126 validation files
+{
+  "native-observations": 8944,
+  "ABI-profiles": 4,
+  "physical-kernels": 1,
+  "bound-native-files": 81,
+  "active-workers": 0
+}
+{
+  "source-inputs": 24313,
+  "three-host-full-gates": "pass",
+  "retained-consumers": "pass",
+  "ordinary-programs": 2,
+  "ordinary-guest-exit-success": false
+}
+rejected 17 validation corruptions
+Final dormant idle-timeout records complete; portable proof and exact publication remain.

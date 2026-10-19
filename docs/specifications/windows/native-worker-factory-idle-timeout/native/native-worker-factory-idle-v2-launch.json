@@ -1,0 +1,9 @@
+{
+  "pid": 7284,
+  "utc": "2026-10-19T09:24:33.469286+00:00",
+  "state": "finished",
+  "scope": "Controlled native WorkerFactoryIdleTimeout class2 with task-owned dormant factories, both observed stack sizings, seeded flags1 and no posted completions; no unrelated host state changes.",
+  "child-pid": 10192,
+  "exit-code": 0,
+  "completed-utc": "2026-10-19T09:24:48.809589+00:00"
+}

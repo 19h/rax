@@ -1,0 +1,18 @@
+{
+  "utc": "2026-10-19T13:52:06.555230+00:00",
+  "base": "b325144aea85b2ab0bc90a5c69be6e3c0300a652",
+  "source-owned-paths": [
+    "src/user/windows/objects.rs",
+    "src/user/windows/dll/native/worker_factory.rs",
+    "src/user/windows/process/sched/tests/services_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/worker_factory_set_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/worker_factory_create_replay_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/worker_factory_create_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/worker_factory_idle_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/worker_factory_idle_leaf_tests.rs",
+    "src/user/windows/native-runtime.md"
+  ],
+  "evidence-prefix": "docs/specifications/windows/native-worker-factory-idle-timeout/",
+  "baseline-clean": true,
+  "scope": "Implement measured dormant class2 idle timeout, native64 vs WoW64 lengths/alignment/capture/handle/access/value priority and normalized last successful request. Preserve all adjacent classes/defaults, CAPI and shared worktrees."
+}

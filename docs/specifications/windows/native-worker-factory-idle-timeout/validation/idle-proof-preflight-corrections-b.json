@@ -1,0 +1,10 @@
+{
+  "utc": "2026-10-19T14:37:55.981916+00:00",
+  "scope": "Validation harness correction only: restore the Python re.sub flags keyword changed by mechanical filename adaptation. Attempt B passed source/full/native/consumer/ordinary checks and appended engineering text, then stopped in negative-control setup. No false control result was recorded. Resume verifies the existing append and never appends it twice.",
+  "old-stress-sha256": "e3370cd3dc30f26cded8381e518dfb856a8b0bc1be3edbe279befd07ec70df7b",
+  "new-stress-sha256": "65b6ed49602955782a420be1f564f8188978f9d1a4b931b5663b0079efaefb6a",
+  "failure-evidence": [
+    "idle-finalization-b.json",
+    "idle-finalization-b-records.log"
+  ]
+}

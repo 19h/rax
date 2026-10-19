@@ -202,6 +202,10 @@ pub enum Object {
         /// Last accepted class13 ULONG request; no effective flag policy is inferred.
         /// None records no guest request, not a native constructor default.
         flags_request: Option<u32>,
+        /// Last successful class2 relative timeout, normalized in signed 100 ns
+        /// ticks. None means no recorded request; no native default is inferred.
+        /// Active worker scheduling is independent of this dormant state.
+        idle_timeout: Option<i64>,
         /// Measured class7 BindingCount, initially zero. Class3 zero requests
         /// set all bits; nonzero requests add a signed delta with saturation.
         binding_count: u32,
@@ -726,6 +730,7 @@ mod tests {
             maximum: 0,
             soft_maximum: None,
             flags_request: None,
+            idle_timeout: None,
             binding_count: 0,
             reserve: 65536,
             commit: 4096,

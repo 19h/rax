@@ -1,0 +1,29 @@
+{
+  "state": "finished",
+  "host": "linux",
+  "argv": [
+    "docker",
+    "run",
+    "--rm",
+    "--platform",
+    "linux/amd64",
+    "-v",
+    "/Users/int/Library/Caches/assist-process-emulation/native-worker-factory-idle-timeout-20261019/idle-source-epoch2:/source:ro",
+    "-v",
+    "/Users/int/Library/Caches/assist-process-emulation/native-worker-factory-idle-timeout-20261019:/validation:ro",
+    "-w",
+    "/source",
+    "assist-rax-validation-rustfmt:1.95-bullseye-20261015",
+    "python3",
+    "-B",
+    "/validation/run-idle-proof-checks.py",
+    "/source"
+  ],
+  "checked-envelope-files": 244,
+  "utc": "2026-10-19T14:45:58.494981+00:00",
+  "exit-code": 0,
+  "log": "idle-final-check-linux.log",
+  "bytes": 293,
+  "sha256": "6f8883899d3e008694c29d9bb539b3793d97a74aaff1b37def5553a2d9fb5093",
+  "completed-utc": "2026-10-19T14:46:06.585488+00:00"
+}

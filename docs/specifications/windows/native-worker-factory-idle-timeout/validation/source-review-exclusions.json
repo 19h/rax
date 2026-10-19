@@ -1,0 +1,16 @@
+{
+  "utc": "2026-10-19T14:41:55.821101+00:00",
+  "original-manifest": "idle-candidate-epoch2.json",
+  "original-manifest-sha256": "38781bbab1d6d21e43c91525108dd35f4ae6dd8bb981fd5856278085bfd6d087",
+  "reviewed-manifest": "idle-reviewed-source-epoch2.json",
+  "reviewed-manifest-sha256": "318ebfb7ab13bd38244a5a973568990d153e6f034044778eeb3896cba96be100",
+  "removed": [
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/__pycache__/check_native.cpython-315.pyc",
+      "kind": "file",
+      "bytes": 14232,
+      "sha256": "3b73a4886d38710ab46993e8f592494bfdad63b02eb88fb4687b8638e724eee4"
+    }
+  ],
+  "scope": "Only a generated CPython import cache, never consumed by Rust compilation or tests, is excluded from the reviewed publication/proof source view. Original native epoch2 and original source manifest stay immutable; the cache bytes are preserved outside the repository as idle-native-checker-precleanup.pyc. No source/test/build/dependency input changes."
+}

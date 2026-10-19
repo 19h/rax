@@ -1,0 +1,1406 @@
+{
+  "files": [
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/native/native-worker-factory-idle-v1-arm64-build.log",
+      "bytes": 35,
+      "sha256": "cf43f916d8eb3e1e406b13f43d280d5fb300799e90449499b7ab8b0cf35236f2",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/native/native-worker-factory-idle-v1-arm64-source-after.json",
+      "bytes": 254,
+      "sha256": "7b7f2a39b1e4dd00b31035da77fbbf468997143fd402084c0f0f75cc04bc79ec",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/native/native-worker-factory-idle-v1-arm64.log",
+      "bytes": 562026,
+      "sha256": "8cb4351a6fff03862de8f838229e369089b25e03775b64239b4febb606dc8393",
+      "warning-count": 641,
+      "line-ranges": [
+        [
+          1,
+          641
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/native/native-worker-factory-idle-v1-driver.log",
+      "bytes": 964,
+      "sha256": "81157a84a41f6d110e3d629b61f37581444b3f76aa427bed1014db5bce060e17",
+      "warning-count": 16,
+      "line-ranges": [
+        [
+          1,
+          16
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/native/native-worker-factory-idle-v1-launch.json",
+      "bytes": 391,
+      "sha256": "7f223aecd62b283c14d5875833c033b9853ed6508a47bba19b527401154dda08",
+      "warning-count": 9,
+      "line-ranges": [
+        [
+          1,
+          9
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/native/native-worker-factory-idle-v1-modules-after.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/native/native-worker-factory-idle-v1-modules-before.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/native/native-worker-factory-idle-v1-outcomes.json",
+      "bytes": 524,
+      "sha256": "7944d7bfca0037c76db4383ac9148c43e7c06d4911d03cfc577e7f87c1abf3c1",
+      "warning-count": 22,
+      "line-ranges": [
+        [
+          1,
+          22
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/native/native-worker-factory-idle-v1-x64-build.log",
+      "bytes": 35,
+      "sha256": "cf43f916d8eb3e1e406b13f43d280d5fb300799e90449499b7ab8b0cf35236f2",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/native/native-worker-factory-idle-v1-x64-source-after.json",
+      "bytes": 252,
+      "sha256": "9516f9ec248d439cf2027aef5bf683a1b78b89ccb7f5d5bd674717ea9b3476fa",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/native/native-worker-factory-idle-v1-x64.log",
+      "bytes": 562026,
+      "sha256": "c7e326e9938187fbf1de50f0ece8c1951c5ca5dd065d3022d830c98f6da07c35",
+      "warning-count": 641,
+      "line-ranges": [
+        [
+          1,
+          641
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/native/native-worker-factory-idle-v1-x86-build.log",
+      "bytes": 35,
+      "sha256": "cf43f916d8eb3e1e406b13f43d280d5fb300799e90449499b7ab8b0cf35236f2",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/native/native-worker-factory-idle-v1-x86-laa-build.log",
+      "bytes": 35,
+      "sha256": "cf43f916d8eb3e1e406b13f43d280d5fb300799e90449499b7ab8b0cf35236f2",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/native/native-worker-factory-idle-v1-x86-laa-source-after.json",
+      "bytes": 256,
+      "sha256": "378ff9ac3118a8b71cc9135fb3089c1d7d7b0302d740f4230ba90f7f63482f93",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/native/native-worker-factory-idle-v1-x86-laa.log",
+      "bytes": 560746,
+      "sha256": "595ef3a02dc2f1d09b3b020ca293f8b9e597f3982236d38ecf670f1620d83555",
+      "warning-count": 641,
+      "line-ranges": [
+        [
+          1,
+          641
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/native/native-worker-factory-idle-v1-x86-source-after.json",
+      "bytes": 252,
+      "sha256": "37b75551a06150c3c90bcb1f02a81d7e24a730dcf25f6474fa2bc39c0fba5356",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/native/native-worker-factory-idle-v1-x86.log",
+      "bytes": 560746,
+      "sha256": "71b2904a3ae9d17c8c13d2260be6044d95a14b5e396052ebb4ce1bcb005af24d",
+      "warning-count": 641,
+      "line-ranges": [
+        [
+          1,
+          641
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/native/native-worker-factory-idle-v2-arm64-build.log",
+      "bytes": 35,
+      "sha256": "ab8d95df8acd26ba4fb25380897fa30d150337f542424b1e3d8f7eb05cbc9cb1",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/native/native-worker-factory-idle-v2-arm64-source-after.json",
+      "bytes": 254,
+      "sha256": "e4658d24be69a1d6988b1027d42ceca27db1c7c0328fba04b34f79c4d8001dab",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/native/native-worker-factory-idle-v2-arm64.log",
+      "bytes": 949515,
+      "sha256": "af3ed3d60043bb3970543390a74955a6fd6a3f37974ab42a1971039a71850b72",
+      "warning-count": 1069,
+      "line-ranges": [
+        [
+          1,
+          1069
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/native/native-worker-factory-idle-v2-driver.log",
+      "bytes": 964,
+      "sha256": "81157a84a41f6d110e3d629b61f37581444b3f76aa427bed1014db5bce060e17",
+      "warning-count": 16,
+      "line-ranges": [
+        [
+          1,
+          16
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/native/native-worker-factory-idle-v2-launch.json",
+      "bytes": 392,
+      "sha256": "96fa31214c1aab46847a934ac3557b74633303b7a75ad23fad6645048bb92983",
+      "warning-count": 9,
+      "line-ranges": [
+        [
+          1,
+          9
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/native/native-worker-factory-idle-v2-modules-after.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/native/native-worker-factory-idle-v2-modules-before.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/native/native-worker-factory-idle-v2-outcomes.json",
+      "bytes": 524,
+      "sha256": "ba8c27349b358672043ee518ef638413a5ff549d4f195b249fc7a75fc9cb7b59",
+      "warning-count": 22,
+      "line-ranges": [
+        [
+          1,
+          22
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/native/native-worker-factory-idle-v2-x64-build.log",
+      "bytes": 35,
+      "sha256": "ab8d95df8acd26ba4fb25380897fa30d150337f542424b1e3d8f7eb05cbc9cb1",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/native/native-worker-factory-idle-v2-x64-source-after.json",
+      "bytes": 252,
+      "sha256": "42dcf41d3b340810736ca87ce7bf5acd9d3975e8ed9b93c1b4610c5a58b7e948",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/native/native-worker-factory-idle-v2-x64.log",
+      "bytes": 949515,
+      "sha256": "6316160df40e062cd83b4b05041b8a60830335989fe3849a069828aa5b94ef61",
+      "warning-count": 1069,
+      "line-ranges": [
+        [
+          1,
+          1069
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/native/native-worker-factory-idle-v2-x86-build.log",
+      "bytes": 35,
+      "sha256": "ab8d95df8acd26ba4fb25380897fa30d150337f542424b1e3d8f7eb05cbc9cb1",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/native/native-worker-factory-idle-v2-x86-laa-build.log",
+      "bytes": 35,
+      "sha256": "ab8d95df8acd26ba4fb25380897fa30d150337f542424b1e3d8f7eb05cbc9cb1",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/native/native-worker-factory-idle-v2-x86-laa-source-after.json",
+      "bytes": 256,
+      "sha256": "4e7f785b6f78f7c598108bdab95e1e1d133fdedaee83183f3c87a266878b71bd",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/native/native-worker-factory-idle-v2-x86-laa.log",
+      "bytes": 947379,
+      "sha256": "654338c933cc151be50ccaf86245069bcf8b03322c749690ca127d5f1eb93d00",
+      "warning-count": 1069,
+      "line-ranges": [
+        [
+          1,
+          1069
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/native/native-worker-factory-idle-v2-x86-source-after.json",
+      "bytes": 252,
+      "sha256": "93020336fff809d3045026f3293a1c646165da1272c6ef47ace9524e76c1681e",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/native/native-worker-factory-idle-v2-x86.log",
+      "bytes": 947379,
+      "sha256": "a0637d1514b194123d76be8b3d002cba0e01616959254900e4c678d172f825e9",
+      "warning-count": 1069,
+      "line-ranges": [
+        [
+          1,
+          1069
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/native/native-worker-factory-idle-v3-arm64-build.log",
+      "bytes": 35,
+      "sha256": "fa9c924e3154cece9b770373ab0023492eba8840fad30f93c793021ab38f6c8c",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/native/native-worker-factory-idle-v3-arm64-source-after.json",
+      "bytes": 254,
+      "sha256": "b9d31b8744df3c0ee04c2e4fdfcc8e1e8e742c06200b92de03c57898a334ba07",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/native/native-worker-factory-idle-v3-arm64.log",
+      "bytes": 478278,
+      "sha256": "d2474481843a8c3c6d02ee959c67161df9769aebaefa5b4ebdce75d97d3330a4",
+      "warning-count": 529,
+      "line-ranges": [
+        [
+          1,
+          529
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/native/native-worker-factory-idle-v3-driver.log",
+      "bytes": 964,
+      "sha256": "81157a84a41f6d110e3d629b61f37581444b3f76aa427bed1014db5bce060e17",
+      "warning-count": 16,
+      "line-ranges": [
+        [
+          1,
+          16
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/native/native-worker-factory-idle-v3-launch.json",
+      "bytes": 391,
+      "sha256": "12617c8ae787a6be67efb6fe161390d1c91d9a50d844a7fe84963279b3d97fc2",
+      "warning-count": 9,
+      "line-ranges": [
+        [
+          1,
+          9
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/native/native-worker-factory-idle-v3-modules-after.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/native/native-worker-factory-idle-v3-modules-before.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/native/native-worker-factory-idle-v3-outcomes.json",
+      "bytes": 524,
+      "sha256": "fff66eba941d464c1603a8483feb6b6062156695465537df15b99191775ce717",
+      "warning-count": 22,
+      "line-ranges": [
+        [
+          1,
+          22
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/native/native-worker-factory-idle-v3-x64-build.log",
+      "bytes": 35,
+      "sha256": "fa9c924e3154cece9b770373ab0023492eba8840fad30f93c793021ab38f6c8c",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/native/native-worker-factory-idle-v3-x64-source-after.json",
+      "bytes": 252,
+      "sha256": "cce511c65bd7f3412c057b3f40182afa32216e5e4ea71c2fc977d453ff18709c",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/native/native-worker-factory-idle-v3-x64.log",
+      "bytes": 478278,
+      "sha256": "42db1300ba73f96f115957a4982cf1c41a2da147800577824d60eb1fc7699fdf",
+      "warning-count": 529,
+      "line-ranges": [
+        [
+          1,
+          529
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/native/native-worker-factory-idle-v3-x86-build.log",
+      "bytes": 35,
+      "sha256": "fa9c924e3154cece9b770373ab0023492eba8840fad30f93c793021ab38f6c8c",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/native/native-worker-factory-idle-v3-x86-laa-build.log",
+      "bytes": 35,
+      "sha256": "fa9c924e3154cece9b770373ab0023492eba8840fad30f93c793021ab38f6c8c",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/native/native-worker-factory-idle-v3-x86-laa-source-after.json",
+      "bytes": 256,
+      "sha256": "0c8509e198cce0c3ead3fb253e7374647690f3d9480d823a1973d5a461cb6b3a",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/native/native-worker-factory-idle-v3-x86-laa.log",
+      "bytes": 477222,
+      "sha256": "651bcd85b695785e5f8fccb4ce2f3782c8afca8b7e0b722d6044ead8dc9e8bcd",
+      "warning-count": 529,
+      "line-ranges": [
+        [
+          1,
+          529
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/native/native-worker-factory-idle-v3-x86-source-after.json",
+      "bytes": 252,
+      "sha256": "764852eef040bc604c98f207a7b319f0fa78040cdb1efb5555b5ef6721c8a5e6",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/native/native-worker-factory-idle-v3-x86.log",
+      "bytes": 477222,
+      "sha256": "7baabde1cbdc867ab241064d58ee1496226e2636837de0a891f3308179d9c166",
+      "warning-count": 529,
+      "line-ranges": [
+        [
+          1,
+          529
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/validation/idle-baseline-a.log",
+      "bytes": 4322,
+      "sha256": "cbcd7596730f3142fcbf08b805a0c132908dd55c9982063937cc5c6af84f849d",
+      "warning-count": 3,
+      "line-ranges": [
+        [
+          8,
+          8
+        ],
+        [
+          15,
+          15
+        ],
+        [
+          21,
+          21
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/validation/idle-candidate-epoch1-run.json",
+      "bytes": 1664,
+      "sha256": "93bfd00f93846444294ed45e16d6a7a1465a19e0dd180d27c6912025b0853f86",
+      "warning-count": 33,
+      "line-ranges": [
+        [
+          1,
+          33
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/validation/idle-candidate-epoch2-focus.log",
+      "bytes": 2446,
+      "sha256": "c0524a7927e79766a8171c1de0b28f0101484adeca2bef55f6897f6ba11251ee",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          33,
+          33
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/validation/idle-candidate-epoch2-run.json",
+      "bytes": 7053,
+      "sha256": "df27446aa4006e889b6d7ab1f787e20ee03d5d55c4c40fe1d1e4af1ee616e338",
+      "warning-count": 189,
+      "line-ranges": [
+        [
+          1,
+          189
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/validation/idle-final-check-windows.json",
+      "bytes": 1421,
+      "sha256": "d6831c36ce972c35b78c5dc422252873fb28dbf89bf1bf68c2d8d69c97bf4c39",
+      "warning-count": 35,
+      "line-ranges": [
+        [
+          1,
+          35
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/validation/idle-final-check-windows.log",
+      "bytes": 307,
+      "sha256": "6e2e2a6ced3fbf082344da0c539dc33ad0d9bb5a11812dcea936bcf23f9a1b89",
+      "warning-count": 14,
+      "line-ranges": [
+        [
+          1,
+          14
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/validation/idle-linux-epoch2-capi.log",
+      "bytes": 14029,
+      "sha256": "9fd8f978582964a808af7eceff1666e946161a0fb7f2b62c06332aba7ab312c6",
+      "warning-count": 2,
+      "line-ranges": [
+        [
+          97,
+          97
+        ],
+        [
+          204,
+          204
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF.",
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/validation/idle-linux-epoch2-focus.log",
+      "bytes": 1524,
+      "sha256": "f612b87d3ba77df7b57774ce019729f750402fd91a7c5ded90667a6ef8260106",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          16,
+          16
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/validation/idle-linux-epoch2-full.log",
+      "bytes": 841791,
+      "sha256": "d55914cbd9fabc242f91e57aa6944c7c24e1f8b286a8581d2bad6f1b5413404f",
+      "warning-count": 6,
+      "line-ranges": [
+        [
+          1967,
+          1967
+        ],
+        [
+          5471,
+          5471
+        ],
+        [
+          5492,
+          5492
+        ],
+        [
+          5503,
+          5503
+        ],
+        [
+          5517,
+          5517
+        ],
+        [
+          8396,
+          8396
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF.",
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/validation/idle-linux-epoch2-integration.log",
+      "bytes": 35809,
+      "sha256": "b2f9d7a37fc75fdfb62581b9930209d6f415b807cc934e58f1b64460bd2c5659",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          557,
+          557
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/validation/idle-macos-epoch2-capi.log",
+      "bytes": 14047,
+      "sha256": "5bbba745162350ac9ebb22210905995788e177d79ac2a90589018c5b1d39f90e",
+      "warning-count": 2,
+      "line-ranges": [
+        [
+          95,
+          95
+        ],
+        [
+          203,
+          203
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF.",
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/validation/idle-macos-epoch2-full.log",
+      "bytes": 842228,
+      "sha256": "6bfacee8f728f6c25d4f1939df8c9de3bcdb6efedfc81800a9cb230ddd001da7",
+      "warning-count": 6,
+      "line-ranges": [
+        [
+          1936,
+          1936
+        ],
+        [
+          5422,
+          5422
+        ],
+        [
+          5443,
+          5443
+        ],
+        [
+          5454,
+          5454
+        ],
+        [
+          5468,
+          5468
+        ],
+        [
+          8367,
+          8367
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF.",
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/validation/idle-macos-epoch2-integration.log",
+      "bytes": 35938,
+      "sha256": "34be48c3605619084e2bcf4a7be54feecbb3ae2ceb2c0c3e706935aa16d9e464",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          557,
+          557
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/validation/idle-native-epoch2-capi.log",
+      "bytes": 15037,
+      "sha256": "10aee44386f2ae1c90843fa205b3c1ce6327e67e7484e99c3142faa33d7474ea",
+      "warning-count": 2,
+      "line-ranges": [
+        [
+          115,
+          115
+        ],
+        [
+          223,
+          223
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF.",
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/validation/idle-native-epoch2-focus.log",
+      "bytes": 2350,
+      "sha256": "85bd7a420d947fbf85ce20b3672f880aec0b842b3aba0f59aee0752ad4e643e9",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          32,
+          32
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/validation/idle-native-epoch2-full.log",
+      "bytes": 808024,
+      "sha256": "7db76810723e70f17608df9d9ba386c502aa785130178ad5191aeb816233f3f8",
+      "warning-count": 11,
+      "line-ranges": [
+        [
+          1950,
+          1950
+        ],
+        [
+          4866,
+          4866
+        ],
+        [
+          4876,
+          4876
+        ],
+        [
+          4883,
+          4883
+        ],
+        [
+          4889,
+          4889
+        ],
+        [
+          5418,
+          5418
+        ],
+        [
+          5460,
+          5460
+        ],
+        [
+          5481,
+          5481
+        ],
+        [
+          5492,
+          5492
+        ],
+        [
+          5506,
+          5506
+        ],
+        [
+          6272,
+          6272
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/validation/idle-native-epoch2-gates.json",
+      "bytes": 5944,
+      "sha256": "60ecb622283ab21e651428c733841f3b39fcbfddc0fd38b3aa3894b22b0f6abb",
+      "warning-count": 163,
+      "line-ranges": [
+        [
+          1,
+          163
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/validation/idle-native-epoch2-integration.log",
+      "bytes": 1871,
+      "sha256": "aa5965d3d0ebc56638c68c42163a021878a79ebb56be94254bfa52498f7467a5",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          36,
+          36
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/validation/idle-native-owning-epoch2-archive-after.log",
+      "bytes": 182,
+      "sha256": "bbd2e726b7876b211379fc2e412719465feda20714fd220d6ebf94c7cfd841ab",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/validation/idle-native-owning-epoch2-archive-before.log",
+      "bytes": 182,
+      "sha256": "bbd2e726b7876b211379fc2e412719465feda20714fd220d6ebf94c7cfd841ab",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/validation/idle-native-owning-epoch2-cpp.log",
+      "bytes": 3385,
+      "sha256": "cc61a127486083574cb49f72c371fd9ecb03f7f3f3e883732c328740ae52ad54",
+      "warning-count": 54,
+      "line-ranges": [
+        [
+          1,
+          54
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/validation/idle-native-owning-epoch2.json",
+      "bytes": 5121,
+      "sha256": "d86eab242b53a8b21aa57a1babd57844775b6dbd0cc8f1707ed57207a559055f",
+      "warning-count": 125,
+      "line-ranges": [
+        [
+          1,
+          125
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/validation/idle-native-pipeline.json",
+      "bytes": 2078,
+      "sha256": "a1f088e7ed80eb70fc60cdb29411433c59875efe04fe2939df96b480d9916869",
+      "warning-count": 9,
+      "line-ranges": [
+        [
+          1,
+          9
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/validation/idle-owner-epoch2-build.log",
+      "bytes": 241,
+      "sha256": "77027ce0b25d2e321d7341c6fe2a80236a2837874cb1de4f2079588d47f29dc9",
+      "warning-count": 4,
+      "line-ranges": [
+        [
+          1,
+          4
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/validation/idle-owner-epoch2-launch.json",
+      "bytes": 7822,
+      "sha256": "5ee4eb172ccbf8f02814f539ea59b062ef62865c27ac7681d92306cadcd7ac9e",
+      "warning-count": 211,
+      "line-ranges": [
+        [
+          1,
+          211
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/validation/idle-prototype-a.log",
+      "bytes": 1486,
+      "sha256": "44e1f1e17afb3da70b0d570b96793567634a92a0da663a2e1867eaf9f1ae3543",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          14,
+          14
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/validation/idle-prototype-b.log",
+      "bytes": 1352,
+      "sha256": "9841859a37d9f74e37081b658cac89ff783a5b4877a781d419e1ea7f312215b2",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          13,
+          13
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/validation/native-idle-epoch2-final-owning-archive-identities.json",
+      "bytes": 114167,
+      "sha256": "e35641fe64df361eecd432e1e49e55803df9f7f9ae36116db1bde1177ff24888",
+      "warning-count": 2867,
+      "line-ranges": [
+        [
+          1,
+          2867
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/validation/native-idle-epoch2-pre-cpp-archives.json",
+      "bytes": 114170,
+      "sha256": "07318f946066f95d9559400af99a2ab8599cd4882703479d833a92b196183268",
+      "warning-count": 2867,
+      "line-ranges": [
+        [
+          1,
+          2867
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/validation/timer2-native-host-identity.json",
+      "bytes": 944,
+      "sha256": "824a29ad03161b2a10662cadb0d57b47f90c14184ef317e2840b770e8e79e2f3",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    }
+  ],
+  "other-owned-paths-pass": true
+}

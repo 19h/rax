@@ -1,0 +1,77 @@
+{
+  "state": "finished",
+  "controls": [
+    {
+      "name": "success-status",
+      "rejected": true,
+      "outer-envelope-rebound": true
+    },
+    {
+      "name": "sign-validation",
+      "rejected": true,
+      "outer-envelope-rebound": true
+    },
+    {
+      "name": "wow-length",
+      "rejected": true,
+      "outer-envelope-rebound": true
+    },
+    {
+      "name": "alignment-before-guard",
+      "rejected": true,
+      "outer-envelope-rebound": true
+    },
+    {
+      "name": "guard-not-consumed",
+      "rejected": true,
+      "outer-envelope-rebound": true
+    },
+    {
+      "name": "second-guard-consumed-too",
+      "rejected": true,
+      "outer-envelope-rebound": true
+    },
+    {
+      "name": "first-access-denied-guard",
+      "rejected": true,
+      "outer-envelope-rebound": true
+    },
+    {
+      "name": "normalized-clamp",
+      "rejected": true,
+      "outer-envelope-rebound": true
+    },
+    {
+      "name": "value-before-handle",
+      "rejected": true,
+      "outer-envelope-rebound": true
+    },
+    {
+      "name": "query-size",
+      "rejected": true,
+      "outer-envelope-rebound": true
+    },
+    {
+      "name": "case-ordinal",
+      "rejected": true,
+      "outer-envelope-rebound": true
+    },
+    {
+      "name": "PE-machine",
+      "rejected": true,
+      "outer-envelope-rebound": true
+    },
+    {
+      "name": "producer-failure",
+      "rejected": true,
+      "outer-envelope-rebound": true
+    },
+    {
+      "name": "source-identity",
+      "rejected": true,
+      "outer-envelope-rebound": true
+    }
+  ],
+  "rejected": 14,
+  "scope": "Every modified native file has its outer manifest size and hash rebound before semantic validation."
+}

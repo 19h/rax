@@ -1,0 +1,5 @@
+{
+  "before": "/Users/int/Library/Caches/assist-process-emulation/native-worker-factory-idle-timeout-20261019/idle-source",
+  "after": "/Users/int/Library/Caches/assist-process-emulation/native-worker-factory-idle-timeout-20261019/idle-source-epoch2",
+  "scope": "Only the retained task-owned link changed after both epoch1 owning controllers finished. Shared main preserved."
+}

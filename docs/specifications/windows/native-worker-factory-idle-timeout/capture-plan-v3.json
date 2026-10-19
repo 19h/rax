@@ -1,0 +1,8 @@
+{
+  "source-sha256": "043ef3d693205372c790e1de735776af71bd1b92ee46b686fa6a71b8e6e1b19d",
+  "scope": "Independent native cross-page capture/guard/alignment priority on dormant factories; no workers posted.",
+  "per-profile-cases": 528,
+  "profiles": 4,
+  "total-cases": 2112,
+  "enumeration": "2 stack sizings * 11 modes * 2 values * 3 handle modes * 4 lengths"
+}

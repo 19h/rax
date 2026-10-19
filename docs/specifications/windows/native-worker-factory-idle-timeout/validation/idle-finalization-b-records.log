@@ -1,0 +1,37 @@
+collected 120 validation files
+{
+  "native-observations": 8944,
+  "ABI-profiles": 4,
+  "physical-kernels": 1,
+  "bound-native-files": 81,
+  "active-workers": 0
+}
+{
+  "source-inputs": 24313,
+  "three-host-full-gates": "pass",
+  "retained-consumers": "pass",
+  "ordinary-programs": 2,
+  "ordinary-guest-exit-success": false
+}
+Traceback (most recent call last):
+  File "/Users/int/Library/Caches/assist-process-emulation/native-worker-factory-idle-timeout-20261019/stress-idle-validation.py", line 55, in <module>
+    root=Path(temp)/name;shutil.copytree(D,root);mutate(root)
+                                                 ~~~~~~^^^^^^
+  File "/Users/int/Library/Caches/assist-process-emulation/native-worker-factory-idle-timeout-20261019/stress-idle-validation.py", line 41, in <lambda>
+    ('consumer-not-executed',lambda r:change_log(r,'linux-idle-epoch2-owning-gates.json','cpp',remove_execution)),
+                                      ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/int/Library/Caches/assist-process-emulation/native-worker-factory-idle-timeout-20261019/stress-idle-validation.py", line 12, in change_log
+    log=root/'validation'/row['log'];old=log.read_text();new=change(old);assert new!=old
+                                                             ~~~~~~^^^^^
+  File "/Users/int/Library/Caches/assist-process-emulation/native-worker-factory-idle-timeout-20261019/stress-idle-validation.py", line 20, in remove_execution
+    return re.sub(r'^run (\S*[/\\]rust_archive_link) \1\r?\n','',text,idle=re.M)
+           ~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: sub() got an unexpected keyword argument 'idle'
+Traceback (most recent call last):
+  File "/Users/int/Library/Caches/assist-process-emulation/native-worker-factory-idle-timeout-20261019/finalize-idle-records.py", line 89, in <module>
+    subprocess.run([sys.executable, '-B', str(Q / 'stress-idle-validation.py')], check=True)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.15/3.15.0/Frameworks/Python.framework/Versions/3.15/lib/python3.15/subprocess.py", line 692, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '['/opt/homebrew/opt/python@3.15/bin/python3.15', '-B', '/Users/int/Library/Caches/assist-process-emulation/native-worker-factory-idle-timeout-20261019/stress-idle-validation.py']' returned non-zero exit status 1.

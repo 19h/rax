@@ -1,0 +1,23 @@
+{
+  "state": "failed",
+  "pid": 5013,
+  "steps": [
+    {
+      "name": "records",
+      "argv": [
+        "/opt/homebrew/opt/python@3.15/bin/python3.15",
+        "-B",
+        "/Users/int/Library/Caches/assist-process-emulation/native-worker-factory-idle-timeout-20261019/finalize-idle-records.py"
+      ],
+      "exit-code": 1,
+      "log": "idle-finalization-records.log",
+      "bytes": 1999,
+      "sha256": "90d2d131b68d67366987c35feaceb16aa0c93ed8852a8a994c12adc9c5584eda"
+    }
+  ],
+  "utc": "2026-10-19T14:30:33.468421+00:00",
+  "child-pid": 6496,
+  "exit-code": 1,
+  "error": "Traceback (most recent call last):\n  File \"/Users/int/Library/Caches/assist-process-emulation/native-worker-factory-idle-timeout-20261019/run-idle-finalization.py\", line 60, in <module>\n    run('records', [sys.executable, '-B', str(P / 'finalize-idle-records.py')])\n    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/int/Library/Caches/assist-process-emulation/native-worker-factory-idle-timeout-20261019/run-idle-finalization.py\", line 37, in run\n    assert code == 0, name\n           ^^^^^^^^^\nAssertionError: records\n",
+  "completed-utc": "2026-10-19T14:33:34.129104+00:00"
+}

@@ -1,0 +1,12 @@
+{
+  "scope": "Only a generated CPython import cache, never consumed by Rust compilation or tests, is excluded from the reviewed publication/proof source view. Original native epoch2 and original source manifest stay immutable; the cache bytes are preserved outside the repository as idle-native-checker-precleanup.pyc. No source/test/build/dependency input changes.",
+  "removed": {
+    "path": "docs/specifications/windows/native-worker-factory-idle-timeout/__pycache__/check_native.cpython-315.pyc",
+    "kind": "file",
+    "bytes": 14232,
+    "sha256": "3b73a4886d38710ab46993e8f592494bfdad63b02eb88fb4687b8638e724eee4"
+  },
+  "reviewed-inputs": 24312,
+  "reviewed-bytes": 1752710101,
+  "initial-proof-packaging-failure": "idle-finalization-c-proof-archive.log"
+}

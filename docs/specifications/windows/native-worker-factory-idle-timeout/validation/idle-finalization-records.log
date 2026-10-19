@@ -1,0 +1,27 @@
+collected 112 validation files
+{
+  "native-observations": 8944,
+  "ABI-profiles": 4,
+  "physical-kernels": 1,
+  "bound-native-files": 81,
+  "active-workers": 0
+}
+Traceback (most recent call last):
+  File "/Users/int/Library/Caches/assist-process-emulation/native-worker-factory-idle-timeout-20261019/check-idle-validation.py", line 262, in <module>
+    main()
+    ~~~~^^
+  File "/Users/int/Library/Caches/assist-process-emulation/native-worker-factory-idle-timeout-20261019/check-idle-validation.py", line 258, in main
+    print(json.dumps(check(args.source, evidence), indent=2))
+                     ~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/int/Library/Caches/assist-process-emulation/native-worker-factory-idle-timeout-20261019/check-idle-validation.py", line 120, in check
+    assert steps['full']['exit-code'] == 101 and set(record['exact-existing-failures']) == FAILURES
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError
+Traceback (most recent call last):
+  File "/Users/int/Library/Caches/assist-process-emulation/native-worker-factory-idle-timeout-20261019/finalize-idle-records.py", line 39, in <module>
+    subprocess.run([sys.executable, '-B', str(Q / 'check-idle-validation.py'), str(R)], check=True)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.15/3.15.0/Frameworks/Python.framework/Versions/3.15/lib/python3.15/subprocess.py", line 692, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '['/opt/homebrew/opt/python@3.15/bin/python3.15', '-B', '/Users/int/Library/Caches/assist-process-emulation/native-worker-factory-idle-timeout-20261019/check-idle-validation.py', '/Users/int/Library/Caches/assist-process-emulation/native-worker-factory-idle-timeout-20261019/idle-source-epoch2']' returned non-zero exit status 1.

@@ -2651,3 +2651,26 @@ value1 and advance496turns to unsupported NtSetInformationWorkerFactory class2.
 Neither emulated guest demonstrates successful exit. Full process support and
 whole-current-root GUI/plugin/package validation remain incomplete; retained
 Assist RustABI184 consumers are recorded separately.
+
+
+## Dormant worker-factory idle-timeout requests (2026-10-19)
+
+Class 2 accepts the measured installed native/WoW64 `LARGE_INTEGER` contract:
+native64 exact length 8, WoW64 length at least 8, 4-byte alignment and an 8-byte
+capture before typed handle/right 0x4 validation. Nonnegative values fail after
+access checking. Negative values clamp to [-6,000,000,000,-10,000,000] signed
+100 ns ticks (relative 600 s through 1 s); `i64::MIN` is handled without negation.
+The optional normalized request is shared by aliases, preserves constructor
+unknowns, and remains independent of classes 3/5/13/14. Failures preserve prior
+state; cross-page guard consumption matches the native records. Active worker
+scheduling is outside this dormant setter contract. Public Rust enum constructors
+need the new field; opaque C API 1.14.0 and defaults are unchanged.
+
+Evidence: 8,944 observations over four ABI profiles on one Windows ARM64 kernel,
+14 rebound native corruptions rejected, a compiled 0-pass/3-failure regression,
+six shared tests and seven native Windows tests, including actual NTDLL/WoW64
+leaves and x86 20-byte return cleanup. Complete library selections: macOS8037pass/0fail/2ignored, Linux8031/0/2, Windows7499/5/2 with exactly the five established lowerer failures. C API183 each, integration544 on macOS/Linux and4 on Windows, all-target compilation and selected retained consumers passed.
+Actual retained-owner core: 503929600 bytes, SHA-256 `b912928105f461adf0bf338d7ade0815b1557f379d0fa21c2728a93856804835`.
+Both ordinary ARM64 guests return class2 status0 and retain idle_timeout Some(-300000000), then advance359turns: smoke2898814->2899173 and whoami2901099->2901458. The next stop is unimplemented NtQuerySecurityAttributesToken (0x167). Neither guest exits successfully; both native controls exit0. Read-only final diagnostics capture pseudo token handle -4 and requested WIN://SYSAPPID/WIN://PKG names.
+Full process objective remains active until ordinary guests exit successfully.
+[Evidence, assumptions and limits](../../../docs/specifications/windows/native-worker-factory-idle-timeout/README.md).

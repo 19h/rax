@@ -1,0 +1,17 @@
+{
+  "state": "finished",
+  "host": "macos",
+  "argv": [
+    "/opt/homebrew/opt/python@3.15/bin/python3.15",
+    "-B",
+    "/Users/int/Library/Caches/assist-process-emulation/native-worker-factory-idle-timeout-20261019/run-idle-proof-checks.py",
+    "/Users/int/Library/Caches/assist-process-emulation/native-worker-factory-idle-timeout-20261019/idle-source-epoch2"
+  ],
+  "checked-envelope-files": 244,
+  "utc": "2026-10-19T14:45:58.495011+00:00",
+  "exit-code": 0,
+  "log": "idle-final-check-macos.log",
+  "bytes": 293,
+  "sha256": "6f8883899d3e008694c29d9bb539b3793d97a74aaff1b37def5553a2d9fb5093",
+  "completed-utc": "2026-10-19T14:46:00.584204+00:00"
+}

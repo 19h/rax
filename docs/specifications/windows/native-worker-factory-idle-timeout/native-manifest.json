@@ -1,0 +1,409 @@
+{
+  "files": [
+    {
+      "path": "native/native-worker-factory-idle-v1-arm64-after.json",
+      "bytes": 540,
+      "sha256": "65366d0a07d9a67e9a7cf04d51dae4231d05ffdf7be1f6d0b30581fa769d4f87"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v1-arm64-before.json",
+      "bytes": 540,
+      "sha256": "65366d0a07d9a67e9a7cf04d51dae4231d05ffdf7be1f6d0b30581fa769d4f87"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v1-arm64-build.log",
+      "bytes": 35,
+      "sha256": "cf43f916d8eb3e1e406b13f43d280d5fb300799e90449499b7ab8b0cf35236f2"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v1-arm64-source-after.json",
+      "bytes": 254,
+      "sha256": "7b7f2a39b1e4dd00b31035da77fbbf468997143fd402084c0f0f75cc04bc79ec"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v1-arm64.log",
+      "bytes": 562026,
+      "sha256": "8cb4351a6fff03862de8f838229e369089b25e03775b64239b4febb606dc8393"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v1-driver.log",
+      "bytes": 964,
+      "sha256": "81157a84a41f6d110e3d629b61f37581444b3f76aa427bed1014db5bce060e17"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v1-launch.json",
+      "bytes": 391,
+      "sha256": "7f223aecd62b283c14d5875833c033b9853ed6508a47bba19b527401154dda08"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v1-modules-after.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v1-modules-before.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v1-outcomes.json",
+      "bytes": 524,
+      "sha256": "7944d7bfca0037c76db4383ac9148c43e7c06d4911d03cfc577e7f87c1abf3c1"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v1-x64-after.json",
+      "bytes": 532,
+      "sha256": "c5b435657d3a005ba3f16764e9c8fbe5440549fd054b03aa5ea3920372f15b47"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v1-x64-before.json",
+      "bytes": 532,
+      "sha256": "c5b435657d3a005ba3f16764e9c8fbe5440549fd054b03aa5ea3920372f15b47"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v1-x64-build.log",
+      "bytes": 35,
+      "sha256": "cf43f916d8eb3e1e406b13f43d280d5fb300799e90449499b7ab8b0cf35236f2"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v1-x64-source-after.json",
+      "bytes": 252,
+      "sha256": "9516f9ec248d439cf2027aef5bf683a1b78b89ccb7f5d5bd674717ea9b3476fa"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v1-x64.log",
+      "bytes": 562026,
+      "sha256": "c7e326e9938187fbf1de50f0ece8c1951c5ca5dd065d3022d830c98f6da07c35"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v1-x86-after.json",
+      "bytes": 530,
+      "sha256": "f029cbca54a763e0b5508b0e7b888471c345207ca2ab07d33819bb8be2106979"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v1-x86-before.json",
+      "bytes": 530,
+      "sha256": "f029cbca54a763e0b5508b0e7b888471c345207ca2ab07d33819bb8be2106979"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v1-x86-build.log",
+      "bytes": 35,
+      "sha256": "cf43f916d8eb3e1e406b13f43d280d5fb300799e90449499b7ab8b0cf35236f2"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v1-x86-laa-after.json",
+      "bytes": 544,
+      "sha256": "2e077308ed755753ce301f4baedcfdbb3720a46cf8644a9b44d355c211fe0aa5"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v1-x86-laa-before.json",
+      "bytes": 544,
+      "sha256": "2e077308ed755753ce301f4baedcfdbb3720a46cf8644a9b44d355c211fe0aa5"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v1-x86-laa-build.log",
+      "bytes": 35,
+      "sha256": "cf43f916d8eb3e1e406b13f43d280d5fb300799e90449499b7ab8b0cf35236f2"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v1-x86-laa-source-after.json",
+      "bytes": 256,
+      "sha256": "378ff9ac3118a8b71cc9135fb3089c1d7d7b0302d740f4230ba90f7f63482f93"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v1-x86-laa.log",
+      "bytes": 560746,
+      "sha256": "595ef3a02dc2f1d09b3b020ca293f8b9e597f3982236d38ecf670f1620d83555"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v1-x86-source-after.json",
+      "bytes": 252,
+      "sha256": "37b75551a06150c3c90bcb1f02a81d7e24a730dcf25f6474fa2bc39c0fba5356"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v1-x86.log",
+      "bytes": 560746,
+      "sha256": "71b2904a3ae9d17c8c13d2260be6044d95a14b5e396052ebb4ce1bcb005af24d"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v1.cpp",
+      "bytes": 7875,
+      "sha256": "7cf3a2d712aec67d83038d3127644aaa17b6cc6ccf319b805995854e2d8814c4"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v1.ps1",
+      "bytes": 2619,
+      "sha256": "1716fa9ab562a28508fce3899750677ed5ace1a22fbf952aaf96d230faf0a164"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v2-arm64-after.json",
+      "bytes": 540,
+      "sha256": "f6018d47399aad7569fab6743583cd041a0f27bccbac100a09b5705f1988b851"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v2-arm64-before.json",
+      "bytes": 540,
+      "sha256": "f6018d47399aad7569fab6743583cd041a0f27bccbac100a09b5705f1988b851"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v2-arm64-build.log",
+      "bytes": 35,
+      "sha256": "ab8d95df8acd26ba4fb25380897fa30d150337f542424b1e3d8f7eb05cbc9cb1"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v2-arm64-source-after.json",
+      "bytes": 254,
+      "sha256": "e4658d24be69a1d6988b1027d42ceca27db1c7c0328fba04b34f79c4d8001dab"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v2-arm64.log",
+      "bytes": 949515,
+      "sha256": "af3ed3d60043bb3970543390a74955a6fd6a3f37974ab42a1971039a71850b72"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v2-driver.log",
+      "bytes": 964,
+      "sha256": "81157a84a41f6d110e3d629b61f37581444b3f76aa427bed1014db5bce060e17"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v2-launch.json",
+      "bytes": 392,
+      "sha256": "96fa31214c1aab46847a934ac3557b74633303b7a75ad23fad6645048bb92983"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v2-modules-after.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v2-modules-before.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v2-outcomes.json",
+      "bytes": 524,
+      "sha256": "ba8c27349b358672043ee518ef638413a5ff549d4f195b249fc7a75fc9cb7b59"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v2-x64-after.json",
+      "bytes": 532,
+      "sha256": "dfb7e0e5e1bcd6a372d579167b372b42a1692f6dadf9f2dc2ae41c1c21240e35"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v2-x64-before.json",
+      "bytes": 532,
+      "sha256": "dfb7e0e5e1bcd6a372d579167b372b42a1692f6dadf9f2dc2ae41c1c21240e35"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v2-x64-build.log",
+      "bytes": 35,
+      "sha256": "ab8d95df8acd26ba4fb25380897fa30d150337f542424b1e3d8f7eb05cbc9cb1"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v2-x64-source-after.json",
+      "bytes": 252,
+      "sha256": "42dcf41d3b340810736ca87ce7bf5acd9d3975e8ed9b93c1b4610c5a58b7e948"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v2-x64.log",
+      "bytes": 949515,
+      "sha256": "6316160df40e062cd83b4b05041b8a60830335989fe3849a069828aa5b94ef61"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v2-x86-after.json",
+      "bytes": 530,
+      "sha256": "ef802c0c538efc69b29aa7e43b1f200ac88e7307a0653d4acf5bddb0e2294677"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v2-x86-before.json",
+      "bytes": 530,
+      "sha256": "ef802c0c538efc69b29aa7e43b1f200ac88e7307a0653d4acf5bddb0e2294677"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v2-x86-build.log",
+      "bytes": 35,
+      "sha256": "ab8d95df8acd26ba4fb25380897fa30d150337f542424b1e3d8f7eb05cbc9cb1"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v2-x86-laa-after.json",
+      "bytes": 544,
+      "sha256": "d93fda36f347e1e4c268239ca445a1700b3f0761c62cb5918b8fba03c88dab93"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v2-x86-laa-before.json",
+      "bytes": 544,
+      "sha256": "d93fda36f347e1e4c268239ca445a1700b3f0761c62cb5918b8fba03c88dab93"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v2-x86-laa-build.log",
+      "bytes": 35,
+      "sha256": "ab8d95df8acd26ba4fb25380897fa30d150337f542424b1e3d8f7eb05cbc9cb1"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v2-x86-laa-source-after.json",
+      "bytes": 256,
+      "sha256": "4e7f785b6f78f7c598108bdab95e1e1d133fdedaee83183f3c87a266878b71bd"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v2-x86-laa.log",
+      "bytes": 947379,
+      "sha256": "654338c933cc151be50ccaf86245069bcf8b03322c749690ca127d5f1eb93d00"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v2-x86-source-after.json",
+      "bytes": 252,
+      "sha256": "93020336fff809d3045026f3293a1c646165da1272c6ef47ace9524e76c1681e"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v2-x86.log",
+      "bytes": 947379,
+      "sha256": "a0637d1514b194123d76be8b3d002cba0e01616959254900e4c678d172f825e9"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v2.cpp",
+      "bytes": 8045,
+      "sha256": "20825d5a564a57c81e66351284a9e811f73fcd5741b75e472d5e3a6e9d5899e0"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v2.ps1",
+      "bytes": 2619,
+      "sha256": "aa7806a33d618fc4d373f11fd5ddeb77c96e06a7651d64a48d88d76b79f66c42"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v3-arm64-after.json",
+      "bytes": 540,
+      "sha256": "9e617c9901adef356d3bd7a171f61fbc366b7975710b719e4b4098f5fda8d319"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v3-arm64-before.json",
+      "bytes": 540,
+      "sha256": "9e617c9901adef356d3bd7a171f61fbc366b7975710b719e4b4098f5fda8d319"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v3-arm64-build.log",
+      "bytes": 35,
+      "sha256": "fa9c924e3154cece9b770373ab0023492eba8840fad30f93c793021ab38f6c8c"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v3-arm64-source-after.json",
+      "bytes": 254,
+      "sha256": "b9d31b8744df3c0ee04c2e4fdfcc8e1e8e742c06200b92de03c57898a334ba07"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v3-arm64.log",
+      "bytes": 478278,
+      "sha256": "d2474481843a8c3c6d02ee959c67161df9769aebaefa5b4ebdce75d97d3330a4"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v3-driver.log",
+      "bytes": 964,
+      "sha256": "81157a84a41f6d110e3d629b61f37581444b3f76aa427bed1014db5bce060e17"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v3-launch.json",
+      "bytes": 391,
+      "sha256": "12617c8ae787a6be67efb6fe161390d1c91d9a50d844a7fe84963279b3d97fc2"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v3-modules-after.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v3-modules-before.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v3-outcomes.json",
+      "bytes": 524,
+      "sha256": "fff66eba941d464c1603a8483feb6b6062156695465537df15b99191775ce717"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v3-x64-after.json",
+      "bytes": 532,
+      "sha256": "8d7d65e9e3149c015303a6facf25e6994bc68c7e9c391b2b5912254a68be6e82"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v3-x64-before.json",
+      "bytes": 532,
+      "sha256": "8d7d65e9e3149c015303a6facf25e6994bc68c7e9c391b2b5912254a68be6e82"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v3-x64-build.log",
+      "bytes": 35,
+      "sha256": "fa9c924e3154cece9b770373ab0023492eba8840fad30f93c793021ab38f6c8c"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v3-x64-source-after.json",
+      "bytes": 252,
+      "sha256": "cce511c65bd7f3412c057b3f40182afa32216e5e4ea71c2fc977d453ff18709c"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v3-x64.log",
+      "bytes": 478278,
+      "sha256": "42db1300ba73f96f115957a4982cf1c41a2da147800577824d60eb1fc7699fdf"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v3-x86-after.json",
+      "bytes": 530,
+      "sha256": "34407fdc7f620029972b0359ea70490d74fa1398236b9b995fb85fbb951a984f"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v3-x86-before.json",
+      "bytes": 530,
+      "sha256": "34407fdc7f620029972b0359ea70490d74fa1398236b9b995fb85fbb951a984f"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v3-x86-build.log",
+      "bytes": 35,
+      "sha256": "fa9c924e3154cece9b770373ab0023492eba8840fad30f93c793021ab38f6c8c"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v3-x86-laa-after.json",
+      "bytes": 544,
+      "sha256": "4077ffc2bc414332cc57fccee7c45b51f10b8cc37bf3f31317997e1ad380ae33"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v3-x86-laa-before.json",
+      "bytes": 544,
+      "sha256": "4077ffc2bc414332cc57fccee7c45b51f10b8cc37bf3f31317997e1ad380ae33"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v3-x86-laa-build.log",
+      "bytes": 35,
+      "sha256": "fa9c924e3154cece9b770373ab0023492eba8840fad30f93c793021ab38f6c8c"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v3-x86-laa-source-after.json",
+      "bytes": 256,
+      "sha256": "0c8509e198cce0c3ead3fb253e7374647690f3d9480d823a1973d5a461cb6b3a"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v3-x86-laa.log",
+      "bytes": 477222,
+      "sha256": "651bcd85b695785e5f8fccb4ce2f3782c8afca8b7e0b722d6044ead8dc9e8bcd"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v3-x86-source-after.json",
+      "bytes": 252,
+      "sha256": "764852eef040bc604c98f207a7b319f0fa78040cdb1efb5555b5ef6721c8a5e6"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v3-x86.log",
+      "bytes": 477222,
+      "sha256": "7baabde1cbdc867ab241064d58ee1496226e2636837de0a891f3308179d9c166"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v3.cpp",
+      "bytes": 8468,
+      "sha256": "043ef3d693205372c790e1de735776af71bd1b92ee46b686fa6a71b8e6e1b19d"
+    },
+    {
+      "path": "native/native-worker-factory-idle-v3.ps1",
+      "bytes": 2619,
+      "sha256": "5c3d541db1198471290a049e6a12e801ac68d3f57bb77b5e03e41bb9e2ff0c46"
+    }
+  ]
+}

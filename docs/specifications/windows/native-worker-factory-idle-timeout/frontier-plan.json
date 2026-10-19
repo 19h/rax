@@ -1,0 +1,12 @@
+{
+  "scope": "Read-only diagnostic of class2 LARGE_INTEGER input on the validated flags owning core; no idle-timeout implementation.",
+  "source-sha256": "73c692719d464635a35f376758ff71ee155e80b47a15068f07c5c638a15a6774",
+  "core-record": "native-flags-epoch1-final-owning-archive-identities.json",
+  "class": 2,
+  "service": 433,
+  "input-read-bytes": 8,
+  "previous-terminal-turns": [
+    2898814,
+    2901099
+  ]
+}
