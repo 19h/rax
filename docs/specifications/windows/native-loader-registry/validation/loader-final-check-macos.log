@@ -1,0 +1,38 @@
+{
+  "abi-profiles": 4,
+  "native-kernels": 1,
+  "roots": [
+    {
+      "producer": "native-safeboot-option-v1",
+      "present": false,
+      "cases": 320,
+      "success": 0,
+      "missing": 320
+    },
+    {
+      "producer": "native-srp-gp-dll-v1",
+      "present": false,
+      "cases": 320,
+      "success": 0,
+      "missing": 320
+    },
+    {
+      "producer": "native-safer-code-identifiers-v1",
+      "present": true,
+      "cases": 320,
+      "success": 120,
+      "missing": 200
+    }
+  ],
+  "native-cases": 960,
+  "scope": "Exact captured subject: SafeBoot and SRP DLL absent; Safer present. Native success handles are opaque identities. Guest immutable snapshots retain their inherited read-only grant policy, including denial of write-intent access.",
+  "selected-root-observations": 840,
+  "outside-prefix-controls": 120
+}
+{
+  "source-inputs": 23283,
+  "three-host-full-gates": "pass",
+  "retained-consumers": "pass",
+  "ordinary-programs": 2,
+  "ordinary-guest-exit-success": false
+}

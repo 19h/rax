@@ -1,0 +1,125 @@
+{
+  "pid": 8396,
+  "state": "finished",
+  "utc": "2026-10-19T05:49:51.960894+00:00",
+  "source-epoch": 3,
+  "steps": [
+    {
+      "name": "toolchain",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "--version"
+      ],
+      "exit-code": 0,
+      "started-utc": "2026-10-19T05:51:53.744429+00:00",
+      "log": "loader-native-owning-epoch3-toolchain.log",
+      "bytes": 36,
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5"
+    },
+    {
+      "name": "artifacts-before",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "build",
+        "--locked",
+        "--offline",
+        "--features",
+        "rax",
+        "--message-format=json"
+      ],
+      "exit-code": 0,
+      "started-utc": "2026-10-19T05:51:53.769731+00:00",
+      "log": "loader-native-owning-epoch3-artifacts-before.log",
+      "bytes": 130767,
+      "sha256": "39fd431944b55ee9f5f5bf4673a9e0cf38c2c5d9c0d4040599116cef6185e5f6"
+    },
+    {
+      "name": "archive-before",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\collect-loader-archives-epoch3.py",
+        "--host",
+        "windows",
+        "--source",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-loader-candidate-epoch3",
+        "--manifest",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\loader-owning-source-hashes-epoch3.json",
+        "--messages",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\loader-native-owning-epoch3-artifacts-before.log",
+        "--output",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-loader-epoch3-pre-cpp-archives.json"
+      ],
+      "exit-code": 0,
+      "started-utc": "2026-10-19T05:53:59.884581+00:00",
+      "log": "loader-native-owning-epoch3-archive-before.log",
+      "bytes": 182,
+      "sha256": "2582072304836bf0b4f9af4816c2ea6d7fa22be44b4f26d0368ac87d89820d11"
+    },
+    {
+      "name": "cpp",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\loader-owned-cpp-build-epoch3.py"
+      ],
+      "exit-code": 0,
+      "started-utc": "2026-10-19T05:54:03.575893+00:00",
+      "log": "loader-native-owning-epoch3-cpp.log",
+      "bytes": 3385,
+      "sha256": "42ad3beed5abd6c9306918bdbcf21bd3f94ee158a5131d29ceed87bfa40e159b"
+    },
+    {
+      "name": "artifacts-after",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "build",
+        "--locked",
+        "--offline",
+        "--features",
+        "rax",
+        "--message-format=json"
+      ],
+      "exit-code": 0,
+      "started-utc": "2026-10-19T05:54:42.397332+00:00",
+      "log": "loader-native-owning-epoch3-artifacts-after.log",
+      "bytes": 127707,
+      "sha256": "d8412c14b796a9ca952a8d8bc7db77495147b4c0b9f3322101aa47a4361428b2"
+    },
+    {
+      "name": "archive-after",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\collect-loader-archives-epoch3.py",
+        "--host",
+        "windows",
+        "--source",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-loader-candidate-epoch3",
+        "--manifest",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\loader-owning-source-hashes-epoch3.json",
+        "--messages",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\loader-native-owning-epoch3-artifacts-after.log",
+        "--output",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-loader-epoch3-final-owning-archive-identities.json"
+      ],
+      "exit-code": 0,
+      "started-utc": "2026-10-19T05:54:42.702458+00:00",
+      "log": "loader-native-owning-epoch3-archive-after.log",
+      "bytes": 182,
+      "sha256": "2582072304836bf0b4f9af4816c2ea6d7fa22be44b4f26d0368ac87d89820d11"
+    }
+  ],
+  "junction": {
+    "before": "\\\\?\\C:\\Windows\\Temp\\assist-native-rax-20261010\\src-safeboot-epoch1",
+    "after": "\\\\?\\C:\\Windows\\Temp\\assist-native-rax-20261010\\src-loader-candidate-epoch3"
+  },
+  "verified-source-inputs": 528,
+  "compared-cpp-inputs": 8,
+  "current-step": "archive-after",
+  "child-pid": 6896,
+  "exit-code": 0,
+  "post-source-inputs": 528,
+  "qualification": "Actual current Cargo archives, selected528 inputs, matching archive identities before and after five C++ consumers. Retained Assist Rust ABI184; eight C++ inputs were compared to root ABI264; no whole current-root GUI/plugin/package claim.",
+  "completed-utc": "2026-10-19T05:54:46.989914+00:00"
+}

@@ -1,0 +1,20 @@
+{
+  "receipts": [
+    {
+      "host": "macos",
+      "record": "loader-final-check-macos.json",
+      "checked-envelope-files": 209
+    },
+    {
+      "host": "linux",
+      "record": "loader-final-check-linux.json",
+      "checked-envelope-files": 209
+    },
+    {
+      "host": "windows",
+      "record": "loader-final-check-windows.json",
+      "checked-envelope-files": 209
+    }
+  ],
+  "scope": "Each native/macOS/Linux receipt verifies the original209-file envelope. These six receipt/log files, this scope declaration and the subsequent verbatim whitespace audit are appended afterward and bound by the final envelope; receipts do not claim to have verified themselves."
+}

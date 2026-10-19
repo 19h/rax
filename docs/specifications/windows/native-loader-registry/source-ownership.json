@@ -1,0 +1,22 @@
+{
+  "source-owned-paths": [
+    "src/user/windows/registry.rs",
+    "src/user/windows/registry/tree.rs",
+    "src/user/windows/registry/installed.rs",
+    "src/user/windows/registry/safeboot_tests.rs",
+    "src/user/windows/registry/installed/safeboot_tests.rs",
+    "src/user/windows/native-runtime.md",
+    "src/user/windows/process/sched/tests/services_tests/registry_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/safeboot_registry_tests.rs",
+    "src/user/windows/registry/srp_tests.rs",
+    "src/user/windows/registry/installed/srp_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/srp_registry_tests.rs",
+    "src/user/windows/registry/safer_tests.rs",
+    "src/user/windows/registry/installed/safer_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/safer_registry_tests.rs"
+  ],
+  "base": "9db68d792b386355b87a24b9d10466401ca71731",
+  "evidence-prefix": "docs/specifications/windows/native-loader-registry/",
+  "source-root": "/Users/int/Library/Caches/assist-process-emulation/native-safeboot-option-20261019/loader-source",
+  "scope": "Candidate fixed loader registry roots: SafeBoot Option, SRP GP DLL and now-observed Safer CodeIdentifiers. All remain immutable and bounded; final parity validation pending."
+}

@@ -1,0 +1,35 @@
+{
+  "state": "finished",
+  "pid": 9992,
+  "utc": "2026-10-19T06:09:10.884606+00:00",
+  "steps": [
+    {
+      "name": "native",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\verify-loader-epoch3\\docs\\specifications\\windows\\native-loader-registry\\check_native.py",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\verify-loader-epoch3\\docs\\specifications\\windows\\native-loader-registry"
+      ],
+      "exit-code": 0
+    },
+    {
+      "name": "validation",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\verify-loader-epoch3\\docs\\specifications\\windows\\native-loader-registry\\check_validation.py",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\verify-loader-epoch3"
+      ],
+      "exit-code": 0
+    }
+  ],
+  "checked-envelope-files": 209,
+  "scope": "New verification tree; all extracted proof/runtime documents detach from immutable parent hardlinks.",
+  "complete-inputs": 23283,
+  "exit-code": 0,
+  "log": "loader-final-check-windows.log",
+  "bytes": 1038,
+  "sha256": "da882573863ec594c301287d653017c1efe03dca5bbc475798d2d7167492ab2f",
+  "completed-utc": "2026-10-19T06:09:32.965945+00:00"
+}

@@ -1,0 +1,44 @@
+{
+  "state": "expected-regression-failed",
+  "pid": 10104,
+  "utc": "2026-10-19T05:02:24.528572+00:00",
+  "scope": "Tests-only baseline over the complete timer compiled-source epoch; published9db68d79 product Rust/Cargo inputs are unchanged. Post-gate documentation is not a compiler input.",
+  "immutable-linked-inputs": 23049,
+  "test-only-overrides": [
+    {
+      "path": "src/user/windows/registry/installed.rs",
+      "transfer": "safeboot-baseline-installed.rs",
+      "bytes": 9380,
+      "sha256": "7bfeb78253e3b41ca161c41093299fd3cdb2cd1e019aa85de15d52390698902a"
+    },
+    {
+      "path": "src/user/windows/registry/installed/safeboot_tests.rs",
+      "transfer": "safeboot-baseline-safeboot_tests.rs",
+      "bytes": 1415,
+      "sha256": "eb23b14f687b0a54598cd54e29b39b8d00336292ad3c69bc7af48f1e637cf207"
+    }
+  ],
+  "disk-free-before": 7733645312,
+  "argv": [
+    "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+    "test",
+    "--locked",
+    "--offline",
+    "--no-default-features",
+    "--lib",
+    "installed_safeboot_option_snapshot_matches_independent_native_presence_all_views",
+    "--",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "child-pid": 2796,
+  "command-exit-code": 101,
+  "log": "safeboot-native-baseline-a.log",
+  "log-sha256": "0270d62a3200c6b4e69963891328fa9a887d29debd1b4801c25ca0598f4dac51",
+  "log-bytes": 1994,
+  "disk-free-after": 7733280768,
+  "exit-code": 101,
+  "passed": 0,
+  "failed": 1,
+  "completed-utc": "2026-10-19T05:04:31.140708+00:00"
+}

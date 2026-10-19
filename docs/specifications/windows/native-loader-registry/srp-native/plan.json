@@ -1,0 +1,11 @@
+{
+  "utc": "2026-10-19T05:20:47.372756+00:00",
+  "observed-path": "\\Registry\\Machine\\System\\CurrentControlSet\\Control\\Srp\\GP\\DLL",
+  "observed-access": "0x20019",
+  "turns": [
+    2883915,
+    2886200
+  ],
+  "source-sha256": "4b6649a6a155984239ca60343b5d03e99b60de7dc9bbb4b9f40930ab62ff2653",
+  "scope": "Read-only fixed next-frontier capture. Frozen SafeBoot epoch1 product/source inputs remain unchanged while full gates finish."
+}

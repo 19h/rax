@@ -1,0 +1,4 @@
+{
+  "source-sha256": "14a8a3c6edb84cf4fd5c3bff928a839ffcb413c501848942f9408f8d97e6efda",
+  "scope": "Read-only reference for static NTDLL loader-policy literal; static presence is not execution evidence. No production selection yet."
+}

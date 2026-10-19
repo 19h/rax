@@ -1,0 +1,26 @@
+   Compiling rax v0.1.0 (/Users/int/Library/Caches/assist-process-emulation/native-safeboot-option-20261019/loader-source)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 33.56s
+     Running unittests src/lib.rs (/Users/int/Library/Caches/assist-process-emulation/native-wait-20261019/target-macos-wait-epoch3/debug/deps/rax-754f4d2a527a4423)
+
+running 18 tests
+test user::windows::process::sched::tests::services_tests::registry_tests::safeboot::native_loader_registry_safeboot_absolute_children_serialize_raw_values_and_preserve_outside_frontier_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::registry_tests::safeboot::native_loader_registry_safeboot_known_absent_root_and_children_return_name_not_found_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::registry_tests::safeboot::native_loader_registry_safeboot_opens_relative_paths_with_observed_absence_and_root_lifetime_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::registry_tests::safer::native_loader_registry_safer_absolute_children_serialize_raw_values_and_preserve_outside_frontier_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::registry_tests::safer::native_loader_registry_safer_known_absent_root_and_children_return_name_not_found_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::registry_tests::safer::native_loader_registry_safer_opens_relative_paths_with_observed_absence_and_root_lifetime_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::registry_tests::srp::native_loader_registry_srp_absolute_children_serialize_raw_values_and_preserve_outside_frontier_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::registry_tests::srp::native_loader_registry_srp_known_absent_root_and_children_return_name_not_found_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::registry_tests::srp::native_loader_registry_srp_opens_relative_paths_with_observed_absence_and_root_lifetime_all_abis ... ok
+test user::windows::registry::safeboot_tests::loader_registry_safeboot_absence_is_selected_per_root_and_does_not_admit_siblings ... ok
+test user::windows::registry::safeboot_tests::loader_registry_safeboot_present_tree_keeps_raw_values_and_survives_registry_drop ... ok
+test user::windows::registry::safeboot_tests::loader_registry_safeboot_selections_share_value_budget_and_reject_duplicates ... ok
+test user::windows::registry::safer_tests::loader_registry_safer_absence_is_selected_per_root_and_does_not_admit_siblings ... ok
+test user::windows::registry::safer_tests::loader_registry_safer_present_tree_keeps_raw_values_and_survives_registry_drop ... ok
+test user::windows::registry::safer_tests::loader_registry_safer_selections_share_value_budget_and_reject_duplicates ... ok
+test user::windows::registry::srp_tests::loader_registry_srp_absence_is_selected_per_root_and_does_not_admit_siblings ... ok
+test user::windows::registry::srp_tests::loader_registry_srp_present_tree_keeps_raw_values_and_survives_registry_drop ... ok
+test user::windows::registry::srp_tests::loader_registry_srp_selections_share_value_budget_and_reject_duplicates ... ok
+
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 7992 filtered out; finished in 0.20s
+

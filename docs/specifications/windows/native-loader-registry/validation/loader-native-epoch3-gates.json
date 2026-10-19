@@ -1,0 +1,10 @@
+{
+  "pid": 7596,
+  "utc": "2026-10-19T05:48:51.639453+00:00",
+  "state": "failed",
+  "source-epoch": 3,
+  "steps": [],
+  "exit-code": 1,
+  "error": "Traceback (most recent call last):\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-loader-native-epoch3.py\", line 58, in <module>\n    subprocess.run([sys.executable, '-B', str(S / 'prepare-loader-native-epoch3.py')], check=True)\n    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"subprocess.py\", line 577, in run\nsubprocess.CalledProcessError: Command '['C:\\\\Windows\\\\Temp\\\\assist-native-rax-20261010\\\\python\\\\python.exe', '-B', 'C:\\\\Mac\\\\Home\\\\Downloads\\\\assist-native-allocate-ex-transfer-20261010-2154\\\\prepare-loader-native-epoch3.py']' returned non-zero exit status 2.\n",
+  "completed-utc": "2026-10-19T05:48:51.692854+00:00"
+}

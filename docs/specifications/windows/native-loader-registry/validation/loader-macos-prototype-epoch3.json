@@ -1,0 +1,6 @@
+{
+  "log": "loader-macos-prototype-epoch3.log",
+  "bytes": 3330,
+  "sha256": "2814e54fb4cd3676a4f474c73231b70a435f635166178eac1b51c4a8ee8d6310",
+  "scope": "eighteen shared tests on the immutable final epoch3 Rust inputs"
+}

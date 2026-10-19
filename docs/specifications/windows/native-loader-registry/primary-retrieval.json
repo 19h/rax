@@ -1,0 +1,6 @@
+{
+  "url": "https://learn.microsoft.com/en-us/windows/win32/winprog64/shared-registry-keys",
+  "retrieved": "2026-10-19T05:05:44.799515+00:00",
+  "sha256": "17f371043070ad9ead9c65b26a0718f99e8e37776c674ecbdc69ec107afc624c",
+  "use": "SYSTEM inherits shared HKLM behavior; child keys inherit parent mapping unless listed. Capture/data behavior is independently checked with native current-host probes."
+}

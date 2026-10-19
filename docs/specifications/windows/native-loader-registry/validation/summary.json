@@ -1,0 +1,93 @@
+{
+  "utc": "2026-10-19T06:08:12.311943+00:00",
+  "source-epoch": 3,
+  "source-inputs": 23283,
+  "source-bytes": 1657974640,
+  "core-counts": {
+    "macos": [
+      8008,
+      0,
+      2
+    ],
+    "linux": [
+      8002,
+      0,
+      2
+    ],
+    "windows": [
+      7461,
+      5,
+      2
+    ]
+  },
+  "shared-focus": 18,
+  "windows-focus": 27,
+  "capi-each": 183,
+  "native-cases": 960,
+  "native-negative-controls": 18,
+  "owning-selected-inputs": 528,
+  "ordinary-programs": {
+    "actual-core": {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-owned\\debug\\deps\\librax-934115059aa64c85.rlib",
+      "bytes": 503515446,
+      "sha256": "1e1a94d1cd59c4225dd1d85f1391083fdac087c2dcf73a5ea55b24801e170c18",
+      "members": 20,
+      "structural-member-walk": "pass"
+    },
+    "programs": [
+      {
+        "program": {
+          "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-loader-candidate-epoch3\\tests\\fixtures\\user\\windows\\bin\\arm64\\smoke.exe",
+          "bytes": 3584,
+          "sha256": "325730e33e981784bff4a60bc6f342cf95c2735e85042c89748fc471cbe7781b"
+        },
+        "log": "loader-owner-epoch3-0.log",
+        "log-sha256": "d6805119d43017557b6bd7cac9cfb7c6b4a4fd3f7cf393d0384defea4f71dd97",
+        "controller-exit-code": 0,
+        "former-stop-turn": 2883900,
+        "new-terminal-turn": 2883974,
+        "additional-observer-turns": 74,
+        "terminal-result": "Complete(Internal(\"native NTDLL service NtQueryInformationToken: Unimplemented(\\\"NtQueryInformationToken: NtQueryInformationToken class 1\\\")\"))",
+        "guest-exit-success": false,
+        "native-before": {
+          "exit-code": 0,
+          "stdout-hex": "",
+          "stderr-hex": ""
+        },
+        "native-after": {
+          "exit-code": 0,
+          "stdout-hex": "",
+          "stderr-hex": ""
+        }
+      },
+      {
+        "program": {
+          "path": "C:\\Windows\\System32\\whoami.exe",
+          "bytes": 84480,
+          "sha256": "48fde190b002a5a4c4b8b19db014377263ba94220f23a4f0a117fec082d46bf6"
+        },
+        "log": "loader-owner-epoch3-1.log",
+        "log-sha256": "8e3a22c580d381a39eb18a1ce2ab202d8af04858a0abdfdbb27e377fcfbc878c",
+        "controller-exit-code": 0,
+        "former-stop-turn": 2886185,
+        "new-terminal-turn": 2886259,
+        "additional-observer-turns": 74,
+        "terminal-result": "Complete(Internal(\"native NTDLL service NtQueryInformationToken: Unimplemented(\\\"NtQueryInformationToken: NtQueryInformationToken class 1\\\")\"))",
+        "guest-exit-success": false,
+        "native-before": {
+          "exit-code": 0,
+          "stdout-hex": "6e7420617574686f726974795c73797374656d0d0a",
+          "stderr-hex": ""
+        },
+        "native-after": {
+          "exit-code": 0,
+          "stdout-hex": "6e7420617574686f726974795c73797374656d0d0a",
+          "stderr-hex": ""
+        }
+      }
+    ],
+    "ordinary-guest-exit-success": false,
+    "scope": "Both guests pass all three fixed registry roots and reach the next unsupported token query. Native controls exit0; controller exit0 does not mean guest success."
+  },
+  "full-process-objective-complete": false
+}

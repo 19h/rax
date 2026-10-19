@@ -1055,3 +1055,12 @@ fn native_registry_open_odd_name_is_rejected_before_native_text_probe_all_abis()
         }
     }
 }
+
+#[path = "safeboot_registry_tests.rs"]
+mod safeboot;
+
+#[path = "srp_registry_tests.rs"]
+mod srp;
+
+#[path = "safer_registry_tests.rs"]
+mod safer;

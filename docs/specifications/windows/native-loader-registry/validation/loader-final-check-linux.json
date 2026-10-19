@@ -1,0 +1,29 @@
+{
+  "state": "finished",
+  "host": "linux",
+  "argv": [
+    "docker",
+    "run",
+    "--rm",
+    "--platform",
+    "linux/amd64",
+    "-v",
+    "/Users/int/Library/Caches/assist-process-emulation/native-safeboot-option-20261019/loader-source:/source:ro",
+    "-v",
+    "/Users/int/Library/Caches/assist-process-emulation/native-safeboot-option-20261019:/validation:ro",
+    "-w",
+    "/source",
+    "assist-rax-validation-rustfmt:1.95-bullseye-20261015",
+    "python3",
+    "-B",
+    "/validation/run-loader-proof-checks.py",
+    "/source"
+  ],
+  "checked-envelope-files": 209,
+  "utc": "2026-10-19T06:09:10.681088+00:00",
+  "exit-code": 0,
+  "log": "loader-final-check-linux.log",
+  "bytes": 1000,
+  "sha256": "10323e4faa790af18442047b9ed7f48774a22a12ca41572dcb46388b2a65203e",
+  "completed-utc": "2026-10-19T06:09:17.668990+00:00"
+}

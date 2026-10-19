@@ -2526,3 +2526,36 @@ The actual Windows owning core is503,289,084 bytes, SHA-256
 `082390d8d0aca0c04aa96dc484b1111c6a3bb756ae39faad4ca75c4b4a227e76`. Sources, captures, logs, commands, assumptions, complete
 counts and portable verification are recorded under
 `docs/specifications/windows/native-timer2-arm/`.
+
+
+## Fixed loader registry roots (2026-10-19)
+
+Native selection additionally captures SafeBoot/Option, Srp/GP/DLL and
+Safer/CodeIdentifiers as complete-or-known-absent immutable trees. All three
+roots were observed during ordinary Windows execution. Existing per-root tree
+bounds, aggregate value budgets, ordinal folding, raw values and retained key
+handle ownership remain unchanged. Only fixed-root ERROR_FILE_NOT_FOUND means
+absence; other root errors or disappearing enumerated children abort capture.
+Guest queries remain read-only; host write permission is not forwarded.
+
+Three independent native capture families bind960cases across four ABI profiles
+on one ARM64 kernel;18corrupted capture copies are rejected. SafeBoot and SRP
+are absent on this subject; Safer is present. The product dynamically captures
+present or absent state. Eighteen shared and27total Windows focused tests pass.
+Full unfiltered core pass/fail/ignore is macOS8008/0/2,Linux8002/0/2,
+Windows7461/5/2, retaining the exact five established Windows lowerer failures.
+CAPI183, process integration and all-target checks pass across all three hosts.
+Actual retained Assist core/carrier archives and C++ consumers bind528selected
+inputs with complete archive walks before/after links. The retained Rust ABI184
+and C++ input comparison to root ABI264 do not establish whole-current-root
+GUI/plugin/package coverage. Public RAX C API remains1.14.0.
+
+Both ordinary Windows guests pass all three roots and advance74normally
+executed observer turns to unsupported NtQueryInformationToken class1, without
+successful guest exit. Native controls exit0 with stable output. The exact
+validated owning core is503515446bytes, SHA256
+`1e1a94d1cd59c4225dd1d85f1391083fdac087c2dcf73a5ea55b24801e170c18`. Sources, executable, modules, programs and archive remain
+stable. The complete pre-gate epoch binds23283inputs/1657974640bytes; this
+engineering append is separately bound. Sources, assumptions, known limits,
+complete counts and portable verification are under
+`docs/specifications/windows/native-loader-registry/`.

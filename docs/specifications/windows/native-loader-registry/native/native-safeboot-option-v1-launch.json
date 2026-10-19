@@ -1,0 +1,9 @@
+{
+  "pid": 9996,
+  "utc": "2026-10-19T04:34:57.315778+00:00",
+  "state": "finished",
+  "scope": "Read-only opens of one fixed system registry key and bounded literal variants; no registry mutation or security policy changes.",
+  "child-pid": 636,
+  "exit-code": 0,
+  "completed-utc": "2026-10-19T04:35:07.130685+00:00"
+}

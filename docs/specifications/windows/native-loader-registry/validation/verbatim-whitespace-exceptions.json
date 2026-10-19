@@ -1,0 +1,2042 @@
+{
+  "files": [
+    {
+      "path": "docs/specifications/windows/native-loader-registry/native/native-safeboot-option-v1-arm64-build.log",
+      "bytes": 31,
+      "sha256": "14f6f48f785509e67f9cbc94d5d3e9feee9f70911ab0046868e30cbc4dba7270",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/native/native-safeboot-option-v1-arm64-source-after.json",
+      "bytes": 246,
+      "sha256": "3c5566f9276edcf0f89dcac9f800711cff8a2f9f03e8bf2a892a94485e72bddc",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/native/native-safeboot-option-v1-arm64.log",
+      "bytes": 6164,
+      "sha256": "2ff231fc2041e13e2994a5b806847d44250feb6f0888dc8f21e96005c14d600b",
+      "warning-count": 82,
+      "line-ranges": [
+        [
+          1,
+          82
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/native/native-safeboot-option-v1-controller.log",
+      "bytes": 306,
+      "sha256": "a488fd1e3b9bfe84c02e0c3fb3b3646c71644ae1568d060ca8d9e2e5cfb56b9b",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/native/native-safeboot-option-v1-driver.log",
+      "bytes": 964,
+      "sha256": "81157a84a41f6d110e3d629b61f37581444b3f76aa427bed1014db5bce060e17",
+      "warning-count": 16,
+      "line-ranges": [
+        [
+          1,
+          16
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/native/native-safeboot-option-v1-launch.json",
+      "bytes": 330,
+      "sha256": "8d14882ae2a233b793613d012ab5928ae481e39a4b12607582129700b1f84a67",
+      "warning-count": 9,
+      "line-ranges": [
+        [
+          1,
+          9
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/native/native-safeboot-option-v1-modules-after.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/native/native-safeboot-option-v1-modules-before.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/native/native-safeboot-option-v1-outcomes.json",
+      "bytes": 508,
+      "sha256": "138468e1f9396b92087ecddc25ae466e4e8e1b2ad04e31de9194e7594d47c9ce",
+      "warning-count": 22,
+      "line-ranges": [
+        [
+          1,
+          22
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/native/native-safeboot-option-v1-x64-build.log",
+      "bytes": 31,
+      "sha256": "14f6f48f785509e67f9cbc94d5d3e9feee9f70911ab0046868e30cbc4dba7270",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/native/native-safeboot-option-v1-x64-source-after.json",
+      "bytes": 244,
+      "sha256": "d27d64dc773bd16c74a0d5937e62ad3ef6c9a460b90da27b5cce81914fe0a0af",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/native/native-safeboot-option-v1-x64.log",
+      "bytes": 6162,
+      "sha256": "9f5e6c4e2c0a13e6aa9acb7671cbbca5f90b7269c6ff886a947632430e32b6dd",
+      "warning-count": 82,
+      "line-ranges": [
+        [
+          1,
+          82
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/native/native-safeboot-option-v1-x86-build.log",
+      "bytes": 31,
+      "sha256": "14f6f48f785509e67f9cbc94d5d3e9feee9f70911ab0046868e30cbc4dba7270",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/native/native-safeboot-option-v1-x86-laa-build.log",
+      "bytes": 31,
+      "sha256": "14f6f48f785509e67f9cbc94d5d3e9feee9f70911ab0046868e30cbc4dba7270",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/native/native-safeboot-option-v1-x86-laa-source-after.json",
+      "bytes": 248,
+      "sha256": "f9d7a10c8fd10e375df88e85c1b09f78b075e74fb3ae29867ec2a6ab52b52da7",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/native/native-safeboot-option-v1-x86-laa.log",
+      "bytes": 6166,
+      "sha256": "a57a28e17f04cf59e365f0bb62bd0b3955d240f5c6c9cad06de00445771e6513",
+      "warning-count": 82,
+      "line-ranges": [
+        [
+          1,
+          82
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/native/native-safeboot-option-v1-x86-source-after.json",
+      "bytes": 244,
+      "sha256": "fe54aa4f4590b7560ddc7a6f2392308ee0447a40cac11ee99f78ee79bfe7d1ee",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/native/native-safeboot-option-v1-x86.log",
+      "bytes": 6162,
+      "sha256": "ba14685afb1af95a2f78e71ca6cde2ffb4e170c1d893dcc2ebd7dafef7d4514f",
+      "warning-count": 82,
+      "line-ranges": [
+        [
+          1,
+          82
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/safeboot-macos-prototype-a.log",
+      "bytes": 1695,
+      "sha256": "0dacdb98bd491738b4fb470eba9b491c796d7016ca2a44461d8de6521b9b8e6f",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          16,
+          16
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/safeboot-native-baseline-a.json",
+      "bytes": 1568,
+      "sha256": "903348ef17f3419a9106ace173033bdc3f21d6bf702839af85cce32c2d2ae9a1",
+      "warning-count": 44,
+      "line-ranges": [
+        [
+          1,
+          44
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/safeboot-native-baseline-a.log",
+      "bytes": 1994,
+      "sha256": "0270d62a3200c6b4e69963891328fa9a887d29debd1b4801c25ca0598f4dac51",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          24,
+          24
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/safer-native/controller.log",
+      "bytes": 307,
+      "sha256": "24040d2e61875fc5bd69c56da78a0fc0821e5c6bd806c1768ba7bb58624b8f5a",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/safer-native/native-safer-code-identifiers-v1-arm64-build.log",
+      "bytes": 38,
+      "sha256": "062a2e03e56480b8d8144753464a56de23b957fb9d100c29f675f941aea74bc9",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/safer-native/native-safer-code-identifiers-v1-arm64-source-after.json",
+      "bytes": 260,
+      "sha256": "c4de28fe21d987c34b9c223e90456af352c50ce5ded40a264fc1e008a6e387fd",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/safer-native/native-safer-code-identifiers-v1-arm64.log",
+      "bytes": 6164,
+      "sha256": "1e6b997998ed674bf41193a1680267e08c4a52a1066b7011c688f690a80e2ee5",
+      "warning-count": 82,
+      "line-ranges": [
+        [
+          1,
+          82
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/safer-native/native-safer-code-identifiers-v1-driver.log",
+      "bytes": 964,
+      "sha256": "81157a84a41f6d110e3d629b61f37581444b3f76aa427bed1014db5bce060e17",
+      "warning-count": 16,
+      "line-ranges": [
+        [
+          1,
+          16
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/safer-native/native-safer-code-identifiers-v1-launch.json",
+      "bytes": 331,
+      "sha256": "e7a2bd86595e53f1c23b28cda74163a5abb261c4211b1839c4e7267ed5641605",
+      "warning-count": 9,
+      "line-ranges": [
+        [
+          1,
+          9
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/safer-native/native-safer-code-identifiers-v1-modules-after.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/safer-native/native-safer-code-identifiers-v1-modules-before.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/safer-native/native-safer-code-identifiers-v1-outcomes.json",
+      "bytes": 536,
+      "sha256": "7d9c645bc394ce8c12d66c90fe3cb86c3b276e22cb1aff99a02e5ebd7aa1a071",
+      "warning-count": 22,
+      "line-ranges": [
+        [
+          1,
+          22
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/safer-native/native-safer-code-identifiers-v1-x64-build.log",
+      "bytes": 38,
+      "sha256": "062a2e03e56480b8d8144753464a56de23b957fb9d100c29f675f941aea74bc9",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/safer-native/native-safer-code-identifiers-v1-x64-source-after.json",
+      "bytes": 258,
+      "sha256": "1df71460ce09afecfc63c52757265d2a03cdfd52edaccec0863506ece004fb49",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/safer-native/native-safer-code-identifiers-v1-x64.log",
+      "bytes": 6162,
+      "sha256": "274b50f019bfa1e726eccd062c00559ae699af69cf67a3c3a90c9b4ac7e68d44",
+      "warning-count": 82,
+      "line-ranges": [
+        [
+          1,
+          82
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/safer-native/native-safer-code-identifiers-v1-x86-build.log",
+      "bytes": 38,
+      "sha256": "062a2e03e56480b8d8144753464a56de23b957fb9d100c29f675f941aea74bc9",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/safer-native/native-safer-code-identifiers-v1-x86-laa-build.log",
+      "bytes": 38,
+      "sha256": "062a2e03e56480b8d8144753464a56de23b957fb9d100c29f675f941aea74bc9",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/safer-native/native-safer-code-identifiers-v1-x86-laa-source-after.json",
+      "bytes": 262,
+      "sha256": "f302128f77fe5bda1a63fc69352f51f267e44f1d297a4a4e5a2b81b008622e4c",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/safer-native/native-safer-code-identifiers-v1-x86-laa.log",
+      "bytes": 6166,
+      "sha256": "901a49cbadae69d2c77463a03645fd2c019d112d5e7e6d93129d54f397996d9e",
+      "warning-count": 82,
+      "line-ranges": [
+        [
+          1,
+          82
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/safer-native/native-safer-code-identifiers-v1-x86-source-after.json",
+      "bytes": 258,
+      "sha256": "c3ec6ee7817514a4a7d02ec2d36dee5d16760e2ac2495d52aa3e02fe0befd3da",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/safer-native/native-safer-code-identifiers-v1-x86.log",
+      "bytes": 6162,
+      "sha256": "646035a058973d7c7dcabf45ee458beff23623d275acc100fe22289f1c51de4f",
+      "warning-count": 82,
+      "line-ranges": [
+        [
+          1,
+          82
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/shared-registry-keys.html",
+      "bytes": 66038,
+      "sha256": "17f371043070ad9ead9c65b26a0718f99e8e37776c674ecbdc69ec107afc624c",
+      "warning-count": 142,
+      "line-ranges": [
+        [
+          11,
+          11
+        ],
+        [
+          19,
+          19
+        ],
+        [
+          33,
+          33
+        ],
+        [
+          39,
+          39
+        ],
+        [
+          42,
+          42
+        ],
+        [
+          44,
+          44
+        ],
+        [
+          46,
+          46
+        ],
+        [
+          48,
+          48
+        ],
+        [
+          50,
+          50
+        ],
+        [
+          52,
+          52
+        ],
+        [
+          54,
+          54
+        ],
+        [
+          56,
+          56
+        ],
+        [
+          58,
+          58
+        ],
+        [
+          60,
+          60
+        ],
+        [
+          62,
+          62
+        ],
+        [
+          64,
+          64
+        ],
+        [
+          66,
+          66
+        ],
+        [
+          68,
+          68
+        ],
+        [
+          70,
+          70
+        ],
+        [
+          72,
+          72
+        ],
+        [
+          74,
+          74
+        ],
+        [
+          76,
+          76
+        ],
+        [
+          78,
+          78
+        ],
+        [
+          80,
+          80
+        ],
+        [
+          82,
+          82
+        ],
+        [
+          84,
+          84
+        ],
+        [
+          86,
+          86
+        ],
+        [
+          88,
+          88
+        ],
+        [
+          90,
+          90
+        ],
+        [
+          92,
+          92
+        ],
+        [
+          94,
+          94
+        ],
+        [
+          96,
+          96
+        ],
+        [
+          98,
+          98
+        ],
+        [
+          100,
+          100
+        ],
+        [
+          102,
+          102
+        ],
+        [
+          104,
+          104
+        ],
+        [
+          106,
+          106
+        ],
+        [
+          108,
+          108
+        ],
+        [
+          110,
+          110
+        ],
+        [
+          112,
+          112
+        ],
+        [
+          114,
+          114
+        ],
+        [
+          116,
+          116
+        ],
+        [
+          118,
+          118
+        ],
+        [
+          120,
+          120
+        ],
+        [
+          122,
+          122
+        ],
+        [
+          124,
+          124
+        ],
+        [
+          126,
+          126
+        ],
+        [
+          168,
+          168
+        ],
+        [
+          170,
+          170
+        ],
+        [
+          174,
+          174
+        ],
+        [
+          220,
+          220
+        ],
+        [
+          223,
+          223
+        ],
+        [
+          225,
+          225
+        ],
+        [
+          235,
+          235
+        ],
+        [
+          238,
+          238
+        ],
+        [
+          241,
+          241
+        ],
+        [
+          245,
+          245
+        ],
+        [
+          255,
+          255
+        ],
+        [
+          309,
+          309
+        ],
+        [
+          312,
+          312
+        ],
+        [
+          316,
+          316
+        ],
+        [
+          319,
+          319
+        ],
+        [
+          327,
+          327
+        ],
+        [
+          374,
+          374
+        ],
+        [
+          385,
+          385
+        ],
+        [
+          412,
+          412
+        ],
+        [
+          420,
+          420
+        ],
+        [
+          426,
+          426
+        ],
+        [
+          429,
+          429
+        ],
+        [
+          453,
+          453
+        ],
+        [
+          458,
+          458
+        ],
+        [
+          464,
+          464
+        ],
+        [
+          478,
+          478
+        ],
+        [
+          494,
+          494
+        ],
+        [
+          509,
+          509
+        ],
+        [
+          523,
+          523
+        ],
+        [
+          538,
+          538
+        ],
+        [
+          552,
+          552
+        ],
+        [
+          568,
+          569
+        ],
+        [
+          584,
+          584
+        ],
+        [
+          600,
+          601
+        ],
+        [
+          608,
+          608
+        ],
+        [
+          620,
+          620
+        ],
+        [
+          622,
+          622
+        ],
+        [
+          639,
+          639
+        ],
+        [
+          654,
+          655
+        ],
+        [
+          659,
+          659
+        ],
+        [
+          662,
+          662
+        ],
+        [
+          683,
+          683
+        ],
+        [
+          685,
+          685
+        ],
+        [
+          692,
+          692
+        ],
+        [
+          699,
+          699
+        ],
+        [
+          714,
+          714
+        ],
+        [
+          716,
+          716
+        ],
+        [
+          718,
+          718
+        ],
+        [
+          740,
+          740
+        ],
+        [
+          1120,
+          1120
+        ],
+        [
+          1126,
+          1126
+        ],
+        [
+          1143,
+          1144
+        ],
+        [
+          1220,
+          1220
+        ],
+        [
+          1288,
+          1288
+        ],
+        [
+          1295,
+          1295
+        ],
+        [
+          1297,
+          1297
+        ],
+        [
+          1303,
+          1303
+        ],
+        [
+          1310,
+          1310
+        ],
+        [
+          1317,
+          1317
+        ],
+        [
+          1324,
+          1324
+        ],
+        [
+          1326,
+          1326
+        ],
+        [
+          1348,
+          1348
+        ],
+        [
+          1350,
+          1350
+        ],
+        [
+          1358,
+          1358
+        ],
+        [
+          1365,
+          1365
+        ],
+        [
+          1374,
+          1374
+        ],
+        [
+          1376,
+          1376
+        ],
+        [
+          1449,
+          1449
+        ],
+        [
+          1517,
+          1517
+        ],
+        [
+          1523,
+          1523
+        ],
+        [
+          1526,
+          1526
+        ],
+        [
+          1545,
+          1545
+        ],
+        [
+          1558,
+          1558
+        ],
+        [
+          1593,
+          1593
+        ],
+        [
+          1596,
+          1596
+        ],
+        [
+          1708,
+          1708
+        ],
+        [
+          1718,
+          1718
+        ],
+        [
+          1720,
+          1720
+        ],
+        [
+          1730,
+          1730
+        ],
+        [
+          1732,
+          1732
+        ],
+        [
+          1742,
+          1742
+        ],
+        [
+          1744,
+          1744
+        ],
+        [
+          1754,
+          1754
+        ],
+        [
+          1756,
+          1756
+        ],
+        [
+          1766,
+          1766
+        ],
+        [
+          1768,
+          1768
+        ],
+        [
+          1778,
+          1778
+        ],
+        [
+          1780,
+          1780
+        ],
+        [
+          1790,
+          1790
+        ],
+        [
+          1792,
+          1792
+        ],
+        [
+          1802,
+          1802
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/srp-native/controller.log",
+      "bytes": 307,
+      "sha256": "4f4e8eea3e22a1e77f94d608d7240782c9f117a9ae251e5643d11bdea9394038",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/srp-native/native-srp-gp-dll-v1-arm64-build.log",
+      "bytes": 26,
+      "sha256": "debf85dca0e0caccfc133e64828a91c994f353d2e7db0f7303e4168f571c9a9d",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/srp-native/native-srp-gp-dll-v1-arm64-source-after.json",
+      "bytes": 236,
+      "sha256": "86b91075a3fc2c25d8f7056b563e7184edc1f2c4e5b150b11c618570e7dac255",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/srp-native/native-srp-gp-dll-v1-arm64.log",
+      "bytes": 6164,
+      "sha256": "2ff231fc2041e13e2994a5b806847d44250feb6f0888dc8f21e96005c14d600b",
+      "warning-count": 82,
+      "line-ranges": [
+        [
+          1,
+          82
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/srp-native/native-srp-gp-dll-v1-driver.log",
+      "bytes": 964,
+      "sha256": "81157a84a41f6d110e3d629b61f37581444b3f76aa427bed1014db5bce060e17",
+      "warning-count": 16,
+      "line-ranges": [
+        [
+          1,
+          16
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/srp-native/native-srp-gp-dll-v1-launch.json",
+      "bytes": 331,
+      "sha256": "4d1308192c0653baf62d25d47e7a6f6646615be74bfc941e7beeda28474cd9fc",
+      "warning-count": 9,
+      "line-ranges": [
+        [
+          1,
+          9
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/srp-native/native-srp-gp-dll-v1-modules-after.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/srp-native/native-srp-gp-dll-v1-modules-before.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/srp-native/native-srp-gp-dll-v1-outcomes.json",
+      "bytes": 488,
+      "sha256": "1794557db859899baf6adbed69b652fe4ee00cb0bd6999006f0e598147c805e7",
+      "warning-count": 22,
+      "line-ranges": [
+        [
+          1,
+          22
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/srp-native/native-srp-gp-dll-v1-x64-build.log",
+      "bytes": 26,
+      "sha256": "debf85dca0e0caccfc133e64828a91c994f353d2e7db0f7303e4168f571c9a9d",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/srp-native/native-srp-gp-dll-v1-x64-source-after.json",
+      "bytes": 234,
+      "sha256": "dd433833caff5c27af2d3fe307cec8c16cd84b0bf2dfd92915133f1202b2d64a",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/srp-native/native-srp-gp-dll-v1-x64.log",
+      "bytes": 6162,
+      "sha256": "9f5e6c4e2c0a13e6aa9acb7671cbbca5f90b7269c6ff886a947632430e32b6dd",
+      "warning-count": 82,
+      "line-ranges": [
+        [
+          1,
+          82
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/srp-native/native-srp-gp-dll-v1-x86-build.log",
+      "bytes": 26,
+      "sha256": "debf85dca0e0caccfc133e64828a91c994f353d2e7db0f7303e4168f571c9a9d",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/srp-native/native-srp-gp-dll-v1-x86-laa-build.log",
+      "bytes": 26,
+      "sha256": "debf85dca0e0caccfc133e64828a91c994f353d2e7db0f7303e4168f571c9a9d",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/srp-native/native-srp-gp-dll-v1-x86-laa-source-after.json",
+      "bytes": 238,
+      "sha256": "f0acd5e6ab59086d643e06af737668fb0b3a8905c404e49cccf5a17f7e98a086",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/srp-native/native-srp-gp-dll-v1-x86-laa.log",
+      "bytes": 6166,
+      "sha256": "a57a28e17f04cf59e365f0bb62bd0b3955d240f5c6c9cad06de00445771e6513",
+      "warning-count": 82,
+      "line-ranges": [
+        [
+          1,
+          82
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/srp-native/native-srp-gp-dll-v1-x86-source-after.json",
+      "bytes": 234,
+      "sha256": "e636e62416c2a7af52425877880e625c8714aedde4326bdacf6f20ccc52d24a4",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/srp-native/native-srp-gp-dll-v1-x86.log",
+      "bytes": 6162,
+      "sha256": "ba14685afb1af95a2f78e71ca6cde2ffb4e170c1d893dcc2ebd7dafef7d4514f",
+      "warning-count": 82,
+      "line-ranges": [
+        [
+          1,
+          82
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/validation/loader-candidate-epoch2-observer-b.json",
+      "bytes": 6057,
+      "sha256": "661d6bf022c06acb082f283ff57d9cfe23d9b20550647cb62f973336af10428e",
+      "warning-count": 155,
+      "line-ranges": [
+        [
+          1,
+          155
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/validation/loader-candidate-epoch3-run.json",
+      "bytes": 6477,
+      "sha256": "46670c0c1a68a09de242821725f5abeedd2f0c5e43921b0c086c5dd9b024a618",
+      "warning-count": 170,
+      "line-ranges": [
+        [
+          1,
+          170
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/validation/loader-final-check-windows.json",
+      "bytes": 1396,
+      "sha256": "8ed92ab131bd0e0eee9c2842a566e3216f25d7ce22033b443120baf8b59db45a",
+      "warning-count": 35,
+      "line-ranges": [
+        [
+          1,
+          35
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/validation/loader-final-check-windows.log",
+      "bytes": 1038,
+      "sha256": "da882573863ec594c301287d653017c1efe03dca5bbc475798d2d7167492ab2f",
+      "warning-count": 38,
+      "line-ranges": [
+        [
+          1,
+          38
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/validation/loader-linux-epoch3-capi.log",
+      "bytes": 14068,
+      "sha256": "7b08a2759f59702e519a2892315222e22334b44203769356967f38941f874166",
+      "warning-count": 2,
+      "line-ranges": [
+        [
+          97,
+          97
+        ],
+        [
+          205,
+          205
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF.",
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/validation/loader-linux-epoch3-focus.log",
+      "bytes": 3378,
+      "sha256": "f831be17d1e3f805312f168c53b4d0d06607ee8dd77f8597f18729df8988d4fc",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          28,
+          28
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/validation/loader-linux-epoch3-full.log",
+      "bytes": 836987,
+      "sha256": "1dfd4d4544b1c934f4a6a70a284a038a9b0a35465790d7800498ce43a9b3f1d4",
+      "warning-count": 6,
+      "line-ranges": [
+        [
+          1967,
+          1967
+        ],
+        [
+          5471,
+          5471
+        ],
+        [
+          5492,
+          5492
+        ],
+        [
+          5503,
+          5503
+        ],
+        [
+          5517,
+          5517
+        ],
+        [
+          8367,
+          8367
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF.",
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/validation/loader-linux-epoch3-integration.log",
+      "bytes": 35852,
+      "sha256": "35295c59e39845f259f57bad7c7fc4e52dd1531744250c9c333256a5c5fa7627",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          558,
+          558
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/validation/loader-macos-epoch3-capi.log",
+      "bytes": 14302,
+      "sha256": "33c445c8574b08d1345ee959a57e0bcfc3d9517d5cc274dcab40120d41e934bf",
+      "warning-count": 2,
+      "line-ranges": [
+        [
+          97,
+          97
+        ],
+        [
+          205,
+          205
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF.",
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/validation/loader-macos-epoch3-full.log",
+      "bytes": 837390,
+      "sha256": "60d26be2399be6a9bb4b4e5a14d245d975567bc3f839e04a0ecfe590e541df21",
+      "warning-count": 6,
+      "line-ranges": [
+        [
+          1936,
+          1936
+        ],
+        [
+          5422,
+          5422
+        ],
+        [
+          5443,
+          5443
+        ],
+        [
+          5454,
+          5454
+        ],
+        [
+          5468,
+          5468
+        ],
+        [
+          8338,
+          8338
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF.",
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/validation/loader-macos-epoch3-integration.log",
+      "bytes": 36061,
+      "sha256": "9eadc72a9845f7ac54cac755ee81b290cb69233f4625be2834ffc3ec55f4bbe3",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          558,
+          558
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/validation/loader-macos-prototype-epoch3.log",
+      "bytes": 3330,
+      "sha256": "2814e54fb4cd3676a4f474c73231b70a435f635166178eac1b51c4a8ee8d6310",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          26,
+          26
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/validation/loader-native-epoch3-gates.json",
+      "bytes": 918,
+      "sha256": "c7f0f8301bcfd4bc770ef070ef422825cd4ae776f025c402322651a0b6438c4a",
+      "warning-count": 10,
+      "line-ranges": [
+        [
+          1,
+          10
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/validation/loader-native-epoch3b-capi.log",
+      "bytes": 15041,
+      "sha256": "d6d0da9e55d5ee8285ea1bbd765460113866ff5c77478bde0181431cd2eef2f1",
+      "warning-count": 2,
+      "line-ranges": [
+        [
+          115,
+          115
+        ],
+        [
+          223,
+          223
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF.",
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/validation/loader-native-epoch3b-focus.log",
+      "bytes": 5653,
+      "sha256": "3bfe2ecd9de4e3d477103d086382e2efd3f85144e74d0b0d9f2e608269b3e98e",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          56,
+          56
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/validation/loader-native-epoch3b-full.log",
+      "bytes": 801652,
+      "sha256": "2b79446766f2c81f56b585464b1be4a5503d714cae245a6c0df19bf7ae086548",
+      "warning-count": 11,
+      "line-ranges": [
+        [
+          1950,
+          1950
+        ],
+        [
+          4866,
+          4866
+        ],
+        [
+          4876,
+          4876
+        ],
+        [
+          4883,
+          4883
+        ],
+        [
+          4889,
+          4889
+        ],
+        [
+          5418,
+          5418
+        ],
+        [
+          5460,
+          5460
+        ],
+        [
+          5481,
+          5481
+        ],
+        [
+          5492,
+          5492
+        ],
+        [
+          5506,
+          5506
+        ],
+        [
+          6272,
+          6272
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/validation/loader-native-epoch3b-gates.json",
+      "bytes": 5968,
+      "sha256": "eca555c9f5d9489452b3bec983d6dea193d1fd95919dd1eef77415424c5a0d39",
+      "warning-count": 163,
+      "line-ranges": [
+        [
+          1,
+          163
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/validation/loader-native-epoch3b-integration.log",
+      "bytes": 1873,
+      "sha256": "195f7f015bdb6a6066101698ff7250287417e9d153a4590fcfe85f95a4bcff17",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          36,
+          36
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/validation/loader-native-owning-epoch3-archive-after.log",
+      "bytes": 182,
+      "sha256": "2582072304836bf0b4f9af4816c2ea6d7fa22be44b4f26d0368ac87d89820d11",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/validation/loader-native-owning-epoch3-archive-before.log",
+      "bytes": 182,
+      "sha256": "2582072304836bf0b4f9af4816c2ea6d7fa22be44b4f26d0368ac87d89820d11",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/validation/loader-native-owning-epoch3-cpp.log",
+      "bytes": 3385,
+      "sha256": "42ad3beed5abd6c9306918bdbcf21bd3f94ee158a5131d29ceed87bfa40e159b",
+      "warning-count": 54,
+      "line-ranges": [
+        [
+          1,
+          54
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/validation/loader-native-owning-epoch3.json",
+      "bytes": 5150,
+      "sha256": "d81575aff384df19fffbc48445ab7b1dd1a1dedab78cc56ae01445be74f55478",
+      "warning-count": 125,
+      "line-ranges": [
+        [
+          1,
+          125
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/validation/loader-owner-epoch3-build.log",
+      "bytes": 241,
+      "sha256": "77027ce0b25d2e321d7341c6fe2a80236a2837874cb1de4f2079588d47f29dc9",
+      "warning-count": 4,
+      "line-ranges": [
+        [
+          1,
+          4
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/validation/loader-owner-epoch3-launch.json",
+      "bytes": 7844,
+      "sha256": "908c59ef16452e89688d7caa05b700fa9a18f6b4e1b2b16c476c6e356c974ff6",
+      "warning-count": 211,
+      "line-ranges": [
+        [
+          1,
+          211
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/validation/native-loader-epoch3-final-owning-archive-identities.json",
+      "bytes": 108298,
+      "sha256": "0dc8c148cfef5ccf7704c22ecbaec0ae13bffb9a0170f5cb84b76c11523b5877",
+      "warning-count": 2737,
+      "line-ranges": [
+        [
+          1,
+          2737
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/validation/native-loader-epoch3-pre-cpp-archives.json",
+      "bytes": 108301,
+      "sha256": "1f2ce729abfa02f6a93cda4eee9298aa5bd754b7b711316cefc6bb5f8e33b587",
+      "warning-count": 2737,
+      "line-ranges": [
+        [
+          1,
+          2737
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/validation/safeboot-native-baseline-a.json",
+      "bytes": 1568,
+      "sha256": "903348ef17f3419a9106ace173033bdc3f21d6bf702839af85cce32c2d2ae9a1",
+      "warning-count": 44,
+      "line-ranges": [
+        [
+          1,
+          44
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/validation/safeboot-native-baseline-a.log",
+      "bytes": 1994,
+      "sha256": "0270d62a3200c6b4e69963891328fa9a887d29debd1b4801c25ca0598f4dac51",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          24,
+          24
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/validation/timer2-native-host-identity.json",
+      "bytes": 944,
+      "sha256": "824a29ad03161b2a10662cadb0d57b47f90c14184ef317e2840b770e8e79e2f3",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    }
+  ],
+  "other-owned-paths-pass": true
+}

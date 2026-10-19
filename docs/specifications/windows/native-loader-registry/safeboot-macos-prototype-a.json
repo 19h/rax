@@ -1,0 +1,9 @@
+{
+  "state": "finished",
+  "exit-code": 0,
+  "log-sha256": "0dacdb98bd491738b4fb470eba9b491c796d7016ca2a44461d8de6521b9b8e6f",
+  "results": [
+    "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 7992 filtered out; finished in 0.08s"
+  ],
+  "scope": "Six new shared model/kernel tests, including exact observed missing-key access0x3. Final compiled-source epoch is separately frozen before broad gates."
+}

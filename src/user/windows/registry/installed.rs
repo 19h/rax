@@ -278,6 +278,15 @@ pub(crate) fn snapshot() -> io::Result<Registry> {
     }?;
     let root = super::TreeRoot::RedirectionKeys;
     let selected = tree::capture_root(&registry, root)?;
+    let registry = registry.with_tree(root, selected)?;
+    let root = super::TreeRoot::SafeBootOption;
+    let selected = tree::capture_root(&registry, root)?;
+    let registry = registry.with_tree(root, selected)?;
+    let root = super::TreeRoot::SrpDll;
+    let selected = tree::capture_root(&registry, root)?;
+    let registry = registry.with_tree(root, selected)?;
+    let root = super::TreeRoot::SaferCodeIdentifiers;
+    let selected = tree::capture_root(&registry, root)?;
     registry.with_tree(root, selected)
 }
 
@@ -288,3 +297,15 @@ mod tests;
 #[cfg(test)]
 #[path = "installed/redirection_tests.rs"]
 mod redirection_tests;
+
+#[cfg(test)]
+#[path = "installed/safeboot_tests.rs"]
+mod safeboot_tests;
+
+#[cfg(test)]
+#[path = "installed/srp_tests.rs"]
+mod srp_tests;
+
+#[cfg(test)]
+#[path = "installed/safer_tests.rs"]
+mod safer_tests;

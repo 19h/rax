@@ -1,0 +1,95 @@
+{
+  "controls": [
+    {
+      "name": "native-safeboot-option-v1-status",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "native-safeboot-option-v1-duplicate",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "native-safeboot-option-v1-source-after",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "native-safeboot-option-v1-module-after",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "native-safeboot-option-v1-pe-machine",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "native-safeboot-option-v1-producer-failed",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "native-srp-gp-dll-v1-status",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "native-srp-gp-dll-v1-duplicate",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "native-srp-gp-dll-v1-source-after",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "native-srp-gp-dll-v1-module-after",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "native-srp-gp-dll-v1-pe-machine",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "native-srp-gp-dll-v1-producer-failed",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "native-safer-code-identifiers-v1-status",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "native-safer-code-identifiers-v1-duplicate",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "native-safer-code-identifiers-v1-source-after",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "native-safer-code-identifiers-v1-module-after",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "native-safer-code-identifiers-v1-pe-machine",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "native-safer-code-identifiers-v1-producer-failed",
+      "rejected": true,
+      "error-type": "AssertionError"
+    }
+  ],
+  "all-rejected": true
+}

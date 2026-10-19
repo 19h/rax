@@ -1,0 +1,79 @@
+{
+  "base-repository-commit": "9db68d792b386355b87a24b9d10466401ca71731",
+  "source-root": "/Users/int/Library/Caches/assist-process-emulation/native-safeboot-option-20261019/safeboot-source",
+  "source-owned-paths": [
+    "src/user/windows/registry.rs",
+    "src/user/windows/registry/tree.rs",
+    "src/user/windows/registry/installed.rs",
+    "src/user/windows/registry/safeboot_tests.rs",
+    "src/user/windows/registry/installed/safeboot_tests.rs",
+    "src/user/windows/native-runtime.md",
+    "src/user/windows/process/sched/tests/services_tests/registry_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/safeboot_registry_tests.rs"
+  ],
+  "scope": "Add the observed fixed SYSTEM SafeBoot/Option key to complete-or-known-absent immutable registry snapshots; preserve all existing roots, shared budgets, failure boundaries and absence/error distinction. No arbitrary host registry forwarding.",
+  "acceptance": [
+    "Native320 cases on four ABI profiles bind exact observed access0x3 and view/path variants with balanced handles and stable producer/DLL identities.",
+    "A tests-only native baseline reaches a genuine presence/absence assertion before product edits.",
+    "Present/absent models, aliases, unknown siblings, shared budgets, immutable handle lifetimes, root/child errors and native controlled-present capture remain complete.",
+    "Compile and run new shared/native checks plus unfiltered core, CAPI183, integration and all-target gates on all three hosts; bind actual retained consumer archives.",
+    "Run ordinary smoke and whoami normally against the rebuilt Windows owning core, measure the next frontier or successful guest exit.",
+    "Publish exact owned semantic paths via red, push RAX master and pair root pin/engineering records to both remotes, preserving shared worktrees and linear history."
+  ],
+  "assumptions": [
+    {
+      "id": "A1",
+      "assumption": "The fixed host SafeBoot/Option key is absent for the captured native subject.",
+      "basis": "All320 captured opens including observed access0x3 return C0000034 with zero output; module/PE/source identities and handles stable.",
+      "dependent-result": "Native baseline and ordinary prior-frontier comparison use known absence; implementation still supports complete present trees.",
+      "stress-test": "All four ABI profiles, repeated opens,32/64/default views, aliases and bounded path variants.",
+      "falsification-probe": "A new native open or presence test succeeds for this same host/subject; recapture rather than hard-code absence.",
+      "status": "confirmed for captured subject"
+    },
+    {
+      "id": "A2",
+      "assumption": "The existing fixed complete-tree and aggregate value-budget contract extends to this disjoint SYSTEM root.",
+      "basis": "Published generic TreeRoot model already captures complete fixed SYSTEM RedirectionKeys plus IFEO; native path is fixed and disjoint.",
+      "dependent-result": "One root adapter and shared lookup model, with unchanged unknown-path boundary.",
+      "stress-test": "Present controlled native subtree, errors other than root-not-found, aggregate budgets across all three roots, duplicate names, UTF16/path limits and retained handles.",
+      "falsification-probe": "New root requires divergent host view, metadata, lifetime or error mechanics not represented by generic capture.",
+      "status": "retained pending implementation tests"
+    }
+  ],
+  "bounded-scope": [
+    {
+      "impact": "high",
+      "item": "Both ordinary Windows programs currently stop at this key without successful guest exit.",
+      "evidence": "Published native-timer2-arm validation/ordinary-program-summary.json",
+      "blocks-full-goal": true
+    },
+    {
+      "impact": "medium",
+      "item": "Four native ABI profiles share one ARM64 kernel; retained consumers do not establish whole-current-root GUI/plugin/package builds.",
+      "evidence": "Published timer proof and host identity",
+      "blocks-scoped-group": false
+    },
+    {
+      "impact": "medium",
+      "item": "Native core retains the exact five existing lowerer failures.",
+      "evidence": "Published timer full native gate",
+      "blocks-all-tests-passed-claim": true
+    },
+    {
+      "impact": "high",
+      "item": "Existing guest registry handles remain read-only. Write-intent access on a present key is denied by the inherited model; the observed native key is absent, so current access0x3 correctly reaches name-not-found. This group extends immutable capture without changing that permission contract.",
+      "evidence": "registry_tests and NtOpenKey key_access; native320 current-host opens.",
+      "blocks-fixed-read-only-capture-group": false,
+      "limits-general-mutable-registry-parity": true
+    }
+  ],
+  "surface-map": {
+    "native-library-selection": "affected: add exactly one fixed registry capture root",
+    "Windows-registry-model-handles-queries": "affected: third selected complete-or-known-absent tree, same immutable ownership and budgets",
+    "native-HLE-service-schema": "unchanged implementation: existing NtOpenKey and query paths consume shared lookup; validate behavior at real ordinary frontier",
+    "Windows-macOS-Linux": "shared model builds/tests everywhere; native Win32 registry adapter compiles/runs on Windows; all three whole core/CAPI/consumer gates required",
+    "ISA-SMIR-JIT-backends-CABI": "unaffected: no instruction/backend/public layout/ABI/default/dependency changes",
+    "root-products": "paired pin/engineering records; actual retained consumers separately qualified",
+    "tests-docs": "new shared/root/native adapter tests, native captures, source-bound gate records, ordinary observations and corruption checks"
+  }
+}

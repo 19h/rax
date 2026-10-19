@@ -1,0 +1,10 @@
+{
+  "scope": "Fixed loader registry semantic group only; complete process objective is incomplete.",
+  "QG1": "pass: factual implementation and validation, no normative judgment",
+  "QG2": "pass: bases, dependencies, stress tests and falsification probes recorded",
+  "QG3": "pass within group: three observed roots, eighteen shared/nine additional native tests, full three-host core/CAPI/integration/all-target checks and actual retained consumers",
+  "QG4": "pass: UTF16 byte/unit boundaries and fixed capture/value budgets preserved; 2samples*8paths*5rights*4profiles*3roots=960cases",
+  "QG5": "pass within group: absence versus unselected, opaque values, root/child errors, aliases, shared budgets, read-only grants and handle lifetimes checked; full-process token frontier explicit",
+  "QG6": "pass: native source/PE/module/program/archive bindings, saved Microsoft source, full source snapshot and portable checkers",
+  "QG7": "pass: immutable registry limitation, one physical native kernel, five established lowerer failures, retained ABI184 consumers and next unsupported service documented"
+}

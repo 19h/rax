@@ -19,7 +19,10 @@ const MAX_TOTAL_BYTES: usize = 16 << 20;
 mod tree;
 #[cfg(test)]
 pub(crate) use tree::KeyTree as IfeoTree;
-pub(crate) use tree::{IFEO_KEY, KeyTree, Lookup, REDIRECTION_KEYS_KEY, TreeRoot};
+pub(crate) use tree::{
+    IFEO_KEY, KeyTree, Lookup, REDIRECTION_KEYS_KEY, SAFEBOOT_OPTION_KEY,
+    SAFER_CODE_IDENTIFIERS_KEY, SRP_DLL_KEY, TreeRoot,
+};
 #[path = "registry/fixed.rs"]
 mod fixed;
 pub(crate) use fixed::SEGMENT_HEAP_KEY;
@@ -219,3 +222,15 @@ pub(crate) fn snapshot() -> io::Result<Registry> {
 #[cfg(test)]
 #[path = "registry/tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "registry/safeboot_tests.rs"]
+mod safeboot_tests;
+
+#[cfg(test)]
+#[path = "registry/srp_tests.rs"]
+mod srp_tests;
+
+#[cfg(test)]
+#[path = "registry/safer_tests.rs"]
+mod safer_tests;

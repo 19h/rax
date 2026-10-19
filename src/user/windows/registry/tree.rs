@@ -4,6 +4,12 @@ use super::*;
 
 pub(crate) const IFEO_KEY: &str = "\\Registry\\Machine\\Software\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options";
 pub(crate) const REDIRECTION_KEYS_KEY: &str = "\\Registry\\Machine\\System\\CurrentControlSet\\Control\\StateSeparation\\RedirectionMap\\Keys";
+pub(crate) const SAFEBOOT_OPTION_KEY: &str =
+    "\\Registry\\Machine\\System\\CurrentControlSet\\Control\\SafeBoot\\Option";
+pub(crate) const SRP_DLL_KEY: &str =
+    "\\Registry\\Machine\\System\\CurrentControlSet\\Control\\Srp\\GP\\DLL";
+pub(crate) const SAFER_CODE_IDENTIFIERS_KEY: &str =
+    "\\Registry\\Machine\\Software\\Policies\\Microsoft\\Windows\\Safer\\CodeIdentifiers";
 pub(super) const MAX_TREE_KEYS: usize = 1024;
 pub(super) const MAX_TREE_DEPTH: usize = 32;
 pub(super) const MAX_COMPONENT_UNITS: usize = 255;
@@ -19,12 +25,18 @@ pub(crate) struct KeyTree {
 pub(crate) enum TreeRoot {
     Ifeo,
     RedirectionKeys,
+    SafeBootOption,
+    SrpDll,
+    SaferCodeIdentifiers,
 }
 impl TreeRoot {
     pub(crate) fn path(self) -> &'static str {
         match self {
             Self::Ifeo => IFEO_KEY,
             Self::RedirectionKeys => REDIRECTION_KEYS_KEY,
+            Self::SafeBootOption => SAFEBOOT_OPTION_KEY,
+            Self::SrpDll => SRP_DLL_KEY,
+            Self::SaferCodeIdentifiers => SAFER_CODE_IDENTIFIERS_KEY,
         }
     }
 }

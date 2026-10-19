@@ -1,0 +1,75 @@
+{
+  "scope": "Three fixed immutable loader registry roots; full process objective remains active.",
+  "assumptions": [
+    {
+      "id": "A1",
+      "assumption": "The two fixed SYSTEM roots are absent and Safer CodeIdentifiers is present on this captured native subject.",
+      "basis": "Native960 cases: SafeBoot320missing, SRP320missing, Safer120successful root/alias opens and200missing descendants/controls; all profiles agree.; final three-host checks and exact retained-owner observations agree.",
+      "dependent-result": "Reference comparison uses captured subject, while product capture dynamically handles complete present or known-absent roots.",
+      "stress-test": "Four ABI profiles, two samples, eight paths and five rights including observed0x3/0x20019/0x1.",
+      "falsification-probe": "Repeat native capture or native full-suite presence crosscheck differs; recapture and diagnose, never hard-code current absence.",
+      "status": "confirmed for the recorded source, native subject and bounded observations"
+    },
+    {
+      "id": "A2",
+      "assumption": "Existing immutable complete-tree capture supports all three disjoint fixed roots without changing view, lifetime or aggregate-budget policy.",
+      "basis": "Shared prototype18pass; source adds three enum variants and sequential generic capture.; final three-host checks and exact retained-owner observations agree.",
+      "dependent-result": "Existing NtOpenKey/query serializers and handles consume the selected model unchanged.",
+      "stress-test": "All five selected roots share value budget; root vs child errors, aliases, present native subtree, native view equality and retained relative handles.",
+      "falsification-probe": "Full native tests or ordinary continuation show divergent data/view/capture behavior.",
+      "status": "confirmed for the recorded source, native subject and bounded observations"
+    },
+    {
+      "id": "A3",
+      "assumption": "Captured roots and token subject remain stable during the bounded ordinary observations.",
+      "basis": "Candidate3 checks module/program/source identities before and after; native controls repeat successfully. Installed capture uses existing immutable snapshots.; final three-host checks and exact retained-owner observations agree.",
+      "dependent-result": "Native versus guest startup-frontier comparison.",
+      "stress-test": "Repeat ordinary programs around native controls and final archive identity checks.",
+      "falsification-probe": "Changed modules, source, program hash, subject capture, or native control result.",
+      "status": "confirmed for the recorded source, native subject and bounded observations"
+    }
+  ],
+  "bounded-scope": [
+    {
+      "impact": "high",
+      "item": "Both ordinary programs pass all three registry roots and stop at unimplemented NtQueryInformationToken class1; neither reaches a successful guest exit.",
+      "evidence": "loader-candidate-epoch3-run.json and ordinary0/1 logs, terminal turns2883974/2886259",
+      "blocks-full-goal": true
+    },
+    {
+      "impact": "medium",
+      "item": "Four native ABI profiles share one ARM64 kernel; retained consumers do not establish whole-current-root GUI/plugin/package builds.",
+      "evidence": "Published timer proof and host identity",
+      "blocks-scoped-group": false
+    },
+    {
+      "impact": "medium",
+      "item": "Native core retains the exact five existing lowerer failures.",
+      "evidence": "Published timer full native gate",
+      "blocks-all-tests-passed-claim": true
+    },
+    {
+      "impact": "high",
+      "item": "Existing guest registry handles remain read-only. Write-intent access on a present key is denied by the inherited model; the observed native key is absent, so current access0x3 correctly reaches name-not-found. This group extends immutable capture without changing that permission contract.",
+      "evidence": "registry_tests and NtOpenKey key_access; native320 current-host opens.",
+      "blocks-fixed-read-only-capture-group": false,
+      "limits-general-mutable-registry-parity": true
+    },
+    {
+      "impact": "low",
+      "item": "The Safer controlled-present test inherits the diagnostic text srp_dll; its test identity, selected enum/root, assertions and source are explicitly Safer.",
+      "evidence": "registry/installed/safer_tests.rs eprintln; immutable epoch3 source.",
+      "blocks-scoped-group": false,
+      "action": "Record the exact test identity when interpreting logs; no semantic inference from this diagnostic label."
+    }
+  ],
+  "surface-map": {
+    "native-library-selection": "affected: three fixed snapshot roots observed by ordinary execution; all other registry prefixes retain unsupported selection boundary",
+    "Windows-registry-model-handles-queries": "affected: five total selected complete-or-known-absent roots with unchanged shared budget, serialization, immutable handle ownership and read-only access",
+    "native-HLE-service-schema": "existing NtOpenKey/query implementation consumes the new selected roots; no new guest export, calling convention or public schema",
+    "Windows-macOS-Linux": "shared model builds/tests everywhere; native Win32 registry adapter compiles/runs on Windows; all three whole core/CAPI/consumer gates required",
+    "ISA-SMIR-JIT-backends-CABI": "unaffected: no instruction/backend/public layout/ABI/default/dependency changes",
+    "root-products": "paired pin/engineering records; actual retained consumers separately qualified",
+    "tests-docs": "new shared/root/native adapter tests, native captures, source-bound gate records, ordinary observations and corruption checks"
+  }
+}
