@@ -1,0 +1,19 @@
+   Compiling vm-memory v0.17.1 (/work/vendor/rax/vendor/vm-memory)
+   Compiling linux-loader v0.13.2 (https://github.com/19h/linux-loader?rev=f745b555942c4e840a784bca61e6f3976d101960#f745b555)
+   Compiling rax v0.1.0 (/work/vendor/rax)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2m 14s
+     Running unittests src/lib.rs (/target/bno-isolation-prototype/debug/deps/rax-3e31f1d94bc1cdf9)
+
+running 9 tests
+test user::windows::dll::threading::tests::native_semaphore_tests::native_semaphore_preserves_every_prior_ntdll_ordinal_and_trap_rva_all_abis ... ok
+test user::windows::dll::threading::tests::native_semaphore_tests::native_semaphore_win32_native_names_counts_and_cross_type_lifetime_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::semaphore_replay_tests::native_semaphore_create_replays_6144_fault_count_and_publication_cases ... ok
+test user::windows::process::sched::tests::services_tests::semaphore_replay_tests::native_semaphore_open_replays_768_attribute_and_copy_cases ... ok
+test user::windows::process::sched::tests::services_tests::semaphore_replay_tests::native_semaphore_query_replays_27916_probe_priority_alias_and_copy_cases ... ok
+test user::windows::process::sched::tests::services_tests::semaphore_replay_tests::native_semaphore_release_replays_4480_fault_access_and_count_cases ... ok
+test user::windows::process::sched::tests::services_tests::semaphore_tests::native_semaphore_names_openif_counts_types_and_root_aliases_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::semaphore_tests::native_semaphore_release_wakes_parked_native_wait_and_retires_last_pin_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::semaphore_tests::native_semaphore_signed_counts_grants_inherit_and_last_close_all_abis ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 7957 filtered out; finished in 9.49s
+

@@ -1,0 +1,23 @@
+{
+  "archive": "semaphore-source-epoch2-overrides.tar.gz",
+  "bytes": 56632,
+  "sha256": "067df4538c3a8a43ee992f857ccc1018a647a1cbd4357868ad0190e05b248f1e",
+  "parent-manifest": "semaphore-source-epoch1.json",
+  "parent-manifest-sha256": "6ecb2a08faa7daf9949d528ccf7622d3ec3e33b721baa0e80cb5da6c8c001f97",
+  "source-files": 22587,
+  "source-bytes": 1566675854,
+  "separate-overrides": [
+    "capi/README.md",
+    "capi/examples/x86_64_smir.c",
+    "capi/examples/x86_64_vector_smir.c",
+    "capi/include/rax.h",
+    "capi/src/lib.rs",
+    "capi/src/smir.rs",
+    "capi/src/smir/tests.rs",
+    "capi/src/smir/vector.rs",
+    "capi/src/smir/vector_tests.rs",
+    "capi/src/tests.rs",
+    "capi/tests/analyze_abi.c"
+  ],
+  "deleted": []
+}

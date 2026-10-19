@@ -1,0 +1,79 @@
+{
+  "state": "finished",
+  "source": "/Users/int/Library/Caches/assist-process-emulation/native-semaphore-20261019/semaphore-source",
+  "pid": 3696,
+  "steps": [
+    {
+      "selection": "native_semaphore",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "native_semaphore",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 94.4189303329913,
+      "log": "semaphore-prototype-macos-native_semaphore.log",
+      "sha256": "49bcd284b235fcfd26930ca27397594b24d9ab004a54bc1abbfd8064c4cf57db",
+      "results": [
+        "ok. 9 passed; 0 failed; 0 ignored; 0 measured; 7963 filtered out; finished in 6.74s"
+      ]
+    },
+    {
+      "selection": "native_mutant",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "native_mutant",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 6.198472750009387,
+      "log": "semaphore-prototype-macos-native_mutant.log",
+      "sha256": "c13b7ccf6415ae78b6fb9fb4559a38044f8f683d5ad5cc5a51770cef52018bcc",
+      "results": [
+        "ok. 11 passed; 0 failed; 0 ignored; 0 measured; 7961 filtered out; finished in 6.06s"
+      ]
+    },
+    {
+      "selection": "native_single_wait",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "native_single_wait",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 0.835022333994857,
+      "log": "semaphore-prototype-macos-native_single_wait.log",
+      "sha256": "9fcede20a441f48faeeddeafa063c61b09e413ebf600ac6c739d897f4b4d2c7c",
+      "results": [
+        "ok. 16 passed; 0 failed; 0 ignored; 0 measured; 7956 filtered out; finished in 0.76s"
+      ]
+    }
+  ],
+  "current-step": "native_single_wait",
+  "child-pid": 7746,
+  "exit-code": 0
+}

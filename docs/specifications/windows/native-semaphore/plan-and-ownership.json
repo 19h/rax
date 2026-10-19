@@ -1,0 +1,140 @@
+{
+  "baseline": "464e728b00000850b47d13b12e2e54283be12b76",
+  "owned_source_paths_planned": [
+    "src/user/windows/dll/native.rs",
+    "src/user/windows/dll/native/semaphore.rs",
+    "src/user/windows/dll/mod.rs",
+    "src/user/windows/dll/threading/tests.rs",
+    "src/user/windows/dll/threading/native_semaphore_tests.rs",
+    "src/user/windows/native-runtime.md",
+    "docs/specifications/windows/native-semaphore/"
+  ],
+  "acceptance": [
+    "Native create/open/release/query semaphore semantics across x86/x64/ARM64 guest ABIs.",
+    "Installed and synthetic NTDLL use the same handlers.",
+    "Preserve all existing synthetic PE ordinals and trap RVAs.",
+    "Native and Win32 paths share count, access, naming, lifetime and wait state.",
+    "Fault, guard, access, alias, overflow and output-publication order follow native captures.",
+    "Compile/run relevant Windows/macOS/Linux gates and owning consumers.",
+    "Resume both ordinary Windows binaries on the actual rebuilt core; never equate observer exit with guest exit.",
+    "Publish exact owned paths with red and pair the root gitlink/records; no merge commits."
+  ],
+  "assumptions": [
+    {
+      "id": "A1",
+      "assumption": "The observed NtOpenSemaphore request belongs to the selected BaseNamedObjects namespace.",
+      "basis": "Read-only observer captured RootDirectory=0x70 and the Local-prefixed name; earlier directory captures identify this root.",
+      "dependent_result": "Name-resolution design.",
+      "stress_test": "Root-relative Local and Global links, wrong-type roots, absolute/root combinations, case flags.",
+      "falsification_probe": "Native create/open captures contradict same-name identity or captured root object identity.",
+      "status": "confirmed"
+    },
+    {
+      "id": "A2",
+      "assumption": "One native ARM64 kernel can supply evidence for its ARM64, x64 compatibility and WoW64 ABI profiles.",
+      "basis": "Four prior producer profiles ran on Windows 10.0.29683 with per-module identities.",
+      "dependent_result": "Host-specific fault ordering; no cross-kernel universality claim.",
+      "stress_test": "Capture all four profiles independently, including x86 LAA.",
+      "falsification_probe": "Profile-dependent statuses, writes, handle counts, or compiled ABI differ.",
+      "status": "confirmed"
+    },
+    {
+      "id": "A3",
+      "assumption": "Parent Windows source inputs can be reused immutably after verifying their exact hashes.",
+      "basis": "Completed native single-wait source epoch4 manifest and terminal gate records.",
+      "dependent_result": "Native semaphore materialization and warmed Cargo targets.",
+      "stress_test": "Verify all parent files before linking and all new files after extraction, with changed paths separated.",
+      "falsification_probe": "Any before/after parent hash mismatch or unexpected active preceding gate.",
+      "status": "retained"
+    }
+  ],
+  "surface_map": {
+    "affected": [
+      "Windows native DLL/kernel service dispatch",
+      "guest object and handle access/lifetime",
+      "selected object namespace",
+      "shared guest semaphore waits",
+      "synthetic PE export stability",
+      "RAX core and CAPI/Assist owning consumers",
+      "native differential fixtures and engineering evidence"
+    ],
+    "unaffected_with_basis": {
+      "ISA/lifter/SMIR/JIT": "Native service handlers operate on existing interpreted Windows state; no decoder or IR change is planned.",
+      "C ABI": "No exported structure or function change planned; confirm via owning archive/consumer gates.",
+      "Assist UI/permissions/persistence/mesh/transport": "No Assist product-source edits planned; only RAX pin and engineering record.",
+      "Linux/macOS guest API semantics": "Windows handlers are shared Rust and compile on every host; existing guest loaders still require owning runtime checks."
+    },
+    "unknown": [
+      "Any newly exposed next ordinary-program service."
+    ]
+  },
+  "bounded_scope": [
+    {
+      "impact": "high",
+      "item": "Ordinary Windows guest exit remains unsuccessful at the baseline.",
+      "evidence": "Both observer logs stop at NtOpenSemaphore (0x136).",
+      "blocks_global_goal": true
+    },
+    {
+      "impact": "medium",
+      "item": "Five pre-existing native Windows AArch64-lowering tests fail on the kernel profile.",
+      "evidence": "Final single-wait gate records exact failure names.",
+      "blocks_semaphore_group": false
+    },
+    {
+      "impact": "medium",
+      "item": "Explicit security descriptors, QoS, permanent objects and ACCESS_SYSTEM_SECURITY remain unsupported guest policies.",
+      "evidence": "Existing native mutant/object-create contract; new semaphore adapters preserve explicit unsupported results.",
+      "blocks_semaphore_default_namespace_group": false,
+      "blocks_claim_of_full_NT_object_security": true
+    }
+  ],
+  "created_utc": "2026-10-19T01:33:31.427393+00:00",
+  "source-operations": [
+    {
+      "path": "src/user/windows/dll/native/named_object.rs",
+      "before-sha256": null,
+      "draft": "/Users/int/Library/Caches/assist-process-emulation/native-semaphore-20261019/drafts/prepared/src/user/windows/dll/native/named_object.rs"
+    },
+    {
+      "path": "src/user/windows/dll/native/named_object/attributes.rs",
+      "before-sha256": null,
+      "draft": "/Users/int/Library/Caches/assist-process-emulation/native-semaphore-20261019/drafts/prepared/src/user/windows/dll/native/named_object/attributes.rs"
+    },
+    {
+      "path": "src/user/windows/dll/native/mutant/attributes.rs",
+      "before-sha256": "e2bc74128f11e5e14c4d369e36bb5a97dcaa32319a0a131c654387cd20b81ea8",
+      "draft": null
+    },
+    {
+      "path": "src/user/windows/dll/native/mutant.rs",
+      "before-sha256": "f6f67c1bdf7805f4fcbad7e36566b1eb4c5183a1c886530d281eed7d4d691d7b",
+      "draft": "/Users/int/Library/Caches/assist-process-emulation/native-semaphore-20261019/drafts/prepared/src/user/windows/dll/native/mutant.rs"
+    },
+    {
+      "path": "src/user/windows/dll/native/semaphore.rs",
+      "before-sha256": null,
+      "draft": "/Users/int/Library/Caches/assist-process-emulation/native-semaphore-20261019/drafts/prepared/src/user/windows/dll/native/semaphore.rs"
+    },
+    {
+      "path": "src/user/windows/dll/native.rs",
+      "before-sha256": "113793d1b95738a6b82056d13ec898026f6834d8c5cc146391ad9098277447c8",
+      "draft": "/Users/int/Library/Caches/assist-process-emulation/native-semaphore-20261019/drafts/prepared/src/user/windows/dll/native.rs"
+    },
+    {
+      "path": "src/user/windows/dll/mod.rs",
+      "before-sha256": "151f2ae06fbe633ae3198174311c69a2c7c49d1f1b11814c9786e88eef385728",
+      "draft": "/Users/int/Library/Caches/assist-process-emulation/native-semaphore-20261019/drafts/prepared/src/user/windows/dll/mod.rs"
+    },
+    {
+      "path": "src/user/windows/dll/threading/tests.rs",
+      "before-sha256": "aac53f47f82d2ff9382bc490714590baf571e1fc37cbaf000b48e0cd86c4d6ec",
+      "draft": "/Users/int/Library/Caches/assist-process-emulation/native-semaphore-20261019/drafts/prepared/src/user/windows/dll/threading/tests.rs"
+    },
+    {
+      "path": "src/user/windows/dll/threading/native_wait_tests.rs",
+      "before-sha256": "beddc8fdeda3c11db199490715c98c7ad6cda4ab37fb2440093403ff991bd07b",
+      "draft": "/Users/int/Library/Caches/assist-process-emulation/native-semaphore-20261019/drafts/prepared/src/user/windows/dll/threading/native_wait_tests.rs"
+    }
+  ]
+}

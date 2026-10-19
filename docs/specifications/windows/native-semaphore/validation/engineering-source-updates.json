@@ -1,0 +1,8 @@
+[
+  {
+    "path": "src/user/windows/native-runtime.md",
+    "compiled-sha256": "b8f481cf84546a669611ee70182aa4004505b9b7a8b7c9d2fbd5f220474a8164",
+    "final-sha256": "cc4facdf19c99d61d4e4b329a609508537169164f8f9fbd568786cef2e2e5342",
+    "reason": "Engineering record appended only after all frozen gates/consumers completed; no Rust or replay input changed."
+  }
+]

@@ -1,0 +1,22 @@
+{
+  "bound-files": 259,
+  "platforms": {
+    "macos": {
+      "passed": 7970,
+      "failed": 0,
+      "ignored": 2
+    },
+    "linux": {
+      "passed": 7964,
+      "failed": 0,
+      "ignored": 2
+    },
+    "windows": {
+      "passed": 7410,
+      "failed": 5,
+      "ignored": 2
+    }
+  },
+  "guest-exit-success": false,
+  "next-frontier": "NtOpenKey snapshot coverage"
+}

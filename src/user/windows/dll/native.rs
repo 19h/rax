@@ -12,6 +12,7 @@ mod events;
 mod hotpatch;
 mod io_completion;
 mod mutant;
+mod named_object;
 mod nls;
 mod object_create;
 mod performance_counter;
@@ -25,6 +26,7 @@ mod registry;
 mod section_create;
 mod section_map;
 mod secure_connect;
+mod semaphore;
 mod symbolic_link;
 mod system_time;
 mod thread_set;
@@ -333,6 +335,34 @@ pub(super) static WAIT_EXPORTS: &[Export] = &[Export::func(
     &[Ptr, I32, Ptr],
     wait::single,
 )];
+// Appended after the native wait table: existing ordinals and trap RVAs stay stable.
+pub(super) static SEMAPHORE_EXPORTS: &[Export] = &[
+    Export::func(
+        "NtCreateSemaphore",
+        Stdcall,
+        &[Ptr, I32, Ptr, I32, I32],
+        semaphore::create,
+    ),
+    Export::func(
+        "NtOpenSemaphore",
+        Stdcall,
+        &[Ptr, I32, Ptr],
+        semaphore::open,
+    ),
+    Export::func(
+        "NtReleaseSemaphore",
+        Stdcall,
+        &[Ptr, I32, Ptr],
+        semaphore::release,
+    ),
+    Export::func(
+        "NtQuerySemaphore",
+        Stdcall,
+        &[Ptr, I32, Ptr, I32, Ptr],
+        semaphore::query,
+    ),
+];
+
 fn status_error(c: &mut Ctx) -> ApiResult {
     Flow::ret(u64::from(super::super::nt::status_to_error(c.u32(0)?)))
 }

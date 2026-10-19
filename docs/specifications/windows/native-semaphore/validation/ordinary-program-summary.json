@@ -1,0 +1,51 @@
+{
+  "source-epoch": 1,
+  "core-archive": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-owned\\debug\\deps\\librax-934115059aa64c85.rlib",
+    "bytes": 501801646,
+    "sha256": "0bd770c8168f7ab4fde931024a620a7aefc882b2ae7f373a423b2bce0401be97",
+    "members": 20,
+    "structural-member-walk": "pass"
+  },
+  "observer-source": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\semaphore-owner-epoch1.rs",
+    "bytes": 7384,
+    "sha256": "c2937df0ecc4c55efa514b14f8eef7955545c26f2e052882a4937eebb93f7d0f"
+  },
+  "runtime-modules-stable": true,
+  "scope": "Supplied ARM64 PE bytes, installed same-host libraries, virtual process image path C:\\app\\probe.exe, all prefix turns executed normally; no successful guest exit.",
+  "programs": [
+    {
+      "program": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-semaphore-epoch1\\tests\\fixtures\\user\\windows\\bin\\arm64\\smoke.exe",
+        "bytes": 3584,
+        "sha256": "325730e33e981784bff4a60bc6f342cf95c2735e85042c89748fc471cbe7781b"
+      },
+      "prior-frontier-turn": 2151527,
+      "new-frontier-turn": 2178927,
+      "advance-observer-turns": 27400,
+      "native-semaphore-open": "STATUS_OBJECT_NAME_NOT_FOUND (0xC0000034)",
+      "successful-native-semaphore-creates": 2,
+      "guest-exit-success": false,
+      "terminal": "Complete(Internal(\"native NTDLL service NtOpenKey: Unimplemented(\\\"NtOpenKey: registry key outside selected runtime snapshot\\\")\"))",
+      "log": "semaphore-owner-epoch1-0.log",
+      "sha256": "f94fc3175004044f6e06e21d770358d18862775f73d12604867bcd0eaa709fbd"
+    },
+    {
+      "program": {
+        "path": "C:\\Windows\\System32\\whoami.exe",
+        "bytes": 84480,
+        "sha256": "48fde190b002a5a4c4b8b19db014377263ba94220f23a4f0a117fec082d46bf6"
+      },
+      "prior-frontier-turn": 2153876,
+      "new-frontier-turn": 2181212,
+      "advance-observer-turns": 27336,
+      "native-semaphore-open": "STATUS_OBJECT_NAME_NOT_FOUND (0xC0000034)",
+      "successful-native-semaphore-creates": 2,
+      "guest-exit-success": false,
+      "terminal": "Complete(Internal(\"native NTDLL service NtOpenKey: Unimplemented(\\\"NtOpenKey: registry key outside selected runtime snapshot\\\")\"))",
+      "log": "semaphore-owner-epoch1-1.log",
+      "sha256": "21c52245dc5ee8105c894c48f15d83c308cba8ef1d25adbba6c72b74c50363c0"
+    }
+  ]
+}

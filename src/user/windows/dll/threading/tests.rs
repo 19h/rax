@@ -10,6 +10,9 @@ use std::time::Instant;
 #[path = "native_wait_tests.rs"]
 mod native_wait_tests;
 
+#[path = "native_semaphore_tests.rs"]
+mod native_semaphore_tests;
+
 fn with_context(arch: WinArch, test: impl FnOnce(&mut Ctx, u64)) {
     let image: &[u8] = match arch {
         WinArch::X86 => {
@@ -51,6 +54,7 @@ fn api(name: &str) -> &'static Api {
         .iter()
         .chain(super::super::kernel::EXPORTS.iter())
         .chain(super::super::native::EXPORTS.iter())
+        .chain(super::super::native::SEMAPHORE_EXPORTS.iter())
         .find_map(|export| match &export.item {
             Item::Func(api) if api.name == name => Some(api),
             _ => None,

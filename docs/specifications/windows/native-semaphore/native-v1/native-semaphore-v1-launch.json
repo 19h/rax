@@ -1,0 +1,9 @@
+{
+  "pid": 4188,
+  "utc": "2026-10-19T01:35:00.633795+00:00",
+  "state": "finished",
+  "scope": "Own process-private unnamed semaphores/events and read-only opens of a unique nonexistent name; count/fault/access capture, no permanent objects or security policy changes.",
+  "child-pid": 5948,
+  "exit-code": 0,
+  "completed-utc": "2026-10-19T01:35:31.694852+00:00"
+}

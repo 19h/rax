@@ -2,10 +2,10 @@
 use super::*;
 
 #[derive(Default)]
-pub(super) struct Attributes {
-    pub(super) root: u64,
-    pub(super) flags: u32,
-    pub(super) name: Option<Vec<u16>>,
+pub(in super::super) struct Attributes {
+    pub(in super::super) root: u64,
+    pub(in super::super) flags: u32,
+    pub(in super::super) name: Option<Vec<u16>>,
     security: u64,
     qos: u64,
 }
@@ -37,7 +37,7 @@ fn name(c: &Ctx, pointer: u64, wow: bool) -> Checked<Option<Vec<u16>>> {
     ))
 }
 
-pub(super) fn capture(c: &Ctx, address: u64, wow: bool) -> Checked<Option<Attributes>> {
+pub(in super::super) fn capture(c: &Ctx, address: u64, wow: bool) -> Checked<Option<Attributes>> {
     if address == 0 {
         return Ok(None);
     }
@@ -85,15 +85,15 @@ pub(super) fn capture(c: &Ctx, address: u64, wow: bool) -> Checked<Option<Attrib
     }))
 }
 
-pub(super) fn supported(c: &Ctx, attrs: &Attributes) -> Checked<()> {
+pub(in super::super) fn supported(c: &Ctx, attrs: &Attributes, kind: &str) -> Checked<()> {
     if attrs.security != 0 {
         return Err(c
-            .unsupported("NT mutant explicit security descriptor")
+            .unsupported(format!("NT {kind} explicit security descriptor"))
             .into());
     }
     if attrs.qos != 0 {
         return Err(c
-            .unsupported("NT mutant security quality of service")
+            .unsupported(format!("NT {kind} security quality of service"))
             .into());
     }
     Ok(())

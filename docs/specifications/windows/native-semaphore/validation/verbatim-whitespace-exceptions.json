@@ -1,0 +1,331 @@
+{
+  "reason": "Preserve captured commands/output byte-for-byte. No product source or replay data exception.",
+  "files": [
+    {
+      "path": "validation/semaphore-baseline-macos.log",
+      "sha256": "4ad97c6f313234f923ca07f24bb142e76d7cdc0741ab14ba6f382fc8a1b03ce1",
+      "warnings": [
+        {
+          "line": 6,
+          "kind": "trailing whitespace"
+        },
+        {
+          "line": 13,
+          "kind": "trailing whitespace"
+        },
+        {
+          "line": 17,
+          "kind": "trailing whitespace"
+        },
+        {
+          "line": 21,
+          "kind": "trailing whitespace"
+        },
+        {
+          "line": 25,
+          "kind": "trailing whitespace"
+        },
+        {
+          "line": 29,
+          "kind": "trailing whitespace"
+        },
+        {
+          "line": 33,
+          "kind": "trailing whitespace"
+        },
+        {
+          "line": 39,
+          "kind": "trailing whitespace"
+        },
+        {
+          "line": 45,
+          "kind": "trailing whitespace"
+        }
+      ]
+    },
+    {
+      "path": "validation/semaphore-linux-epoch1-capi.log",
+      "sha256": "e542210f3091f3fdf8fad430711bdbb40d0b1b1c7e4af3fd4ad7ecbc27f36dcb",
+      "warnings": [
+        {
+          "line": 82,
+          "kind": "trailing whitespace"
+        },
+        {
+          "line": 190,
+          "kind": "new blank line at EOF"
+        }
+      ]
+    },
+    {
+      "path": "validation/semaphore-linux-epoch1-focus.log",
+      "sha256": "70b6b7a651eae8f19752d24e70097585343ce8e68ec95059bc2f2f5f2df60a57",
+      "warnings": [
+        {
+          "line": 19,
+          "kind": "new blank line at EOF"
+        }
+      ]
+    },
+    {
+      "path": "validation/semaphore-linux-epoch1-full.log",
+      "sha256": "cd4af3dc5d246279c9f2fbff400aa183a1d8499dcc30edb25c627104559015ad",
+      "warnings": [
+        {
+          "line": 1967,
+          "kind": "trailing whitespace"
+        },
+        {
+          "line": 5471,
+          "kind": "trailing whitespace"
+        },
+        {
+          "line": 5492,
+          "kind": "trailing whitespace"
+        },
+        {
+          "line": 5503,
+          "kind": "trailing whitespace"
+        },
+        {
+          "line": 5517,
+          "kind": "trailing whitespace"
+        },
+        {
+          "line": 8329,
+          "kind": "new blank line at EOF"
+        }
+      ]
+    },
+    {
+      "path": "validation/semaphore-linux-epoch1-integration.log",
+      "sha256": "e3587e7195e61b00b89ee42691231f99212ef113b09f6fb75bf05ab778b96ce5",
+      "warnings": [
+        {
+          "line": 558,
+          "kind": "new blank line at EOF"
+        }
+      ]
+    },
+    {
+      "path": "validation/semaphore-linux-epoch2-capi.log",
+      "sha256": "6360a76749cd73d3bba4062910ae7bb1beeee71e02248420125d4300af8f9be6",
+      "warnings": [
+        {
+          "line": 99,
+          "kind": "trailing whitespace"
+        },
+        {
+          "line": 207,
+          "kind": "new blank line at EOF"
+        }
+      ]
+    },
+    {
+      "path": "validation/semaphore-macos-epoch1-capi.log",
+      "sha256": "3a39a6952d69fb601a06b62b359fa99ce44dc644cf8274db6d3b420b8c3385cb",
+      "warnings": [
+        {
+          "line": 82,
+          "kind": "trailing whitespace"
+        },
+        {
+          "line": 190,
+          "kind": "new blank line at EOF"
+        }
+      ]
+    },
+    {
+      "path": "validation/semaphore-macos-epoch1-focus.log",
+      "sha256": "c1ee1ddf4753c5ab6d4c1ec2a7347910c26b394fbed3b849f13447a8da967662",
+      "warnings": [
+        {
+          "line": 16,
+          "kind": "new blank line at EOF"
+        }
+      ]
+    },
+    {
+      "path": "validation/semaphore-macos-epoch1-full.log",
+      "sha256": "59ba746c351528df2435fac46823000403f67c1e84a7efec17f7a6d973b7616b",
+      "warnings": [
+        {
+          "line": 1933,
+          "kind": "trailing whitespace"
+        },
+        {
+          "line": 5419,
+          "kind": "trailing whitespace"
+        },
+        {
+          "line": 5440,
+          "kind": "trailing whitespace"
+        },
+        {
+          "line": 5451,
+          "kind": "trailing whitespace"
+        },
+        {
+          "line": 5465,
+          "kind": "trailing whitespace"
+        },
+        {
+          "line": 8297,
+          "kind": "new blank line at EOF"
+        }
+      ]
+    },
+    {
+      "path": "validation/semaphore-macos-epoch1-integration.log",
+      "sha256": "7fd55e28cbf820e350e1b6266f1a3047b1a4e0d343b6dbfcbb8c72d1431d0abf",
+      "warnings": [
+        {
+          "line": 558,
+          "kind": "new blank line at EOF"
+        }
+      ]
+    },
+    {
+      "path": "validation/semaphore-macos-epoch2-capi.log",
+      "sha256": "a6a36417e20d41ee1ed190fe7710b800f46cb6fd2380e44caa5a423bf5402a8a",
+      "warnings": [
+        {
+          "line": 99,
+          "kind": "trailing whitespace"
+        },
+        {
+          "line": 207,
+          "kind": "new blank line at EOF"
+        }
+      ]
+    },
+    {
+      "path": "validation/semaphore-native-epoch1-capi.log",
+      "sha256": "b23bc328a507893720b1b7e210ac8cc378ea21a9a4d282a02267647f8f105756",
+      "warnings": [
+        {
+          "line": 100,
+          "kind": "trailing whitespace"
+        },
+        {
+          "line": 208,
+          "kind": "new blank line at EOF"
+        }
+      ]
+    },
+    {
+      "path": "validation/semaphore-native-epoch1-focus.log",
+      "sha256": "04e07b4ba13b1da4cafff4a8fa035b72aac063a8176bea45bdd8b4c79ecb1ceb",
+      "warnings": [
+        {
+          "line": 35,
+          "kind": "new blank line at EOF"
+        }
+      ]
+    },
+    {
+      "path": "validation/semaphore-native-epoch1-full.log",
+      "sha256": "f3b66186ab7f826942b7b8d98afbdecf92668c691bff4cf3e4385e082ece0070",
+      "warnings": [
+        {
+          "line": 1950,
+          "kind": "trailing whitespace"
+        },
+        {
+          "line": 4866,
+          "kind": "trailing whitespace"
+        },
+        {
+          "line": 4876,
+          "kind": "trailing whitespace"
+        },
+        {
+          "line": 4883,
+          "kind": "trailing whitespace"
+        },
+        {
+          "line": 4889,
+          "kind": "trailing whitespace"
+        },
+        {
+          "line": 5418,
+          "kind": "trailing whitespace"
+        },
+        {
+          "line": 5460,
+          "kind": "trailing whitespace"
+        },
+        {
+          "line": 5481,
+          "kind": "trailing whitespace"
+        },
+        {
+          "line": 5492,
+          "kind": "trailing whitespace"
+        },
+        {
+          "line": 5506,
+          "kind": "trailing whitespace"
+        },
+        {
+          "line": 6272,
+          "kind": "trailing whitespace"
+        }
+      ]
+    },
+    {
+      "path": "validation/semaphore-native-epoch1-integration.log",
+      "sha256": "c7c734492ded1bdd53cf7ee8fdedd75c2cbb0698646856b2370cac6f0bc98c98",
+      "warnings": [
+        {
+          "line": 36,
+          "kind": "new blank line at EOF"
+        }
+      ]
+    },
+    {
+      "path": "validation/semaphore-native-epoch2-capi.log",
+      "sha256": "ab5fa24a259262a06c45cdf60dcf045ccbe5aea6f53f6315f8919fd40006b5c4",
+      "warnings": [
+        {
+          "line": 114,
+          "kind": "trailing whitespace"
+        },
+        {
+          "line": 222,
+          "kind": "new blank line at EOF"
+        }
+      ]
+    },
+    {
+      "path": "validation/semaphore-prototype-macos-native_mutant.log",
+      "sha256": "c13b7ccf6415ae78b6fb9fb4559a38044f8f683d5ad5cc5a51770cef52018bcc",
+      "warnings": [
+        {
+          "line": 18,
+          "kind": "new blank line at EOF"
+        }
+      ]
+    },
+    {
+      "path": "validation/semaphore-prototype-macos-native_semaphore.log",
+      "sha256": "49bcd284b235fcfd26930ca27397594b24d9ab004a54bc1abbfd8064c4cf57db",
+      "warnings": [
+        {
+          "line": 17,
+          "kind": "new blank line at EOF"
+        }
+      ]
+    },
+    {
+      "path": "validation/semaphore-prototype-macos-native_single_wait.log",
+      "sha256": "9fcede20a441f48faeeddeafa063c61b09e413ebf600ac6c739d897f4b4d2c7c",
+      "warnings": [
+        {
+          "line": 23,
+          "kind": "new blank line at EOF"
+        }
+      ]
+    }
+  ]
+}

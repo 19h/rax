@@ -1,0 +1,78 @@
+{
+  "validated-source-epoch": 1,
+  "integrated-source-epoch": 2,
+  "validated-base": "464e728b00000850b47d13b12e2e54283be12b76",
+  "integrated-base": "c717f9b8c93b9e992bc9b1069ced0d85a72de2fc",
+  "incoming-files": [
+    {
+      "path": "capi/README.md",
+      "old-sha256": "bb2f44d1d3b6e128b09ce920ca6d2a96861dcfb711af7867ae9df07e0e83ca91",
+      "new-sha256": "a32abc0e21854b7f262dd0c32d6a5fba71c384a5f3a88938b4a4e2bd3d39cc7f",
+      "new-bytes": 44697
+    },
+    {
+      "path": "capi/examples/x86_64_smir.c",
+      "old-sha256": null,
+      "new-sha256": "77e5831e6f25bab502bf0aa22ff901c3fcae6d40526f1e923482b43435690dd5",
+      "new-bytes": 1226
+    },
+    {
+      "path": "capi/examples/x86_64_vector_smir.c",
+      "old-sha256": null,
+      "new-sha256": "bb5e28da0502998d23cc9aa505d263a83d09804f23ad7eef6e723188a46147f2",
+      "new-bytes": 1315
+    },
+    {
+      "path": "capi/include/rax.h",
+      "old-sha256": "ff917c35319d210d1d51deadcaaf8d368f82adb6794d290bde9ce2367aa3136c",
+      "new-sha256": "e8438269c7f9411da7c92dff70942dbb839570cda9a6ac1bec0b78ed731e829a",
+      "new-bytes": 70196
+    },
+    {
+      "path": "capi/src/lib.rs",
+      "old-sha256": "017965ece272578afcd1abecab70b67847f7cc771e4164afa65e73c341d8c778",
+      "new-sha256": "90faa40d39ce6b6475b1f888872488cd2d1039352c841a03205c5d49d29f6583",
+      "new-bytes": 8669
+    },
+    {
+      "path": "capi/src/smir.rs",
+      "old-sha256": null,
+      "new-sha256": "ca545e3f4560ed333d061c44c87a5e37032cd8a507ac2e9d60c9e30cccaa2d0d",
+      "new-bytes": 24972
+    },
+    {
+      "path": "capi/src/smir/tests.rs",
+      "old-sha256": null,
+      "new-sha256": "d3e6c893bf6c5cd423647263ced4506fe04a13f67bfe79936f0ad5fa8004a647",
+      "new-bytes": 8934
+    },
+    {
+      "path": "capi/src/smir/vector.rs",
+      "old-sha256": null,
+      "new-sha256": "006972d572d5d37fd244a1f4c7c0d3d3be4c55ebeba82c8a7808dd7115e8e264",
+      "new-bytes": 4808
+    },
+    {
+      "path": "capi/src/smir/vector_tests.rs",
+      "old-sha256": null,
+      "new-sha256": "aa79bd9691bef0686f21097f12ba97ed629bc7c8a71a0871f7466a8610cf4f5f",
+      "new-bytes": 4921
+    },
+    {
+      "path": "capi/src/tests.rs",
+      "old-sha256": "3c91642d9c871bc9bd6c926693c8a2957c41061b2df9d98ebee91ac5d4123113",
+      "new-sha256": "8159950f9feb53a0640031a3dae6336ac85abb4c964b5d9b2e298e7bdaf29f87",
+      "new-bytes": 23293
+    },
+    {
+      "path": "capi/tests/analyze_abi.c",
+      "old-sha256": "2e6c8a55109c8512a0c5b522a8c676d04a289af9191f4b83d93f26c7340c14ce",
+      "new-sha256": "545eef56413a50602e0e7fdf0a91a87a46b95b67a1ee0fed361ae0ac102771fa",
+      "new-bytes": 2377
+    }
+  ],
+  "core-and-fixture-inputs-identical": true,
+  "core-has-no-capi-source-references": true,
+  "root-build-script-exists": false,
+  "validation-policy": "Retain full epoch1 core and Windows integration results; rebuild/test changed C API and all owning carriers/consumers on epoch2. No merge commit or published history rewrite."
+}

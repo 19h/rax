@@ -1,0 +1,9 @@
+{
+  "pid": 5992,
+  "utc": "2026-10-19T01:35:59.410859+00:00",
+  "state": "finished",
+  "scope": "Own uniquely named temporary semaphore/event objects, read-only existing directory handles, native and Win32 count operations; no permanent objects or security policy changes.",
+  "child-pid": 6028,
+  "exit-code": 0,
+  "completed-utc": "2026-10-19T01:37:44.037488+00:00"
+}

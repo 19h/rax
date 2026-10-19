@@ -1,0 +1,9 @@
+{
+  "pid": 2240,
+  "utc": "2026-10-19T01:37:22.240549+00:00",
+  "state": "finished",
+  "scope": "Own process-private unnamed semaphore/event handles and query fault-order captures only; no permanent objects or security policy changes.",
+  "child-pid": 5640,
+  "exit-code": 0,
+  "completed-utc": "2026-10-19T01:38:07.799196+00:00"
+}

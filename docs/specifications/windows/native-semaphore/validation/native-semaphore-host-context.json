@@ -1,0 +1,155 @@
+{
+  "utc": "2026-10-19T01:45:39.283060+00:00",
+  "kernel": {
+    "status": 0,
+    "major": 10,
+    "minor": 0,
+    "build": 29683
+  },
+  "native-python-machine": "ARM64",
+  "pointer-bytes": 8,
+  "current-process-token-privileges": [
+    {
+      "name": "SeAssignPrimaryTokenPrivilege",
+      "attributes": "0x00000000",
+      "enabled": false
+    },
+    {
+      "name": "SeLockMemoryPrivilege",
+      "attributes": "0x00000003",
+      "enabled": true
+    },
+    {
+      "name": "SeIncreaseQuotaPrivilege",
+      "attributes": "0x00000000",
+      "enabled": false
+    },
+    {
+      "name": "SeTcbPrivilege",
+      "attributes": "0x00000003",
+      "enabled": true
+    },
+    {
+      "name": "SeSecurityPrivilege",
+      "attributes": "0x00000000",
+      "enabled": false
+    },
+    {
+      "name": "SeTakeOwnershipPrivilege",
+      "attributes": "0x00000000",
+      "enabled": false
+    },
+    {
+      "name": "SeLoadDriverPrivilege",
+      "attributes": "0x00000000",
+      "enabled": false
+    },
+    {
+      "name": "SeSystemProfilePrivilege",
+      "attributes": "0x00000003",
+      "enabled": true
+    },
+    {
+      "name": "SeSystemtimePrivilege",
+      "attributes": "0x00000000",
+      "enabled": false
+    },
+    {
+      "name": "SeProfileSingleProcessPrivilege",
+      "attributes": "0x00000003",
+      "enabled": true
+    },
+    {
+      "name": "SeIncreaseBasePriorityPrivilege",
+      "attributes": "0x00000003",
+      "enabled": true
+    },
+    {
+      "name": "SeCreatePagefilePrivilege",
+      "attributes": "0x00000003",
+      "enabled": true
+    },
+    {
+      "name": "SeCreatePermanentPrivilege",
+      "attributes": "0x00000003",
+      "enabled": true
+    },
+    {
+      "name": "SeBackupPrivilege",
+      "attributes": "0x00000000",
+      "enabled": false
+    },
+    {
+      "name": "SeRestorePrivilege",
+      "attributes": "0x00000000",
+      "enabled": false
+    },
+    {
+      "name": "SeShutdownPrivilege",
+      "attributes": "0x00000000",
+      "enabled": false
+    },
+    {
+      "name": "SeDebugPrivilege",
+      "attributes": "0x00000003",
+      "enabled": true
+    },
+    {
+      "name": "SeAuditPrivilege",
+      "attributes": "0x00000003",
+      "enabled": true
+    },
+    {
+      "name": "SeSystemEnvironmentPrivilege",
+      "attributes": "0x00000000",
+      "enabled": false
+    },
+    {
+      "name": "SeChangeNotifyPrivilege",
+      "attributes": "0x00000003",
+      "enabled": true
+    },
+    {
+      "name": "SeUndockPrivilege",
+      "attributes": "0x00000000",
+      "enabled": false
+    },
+    {
+      "name": "SeManageVolumePrivilege",
+      "attributes": "0x00000000",
+      "enabled": false
+    },
+    {
+      "name": "SeImpersonatePrivilege",
+      "attributes": "0x00000003",
+      "enabled": true
+    },
+    {
+      "name": "SeCreateGlobalPrivilege",
+      "attributes": "0x00000003",
+      "enabled": true
+    },
+    {
+      "name": "SeIncreaseWorkingSetPrivilege",
+      "attributes": "0x00000003",
+      "enabled": true
+    },
+    {
+      "name": "SeTimeZonePrivilege",
+      "attributes": "0x00000003",
+      "enabled": true
+    },
+    {
+      "name": "SeCreateSymbolicLinkPrivilege",
+      "attributes": "0x00000003",
+      "enabled": true
+    },
+    {
+      "name": "SeDelegateSessionUserImpersonatePrivilege",
+      "attributes": "0x00000003",
+      "enabled": true
+    }
+  ],
+  "source-sha256": "2eb934ca21f5311055ac8a14e35928c3bc1ced9182bda127b9c1797eef951a43",
+  "scope": "Read-only current-process token and kernel-version query; no privilege or Defender policy changes."
+}

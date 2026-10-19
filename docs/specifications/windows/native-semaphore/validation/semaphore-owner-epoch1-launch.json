@@ -1,0 +1,205 @@
+{
+  "pid": 3604,
+  "state": "finished",
+  "utc": "2026-10-19T02:01:45.496978+00:00",
+  "scope": "Read-only diagnostic linked to the exact validated retained-owner core archive; all prefix turns execute normally. Controller exit is separate from guest exit.",
+  "archive": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-owned\\debug\\deps\\librax-934115059aa64c85.rlib",
+    "bytes": 501801646,
+    "sha256": "0bd770c8168f7ab4fde931024a620a7aefc882b2ae7f373a423b2bce0401be97",
+    "members": 20,
+    "structural-member-walk": "pass"
+  },
+  "source-before": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\semaphore-owner-epoch1.rs",
+    "bytes": 7384,
+    "sha256": "c2937df0ecc4c55efa514b14f8eef7955545c26f2e052882a4937eebb93f7d0f"
+  },
+  "runtime-modules-before": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e"
+    },
+    {
+      "path": "C:\\Windows\\System32\\KernelBase.dll",
+      "bytes": 7213728,
+      "sha256": "6b2fa508ac4f9bce5d7351676485d1dc5b5236cd9656034e2fec1eaba3b82bc9"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\KernelBase.dll",
+      "bytes": 3073488,
+      "sha256": "e9c414d7c6bd2c6fde608f31b2f31da3c2014c801b3764a30ee42abd1e9c2d58"
+    },
+    {
+      "path": "C:\\Windows\\System32\\kernel32.dll",
+      "bytes": 1500304,
+      "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\kernel32.dll",
+      "bytes": 696392,
+      "sha256": "9c9a0c54a79ea712bb533fcc79ba9935ed9f9d3f777fd65cf62d9cec6699b9df"
+    }
+  ],
+  "svc-map": {
+    "utc": "2026-10-19T01:57:25.169965+00:00",
+    "module-path": "C:\\Windows\\System32\\ntdll.dll",
+    "module-sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f",
+    "rows": [
+      {
+        "name": "NtCreateSemaphore",
+        "address": "0x7fff38a41cb0",
+        "first-16-bytes": "e11800d4c0035fd60000000000000000",
+        "svc-offset": 0,
+        "svc": 199
+      },
+      {
+        "name": "NtOpenSemaphore",
+        "address": "0x7fff38a423a0",
+        "first-16-bytes": "c12600d4c0035fd60000000000000000",
+        "svc-offset": 0,
+        "svc": 310
+      },
+      {
+        "name": "NtReleaseSemaphore",
+        "address": "0x7fff38a410a0",
+        "first-16-bytes": "410100d4c0035fd60000000000000000",
+        "svc-offset": 0,
+        "svc": 10
+      },
+      {
+        "name": "NtQuerySemaphore",
+        "address": "0x7fff38a426e0",
+        "first-16-bytes": "412d00d4c0035fd60000000000000000",
+        "svc-offset": 0,
+        "svc": 362
+      },
+      {
+        "name": "NtWaitForSingleObject",
+        "address": "0x7fff38a41040",
+        "first-16-bytes": "810000d4c0035fd60000000000000000",
+        "svc-offset": 0,
+        "svc": 4
+      },
+      {
+        "name": "NtCreateMutant",
+        "address": "0x7fff38a41be0",
+        "first-16-bytes": "411700d4c0035fd60000000000000000",
+        "svc-offset": 0,
+        "svc": 186
+      },
+      {
+        "name": "NtOpenDirectoryObject",
+        "address": "0x7fff38a415c0",
+        "first-16-bytes": "010b00d4c0035fd60000000000000000",
+        "svc-offset": 0,
+        "svc": 88
+      }
+    ],
+    "source-sha256": "f1329842854e0d81b2d33c4c680f2dfb9af4cd923d9f7cf256ad56fa14a02719",
+    "scope": "Read-only installed ARM64 NTDLL function bytes; diagnostic labels only, no guest dispatch changes."
+  },
+  "child": 2240,
+  "executable-before": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\semaphore-owner-epoch1.exe",
+    "bytes": 26870272,
+    "sha256": "fc4198255004668159d21841b3adf76da2bd3f10bf4369408482a5acb76bcbcb"
+  },
+  "outcomes": [
+    {
+      "program-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-semaphore-epoch1\\tests\\fixtures\\user\\windows\\bin\\arm64\\smoke.exe",
+        "bytes": 3584,
+        "sha256": "325730e33e981784bff4a60bc6f342cf95c2735e85042c89748fc471cbe7781b"
+      },
+      "log": "semaphore-owner-epoch1-0.log",
+      "exit-code": 0,
+      "seconds": 77.46686429100009,
+      "program-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-semaphore-epoch1\\tests\\fixtures\\user\\windows\\bin\\arm64\\smoke.exe",
+        "bytes": 3584,
+        "sha256": "325730e33e981784bff4a60bc6f342cf95c2735e85042c89748fc471cbe7781b"
+      },
+      "log-identity": {
+        "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\semaphore-owner-epoch1-0.log",
+        "bytes": 2019,
+        "sha256": "f94fc3175004044f6e06e21d770358d18862775f73d12604867bcd0eaa709fbd"
+      }
+    },
+    {
+      "program-before": {
+        "path": "C:\\Windows\\System32\\whoami.exe",
+        "bytes": 84480,
+        "sha256": "48fde190b002a5a4c4b8b19db014377263ba94220f23a4f0a117fec082d46bf6"
+      },
+      "log": "semaphore-owner-epoch1-1.log",
+      "exit-code": 0,
+      "seconds": 50.63115887499953,
+      "program-after": {
+        "path": "C:\\Windows\\System32\\whoami.exe",
+        "bytes": 84480,
+        "sha256": "48fde190b002a5a4c4b8b19db014377263ba94220f23a4f0a117fec082d46bf6"
+      },
+      "log-identity": {
+        "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\semaphore-owner-epoch1-1.log",
+        "bytes": 1865,
+        "sha256": "21c52245dc5ee8105c894c48f15d83c308cba8ef1d25adbba6c72b74c50363c0"
+      }
+    }
+  ],
+  "exit_code": 0,
+  "source-after": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\semaphore-owner-epoch1.rs",
+    "bytes": 7384,
+    "sha256": "c2937df0ecc4c55efa514b14f8eef7955545c26f2e052882a4937eebb93f7d0f"
+  },
+  "executable-after": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\semaphore-owner-epoch1.exe",
+    "bytes": 26870272,
+    "sha256": "fc4198255004668159d21841b3adf76da2bd3f10bf4369408482a5acb76bcbcb"
+  },
+  "archive-after": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-owned\\debug\\deps\\librax-934115059aa64c85.rlib",
+    "bytes": 501801646,
+    "sha256": "0bd770c8168f7ab4fde931024a620a7aefc882b2ae7f373a423b2bce0401be97"
+  },
+  "runtime-modules-after": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e"
+    },
+    {
+      "path": "C:\\Windows\\System32\\KernelBase.dll",
+      "bytes": 7213728,
+      "sha256": "6b2fa508ac4f9bce5d7351676485d1dc5b5236cd9656034e2fec1eaba3b82bc9"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\KernelBase.dll",
+      "bytes": 3073488,
+      "sha256": "e9c414d7c6bd2c6fde608f31b2f31da3c2014c801b3764a30ee42abd1e9c2d58"
+    },
+    {
+      "path": "C:\\Windows\\System32\\kernel32.dll",
+      "bytes": 1500304,
+      "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\kernel32.dll",
+      "bytes": 696392,
+      "sha256": "9c9a0c54a79ea712bb533fcc79ba9935ed9f9d3f777fd65cf62d9cec6699b9df"
+    }
+  ],
+  "completed-utc": "2026-10-19T02:04:03.177305+00:00"
+}

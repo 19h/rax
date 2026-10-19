@@ -1,0 +1,11 @@
+{
+  "phnt": {
+    "commit": "53fbbdc5b5d2b08761db1c7b26bfa8c820924356",
+    "url": "https://raw.githubusercontent.com/winsiderss/phnt/53fbbdc5b5d2b08761db1c7b26bfa8c820924356/ntexapi.h",
+    "sha256": "0510ac40fa1690cd73bed8afe3ed602aaa7bb6870ab95ea9aaba36ce1f4c3d53"
+  },
+  "microsoft": [
+    "https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-createsemaphorew",
+    "https://learn.microsoft.com/en-us/windows/win32/sync/synchronization-object-security-and-access-rights"
+  ]
+}

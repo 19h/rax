@@ -1,0 +1,101 @@
+{
+  "pid": 3436,
+  "utc": "2026-10-19T02:15:32.501673+00:00",
+  "state": "finished",
+  "source-epoch": 2,
+  "steps": [
+    {
+      "name": "toolchain",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "--version"
+      ],
+      "cwd": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-semaphore-epoch2",
+      "started-utc": "2026-10-19T02:15:58.845958+00:00",
+      "exit-code": 0,
+      "log": "semaphore-native-epoch2-toolchain.log",
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5",
+      "bytes": 36,
+      "results": []
+    },
+    {
+      "name": "capi",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "-p",
+        "rax-capi",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "cwd": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-semaphore-epoch2",
+      "started-utc": "2026-10-19T02:15:58.874773+00:00",
+      "exit-code": 0,
+      "log": "semaphore-native-epoch2-capi.log",
+      "sha256": "ab5fa24a259262a06c45cdf60dcf045ccbe5aea6f53f6315f8919fd40006b5c4",
+      "bytes": 14936,
+      "results": [
+        "ok. 183 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 10.71s",
+        "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    {
+      "name": "all-targets",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "check",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "-p",
+        "rax-capi",
+        "--all-targets"
+      ],
+      "cwd": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-semaphore-epoch2",
+      "started-utc": "2026-10-19T02:16:23.962020+00:00",
+      "exit-code": 0,
+      "log": "semaphore-native-epoch2-all-targets.log",
+      "sha256": "11eed1751872ddc39c3692acfb8f93463d722490ba48a1fa9c5d29b8db19d7ad",
+      "bytes": 1012,
+      "results": []
+    }
+  ],
+  "materialization": {
+    "utc": "2026-10-19T02:15:52.172596+00:00",
+    "source-epoch": 2,
+    "complete-inputs": 22587,
+    "immutable-linked-inputs": 22576,
+    "fallback-copies": [],
+    "separate-overrides": [
+      "capi/README.md",
+      "capi/examples/x86_64_smir.c",
+      "capi/examples/x86_64_vector_smir.c",
+      "capi/include/rax.h",
+      "capi/src/lib.rs",
+      "capi/src/smir.rs",
+      "capi/src/smir/tests.rs",
+      "capi/src/smir/vector.rs",
+      "capi/src/smir/vector_tests.rs",
+      "capi/src/tests.rs",
+      "capi/tests/analyze_abi.c"
+    ],
+    "deleted": [],
+    "scope": "Every parent input verified before reuse; changed files materialized separately with current mtimes. No parent hardlinked content is written."
+  },
+  "native-cargo-source-config": {
+    "sha256": "9f80616d633d948feeba5b201bfa4fe98c8fd736f3f48469b6481279584d8f4c",
+    "bytes": 374
+  },
+  "prior-record": "semaphore-native-epoch1-gates.json",
+  "qualification": "Native full core retains exactly the five established lowerer failures.",
+  "prepared-source-inputs": 22587,
+  "current-step": "all-targets",
+  "child-pid": 2052,
+  "exit-code": 0,
+  "post-source-inputs": 22587,
+  "completed-utc": "2026-10-19T02:16:31.828529+00:00"
+}

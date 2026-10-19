@@ -1,0 +1,87 @@
+[
+  {
+    "case": "source",
+    "rejected": true,
+    "reason": "native-semaphore-v1 source identity"
+  },
+  {
+    "case": "unfinished",
+    "rejected": true,
+    "reason": "native-semaphore-v1 incomplete"
+  },
+  {
+    "case": "missing-profile",
+    "rejected": true,
+    "reason": "native-semaphore-v1 profile outcomes"
+  },
+  {
+    "case": "provider",
+    "rejected": true,
+    "reason": "native-semaphore-v1 provider set"
+  },
+  {
+    "case": "pe-machine",
+    "rejected": true,
+    "reason": "native-semaphore-v1-arm64 executable ABI"
+  },
+  {
+    "case": "post-source",
+    "rejected": true,
+    "reason": "native-semaphore-v1-arm64 post-source identity"
+  },
+  {
+    "case": "case-count",
+    "rejected": true,
+    "reason": "native-semaphore-v1-arm64 case count"
+  },
+  {
+    "case": "leaked-handle",
+    "rejected": true,
+    "reason": "native-semaphore-v1-arm64 leaked handles"
+  },
+  {
+    "case": "escaped-exception",
+    "rejected": true,
+    "reason": "native-semaphore-v1-arm64 escaped exception"
+  },
+  {
+    "case": "count-validation",
+    "rejected": true,
+    "reason": "native-semaphore-v1-arm64 independent create/open count/conversion/probe contract"
+  },
+  {
+    "case": "open-precedence",
+    "rejected": true,
+    "reason": "native-semaphore-v1-arm64 independent create/open count/conversion/probe contract"
+  },
+  {
+    "case": "release-precedence",
+    "rejected": true,
+    "reason": "native-semaphore-v1-arm64 independent release fault/count/access contract"
+  },
+  {
+    "case": "release-mutated-on-failure",
+    "rejected": true,
+    "reason": "native-semaphore-v1-arm64 release mutated on failure or lost successful update"
+  },
+  {
+    "case": "query-precedence",
+    "rejected": true,
+    "reason": "native-semaphore-v1-arm64 independent query fault/class/length/access contract"
+  },
+  {
+    "case": "bridge-identity",
+    "rejected": true,
+    "reason": "native-semaphore-names-v2-arm64 Win32/native identity"
+  },
+  {
+    "case": "existing-count-validation",
+    "rejected": true,
+    "reason": "native-semaphore-names-v2-arm64 existing count validation"
+  },
+  {
+    "case": "replay-bytes",
+    "rejected": true,
+    "reason": "/Users/int/Library/Caches/assist-process-emulation/native-semaphore-20261019/semaphore-negative-a6uqoicc/native-semaphore/replay/query-arm64.tsv projection drift"
+  }
+]

@@ -1,0 +1,656 @@
+{
+  "source": "/Users/int/Library/Caches/assist-process-emulation/native-semaphore-20261019/semaphore-source",
+  "target": "/Users/int/Library/Caches/assist-process-emulation/native-semaphore-20261019/semaphore-integrated-source",
+  "parent": "c717f9b8c93b9e992bc9b1069ced0d85a72de2fc",
+  "files": [
+    {
+      "path": "docs/specifications/windows/native-semaphore/.gitattributes",
+      "bytes": 29,
+      "sha256": "730a35ae3d558080083c3103d9ac8100c3f6561678092abe341701dfa331eb1d"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/check_native.py",
+      "bytes": 11914,
+      "sha256": "c4e35c64e002f29d434328a819d476db316c52ce266e3a38c1a9d18fe9d821e7"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-names-v2/native-semaphore-names-v2-arm64-after.json",
+      "bytes": 532,
+      "sha256": "fe10ecfc45ea0454222f582909824b6e0dab7f5b2097c4cc002781b476a269d6"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-names-v2/native-semaphore-names-v2-arm64-before.json",
+      "bytes": 532,
+      "sha256": "fe10ecfc45ea0454222f582909824b6e0dab7f5b2097c4cc002781b476a269d6"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-names-v2/native-semaphore-names-v2-arm64-build.log",
+      "bytes": 31,
+      "sha256": "668a20c5b15a2231ff80fd878a87b983912efd153563f1bcc0c347881443d364"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-names-v2/native-semaphore-names-v2-arm64-source-after.json",
+      "bytes": 246,
+      "sha256": "c09810081d7d28c6dceaf7a2a8b39189a17db892322dd71335f4c0606d0ff738"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-names-v2/native-semaphore-names-v2-arm64.log",
+      "bytes": 128720,
+      "sha256": "b1aab4f9750ed628a77a2d731684fffefa752b42171e2daf405ef47b85822f1c"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-names-v2/native-semaphore-names-v2-driver.log",
+      "bytes": 964,
+      "sha256": "81157a84a41f6d110e3d629b61f37581444b3f76aa427bed1014db5bce060e17"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-names-v2/native-semaphore-names-v2-launch.json",
+      "bytes": 379,
+      "sha256": "0be059fef6e8c87815677f104e045f941e410a9d2442e060b05960cfa2fe5c1b"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-names-v2/native-semaphore-names-v2-modules-after.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-names-v2/native-semaphore-names-v2-modules-before.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-names-v2/native-semaphore-names-v2-outcomes.json",
+      "bytes": 508,
+      "sha256": "60234e60a27341649a1054995869c544e8f896198f9410b33414503d26abdde3"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-names-v2/native-semaphore-names-v2-x64-after.json",
+      "bytes": 524,
+      "sha256": "4e8666695fc6e902ae84d080464cbd8ba2e46a7b7deb5cdec38a5bab5bdebc95"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-names-v2/native-semaphore-names-v2-x64-before.json",
+      "bytes": 524,
+      "sha256": "4e8666695fc6e902ae84d080464cbd8ba2e46a7b7deb5cdec38a5bab5bdebc95"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-names-v2/native-semaphore-names-v2-x64-build.log",
+      "bytes": 31,
+      "sha256": "668a20c5b15a2231ff80fd878a87b983912efd153563f1bcc0c347881443d364"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-names-v2/native-semaphore-names-v2-x64-source-after.json",
+      "bytes": 244,
+      "sha256": "44c6f54bffd5f7fa6d61c9f1bf9f1ed1f13d4d194a160ace5de52c187e5f3695"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-names-v2/native-semaphore-names-v2-x64.log",
+      "bytes": 128734,
+      "sha256": "06a0282f21352951296b763c6bcdaea41bb12bcdfdaf052de5a8e3dd6fa94474"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-names-v2/native-semaphore-names-v2-x86-after.json",
+      "bytes": 522,
+      "sha256": "45c23948e37fdbb06db4b29bb980ddd9aba2a6840049806b7eaf9d9eba686a51"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-names-v2/native-semaphore-names-v2-x86-before.json",
+      "bytes": 522,
+      "sha256": "45c23948e37fdbb06db4b29bb980ddd9aba2a6840049806b7eaf9d9eba686a51"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-names-v2/native-semaphore-names-v2-x86-build.log",
+      "bytes": 31,
+      "sha256": "668a20c5b15a2231ff80fd878a87b983912efd153563f1bcc0c347881443d364"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-names-v2/native-semaphore-names-v2-x86-laa-after.json",
+      "bytes": 536,
+      "sha256": "0ffd5599f5f8ed2ac039ceec6473a1241f2b8778336a4ad40c235ee78cca2a27"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-names-v2/native-semaphore-names-v2-x86-laa-before.json",
+      "bytes": 536,
+      "sha256": "0ffd5599f5f8ed2ac039ceec6473a1241f2b8778336a4ad40c235ee78cca2a27"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-names-v2/native-semaphore-names-v2-x86-laa-build.log",
+      "bytes": 31,
+      "sha256": "668a20c5b15a2231ff80fd878a87b983912efd153563f1bcc0c347881443d364"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-names-v2/native-semaphore-names-v2-x86-laa-source-after.json",
+      "bytes": 248,
+      "sha256": "978934d613d60f4a8a367068c97112390f5b4cf713694a86c8ca33884c5dec84"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-names-v2/native-semaphore-names-v2-x86-laa.log",
+      "bytes": 127206,
+      "sha256": "509cb6ed1f6072d1c12f540b6aac4eb17fcef696dc58cff9008dee13a2c34f4f"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-names-v2/native-semaphore-names-v2-x86-source-after.json",
+      "bytes": 244,
+      "sha256": "41886a310c84290a36b9fad5e35f54190ff3c7842afda0035dec6f6d391f11e8"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-names-v2/native-semaphore-names-v2-x86.log",
+      "bytes": 127202,
+      "sha256": "e096fcc2dfea1d6cd6d350b6176c7598bd5c07298db8c0454d0a317a82465694"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-names-v2/native-semaphore-names-v2.cpp",
+      "bytes": 14567,
+      "sha256": "1c3cbb13d37249f523ff9f00967e85b79b81a319e8005bbb4b92cad1f76d5b47"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-names-v2/native-semaphore-names-v2.ps1",
+      "bytes": 2550,
+      "sha256": "bf893bde432eb1d79d08d2d91822459866773c58c9209d72da09f337cfe0394a"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-names-v2/run-native-semaphore-names-v2.py",
+      "bytes": 1245,
+      "sha256": "41eb8d77a879c247be23e33d0dddfbdab1eefaedff03a88013aa73ffa1aa5dbe"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-query-v3/native-semaphore-query-v3-arm64-after.json",
+      "bytes": 532,
+      "sha256": "0f9b8fb81ce2d8435901cefcf28d14baefd90002ba446b620ad1320c66a24f70"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-query-v3/native-semaphore-query-v3-arm64-before.json",
+      "bytes": 532,
+      "sha256": "0f9b8fb81ce2d8435901cefcf28d14baefd90002ba446b620ad1320c66a24f70"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-query-v3/native-semaphore-query-v3-arm64-build.log",
+      "bytes": 31,
+      "sha256": "6b89340565eeebf236366606c749800693e6a1e071e324e895dba0174c31492a"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-query-v3/native-semaphore-query-v3-arm64-source-after.json",
+      "bytes": 246,
+      "sha256": "87a7ff7e83954fbce48071aea55204eb2438dff77f7e9ff630c6ed839f41e787"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-query-v3/native-semaphore-query-v3-arm64.log",
+      "bytes": 2394037,
+      "sha256": "4be3396a9a5af6bf5eb01e78cb53cc1929713536d64170cf1aabcaa546dad5c4"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-query-v3/native-semaphore-query-v3-driver.log",
+      "bytes": 964,
+      "sha256": "81157a84a41f6d110e3d629b61f37581444b3f76aa427bed1014db5bce060e17"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-query-v3/native-semaphore-query-v3-launch.json",
+      "bytes": 341,
+      "sha256": "6bbfa3732f1b7f05d2e18dbd048464ee2aa4b12f474fb40cae4313ee628b5a98"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-query-v3/native-semaphore-query-v3-modules-after.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-query-v3/native-semaphore-query-v3-modules-before.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-query-v3/native-semaphore-query-v3-outcomes.json",
+      "bytes": 508,
+      "sha256": "8ff2f976c643b4475f310f5219b9324421f7cb679101506f42f4f9d0d72a9d3b"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-query-v3/native-semaphore-query-v3-x64-after.json",
+      "bytes": 524,
+      "sha256": "4847b3661833c591c84e39d26365677e2508356575545bd42c7273139800e46d"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-query-v3/native-semaphore-query-v3-x64-before.json",
+      "bytes": 524,
+      "sha256": "4847b3661833c591c84e39d26365677e2508356575545bd42c7273139800e46d"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-query-v3/native-semaphore-query-v3-x64-build.log",
+      "bytes": 31,
+      "sha256": "6b89340565eeebf236366606c749800693e6a1e071e324e895dba0174c31492a"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-query-v3/native-semaphore-query-v3-x64-source-after.json",
+      "bytes": 244,
+      "sha256": "0e4a3a67279aae6ec10b83d361d5c114ce3a484d852ca34a93d34d1709524255"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-query-v3/native-semaphore-query-v3-x64.log",
+      "bytes": 2394035,
+      "sha256": "727291d4e7dd7d651212c40424912edcaa5d8bf3efcdc72b7b4252d1cfc1c8b7"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-query-v3/native-semaphore-query-v3-x86-after.json",
+      "bytes": 522,
+      "sha256": "201136fb67c35b1072ceeb6a1fa08b9427eb944e57cb5b25f16682ca16c9d613"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-query-v3/native-semaphore-query-v3-x86-before.json",
+      "bytes": 522,
+      "sha256": "201136fb67c35b1072ceeb6a1fa08b9427eb944e57cb5b25f16682ca16c9d613"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-query-v3/native-semaphore-query-v3-x86-build.log",
+      "bytes": 31,
+      "sha256": "6b89340565eeebf236366606c749800693e6a1e071e324e895dba0174c31492a"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-query-v3/native-semaphore-query-v3-x86-laa-after.json",
+      "bytes": 536,
+      "sha256": "72dae854cf1fededb43583bd4f75b629842c965925a1b3aca3e1da7674bbe203"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-query-v3/native-semaphore-query-v3-x86-laa-before.json",
+      "bytes": 536,
+      "sha256": "72dae854cf1fededb43583bd4f75b629842c965925a1b3aca3e1da7674bbe203"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-query-v3/native-semaphore-query-v3-x86-laa-build.log",
+      "bytes": 31,
+      "sha256": "6b89340565eeebf236366606c749800693e6a1e071e324e895dba0174c31492a"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-query-v3/native-semaphore-query-v3-x86-laa-source-after.json",
+      "bytes": 248,
+      "sha256": "d7ea884f4ed8724bd55b4589a7d868261a7260152b1ba406624b607f89e4f4a9"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-query-v3/native-semaphore-query-v3-x86-laa.log",
+      "bytes": 2394040,
+      "sha256": "0af97f2dbb0d76f99a7dee6d3a2c0c75d54da8f85bc196d813ce0551f3191122"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-query-v3/native-semaphore-query-v3-x86-source-after.json",
+      "bytes": 244,
+      "sha256": "a9e9ec55fa115f3057db5a6b35fb0f9605e96cbd0bbdfb25e404da70f5928030"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-query-v3/native-semaphore-query-v3-x86.log",
+      "bytes": 2394035,
+      "sha256": "1e244f01029ae4565b77c07afa25986f5e0bae3a354d62dcfb08b5ab4eccb8ca"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-query-v3/native-semaphore-query-v3.cpp",
+      "bytes": 13187,
+      "sha256": "049fbe4adf09351b0f0cd7f8ce3705eded982b7b52b9aa669566124fe4e70ff3"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-query-v3/native-semaphore-query-v3.ps1",
+      "bytes": 2550,
+      "sha256": "a0017f80dcf4c30cd42d82e7b5ecc3a73c00198a2a67e3bd3265e13ae2eb4c63"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-query-v3/run-native-semaphore-query-v3.py",
+      "bytes": 1207,
+      "sha256": "260832e1c32afe4a7e9fb74ed5b56a3e98539299af4359c4627f6b0ef1b1b2e1"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-v1/native-semaphore-v1-arm64-after.json",
+      "bytes": 520,
+      "sha256": "a7b0005051e7c4331d9b22d2f0f9658aa6e613ef33920ae4a09807e4334a5455"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-v1/native-semaphore-v1-arm64-before.json",
+      "bytes": 520,
+      "sha256": "a7b0005051e7c4331d9b22d2f0f9658aa6e613ef33920ae4a09807e4334a5455"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-v1/native-semaphore-v1-arm64-build.log",
+      "bytes": 25,
+      "sha256": "a93a9b6757a191c3c872658b4f933048e20c3dd7e7d945d30671c7b42746acec"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-v1/native-semaphore-v1-arm64-source-after.json",
+      "bytes": 234,
+      "sha256": "c86d90f955c4b38b51a0cf15313aebbeacd82ddaeaca2cd687549942562ca452"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-v1/native-semaphore-v1-arm64.log",
+      "bytes": 2368815,
+      "sha256": "4f5a1954208e7df809d29c752973673eaeb8a56d64a7c698aa48bb3a66be3180"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-v1/native-semaphore-v1-driver.log",
+      "bytes": 964,
+      "sha256": "81157a84a41f6d110e3d629b61f37581444b3f76aa427bed1014db5bce060e17"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-v1/native-semaphore-v1-launch.json",
+      "bytes": 376,
+      "sha256": "164abea9689b095ddf740fc7b2b27b8c119ac153bcc5b653b83ecccd66cd60dc"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-v1/native-semaphore-v1-modules-after.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-v1/native-semaphore-v1-modules-before.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-v1/native-semaphore-v1-outcomes.json",
+      "bytes": 484,
+      "sha256": "631648c3fe07c49201d2ab16d4aed32d2e7a7a3d63974640cd54f6cb42b67cbe"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-v1/native-semaphore-v1-x64-after.json",
+      "bytes": 512,
+      "sha256": "ca0c46236333597c3baccdcfdfab026dc4066888cab76903b6ee3222c525b2b7"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-v1/native-semaphore-v1-x64-before.json",
+      "bytes": 512,
+      "sha256": "ca0c46236333597c3baccdcfdfab026dc4066888cab76903b6ee3222c525b2b7"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-v1/native-semaphore-v1-x64-build.log",
+      "bytes": 25,
+      "sha256": "a93a9b6757a191c3c872658b4f933048e20c3dd7e7d945d30671c7b42746acec"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-v1/native-semaphore-v1-x64-source-after.json",
+      "bytes": 232,
+      "sha256": "8c016078a5124b2eb6e1a71ab9ab3caeb58c5d7ade0aa130173fdd21b23e56ac"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-v1/native-semaphore-v1-x64.log",
+      "bytes": 2368813,
+      "sha256": "9f0468ce6b9617e131722d0ade240fa0dc4dc22e62778fe1e4abe143c5be39f0"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-v1/native-semaphore-v1-x86-after.json",
+      "bytes": 510,
+      "sha256": "9b7fab0219b71451f9c949c5723f4f0323931ece7f40022d15171749efb69410"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-v1/native-semaphore-v1-x86-before.json",
+      "bytes": 510,
+      "sha256": "9b7fab0219b71451f9c949c5723f4f0323931ece7f40022d15171749efb69410"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-v1/native-semaphore-v1-x86-build.log",
+      "bytes": 25,
+      "sha256": "a93a9b6757a191c3c872658b4f933048e20c3dd7e7d945d30671c7b42746acec"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-v1/native-semaphore-v1-x86-laa-after.json",
+      "bytes": 524,
+      "sha256": "bf85266ae0be4a0f64a6c64b3480e413054004846dc9fcda3c95d355bbb8a943"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-v1/native-semaphore-v1-x86-laa-before.json",
+      "bytes": 524,
+      "sha256": "bf85266ae0be4a0f64a6c64b3480e413054004846dc9fcda3c95d355bbb8a943"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-v1/native-semaphore-v1-x86-laa-build.log",
+      "bytes": 25,
+      "sha256": "a93a9b6757a191c3c872658b4f933048e20c3dd7e7d945d30671c7b42746acec"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-v1/native-semaphore-v1-x86-laa-source-after.json",
+      "bytes": 236,
+      "sha256": "91c6c9da6b609fb02073926c1d9a722b240b6d0d5c7ddc3159bed4fa52608959"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-v1/native-semaphore-v1-x86-laa.log",
+      "bytes": 2372104,
+      "sha256": "626e040e1d4a1610943c97152708827f48b770732adf47650817bd568c4e129d"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-v1/native-semaphore-v1-x86-source-after.json",
+      "bytes": 232,
+      "sha256": "217de6027af4b12ed73b978ea0ee0adf646fc8775a00674c092a443e97ca69ff"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-v1/native-semaphore-v1-x86.log",
+      "bytes": 2372100,
+      "sha256": "2567a4fc70c93b1d76423ecb8faf77230c4ee9f8eeffffe03783591c7914905f"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-v1/native-semaphore-v1.cpp",
+      "bytes": 14929,
+      "sha256": "9aed7fd97854147ff95da80f8751d37ac9753004e87270c8818093ff277c8445"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-v1/native-semaphore-v1.ps1",
+      "bytes": 2466,
+      "sha256": "bb8cce52295b611a657dd3d540030a5149a8b1fe226fd0deb69bc4926591c1a5"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/native-v1/run-native-semaphore-v1.py",
+      "bytes": 1218,
+      "sha256": "92866814bde39577a9182aa686031e3bfbd90cf32a7ca5865f2d1a3a40170e67"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/plan-and-ownership.json",
+      "bytes": 7481,
+      "sha256": "d02ab490565c733215266c3e6d661e3cf2f6cb08942ac219609edc363b742ee9"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/primary-sources.json",
+      "bytes": 502,
+      "sha256": "100b1a3b97fe18d3bcd86cb8ebb358d7478eea2bb8c75d65a8e36bde8fec41ca"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/replay/create-arm64.tsv",
+      "bytes": 352651,
+      "sha256": "e36be47cc792e38ac9f84973e4b2f586040cab7f1b91265810a1d0145855455a"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/replay/create-x64.tsv",
+      "bytes": 352651,
+      "sha256": "e36be47cc792e38ac9f84973e4b2f586040cab7f1b91265810a1d0145855455a"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/replay/create-x86-laa.tsv",
+      "bytes": 355336,
+      "sha256": "d40c0af876071bd734c443caef14e37753dbc10080695f8263ea3719493ee500"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/replay/create-x86.tsv",
+      "bytes": 355336,
+      "sha256": "d40c0af876071bd734c443caef14e37753dbc10080695f8263ea3719493ee500"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/replay/open-arm64.tsv",
+      "bytes": 44456,
+      "sha256": "041df02d67bd395850d122500c6b80ec250f7e2fa00d1bf2d12cfaf999418f7e"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/replay/open-x64.tsv",
+      "bytes": 44456,
+      "sha256": "be644bc8501adfa0e25d5544829367f3858ebfc65b22c642e80ab1e411a8932b"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/replay/open-x86-laa.tsv",
+      "bytes": 44456,
+      "sha256": "d1471e65cf1f8bf5570abef27db2ef54fd82c9586cd72a6ce60a118e2423e6c9"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/replay/open-x86.tsv",
+      "bytes": 44456,
+      "sha256": "2ae2eddcc9ea0dfa37837fa3391f80e5e71cd7ed1bae88ce1d98e0781b385e0d"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/replay/query-arm64.tsv",
+      "bytes": 2973016,
+      "sha256": "23165820077052424b454fb17a87d72897fed5ae1e1022b2ae0f2d9b91081327"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/replay/query-x64.tsv",
+      "bytes": 2973016,
+      "sha256": "23165820077052424b454fb17a87d72897fed5ae1e1022b2ae0f2d9b91081327"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/replay/query-x86-laa.tsv",
+      "bytes": 2973016,
+      "sha256": "3b251f759f393a0d560f4f91d9c97f2afb1d41b5fa786b305b0bdd02a38f5bdc"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/replay/query-x86.tsv",
+      "bytes": 2973016,
+      "sha256": "3b251f759f393a0d560f4f91d9c97f2afb1d41b5fa786b305b0bdd02a38f5bdc"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/replay/release-arm64.tsv",
+      "bytes": 248900,
+      "sha256": "8868c7a1937132fc415dd010d36506352afbd594739b6f413dbf39cf7e182a61"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/replay/release-x64.tsv",
+      "bytes": 248900,
+      "sha256": "8868c7a1937132fc415dd010d36506352afbd594739b6f413dbf39cf7e182a61"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/replay/release-x86-laa.tsv",
+      "bytes": 248900,
+      "sha256": "8868c7a1937132fc415dd010d36506352afbd594739b6f413dbf39cf7e182a61"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/replay/release-x86.tsv",
+      "bytes": 248900,
+      "sha256": "8868c7a1937132fc415dd010d36506352afbd594739b6f413dbf39cf7e182a61"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/validation/baseline-a-native-semaphore-tests.rs",
+      "bytes": 5937,
+      "sha256": "4b9457eda3ff39c47fa6315b9f9c7d261d291bdccaad693e917686975b840bcb"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/validation/capture-semaphore-host-context.py",
+      "bytes": 2957,
+      "sha256": "2eb934ca21f5311055ac8a14e35928c3bc1ced9182bda127b9c1797eef951a43"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/validation/native-semaphore-host-context.json",
+      "bytes": 3691,
+      "sha256": "86b7ceb24ecd2c62746b5be2a44484bc35c36ab36d666cd0c65e906c4abd9ff7"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/validation/semaphore-baseline-a-inputs.json",
+      "bytes": 1129,
+      "sha256": "8a502bb9685adb412035978f261f73160d40d4a66e22f8d8c5247b3c9f239010"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/validation/semaphore-baseline-a-macos.json",
+      "bytes": 572,
+      "sha256": "1c94c3199061f90fce4a6f0b98385a5ff1683e55fbd18a71e31e8f946cd14599"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/validation/semaphore-baseline-a-macos.log",
+      "bytes": 2988,
+      "sha256": "9abe24a6a728d0133052338c583e14e4eef2c0dec849f61981435284ee632cad"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/validation/semaphore-baseline-inputs.json",
+      "bytes": 1262,
+      "sha256": "e9b475386e65b1e49f440e9d49a155f2812da7d13f7b6cd4dc41b70bb2f17149"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/validation/semaphore-baseline-macos.json",
+      "bytes": 668,
+      "sha256": "e805764f39f700ddfd83ab9b41680376b8d0c0b485e7514226bbf38b0ae915c8"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/validation/semaphore-baseline-macos.log",
+      "bytes": 6175,
+      "sha256": "4ad97c6f313234f923ca07f24bb142e76d7cdc0741ab14ba6f382fc8a1b03ce1"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/validation/semaphore-prototype-macos-native_mutant.log",
+      "bytes": 1929,
+      "sha256": "c13b7ccf6415ae78b6fb9fb4559a38044f8f683d5ad5cc5a51770cef52018bcc"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/validation/semaphore-prototype-macos-native_semaphore.log",
+      "bytes": 1872,
+      "sha256": "49bcd284b235fcfd26930ca27397594b24d9ab004a54bc1abbfd8064c4cf57db"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/validation/semaphore-prototype-macos-native_single_wait.log",
+      "bytes": 2749,
+      "sha256": "9fcede20a441f48faeeddeafa063c61b09e413ebf600ac6c739d897f4b4d2c7c"
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/validation/semaphore-prototype-macos.json",
+      "bytes": 2158,
+      "sha256": "3a93dc864ca5362559de839f6a0b3e9d913e77afc8d6f943b21de151e921b8a3"
+    },
+    {
+      "path": "src/user/windows/dll/mod.rs",
+      "bytes": 15237,
+      "sha256": "d8c427d0ade069fb2a4bf87bdecec6c73ff66056cfac8004440af9c544b23f9c"
+    },
+    {
+      "path": "src/user/windows/dll/native.rs",
+      "bytes": 20628,
+      "sha256": "55bd30ad0c44919e3d8ba8329428883d3e10ba5922ac8d88ba5682ee4120fcc1"
+    },
+    {
+      "path": "src/user/windows/dll/native/mutant.rs",
+      "bytes": 5698,
+      "sha256": "46c1d6ae98042ed19f23900ca7cbab3cac1ff203c9949ec8f2e475e2cfbc6935"
+    },
+    {
+      "path": "src/user/windows/dll/native/mutant/attributes.rs",
+      "deleted": true
+    },
+    {
+      "path": "src/user/windows/dll/native/named_object.rs",
+      "bytes": 3116,
+      "sha256": "a8d0fa65f05ce61b82526eb5754a9f36cf11f25180765626c2f82606cd7b19a2"
+    },
+    {
+      "path": "src/user/windows/dll/native/named_object/attributes.rs",
+      "bytes": 2958,
+      "sha256": "a7ed8a759afabb47fb85d79e2bc88e28ff122a11aa6c60ebb1c083d68b5198f0"
+    },
+    {
+      "path": "src/user/windows/dll/native/semaphore.rs",
+      "bytes": 6853,
+      "sha256": "e19a8c5785c24aeeb9651fc8596df0f55fb836c4962172c08126d8496097c3ac"
+    },
+    {
+      "path": "src/user/windows/dll/threading/native_semaphore_tests.rs",
+      "bytes": 5945,
+      "sha256": "84c12d3262197af616cfca94dd180e5753f125bd339020f6a9ab6470b0285434"
+    },
+    {
+      "path": "src/user/windows/dll/threading/native_wait_tests.rs",
+      "bytes": 7611,
+      "sha256": "5fe6ad9b4f13c6b79602321b9c11b38e97344de2495778dfff46c37e0c80a0d4"
+    },
+    {
+      "path": "src/user/windows/dll/threading/tests.rs",
+      "bytes": 36403,
+      "sha256": "82c4e6e77aa57c5dd0dc363d1d45dec7dcae35d929f6dfa96fddad8668ae2f22"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests.rs",
+      "bytes": 48629,
+      "sha256": "638b1b2033d5500a6f352ea4894b0dadb486129ffdaa72e5400f3b236c80e470"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/semaphore_replay_tests.rs",
+      "bytes": 14091,
+      "sha256": "b69cb22b050f2ab79313e6f0d8870f14a35cda829daf1b9b206a3d40afa68db7"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/semaphore_tests.rs",
+      "bytes": 9503,
+      "sha256": "f0675bd7a151177fdbf3550be1d4ac75f31d5ea2888dc4430f649d94b9f6f886"
+    }
+  ]
+}

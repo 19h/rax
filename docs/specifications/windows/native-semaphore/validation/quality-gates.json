@@ -1,0 +1,12 @@
+{
+  "scope": "Native semaphore semantic group; full process-userland objective remains active and incomplete.",
+  "QG1": "pass: technical behavior and evidence only",
+  "QG2": "pass: final assumption register with probes and dependencies",
+  "QG3": "pass within group: four APIs, native/synthetic dispatch, shared Win32 state, three hosts and paired publication preparation",
+  "QG4": "pass: 32-bit signed count bounds, 8-byte information layout, exact observer-turn arithmetic",
+  "QG5": "pass within group: explicit security/namespace limitations, exact five pre-existing Windows failures, remaining NtOpenKey boundary retained",
+  "QG6": "pass: source/PE/provider identities and pinned primary headers, full snapshots, actual archive/linkage records",
+  "QG7": "pass: bounded findings listed; no registry implementation or unrelated source edits in group",
+  "native-corruptions-rejected": 17,
+  "final-corruptions-rejected-after-rebinding": 13
+}

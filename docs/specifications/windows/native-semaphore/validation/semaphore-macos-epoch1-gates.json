@@ -1,0 +1,131 @@
+{
+  "state": "finished",
+  "source-epoch": 1,
+  "host": "macos",
+  "driver-pid": 9371,
+  "steps": [
+    {
+      "name": "focus",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "native_semaphore",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 8.131179417003295,
+      "log": "semaphore-macos-epoch1-focus.log",
+      "bytes": 1751,
+      "sha256": "c1ee1ddf4753c5ab6d4c1ec2a7347910c26b394fbed3b849f13447a8da967662",
+      "results": [
+        "ok. 9 passed; 0 failed; 0 ignored; 0 measured; 7963 filtered out; finished in 6.81s"
+      ]
+    },
+    {
+      "name": "full",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 389.0036463330034,
+      "log": "semaphore-macos-epoch1-full.log",
+      "bytes": 830901,
+      "sha256": "59ba746c351528df2435fac46823000403f67c1e84a7efec17f7a6d973b7616b",
+      "results": [
+        "ok. 7970 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 386.65s"
+      ]
+    },
+    {
+      "name": "capi",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "-p",
+        "rax-capi",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 63.55956395799876,
+      "log": "semaphore-macos-epoch1-capi.log",
+      "bytes": 13132,
+      "sha256": "3a39a6952d69fb601a06b62b359fa99ce44dc644cf8274db6d3b420b8c3385cb",
+      "results": [
+        "ok. 168 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 13.96s",
+        "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    {
+      "name": "integration",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--test",
+        "user_windows",
+        "--test",
+        "user_windows_memory",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 90.43268845899729,
+      "log": "semaphore-macos-epoch1-integration.log",
+      "bytes": 36058,
+      "sha256": "7fd55e28cbf820e350e1b6266f1a3047b1a4e0d343b6dbfcbb8c72d1431d0abf",
+      "results": [
+        "ok. 544 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 84.08s",
+        "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    {
+      "name": "all-targets",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "check",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--all-targets"
+      ],
+      "exit-code": 0,
+      "seconds": 61.53732091700658,
+      "log": "semaphore-macos-epoch1-all-targets.log",
+      "bytes": 463,
+      "sha256": "45607637d949ae1c018de8e59a569d915636c18219e8779b2867dc5f7f33a140",
+      "results": []
+    }
+  ],
+  "utc": "2026-10-19T01:58:41.968005+00:00",
+  "child-pid": 21871,
+  "current-step": "all-targets",
+  "last-exit-code": 0,
+  "exit-code": 0,
+  "completed-utc": "2026-10-19T01:59:43.501999+00:00"
+}

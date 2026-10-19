@@ -1,0 +1,24 @@
+{
+  "state": "finished",
+  "argv": [
+    "cargo",
+    "+1.95.0",
+    "test",
+    "--locked",
+    "--offline",
+    "--no-default-features",
+    "--lib",
+    "native_semaphore",
+    "--",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "source": "/Users/int/Library/Caches/assist-process-emulation/native-semaphore-20261019/semaphore-source",
+  "pid": 98447,
+  "child-pid": 98448,
+  "exit-code": 101,
+  "seconds": 42.405770583005506,
+  "log": "semaphore-baseline-macos.log",
+  "sha256": "9abe24a6a728d0133052338c583e14e4eef2c0dec849f61981435284ee632cad",
+  "results": []
+}

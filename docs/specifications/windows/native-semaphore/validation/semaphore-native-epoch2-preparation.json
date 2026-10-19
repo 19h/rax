@@ -1,0 +1,22 @@
+{
+  "utc": "2026-10-19T02:15:52.172596+00:00",
+  "source-epoch": 2,
+  "complete-inputs": 22587,
+  "immutable-linked-inputs": 22576,
+  "fallback-copies": [],
+  "separate-overrides": [
+    "capi/README.md",
+    "capi/examples/x86_64_smir.c",
+    "capi/examples/x86_64_vector_smir.c",
+    "capi/include/rax.h",
+    "capi/src/lib.rs",
+    "capi/src/smir.rs",
+    "capi/src/smir/tests.rs",
+    "capi/src/smir/vector.rs",
+    "capi/src/smir/vector_tests.rs",
+    "capi/src/tests.rs",
+    "capi/tests/analyze_abi.c"
+  ],
+  "deleted": [],
+  "scope": "Every parent input verified before reuse; changed files materialized separately with current mtimes. No parent hardlinked content is written."
+}

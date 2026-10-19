@@ -1,0 +1,35 @@
+warning: "stdcall" is not a supported ABI for the current target
+  --> vendor\vm-memory\src\mmap\windows.rs:22:1
+   |
+22 | / extern "stdcall" {
+23 | |     pub fn VirtualAlloc(
+24 | |         lpAddress: *mut c_void,
+25 | |         dwSize: size_t,
+...  |
+49 | |     pub fn CloseHandle(hObject: RawHandle) -> u32; // BOOL
+50 | | }
+   | |_^
+   |
+   = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!
+   = note: for more information, see issue #137018 <https://github.com/rust-lang/rust/issues/137018>
+   = help: if you need `extern "stdcall"` on win32 and `extern "C"` everywhere else, use `extern "system"`
+   = note: `#[warn(unsupported_calling_conventions)]` (part of `#[warn(future_incompatible)]`) on by default
+
+warning: `vm-memory` (lib) generated 1 warning
+   Compiling rax v0.1.0 (C:\Windows\Temp\assist-native-rax-20261010\src-semaphore-epoch1)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2m 31s
+     Running unittests src\lib.rs (C:\Windows\Temp\assist-native-rax-20261010\target-wait-epoch3\debug\deps\rax-b799307a7949aa6b.exe)
+
+running 9 tests
+test user::windows::dll::threading::tests::native_semaphore_tests::native_semaphore_preserves_every_prior_ntdll_ordinal_and_trap_rva_all_abis ... ok
+test user::windows::dll::threading::tests::native_semaphore_tests::native_semaphore_win32_native_names_counts_and_cross_type_lifetime_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::semaphore_replay_tests::native_semaphore_create_replays_6144_fault_count_and_publication_cases ... ok
+test user::windows::process::sched::tests::services_tests::semaphore_replay_tests::native_semaphore_open_replays_768_attribute_and_copy_cases ... ok
+test user::windows::process::sched::tests::services_tests::semaphore_replay_tests::native_semaphore_query_replays_27916_probe_priority_alias_and_copy_cases ... ok
+test user::windows::process::sched::tests::services_tests::semaphore_replay_tests::native_semaphore_release_replays_4480_fault_access_and_count_cases ... ok
+test user::windows::process::sched::tests::services_tests::semaphore_tests::native_semaphore_names_openif_counts_types_and_root_aliases_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::semaphore_tests::native_semaphore_release_wakes_parked_native_wait_and_retires_last_pin_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::semaphore_tests::native_semaphore_signed_counts_grants_inherit_and_last_close_all_abis ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 7408 filtered out; finished in 8.34s
+

@@ -1,0 +1,61 @@
+   Compiling vm-memory v0.17.1 (/Users/int/Library/Caches/assist-process-emulation/native-semaphore-20261019/semaphore-source/vendor/vm-memory)
+   Compiling linux-loader v0.13.2 (https://github.com/19h/linux-loader?rev=f745b555942c4e840a784bca61e6f3976d101960#f745b555)
+   Compiling rax v0.1.0 (/Users/int/Library/Caches/assist-process-emulation/native-semaphore-20261019/semaphore-source)
+error[E0283]: type annotations needed
+  --> src/user/windows/dll/threading/native_semaphore_tests.rs:67:46
+   |
+67 |                     STATUS_INVALID_PARAMETER.into()
+   |                                              ^^^^
+   |
+   = note: cannot satisfy `_: From<u32>`
+   = note: required for `u32` to implement `Into<_>`
+help: try using a fully qualified path to specify the expected types
+   |
+67 -                     STATUS_INVALID_PARAMETER.into()
+67 +                     <u32 as Into<T>>::into(STATUS_INVALID_PARAMETER)
+   |
+
+error[E0283]: type annotations needed
+  --> src/user/windows/dll/threading/native_semaphore_tests.rs:67:46
+   |
+65 | /                 assert_eq!(
+66 | |                     integer(c, "NtCreateSemaphore", &[data + 256, 1, oa, u64::MAX, 0]),
+67 | |                     STATUS_INVALID_PARAMETER.into()
+   | |                                              ^^^^
+68 | |                 );
+   | |_________________- type must be known at this point
+   |
+   = note: multiple `impl`s satisfying `u64: PartialEq<_>` found in the following crates: `core`, `serde_json`, `vm_memory`:
+           - impl PartialEq for u64;
+           - impl PartialEq<Be64> for u64;
+           - impl PartialEq<Le64> for u64;
+           - impl PartialEq<serde_json::Value> for u64;
+help: try using a fully qualified path to specify the expected types
+   |
+67 -                     STATUS_INVALID_PARAMETER.into()
+67 +                     <u32 as Into<T>>::into(STATUS_INVALID_PARAMETER)
+   |
+
+error[E0283]: type annotations needed
+  --> src/user/windows/dll/threading/native_semaphore_tests.rs:76:49
+   |
+74 | /                 assert_eq!(
+75 | |                     integer(c, "NtCreateSemaphore", &[data + 256, 1, oa, 0, 1]),
+76 | |                     STATUS_OBJECT_TYPE_MISMATCH.into()
+   | |                                                 ^^^^
+77 | |                 );
+   | |_________________- type must be known at this point
+   |
+   = note: multiple `impl`s satisfying `u64: PartialEq<_>` found in the following crates: `core`, `serde_json`, `vm_memory`:
+           - impl PartialEq for u64;
+           - impl PartialEq<Be64> for u64;
+           - impl PartialEq<Le64> for u64;
+           - impl PartialEq<serde_json::Value> for u64;
+help: try using a fully qualified path to specify the expected types
+   |
+76 -                     STATUS_OBJECT_TYPE_MISMATCH.into()
+76 +                     <u32 as Into<T>>::into(STATUS_OBJECT_TYPE_MISMATCH)
+   |
+
+For more information about this error, try `rustc --explain E0283`.
+error: could not compile `rax` (lib test) due to 3 previous errors

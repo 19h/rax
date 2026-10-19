@@ -1,0 +1,17 @@
+[
+  {
+    "repository": "/Users/int/Library/Caches/assist-process-emulation/native-semaphore-20261019/semaphore-source",
+    "remote": "origin",
+    "master": "c717f9b8c93b9e992bc9b1069ced0d85a72de2fc"
+  },
+  {
+    "repository": "/Users/int/Library/Caches/assist-process-emulation/native-wait-20261019/assist-root-wait-final",
+    "remote": "origin",
+    "master": "833631892fee4027b1b262692adba3d10fc741ed"
+  },
+  {
+    "repository": "/Users/int/Library/Caches/assist-process-emulation/native-wait-20261019/assist-root-wait-final",
+    "remote": "19h",
+    "master": "833631892fee4027b1b262692adba3d10fc741ed"
+  }
+]

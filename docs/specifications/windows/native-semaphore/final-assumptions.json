@@ -1,0 +1,41 @@
+{
+  "utc": "2026-10-19T02:21:00.391480+00:00",
+  "assumptions": [
+    {
+      "id": "A1",
+      "assumption": "The observed NtOpenSemaphore request belongs to the selected BaseNamedObjects namespace.",
+      "basis": "Read-only observer captured RootDirectory=0x70 and the Local-prefixed name; earlier directory captures identify this root.",
+      "dependent_result": "Name-resolution design.",
+      "stress_test": "Root-relative Local and Global links, wrong-type roots, absolute/root combinations, case flags.",
+      "falsification_probe": "Native create/open captures contradict same-name identity or captured root object identity.",
+      "status": "confirmed"
+    },
+    {
+      "id": "A2",
+      "assumption": "One native ARM64 kernel can supply evidence for its ARM64, x64 compatibility and WoW64 ABI profiles.",
+      "basis": "Four prior producer profiles ran on Windows 10.0.29683 with per-module identities.",
+      "dependent_result": "Host-specific fault ordering; no cross-kernel universality claim.",
+      "stress_test": "Capture all four profiles independently, including x86 LAA.",
+      "falsification_probe": "Profile-dependent statuses, writes, handle counts, or compiled ABI differ.",
+      "status": "confirmed"
+    },
+    {
+      "id": "A3",
+      "assumption": "Parent Windows source inputs can be reused immutably after verifying their exact hashes.",
+      "basis": "Completed native single-wait source epoch4 manifest and terminal gate records.",
+      "dependent_result": "Native semaphore materialization and warmed Cargo targets.",
+      "stress_test": "Verify all parent files before linking and all new files after extraction, with changed paths separated.",
+      "falsification_probe": "Any before/after parent hash mismatch or unexpected active preceding gate.",
+      "status": "confirmed"
+    },
+    {
+      "id": "A4",
+      "assumption": "The four incoming C API commits leave validated core inputs unchanged.",
+      "basis": "Complete epoch1/epoch2 hashes differ only on eleven capi paths; core/tests have no capi source references, root has no build script.",
+      "dependent_result": "Retention of full epoch1 core/Windows integration results while rebuilding the C API and owning consumers.",
+      "stress_test": "C API1.14 tests and all-target checks on all three hosts; actual new carriers before/after C++ validation.",
+      "falsification_probe": "Any changed non-CAPI input, added core dependency on capi, or mismatched owning core/consumer result.",
+      "status": "confirmed"
+    }
+  ]
+}

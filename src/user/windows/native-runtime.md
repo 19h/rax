@@ -2412,3 +2412,37 @@ Public Rust Wait/NativeDeadline source types are extended; public C ABI,
 dependencies, defaults and package layout remain unchanged.
 
 [Contract, assumptions and evidence](../../../docs/specifications/windows/native-single-wait/README.md).
+
+
+### Native semaphore operations (2026-10-19)
+
+`NtCreateSemaphore`, `NtOpenSemaphore`, `NtReleaseSemaphore` and
+`NtQuerySemaphore` now use the existing guest semaphore object, selected named
+namespace, access grants and wait lifetime. Mutants and semaphores share
+object-manager name/attribute capture and fault conversion. Existing synthetic
+NTDLL ordinals and trap RVAs are preserved across all three guest ABIs.
+
+Twelve native captures on Windows ARM64 kernel 10.0.29683 cover 40,268 cases
+across ARM64, x64 compatibility, x86 and x86-LAA profiles. Nine new tests include
+39,308 exact status/output/guard replays; the existing 11 mutant and 16 native
+single-wait regressions pass. Full core gates report 7970/0/2 on macOS,
+7964/0/2 on Linux and 7410/5/2 on native Windows (passed/failed/ignored); Windows
+retains the exact five preceding AArch64-lowerer failures. The integrated C API
+ABI 1.14 passes 183 tests on each host. All affected target checks pass.
+
+Source epoch 2 incorporates the four independent C API commits through c717f9b8;
+the complete source comparison leaves core and fixture inputs unchanged.
+Actual integrated owning archives pass the retained Assist ABI 184 consumer
+lanes on all three hosts. The Windows core remains byte-identical to the
+ordinary-program observer's core. These consumer lanes do not establish whole
+current-root GUI, plugin or package validation.
+
+Both ARM64 smoke and installed `whoami.exe` handle the missing initial semaphore
+open and successfully create two semaphores. Their remaining stop is
+`NtOpenKey: registry key outside selected runtime snapshot`, after 27,400 and
+27,336 additional observer turns respectively. Neither has a successful guest
+exit. Explicit object security/QoS, permanent objects, privilege rights and
+cross-process namespace equivalence remain outside this single-principal
+semaphore group. See `docs/specifications/windows/native-semaphore/README.md`
+for source snapshots, exact native producers, output budgets, assumptions,
+consumer qualifications and the executable evidence verifier.

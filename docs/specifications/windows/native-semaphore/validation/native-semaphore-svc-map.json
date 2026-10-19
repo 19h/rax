@@ -1,0 +1,58 @@
+{
+  "utc": "2026-10-19T01:57:25.169965+00:00",
+  "module-path": "C:\\Windows\\System32\\ntdll.dll",
+  "module-sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f",
+  "rows": [
+    {
+      "name": "NtCreateSemaphore",
+      "address": "0x7fff38a41cb0",
+      "first-16-bytes": "e11800d4c0035fd60000000000000000",
+      "svc-offset": 0,
+      "svc": 199
+    },
+    {
+      "name": "NtOpenSemaphore",
+      "address": "0x7fff38a423a0",
+      "first-16-bytes": "c12600d4c0035fd60000000000000000",
+      "svc-offset": 0,
+      "svc": 310
+    },
+    {
+      "name": "NtReleaseSemaphore",
+      "address": "0x7fff38a410a0",
+      "first-16-bytes": "410100d4c0035fd60000000000000000",
+      "svc-offset": 0,
+      "svc": 10
+    },
+    {
+      "name": "NtQuerySemaphore",
+      "address": "0x7fff38a426e0",
+      "first-16-bytes": "412d00d4c0035fd60000000000000000",
+      "svc-offset": 0,
+      "svc": 362
+    },
+    {
+      "name": "NtWaitForSingleObject",
+      "address": "0x7fff38a41040",
+      "first-16-bytes": "810000d4c0035fd60000000000000000",
+      "svc-offset": 0,
+      "svc": 4
+    },
+    {
+      "name": "NtCreateMutant",
+      "address": "0x7fff38a41be0",
+      "first-16-bytes": "411700d4c0035fd60000000000000000",
+      "svc-offset": 0,
+      "svc": 186
+    },
+    {
+      "name": "NtOpenDirectoryObject",
+      "address": "0x7fff38a415c0",
+      "first-16-bytes": "010b00d4c0035fd60000000000000000",
+      "svc-offset": 0,
+      "svc": 88
+    }
+  ],
+  "source-sha256": "f1329842854e0d81b2d33c4c680f2dfb9af4cd923d9f7cf256ad56fa14a02719",
+  "scope": "Read-only installed ARM64 NTDLL function bytes; diagnostic labels only, no guest dispatch changes."
+}

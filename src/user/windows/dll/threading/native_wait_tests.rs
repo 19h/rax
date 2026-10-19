@@ -8,14 +8,23 @@ fn native_single_wait_preserves_prior_ntdll_ordinals_and_trap_rvas_all_abis() {
     use crate::user::windows::loader::builtin;
 
     let current = dll::find("ntdll.dll").unwrap();
-    // Reconstruct the preceding DLL by removing only this group's addition.
+    // Reconstruct the pre-wait DLL by removing the wait and the later semaphore additions.
     // Keep the other source entries and architecture filters in their original
     // order. These bounded static test fixtures live until the test process exits.
     let prior: Vec<Export> = current
         .exports
         .iter()
         .flat_map(|table| table.iter())
-        .filter(|export| export.name != "NtWaitForSingleObject")
+        .filter(|export| {
+            ![
+                "NtWaitForSingleObject",
+                "NtCreateSemaphore",
+                "NtOpenSemaphore",
+                "NtReleaseSemaphore",
+                "NtQuerySemaphore",
+            ]
+            .contains(&export.name)
+        })
         .map(|export| {
             let copy = match &export.item {
                 Item::Func(api) => Export::func(api.name, api.conv, api.args, api.imp),
@@ -37,13 +46,16 @@ fn native_single_wait_preserves_prior_ntdll_ordinals_and_trap_rvas_all_abis() {
         let before = builtin::build(&previous, arch, 0, &[]);
         let after = builtin::build(current, arch, 0, &[]);
         assert_eq!(after.ordinal_base, before.ordinal_base);
-        assert_eq!(after.symbols.len(), before.symbols.len() + 1);
+        assert_eq!(after.symbols.len(), before.symbols.len() + 5);
         assert_eq!(
             &after.symbols[..before.symbols.len()],
             before.symbols.as_slice(),
             "{arch}: existing ordinals or trap RVAs changed"
         );
-        assert_eq!(after.symbols.last().unwrap().0, "NtWaitForSingleObject");
+        assert_eq!(
+            after.symbols[before.symbols.len()].0,
+            "NtWaitForSingleObject"
+        );
     }
 }
 

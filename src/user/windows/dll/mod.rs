@@ -28,6 +28,7 @@ pub(crate) fn nt_service(
     native::EXPORTS
         .iter()
         .chain(native::WAIT_EXPORTS)
+        .chain(native::SEMAPHORE_EXPORTS)
         .find_map(|export| {
             if export.name == name
                 && export.name.starts_with("Nt")
@@ -65,7 +66,12 @@ static NTDLL: BuiltinDll = BuiltinDll {
     name: "ntdll.dll",
     display: "ntdll.dll",
     subsystem: 3,
-    exports: &[native::EXPORTS, slist::NTDLL_EXPORTS, native::WAIT_EXPORTS],
+    exports: &[
+        native::EXPORTS,
+        slist::NTDLL_EXPORTS,
+        native::WAIT_EXPORTS,
+        native::SEMAPHORE_EXPORTS,
+    ],
 };
 static KERNEL32: BuiltinDll = BuiltinDll {
     name: "kernel32.dll",

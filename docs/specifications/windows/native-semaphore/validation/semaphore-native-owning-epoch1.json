@@ -1,0 +1,125 @@
+{
+  "pid": 2508,
+  "state": "finished",
+  "utc": "2026-10-19T01:54:06.297032+00:00",
+  "source-epoch": 1,
+  "steps": [
+    {
+      "name": "toolchain",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "--version"
+      ],
+      "exit-code": 0,
+      "started-utc": "2026-10-19T01:54:06.896027+00:00",
+      "log": "semaphore-native-owning-epoch1-toolchain.log",
+      "bytes": 36,
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5"
+    },
+    {
+      "name": "artifacts-before",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "build",
+        "--locked",
+        "--offline",
+        "--features",
+        "rax",
+        "--message-format=json"
+      ],
+      "exit-code": 0,
+      "started-utc": "2026-10-19T01:54:06.945046+00:00",
+      "log": "semaphore-native-owning-epoch1-artifacts-before.log",
+      "bytes": 127992,
+      "sha256": "e59b72d922ef86c2aae4020d1beeff3ac6e427d9fc507ba0829125e580c48a64"
+    },
+    {
+      "name": "archive-before",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\collect-semaphore-archives-epoch1.py",
+        "--host",
+        "windows",
+        "--source",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-semaphore-epoch1",
+        "--manifest",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\semaphore-owning-source-hashes-epoch1.json",
+        "--messages",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\semaphore-native-owning-epoch1-artifacts-before.log",
+        "--output",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-semaphore-epoch1-pre-cpp-archives.json"
+      ],
+      "exit-code": 0,
+      "started-utc": "2026-10-19T01:57:01.699950+00:00",
+      "log": "semaphore-native-owning-epoch1-archive-before.log",
+      "bytes": 182,
+      "sha256": "ae1f608859916d120d4f34c0092e766a37cb29ad32a04cd188f82ae6c565e380"
+    },
+    {
+      "name": "cpp",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\semaphore-owned-cpp-build-epoch1.py"
+      ],
+      "exit-code": 0,
+      "started-utc": "2026-10-19T01:57:07.919261+00:00",
+      "log": "semaphore-native-owning-epoch1-cpp.log",
+      "bytes": 3385,
+      "sha256": "c7fb7e16e89d252187b60b597f3f619fa8096a09b08ff8be9c0d5aa1684d45e4"
+    },
+    {
+      "name": "artifacts-after",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "build",
+        "--locked",
+        "--offline",
+        "--features",
+        "rax",
+        "--message-format=json"
+      ],
+      "exit-code": 0,
+      "started-utc": "2026-10-19T01:59:50.553327+00:00",
+      "log": "semaphore-native-owning-epoch1-artifacts-after.log",
+      "bytes": 127707,
+      "sha256": "13ac31d89c2df76a24958e68e33b7314c405921af1414b46c9dff43f1418be6f"
+    },
+    {
+      "name": "archive-after",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\collect-semaphore-archives-epoch1.py",
+        "--host",
+        "windows",
+        "--source",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-semaphore-epoch1",
+        "--manifest",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\semaphore-owning-source-hashes-epoch1.json",
+        "--messages",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\semaphore-native-owning-epoch1-artifacts-after.log",
+        "--output",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-semaphore-epoch1-final-owning-archive-identities.json"
+      ],
+      "exit-code": 0,
+      "started-utc": "2026-10-19T01:59:51.142488+00:00",
+      "log": "semaphore-native-owning-epoch1-archive-after.log",
+      "bytes": 182,
+      "sha256": "ae1f608859916d120d4f34c0092e766a37cb29ad32a04cd188f82ae6c565e380"
+    }
+  ],
+  "junction": {
+    "before": "\\\\?\\C:\\Windows\\Temp\\assist-native-rax-20261010\\src-wait-epoch4",
+    "after": "\\\\?\\C:\\Windows\\Temp\\assist-native-rax-20261010\\src-semaphore-epoch1"
+  },
+  "verified-source-inputs": 495,
+  "compared-cpp-inputs": 8,
+  "current-step": "archive-after",
+  "child-pid": 7816,
+  "exit-code": 0,
+  "post-source-inputs": 495,
+  "qualification": "Actual current Cargo archives, selected495 inputs, matching archive identities before and after five C++ consumers. Retained Assist Rust ABI184; eight C++ inputs were compared to root ABI264; no whole current-root GUI/plugin/package claim.",
+  "completed-utc": "2026-10-19T01:59:57.844581+00:00"
+}

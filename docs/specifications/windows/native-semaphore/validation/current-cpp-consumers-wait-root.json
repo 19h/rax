@@ -1,0 +1,57 @@
+{
+  "current-root-head": "8f49854be133693b69f546748fe207b23c6a23cd",
+  "frozen-unix-root-head": "e2fc5b483be7cad2dae17d889690cc398973c5e8",
+  "files": [
+    {
+      "path": "src/tools/builtin/emulation/sessions/process_tool.cpp",
+      "bytes": 21736,
+      "sha256": "2e367268a546344c73c288910b97ab733b825c3388b69c7a28ad3a0d3e27e2eb"
+    },
+    {
+      "path": "src/emulation/rax/rax_process.cpp",
+      "bytes": 8600,
+      "sha256": "ed55d78681a9a59e384186382d998244d80ca5665793e60f5e7577d88d526564"
+    },
+    {
+      "path": "src/emulation/rax/librax_loader.cpp",
+      "bytes": 2070,
+      "sha256": "968294f6cf9f5e0e2af2f13a87eca456c57b5f951f6d8ccb3375f7cd16fee4c9"
+    },
+    {
+      "path": "test/process_tool_tests.cpp",
+      "bytes": 33330,
+      "sha256": "960bb5d07a446619ee7331ca517ea9eb38b8c8b87b15f7dcf4e3c2f136336522"
+    },
+    {
+      "path": "test/process_tool_unavailable_tests.cpp",
+      "bytes": 1051,
+      "sha256": "c7123d9398fa405349018f4ab18953d0b7688c0afb687fca2beaf1fa226a2e72"
+    },
+    {
+      "path": "test/rax_process_tests.cpp",
+      "bytes": 14493,
+      "sha256": "d4dacc7f185d04d7ca30acf2bf97eed71194bde9e2a22e11c1cad73d1770fcbd"
+    },
+    {
+      "path": "test/e14_rax_abi_drift_tests.cpp",
+      "bytes": 772,
+      "sha256": "bb0f260181f3506db1e203a018cda6de0b47daf617baf2216d5a9568c604369f"
+    },
+    {
+      "path": "test/rust_archive_link_tests.cpp",
+      "bytes": 4324,
+      "sha256": "1418965f173b0448ee5429fda9ab8556f806dc4ec70b6cc3a85de735051c9b1f"
+    }
+  ],
+  "scope": "Frozen compared C++/RustABI184 carrier inputs; new current root comparison remains separate.",
+  "previously-verified-root-head": "d42cab4df1bc535206984bdc8685d5df4a0a9b47",
+  "current-abi-minor": 241,
+  "published-parent": {
+    "utc": "2026-10-18T19:04:36.813504+00:00",
+    "root": "ddee78e66637784db73f01a7f5fec4697061ddcc",
+    "rax": "ce29b4a4bca74a668d7f029e8a69da6a2e0340e7",
+    "state": "both clean; both root remotes and RAX origin verified"
+  },
+  "current-root-rust-abi-minor": 264,
+  "excluded-independent-file": "src/crypto/static_text.cpp; current Rust static-text bridge differs from frozen carrier"
+}

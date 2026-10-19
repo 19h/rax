@@ -1,0 +1,11 @@
+{
+  "checked-bound-files": 259,
+  "checked-proof-files": 260,
+  "hosts": [
+    "macos",
+    "linux",
+    "windows"
+  ],
+  "all-exit-zero": true,
+  "qualification": "Final checker code, core snapshots, native captures, tests and archive lineage identical. Only final verification receipts and staging whitespace audit are added after the three-host check."
+}

@@ -1,0 +1,12 @@
+{
+  "state": "finished",
+  "pid": 7668,
+  "utc": "2026-10-19T02:27:58.364274+00:00",
+  "scope": "Read-only evidence check in a new source tree; every overwritten proof file is detached from its parent hardlink.",
+  "complete-inputs": 22587,
+  "proof-files": 260,
+  "exit-code": 0,
+  "log": "semaphore-final-check-windows.log",
+  "sha256": "0e68ea46a85c91efcaee9ef6d5672e2849c4e7dd0c79cc6f6eddabf17055e0d1",
+  "completed-utc": "2026-10-19T02:28:24.263579+00:00"
+}

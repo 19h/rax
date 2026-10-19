@@ -1,0 +1,67 @@
+[
+  {
+    "case": "full-count",
+    "rejected": true,
+    "reason": "macos unfiltered full counts"
+  },
+  {
+    "case": "filtered-full",
+    "rejected": true,
+    "reason": "macos unfiltered full counts"
+  },
+  {
+    "case": "windows-failure-name",
+    "rejected": true,
+    "reason": "exact five existing Windows failures"
+  },
+  {
+    "case": "zero-capi",
+    "rejected": true,
+    "reason": "macos integrated C API selection"
+  },
+  {
+    "case": "zero-ctest",
+    "rejected": true,
+    "reason": "CTest progress indices"
+  },
+  {
+    "case": "core-features",
+    "rejected": true,
+    "reason": "windows disabled core defaults"
+  },
+  {
+    "case": "archive-members",
+    "rejected": true,
+    "reason": "windows archive structure"
+  },
+  {
+    "case": "old-cpp-carrier",
+    "rejected": true,
+    "reason": "windows stale C++ archive"
+  },
+  {
+    "case": "current-root-claim",
+    "rejected": true,
+    "reason": "retained carrier qualification"
+  },
+  {
+    "case": "guest-exit-claim",
+    "rejected": true,
+    "reason": "fabricated successful guest exit"
+  },
+  {
+    "case": "non-capi-integration",
+    "rejected": true,
+    "reason": "bounded upstream C API changes"
+  },
+  {
+    "case": "selected-source",
+    "rejected": true,
+    "reason": "owning source drift Cargo.toml"
+  },
+  {
+    "case": "program-identity",
+    "rejected": true,
+    "reason": "program identity"
+  }
+]

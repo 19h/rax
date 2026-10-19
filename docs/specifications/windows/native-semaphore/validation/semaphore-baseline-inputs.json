@@ -1,0 +1,31 @@
+{
+  "baseline-head": "464e728b00000850b47d13b12e2e54283be12b76",
+  "tracked-diff": [
+    "src/user/windows/dll/threading/tests.rs",
+    "src/user/windows/process/sched/tests/services_tests.rs"
+  ],
+  "test-files": [
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests.rs",
+      "sha256": "638b1b2033d5500a6f352ea4894b0dadb486129ffdaa72e5400f3b236c80e470"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/semaphore_tests.rs",
+      "sha256": "f0675bd7a151177fdbf3550be1d4ac75f31d5ea2888dc4430f649d94b9f6f886"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/semaphore_replay_tests.rs",
+      "sha256": "b69cb22b050f2ab79313e6f0d8870f14a35cda829daf1b9b206a3d40afa68db7"
+    },
+    {
+      "path": "src/user/windows/dll/threading/tests.rs",
+      "sha256": "aac53f47f82d2ff9382bc490714590baf571e1fc37cbaf000b48e0cd86c4d6ec"
+    },
+    {
+      "path": "src/user/windows/dll/threading/native_semaphore_tests.rs",
+      "sha256": "84c12d3262197af616cfca94dd180e5753f125bd339020f6a9ab6470b0285434"
+    }
+  ],
+  "product-implementation-edited": false,
+  "supersedes": "baseline-a compile-only failure: ambiguous Into target in two new test assertions; changed to explicit u64::from."
+}

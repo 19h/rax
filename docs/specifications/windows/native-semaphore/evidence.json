@@ -1,0 +1,1339 @@
+{
+  "feature": "native semaphore operations",
+  "source-epochs": [
+    1,
+    2
+  ],
+  "files": [
+    {
+      "path": ".gitattributes",
+      "bytes": 29,
+      "sha256": "730a35ae3d558080083c3103d9ac8100c3f6561678092abe341701dfa331eb1d"
+    },
+    {
+      "path": "README.md",
+      "bytes": 10343,
+      "sha256": "2fa0f2df2d99e5a4241da27dbd56eddb5da6b14f02572f2452d6405a05984a00"
+    },
+    {
+      "path": "check_native.py",
+      "bytes": 11914,
+      "sha256": "c4e35c64e002f29d434328a819d476db316c52ce266e3a38c1a9d18fe9d821e7"
+    },
+    {
+      "path": "check_validation.py",
+      "bytes": 16186,
+      "sha256": "a63045539c4eb099c0a441629089d0cdf5cbbfcc3a90aa8b9a5d44df31f33037"
+    },
+    {
+      "path": "final-assumptions.json",
+      "bytes": 2547,
+      "sha256": "0a3622de1df6c1e4e377d75800e6243996725c9400a72844a24226c9cca821f9"
+    },
+    {
+      "path": "native-names-v2/native-semaphore-names-v2-arm64-after.json",
+      "bytes": 532,
+      "sha256": "fe10ecfc45ea0454222f582909824b6e0dab7f5b2097c4cc002781b476a269d6"
+    },
+    {
+      "path": "native-names-v2/native-semaphore-names-v2-arm64-before.json",
+      "bytes": 532,
+      "sha256": "fe10ecfc45ea0454222f582909824b6e0dab7f5b2097c4cc002781b476a269d6"
+    },
+    {
+      "path": "native-names-v2/native-semaphore-names-v2-arm64-build.log",
+      "bytes": 31,
+      "sha256": "668a20c5b15a2231ff80fd878a87b983912efd153563f1bcc0c347881443d364"
+    },
+    {
+      "path": "native-names-v2/native-semaphore-names-v2-arm64-source-after.json",
+      "bytes": 246,
+      "sha256": "c09810081d7d28c6dceaf7a2a8b39189a17db892322dd71335f4c0606d0ff738"
+    },
+    {
+      "path": "native-names-v2/native-semaphore-names-v2-arm64.log",
+      "bytes": 128720,
+      "sha256": "b1aab4f9750ed628a77a2d731684fffefa752b42171e2daf405ef47b85822f1c"
+    },
+    {
+      "path": "native-names-v2/native-semaphore-names-v2-driver.log",
+      "bytes": 964,
+      "sha256": "81157a84a41f6d110e3d629b61f37581444b3f76aa427bed1014db5bce060e17"
+    },
+    {
+      "path": "native-names-v2/native-semaphore-names-v2-launch.json",
+      "bytes": 379,
+      "sha256": "0be059fef6e8c87815677f104e045f941e410a9d2442e060b05960cfa2fe5c1b"
+    },
+    {
+      "path": "native-names-v2/native-semaphore-names-v2-modules-after.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05"
+    },
+    {
+      "path": "native-names-v2/native-semaphore-names-v2-modules-before.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05"
+    },
+    {
+      "path": "native-names-v2/native-semaphore-names-v2-outcomes.json",
+      "bytes": 508,
+      "sha256": "60234e60a27341649a1054995869c544e8f896198f9410b33414503d26abdde3"
+    },
+    {
+      "path": "native-names-v2/native-semaphore-names-v2-x64-after.json",
+      "bytes": 524,
+      "sha256": "4e8666695fc6e902ae84d080464cbd8ba2e46a7b7deb5cdec38a5bab5bdebc95"
+    },
+    {
+      "path": "native-names-v2/native-semaphore-names-v2-x64-before.json",
+      "bytes": 524,
+      "sha256": "4e8666695fc6e902ae84d080464cbd8ba2e46a7b7deb5cdec38a5bab5bdebc95"
+    },
+    {
+      "path": "native-names-v2/native-semaphore-names-v2-x64-build.log",
+      "bytes": 31,
+      "sha256": "668a20c5b15a2231ff80fd878a87b983912efd153563f1bcc0c347881443d364"
+    },
+    {
+      "path": "native-names-v2/native-semaphore-names-v2-x64-source-after.json",
+      "bytes": 244,
+      "sha256": "44c6f54bffd5f7fa6d61c9f1bf9f1ed1f13d4d194a160ace5de52c187e5f3695"
+    },
+    {
+      "path": "native-names-v2/native-semaphore-names-v2-x64.log",
+      "bytes": 128734,
+      "sha256": "06a0282f21352951296b763c6bcdaea41bb12bcdfdaf052de5a8e3dd6fa94474"
+    },
+    {
+      "path": "native-names-v2/native-semaphore-names-v2-x86-after.json",
+      "bytes": 522,
+      "sha256": "45c23948e37fdbb06db4b29bb980ddd9aba2a6840049806b7eaf9d9eba686a51"
+    },
+    {
+      "path": "native-names-v2/native-semaphore-names-v2-x86-before.json",
+      "bytes": 522,
+      "sha256": "45c23948e37fdbb06db4b29bb980ddd9aba2a6840049806b7eaf9d9eba686a51"
+    },
+    {
+      "path": "native-names-v2/native-semaphore-names-v2-x86-build.log",
+      "bytes": 31,
+      "sha256": "668a20c5b15a2231ff80fd878a87b983912efd153563f1bcc0c347881443d364"
+    },
+    {
+      "path": "native-names-v2/native-semaphore-names-v2-x86-laa-after.json",
+      "bytes": 536,
+      "sha256": "0ffd5599f5f8ed2ac039ceec6473a1241f2b8778336a4ad40c235ee78cca2a27"
+    },
+    {
+      "path": "native-names-v2/native-semaphore-names-v2-x86-laa-before.json",
+      "bytes": 536,
+      "sha256": "0ffd5599f5f8ed2ac039ceec6473a1241f2b8778336a4ad40c235ee78cca2a27"
+    },
+    {
+      "path": "native-names-v2/native-semaphore-names-v2-x86-laa-build.log",
+      "bytes": 31,
+      "sha256": "668a20c5b15a2231ff80fd878a87b983912efd153563f1bcc0c347881443d364"
+    },
+    {
+      "path": "native-names-v2/native-semaphore-names-v2-x86-laa-source-after.json",
+      "bytes": 248,
+      "sha256": "978934d613d60f4a8a367068c97112390f5b4cf713694a86c8ca33884c5dec84"
+    },
+    {
+      "path": "native-names-v2/native-semaphore-names-v2-x86-laa.log",
+      "bytes": 127206,
+      "sha256": "509cb6ed1f6072d1c12f540b6aac4eb17fcef696dc58cff9008dee13a2c34f4f"
+    },
+    {
+      "path": "native-names-v2/native-semaphore-names-v2-x86-source-after.json",
+      "bytes": 244,
+      "sha256": "41886a310c84290a36b9fad5e35f54190ff3c7842afda0035dec6f6d391f11e8"
+    },
+    {
+      "path": "native-names-v2/native-semaphore-names-v2-x86.log",
+      "bytes": 127202,
+      "sha256": "e096fcc2dfea1d6cd6d350b6176c7598bd5c07298db8c0454d0a317a82465694"
+    },
+    {
+      "path": "native-names-v2/native-semaphore-names-v2.cpp",
+      "bytes": 14567,
+      "sha256": "1c3cbb13d37249f523ff9f00967e85b79b81a319e8005bbb4b92cad1f76d5b47"
+    },
+    {
+      "path": "native-names-v2/native-semaphore-names-v2.ps1",
+      "bytes": 2550,
+      "sha256": "bf893bde432eb1d79d08d2d91822459866773c58c9209d72da09f337cfe0394a"
+    },
+    {
+      "path": "native-names-v2/run-native-semaphore-names-v2.py",
+      "bytes": 1245,
+      "sha256": "41eb8d77a879c247be23e33d0dddfbdab1eefaedff03a88013aa73ffa1aa5dbe"
+    },
+    {
+      "path": "native-query-v3/native-semaphore-query-v3-arm64-after.json",
+      "bytes": 532,
+      "sha256": "0f9b8fb81ce2d8435901cefcf28d14baefd90002ba446b620ad1320c66a24f70"
+    },
+    {
+      "path": "native-query-v3/native-semaphore-query-v3-arm64-before.json",
+      "bytes": 532,
+      "sha256": "0f9b8fb81ce2d8435901cefcf28d14baefd90002ba446b620ad1320c66a24f70"
+    },
+    {
+      "path": "native-query-v3/native-semaphore-query-v3-arm64-build.log",
+      "bytes": 31,
+      "sha256": "6b89340565eeebf236366606c749800693e6a1e071e324e895dba0174c31492a"
+    },
+    {
+      "path": "native-query-v3/native-semaphore-query-v3-arm64-source-after.json",
+      "bytes": 246,
+      "sha256": "87a7ff7e83954fbce48071aea55204eb2438dff77f7e9ff630c6ed839f41e787"
+    },
+    {
+      "path": "native-query-v3/native-semaphore-query-v3-arm64.log",
+      "bytes": 2394037,
+      "sha256": "4be3396a9a5af6bf5eb01e78cb53cc1929713536d64170cf1aabcaa546dad5c4"
+    },
+    {
+      "path": "native-query-v3/native-semaphore-query-v3-driver.log",
+      "bytes": 964,
+      "sha256": "81157a84a41f6d110e3d629b61f37581444b3f76aa427bed1014db5bce060e17"
+    },
+    {
+      "path": "native-query-v3/native-semaphore-query-v3-launch.json",
+      "bytes": 341,
+      "sha256": "6bbfa3732f1b7f05d2e18dbd048464ee2aa4b12f474fb40cae4313ee628b5a98"
+    },
+    {
+      "path": "native-query-v3/native-semaphore-query-v3-modules-after.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05"
+    },
+    {
+      "path": "native-query-v3/native-semaphore-query-v3-modules-before.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05"
+    },
+    {
+      "path": "native-query-v3/native-semaphore-query-v3-outcomes.json",
+      "bytes": 508,
+      "sha256": "8ff2f976c643b4475f310f5219b9324421f7cb679101506f42f4f9d0d72a9d3b"
+    },
+    {
+      "path": "native-query-v3/native-semaphore-query-v3-x64-after.json",
+      "bytes": 524,
+      "sha256": "4847b3661833c591c84e39d26365677e2508356575545bd42c7273139800e46d"
+    },
+    {
+      "path": "native-query-v3/native-semaphore-query-v3-x64-before.json",
+      "bytes": 524,
+      "sha256": "4847b3661833c591c84e39d26365677e2508356575545bd42c7273139800e46d"
+    },
+    {
+      "path": "native-query-v3/native-semaphore-query-v3-x64-build.log",
+      "bytes": 31,
+      "sha256": "6b89340565eeebf236366606c749800693e6a1e071e324e895dba0174c31492a"
+    },
+    {
+      "path": "native-query-v3/native-semaphore-query-v3-x64-source-after.json",
+      "bytes": 244,
+      "sha256": "0e4a3a67279aae6ec10b83d361d5c114ce3a484d852ca34a93d34d1709524255"
+    },
+    {
+      "path": "native-query-v3/native-semaphore-query-v3-x64.log",
+      "bytes": 2394035,
+      "sha256": "727291d4e7dd7d651212c40424912edcaa5d8bf3efcdc72b7b4252d1cfc1c8b7"
+    },
+    {
+      "path": "native-query-v3/native-semaphore-query-v3-x86-after.json",
+      "bytes": 522,
+      "sha256": "201136fb67c35b1072ceeb6a1fa08b9427eb944e57cb5b25f16682ca16c9d613"
+    },
+    {
+      "path": "native-query-v3/native-semaphore-query-v3-x86-before.json",
+      "bytes": 522,
+      "sha256": "201136fb67c35b1072ceeb6a1fa08b9427eb944e57cb5b25f16682ca16c9d613"
+    },
+    {
+      "path": "native-query-v3/native-semaphore-query-v3-x86-build.log",
+      "bytes": 31,
+      "sha256": "6b89340565eeebf236366606c749800693e6a1e071e324e895dba0174c31492a"
+    },
+    {
+      "path": "native-query-v3/native-semaphore-query-v3-x86-laa-after.json",
+      "bytes": 536,
+      "sha256": "72dae854cf1fededb43583bd4f75b629842c965925a1b3aca3e1da7674bbe203"
+    },
+    {
+      "path": "native-query-v3/native-semaphore-query-v3-x86-laa-before.json",
+      "bytes": 536,
+      "sha256": "72dae854cf1fededb43583bd4f75b629842c965925a1b3aca3e1da7674bbe203"
+    },
+    {
+      "path": "native-query-v3/native-semaphore-query-v3-x86-laa-build.log",
+      "bytes": 31,
+      "sha256": "6b89340565eeebf236366606c749800693e6a1e071e324e895dba0174c31492a"
+    },
+    {
+      "path": "native-query-v3/native-semaphore-query-v3-x86-laa-source-after.json",
+      "bytes": 248,
+      "sha256": "d7ea884f4ed8724bd55b4589a7d868261a7260152b1ba406624b607f89e4f4a9"
+    },
+    {
+      "path": "native-query-v3/native-semaphore-query-v3-x86-laa.log",
+      "bytes": 2394040,
+      "sha256": "0af97f2dbb0d76f99a7dee6d3a2c0c75d54da8f85bc196d813ce0551f3191122"
+    },
+    {
+      "path": "native-query-v3/native-semaphore-query-v3-x86-source-after.json",
+      "bytes": 244,
+      "sha256": "a9e9ec55fa115f3057db5a6b35fb0f9605e96cbd0bbdfb25e404da70f5928030"
+    },
+    {
+      "path": "native-query-v3/native-semaphore-query-v3-x86.log",
+      "bytes": 2394035,
+      "sha256": "1e244f01029ae4565b77c07afa25986f5e0bae3a354d62dcfb08b5ab4eccb8ca"
+    },
+    {
+      "path": "native-query-v3/native-semaphore-query-v3.cpp",
+      "bytes": 13187,
+      "sha256": "049fbe4adf09351b0f0cd7f8ce3705eded982b7b52b9aa669566124fe4e70ff3"
+    },
+    {
+      "path": "native-query-v3/native-semaphore-query-v3.ps1",
+      "bytes": 2550,
+      "sha256": "a0017f80dcf4c30cd42d82e7b5ecc3a73c00198a2a67e3bd3265e13ae2eb4c63"
+    },
+    {
+      "path": "native-query-v3/run-native-semaphore-query-v3.py",
+      "bytes": 1207,
+      "sha256": "260832e1c32afe4a7e9fb74ed5b56a3e98539299af4359c4627f6b0ef1b1b2e1"
+    },
+    {
+      "path": "native-v1/native-semaphore-v1-arm64-after.json",
+      "bytes": 520,
+      "sha256": "a7b0005051e7c4331d9b22d2f0f9658aa6e613ef33920ae4a09807e4334a5455"
+    },
+    {
+      "path": "native-v1/native-semaphore-v1-arm64-before.json",
+      "bytes": 520,
+      "sha256": "a7b0005051e7c4331d9b22d2f0f9658aa6e613ef33920ae4a09807e4334a5455"
+    },
+    {
+      "path": "native-v1/native-semaphore-v1-arm64-build.log",
+      "bytes": 25,
+      "sha256": "a93a9b6757a191c3c872658b4f933048e20c3dd7e7d945d30671c7b42746acec"
+    },
+    {
+      "path": "native-v1/native-semaphore-v1-arm64-source-after.json",
+      "bytes": 234,
+      "sha256": "c86d90f955c4b38b51a0cf15313aebbeacd82ddaeaca2cd687549942562ca452"
+    },
+    {
+      "path": "native-v1/native-semaphore-v1-arm64.log",
+      "bytes": 2368815,
+      "sha256": "4f5a1954208e7df809d29c752973673eaeb8a56d64a7c698aa48bb3a66be3180"
+    },
+    {
+      "path": "native-v1/native-semaphore-v1-driver.log",
+      "bytes": 964,
+      "sha256": "81157a84a41f6d110e3d629b61f37581444b3f76aa427bed1014db5bce060e17"
+    },
+    {
+      "path": "native-v1/native-semaphore-v1-launch.json",
+      "bytes": 376,
+      "sha256": "164abea9689b095ddf740fc7b2b27b8c119ac153bcc5b653b83ecccd66cd60dc"
+    },
+    {
+      "path": "native-v1/native-semaphore-v1-modules-after.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05"
+    },
+    {
+      "path": "native-v1/native-semaphore-v1-modules-before.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05"
+    },
+    {
+      "path": "native-v1/native-semaphore-v1-outcomes.json",
+      "bytes": 484,
+      "sha256": "631648c3fe07c49201d2ab16d4aed32d2e7a7a3d63974640cd54f6cb42b67cbe"
+    },
+    {
+      "path": "native-v1/native-semaphore-v1-x64-after.json",
+      "bytes": 512,
+      "sha256": "ca0c46236333597c3baccdcfdfab026dc4066888cab76903b6ee3222c525b2b7"
+    },
+    {
+      "path": "native-v1/native-semaphore-v1-x64-before.json",
+      "bytes": 512,
+      "sha256": "ca0c46236333597c3baccdcfdfab026dc4066888cab76903b6ee3222c525b2b7"
+    },
+    {
+      "path": "native-v1/native-semaphore-v1-x64-build.log",
+      "bytes": 25,
+      "sha256": "a93a9b6757a191c3c872658b4f933048e20c3dd7e7d945d30671c7b42746acec"
+    },
+    {
+      "path": "native-v1/native-semaphore-v1-x64-source-after.json",
+      "bytes": 232,
+      "sha256": "8c016078a5124b2eb6e1a71ab9ab3caeb58c5d7ade0aa130173fdd21b23e56ac"
+    },
+    {
+      "path": "native-v1/native-semaphore-v1-x64.log",
+      "bytes": 2368813,
+      "sha256": "9f0468ce6b9617e131722d0ade240fa0dc4dc22e62778fe1e4abe143c5be39f0"
+    },
+    {
+      "path": "native-v1/native-semaphore-v1-x86-after.json",
+      "bytes": 510,
+      "sha256": "9b7fab0219b71451f9c949c5723f4f0323931ece7f40022d15171749efb69410"
+    },
+    {
+      "path": "native-v1/native-semaphore-v1-x86-before.json",
+      "bytes": 510,
+      "sha256": "9b7fab0219b71451f9c949c5723f4f0323931ece7f40022d15171749efb69410"
+    },
+    {
+      "path": "native-v1/native-semaphore-v1-x86-build.log",
+      "bytes": 25,
+      "sha256": "a93a9b6757a191c3c872658b4f933048e20c3dd7e7d945d30671c7b42746acec"
+    },
+    {
+      "path": "native-v1/native-semaphore-v1-x86-laa-after.json",
+      "bytes": 524,
+      "sha256": "bf85266ae0be4a0f64a6c64b3480e413054004846dc9fcda3c95d355bbb8a943"
+    },
+    {
+      "path": "native-v1/native-semaphore-v1-x86-laa-before.json",
+      "bytes": 524,
+      "sha256": "bf85266ae0be4a0f64a6c64b3480e413054004846dc9fcda3c95d355bbb8a943"
+    },
+    {
+      "path": "native-v1/native-semaphore-v1-x86-laa-build.log",
+      "bytes": 25,
+      "sha256": "a93a9b6757a191c3c872658b4f933048e20c3dd7e7d945d30671c7b42746acec"
+    },
+    {
+      "path": "native-v1/native-semaphore-v1-x86-laa-source-after.json",
+      "bytes": 236,
+      "sha256": "91c6c9da6b609fb02073926c1d9a722b240b6d0d5c7ddc3159bed4fa52608959"
+    },
+    {
+      "path": "native-v1/native-semaphore-v1-x86-laa.log",
+      "bytes": 2372104,
+      "sha256": "626e040e1d4a1610943c97152708827f48b770732adf47650817bd568c4e129d"
+    },
+    {
+      "path": "native-v1/native-semaphore-v1-x86-source-after.json",
+      "bytes": 232,
+      "sha256": "217de6027af4b12ed73b978ea0ee0adf646fc8775a00674c092a443e97ca69ff"
+    },
+    {
+      "path": "native-v1/native-semaphore-v1-x86.log",
+      "bytes": 2372100,
+      "sha256": "2567a4fc70c93b1d76423ecb8faf77230c4ee9f8eeffffe03783591c7914905f"
+    },
+    {
+      "path": "native-v1/native-semaphore-v1.cpp",
+      "bytes": 14929,
+      "sha256": "9aed7fd97854147ff95da80f8751d37ac9753004e87270c8818093ff277c8445"
+    },
+    {
+      "path": "native-v1/native-semaphore-v1.ps1",
+      "bytes": 2466,
+      "sha256": "bb8cce52295b611a657dd3d540030a5149a8b1fe226fd0deb69bc4926591c1a5"
+    },
+    {
+      "path": "native-v1/run-native-semaphore-v1.py",
+      "bytes": 1218,
+      "sha256": "92866814bde39577a9182aa686031e3bfbd90cf32a7ca5865f2d1a3a40170e67"
+    },
+    {
+      "path": "plan-and-ownership.json",
+      "bytes": 7481,
+      "sha256": "d02ab490565c733215266c3e6d661e3cf2f6cb08942ac219609edc363b742ee9"
+    },
+    {
+      "path": "primary-sources.json",
+      "bytes": 502,
+      "sha256": "100b1a3b97fe18d3bcd86cb8ebb358d7478eea2bb8c75d65a8e36bde8fec41ca"
+    },
+    {
+      "path": "replay/create-arm64.tsv",
+      "bytes": 352651,
+      "sha256": "e36be47cc792e38ac9f84973e4b2f586040cab7f1b91265810a1d0145855455a"
+    },
+    {
+      "path": "replay/create-x64.tsv",
+      "bytes": 352651,
+      "sha256": "e36be47cc792e38ac9f84973e4b2f586040cab7f1b91265810a1d0145855455a"
+    },
+    {
+      "path": "replay/create-x86-laa.tsv",
+      "bytes": 355336,
+      "sha256": "d40c0af876071bd734c443caef14e37753dbc10080695f8263ea3719493ee500"
+    },
+    {
+      "path": "replay/create-x86.tsv",
+      "bytes": 355336,
+      "sha256": "d40c0af876071bd734c443caef14e37753dbc10080695f8263ea3719493ee500"
+    },
+    {
+      "path": "replay/open-arm64.tsv",
+      "bytes": 44456,
+      "sha256": "041df02d67bd395850d122500c6b80ec250f7e2fa00d1bf2d12cfaf999418f7e"
+    },
+    {
+      "path": "replay/open-x64.tsv",
+      "bytes": 44456,
+      "sha256": "be644bc8501adfa0e25d5544829367f3858ebfc65b22c642e80ab1e411a8932b"
+    },
+    {
+      "path": "replay/open-x86-laa.tsv",
+      "bytes": 44456,
+      "sha256": "d1471e65cf1f8bf5570abef27db2ef54fd82c9586cd72a6ce60a118e2423e6c9"
+    },
+    {
+      "path": "replay/open-x86.tsv",
+      "bytes": 44456,
+      "sha256": "2ae2eddcc9ea0dfa37837fa3391f80e5e71cd7ed1bae88ce1d98e0781b385e0d"
+    },
+    {
+      "path": "replay/query-arm64.tsv",
+      "bytes": 2973016,
+      "sha256": "23165820077052424b454fb17a87d72897fed5ae1e1022b2ae0f2d9b91081327"
+    },
+    {
+      "path": "replay/query-x64.tsv",
+      "bytes": 2973016,
+      "sha256": "23165820077052424b454fb17a87d72897fed5ae1e1022b2ae0f2d9b91081327"
+    },
+    {
+      "path": "replay/query-x86-laa.tsv",
+      "bytes": 2973016,
+      "sha256": "3b251f759f393a0d560f4f91d9c97f2afb1d41b5fa786b305b0bdd02a38f5bdc"
+    },
+    {
+      "path": "replay/query-x86.tsv",
+      "bytes": 2973016,
+      "sha256": "3b251f759f393a0d560f4f91d9c97f2afb1d41b5fa786b305b0bdd02a38f5bdc"
+    },
+    {
+      "path": "replay/release-arm64.tsv",
+      "bytes": 248900,
+      "sha256": "8868c7a1937132fc415dd010d36506352afbd594739b6f413dbf39cf7e182a61"
+    },
+    {
+      "path": "replay/release-x64.tsv",
+      "bytes": 248900,
+      "sha256": "8868c7a1937132fc415dd010d36506352afbd594739b6f413dbf39cf7e182a61"
+    },
+    {
+      "path": "replay/release-x86-laa.tsv",
+      "bytes": 248900,
+      "sha256": "8868c7a1937132fc415dd010d36506352afbd594739b6f413dbf39cf7e182a61"
+    },
+    {
+      "path": "replay/release-x86.tsv",
+      "bytes": 248900,
+      "sha256": "8868c7a1937132fc415dd010d36506352afbd594739b6f413dbf39cf7e182a61"
+    },
+    {
+      "path": "validation/baseline-a-native-semaphore-tests.rs",
+      "bytes": 5937,
+      "sha256": "4b9457eda3ff39c47fa6315b9f9c7d261d291bdccaad693e917686975b840bcb"
+    },
+    {
+      "path": "validation/capture-semaphore-host-context.py",
+      "bytes": 2957,
+      "sha256": "2eb934ca21f5311055ac8a14e35928c3bc1ced9182bda127b9c1797eef951a43"
+    },
+    {
+      "path": "validation/capture-semaphore-svc-map.py",
+      "bytes": 1878,
+      "sha256": "f1329842854e0d81b2d33c4c680f2dfb9af4cd923d9f7cf256ad56fa14a02719"
+    },
+    {
+      "path": "validation/collect-semaphore-archives-epoch1.py",
+      "bytes": 3343,
+      "sha256": "c0bd9f14e6cf5b334f69d0acc3be3f6e7b132ef0b30dad4f94962fe3b5b6c4d8"
+    },
+    {
+      "path": "validation/collect-semaphore-archives-epoch2.py",
+      "bytes": 3343,
+      "sha256": "24729dcf086fc912596a1229e4cc6694bec8b2e81a7eee99ac58af73ea1ebc4b"
+    },
+    {
+      "path": "validation/consumer-summary.json",
+      "bytes": 2531,
+      "sha256": "34927da666a7521f03c59919d4fc47550945598dda1133bf4f7f8094fe602780"
+    },
+    {
+      "path": "validation/current-cpp-consumers-wait-root.json",
+      "bytes": 2147,
+      "sha256": "53d9e0caa94fe53441aa9f5d429b26c8e801e8fca5b4297af248206c1a3f8dac"
+    },
+    {
+      "path": "validation/engineering-source-updates.json",
+      "bytes": 367,
+      "sha256": "c8721f95c98380f86e7e1ebfed5af76d9bbf0d97800a2c465433ea4f32adbb1c"
+    },
+    {
+      "path": "validation/final-verifier-runs.json",
+      "bytes": 358,
+      "sha256": "842fd01b24e913029401a6d1b8e2768416bde5a33839c55f329b33e593944ae0"
+    },
+    {
+      "path": "validation/linux-semaphore-epoch1-final-owning-archive-identities.json",
+      "bytes": 98975,
+      "sha256": "e8e15907d00ce269779ce116a29e0411b85027914beedfa05143d59b3fd8fc7d"
+    },
+    {
+      "path": "validation/linux-semaphore-epoch1-owning-archive-before.log",
+      "bytes": 180,
+      "sha256": "874b295474afc586464750c793129f638f766a64d11ce0fced6c1df0e7bebcfe"
+    },
+    {
+      "path": "validation/linux-semaphore-epoch1-owning-archive-identities.log",
+      "bytes": 180,
+      "sha256": "874b295474afc586464750c793129f638f766a64d11ce0fced6c1df0e7bebcfe"
+    },
+    {
+      "path": "validation/linux-semaphore-epoch1-owning-artifacts.log",
+      "bytes": 159806,
+      "sha256": "2f14fb5da36676feacdb503a2e83c71aa734b622d03e0356bcca86a2b1ea6e0c"
+    },
+    {
+      "path": "validation/linux-semaphore-epoch1-owning-commands.json",
+      "bytes": 6941,
+      "sha256": "77ed432190ad532533f582995e845e358632ec1e002684906033fb683782a8ff"
+    },
+    {
+      "path": "validation/linux-semaphore-epoch1-owning-cpp.log",
+      "bytes": 1944,
+      "sha256": "0a4de49a8201af2ff36e9663b8bfd514b1d5a24c4d64601a64d558a4169c38db"
+    },
+    {
+      "path": "validation/linux-semaphore-epoch1-owning-gates.json",
+      "bytes": 8833,
+      "sha256": "0d4e93ef5b4509a16a3d7ec272105cb61fd4c9ffc8fbf296acd128596b01e185"
+    },
+    {
+      "path": "validation/linux-semaphore-epoch1-owning-shipping.log",
+      "bytes": 160155,
+      "sha256": "330c0d820ca0af26a781ab3a0c80c4106d4621b07a8613d1e63439d5feede879"
+    },
+    {
+      "path": "validation/linux-semaphore-epoch1-pre-cpp-archive-identities.json",
+      "bytes": 98976,
+      "sha256": "80be479f5045159cc870fd87e296169109ed9b75acdee35203f4b9dbd3254ee1"
+    },
+    {
+      "path": "validation/linux-semaphore-epoch2-final-owning-archive-identities.json",
+      "bytes": 100703,
+      "sha256": "5f2ae7aeb7d0eab6f80ebfcc55f2ef6605135a35c8594a673eeb853c48d6d147"
+    },
+    {
+      "path": "validation/linux-semaphore-epoch2-owning-archive-before.log",
+      "bytes": 180,
+      "sha256": "66b28ca76e3140093566f1ed901991a4b6853fac1e19c3c1198dca104b291d44"
+    },
+    {
+      "path": "validation/linux-semaphore-epoch2-owning-archive-identities.log",
+      "bytes": 180,
+      "sha256": "66b28ca76e3140093566f1ed901991a4b6853fac1e19c3c1198dca104b291d44"
+    },
+    {
+      "path": "validation/linux-semaphore-epoch2-owning-artifacts.log",
+      "bytes": 159806,
+      "sha256": "dbebf9259c9f93b08db7ffd35afaad3b959e87c9cd5069d15510b9554f469a61"
+    },
+    {
+      "path": "validation/linux-semaphore-epoch2-owning-commands.json",
+      "bytes": 7080,
+      "sha256": "2bff0e81783547d2e07496a348a50b66112263c35c0189cd159a1940e6efa1bb"
+    },
+    {
+      "path": "validation/linux-semaphore-epoch2-owning-cpp.log",
+      "bytes": 1944,
+      "sha256": "e3b20d74f1f8dc3ec9813d59328e94f96af98cd636a58401524c3e4eaa012f8d"
+    },
+    {
+      "path": "validation/linux-semaphore-epoch2-owning-gates.json",
+      "bytes": 8971,
+      "sha256": "c8a38fc91f5af0f9f7ffd2608d2dcac70aa9601febcd912ab8c422da8aaf4536"
+    },
+    {
+      "path": "validation/linux-semaphore-epoch2-owning-shipping.log",
+      "bytes": 160155,
+      "sha256": "9ff6ac4f4bd968b655d69d895eda11634db2140ec9df6566961a68654d3fbb4b"
+    },
+    {
+      "path": "validation/linux-semaphore-epoch2-pre-cpp-archive-identities.json",
+      "bytes": 100704,
+      "sha256": "ac9f80dedcd941c6c6786923c47d2ab4a61f56f1864eb2253bb197038a0b1484"
+    },
+    {
+      "path": "validation/macos-semaphore-epoch1-final-owning-archive-identities.json",
+      "bytes": 100359,
+      "sha256": "b898b0d5dd33379c80338e6bb5a27fb506be4daf468b291b3020fce4b0e7aa20"
+    },
+    {
+      "path": "validation/macos-semaphore-epoch1-linkage.json",
+      "bytes": 1957,
+      "sha256": "e10fc8a4cd78c1ccc498af25c1f573c279f5e33041f50d636cc549f9e96159e6"
+    },
+    {
+      "path": "validation/macos-semaphore-epoch1-owning-archive-before.log",
+      "bytes": 180,
+      "sha256": "f95c459412d07549389782550c37c5356bc03d14eaa9f568435c302ffab13832"
+    },
+    {
+      "path": "validation/macos-semaphore-epoch1-owning-archive-identities.log",
+      "bytes": 180,
+      "sha256": "f95c459412d07549389782550c37c5356bc03d14eaa9f568435c302ffab13832"
+    },
+    {
+      "path": "validation/macos-semaphore-epoch1-owning-artifacts.log",
+      "bytes": 131080,
+      "sha256": "754872364ddfbbc0d83073c7416c39431983994d9128b7527f5a313591b12c05"
+    },
+    {
+      "path": "validation/macos-semaphore-epoch1-owning-build.log",
+      "bytes": 32919,
+      "sha256": "efc45861d36f550b1a7704b17e64d8ba482cb64ff1c18d09fa7856dfae3ddd5a"
+    },
+    {
+      "path": "validation/macos-semaphore-epoch1-owning-commands.json",
+      "bytes": 5734,
+      "sha256": "ab9fb168ccedeb796c689d9d7248adcc59ffd5289692765c59b8c389ff202052"
+    },
+    {
+      "path": "validation/macos-semaphore-epoch1-owning-ctest.log",
+      "bytes": 1273,
+      "sha256": "c7dbd8476e9f6258b4b48efc68cf96d2ed8a57d724319a205fbdf180b57cb67d"
+    },
+    {
+      "path": "validation/macos-semaphore-epoch1-owning-gates.json",
+      "bytes": 8207,
+      "sha256": "c04c02fa89f867b8eac0ee437cd2985d95bd60595b20aa02d9f9565d57b577dc"
+    },
+    {
+      "path": "validation/macos-semaphore-epoch1-owning-prime-artifacts.log",
+      "bytes": 131845,
+      "sha256": "82ff7e3d190537f2fe2731dc937a9d56155623756d7faa0504f0ecc0aff0bc98"
+    },
+    {
+      "path": "validation/macos-semaphore-epoch1-owning-protected-assist-cli.log",
+      "bytes": 42,
+      "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+    },
+    {
+      "path": "validation/macos-semaphore-epoch1-owning-protected-assist-mcp.log",
+      "bytes": 42,
+      "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+    },
+    {
+      "path": "validation/macos-semaphore-epoch1-pre-cpp-archive-identities.json",
+      "bytes": 100367,
+      "sha256": "cf0ae48b33adc40691fe7c327656de4e0dbb2513c733dee1e0990ab64c7b0834"
+    },
+    {
+      "path": "validation/macos-semaphore-epoch2-final-owning-archive-identities.json",
+      "bytes": 102087,
+      "sha256": "7c8e0c9c929801372d5410d7f5d98f2a5f23a5299e3e8926533e3c0da6898b7c"
+    },
+    {
+      "path": "validation/macos-semaphore-epoch2-linkage.json",
+      "bytes": 1957,
+      "sha256": "e10fc8a4cd78c1ccc498af25c1f573c279f5e33041f50d636cc549f9e96159e6"
+    },
+    {
+      "path": "validation/macos-semaphore-epoch2-owning-archive-before.log",
+      "bytes": 180,
+      "sha256": "c487aacd050e428874912b0bb8888fb4419f16ada4bb83219645235da7bba536"
+    },
+    {
+      "path": "validation/macos-semaphore-epoch2-owning-archive-identities.log",
+      "bytes": 180,
+      "sha256": "c487aacd050e428874912b0bb8888fb4419f16ada4bb83219645235da7bba536"
+    },
+    {
+      "path": "validation/macos-semaphore-epoch2-owning-artifacts.log",
+      "bytes": 131080,
+      "sha256": "c78a28504bf60d3a29fc07285527c00837410964fe40ccf1740891285731d4e8"
+    },
+    {
+      "path": "validation/macos-semaphore-epoch2-owning-build.log",
+      "bytes": 32919,
+      "sha256": "ea12dc79ac5f1c1062396ff40ba09eabf0251c5c7a6c835d0c9a0b7a576d351f"
+    },
+    {
+      "path": "validation/macos-semaphore-epoch2-owning-commands.json",
+      "bytes": 5756,
+      "sha256": "de78870c3f420bfaeaccdcef05dcccfc98fe85fd0c3ef278e500e9959d153bd5"
+    },
+    {
+      "path": "validation/macos-semaphore-epoch2-owning-ctest.log",
+      "bytes": 1273,
+      "sha256": "14a88ab89bab815007a42e733115063b19c8dc519b2b749f53479d88e4aef7be"
+    },
+    {
+      "path": "validation/macos-semaphore-epoch2-owning-gates.json",
+      "bytes": 8229,
+      "sha256": "d4db7b4e6a630b1fda3d868bb6cd3feb00aec70c85dc716f8cd4282a084263ea"
+    },
+    {
+      "path": "validation/macos-semaphore-epoch2-owning-prime-artifacts.log",
+      "bytes": 131845,
+      "sha256": "eebcabd53b403898a20ebcd835d114e1f46fc0ee938973a3018a1cb88e7a14ff"
+    },
+    {
+      "path": "validation/macos-semaphore-epoch2-owning-protected-assist-cli.log",
+      "bytes": 42,
+      "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+    },
+    {
+      "path": "validation/macos-semaphore-epoch2-owning-protected-assist-mcp.log",
+      "bytes": 42,
+      "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+    },
+    {
+      "path": "validation/macos-semaphore-epoch2-pre-cpp-archive-identities.json",
+      "bytes": 102095,
+      "sha256": "5a74a0ba0f5a64ca91f7cddff54f5453596e8350f00c13a2b24df04a6f29bcc2"
+    },
+    {
+      "path": "validation/native-semaphore-epoch1-final-owning-archive-identities.json",
+      "bytes": 102211,
+      "sha256": "cdb879af80b7965601bfbaeb0bfe45c144490587a1ad90280293ea4a0b082173"
+    },
+    {
+      "path": "validation/native-semaphore-epoch1-pre-cpp-archives.json",
+      "bytes": 102214,
+      "sha256": "163a28936246640908e256caf2106a46390f0b5110df6c9e3d84286dc10e665d"
+    },
+    {
+      "path": "validation/native-semaphore-epoch2-final-owning-archive-identities.json",
+      "bytes": 103994,
+      "sha256": "5aa9f7a64873d37cdab5ce3bff3cd105143032d7738e25667ed9f320b2acd347"
+    },
+    {
+      "path": "validation/native-semaphore-epoch2-pre-cpp-archives.json",
+      "bytes": 103996,
+      "sha256": "2fbbfc445cb03115804b06104179cb54d31e875245fb01ac677a70867bbd8728"
+    },
+    {
+      "path": "validation/native-semaphore-host-context.json",
+      "bytes": 3691,
+      "sha256": "86b7ceb24ecd2c62746b5be2a44484bc35c36ab36d666cd0c65e906c4abd9ff7"
+    },
+    {
+      "path": "validation/native-semaphore-svc-map.json",
+      "bytes": 1742,
+      "sha256": "ea605bcf0929af36213681fc045bb461a0ba2dca7caa5efcfbdef274dad68b2d"
+    },
+    {
+      "path": "validation/ordinary-program-summary.json",
+      "bytes": 2422,
+      "sha256": "8766cd37070ca0dfd086dc261cc2f68bb2503ea7ce8ccc24a46cecafaabeced0"
+    },
+    {
+      "path": "validation/owning-linux-cpp-build-epoch2.py",
+      "bytes": 2205,
+      "sha256": "e732e0d2acacd5c5be36d9adf437713479e7ba6b312db8189e208f7bba1b657d"
+    },
+    {
+      "path": "validation/owning-linux-cpp-build.py",
+      "bytes": 2205,
+      "sha256": "8e6fad200beb2e24e4a50a8c20b35b499993132cf07e69e23ed3183228bda806"
+    },
+    {
+      "path": "validation/prepare-semaphore-implementation.py",
+      "bytes": 7954,
+      "sha256": "894a192c2da6a676f1856cb44a6728a6e755c66fb22f94c22184dcd8bbc122aa"
+    },
+    {
+      "path": "validation/prepare-semaphore-native-epoch1.py",
+      "bytes": 2921,
+      "sha256": "01deb28ca41cdfc21a740e6bfa577d0054e6f5a668f98290ed5e8fa4f7130fd9"
+    },
+    {
+      "path": "validation/prepare-semaphore-native-epoch2.py",
+      "bytes": 2936,
+      "sha256": "dd97c10d03e5061db805b2d6d0300f831cf50340beec0cf05d9f9a15dfc8b7b1"
+    },
+    {
+      "path": "validation/quality-gates.json",
+      "bytes": 950,
+      "sha256": "af9df30fda1a3d8e0f2f80233230e01adf960a32f3e977f78d7f0f06a7e95783"
+    },
+    {
+      "path": "validation/run-semaphore-final-windows-check.py",
+      "bytes": 2978,
+      "sha256": "88203cbeb585c58c4e120b47d318b07711325c9e1b7ebfa5ffe57cbcadb0501d"
+    },
+    {
+      "path": "validation/run-semaphore-native-epoch1.py",
+      "bytes": 5377,
+      "sha256": "ad0e90b2bb2fbe0fa7f1ce4f95703542d214543cbeb70ad1799b2c47229cfa44"
+    },
+    {
+      "path": "validation/run-semaphore-native-epoch2.py",
+      "bytes": 5224,
+      "sha256": "615ab3900ecba71fd0c502efa6a4d61242e63da69ba7026fed8e20df8b66c27c"
+    },
+    {
+      "path": "validation/run-semaphore-native-owning-epoch1.py",
+      "bytes": 5488,
+      "sha256": "fd4c218e7125f87f3a9aebe264c4060448acf39e81cd8f4a00d61123665d22a7"
+    },
+    {
+      "path": "validation/run-semaphore-native-owning-epoch2.py",
+      "bytes": 5483,
+      "sha256": "440ee7b6e21456e573cbb29eaee6106eb1a7e093d3f54eb75b34f40c644fdcf7"
+    },
+    {
+      "path": "validation/run-semaphore-owner-epoch1.py",
+      "bytes": 4342,
+      "sha256": "775373ba7cc3e939ae9036e857f1afa119162f499b96b380357eb104d495185b"
+    },
+    {
+      "path": "validation/run-semaphore-owning-epoch1.py",
+      "bytes": 3567,
+      "sha256": "87afc51b48d17804b62ca109bf02a52314aa8976e55296d5bdfc4fa05821d537"
+    },
+    {
+      "path": "validation/run-semaphore-owning-epoch2.py",
+      "bytes": 3578,
+      "sha256": "a601f49f1dd6ab3eb71419cd2c783d75f09da1d042bbd6bb95d6ba9633fc4e29"
+    },
+    {
+      "path": "validation/run-semaphore-unix-epoch1.py",
+      "bytes": 3888,
+      "sha256": "38d71586c8a1fb369b269fda0b987b075c9bb5a663bdb4e74dd33d0aa240a591"
+    },
+    {
+      "path": "validation/run-semaphore-unix-epoch2.py",
+      "bytes": 3725,
+      "sha256": "0aed4ba4a850328099ab59dcfc93a8ba9143c087dd067f9051d524118072f06d"
+    },
+    {
+      "path": "validation/semaphore-baseline-a-inputs.json",
+      "bytes": 1129,
+      "sha256": "8a502bb9685adb412035978f261f73160d40d4a66e22f8d8c5247b3c9f239010"
+    },
+    {
+      "path": "validation/semaphore-baseline-a-macos.json",
+      "bytes": 572,
+      "sha256": "1c94c3199061f90fce4a6f0b98385a5ff1683e55fbd18a71e31e8f946cd14599"
+    },
+    {
+      "path": "validation/semaphore-baseline-a-macos.log",
+      "bytes": 2988,
+      "sha256": "9abe24a6a728d0133052338c583e14e4eef2c0dec849f61981435284ee632cad"
+    },
+    {
+      "path": "validation/semaphore-baseline-inputs.json",
+      "bytes": 1262,
+      "sha256": "e9b475386e65b1e49f440e9d49a155f2812da7d13f7b6cd4dc41b70bb2f17149"
+    },
+    {
+      "path": "validation/semaphore-baseline-macos.json",
+      "bytes": 668,
+      "sha256": "e805764f39f700ddfd83ab9b41680376b8d0c0b485e7514226bbf38b0ae915c8"
+    },
+    {
+      "path": "validation/semaphore-baseline-macos.log",
+      "bytes": 6175,
+      "sha256": "4ad97c6f313234f923ca07f24bb142e76d7cdc0741ab14ba6f382fc8a1b03ce1"
+    },
+    {
+      "path": "validation/semaphore-final-check-linux.log",
+      "bytes": 375,
+      "sha256": "543f0f5243b4654d5867e45020d4c00da8716a7512171acf9a60ea4796b31802"
+    },
+    {
+      "path": "validation/semaphore-final-check-macos.log",
+      "bytes": 375,
+      "sha256": "543f0f5243b4654d5867e45020d4c00da8716a7512171acf9a60ea4796b31802"
+    },
+    {
+      "path": "validation/semaphore-final-check-windows.json",
+      "bytes": 475,
+      "sha256": "7a979d61ec90426aab178232266d82048185827d467f12ffd9eabdce81f3a8c5"
+    },
+    {
+      "path": "validation/semaphore-final-check-windows.log",
+      "bytes": 397,
+      "sha256": "0e68ea46a85c91efcaee9ef6d5672e2849c4e7dd0c79cc6f6eddabf17055e0d1"
+    },
+    {
+      "path": "validation/semaphore-final-proof-archive.json",
+      "bytes": 170,
+      "sha256": "250ad984f7098c60437cc7241b8e19dc070b5674648d08e46e7d161a8a54e993"
+    },
+    {
+      "path": "validation/semaphore-final-stress.json",
+      "bytes": 1389,
+      "sha256": "f0be8861e397978b5bdf3ca6aa83a977ee9aef7171d7543791812f856e2d40e5"
+    },
+    {
+      "path": "validation/semaphore-incoming-head.json",
+      "bytes": 184,
+      "sha256": "301135b0c02fc6f2aeda1c5382d7e549b9d40ebf225b27f12290f6d4a39aad92"
+    },
+    {
+      "path": "validation/semaphore-integration-lineage.json",
+      "bytes": 2962,
+      "sha256": "e20d4a67edaf151169fcdaaf9d16ec5b1b82464c6f11ff4651225ccc1e3225db"
+    },
+    {
+      "path": "validation/semaphore-linux-epoch1-all-targets.log",
+      "bytes": 309,
+      "sha256": "5607f1610cb648f1f4fcada0ef5fd0beb4440f30f05cd7837c1183e7d1e500b6"
+    },
+    {
+      "path": "validation/semaphore-linux-epoch1-capi.log",
+      "bytes": 12904,
+      "sha256": "e542210f3091f3fdf8fad430711bdbb40d0b1b1c7e4af3fd4ad7ecbc27f36dcb"
+    },
+    {
+      "path": "validation/semaphore-linux-epoch1-focus.log",
+      "bytes": 1923,
+      "sha256": "70b6b7a651eae8f19752d24e70097585343ce8e68ec95059bc2f2f5f2df60a57"
+    },
+    {
+      "path": "validation/semaphore-linux-epoch1-full.log",
+      "bytes": 830895,
+      "sha256": "cd4af3dc5d246279c9f2fbff400aa183a1d8499dcc30edb25c627104559015ad"
+    },
+    {
+      "path": "validation/semaphore-linux-epoch1-gates.json",
+      "bytes": 7759,
+      "sha256": "877062dd823b5a411c12c378112cc299bf51c9f604913c85d4fcde7f3aeab7e6"
+    },
+    {
+      "path": "validation/semaphore-linux-epoch1-integration.log",
+      "bytes": 35852,
+      "sha256": "e3587e7195e61b00b89ee42691231f99212ef113b09f6fb75bf05ab778b96ce5"
+    },
+    {
+      "path": "validation/semaphore-linux-epoch2-all-targets.log",
+      "bytes": 362,
+      "sha256": "a3a67bd98f8559aff50d62856f797d35ceee718497b320cdd98c1acc24c446c9"
+    },
+    {
+      "path": "validation/semaphore-linux-epoch2-capi.log",
+      "bytes": 14262,
+      "sha256": "6360a76749cd73d3bba4062910ae7bb1beeee71e02248420125d4300af8f9be6"
+    },
+    {
+      "path": "validation/semaphore-linux-epoch2-gates.json",
+      "bytes": 3234,
+      "sha256": "7cd544be721a4080586a4177bfa5393089b538831df340fa5ed7a72cb67a6deb"
+    },
+    {
+      "path": "validation/semaphore-macos-epoch1-all-targets.log",
+      "bytes": 463,
+      "sha256": "45607637d949ae1c018de8e59a569d915636c18219e8779b2867dc5f7f33a140"
+    },
+    {
+      "path": "validation/semaphore-macos-epoch1-capi.log",
+      "bytes": 13132,
+      "sha256": "3a39a6952d69fb601a06b62b359fa99ce44dc644cf8274db6d3b420b8c3385cb"
+    },
+    {
+      "path": "validation/semaphore-macos-epoch1-focus.log",
+      "bytes": 1751,
+      "sha256": "c1ee1ddf4753c5ab6d4c1ec2a7347910c26b394fbed3b849f13447a8da967662"
+    },
+    {
+      "path": "validation/semaphore-macos-epoch1-full.log",
+      "bytes": 830901,
+      "sha256": "59ba746c351528df2435fac46823000403f67c1e84a7efec17f7a6d973b7616b"
+    },
+    {
+      "path": "validation/semaphore-macos-epoch1-gates.json",
+      "bytes": 3477,
+      "sha256": "b363b576d80e5534bdfe8413585a930c98152266a4232d592612f77d46db1c54"
+    },
+    {
+      "path": "validation/semaphore-macos-epoch1-integration.log",
+      "bytes": 36058,
+      "sha256": "7fd55e28cbf820e350e1b6266f1a3047b1a4e0d343b6dbfcbb8c72d1431d0abf"
+    },
+    {
+      "path": "validation/semaphore-macos-epoch2-all-targets.log",
+      "bytes": 626,
+      "sha256": "0e3061be0b87f4af7cc88899219e1a4e420466a648701e9c932c839ff9255406"
+    },
+    {
+      "path": "validation/semaphore-macos-epoch2-capi.log",
+      "bytes": 14599,
+      "sha256": "a6a36417e20d41ee1ed190fe7710b800f46cb6fd2380e44caa5a423bf5402a8a"
+    },
+    {
+      "path": "validation/semaphore-macos-epoch2-gates.json",
+      "bytes": 1501,
+      "sha256": "6e318ea2b7cebb7244de5c599f1672e723bdd116dd8551284dd29caae811fc2d"
+    },
+    {
+      "path": "validation/semaphore-native-epoch1-all-targets.log",
+      "bytes": 1003,
+      "sha256": "e52dafdffd6b02a1cbbdfcbbe4ce0ed012285ac6db686610b6010d796b6596eb"
+    },
+    {
+      "path": "validation/semaphore-native-epoch1-capi.log",
+      "bytes": 13863,
+      "sha256": "b23bc328a507893720b1b7e210ac8cc378ea21a9a4d282a02267647f8f105756"
+    },
+    {
+      "path": "validation/semaphore-native-epoch1-focus.log",
+      "bytes": 2651,
+      "sha256": "04e07b4ba13b1da4cafff4a8fa035b72aac063a8176bea45bdd8b4c79ecb1ceb"
+    },
+    {
+      "path": "validation/semaphore-native-epoch1-full.log",
+      "bytes": 793342,
+      "sha256": "f3b66186ab7f826942b7b8d98afbdecf92668c691bff4cf3e4385e082ece0070"
+    },
+    {
+      "path": "validation/semaphore-native-epoch1-gates.json",
+      "bytes": 59563,
+      "sha256": "e262fa06510254b76a0bd56404859efc18451e42abcee5b0159b78c587b25503"
+    },
+    {
+      "path": "validation/semaphore-native-epoch1-integration.log",
+      "bytes": 1866,
+      "sha256": "c7c734492ded1bdd53cf7ee8fdedd75c2cbb0698646856b2370cac6f0bc98c98"
+    },
+    {
+      "path": "validation/semaphore-native-epoch1-preparation.json",
+      "bytes": 52746,
+      "sha256": "74c65fa36c2b10b04316de9facb4a62cf27b97c6c29a5a3f5d236b401d0bb1c2"
+    },
+    {
+      "path": "validation/semaphore-native-epoch1-toolchain.log",
+      "bytes": 36,
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5"
+    },
+    {
+      "path": "validation/semaphore-native-epoch2-all-targets.log",
+      "bytes": 1012,
+      "sha256": "11eed1751872ddc39c3692acfb8f93463d722490ba48a1fa9c5d29b8db19d7ad"
+    },
+    {
+      "path": "validation/semaphore-native-epoch2-capi.log",
+      "bytes": 14936,
+      "sha256": "ab5fa24a259262a06c45cdf60dcf045ccbe5aea6f53f6315f8919fd40006b5c4"
+    },
+    {
+      "path": "validation/semaphore-native-epoch2-gates.json",
+      "bytes": 3474,
+      "sha256": "3916bc3e0ae261cdc73a312a5a3660e40c513dfa0c32ddc37c6b9aa9f7dffd7e"
+    },
+    {
+      "path": "validation/semaphore-native-epoch2-preparation.json",
+      "bytes": 710,
+      "sha256": "dd0a8d2053f9f4974d6ac118bbc1d536aa7e3478143d1d0c09755c609ad6582d"
+    },
+    {
+      "path": "validation/semaphore-native-epoch2-toolchain.log",
+      "bytes": 36,
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5"
+    },
+    {
+      "path": "validation/semaphore-native-owning-epoch1-archive-after.log",
+      "bytes": 182,
+      "sha256": "ae1f608859916d120d4f34c0092e766a37cb29ad32a04cd188f82ae6c565e380"
+    },
+    {
+      "path": "validation/semaphore-native-owning-epoch1-archive-before.log",
+      "bytes": 182,
+      "sha256": "ae1f608859916d120d4f34c0092e766a37cb29ad32a04cd188f82ae6c565e380"
+    },
+    {
+      "path": "validation/semaphore-native-owning-epoch1-artifacts-after.log",
+      "bytes": 127707,
+      "sha256": "13ac31d89c2df76a24958e68e33b7314c405921af1414b46c9dff43f1418be6f"
+    },
+    {
+      "path": "validation/semaphore-native-owning-epoch1-artifacts-before.log",
+      "bytes": 127992,
+      "sha256": "e59b72d922ef86c2aae4020d1beeff3ac6e427d9fc507ba0829125e580c48a64"
+    },
+    {
+      "path": "validation/semaphore-native-owning-epoch1-cpp.log",
+      "bytes": 3385,
+      "sha256": "c7fb7e16e89d252187b60b597f3f619fa8096a09b08ff8be9c0d5aa1684d45e4"
+    },
+    {
+      "path": "validation/semaphore-native-owning-epoch1-toolchain.log",
+      "bytes": 36,
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5"
+    },
+    {
+      "path": "validation/semaphore-native-owning-epoch1.json",
+      "bytes": 5170,
+      "sha256": "e2046efe2eb6f261820dcfb7b96e44f12817057530679bef909e391ca7125e2a"
+    },
+    {
+      "path": "validation/semaphore-native-owning-epoch2-archive-after.log",
+      "bytes": 182,
+      "sha256": "919259548464989d64d90d26d1c71a11917b5ff9c4a02fed17d89b1d18144994"
+    },
+    {
+      "path": "validation/semaphore-native-owning-epoch2-archive-before.log",
+      "bytes": 182,
+      "sha256": "919259548464989d64d90d26d1c71a11917b5ff9c4a02fed17d89b1d18144994"
+    },
+    {
+      "path": "validation/semaphore-native-owning-epoch2-artifacts-after.log",
+      "bytes": 127707,
+      "sha256": "a44cbb4238621f6d2f345413b4cc10539821a6e9d518e124412542046891de50"
+    },
+    {
+      "path": "validation/semaphore-native-owning-epoch2-artifacts-before.log",
+      "bytes": 127904,
+      "sha256": "c2f8ce9d703d41d1059a81f0de62845fd699cd45c8d276c82285a8b5a232d432"
+    },
+    {
+      "path": "validation/semaphore-native-owning-epoch2-cpp.log",
+      "bytes": 3385,
+      "sha256": "dacfa1b41f0c6e800cb172970dc9b24224f91532a601ad55f26a7caf3d6a7ff2"
+    },
+    {
+      "path": "validation/semaphore-native-owning-epoch2-toolchain.log",
+      "bytes": 36,
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5"
+    },
+    {
+      "path": "validation/semaphore-native-owning-epoch2.json",
+      "bytes": 5175,
+      "sha256": "0d4b79aafeb8c232670198abbca9087e94975ffca6770169e3d9085a8c2ce7a0"
+    },
+    {
+      "path": "validation/semaphore-native-stress.json",
+      "bytes": 2334,
+      "sha256": "06fc9516c543ac41c90cc037070a1711d382f83fd75326c0018dad38d27cc309"
+    },
+    {
+      "path": "validation/semaphore-owned-cpp-build-epoch1.py",
+      "bytes": 2683,
+      "sha256": "4a9e2efe8fc1cf768dc7507da65ac61a41b09158f85564f2992117894e80547f"
+    },
+    {
+      "path": "validation/semaphore-owned-cpp-build-epoch2.py",
+      "bytes": 2683,
+      "sha256": "b514d5ccc280be8fd606bcf053c64d964524d7c8ac02a433e6cb9c330c8725d7"
+    },
+    {
+      "path": "validation/semaphore-owned-integration-transfer.json",
+      "bytes": 29051,
+      "sha256": "42c06d142a402a05c08a5918eaeaddb200daecfe463e95c5e6105eaf77e20d3b"
+    },
+    {
+      "path": "validation/semaphore-owner-epoch1-0.log",
+      "bytes": 2019,
+      "sha256": "f94fc3175004044f6e06e21d770358d18862775f73d12604867bcd0eaa709fbd"
+    },
+    {
+      "path": "validation/semaphore-owner-epoch1-1.log",
+      "bytes": 1865,
+      "sha256": "21c52245dc5ee8105c894c48f15d83c308cba8ef1d25adbba6c72b74c50363c0"
+    },
+    {
+      "path": "validation/semaphore-owner-epoch1-build.log",
+      "bytes": 241,
+      "sha256": "77027ce0b25d2e321d7341c6fe2a80236a2837874cb1de4f2079588d47f29dc9"
+    },
+    {
+      "path": "validation/semaphore-owner-epoch1-build.ps1",
+      "bytes": 1033,
+      "sha256": "fd939638b25313dd995007b6940d9db841f6a6e58d8407f5ebfe8a3e54168c0c"
+    },
+    {
+      "path": "validation/semaphore-owner-epoch1-launch.json",
+      "bytes": 7735,
+      "sha256": "456c259b27b7a665ca04969964b014f6245871b38a0d93045ee4d0b63f1fe92a"
+    },
+    {
+      "path": "validation/semaphore-owner-epoch1.rs",
+      "bytes": 7384,
+      "sha256": "c2937df0ecc4c55efa514b14f8eef7955545c26f2e052882a4937eebb93f7d0f"
+    },
+    {
+      "path": "validation/semaphore-owning-source-hashes-epoch1.json",
+      "bytes": 97701,
+      "sha256": "5c96cfea16dc0c3b8a892115f708baf135feec09c51db71cd50cc4c1c5a8a623"
+    },
+    {
+      "path": "validation/semaphore-owning-source-hashes-epoch2.json",
+      "bytes": 99413,
+      "sha256": "0f5ba85b09c9eed5b5f70146c6d745bca30bccd4587548ed6e0bcc201b1a9b5a"
+    },
+    {
+      "path": "validation/semaphore-prepublication-remote-refs.json",
+      "bytes": 617,
+      "sha256": "b092812d73d9d6fba67e1a2ce88e2360996d108fb80fa077b6740a45ddf54158"
+    },
+    {
+      "path": "validation/semaphore-prototype-macos-native_mutant.log",
+      "bytes": 1929,
+      "sha256": "c13b7ccf6415ae78b6fb9fb4559a38044f8f683d5ad5cc5a51770cef52018bcc"
+    },
+    {
+      "path": "validation/semaphore-prototype-macos-native_semaphore.log",
+      "bytes": 1872,
+      "sha256": "49bcd284b235fcfd26930ca27397594b24d9ab004a54bc1abbfd8064c4cf57db"
+    },
+    {
+      "path": "validation/semaphore-prototype-macos-native_single_wait.log",
+      "bytes": 2749,
+      "sha256": "9fcede20a441f48faeeddeafa063c61b09e413ebf600ac6c739d897f4b4d2c7c"
+    },
+    {
+      "path": "validation/semaphore-prototype-macos.json",
+      "bytes": 2158,
+      "sha256": "3a93dc864ca5362559de839f6a0b3e9d913e77afc8d6f943b21de151e921b8a3"
+    },
+    {
+      "path": "validation/semaphore-source-epoch1-archive.json",
+      "bytes": 52248,
+      "sha256": "98a76764d76d496aa0ec444fdfa64708262e5bee9502bbadc95c2e498e9cbeb8"
+    },
+    {
+      "path": "validation/semaphore-source-epoch1.json",
+      "bytes": 5198867,
+      "sha256": "6ecb2a08faa7daf9949d528ccf7622d3ec3e33b721baa0e80cb5da6c8c001f97"
+    },
+    {
+      "path": "validation/semaphore-source-epoch2-archive.json",
+      "bytes": 736,
+      "sha256": "0e45f4e73db2af04fc81f0c78d20a3142f220aebdb3be3e2bf374451e10281c3"
+    },
+    {
+      "path": "validation/semaphore-source-epoch2.json",
+      "bytes": 5199876,
+      "sha256": "1778db3b3a1c29fc33d267d39187cf70f3761efc7397be0bcad2e767103b8c58"
+    },
+    {
+      "path": "validation/stress-semaphore-native.py",
+      "bytes": 4863,
+      "sha256": "c1f8e9799decff197fb625362b3c5c4e8720d6307e64bf4acf2d21c3199ece77"
+    },
+    {
+      "path": "validation/stress-semaphore-validation.py",
+      "bytes": 6033,
+      "sha256": "369424fc8c8b3e82630082391ac2b5d4435c16b835061c218803c316b7d050f8"
+    },
+    {
+      "path": "validation/verbatim-whitespace-exceptions.json",
+      "bytes": 8182,
+      "sha256": "e638c1e0d9afb01d4c31d5cf422f00e7c6e31265b5b6216555c03319fb5361e0"
+    }
+  ]
+}

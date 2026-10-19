@@ -1,0 +1,68 @@
+{
+  "frozen-rust-abi-minor": 184,
+  "compared-root-rust-abi-minor": 264,
+  "compared-root-head": "8f49854be133693b69f546748fe207b23c6a23cd",
+  "whole-current-root-product-validated": false,
+  "selected-source-inputs": 506,
+  "integrated-rax-c-api": "1.14.0",
+  "source-epoch": 2,
+  "hosts": {
+    "macos": {
+      "archives": [
+        {
+          "path": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/assist-rs-target/aarch64-apple-darwin/debug/libassist_rs.a",
+          "bytes": 526593848,
+          "sha256": "986322827262d1475e9f9fc9a58d1e0e6f3cf98011a08244ac2dc7be0d9f8890",
+          "members": 1467,
+          "structural-member-walk": "pass"
+        },
+        {
+          "path": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/assist-rs-target/aarch64-apple-darwin/debug/deps/librax-c89758aa402dc84d.rlib",
+          "bytes": 393354624,
+          "sha256": "30c0340b4ff2109e8991176fc7e5818300ba5806d4d1ac3302c5f64cc208d4dd",
+          "members": 258,
+          "structural-member-walk": "pass"
+        }
+      ],
+      "core-features": []
+    },
+    "linux": {
+      "archives": [
+        {
+          "path": "/target/debug/libassist_rs.a",
+          "bytes": 932590458,
+          "sha256": "bdcc96fbb524199bda99c137b42d41f9fc5c22a0dd729108c79f849bee3b86ee",
+          "members": 1610,
+          "structural-member-walk": "pass"
+        },
+        {
+          "path": "/target/debug/deps/librax-a2a8568229f56ea7.rlib",
+          "bytes": 574509136,
+          "sha256": "294d3d90d2782ef2d723efa2389f8ae20aefbf0a3b6e88fa79fdd72ca34f9d96",
+          "members": 259,
+          "structural-member-walk": "pass"
+        }
+      ],
+      "core-features": []
+    },
+    "windows": {
+      "archives": [
+        {
+          "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-owned\\debug\\assist_rs.lib",
+          "bytes": 850667668,
+          "sha256": "16e0d4ea02f3be27bdfd7d3837e0f6b5f691e4eafd3cd1e1a531c3997d9f10ed",
+          "members": 3946,
+          "structural-member-walk": "pass"
+        },
+        {
+          "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-owned\\debug\\deps\\librax-934115059aa64c85.rlib",
+          "bytes": 501801646,
+          "sha256": "0bd770c8168f7ab4fde931024a620a7aefc882b2ae7f373a423b2bce0401be97",
+          "members": 20,
+          "structural-member-walk": "pass"
+        }
+      ],
+      "core-features": []
+    }
+  }
+}

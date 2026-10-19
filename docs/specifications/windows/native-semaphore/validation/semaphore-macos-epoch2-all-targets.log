@@ -1,0 +1,5 @@
+    Checking vm-memory v0.17.1 (/Users/int/Library/Caches/assist-process-emulation/native-semaphore-20261019/semaphore-integrated-source/vendor/vm-memory)
+    Checking linux-loader v0.13.2 (https://github.com/19h/linux-loader?rev=f745b555942c4e840a784bca61e6f3976d101960#f745b555)
+    Checking rax v0.1.0 (/Users/int/Library/Caches/assist-process-emulation/native-semaphore-20261019/semaphore-integrated-source)
+    Checking rax-capi v0.1.2 (/Users/int/Library/Caches/assist-process-emulation/native-semaphore-20261019/semaphore-integrated-source/capi)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 22.86s
