@@ -131,6 +131,7 @@ fn proc_stat(ids: (u32, u32), e: &ProcEntry) -> Stat {
         ProcEntry::Comm { .. } => (mode::S_IFREG | 0o644, 0),
         ProcEntry::Link(t) => (mode::S_IFLNK | 0o777, t.len() as i64),
         ProcEntry::Dir(_) => (mode::S_IFDIR | 0o555, 0),
+        ProcEntry::TraceeFile { .. } => (mode::S_IFREG | 0o444, 0),
     };
     let (sec, nsec) = super::super::host::clock_gettime(super::super::host::HostClock::Realtime);
     let now = Timespec { sec, nsec };
@@ -342,6 +343,26 @@ pub(super) fn open_target(
         flags & valid & !(O_CREAT | O_EXCL | O_NOCTTY | O_TRUNC | O_CLOEXEC)
     };
     match target {
+        Target::Proc(ProcEntry::TraceeFile { tid, name }, guest) => {
+            let request = super::super::ptrace::procfs::OpenRequest {
+                tid,
+                name,
+                guest: guest.clone(),
+                flags,
+                create_mode,
+            };
+            let (bytes, descriptor) = super::super::ptrace::procfs::read(c, request)?;
+            #[cfg(unix)]
+            if let Some(descriptor) = descriptor {
+                return super::super::fs::reopen::adopt(descriptor, &bytes, status);
+            }
+            open_target(
+                c,
+                Target::Proc(ProcEntry::File(bytes), guest),
+                flags,
+                create_mode,
+            )
+        }
         Target::Fd(file) => Ok(file),
         Target::Supplied(entry, guest) => {
             if flags & (O_CREAT | O_EXCL) == (O_CREAT | O_EXCL) {
@@ -599,6 +620,17 @@ pub(super) fn open_file(
     flags: u32,
     create_mode: u32,
 ) -> Result<Arc<OpenFile>, Errno> {
+    if let Some(super::super::wait::Resume::TraceeFile { request, .. }) = c.resume.as_ref() {
+        let request = request.clone();
+        let target = Target::Proc(
+            ProcEntry::TraceeFile {
+                tid: request.tid,
+                name: request.name,
+            },
+            request.guest,
+        );
+        return open_target(c, target, request.flags, request.create_mode);
+    }
     let nofollow = flags & c.p.abi.open_flags().nofollow != 0;
     let target = resolve(c, dirfd, path, 0, !nofollow)?;
     open_target(c, target, flags, create_mode)
@@ -607,6 +639,10 @@ pub(super) fn open_file(
 /// `openat2` with `struct open_how` (resolution restrictions are not
 /// supported and are rejected with `EINVAL`).
 pub fn openat2(c: &mut Ctx<'_>, dirfd: i32, path: u64, how: u64, size: u64) -> SysResult {
+    if let Some(super::super::wait::Resume::TraceeFile { request, .. }) = c.resume.as_ref() {
+        let (flags, mode) = (request.flags, request.create_mode);
+        return open_at(c, dirfd, path, flags, mode);
+    }
     const OPEN_HOW_SIZE_VER0: u64 = 24;
     if size < OPEN_HOW_SIZE_VER0 || size > 4096 {
         return Err(Errno(if size > 4096 { E2BIG } else { EINVAL }));

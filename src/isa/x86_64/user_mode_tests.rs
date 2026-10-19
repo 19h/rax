@@ -6,6 +6,8 @@
 //! the implementation under test. Instruction bytes were produced with
 //! `llvm-mc -triple=x86_64 -x86-asm-syntax=intel -show-encoding`.
 
+mod rip_relative;
+
 use std::collections::BTreeMap;
 use std::sync::{Arc, Mutex};
 

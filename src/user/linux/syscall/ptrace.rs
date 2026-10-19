@@ -83,8 +83,8 @@ fn traceme(c: &mut Ctx<'_>) -> SysResult {
 }
 
 /// `ptrace_attach` (and `PTRACE_SEIZE`'s checks before it): a task in
-/// reach is one of this process's children or its parent (along their
-/// links); any other is refused as by `ptrace_may_access` (`EPERM`), the
+/// reach is one of this process's descendants or ancestors (along their
+/// links); any other is refused (`EPERM`), the
 /// caller's own threads too.
 fn attach(
     c: &mut Ctx<'_>,
@@ -125,7 +125,7 @@ fn attach(
     } else if pid == c.p.ppid && c.p.parent_link.is_some() {
         Some(LinkId::Parent)
     } else {
-        None
+        super::super::ptrace::link_to(c.p, pid)
     };
     // find_get_task_by_vpid: another process exists if the host can
     // signal it or is refused doing so.

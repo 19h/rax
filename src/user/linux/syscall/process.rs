@@ -420,8 +420,10 @@ pub fn prctl(c: &mut Ctx<'_>, option: i32, a2: u64, a3: u64, a4: u64, a5: u64) -
     const PR_SET_THP_DISABLE: i32 = 41;
     const PR_GET_THP_DISABLE: i32 = 42;
     const PR_GET_AUXV: i32 = 0x4155_5856;
+    const PR_SET_PTRACER: i32 = 0x5961_6d61;
     let _ = (a4, a5);
     match option {
+        PR_SET_PTRACER => super::super::ptrace::family::set_ptracer(c, a2),
         PR_SET_PDEATHSIG => {
             if a2 > 64 {
                 return Err(Errno(EINVAL));

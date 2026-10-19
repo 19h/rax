@@ -140,6 +140,9 @@ pub struct OpenFile {
     pub watchers: Mutex<Vec<Watch>>,
     /// The inode state of a `memfd` (its seals).
     pub memfd: Option<Arc<super::memfd::Memfd>>,
+    /// Independent position for a reopened anonymous host file.
+    #[cfg(unix)]
+    pub(crate) reopen_cursor: Option<super::reopen::Cursor>,
     /// What reports file-system events on the file, and its close when it
     /// and its mappings are gone (the emulated notification backend).
     #[cfg(unix)]
@@ -212,6 +215,8 @@ impl OpenFile {
             peer: Mutex::new(std::sync::Weak::new()),
             watchers: Mutex::new(Vec::new()),
             memfd,
+            #[cfg(unix)]
+            reopen_cursor: None,
             #[cfg(unix)]
             notify: std::sync::OnceLock::new(),
         })
@@ -292,7 +297,13 @@ impl OpenFile {
             return Err(Errno(EISDIR));
         }
         match &self.object {
-            FileObject::Host(f) => Ok((&*f).read(buf)?),
+            FileObject::Host(f) => {
+                #[cfg(unix)]
+                if let Some(cursor) = &self.reopen_cursor {
+                    return cursor.read(f, buf);
+                }
+                Ok((&*f).read(buf)?)
+            }
             FileObject::Console {
                 console,
                 stream: None,
@@ -384,6 +395,12 @@ impl OpenFile {
             }
             FileObject::Console { .. } => Err(Errno(EBADF)),
             FileObject::Host(f) => {
+                #[cfg(unix)]
+                if let Some(cursor) = &self.reopen_cursor {
+                    return cursor.write(f, data, self.flags() & O_APPEND != 0, |pos, len| {
+                        self.sealed_len(f, Some(pos), len)
+                    });
+                }
                 if self.flags() & O_APPEND != 0 && self.ftype == FileType::Regular {
                     (&*f).seek(SeekFrom::End(0))?;
                 }
@@ -477,6 +494,10 @@ impl OpenFile {
             FileObject::Host(f)
                 if matches!(self.ftype, FileType::Regular | FileType::BlockDevice) =>
             {
+                #[cfg(unix)]
+                if let Some(cursor) = &self.reopen_cursor {
+                    return cursor.seek(f, offset, whence);
+                }
                 let pos = match whence {
                     SEEK_SET => {
                         if offset < 0 {

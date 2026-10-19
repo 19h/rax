@@ -18,6 +18,8 @@ pub mod locks;
 pub mod memfd;
 pub mod pidfd;
 #[cfg(unix)]
+pub(crate) mod reopen;
+#[cfg(unix)]
 pub mod xattr;
 
 use std::path::{Component, Path, PathBuf};

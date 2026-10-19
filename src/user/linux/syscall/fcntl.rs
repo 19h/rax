@@ -137,6 +137,12 @@ pub fn fcntl(c: &mut Ctx<'_>, fd: i32, cmd: u32, arg: u64) -> SysResult {
 /// blocking is emulated, so one thread's transfer never stops the host
 /// thread that runs the others.
 pub(super) fn set_host_nonblocking(file: &OpenFile, on: bool) -> Result<(), Errno> {
+    #[cfg(unix)]
+    if file.reopen_cursor.is_some() {
+        // Reopened memfds are regular, always-ready files. Their guest
+        // status flags must not change the sender's host description.
+        return Ok(());
+    }
     match &file.object {
         #[cfg(not(unix))]
         FileObject::Host(_) => Err(Errno(EPERM)),

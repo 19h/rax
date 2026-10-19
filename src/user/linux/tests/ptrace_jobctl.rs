@@ -297,6 +297,7 @@ fn the_tracer_learns_of_stops_and_listening() {
         status: SIGSTOP,
         uid: 77,
         compat: false,
+        exe_path: None,
     }));
     while h.proc.state.tracees.get(parent).unwrap().stopped.is_none() {
         h.proc.collect_async(None);

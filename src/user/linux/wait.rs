@@ -101,6 +101,11 @@ pub struct SockWait {
 /// A handler's progress, handed back when its thread wakes.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Resume {
+    /// Waiting for a tracee's current procfs file contents.
+    TraceeFile {
+        link: super::ptrace::LinkId,
+        request: super::ptrace::procfs::OpenRequest,
+    },
     /// Nothing beyond the arguments: evaluate the call again.
     Retry,
     /// A sleep, `poll`, or `select` ending at the instant (never if `None`)

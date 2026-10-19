@@ -17,6 +17,8 @@ impl X86_64Vcpu {
         ctx: &mut InsnContext,
     ) -> Result<Option<VcpuExit>> {
         let opcode3 = ctx.consume_u8()?;
+        // Every legacy 0F3A instruction has a trailing imm8.
+        ctx.rip_relative_offset = super::super::super::immediate_len(0x3, opcode3);
         if self.reject_rex2_for_legacy_simd(ctx)? {
             return Ok(None);
         }

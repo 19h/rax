@@ -6,10 +6,9 @@
 //! carries out its tracer's requests on its own memory and registers while
 //! its traced thread is stopped. Every process has a link to its parent and
 //! one to each child it forks (an `AF_UNIX` stream pair made at `fork`),
-//! and tracing goes along them: a process traces its children or its
-//! parent. Nothing else is within reach (`EPERM`, as a denied
-//! `ptrace_may_access`), and a thread of another process is reached only as
-//! that process's main thread.
+//! and direct links to ancestors survive an intermediate process's exit.
+//! Unrelated processes remain out of reach (`EPERM`), and a thread of
+//! another process is reached only as that process's main thread.
 //!
 //! A message is a frame: a little-endian `u32` length, then a tag byte and
 //! the fields. The tracee tells its tracer of a `PTRACE_TRACEME` and of
@@ -23,6 +22,8 @@
 //! are the `ptrace` system call (`syscall::ptrace`).
 
 pub mod call;
+pub(crate) mod family;
+pub(crate) mod procfs;
 pub mod regs;
 pub mod regs32;
 pub mod regs_a32;
@@ -156,6 +157,26 @@ pub enum LinkId {
 /// A message on a link.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Msg {
+    /// Read a current procfs file from a tracee. Replies belong to the
+    /// requesting thread, independently of outstanding ptrace requests.
+    ReadProc {
+        tid: i32,
+        requester: i32,
+        name: String,
+        flags: u32,
+        uid: u32,
+        gid: u32,
+        capable: bool,
+    },
+    ProcReply {
+        requester: i32,
+        ret: i64,
+        payload: Vec<u8>,
+        descriptor: bool,
+    },
+    /// A new descendant, with a direct link passed by its parent through
+    /// `SCM_RIGHTS`. This establishes reachability, without attaching.
+    Relative { pid: i32 },
     /// `PTRACE_TRACEME`: the sender's thread `tid` is traced by the
     /// receiver.
     Traceme { tid: i32 },
@@ -184,6 +205,8 @@ pub enum Msg {
         /// The thread runs 32-bit code (`task_user_regset_view`'s i386
         /// view).
         compat: bool,
+        /// The executable at this stop, for the tracer's `/proc/<tid>/exe`.
+        exe_path: Option<String>,
     },
     /// Thread `tid` listens (`PTRACE_LISTEN`): still stopped, but not in a
     /// stop its tracer sees until it traps again.
@@ -229,6 +252,40 @@ impl Msg {
         let i32s = |b: &mut Vec<u8>, v: i32| b.extend_from_slice(&v.to_le_bytes());
         let u64s = |b: &mut Vec<u8>, v: u64| b.extend_from_slice(&v.to_le_bytes());
         match self {
+            Msg::ReadProc {
+                tid,
+                requester,
+                name,
+                flags,
+                uid,
+                gid,
+                capable,
+            } => {
+                b.push(b'P');
+                i32s(&mut b, *tid);
+                i32s(&mut b, *requester);
+                i32s(&mut b, *flags as i32);
+                i32s(&mut b, *uid as i32);
+                i32s(&mut b, *gid as i32);
+                b.push(u8::from(*capable));
+                b.extend_from_slice(name.as_bytes());
+            }
+            Msg::ProcReply {
+                requester,
+                ret,
+                payload,
+                descriptor,
+            } => {
+                b.push(b'p');
+                i32s(&mut b, *requester);
+                b.extend_from_slice(&ret.to_le_bytes());
+                b.push(u8::from(*descriptor));
+                b.extend_from_slice(payload);
+            }
+            Msg::Relative { pid } => {
+                b.push(b'F');
+                i32s(&mut b, *pid);
+            }
             Msg::Traceme { tid } => {
                 b.push(b'T');
                 i32s(&mut b, *tid);
@@ -256,6 +313,7 @@ impl Msg {
                 status,
                 uid,
                 compat,
+                exe_path,
             } => {
                 b.push(b'S');
                 i32s(&mut b, *tid);
@@ -264,6 +322,9 @@ impl Msg {
                 i32s(&mut b, *status);
                 b.extend_from_slice(&uid.to_le_bytes());
                 b.push(u8::from(*compat));
+                if let Some(path) = exe_path {
+                    b.extend_from_slice(path.as_bytes());
+                }
             }
             Msg::Listening { tid } => {
                 b.push(b'L');
@@ -337,6 +398,22 @@ impl Msg {
         let i32at = |at: usize| Some(i32::from_le_bytes(f.get(at..at + 4)?.try_into().ok()?));
         let u64at = |at: usize| Some(u64::from_le_bytes(f.get(at..at + 8)?.try_into().ok()?));
         Some(match tag {
+            b'P' => Msg::ReadProc {
+                tid: i32at(0)?,
+                requester: i32at(4)?,
+                flags: i32at(8)? as u32,
+                uid: i32at(12)? as u32,
+                gid: i32at(16)? as u32,
+                capable: *f.get(20)? != 0,
+                name: String::from_utf8(f.get(21..)?.to_vec()).ok()?,
+            },
+            b'p' => Msg::ProcReply {
+                requester: i32at(0)?,
+                ret: u64at(4)? as i64,
+                descriptor: *f.get(12)? != 0,
+                payload: f.get(13..)?.to_vec(),
+            },
+            b'F' => Msg::Relative { pid: i32at(0)? },
             b'T' => Msg::Traceme { tid: i32at(0)? },
             b'A' => Msg::Attach {
                 tid: i32at(0)?,
@@ -353,6 +430,11 @@ impl Msg {
                 status: i32at(12)?,
                 uid: i32at(16)? as u32,
                 compat: *f.get(20)? != 0,
+                exe_path: if f.len() > 21 {
+                    Some(String::from_utf8(f.get(21..)?.to_vec()).ok()?)
+                } else {
+                    None
+                },
             },
             b'L' => Msg::Listening { tid: i32at(0)? },
             b'K' => Msg::Kill {
@@ -705,6 +787,8 @@ pub struct Tracee {
     /// At its last stop it ran 32-bit code: its register sets are the
     /// i386 view's (`task_user_regset_view`).
     pub compat: bool,
+    /// Executable reported at its last stop. Unknown for synthetic stops.
+    pub exe_path: Option<String>,
     /// This tracer sent it `SIGKILL`, which ends a traced stop at once and
     /// keeps it from stopping again (`signal_wake_up`,
     /// `__fatal_signal_pending` in `ptrace_stop`): no stop of it is
@@ -718,6 +802,8 @@ pub struct Tracees {
     pub list: Vec<Tracee>,
     /// Answers that arrived, by link, for a waiting request.
     pub replies: Vec<(LinkId, i64, Vec<u8>)>,
+    /// Procfs replies keyed by both the peer and the requesting thread.
+    pub proc_replies: Vec<(LinkId, i32, i64, Vec<u8>, Option<std::fs::File>)>,
 }
 
 impl Tracees {
@@ -742,6 +828,7 @@ impl Tracees {
             reported: false,
             exited: None,
             compat: false,
+            exe_path: None,
             killed: false,
         });
     }
@@ -906,6 +993,22 @@ mod tests {
     #[test]
     fn messages_round_trip() {
         let all = [
+            Msg::ReadProc {
+                tid: 12,
+                requester: 34,
+                name: "maps".into(),
+                flags: 0,
+                uid: 1000,
+                gid: 1000,
+                capable: false,
+            },
+            Msg::ProcReply {
+                requester: 34,
+                ret: 0,
+                payload: b"guest maps".to_vec(),
+                descriptor: false,
+            },
+            Msg::Relative { pid: 11 },
             Msg::Traceme { tid: 7 },
             Msg::Attach {
                 tid: 9,
@@ -922,6 +1025,7 @@ mod tests {
                 status: 5,
                 uid: 1000,
                 compat: true,
+                exe_path: Some("/guest/program".into()),
             },
             Msg::Listening { tid: 9 },
             Msg::Kill {

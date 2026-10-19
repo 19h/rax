@@ -54,6 +54,74 @@ pub fn poll_links(p: &mut ProcState, th: &mut Threads<'_>) {
 
 fn on_message(p: &mut ProcState, th: &mut Threads<'_>, link: LinkId, m: Msg) {
     match m {
+        Msg::ReadProc {
+            tid,
+            requester,
+            name,
+            flags,
+            uid,
+            gid,
+            capable,
+        } => {
+            let (ret, payload, file) =
+                super::procfs::serve(p, th, link, tid, &name, flags, (uid, gid, capable));
+            let message = Msg::ProcReply {
+                requester,
+                ret,
+                payload,
+                descriptor: file.is_some(),
+            };
+            #[cfg(unix)]
+            if let Some(file) = file {
+                if let Some(peer) = link_mut(p, link) {
+                    peer.send_passing(&message, &file);
+                }
+                return;
+            }
+            send(p, link, &message);
+        }
+        Msg::ProcReply {
+            requester,
+            ret,
+            payload,
+            descriptor,
+        } => {
+            #[cfg(unix)]
+            let file = if descriptor {
+                link_mut(p, link)
+                    .and_then(|l| l.take_fd())
+                    .map(std::fs::File::from)
+            } else {
+                None
+            };
+            #[cfg(not(unix))]
+            let file = None;
+            let ret = if descriptor && file.is_none() {
+                -i64::from(EIO)
+            } else {
+                ret
+            };
+            let pending = th.iter().any(|t| t.tid == requester && t.blocked.as_ref().is_some_and(|b| matches!(b.resume, Resume::TraceeFile { link: waiting, .. } if waiting == link)));
+            if pending
+                && !p
+                    .tracees
+                    .proc_replies
+                    .iter()
+                    .any(|r| r.0 == link && r.1 == requester)
+            {
+                p.tracees
+                    .proc_replies
+                    .push((link, requester, ret, payload, file));
+            }
+        }
+        #[cfg(unix)]
+        Msg::Relative { pid } => {
+            if let Some(fd) = link_mut(p, link).and_then(|l| l.take_fd()) {
+                p.adopted.push((pid, super::Link::from_fd(fd)));
+            }
+        }
+        #[cfg(not(unix))]
+        Msg::Relative { .. } => {}
         Msg::Traceme { tid } => {
             // The tracer is the thread that made the child.
             let creator = match link {
@@ -69,6 +137,7 @@ fn on_message(p: &mut ProcState, th: &mut Threads<'_>, link: LinkId, m: Msg) {
             status,
             uid,
             compat,
+            exe_path,
         } => {
             if let Some(t) = p.tracees.get_mut(tid)
                 && !t.killed
@@ -76,6 +145,7 @@ fn on_message(p: &mut ProcState, th: &mut Threads<'_>, link: LinkId, m: Msg) {
                 t.stopped = Some(exit);
                 t.reported = false;
                 t.compat = compat;
+                t.exe_path = exe_path;
                 notify_trapped(p, th, tid, why, status, uid);
             }
         }
@@ -182,7 +252,10 @@ fn on_message(p: &mut ProcState, th: &mut Threads<'_>, link: LinkId, m: Msg) {
     // A wait or a request asleep for this looks again.
     for t in th.iter_mut() {
         if let Some(b) = t.blocked.as_mut()
-            && matches!(b.resume, Resume::WaitChild | Resume::Ptrace { .. })
+            && matches!(
+                b.resume,
+                Resume::WaitChild | Resume::Ptrace { .. } | Resume::TraceeFile { .. }
+            )
         {
             b.woken = true;
         }
@@ -769,7 +842,10 @@ fn link_ended(p: &mut ProcState, th: &mut Threads<'_>, link: LinkId) {
     }
     // Links that only tracing made go with it.
     match link {
-        LinkId::Adopted(pid) => p.adopted.retain(|a| a.0 != pid),
+        LinkId::Adopted(pid) => {
+            p.adopted.retain(|a| a.0 != pid);
+            p.ancestor_pids.retain(|ancestor| *ancestor != pid);
+        }
         LinkId::Tracer => p.tracer_link = None,
         _ => {}
     }
@@ -831,6 +907,7 @@ fn report(
         status,
         uid,
         compat: regs::compat_mode(&t.cpu),
+        exe_path: Some(p.exe_path.clone()),
     };
     send(p, link, &m);
 }

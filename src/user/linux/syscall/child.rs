@@ -115,6 +115,7 @@ pub fn fork(c: &mut Ctx<'_>, args: ForkArgs) -> Result<Outcome, Errno> {
         flags & super::thread::cf::CLONE_PTRACE != 0,
         args.exit_signal,
     )?;
+    let family = super::super::ptrace::family::ForkLinks::prepare(c.p)?;
     // The child shares the open file descriptions.
     if let Some(h) = &c.p.fsnotify {
         h.before_fork();
@@ -129,6 +130,7 @@ pub fn fork(c: &mut Ctx<'_>, args: ForkArgs) -> Result<Outcome, Errno> {
         Some(pid) => {
             drop(write);
             drop(child_link);
+            family.publish(c.p, pid);
             let (tid, exec_id) = (c.t.tid, c.p.exec_id);
             c.p.children
                 .add(pid, read, Some(link), args.exit_signal as i32, tid, exec_id);
@@ -154,6 +156,7 @@ pub fn fork(c: &mut Ctx<'_>, args: ForkArgs) -> Result<Outcome, Errno> {
             c.p.parent_link = Some(child_link);
             c.p.tracees = Default::default();
             c.p.adopted.clear();
+            family.inherit(c.p);
             c.p.tracer_link = None;
             c.p.group_stop = None;
             c.t.ptrace = None;

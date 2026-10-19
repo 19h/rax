@@ -305,6 +305,7 @@ fn a_tracer_adopts_a_forked_tracee_and_reaps_it() {
         status: SIGSTOP,
         uid: 0,
         compat: false,
+        exe_path: None,
     }));
     while h.proc.state.tracees.get(g).unwrap().stopped.is_none() {
         h.proc.collect_async(None);

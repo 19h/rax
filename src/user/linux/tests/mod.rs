@@ -26,7 +26,7 @@ mod exec;
 mod fdinfo;
 #[cfg(unix)]
 mod files;
-mod harness;
+pub(super) mod harness;
 #[cfg(unix)]
 mod i386;
 #[cfg(unix)]

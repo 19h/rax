@@ -32,6 +32,8 @@ pub enum ProcEntry {
     Link(String),
     /// A directory with these entries.
     Dir(Vec<DirEntry>),
+    /// Read-only file served by another emulated process to its tracer.
+    TraceeFile { tid: i32, name: String },
 }
 
 /// Well-known inode numbers for synthesized entries (stable, nonzero).
@@ -379,6 +381,32 @@ pub fn lookup(p: &ProcState, cur: &Thread, threads: &[&Thread], guest: &str) -> 
             if id == p.pid {
                 return process_entry(p, leader, threads, rest);
             }
+            if rest == "exe" {
+                if let Some(tracee) = p.tracees.get(id).filter(|t| t.stopped.is_some()) {
+                    return tracee.exe_path.clone().map(ProcEntry::Link);
+                }
+            }
+            if p.tracees.get(id).is_some()
+                && matches!(
+                    rest,
+                    "maps" | "auxv" | "cmdline" | "environ" | "stat" | "status" | "comm"
+                )
+            {
+                return Some(ProcEntry::TraceeFile {
+                    tid: id,
+                    name: rest.to_string(),
+                });
+            }
+            if rest
+                .strip_prefix("fd/")
+                .is_some_and(|n| n.parse::<i32>().is_ok())
+                && super::ptrace::link_to(p, id).is_some()
+            {
+                return Some(ProcEntry::TraceeFile {
+                    tid: id,
+                    name: rest.to_string(),
+                });
+            }
             // /proc/<tid> of another thread: not listed, but present.
             return find(id).and_then(|t| thread_entry(p, t, threads, rest, true));
         }
@@ -467,6 +495,9 @@ pub fn owned(p: &ProcState, threads: &[&Thread], guest: &str) -> bool {
         r
     } else if let Some((id, r)) = path.strip_prefix("/proc/").and_then(|n| n.split_once('/')) {
         match id.parse::<i32>() {
+            Ok(id) if p.tracees.get(id).is_some() || super::ptrace::link_to(p, id).is_some() => {
+                return true;
+            }
             Ok(id) if id == p.pid || threads.iter().any(|t| t.tid == id) => r,
             _ => return false,
         }

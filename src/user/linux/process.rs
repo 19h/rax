@@ -433,6 +433,8 @@ pub struct ProcState {
     /// Links to tracees that are not children, by PID (their parents,
     /// tracees of this process, passed them over as they forked them).
     pub adopted: Vec<(i32, super::ptrace::Link)>,
+    /// Ancestors reached through `adopted`, excluding the immediate parent.
+    pub ancestor_pids: Vec<i32>,
     /// The link to this process's tracer (its PID) when the tracer is
     /// neither its parent nor a child.
     pub tracer_link: Option<(i32, super::ptrace::Link)>,
@@ -892,6 +894,7 @@ impl LinuxProcess {
             parent_link: None,
             tracees: Default::default(),
             adopted: Vec::new(),
+            ancestor_pids: Vec::new(),
             tracer_link: None,
             group_stop: None,
             #[cfg(unix)]

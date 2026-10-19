@@ -16,7 +16,7 @@ mod vex;
 mod xop;
 
 /// Length in bytes of the immediate that follows the ModR/M operand of a
-/// VEX- or EVEX-encoded opcode in map 1 (0F), 2 (0F38), 3 (0F3A), 5, or 6.
+/// legacy, VEX, or EVEX opcode in map 1 (0F), 2 (0F38), 3 (0F3A), 5, or 6.
 ///
 /// A RIP-relative operand is relative to the end of the whole instruction
 /// (Intel SDM Vol. 2A section 2.2.1.6), so the ModR/M decoder must know how
@@ -25,7 +25,8 @@ mod xop;
 /// the 0F map, only on 70-73 (`PSHUF*` and shift groups 12-14), C2 (`CMP*`),
 /// C4 (`PINSRW`), C5 (`PEXTRW`), and C6 (`SHUFP*`); no 0F38 opcode has one,
 /// nor do the AVX512-FP16 maps 5 and 6, whose immediate forms are in 0F3A.
-/// APX map 4 sizes its immediates per instruction.
+/// The legacy-only SHLD/SHRD (A4, AC) and group 8 (BA) forms set their
+/// offsets in their handlers. APX map 4 sizes its immediates per instruction.
 fn immediate_len(map: u8, opcode: u8) -> usize {
     match map {
         0x1 => usize::from(matches!(opcode, 0x70..=0x73 | 0xC2 | 0xC4..=0xC6)),
