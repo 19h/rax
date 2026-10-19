@@ -1,0 +1,26 @@
+{
+  "base": "889bc914e298cb58d8ab0b90c9181ef75083f97c",
+  "files": [
+    {
+      "path": "src/user/windows/dll/threading/tests.rs",
+      "bytes": 36273,
+      "sha256": "acb933bcd041b39c61dd1ff69287c20db1a5bf2d533e8b0085aa42d2b703dcbc"
+    },
+    {
+      "path": "src/user/windows/dll/threading/native_wait_tests.rs",
+      "bytes": 5359,
+      "sha256": "4b873825f7df07710d06efa863cc13674e6bfa7f5beff6ee98fe2d14f60f503a"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests.rs",
+      "bytes": 48393,
+      "sha256": "716980ca24680bf6368bc7b5719353e2bdf6ffb49bc05c8a7d140bef2645dfb5"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/native_wait_tests.rs",
+      "bytes": 10177,
+      "sha256": "dfa822462f7007e8a6af2546d93bc32563b9334d1b85da0069d8d75dddbd2a70"
+    }
+  ],
+  "scope": "Corrected tests-only parent baseline; direct private cleanup fixes the two unavailable CloseHandle lookup calls. Shipping source remains published parent."
+}

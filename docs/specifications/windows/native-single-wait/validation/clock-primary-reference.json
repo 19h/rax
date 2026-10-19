@@ -1,0 +1,11 @@
+{
+  "verified-utc": "2026-10-19T00:39:24.212863+00:00",
+  "apple-libc": {
+    "commit": "63976b830a836a22649b806fe62e8614fe3e5555",
+    "path": "gen/clock_gettime.c",
+    "url": "https://raw.githubusercontent.com/apple-oss-distributions/Libc/63976b830a836a22649b806fe62e8614fe3e5555/gen/clock_gettime.c",
+    "bytes": 6439,
+    "sha256": "55ee62841451d0d936fee72658b9c0452d5571c6039789e794e42751e2050f15",
+    "finding": "CLOCK_UPTIME_RAW uses mach_absolute_time; CLOCK_MONOTONIC_RAW uses mach_continuous_time."
+  }
+}

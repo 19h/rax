@@ -1,0 +1,109 @@
+{
+  "frozen-rust-abi-minor": 184,
+  "compared-root-rust-abi-minor": 264,
+  "compared-root-head": "8f49854be133693b69f546748fe207b23c6a23cd",
+  "selected-cpp-inputs": 8,
+  "whole-current-root-product-validated": false,
+  "hosts": {
+    "macos": {
+      "gates": [
+        {
+          "name": "prime-artifacts",
+          "exit-code": 0,
+          "log": "macos-wait-epoch4-owning-prime-artifacts.log"
+        },
+        {
+          "name": "build",
+          "exit-code": 0,
+          "log": "macos-wait-epoch4-owning-build.log"
+        },
+        {
+          "name": "ctest",
+          "exit-code": 0,
+          "log": "macos-wait-epoch4-owning-ctest.log"
+        },
+        {
+          "name": "protected-assist-cli",
+          "exit-code": 0,
+          "log": "macos-wait-epoch4-owning-protected-assist-cli.log"
+        },
+        {
+          "name": "protected-assist-mcp",
+          "exit-code": 0,
+          "log": "macos-wait-epoch4-owning-protected-assist-mcp.log"
+        },
+        {
+          "name": "artifacts",
+          "exit-code": 0,
+          "log": "macos-wait-epoch4-owning-artifacts.log"
+        },
+        {
+          "name": "archive-identities",
+          "exit-code": 0,
+          "log": "macos-wait-epoch4-owning-archive-identities.log"
+        }
+      ],
+      "archives-changed-from-parent": true
+    },
+    "linux": {
+      "gates": [
+        {
+          "name": "shipping",
+          "exit-code": 0,
+          "log": "linux-wait-epoch4-owning-shipping.log"
+        },
+        {
+          "name": "cpp",
+          "exit-code": 0,
+          "log": "linux-wait-epoch4-owning-cpp.log"
+        },
+        {
+          "name": "artifacts",
+          "exit-code": 0,
+          "log": "linux-wait-epoch4-owning-artifacts.log"
+        },
+        {
+          "name": "archive-identities",
+          "exit-code": 0,
+          "log": "linux-wait-epoch4-owning-archive-identities.log"
+        }
+      ],
+      "archives-changed-from-parent": true
+    },
+    "windows": {
+      "gates": [
+        {
+          "name": "toolchain",
+          "exit-code": 0,
+          "log": "wait-native-owning-epoch4-toolchain.log"
+        },
+        {
+          "name": "artifacts-before",
+          "exit-code": 0,
+          "log": "wait-native-owning-epoch4-artifacts-before.log"
+        },
+        {
+          "name": "archive-before",
+          "exit-code": 0,
+          "log": "wait-native-owning-epoch4-archive-before.log"
+        },
+        {
+          "name": "cpp",
+          "exit-code": 0,
+          "log": "wait-native-owning-epoch4-cpp.log"
+        },
+        {
+          "name": "artifacts-after",
+          "exit-code": 0,
+          "log": "wait-native-owning-epoch4-artifacts-after.log"
+        },
+        {
+          "name": "archive-after",
+          "exit-code": 0,
+          "log": "wait-native-owning-epoch4-archive-after.log"
+        }
+      ],
+      "archives-changed-from-parent": true
+    }
+  }
+}

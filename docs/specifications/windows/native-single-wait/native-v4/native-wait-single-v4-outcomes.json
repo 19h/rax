@@ -1,0 +1,22 @@
+﻿[
+    {
+        "profile":  "arm64",
+        "exit-code":  0,
+        "log":  "native-wait-single-v4-arm64.log"
+    },
+    {
+        "profile":  "x64",
+        "exit-code":  0,
+        "log":  "native-wait-single-v4-x64.log"
+    },
+    {
+        "profile":  "x86",
+        "exit-code":  0,
+        "log":  "native-wait-single-v4-x86.log"
+    },
+    {
+        "profile":  "x86-laa",
+        "exit-code":  0,
+        "log":  "native-wait-single-v4-x86-laa.log"
+    }
+]

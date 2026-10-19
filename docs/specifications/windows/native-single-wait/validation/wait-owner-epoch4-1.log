@@ -1,0 +1,9 @@
+program=C:\Windows\System32\whoami.exe prefix-turns=2100000 result=BudgetExhausted
+directory turn=2153347 access=0xf root=Ok(0) flags=Ok(40)
+directory name="\\BaseNamedObjects" length=34 raw=[5c, 42, 61, 73, 65, 4e, 61, 6d, 65, 64, 4f, 62, 6a, 65, 63, 74, 73]
+mutant-call turn=2153461 tid=8 output=0x1a5df28 access=0x1f0001 attributes=0x1a5df30 owner=0x0
+mutant-result turn=2153461 tid=8 status=Some(0) handle=Ok(6c) kind=Some("Mutant")
+wait-call turn=2153525 tid=8 handle=0x6c alertable=0x0 timeout=0x0 timeout-value=Err(MemFault { addr: 0, write: false }) object=Some(Mutex { owner: None, count: 0, abandoned: false })
+wait-result turn=2153525 tid=8 status=Some(0) state=Some(Ready) object=Some(Mutex { owner: Some(8), count: 1, abandoned: false })
+terminal turn=2153876 Complete(Internal("native NTDLL service NtOpenSemaphore (0x136) at 0x7fff38a423a0 is not implemented"))
+observation-finished program=C:\Windows\System32\whoami.exe turn-limit=3000000

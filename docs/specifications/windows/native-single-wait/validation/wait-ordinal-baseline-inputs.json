@@ -1,0 +1,21 @@
+{
+  "utc": "2026-10-19T00:52:23.012560+00:00",
+  "source-epoch": "3 plus ordinal regression only",
+  "files": [
+    {
+      "path": "src/user/windows/dll/native.rs",
+      "bytes": 19766,
+      "sha256": "ae826a83e5abc417f681bb9cadacbfddecff88c22e25f5062285dda08ddba61e"
+    },
+    {
+      "path": "src/user/windows/dll/mod.rs",
+      "bytes": 15012,
+      "sha256": "7025e8a801f234954c1cd18d610e181b944f4033a4f6dbf49a3c580e962ed0e7"
+    },
+    {
+      "path": "src/user/windows/dll/threading/native_wait_tests.rs",
+      "bytes": 7331,
+      "sha256": "beddc8fdeda3c11db199490715c98c7ad6cda4ab37fb2440093403ff991bd07b"
+    }
+  ]
+}

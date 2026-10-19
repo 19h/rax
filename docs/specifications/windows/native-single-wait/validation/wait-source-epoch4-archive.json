@@ -1,0 +1,12 @@
+{
+  "archive": "wait-source-epoch4-overrides.tar.gz",
+  "bytes": 9715,
+  "sha256": "292e0d3ddc87238c1ac2978cc626418e1570f723488dbc4dacc601f442016a51",
+  "source-files": 22059,
+  "source-bytes": 1510895073,
+  "overrides": [
+    "src/user/windows/dll/mod.rs",
+    "src/user/windows/dll/native.rs",
+    "src/user/windows/dll/threading/native_wait_tests.rs"
+  ]
+}

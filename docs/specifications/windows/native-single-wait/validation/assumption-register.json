@@ -1,0 +1,83 @@
+[
+  {
+    "id": "W1",
+    "assumption": "Build29683 four-profile captures bound native fault ordering and low-byte conversion; not all NT kernels.",
+    "basis": "native-v1/v2 before-after PE/source/NTDLL identities and finite cases",
+    "dependent-result": "kernel probe/BOOLEAN implementation",
+    "stress-test": "2240 fault rows plus APC and i64 boundary waits per retained revision",
+    "falsification-probe": "replay bound captures; run exact producers on another kernel",
+    "status": "retained"
+  },
+  {
+    "id": "W2",
+    "assumption": "All guest waits use private object-table references and scheduler parking; no host wait handle is opened for a guest request.",
+    "basis": "Objects and sync::Wait existing model",
+    "dependent-result": "isolation, lifetime, cancellation",
+    "stress-test": "last handle close, duplicate, abandoned owner and cancelled waiting thread",
+    "falsification-probe": "host wait FFI reachable from guest adapter, or leaked retained ObjId",
+    "status": "retained"
+  },
+  {
+    "id": "W3",
+    "assumption": "Existing kernel continuation can use CallSite + Flow::Block with a status-to-Flow::Resume wrapper instead of applying HLE callee cleanup.",
+    "basis": "dispatch::complete already pins/unpins waits and Flow::Resume restores explicit registers; services.rs currently rejects Block.",
+    "dependent-result": "native blocked return and APC lifetime",
+    "stress-test": "all guest ABIs, WoW sp+4 resume, native x64 RCX restoration, APC same-height frontier, cancellation and abandoned context",
+    "falsification-probe": "PC/SP differ from immediate NT return, native frame pruned during APC, or duplicate cleanup",
+    "status": "retained"
+  },
+  {
+    "id": "W4",
+    "assumption": "Absolute native deadlines must preserve their clock domain rather than silently become infinite or lose clock adjustments.",
+    "basis": "primary NtWaitForSingleObject signed100ns contract and native v2 huge/past/future cases",
+    "dependent-result": "new private deadline representation and polling",
+    "stress-test": "NULL,0,+1,-1,i64MIN/i64MAX, forward/backward realtime movement and signal/APC priority",
+    "falsification-probe": "finite future loses deadline, overflow, or native pending wait resolves before target after backwards clock adjustment",
+    "status": "retained"
+  },
+  {
+    "id": "W5",
+    "assumption": "Full BOOL truth was initially considered for Win32 WaitForSingleObjectEx but is contradicted by all four native revision2 runs.",
+    "basis": "win32-apc alertable00000100 rows are false,00000101 true",
+    "dependent-result": "narrow measured adapter correction; no global c.bool change",
+    "stress-test": "all seven alert values and both signaled states",
+    "falsification-probe": "independent Win32 producer yields full nonzero normalization",
+    "status": "falsified"
+  },
+  {
+    "id": "W6",
+    "assumption": "The documented Kernel32 provider always exports QueryUnbiasedInterruptTimePrecise on this supported host.",
+    "basis": "Microsoft realtimeapiset requirements table names Kernel32; native v4 returned no export in all four profiles.",
+    "dependent-result": "Precise awake-time clock resolution",
+    "stress-test": "v5 compares both borrowed providers on all four profiles and binds six module files before and after.",
+    "falsification-probe": "Kernel32 export missing with KernelBase export present.",
+    "status": "falsified"
+  },
+  {
+    "id": "W7",
+    "assumption": "Verified source hashes alone ensure Cargo rebuilt a different worktree when a target directory is reused.",
+    "basis": "macOS epoch3 reused the corrected tests-only baseline binary in0.28s despite different worktree contents.",
+    "dependent-result": "Validation provenance",
+    "stress-test": "Fresh isolated target directory and exact15-test selection, then full suite and archive member identity.",
+    "falsification-probe": "Old nine-test binary or stale package path in artifact metadata.",
+    "status": "falsified"
+  },
+  {
+    "id": "W8",
+    "assumption": "Changing CARGO_TARGET_DIR also updates the retained C++ helper archive selection.",
+    "basis": "The first native consumer script still hard-coded target-io-completion-owned while Cargo selected target-wait-owned.",
+    "dependent-result": "Current native C++ consumer coverage",
+    "stress-test": "Separately named helper binds the actual carrier path, byte length and SHA256 before and after all five linked consumers.",
+    "falsification-probe": "A C++ link uses the parent archive or before/after digests differ.",
+    "status": "falsified"
+  },
+  {
+    "id": "W9",
+    "assumption": "Prepending the new native export leaves pre-existing synthetic NTDLL ordinals and trap RVAs unchanged.",
+    "basis": "The PE builder assigns ordinals and slots by table iteration order; the epoch3 ordinal regression compiles and fails.",
+    "dependent-result": "Compatibility with pre-existing ordinal imports and trap locations",
+    "stress-test": "Construct old/new actual PE images for all three guest ABIs, comparing every old ordinal/symbol RVA and appending exactly one new export.",
+    "falsification-probe": "An old symbol moves or the new wait is not the final entry.",
+    "status": "falsified"
+  }
+]

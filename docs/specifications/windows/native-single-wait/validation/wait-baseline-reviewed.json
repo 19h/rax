@@ -1,0 +1,11 @@
+{
+  "utc": "2026-10-19T00:14:18.534298+00:00",
+  "base": "889bc914e298cb58d8ab0b90c9181ef75083f97c",
+  "passed": 0,
+  "failed": 9,
+  "ignored": 0,
+  "filtered": 7947,
+  "log-sha256": "d2d850387ccd8c9015245460183578a494f989f778868f68c2b811c8f9215d8e",
+  "qualification": "The two Win32 cleanup fixture failures do not establish parent behavioral failure. A corrected tests-only parent baseline is required.",
+  "status": "superseded: seven expected behavioral failures plus two fixture cleanup lookup failures"
+}

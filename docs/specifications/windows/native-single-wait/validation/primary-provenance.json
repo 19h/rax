@@ -1,0 +1,18 @@
+{
+  "utc": "2026-10-18T23:57:43.207749+00:00",
+  "files": [
+    {
+      "path": "primary/ntwaitforsingleobject.md",
+      "url": "https://raw.githubusercontent.com/MicrosoftDocs/sdk-api/docs/sdk-api-src/content/winternl/nf-winternl-ntwaitforsingleobject.md",
+      "bytes": 3603,
+      "sha256": "71feee7edddbe8fbb54e22998095d0c6732175c4a39af937c7b6455c8ddfa636"
+    },
+    {
+      "path": "primary/phnt-ntobapi.h",
+      "url": "https://raw.githubusercontent.com/winsiderss/systeminformer/master/phnt/include/ntobapi.h",
+      "bytes": 46773,
+      "sha256": "1325b3b11e33e27f0c1a364f2538734a23746e5d32de4196e3ab0940da62e9d3"
+    }
+  ],
+  "scope": "Primary interfaces and signed100ns timeout contract; fault ordering and BOOLEAN conversion come from retained native v1/v2 captures."
+}

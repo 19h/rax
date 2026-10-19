@@ -1,0 +1,24 @@
+   Compiling rax v0.1.0 (/Users/int/Library/Caches/assist-process-emulation/native-wait-20261019/wait-source)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 25s
+     Running unittests src/lib.rs (/Users/int/Library/Caches/assist-process-emulation/native-wait-20261019/target-macos-wait-epoch3/debug/deps/rax-dd79f0cd9ae9bb68)
+
+running 16 tests
+test user::windows::dll::threading::tests::native_wait_tests::native_single_wait_preserves_prior_ntdll_ordinals_and_trap_rvas_all_abis ... ok
+test user::windows::dll::threading::tests::native_wait_tests::native_single_wait_win32_multiple_apc_preserves_complete_signal_set_all_abis ... ok
+test user::windows::dll::threading::tests::native_wait_tests::native_single_wait_win32_single_apc_priority_and_alert_byte_all_abis ... ok
+test user::windows::dll::threading::tests::native_wait_tests::native_single_wait_win32_sleep_ex_retains_measured_alert_byte_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::native_wait_replay_tests::native_single_wait_replays_all_2240_fault_access_guard_and_object_state_rows ... ok
+test user::windows::process::sched::tests::services_tests::native_wait_replay_tests::native_single_wait_replays_all_336_object_access_apc_and_recursion_rows ... ok
+test user::windows::process::sched::tests::services_tests::native_wait_tests::native_single_wait_abandoned_mutant_returns_ownership_and_native_status_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::native_wait_tests::native_single_wait_alertable_low_byte_with_pending_apc_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::native_wait_tests::native_single_wait_apc_precedes_signal_and_preserves_kernel_frame_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::native_wait_tests::native_single_wait_cancel_releases_pin_and_continuation_once_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::native_wait_tests::native_single_wait_immediate_poll_and_native_return_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::native_wait_tests::native_single_wait_park_pins_last_handle_and_wakes_without_hle_cleanup_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::native_wait_tests::native_single_wait_process_exit_retires_native_object_pins_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::native_wait_tests::native_single_wait_signed_timeout_boundaries_remain_finite_all_abis ... ok
+test user::windows::sync::native_wait::tests::native_single_wait_absolute_clock_changes_and_relative_clock_domains ... ok
+test user::windows::sync::native_wait::tests::native_single_wait_maximum_intervals_do_not_overflow_or_become_infinite ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 7947 filtered out; finished in 0.70s
+

@@ -1,0 +1,77 @@
+{
+  "source-epoch": 4,
+  "cases": [
+    {
+      "name": "focused-selection",
+      "result": "rejected",
+      "outer-digests-rebound": true,
+      "reason": "ValueError: macos focused coverage"
+    },
+    {
+      "name": "full-filtered-out",
+      "result": "rejected",
+      "outer-digests-rebound": true,
+      "reason": "ValueError: macos full counts"
+    },
+    {
+      "name": "capi-selection",
+      "result": "rejected",
+      "outer-digests-rebound": true,
+      "reason": "ValueError: macos C API coverage"
+    },
+    {
+      "name": "native-integration-selection",
+      "result": "rejected",
+      "outer-digests-rebound": true,
+      "reason": "ValueError: windows integration coverage"
+    },
+    {
+      "name": "existing-windows-failure-set",
+      "result": "rejected",
+      "outer-digests-rebound": true,
+      "reason": "ValueError: Windows exact existing failure set"
+    },
+    {
+      "name": "core-features",
+      "result": "rejected",
+      "outer-digests-rebound": true,
+      "reason": "ValueError: macos carrier feature set"
+    },
+    {
+      "name": "archive-member-walk",
+      "result": "rejected",
+      "outer-digests-rebound": true,
+      "reason": "ValueError: linux complete archive walk"
+    },
+    {
+      "name": "current-root-claim",
+      "result": "rejected",
+      "outer-digests-rebound": true,
+      "reason": "ValueError: consumer claim boundary"
+    },
+    {
+      "name": "linked-native-carrier",
+      "result": "rejected",
+      "outer-digests-rebound": true,
+      "reason": "ValueError: Windows C++ linked a stale carrier"
+    },
+    {
+      "name": "ordinary-native-status",
+      "result": "rejected",
+      "outer-digests-rebound": true,
+      "reason": "ValueError: ordinary wait did not complete successfully"
+    },
+    {
+      "name": "compiled-source",
+      "result": "rejected",
+      "outer-digests-rebound": true,
+      "reason": "ValueError: compiled source drift: src/user/windows/dll/native.rs"
+    },
+    {
+      "name": "program-identity",
+      "result": "rejected",
+      "outer-digests-rebound": true,
+      "reason": "ValueError: ordinary program bytes changed"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "utc": "2026-10-19T00:56:22.537742+00:00",
+  "source-epoch": 4,
+  "complete-inputs": 22059,
+  "immutable-linked-inputs": 22056,
+  "fallback-copies": [],
+  "separate-overrides": [
+    "src/user/windows/dll/mod.rs",
+    "src/user/windows/dll/native.rs",
+    "src/user/windows/dll/threading/native_wait_tests.rs"
+  ],
+  "source-bytes": 1510895073,
+  "scope": "Complete verified epoch3 snapshot plus three separately materialized overrides. Unchanged hardlinked inputs are never written; overrides receive current mtimes to force rebuild. Full hashes are checked before and after the final gates."
+}

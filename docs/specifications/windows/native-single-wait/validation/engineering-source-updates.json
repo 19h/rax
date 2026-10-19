@@ -1,0 +1,11 @@
+{
+  "files": [
+    {
+      "path": "src/user/windows/native-runtime.md",
+      "compiled-snapshot-sha256": "b6dcade9bcb357a7440e90ecdff94bd9f90c92ba93e249ff39631e9ee959ba12",
+      "final-sha256": "b8f481cf84546a669611ee70182aa4004505b9b7a8b7c9d2fbd5f220474a8164",
+      "final-bytes": 173128,
+      "scope": "Noncompiled engineering append after all final gates; Rust/test inputs stay identical."
+    }
+  ]
+}

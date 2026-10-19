@@ -8,6 +8,8 @@ use crate::user::windows::hle::dispatch::{Outcome, prune, write_value};
 use crate::user::windows::hle::{ApiErr, Ctx, Flow, Value};
 use crate::user::windows::nt::status::STATUS_ACCESS_VIOLATION;
 
+mod wait;
+
 pub(super) fn dispatch(p: &mut Proc, t: &mut Thread, number: u32, pc: u64) -> Option<Outcome> {
     enter(p, t, number, pc, t.cpu.sp(), t.cpu.pc(), false)
 }
@@ -87,6 +89,9 @@ fn enter(
         )));
     }
     Some(match result {
+        Ok(Flow::Block { wait, then }) => {
+            wait::park(p, t, api, sp, resume, wow64_return, wait, then)
+        }
         Ok(Flow::Ret(Value::Int(status))) => {
             write_value(&mut t.cpu, Value::Int(status));
             if wow64_return {

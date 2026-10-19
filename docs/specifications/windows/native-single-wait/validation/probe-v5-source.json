@@ -1,0 +1,6 @@
+{
+  "source": "native-wait-single-v5.cpp",
+  "sha256": "78cf015a27984c3a46d56a612af9e262060944025f2c0ba10f7123ef7d1e493c",
+  "bytes": 15105,
+  "scope": "Retain revision4 matrices and compare precise unbiased clock exports in borrowed kernel32 and KernelBase modules; bind both providers on disk before and after."
+}

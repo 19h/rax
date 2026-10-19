@@ -1,0 +1,7 @@
+{
+  "utc": "2026-10-19T00:43:11.662564+00:00",
+  "prior": "wait-final-owned-launch.json",
+  "final": "wait-final-owned-b-launch.json",
+  "superseded-scope": "The first native owning command compiled a new carrier into target-wait-owned, but shared-section-owned-cpp-build.py still linked target-io-completion-owned. Its C++ successes are excluded from final new-carrier coverage. The original immutable helper and results are retained.",
+  "correction": "A separately named helper selects target-wait-owned, matches its path/hash/bytes to actual Cargo metadata, and records identical archive identities before and after five C++ consumers. It has a separate helper manifest, controller and result names. Rust compilation sources remain epoch3."
+}

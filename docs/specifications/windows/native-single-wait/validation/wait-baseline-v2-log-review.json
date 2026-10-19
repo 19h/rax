@@ -1,0 +1,9 @@
+{
+  "log": "wait-baseline-v2.log",
+  "bytes": 6787,
+  "sha256": "d2b49538cd5e6dab10f2f29d256c186b78a8c2b0ec81efcca9c412b9efeeb780",
+  "results": [
+    "FAILED. 0 passed; 9 failed; 0 ignored; 0 measured; 7947 filtered out; finished in 0.04s"
+  ],
+  "qualification": "Corrected tests-only baseline: all nine failures are behavioral; original baseline two fixture lookup failures are superseded but retained."
+}

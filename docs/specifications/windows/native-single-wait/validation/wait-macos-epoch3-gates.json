@@ -1,0 +1,36 @@
+{
+  "state": "failed",
+  "source-epoch": 3,
+  "host": "macos",
+  "driver-pid": 40872,
+  "steps": [
+    {
+      "name": "focus",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "native_single_wait",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 101,
+      "seconds": 1.5628370829945197,
+      "log": "wait-macos-epoch3-focus.log",
+      "bytes": 6398,
+      "sha256": "f4c68249132cf5336dec49cdfe58bc4b6d9669239c062024b45ab9c1be8e5354",
+      "results": [
+        "FAILED. 0 passed; 9 failed; 0 ignored; 0 measured; 7947 filtered out; finished in 0.08s"
+      ]
+    }
+  ],
+  "utc": "2026-10-19T00:31:39.728581+00:00",
+  "child-pid": 40909,
+  "current-step": "focus",
+  "last-exit-code": 101
+}

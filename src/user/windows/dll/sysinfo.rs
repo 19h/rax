@@ -70,7 +70,6 @@ const PF_AVX2_INSTRUCTIONS_AVAILABLE: u32 = 40;
 const PF_AVX512F_INSTRUCTIONS_AVAILABLE: u32 = 41;
 
 /// Seconds between 1601-01-01 (the FILETIME epoch) and 1970-01-01.
-const FILETIME_UNIX_EPOCH_SECONDS: i128 = 11_644_473_600;
 
 fn bit(value: u32, index: u32) -> bool {
     value & (1 << index) != 0
@@ -153,12 +152,7 @@ pub(crate) fn processor_feature_present(cpu: &WinCpu, feature: u32) -> bool {
     }
 }
 
-/// 100-nanosecond intervals since 1601-01-01 UTC for a Unix-epoch sample.
-pub(super) fn file_time(seconds: i64, nanoseconds: i64) -> Option<u64> {
-    let ticks = (i128::from(seconds) + FILETIME_UNIX_EPOCH_SECONDS) * 10_000_000
-        + i128::from(nanoseconds) / 100;
-    u64::try_from(ticks).ok()
-}
+pub(super) use super::super::nt::time::file_time;
 
 fn system_time_as_file_time(c: &mut Ctx) -> ApiResult {
     let out = c.ptr(0)?;

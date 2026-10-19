@@ -1,0 +1,8 @@
+{
+  "passed": 12,
+  "failed": 2,
+  "ignored": 0,
+  "filtered": 7947,
+  "log-sha256": "373199fa0671ce831d8b6d9338a89f06c12dcfcdba1ddf664c1082dd938dc1e9",
+  "finding": "Two Win32 fixture cleanup calls used api(CloseHandle), outside that test helper export family. Shipping native/Win32 behavior was not the failure cause for these two tests. Both are corrected with direct private fixture cleanup."
+}

@@ -1,0 +1,6 @@
+{
+  "source": "wait-owner-epoch4.rs",
+  "sha256": "1dc6daedff021608ae91ea85270b498c130e9fed26177003629502fcd51bc227",
+  "bytes": 5378,
+  "scope": "Same read-only observer as epoch3, linked to the actual final epoch4 retained-owner core. Unchanged programs; no guest PC/status patch or syscall suppression."
+}

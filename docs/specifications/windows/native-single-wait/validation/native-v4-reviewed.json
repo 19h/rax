@@ -1,0 +1,64 @@
+{
+  "source": {
+    "source": "native-wait-single-v4.cpp",
+    "sha256": "e0bc5ff2ca9908b31881d9831f8bcee87d76349c24aed536bddccaac5a1b130b",
+    "bytes": 14686,
+    "scope": "Retain revision3 matrices; add84 native object/APC rows including denied/invalid handles, recursive owned mutant and nonsignaled objects, plus active version/precise-unbiased-clock context."
+  },
+  "runs": [
+    {
+      "profile": "arm64",
+      "cases": 84,
+      "context": {
+        "version-status": "00000000",
+        "major": "10",
+        "minor": "0",
+        "build": "29683",
+        "precise-unbiased": "0",
+        "awake-100ns": "0"
+      },
+      "handle-count-stable": true
+    },
+    {
+      "profile": "x64",
+      "cases": 84,
+      "context": {
+        "version-status": "00000000",
+        "major": "10",
+        "minor": "0",
+        "build": "29683",
+        "precise-unbiased": "0",
+        "awake-100ns": "0"
+      },
+      "handle-count-stable": true
+    },
+    {
+      "profile": "x86",
+      "cases": 84,
+      "context": {
+        "version-status": "00000000",
+        "major": "10",
+        "minor": "0",
+        "build": "29683",
+        "precise-unbiased": "0",
+        "awake-100ns": "0"
+      },
+      "handle-count-stable": true
+    },
+    {
+      "profile": "x86-laa",
+      "cases": 84,
+      "context": {
+        "version-status": "00000000",
+        "major": "10",
+        "minor": "0",
+        "build": "29683",
+        "precise-unbiased": "0",
+        "awake-100ns": "0"
+      },
+      "handle-count-stable": true
+    }
+  ],
+  "finding": "Denied/invalid handles precede APC; valid ready and already-owned mutants deliver queued APC first. Active build29683 confirmed.",
+  "clock-provider-assumption": "Falsified: QueryUnbiasedInterruptTimePrecise was sought only in kernel32, which does not export it on this kernel; KernelBase provider verification follows."
+}

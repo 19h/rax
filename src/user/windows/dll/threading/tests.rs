@@ -7,6 +7,9 @@ use super::super::super::sync::{self, Wait};
 use super::*;
 use std::time::Instant;
 
+#[path = "native_wait_tests.rs"]
+mod native_wait_tests;
+
 fn with_context(arch: WinArch, test: impl FnOnce(&mut Ctx, u64)) {
     let image: &[u8] = match arch {
         WinArch::X86 => {

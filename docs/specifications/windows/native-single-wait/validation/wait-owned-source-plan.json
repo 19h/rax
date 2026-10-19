@@ -1,0 +1,82 @@
+{
+  "base": "889bc914e298cb58d8ab0b90c9181ef75083f97c",
+  "utc": "2026-10-19T00:00:30.600376+00:00",
+  "baseline-status": "clean detached task-owned worktree",
+  "paths": [
+    "src/user/windows/dll/native.rs",
+    "src/user/windows/dll/native/wait.rs",
+    "src/user/windows/dll/threading/waits.rs",
+    "src/user/windows/dll/threading/tests.rs",
+    "src/user/windows/dll/threading/native_wait_tests.rs",
+    "src/user/windows/sync.rs",
+    "src/user/windows/sync/native_wait.rs",
+    "src/user/windows/process/services.rs",
+    "src/user/windows/process/services/wait.rs",
+    "src/user/windows/process/sched/tests/services_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/native_wait_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/native_wait_replay_tests.rs",
+    "src/user/windows/native-runtime.md",
+    "src/user/windows/nt.rs",
+    "src/user/windows/nt/time.rs",
+    "src/user/windows/dll/sysinfo.rs",
+    "src/user/windows/sync/native_wait/clock.rs",
+    "src/user/windows/dll/mod.rs"
+  ],
+  "proof-prefix": "docs/specifications/windows/native-single-wait/",
+  "acceptance": [
+    "NtWaitForSingleObject actual installed service supports immediate and parked guest waits without host waits",
+    "Native ABI return context, WoW transition SP/PC and NTDLL stdcall cleanup survive block, wake, APC, cancellation and abandonment",
+    "Preserve every pre-existing synthetic NTDLL export ordinal and trap RVA; append the new table after existing families",
+    "Signed100ns relative/absolute/NULL timeout semantics include i64 boundary values and faults before handle lookup",
+    "Measured low-byte alertable policy and APC-before-signal semantics applied to affected native and Win32 adapters after complete native measurements",
+    "Reference lifetime pinned while parked and released on completion/cancel/teardown",
+    "All three host core/CAPI/integration/all-target configurations and retained actual consumer archives",
+    "Actual unchanged ordinary-program advancement and remaining full-goal limits",
+    "Exact red semantic publication and paired root gitlink/records to both root remotes"
+  ],
+  "scope-map": {
+    "affected": [
+      "user runtime native NT service",
+      "native kernel continuations through existing HLE frame/FlowResume infrastructure",
+      "synchronization/APC/deadline state",
+      "fault order and access checks",
+      "Win32 alertable wait consumers",
+      "tests/engineering records",
+      "Windows/macOS/Linux compiled core and CAPI/retained carriers",
+      "Public Rust Wait enum gains NativeObjects/NativeDeadline; known Rust consumers must compile. C ABI layouts remain unchanged.",
+      "NT file-time conversion moves to a shared private helper with its old DLL alias retained."
+    ],
+    "unaffected": [
+      "direct ISA decode/execute",
+      "SMIR/IR/optimizer/native lowerers/JIT",
+      "UI/main-thread/mesh/permission schemas",
+      "C ABI layouts and dependency/default/package definitions"
+    ],
+    "unknown": [
+      "exact native and Win32 multiple/SleepEx low-byte behavior until revision3 capture",
+      "native absolute waits under realtime clock changes: keep explicit absolute target, test pure-clock boundary rather than silently convert to infinite"
+    ]
+  },
+  "bounded-scope": [
+    {
+      "impact": "high",
+      "item": "services.rs rejects all Flow::Block continuations; must fix before claiming native parked waits",
+      "blocks": "new wait feature"
+    },
+    {
+      "impact": "high",
+      "item": "existing shared object poll and HLE wait immediate path consume signal before a queued APC; measured native/Win32 single behavior is opposite",
+      "blocks": "alertable wait correctness"
+    },
+    {
+      "impact": "medium",
+      "item": "v2 disproves initial assumption that full Win32 BOOL controls WaitForSingleObjectEx alertable:0x100 false,0x101 true on all four captured profiles",
+      "blocks": "generic c.bool reuse; change only measured adapters, not global BOOL policy"
+    },
+    {
+      "impact": "medium",
+      "item": "one physical ARM64 kernel, compatibility x64/x86 profiles; future matrix remains bounded",
+      "blocks": "universal kernel/principal claims"
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "pid": 3436,
+  "utc": "2026-10-18T23:48:45.755644+00:00",
+  "state": "finished",
+  "scope": "Only own process-private unnamed objects, read-only directory root, zero-time/fault waits and queued own-thread APCs. No permanent objects or host state changes.",
+  "child-pid": 8096,
+  "exit-code": 0,
+  "completed-utc": "2026-10-18T23:48:57.624996+00:00"
+}

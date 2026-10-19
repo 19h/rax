@@ -34,6 +34,7 @@ mod token_query;
 mod topology;
 mod trace;
 mod virtual_memory;
+mod wait;
 mod wait_packet;
 mod wnf;
 mod wnf_query;
@@ -323,6 +324,15 @@ pub(super) static EXPORTS: &[Export] = &[
         wnf_query::query,
     ),
 ];
+
+// Append this table after all existing NTDLL families to preserve their
+// synthetic PE ordinals and trap addresses. Kernel lookup shares this table.
+pub(super) static WAIT_EXPORTS: &[Export] = &[Export::func(
+    "NtWaitForSingleObject",
+    Stdcall,
+    &[Ptr, I32, Ptr],
+    wait::single,
+)];
 fn status_error(c: &mut Ctx) -> ApiResult {
     Flow::ret(u64::from(super::super::nt::status_to_error(c.u32(0)?)))
 }

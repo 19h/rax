@@ -1,0 +1,46 @@
+{
+  "runs": [
+    {
+      "profile": "arm64",
+      "waits": 560,
+      "apcs": 14,
+      "handles-before": "49",
+      "handles-after": "49"
+    },
+    {
+      "profile": "x64",
+      "waits": 560,
+      "apcs": 14,
+      "handles-before": "65",
+      "handles-after": "65"
+    },
+    {
+      "profile": "x86",
+      "waits": 560,
+      "apcs": 14,
+      "handles-before": "76",
+      "handles-after": "76"
+    },
+    {
+      "profile": "x86-laa",
+      "waits": 560,
+      "apcs": 14,
+      "handles-before": "76",
+      "handles-after": "76"
+    }
+  ],
+  "source": {
+    "source": "native-wait-single-v1.cpp",
+    "sha256": "b09bd613fff198f612f79c4de2e1b8430d4f2e6e5b8c81facff8232fa8b9a704",
+    "bytes": 7466,
+    "fault-cases-per-profile": 560,
+    "apc-cases-per-profile": 14,
+    "profiles": [
+      "arm64",
+      "x64",
+      "x86",
+      "x86-laa"
+    ]
+  },
+  "note": "One ARM64 kernel; alertable argument is an exercised ULONG slot whose low byte is BOOLEAN. Infinite/pseudo waits excluded from finite fault Cartesian matrix."
+}

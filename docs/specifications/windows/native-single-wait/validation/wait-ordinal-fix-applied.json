@@ -1,0 +1,10 @@
+{
+  "utc": "2026-10-19T00:54:19.244643+00:00",
+  "baseline": "wait-ordinal-baseline-result.json",
+  "changed": [
+    "src/user/windows/dll/native.rs",
+    "src/user/windows/dll/mod.rs"
+  ],
+  "primary-native-export-body-identical-to-parent": true,
+  "scope": "Append the new wait table after all existing synthetic NTDLL tables and share it with installed native service lookup. No existing export signature or order changes."
+}

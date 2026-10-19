@@ -1,0 +1,110 @@
+{
+  "scope": "Semantic checks run independently of outer evidence digests; rebinding an outer manifest cannot bypass these controls.",
+  "cases": [
+    {
+      "name": "timeout-before-invalid-handle",
+      "changed": [
+        "native-v5/native-wait-single-v5-arm64.log"
+      ],
+      "result": "rejected",
+      "reason": "native-wait-single-v5-arm64 fault matrix revision drift"
+    },
+    {
+      "name": "native-apc-before-signal",
+      "changed": [
+        "native-v5/native-wait-single-v5-arm64.log"
+      ],
+      "result": "rejected",
+      "reason": "native-wait-single-v5-arm64 APC/signal/timeout priority"
+    },
+    {
+      "name": "win32-alertable-low-byte",
+      "changed": [
+        "native-v5/native-wait-single-v5-arm64.log"
+      ],
+      "result": "rejected",
+      "reason": "native-wait-single-v5-arm64 APC/signal/timeout priority"
+    },
+    {
+      "name": "multiple-waitall-full-bool",
+      "changed": [
+        "native-v5/native-wait-single-v5-arm64.log"
+      ],
+      "result": "rejected",
+      "reason": "native-wait-single-v5-arm64 multiple status/APC"
+    },
+    {
+      "name": "sleep-low-byte",
+      "changed": [
+        "native-v5/native-wait-single-v5-arm64.log"
+      ],
+      "result": "rejected",
+      "reason": "native-wait-single-v5-arm64 SleepEx normalization"
+    },
+    {
+      "name": "owned-mutant-apc",
+      "changed": [
+        "native-v5/native-wait-single-v5-arm64.log"
+      ],
+      "result": "rejected",
+      "reason": "native-wait-single-v5-arm64 object access/APC priority"
+    },
+    {
+      "name": "clock-provider",
+      "changed": [
+        "native-v5/native-wait-single-v5-arm64.log"
+      ],
+      "result": "rejected",
+      "reason": "native-wait-single-v5-arm64 clock provider"
+    },
+    {
+      "name": "kernel-build",
+      "changed": [
+        "native-v5/native-wait-single-v5-arm64.log"
+      ],
+      "result": "rejected",
+      "reason": "native-wait-single-v5-arm64 kernel context"
+    },
+    {
+      "name": "matrix-omission",
+      "changed": [
+        "native-v5/native-wait-single-v5-arm64.log"
+      ],
+      "result": "rejected",
+      "reason": "native-wait-single-v5-arm64 matrix counts"
+    },
+    {
+      "name": "handle-leak",
+      "changed": [
+        "native-v5/native-wait-single-v5-arm64.log"
+      ],
+      "result": "rejected",
+      "reason": "native-wait-single-v5-arm64 handle leak"
+    },
+    {
+      "name": "pe-machine-both-identities-rebound",
+      "changed": [
+        "native-v5/native-wait-single-v5-arm64-before.json",
+        "native-v5/native-wait-single-v5-arm64-after.json"
+      ],
+      "result": "rejected",
+      "reason": "native-wait-single-v5-arm64 PE machine"
+    },
+    {
+      "name": "replay-projection",
+      "changed": [
+        "replay/object-apc-arm64.tsv"
+      ],
+      "result": "rejected",
+      "reason": "arm64 replay projection"
+    },
+    {
+      "name": "producer-source",
+      "changed": [
+        "native-v5/native-wait-single-v5.cpp"
+      ],
+      "result": "rejected",
+      "reason": "native-wait-single-v5 source drift"
+    }
+  ]
+}

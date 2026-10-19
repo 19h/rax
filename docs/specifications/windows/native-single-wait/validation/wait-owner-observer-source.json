@@ -1,0 +1,6 @@
+{
+  "source": "wait-owner-observer.rs",
+  "sha256": "1dc6daedff021608ae91ea85270b498c130e9fed26177003629502fcd51bc227",
+  "bytes": 5378,
+  "scope": "Read-only observations of unchanged ordinary programs, linked to the actual validated retained-owner core archive. No guest PC/status patches or syscall suppression. At most3000000 scheduler turns per program."
+}

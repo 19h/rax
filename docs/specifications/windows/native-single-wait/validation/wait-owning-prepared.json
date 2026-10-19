@@ -1,0 +1,7 @@
+{
+  "utc": "2026-10-19T00:34:53.910373+00:00",
+  "sources": 473,
+  "unix-link-before": "/Users/int/Library/Caches/assist-process-emulation/native-mutant-create-20261018/mutant-source",
+  "unix-link-after": "/Users/int/Library/Caches/assist-process-emulation/native-wait-20261019/wait-source",
+  "scope": "Selected affected runtime/CAPI/fixture inputs, not the complete compilation closure. The complete22059-file source snapshot is bound separately. Retained frozen Assist RustABI184 carrier."
+}

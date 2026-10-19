@@ -1,0 +1,147 @@
+{
+  "pid": 9008,
+  "state": "finished",
+  "utc": "2026-10-19T01:08:04.269053+00:00",
+  "scope": "Additional diagnostic linked to the validated retained-owner core archive; final core-driver observations remain separate.",
+  "archive": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-owned\\debug\\deps\\librax-934115059aa64c85.rlib",
+    "bytes": 501738220,
+    "sha256": "4f27143391f99006333b916921c333cdbb2de5273138785240820c309774c794",
+    "members": 20,
+    "structural-member-walk": "pass"
+  },
+  "source-before": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\wait-owner-epoch4.rs",
+    "bytes": 5378,
+    "sha256": "1dc6daedff021608ae91ea85270b498c130e9fed26177003629502fcd51bc227"
+  },
+  "runtime-modules-before": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e"
+    },
+    {
+      "path": "C:\\Windows\\System32\\KernelBase.dll",
+      "bytes": 7213728,
+      "sha256": "6b2fa508ac4f9bce5d7351676485d1dc5b5236cd9656034e2fec1eaba3b82bc9"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\KernelBase.dll",
+      "bytes": 3073488,
+      "sha256": "e9c414d7c6bd2c6fde608f31b2f31da3c2014c801b3764a30ee42abd1e9c2d58"
+    },
+    {
+      "path": "C:\\Windows\\System32\\kernel32.dll",
+      "bytes": 1500304,
+      "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\kernel32.dll",
+      "bytes": 696392,
+      "sha256": "9c9a0c54a79ea712bb533fcc79ba9935ed9f9d3f777fd65cf62d9cec6699b9df"
+    }
+  ],
+  "child": 1540,
+  "executable-before": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-owner-epoch4.exe",
+    "bytes": 26849280,
+    "sha256": "205bad112f28257e634d74b4d3e70cd7efe3ac90e6cef07d0c63820d7e01bdaa"
+  },
+  "outcomes": [
+    {
+      "program-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-wait-epoch4\\tests\\fixtures\\user\\windows\\bin\\arm64\\smoke.exe",
+        "bytes": 3584,
+        "sha256": "325730e33e981784bff4a60bc6f342cf95c2735e85042c89748fc471cbe7781b"
+      },
+      "log": "wait-owner-epoch4-0.log",
+      "exit-code": 0,
+      "seconds": 37.10553891699965,
+      "program-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-wait-epoch4\\tests\\fixtures\\user\\windows\\bin\\arm64\\smoke.exe",
+        "bytes": 3584,
+        "sha256": "325730e33e981784bff4a60bc6f342cf95c2735e85042c89748fc471cbe7781b"
+      },
+      "log-identity": {
+        "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\wait-owner-epoch4-0.log",
+        "bytes": 1106,
+        "sha256": "547918eafcce53bd76d4c08cbec4cdfc373513300ebc1c56016884c86b478567"
+      }
+    },
+    {
+      "program-before": {
+        "path": "C:\\Windows\\System32\\whoami.exe",
+        "bytes": 84480,
+        "sha256": "48fde190b002a5a4c4b8b19db014377263ba94220f23a4f0a117fec082d46bf6"
+      },
+      "log": "wait-owner-epoch4-1.log",
+      "exit-code": 0,
+      "seconds": 38.234871459000715,
+      "program-after": {
+        "path": "C:\\Windows\\System32\\whoami.exe",
+        "bytes": 84480,
+        "sha256": "48fde190b002a5a4c4b8b19db014377263ba94220f23a4f0a117fec082d46bf6"
+      },
+      "log-identity": {
+        "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\wait-owner-epoch4-1.log",
+        "bytes": 956,
+        "sha256": "91ca0c6d621bee844d09ec7454c2d2ce7ebfa21c730e8aabcc90a96c706b83f2"
+      }
+    }
+  ],
+  "exit_code": 0,
+  "source-after": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\wait-owner-epoch4.rs",
+    "bytes": 5378,
+    "sha256": "1dc6daedff021608ae91ea85270b498c130e9fed26177003629502fcd51bc227"
+  },
+  "executable-after": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-owner-epoch4.exe",
+    "bytes": 26849280,
+    "sha256": "205bad112f28257e634d74b4d3e70cd7efe3ac90e6cef07d0c63820d7e01bdaa"
+  },
+  "archive-after": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-owned\\debug\\deps\\librax-934115059aa64c85.rlib",
+    "bytes": 501738220,
+    "sha256": "4f27143391f99006333b916921c333cdbb2de5273138785240820c309774c794"
+  },
+  "runtime-modules-after": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e"
+    },
+    {
+      "path": "C:\\Windows\\System32\\KernelBase.dll",
+      "bytes": 7213728,
+      "sha256": "6b2fa508ac4f9bce5d7351676485d1dc5b5236cd9656034e2fec1eaba3b82bc9"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\KernelBase.dll",
+      "bytes": 3073488,
+      "sha256": "e9c414d7c6bd2c6fde608f31b2f31da3c2014c801b3764a30ee42abd1e9c2d58"
+    },
+    {
+      "path": "C:\\Windows\\System32\\kernel32.dll",
+      "bytes": 1500304,
+      "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\kernel32.dll",
+      "bytes": 696392,
+      "sha256": "9c9a0c54a79ea712bb533fcc79ba9935ed9f9d3f777fd65cf62d9cec6699b9df"
+    }
+  ],
+  "completed-utc": "2026-10-19T01:09:25.528289+00:00"
+}

@@ -1,0 +1,10 @@
+{
+  "source": "native-wait-single-v2.cpp",
+  "bytes": 10823,
+  "sha256": "ce05d688f3fa2dcb1897809b5eb0251f450cd99a9f6c6718efaa7a73d3879010",
+  "fault-cases-per-profile": 560,
+  "native-apc-cases-per-profile": 14,
+  "win32-apc-cases-per-profile": 14,
+  "time-cases-per-profile": 16,
+  "scope": "Additional Win32 BOOL/APC comparison and finite timed waits; two enormous pending waits are released by own helper thread after2ms, never left blocked."
+}

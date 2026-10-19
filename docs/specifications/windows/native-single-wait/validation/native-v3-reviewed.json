@@ -1,0 +1,295 @@
+{
+  "source": {
+    "source": "native-wait-single-v3.cpp",
+    "sha256": "9b84ac623008bd6450c2d8118ebbdaeec7ce32f0c1051db6aeb54be266cca713",
+    "bytes": 12642,
+    "scope": "Retain560 single fault,14 native APC,14 Win32Single APC,16 timeout rows; add84 Win32Multiple APC and7 SleepEx APC rows per profile. Only process-private objects and own-thread APCs."
+  },
+  "runs": [
+    {
+      "profile": "arm64",
+      "counts": {
+        "wait": 560,
+        "apc": 14,
+        "win32-apc": 14,
+        "time": 16,
+        "multiple-apc": 84,
+        "sleep-apc": 7
+      },
+      "sleep-rows": [
+        {
+          "case": "0",
+          "alertable": "00000000",
+          "status": "00000000",
+          "during": "0",
+          "after-drain": "1",
+          "drained": "00000000"
+        },
+        {
+          "case": "1",
+          "alertable": "00000001",
+          "status": "000000C0",
+          "during": "1",
+          "after-drain": "1",
+          "drained": "00000000"
+        },
+        {
+          "case": "2",
+          "alertable": "00000002",
+          "status": "000000C0",
+          "during": "1",
+          "after-drain": "1",
+          "drained": "00000000"
+        },
+        {
+          "case": "3",
+          "alertable": "000000FF",
+          "status": "000000C0",
+          "during": "1",
+          "after-drain": "1",
+          "drained": "00000000"
+        },
+        {
+          "case": "4",
+          "alertable": "00000100",
+          "status": "00000000",
+          "during": "0",
+          "after-drain": "1",
+          "drained": "00000000"
+        },
+        {
+          "case": "5",
+          "alertable": "00000101",
+          "status": "000000C0",
+          "during": "1",
+          "after-drain": "1",
+          "drained": "00000000"
+        },
+        {
+          "case": "6",
+          "alertable": "FFFFFFFF",
+          "status": "000000C0",
+          "during": "1",
+          "after-drain": "1",
+          "drained": "00000000"
+        }
+      ],
+      "waits-identical-to-v1": true,
+      "handle-count-stable": true
+    },
+    {
+      "profile": "x64",
+      "counts": {
+        "wait": 560,
+        "apc": 14,
+        "win32-apc": 14,
+        "time": 16,
+        "multiple-apc": 84,
+        "sleep-apc": 7
+      },
+      "sleep-rows": [
+        {
+          "case": "0",
+          "alertable": "00000000",
+          "status": "00000000",
+          "during": "0",
+          "after-drain": "1",
+          "drained": "00000000"
+        },
+        {
+          "case": "1",
+          "alertable": "00000001",
+          "status": "000000C0",
+          "during": "1",
+          "after-drain": "1",
+          "drained": "00000000"
+        },
+        {
+          "case": "2",
+          "alertable": "00000002",
+          "status": "000000C0",
+          "during": "1",
+          "after-drain": "1",
+          "drained": "00000000"
+        },
+        {
+          "case": "3",
+          "alertable": "000000FF",
+          "status": "000000C0",
+          "during": "1",
+          "after-drain": "1",
+          "drained": "00000000"
+        },
+        {
+          "case": "4",
+          "alertable": "00000100",
+          "status": "00000000",
+          "during": "0",
+          "after-drain": "1",
+          "drained": "00000000"
+        },
+        {
+          "case": "5",
+          "alertable": "00000101",
+          "status": "000000C0",
+          "during": "1",
+          "after-drain": "1",
+          "drained": "00000000"
+        },
+        {
+          "case": "6",
+          "alertable": "FFFFFFFF",
+          "status": "000000C0",
+          "during": "1",
+          "after-drain": "1",
+          "drained": "00000000"
+        }
+      ],
+      "waits-identical-to-v1": true,
+      "handle-count-stable": true
+    },
+    {
+      "profile": "x86",
+      "counts": {
+        "wait": 560,
+        "apc": 14,
+        "win32-apc": 14,
+        "time": 16,
+        "multiple-apc": 84,
+        "sleep-apc": 7
+      },
+      "sleep-rows": [
+        {
+          "case": "0",
+          "alertable": "00000000",
+          "status": "00000000",
+          "during": "0",
+          "after-drain": "1",
+          "drained": "00000000"
+        },
+        {
+          "case": "1",
+          "alertable": "00000001",
+          "status": "000000C0",
+          "during": "1",
+          "after-drain": "1",
+          "drained": "00000000"
+        },
+        {
+          "case": "2",
+          "alertable": "00000002",
+          "status": "000000C0",
+          "during": "1",
+          "after-drain": "1",
+          "drained": "00000000"
+        },
+        {
+          "case": "3",
+          "alertable": "000000FF",
+          "status": "000000C0",
+          "during": "1",
+          "after-drain": "1",
+          "drained": "00000000"
+        },
+        {
+          "case": "4",
+          "alertable": "00000100",
+          "status": "00000000",
+          "during": "0",
+          "after-drain": "1",
+          "drained": "00000000"
+        },
+        {
+          "case": "5",
+          "alertable": "00000101",
+          "status": "000000C0",
+          "during": "1",
+          "after-drain": "1",
+          "drained": "00000000"
+        },
+        {
+          "case": "6",
+          "alertable": "FFFFFFFF",
+          "status": "000000C0",
+          "during": "1",
+          "after-drain": "1",
+          "drained": "00000000"
+        }
+      ],
+      "waits-identical-to-v1": true,
+      "handle-count-stable": true
+    },
+    {
+      "profile": "x86-laa",
+      "counts": {
+        "wait": 560,
+        "apc": 14,
+        "win32-apc": 14,
+        "time": 16,
+        "multiple-apc": 84,
+        "sleep-apc": 7
+      },
+      "sleep-rows": [
+        {
+          "case": "0",
+          "alertable": "00000000",
+          "status": "00000000",
+          "during": "0",
+          "after-drain": "1",
+          "drained": "00000000"
+        },
+        {
+          "case": "1",
+          "alertable": "00000001",
+          "status": "000000C0",
+          "during": "1",
+          "after-drain": "1",
+          "drained": "00000000"
+        },
+        {
+          "case": "2",
+          "alertable": "00000002",
+          "status": "000000C0",
+          "during": "1",
+          "after-drain": "1",
+          "drained": "00000000"
+        },
+        {
+          "case": "3",
+          "alertable": "000000FF",
+          "status": "000000C0",
+          "during": "1",
+          "after-drain": "1",
+          "drained": "00000000"
+        },
+        {
+          "case": "4",
+          "alertable": "00000100",
+          "status": "00000000",
+          "during": "0",
+          "after-drain": "1",
+          "drained": "00000000"
+        },
+        {
+          "case": "5",
+          "alertable": "00000101",
+          "status": "000000C0",
+          "during": "1",
+          "after-drain": "1",
+          "drained": "00000000"
+        },
+        {
+          "case": "6",
+          "alertable": "FFFFFFFF",
+          "status": "000000C0",
+          "during": "1",
+          "after-drain": "1",
+          "drained": "00000000"
+        }
+      ],
+      "waits-identical-to-v1": true,
+      "handle-count-stable": true
+    }
+  ],
+  "finding": "Win32 multiple waits retain full-value WaitAll and low-byte alertable behavior, with queued APC before signal consumption. SleepEx rows are retained for interpretation."
+}

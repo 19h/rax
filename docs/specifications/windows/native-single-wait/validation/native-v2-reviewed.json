@@ -1,0 +1,44 @@
+{
+  "source": {
+    "source": "native-wait-single-v2.cpp",
+    "bytes": 10823,
+    "sha256": "ce05d688f3fa2dcb1897809b5eb0251f450cd99a9f6c6718efaa7a73d3879010",
+    "fault-cases-per-profile": 560,
+    "native-apc-cases-per-profile": 14,
+    "win32-apc-cases-per-profile": 14,
+    "time-cases-per-profile": 16,
+    "scope": "Additional Win32 BOOL/APC comparison and finite timed waits; two enormous pending waits are released by own helper thread after2ms, never left blocked."
+  },
+  "runs": [
+    {
+      "profile": "arm64",
+      "native-apcs": 14,
+      "win32-apcs": 14,
+      "times": 16,
+      "all-zero-escaped": true
+    },
+    {
+      "profile": "x64",
+      "native-apcs": 14,
+      "win32-apcs": 14,
+      "times": 16,
+      "all-zero-escaped": true
+    },
+    {
+      "profile": "x86",
+      "native-apcs": 14,
+      "win32-apcs": 14,
+      "times": 16,
+      "all-zero-escaped": true
+    },
+    {
+      "profile": "x86-laa",
+      "native-apcs": 14,
+      "win32-apcs": 14,
+      "times": 16,
+      "all-zero-escaped": true
+    }
+  ],
+  "finding": "Both measured NtWaitForSingleObject and WaitForSingleObjectEx truncate the exercised alertable value to BOOLEAN low byte;0x100 is false and0x101 true. Queued user APC wins over signaled event. Current guest Win32 helper uses full bool and tests object first.",
+  "qualification": "One ARM64 kernel; timing samples show substantial scheduling delay and do not establish nanosecond-level latency equivalence."
+}

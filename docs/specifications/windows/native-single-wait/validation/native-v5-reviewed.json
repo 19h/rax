@@ -1,0 +1,16 @@
+{
+  "utc": "2026-10-19T00:34:10.609885+00:00",
+  "source": {
+    "source": "native-wait-single-v5.cpp",
+    "sha256": "78cf015a27984c3a46d56a612af9e262060944025f2c0ba10f7123ef7d1e493c",
+    "bytes": 15105,
+    "scope": "Retain revision4 matrices and compare precise unbiased clock exports in borrowed kernel32 and KernelBase modules; bind both providers on disk before and after."
+  },
+  "checker": {
+    "path": "check-native-wait.py",
+    "sha256": "98e4476d6077fb1eeaa6a2f6793539f72fd2bea8baac75ceeb63c897798fc276"
+  },
+  "native-runs": 20,
+  "status": "passed",
+  "finding": "The documented Kernel32 export is absent; the borrowed KernelBase export is present in every captured profile. All retained matrices and exact replay projections pass."
+}

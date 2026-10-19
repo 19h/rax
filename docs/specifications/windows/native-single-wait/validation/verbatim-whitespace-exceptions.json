@@ -1,0 +1,709 @@
+{
+  "non-exception-staged-check": "pass",
+  "files": [
+    {
+      "path": "docs/specifications/windows/native-single-wait/validation/native-wait-final-owning-archive-hashes-b.json",
+      "sha256": "a9751cd16f8424bd9da8835175b64f01df9e5a9418da1589e3f7490ff6f153e2",
+      "bytes": 97665,
+      "issues": [
+        {
+          "line": 2463,
+          "reason": "new blank line at EOF"
+        }
+      ],
+      "scope": "Verbatim captured command/output retained for provenance; no product source or replay data exception."
+    },
+    {
+      "path": "docs/specifications/windows/native-single-wait/validation/native-wait-final-owning-archive-hashes.json",
+      "sha256": "1b103320adf9bf2aa739138b16417c13f42dd7a86d90dad732c3bf4261aef87f",
+      "bytes": 97663,
+      "issues": [
+        {
+          "line": 2463,
+          "reason": "new blank line at EOF"
+        }
+      ],
+      "scope": "Verbatim captured command/output retained for provenance; no product source or replay data exception."
+    },
+    {
+      "path": "docs/specifications/windows/native-single-wait/validation/owning-windows-wait-b/assist-native-wait-final-owned-b.ps1",
+      "sha256": "5789685f284ee56dda8c645f2e16a166b97eaf17529b4573d80806f85f610b72",
+      "bytes": 4785,
+      "issues": [
+        {
+          "line": 4,
+          "reason": "trailing whitespace"
+        }
+      ],
+      "scope": "Verbatim captured command/output retained for provenance; no product source or replay data exception."
+    },
+    {
+      "path": "docs/specifications/windows/native-single-wait/validation/owning-windows-wait/assist-native-wait-final-owned.ps1",
+      "sha256": "e607098ab043645982f6aea46859dfd0d579c962b73bc33f74e9b32fdeafe823",
+      "bytes": 4767,
+      "issues": [
+        {
+          "line": 4,
+          "reason": "trailing whitespace"
+        }
+      ],
+      "scope": "Verbatim captured command/output retained for provenance; no product source or replay data exception."
+    },
+    {
+      "path": "docs/specifications/windows/native-single-wait/validation/wait-baseline-v2.log",
+      "sha256": "d2b49538cd5e6dab10f2f29d256c186b78a8c2b0ec81efcca9c412b9efeeb780",
+      "bytes": 6787,
+      "issues": [
+        {
+          "line": 8,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 13,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 17,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 21,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 27,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 33,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 39,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 45,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 51,
+          "reason": "trailing whitespace"
+        }
+      ],
+      "scope": "Verbatim captured command/output retained for provenance; no product source or replay data exception."
+    },
+    {
+      "path": "docs/specifications/windows/native-single-wait/validation/wait-baseline.log",
+      "sha256": "d2d850387ccd8c9015245460183578a494f989f778868f68c2b811c8f9215d8e",
+      "bytes": 6729,
+      "issues": [
+        {
+          "line": 8,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 13,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 17,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 21,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 27,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 33,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 39,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 45,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 51,
+          "reason": "trailing whitespace"
+        }
+      ],
+      "scope": "Verbatim captured command/output retained for provenance; no product source or replay data exception."
+    },
+    {
+      "path": "docs/specifications/windows/native-single-wait/validation/wait-linux-epoch3-capi.log",
+      "sha256": "4127303274259c4cd5f15f9617bec09bd8571199fe2a524dbe0704f43798ae01",
+      "bytes": 12904,
+      "issues": [
+        {
+          "line": 82,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 190,
+          "reason": "new blank line at EOF"
+        }
+      ],
+      "scope": "Verbatim captured command/output retained for provenance; no product source or replay data exception."
+    },
+    {
+      "path": "docs/specifications/windows/native-single-wait/validation/wait-linux-epoch3-focus.log",
+      "sha256": "ee379b85313904edc2965ee5849be4b30f7933e70db00b24a39d5ae4d489327b",
+      "bytes": 2779,
+      "issues": [
+        {
+          "line": 25,
+          "reason": "new blank line at EOF"
+        }
+      ],
+      "scope": "Verbatim captured command/output retained for provenance; no product source or replay data exception."
+    },
+    {
+      "path": "docs/specifications/windows/native-single-wait/validation/wait-linux-epoch3-full.log",
+      "sha256": "d726d34fb4de128cdf377df3afc4fee199167d40e2b32302cd34f8bb540fd9cf",
+      "bytes": 829356,
+      "issues": [
+        {
+          "line": 1967,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 5471,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 5492,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 5503,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 5517,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 8319,
+          "reason": "new blank line at EOF"
+        }
+      ],
+      "scope": "Verbatim captured command/output retained for provenance; no product source or replay data exception."
+    },
+    {
+      "path": "docs/specifications/windows/native-single-wait/validation/wait-linux-epoch3-integration.log",
+      "sha256": "233131e340c86d2190342b145b7d68b39713b6f221058e174376829d215cc6da",
+      "bytes": 35852,
+      "issues": [
+        {
+          "line": 558,
+          "reason": "new blank line at EOF"
+        }
+      ],
+      "scope": "Verbatim captured command/output retained for provenance; no product source or replay data exception."
+    },
+    {
+      "path": "docs/specifications/windows/native-single-wait/validation/wait-linux-epoch4-capi.log",
+      "sha256": "4b52f7f30dbf1324d9506148f6b0247ddc8cf2eddfc3146702a03c5c1b718bf5",
+      "bytes": 12904,
+      "issues": [
+        {
+          "line": 82,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 190,
+          "reason": "new blank line at EOF"
+        }
+      ],
+      "scope": "Verbatim captured command/output retained for provenance; no product source or replay data exception."
+    },
+    {
+      "path": "docs/specifications/windows/native-single-wait/validation/wait-linux-epoch4-focus.log",
+      "sha256": "4a6ce68e249379bc61dc09eb18e5c6593e333cce02e24cf26bfda62b1a9fc527",
+      "bytes": 2728,
+      "issues": [
+        {
+          "line": 24,
+          "reason": "new blank line at EOF"
+        }
+      ],
+      "scope": "Verbatim captured command/output retained for provenance; no product source or replay data exception."
+    },
+    {
+      "path": "docs/specifications/windows/native-single-wait/validation/wait-linux-epoch4-full.log",
+      "sha256": "2225cf50848eda67806ae8459516787eac53895c1040c944c8555013aab15271",
+      "bytes": 829498,
+      "issues": [
+        {
+          "line": 1967,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 5471,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 5492,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 5503,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 5517,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 8320,
+          "reason": "new blank line at EOF"
+        }
+      ],
+      "scope": "Verbatim captured command/output retained for provenance; no product source or replay data exception."
+    },
+    {
+      "path": "docs/specifications/windows/native-single-wait/validation/wait-linux-epoch4-integration.log",
+      "sha256": "b3cb69dfc08d30ca0a4108c97b12737571833e32a0c6c82b4cdabcc0dc6a1c4b",
+      "bytes": 35852,
+      "issues": [
+        {
+          "line": 558,
+          "reason": "new blank line at EOF"
+        }
+      ],
+      "scope": "Verbatim captured command/output retained for provenance; no product source or replay data exception."
+    },
+    {
+      "path": "docs/specifications/windows/native-single-wait/validation/wait-macos-epoch3-focus.log",
+      "sha256": "f4c68249132cf5336dec49cdfe58bc4b6d9669239c062024b45ab9c1be8e5354",
+      "bytes": 6398,
+      "issues": [
+        {
+          "line": 5,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 10,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 14,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 18,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 24,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 30,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 36,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 42,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 48,
+          "reason": "trailing whitespace"
+        }
+      ],
+      "scope": "Verbatim captured command/output retained for provenance; no product source or replay data exception."
+    },
+    {
+      "path": "docs/specifications/windows/native-single-wait/validation/wait-macos-epoch3b-capi.log",
+      "sha256": "a3c991f765cf0cd30e6df53712793917addc166e304376f3a7946da987d79cbd",
+      "bytes": 13112,
+      "issues": [
+        {
+          "line": 82,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 190,
+          "reason": "new blank line at EOF"
+        }
+      ],
+      "scope": "Verbatim captured command/output retained for provenance; no product source or replay data exception."
+    },
+    {
+      "path": "docs/specifications/windows/native-single-wait/validation/wait-macos-epoch3b-focus.log",
+      "sha256": "54cdca405051d9de0d981490e40e177667a9794f12093277b0aef57c727c0d58",
+      "bytes": 5291,
+      "issues": [
+        {
+          "line": 99,
+          "reason": "new blank line at EOF"
+        }
+      ],
+      "scope": "Verbatim captured command/output retained for provenance; no product source or replay data exception."
+    },
+    {
+      "path": "docs/specifications/windows/native-single-wait/validation/wait-macos-epoch3b-full.log",
+      "sha256": "129556791e1579f8ceae907be33685c9dbbbf1924806728e28ae27dd2e81d46f",
+      "bytes": 829362,
+      "issues": [
+        {
+          "line": 1933,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 5419,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 5440,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 5451,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 5465,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 8287,
+          "reason": "new blank line at EOF"
+        }
+      ],
+      "scope": "Verbatim captured command/output retained for provenance; no product source or replay data exception."
+    },
+    {
+      "path": "docs/specifications/windows/native-single-wait/validation/wait-macos-epoch3b-integration.log",
+      "sha256": "10f471137a5c06846e6545c18937d49322f4f39d790716c3a60961e0138b649d",
+      "bytes": 36048,
+      "issues": [
+        {
+          "line": 558,
+          "reason": "new blank line at EOF"
+        }
+      ],
+      "scope": "Verbatim captured command/output retained for provenance; no product source or replay data exception."
+    },
+    {
+      "path": "docs/specifications/windows/native-single-wait/validation/wait-macos-epoch4-capi.log",
+      "sha256": "3708ab8a19dd37eeb798b1f11e40ec54c2b108c5c6e221db12f222e67fbd0bfb",
+      "bytes": 13112,
+      "issues": [
+        {
+          "line": 82,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 190,
+          "reason": "new blank line at EOF"
+        }
+      ],
+      "scope": "Verbatim captured command/output retained for provenance; no product source or replay data exception."
+    },
+    {
+      "path": "docs/specifications/windows/native-single-wait/validation/wait-macos-epoch4-focus.log",
+      "sha256": "296964c1022991ff54cb9bdcdcf6fe7523bc760a341f6f5c1bdde73435610d64",
+      "bytes": 2860,
+      "issues": [
+        {
+          "line": 24,
+          "reason": "new blank line at EOF"
+        }
+      ],
+      "scope": "Verbatim captured command/output retained for provenance; no product source or replay data exception."
+    },
+    {
+      "path": "docs/specifications/windows/native-single-wait/validation/wait-macos-epoch4-full.log",
+      "sha256": "fa7feefe952f673be240151e6c72b811633036488b2c9bbe5d990503af9b899a",
+      "bytes": 829504,
+      "issues": [
+        {
+          "line": 1933,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 5419,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 5440,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 5451,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 5465,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 8288,
+          "reason": "new blank line at EOF"
+        }
+      ],
+      "scope": "Verbatim captured command/output retained for provenance; no product source or replay data exception."
+    },
+    {
+      "path": "docs/specifications/windows/native-single-wait/validation/wait-macos-epoch4-integration.log",
+      "sha256": "c82fc5ad842fed067465c94c6e9505422397debfa0139debe32ceed8d8380990",
+      "bytes": 36048,
+      "issues": [
+        {
+          "line": 558,
+          "reason": "new blank line at EOF"
+        }
+      ],
+      "scope": "Verbatim captured command/output retained for provenance; no product source or replay data exception."
+    },
+    {
+      "path": "docs/specifications/windows/native-single-wait/validation/wait-native-epoch3-focus.log",
+      "sha256": "49cddf456285542538e2745e06589c06a0281030b3d7df84c23bee51957485d7",
+      "bytes": 1175,
+      "issues": [
+        {
+          "line": 25,
+          "reason": "new blank line at EOF"
+        }
+      ],
+      "scope": "Verbatim captured command/output retained for provenance; no product source or replay data exception."
+    },
+    {
+      "path": "docs/specifications/windows/native-single-wait/validation/wait-native-epoch3b-capi.log",
+      "sha256": "c8d763773a380b6c0e527e5a7c8b33591cb8fa0a59d24fb95f40c8f78218fd42",
+      "bytes": 13853,
+      "issues": [
+        {
+          "line": 100,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 208,
+          "reason": "new blank line at EOF"
+        }
+      ],
+      "scope": "Verbatim captured command/output retained for provenance; no product source or replay data exception."
+    },
+    {
+      "path": "docs/specifications/windows/native-single-wait/validation/wait-native-epoch3b-focus.log",
+      "sha256": "a638bd37c3d312ecbef52479b296509a09da59ec6db89dbb23d228a35d0d2cb9",
+      "bytes": 6199,
+      "issues": [
+        {
+          "line": 117,
+          "reason": "new blank line at EOF"
+        }
+      ],
+      "scope": "Verbatim captured command/output retained for provenance; no product source or replay data exception."
+    },
+    {
+      "path": "docs/specifications/windows/native-single-wait/validation/wait-native-epoch3b-full.log",
+      "sha256": "72ed67114fbab72f473e9b9f200d97f9db0b29835d3c901973d52b1a15c06686",
+      "bytes": 791803,
+      "issues": [
+        {
+          "line": 1950,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 4866,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 4876,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 4883,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 4889,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 5418,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 5460,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 5481,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 5492,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 5506,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 6272,
+          "reason": "trailing whitespace"
+        }
+      ],
+      "scope": "Verbatim captured command/output retained for provenance; no product source or replay data exception."
+    },
+    {
+      "path": "docs/specifications/windows/native-single-wait/validation/wait-native-epoch3b-integration.log",
+      "sha256": "a9ad14c57410ca55502af9f450e991d66080e74e233c29f35251a6a694a22483",
+      "bytes": 1861,
+      "issues": [
+        {
+          "line": 36,
+          "reason": "new blank line at EOF"
+        }
+      ],
+      "scope": "Verbatim captured command/output retained for provenance; no product source or replay data exception."
+    },
+    {
+      "path": "docs/specifications/windows/native-single-wait/validation/wait-native-epoch4-capi.log",
+      "sha256": "0063762b61355822c1333b58795de46417f5cb2039aeca001bbe9840093d7451",
+      "bytes": 13853,
+      "issues": [
+        {
+          "line": 100,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 208,
+          "reason": "new blank line at EOF"
+        }
+      ],
+      "scope": "Verbatim captured command/output retained for provenance; no product source or replay data exception."
+    },
+    {
+      "path": "docs/specifications/windows/native-single-wait/validation/wait-native-epoch4-focus.log",
+      "sha256": "9dcbd5ea7b07600ec327f8c1f43e121716f34e79cd8af61f5de41d60259d1372",
+      "bytes": 3797,
+      "issues": [
+        {
+          "line": 43,
+          "reason": "new blank line at EOF"
+        }
+      ],
+      "scope": "Verbatim captured command/output retained for provenance; no product source or replay data exception."
+    },
+    {
+      "path": "docs/specifications/windows/native-single-wait/validation/wait-native-epoch4-full.log",
+      "sha256": "7d34e7608fbbf63ffdb76103da05c876cf9e66d1950f4eeb3cfdef252ff1d9b6",
+      "bytes": 791945,
+      "issues": [
+        {
+          "line": 1950,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 4866,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 4876,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 4883,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 4889,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 5418,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 5460,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 5481,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 5492,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 5506,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 6272,
+          "reason": "trailing whitespace"
+        }
+      ],
+      "scope": "Verbatim captured command/output retained for provenance; no product source or replay data exception."
+    },
+    {
+      "path": "docs/specifications/windows/native-single-wait/validation/wait-native-epoch4-integration.log",
+      "sha256": "e068986b33b91dbb3b3a0ff7d4c6ec425108cf110a4723da9b640d30f637b378",
+      "bytes": 1861,
+      "issues": [
+        {
+          "line": 36,
+          "reason": "new blank line at EOF"
+        }
+      ],
+      "scope": "Verbatim captured command/output retained for provenance; no product source or replay data exception."
+    },
+    {
+      "path": "docs/specifications/windows/native-single-wait/validation/wait-ordinal-baseline.log",
+      "sha256": "a82b31affbaf56a3985d22afefa1203238b6ab9562f83ffc0d44b5ee95c94329",
+      "bytes": 5816,
+      "issues": [
+        {
+          "line": 6,
+          "reason": "trailing whitespace"
+        }
+      ],
+      "scope": "Verbatim captured command/output retained for provenance; no product source or replay data exception."
+    },
+    {
+      "path": "docs/specifications/windows/native-single-wait/validation/wait-prototype-epoch1.log",
+      "sha256": "373199fa0671ce831d8b6d9338a89f06c12dcfcdba1ddf664c1082dd938dc1e9",
+      "bytes": 3486,
+      "issues": [
+        {
+          "line": 6,
+          "reason": "trailing whitespace"
+        },
+        {
+          "line": 11,
+          "reason": "trailing whitespace"
+        }
+      ],
+      "scope": "Verbatim captured command/output retained for provenance; no product source or replay data exception."
+    },
+    {
+      "path": "docs/specifications/windows/native-single-wait/validation/wait-prototype-epoch2.log",
+      "sha256": "4c9a6f2103fb12d7eea5c5b3811304c27daf78ea703f7da6d2841f9598a0a613",
+      "bytes": 2558,
+      "issues": [
+        {
+          "line": 22,
+          "reason": "new blank line at EOF"
+        }
+      ],
+      "scope": "Verbatim captured command/output retained for provenance; no product source or replay data exception."
+    }
+  ]
+}

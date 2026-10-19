@@ -1,0 +1,9 @@
+{
+  "log": "wait-prototype-epoch2.log",
+  "bytes": 2558,
+  "sha256": "4c9a6f2103fb12d7eea5c5b3811304c27daf78ea703f7da6d2841f9598a0a613",
+  "results": [
+    "ok. 14 passed; 0 failed; 0 ignored; 0 measured; 7947 filtered out; finished in 0.60s"
+  ],
+  "qualification": "Prototype epoch2 passes14 after correcting only two HLE fixture cleanup lookups."
+}

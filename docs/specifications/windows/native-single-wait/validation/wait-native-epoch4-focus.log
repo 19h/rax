@@ -1,0 +1,43 @@
+warning: "stdcall" is not a supported ABI for the current target
+  --> vendor\vm-memory\src\mmap\windows.rs:22:1
+   |
+22 | / extern "stdcall" {
+23 | |     pub fn VirtualAlloc(
+24 | |         lpAddress: *mut c_void,
+25 | |         dwSize: size_t,
+...  |
+49 | |     pub fn CloseHandle(hObject: RawHandle) -> u32; // BOOL
+50 | | }
+   | |_^
+   |
+   = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!
+   = note: for more information, see issue #137018 <https://github.com/rust-lang/rust/issues/137018>
+   = help: if you need `extern "stdcall"` on win32 and `extern "C"` everywhere else, use `extern "system"`
+   = note: `#[warn(unsupported_calling_conventions)]` (part of `#[warn(future_incompatible)]`) on by default
+
+warning: `vm-memory` (lib) generated 1 warning
+   Compiling rax v0.1.0 (C:\Windows\Temp\assist-native-rax-20261010\src-wait-epoch4)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2m 53s
+     Running unittests src\lib.rs (C:\Windows\Temp\assist-native-rax-20261010\target-wait-epoch3\debug\deps\rax-b799307a7949aa6b.exe)
+
+running 17 tests
+test user::windows::dll::threading::tests::native_wait_tests::native_single_wait_preserves_prior_ntdll_ordinals_and_trap_rvas_all_abis ... ok
+test user::windows::dll::threading::tests::native_wait_tests::native_single_wait_win32_multiple_apc_preserves_complete_signal_set_all_abis ... ok
+test user::windows::dll::threading::tests::native_wait_tests::native_single_wait_win32_single_apc_priority_and_alert_byte_all_abis ... ok
+test user::windows::dll::threading::tests::native_wait_tests::native_single_wait_win32_sleep_ex_retains_measured_alert_byte_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::native_wait_replay_tests::native_single_wait_replays_all_2240_fault_access_guard_and_object_state_rows ... ok
+test user::windows::process::sched::tests::services_tests::native_wait_replay_tests::native_single_wait_replays_all_336_object_access_apc_and_recursion_rows ... ok
+test user::windows::process::sched::tests::services_tests::native_wait_tests::native_single_wait_abandoned_mutant_returns_ownership_and_native_status_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::native_wait_tests::native_single_wait_alertable_low_byte_with_pending_apc_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::native_wait_tests::native_single_wait_apc_precedes_signal_and_preserves_kernel_frame_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::native_wait_tests::native_single_wait_cancel_releases_pin_and_continuation_once_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::native_wait_tests::native_single_wait_immediate_poll_and_native_return_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::native_wait_tests::native_single_wait_installed_leaves_park_resume_and_keep_true_ret12 ... ok
+test user::windows::process::sched::tests::services_tests::native_wait_tests::native_single_wait_park_pins_last_handle_and_wakes_without_hle_cleanup_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::native_wait_tests::native_single_wait_process_exit_retires_native_object_pins_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::native_wait_tests::native_single_wait_signed_timeout_boundaries_remain_finite_all_abis ... ok
+test user::windows::sync::native_wait::tests::native_single_wait_absolute_clock_changes_and_relative_clock_domains ... ok
+test user::windows::sync::native_wait::tests::native_single_wait_maximum_intervals_do_not_overflow_or_become_infinite ... ok
+
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 7391 filtered out; finished in 2.06s
+

@@ -1,0 +1,58 @@
+{
+  "pid": 3680,
+  "utc": "2026-10-19T00:31:38.960818+00:00",
+  "state": "failed",
+  "source-epoch": 3,
+  "steps": [
+    {
+      "name": "toolchain",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "--version"
+      ],
+      "cwd": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-wait-epoch3",
+      "started-utc": "2026-10-19T00:34:53.594197+00:00",
+      "exit-code": 0,
+      "log": "wait-native-epoch3-toolchain.log",
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5",
+      "bytes": 36,
+      "results": []
+    },
+    {
+      "name": "focus",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "native_single_wait",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "cwd": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-wait-epoch3",
+      "started-utc": "2026-10-19T00:34:53.628738+00:00",
+      "exit-code": 0,
+      "log": "wait-native-epoch3-focus.log",
+      "sha256": "49cddf456285542538e2745e06589c06a0281030b3d7df84c23bee51957485d7",
+      "bytes": 1175,
+      "results": [
+        "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 7391 filtered out; finished in 0.00s"
+      ]
+    }
+  ],
+  "repository-cargo-config-sha256": "a198c84574684e95de13dbb1bdb7b6c918f90fdb490c649937f697fc9621f3cd",
+  "native-cargo-source-config": {
+    "sha256": "9f80616d633d948feeba5b201bfa4fe98c8fd736f3f48469b6481279584d8f4c",
+    "bytes": 374,
+    "scope": "Offline dependency source replacement only; no target/build flags. Full parent configuration remains in bound source snapshot."
+  },
+  "prepared-source-inputs": 22059,
+  "current-step": "focus",
+  "child-pid": 10020,
+  "exit-code": 1,
+  "error": "Traceback (most recent call last):\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-wait-native-epoch3.py\", line 103, in <module>\n    assert '16 passed; 0 failed;' in output, 'native focus selection incomplete'\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: native focus selection incomplete\n",
+  "completed-utc": "2026-10-19T00:34:59.863728+00:00"
+}

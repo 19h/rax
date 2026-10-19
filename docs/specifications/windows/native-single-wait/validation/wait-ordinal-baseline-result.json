@@ -1,0 +1,5 @@
+{
+  "exit-code": 101,
+  "log": "wait-ordinal-baseline.log",
+  "qualification": "New compatibility regression against epoch3 implementation; compilation must succeed and the preserved ordinal assertion must fail."
+}

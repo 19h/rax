@@ -1,0 +1,6 @@
+{
+  "source": "native-wait-single-v3.cpp",
+  "sha256": "9b84ac623008bd6450c2d8118ebbdaeec7ce32f0c1051db6aeb54be266cca713",
+  "bytes": 12642,
+  "scope": "Retain560 single fault,14 native APC,14 Win32Single APC,16 timeout rows; add84 Win32Multiple APC and7 SleepEx APC rows per profile. Only process-private objects and own-thread APCs."
+}

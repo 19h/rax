@@ -25,17 +25,20 @@ pub(crate) fn nt_service(
     name: &str,
     arch: super::arch::WinArch,
 ) -> Option<&'static super::hle::Api> {
-    native::EXPORTS.iter().find_map(|export| {
-        if export.name == name
-            && export.name.starts_with("Nt")
-            && export.archs.has(arch)
-            && let super::hle::Item::Func(api) = &export.item
-        {
-            Some(api)
-        } else {
-            None
-        }
-    })
+    native::EXPORTS
+        .iter()
+        .chain(native::WAIT_EXPORTS)
+        .find_map(|export| {
+            if export.name == name
+                && export.name.starts_with("Nt")
+                && export.archs.has(arch)
+                && let super::hle::Item::Func(api) = &export.item
+            {
+                Some(api)
+            } else {
+                None
+            }
+        })
 }
 
 /// A synthetic PE DLL and its export tables.
@@ -62,7 +65,7 @@ static NTDLL: BuiltinDll = BuiltinDll {
     name: "ntdll.dll",
     display: "ntdll.dll",
     subsystem: 3,
-    exports: &[native::EXPORTS, slist::NTDLL_EXPORTS],
+    exports: &[native::EXPORTS, slist::NTDLL_EXPORTS, native::WAIT_EXPORTS],
 };
 static KERNEL32: BuiltinDll = BuiltinDll {
     name: "kernel32.dll",

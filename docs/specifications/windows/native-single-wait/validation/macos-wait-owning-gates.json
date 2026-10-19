@@ -1,0 +1,153 @@
+[
+  {
+    "gate": "prime-artifacts",
+    "cwd": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/rust/assist-rs",
+    "command": [
+      "cmake",
+      "-E",
+      "env",
+      "CARGO_TARGET_DIR=/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/assist-rs-target",
+      "CARGO_PROFILE_RELEASE_STRIP=false",
+      "MACOSX_DEPLOYMENT_TARGET=10.15",
+      "ASSIST_RESOURCE_PYTHON=/opt/homebrew/Frameworks/Python.framework/Versions/3.14/bin/python3.14",
+      "CARGO_BUILD_JOBS=2",
+      "RUSTUP_TOOLCHAIN=1.95.0",
+      "/Users/int/.cargo/bin/cargo",
+      "build",
+      "--locked",
+      "--offline",
+      "--manifest-path",
+      "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/rust/assist-rs/Cargo.toml",
+      "--package",
+      "assist-rs",
+      "--target",
+      "aarch64-apple-darwin",
+      "--features",
+      "rax",
+      "--message-format=json"
+    ],
+    "exit-code": 0,
+    "seconds": 61.97460579872131,
+    "log": "macos-wait-owning-prime-artifacts.log",
+    "sha256": "0650029f51ea83a146099b750ea0fa18b51b664dd6a676f11008abfb2ae9bb3b"
+  },
+  {
+    "gate": "build",
+    "command": [
+      "cmake",
+      "--build",
+      "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build",
+      "--target",
+      "assist_idalib_cli",
+      "assist_mcp",
+      "assist_mcp_tool_manifest_tests",
+      "assist_rax_process_tests",
+      "assist_process_tool_tests",
+      "assist_process_tool_unavailable_tests",
+      "assist_e14_rax_abi_drift_tests",
+      "assist_rust_archive_link_tests",
+      "--parallel",
+      "2"
+    ],
+    "exit-code": 0,
+    "seconds": 16.02292013168335,
+    "log": "macos-wait-owning-build.log",
+    "sha256": "c36fbe17a0dfe09fbb83409e868fa38f8bf8936a0a36fe32f51b530fd608592d"
+  },
+  {
+    "gate": "ctest",
+    "command": [
+      "ctest",
+      "--test-dir",
+      "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build",
+      "--output-on-failure",
+      "-R",
+      "^(assist_rust_archive_link_tests|assist_rax_process_tests|assist_process_tool_tests|assist_process_tool_unavailable_tests|assist_e14_rax_abi_drift_tests|assist_mcp_tool_manifest_tests|assist_mcp_manifest_runtime_test)$"
+    ],
+    "exit-code": 0,
+    "seconds": 4.804455995559692,
+    "log": "macos-wait-owning-ctest.log",
+    "sha256": "0e2b6df4dd1d3eec9a9909387937a3bb0c2f813529fc8b0cbd4180b273bb5d36"
+  },
+  {
+    "gate": "protected-assist-cli",
+    "command": [
+      "python3",
+      "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/scripts/static_text/verify.py",
+      "--root",
+      "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current",
+      "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/assist-cli"
+    ],
+    "exit-code": 0,
+    "seconds": 8.914472103118896,
+    "log": "macos-wait-owning-protected-assist-cli.log",
+    "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+  },
+  {
+    "gate": "protected-assist-mcp",
+    "command": [
+      "python3",
+      "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/scripts/static_text/verify.py",
+      "--root",
+      "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current",
+      "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/assist-mcp"
+    ],
+    "exit-code": 0,
+    "seconds": 5.701892137527466,
+    "log": "macos-wait-owning-protected-assist-mcp.log",
+    "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+  },
+  {
+    "gate": "artifacts",
+    "cwd": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/rust/assist-rs",
+    "command": [
+      "cmake",
+      "-E",
+      "env",
+      "CARGO_TARGET_DIR=/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/assist-rs-target",
+      "CARGO_PROFILE_RELEASE_STRIP=false",
+      "MACOSX_DEPLOYMENT_TARGET=10.15",
+      "ASSIST_RESOURCE_PYTHON=/opt/homebrew/Frameworks/Python.framework/Versions/3.14/bin/python3.14",
+      "CARGO_BUILD_JOBS=2",
+      "RUSTUP_TOOLCHAIN=1.95.0",
+      "/Users/int/.cargo/bin/cargo",
+      "build",
+      "--locked",
+      "--offline",
+      "--manifest-path",
+      "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/rust/assist-rs/Cargo.toml",
+      "--package",
+      "assist-rs",
+      "--target",
+      "aarch64-apple-darwin",
+      "--features",
+      "rax",
+      "--message-format=json"
+    ],
+    "exit-code": 0,
+    "seconds": 0.11357712745666504,
+    "log": "macos-wait-owning-artifacts.log",
+    "sha256": "864361e5046d522f7d68c9a14574e2670e0c6b2bf40d19aa593f79eb07521bff"
+  },
+  {
+    "gate": "archive-identities",
+    "command": [
+      "python3",
+      "/Users/int/Library/Caches/assist-process-emulation/native-wait-20261019/collect-wait-archives.py",
+      "--host",
+      "macos",
+      "--source",
+      "/Users/int/Library/Caches/assist-process-emulation/native-wait-20261019/wait-source",
+      "--manifest",
+      "/Users/int/Library/Caches/assist-process-emulation/native-wait-20261019/wait-owning-source-hashes.json",
+      "--messages",
+      "/Users/int/Library/Caches/assist-process-emulation/native-wait-20261019/macos-wait-owning-artifacts.log",
+      "--output",
+      "/Users/int/Library/Caches/assist-process-emulation/native-wait-20261019/macos-wait-final-owning-archive-identities.json"
+    ],
+    "exit-code": 0,
+    "seconds": 0.48307299613952637,
+    "log": "macos-wait-owning-archive-identities.log",
+    "sha256": "81d4fd072c4f9848c87575f2d4090a0f0a52d77dc88812048b0a4daa41dce5ca"
+  }
+]

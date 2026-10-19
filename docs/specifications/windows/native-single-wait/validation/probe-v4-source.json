@@ -1,0 +1,6 @@
+{
+  "source": "native-wait-single-v4.cpp",
+  "sha256": "e0bc5ff2ca9908b31881d9831f8bcee87d76349c24aed536bddccaac5a1b130b",
+  "bytes": 14686,
+  "scope": "Retain revision3 matrices; add84 native object/APC rows including denied/invalid handles, recursive owned mutant and nonsignaled objects, plus active version/precise-unbiased-clock context."
+}

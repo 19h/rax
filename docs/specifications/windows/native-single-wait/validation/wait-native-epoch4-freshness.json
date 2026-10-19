@@ -1,0 +1,25 @@
+{
+  "utc": "2026-10-19T01:00:58.067332+00:00",
+  "prior-gates-completed-utc": "2026-10-19T01:00:57.886728+00:00",
+  "files": [
+    {
+      "path": "src/user/windows/dll/mod.rs",
+      "sha256": "151f2ae06fbe633ae3198174311c69a2c7c49d1f1b11814c9786e88eef385728",
+      "mtime-before-ns": 1792371371563303600,
+      "mtime-after-ns": 1792371658041607300
+    },
+    {
+      "path": "src/user/windows/dll/native.rs",
+      "sha256": "113793d1b95738a6b82056d13ec898026f6834d8c5cc146391ad9098277447c8",
+      "mtime-before-ns": 1792371371563303600,
+      "mtime-after-ns": 1792371658041607300
+    },
+    {
+      "path": "src/user/windows/dll/threading/native_wait_tests.rs",
+      "sha256": "beddc8fdeda3c11db199490715c98c7ad6cda4ab37fb2440093403ff991bd07b",
+      "mtime-before-ns": 1792371371563303600,
+      "mtime-after-ns": 1792371658041607300
+    }
+  ],
+  "scope": "Refresh only the three separate override mtimes after every prior Cargo invocation finishes. This forces current source into both normal-library and test/check profiles in the warmed target. Source bytes remain unchanged."
+}

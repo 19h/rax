@@ -1,0 +1,19 @@
+{
+  "utc": "2026-10-19T01:24:08.839940+00:00",
+  "scope": "Native single-wait semantic group; full process-emulation goal remains incomplete.",
+  "quality-gates": {
+    "QG1": "No normative content required.",
+    "QG2": "W1-W9 assumptions and concrete falsification probes retained; cache/provider/ordinal candidates falsified and corrected.",
+    "QG3": "Scoped acceptance covered by native20 reference runs, final core/CAPI/integration/all-target gates, actual retained carriers and unchanged ordinary-program advancement.",
+    "QG4": "Signed100ns and UTC/awake domains remain explicit; full finite ranges use checked/wide arithmetic.",
+    "QG5": "Guard/access/APC order, lifecycle, return ABI and old synthetic ordinals validated; exact5 existing Windows lowerer failures remain separate.",
+    "QG6": "Raw source/PE/module identities, complete22059-input snapshot, actual Cargo archive paths/walks and unchanged program hashes bound.",
+    "QG7": "Full goal, unmodeled NT types/security/privateBNO, physical-kernel and current-root product limits remain explicit."
+  },
+  "source-epoch": 4,
+  "source-inputs": 22059,
+  "selected-consumer-inputs": 474,
+  "final-corruption-rejections": 12,
+  "native-corruption-rejections": 13,
+  "full-process-goal-complete": false
+}

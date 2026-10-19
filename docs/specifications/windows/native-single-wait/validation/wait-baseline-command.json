@@ -1,0 +1,18 @@
+{
+  "utc": "2026-10-19T00:06:45.373108+00:00",
+  "base": "889bc914e298cb58d8ab0b90c9181ef75083f97c",
+  "scope": "Tests-only parent baseline; no shipping implementation changes.",
+  "argv": [
+    "cargo",
+    "+1.95.0",
+    "test",
+    "--locked",
+    "--offline",
+    "--no-default-features",
+    "--lib",
+    "native_single_wait",
+    "--",
+    "--nocapture",
+    "--test-threads=1"
+  ]
+}

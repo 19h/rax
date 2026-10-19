@@ -1,0 +1,5 @@
+{
+  "source-sha256": "39ab455a2077c3a45535f379732d4f48977c39b3ef66fd32e3d7ce7dab317b85",
+  "core-record": "native-mutant-final-owning-archive-identities.json",
+  "scope": "Additional read-only baseline argument capture at actual unimplemented NtWaitForSingleObject service; no guest state bypass."
+}

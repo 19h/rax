@@ -1,0 +1,34 @@
+{
+  "columns": [
+    "case",
+    "kind",
+    "alertable",
+    "timeout",
+    "status",
+    "protection",
+    "before",
+    "after"
+  ],
+  "runs": [
+    {
+      "profile": "arm64",
+      "native-log-sha256": "0513d170c76bfb0ff3ad0adec4ebddc8eb7e2cde39099cc8f10c7cd820c1f49b",
+      "cases": 560
+    },
+    {
+      "profile": "x64",
+      "native-log-sha256": "b6296d1560b4f1f5ce36b28aca1971af47230a0b9c0ab232f25509acfbbc5414",
+      "cases": 560
+    },
+    {
+      "profile": "x86",
+      "native-log-sha256": "712400740d5b8f6377ad3d04169be366e39edc2556fbe33c273d1f746b5e7fcb",
+      "cases": 560
+    },
+    {
+      "profile": "x86-laa",
+      "native-log-sha256": "e325a88c336c2d435fbf9549140565e16e6ebf44dabe07cbdcf86cfd0c968bf3",
+      "cases": 560
+    }
+  ]
+}

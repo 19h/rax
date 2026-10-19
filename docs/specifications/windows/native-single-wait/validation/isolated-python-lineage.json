@@ -1,0 +1,5 @@
+{
+  "prior-result": "prior-wait-final-check-windows.json",
+  "cause": "Windows embeddable Python omits the script directory from its isolated module search path. The first verifier stopped before evidence validation.",
+  "correction": "The verifier explicitly prepends its own directory before importing the adjacent native checker. Product Rust source and compiled gates are unchanged."
+}

@@ -1,0 +1,13 @@
+{
+  "source": "native-wait-single-v1.cpp",
+  "sha256": "b09bd613fff198f612f79c4de2e1b8430d4f2e6e5b8c81facff8232fa8b9a704",
+  "bytes": 7466,
+  "fault-cases-per-profile": 560,
+  "apc-cases-per-profile": 14,
+  "profiles": [
+    "arm64",
+    "x64",
+    "x86",
+    "x86-laa"
+  ]
+}

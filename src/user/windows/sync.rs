@@ -30,6 +30,9 @@ use super::process::Proc;
 
 mod wait_packets;
 pub(crate) use wait_packets::pump_wait_packets;
+mod native_wait;
+pub use native_wait::NativeDeadline;
+pub(crate) use native_wait::{WaitTargetError, wait_object};
 
 /// `WAIT_ABANDONED_0`.
 pub const WAIT_ABANDONED_0: u64 = 0x80;
@@ -70,6 +73,18 @@ impl From<SyncError> for super::hle::ApiErr {
 /// What a parked thread waits for.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Wait {
+    /// Native object wait with an explicit NT clock domain. Its scheduling
+    /// hint is bounded; expiration uses the retained native target.
+    NativeObjects {
+        /// Private guest object references.
+        objs: Vec<ObjId>,
+        /// Acquire the complete set.
+        all: bool,
+        /// NULL is infinite; finite values keep their full native range.
+        deadline: Option<NativeDeadline>,
+        /// A pending ordinary user APC interrupts before signal consumption.
+        alertable: bool,
+    },
     /// Kernel objects (`WaitForSingleObject`, `WaitForMultipleObjects`).
     Objects {
         /// The objects.
@@ -110,9 +125,11 @@ pub enum Wait {
 }
 
 impl Wait {
-    /// The wait's deadline.
+    /// The next useful monotonic wake time. Native deadlines return a bounded
+    /// recheck hint so UTC adjustments and very large intervals remain observable.
     pub fn deadline(&self) -> Option<Instant> {
         match self {
+            Wait::NativeObjects { deadline, .. } => deadline.as_ref().map(NativeDeadline::hint),
             Wait::Objects { deadline, .. }
             | Wait::Sleep { deadline, .. }
             | Wait::Address { deadline, .. } => *deadline,
@@ -189,7 +206,7 @@ pub fn on_block(p: &mut Proc, tid: u32, wait: &Wait) -> Result<(), SyncError> {
         return Err(SyncError::Invalid("thread already has a registered wait"));
     }
     match wait {
-        Wait::Objects { objs, all, .. } => {
+        Wait::Objects { objs, all, .. } | Wait::NativeObjects { objs, all, .. } => {
             validate_objects(p, objs, *all)?;
             p.objects.retain_many(objs).map_err(SyncError::Invalid)?;
         }
@@ -239,7 +256,9 @@ pub fn on_cancel(p: &mut Proc, tid: u32, wait: &Wait) -> Result<(), SyncError> {
         _ => {}
     }
     if p.sync.completed.contains(&tid) {
-        if let Some(Wait::Objects { objs, .. }) = p.sync.parked.remove(&tid) {
+        if let Some(Wait::Objects { objs, .. } | Wait::NativeObjects { objs, .. }) =
+            p.sync.parked.remove(&tid)
+        {
             for obj in objs {
                 p.objects.release(obj);
             }
@@ -250,8 +269,10 @@ pub fn on_cancel(p: &mut Proc, tid: u32, wait: &Wait) -> Result<(), SyncError> {
         return Ok(());
     }
     match wait {
-        Wait::Objects { .. } => {
-            if let Some(Wait::Objects { objs, .. }) = p.sync.parked.get(&tid) {
+        Wait::Objects { .. } | Wait::NativeObjects { .. } => {
+            if let Some(Wait::Objects { objs, .. } | Wait::NativeObjects { objs, .. }) =
+                p.sync.parked.get(&tid)
+            {
                 for obj in objs.clone() {
                     p.objects.release(obj);
                 }
@@ -292,7 +313,7 @@ pub fn on_cancel(p: &mut Proc, tid: u32, wait: &Wait) -> Result<(), SyncError> {
 pub fn on_process_exit(p: &mut Proc) {
     let state = std::mem::take(&mut p.sync);
     for wait in state.parked.into_values() {
-        if let Wait::Objects { objs, .. } = wait {
+        if let Wait::Objects { objs, .. } | Wait::NativeObjects { objs, .. } = wait {
             for obj in objs {
                 p.objects.release(obj);
             }
@@ -373,7 +394,7 @@ pub fn on_normal_process_exit(p: &mut Proc, caller_tid: u32) -> Result<(), SyncE
         p.sync.completed.remove(&tid);
         p.sync.woken.remove(&tid);
         match wait {
-            Wait::Objects { objs, .. } => {
+            Wait::Objects { objs, .. } | Wait::NativeObjects { objs, .. } => {
                 for obj in objs {
                     p.objects.release(obj);
                 }
@@ -575,17 +596,34 @@ fn poll_inner(
     apc_pending: bool,
 ) -> Result<Option<u64>, SyncError> {
     Ok(match wait {
+        Wait::NativeObjects {
+            objs,
+            all,
+            deadline,
+            alertable,
+        } => {
+            if *alertable && apc_pending {
+                return Ok(Some(WAIT_IO_COMPLETION));
+            }
+            if let Some(status) = try_objects(p, tid, objs, *all)? {
+                return Ok(Some(status));
+            }
+            match deadline {
+                Some(deadline) if deadline.expired()? => Some(WAIT_TIMEOUT),
+                _ => None,
+            }
+        }
         Wait::Objects {
             objs,
             all,
             deadline,
             alertable,
         } => {
-            if let Some(s) = try_objects(p, tid, objs, *all)? {
-                return Ok(Some(s));
-            }
             if *alertable && apc_pending {
                 return Ok(Some(WAIT_IO_COMPLETION));
+            }
+            if let Some(s) = try_objects(p, tid, objs, *all)? {
+                return Ok(Some(s));
             }
             expired(*deadline, now).then_some(WAIT_TIMEOUT)
         }

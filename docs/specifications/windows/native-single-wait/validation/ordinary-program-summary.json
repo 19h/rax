@@ -1,0 +1,23 @@
+{
+  "programs": 2,
+  "guest-pc-or-status-patched": false,
+  "syscalls-suppressed": false,
+  "actual-owner-core-bound": true,
+  "full-process-goal-complete": false,
+  "runs": [
+    {
+      "log": "wait-owner-epoch4-0.log",
+      "native-wait-result-line": "wait-result turn=2151176 tid=8 status=Some(0) state=Some(Ready) object=Some(Mutex { owner: Some(8), count: 1, abandoned: false })",
+      "terminal-line": "terminal turn=2151527 Complete(Internal(\"native NTDLL service NtOpenSemaphore (0x136) at 0x7fff38a423a0 is not implemented\"))",
+      "guest-successful-exit": false,
+      "advance-from-previous-stop-observer-turns": 351
+    },
+    {
+      "log": "wait-owner-epoch4-1.log",
+      "native-wait-result-line": "wait-result turn=2153525 tid=8 status=Some(0) state=Some(Ready) object=Some(Mutex { owner: Some(8), count: 1, abandoned: false })",
+      "terminal-line": "terminal turn=2153876 Complete(Internal(\"native NTDLL service NtOpenSemaphore (0x136) at 0x7fff38a423a0 is not implemented\"))",
+      "guest-successful-exit": false,
+      "advance-from-previous-stop-observer-turns": 351
+    }
+  ]
+}

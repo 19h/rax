@@ -1,0 +1,107 @@
+{
+  "base": "889bc914e298cb58d8ab0b90c9181ef75083f97c",
+  "source-epoch": 1,
+  "files": [
+    {
+      "path": "src/user/windows/dll/native.rs",
+      "bytes": 19766,
+      "sha256": "ae826a83e5abc417f681bb9cadacbfddecff88c22e25f5062285dda08ddba61e"
+    },
+    {
+      "path": "src/user/windows/dll/native/wait.rs",
+      "bytes": 2144,
+      "sha256": "c1ffc4b9a1853c743a9263695d678c99d9ce67a75c7a8782d7b72dcf83663af3"
+    },
+    {
+      "path": "src/user/windows/dll/threading/waits.rs",
+      "bytes": 6194,
+      "sha256": "796500bf2f3e77029f146d8e6b94c3af21d690a57cfd4dbf86da4fc24abb2ea2"
+    },
+    {
+      "path": "src/user/windows/dll/threading/tests.rs",
+      "bytes": 36273,
+      "sha256": "acb933bcd041b39c61dd1ff69287c20db1a5bf2d533e8b0085aa42d2b703dcbc"
+    },
+    {
+      "path": "src/user/windows/dll/threading/native_wait_tests.rs",
+      "bytes": 5393,
+      "sha256": "2f2c6bbb95bb41ba586801405c5842fc640880d4ff1f1cdae0eb476758bd764b"
+    },
+    {
+      "path": "src/user/windows/sync.rs",
+      "bytes": 37800,
+      "sha256": "5ba13ffb78ad4ced5f44489c4cbd72db0ba8eb7f5dd3e326d553b75b59586ce6"
+    },
+    {
+      "path": "src/user/windows/sync/native_wait.rs",
+      "bytes": 5261,
+      "sha256": "6390ffff8fd6867a0c3c72d687a6d2c072cc2817441e4577cb026748ac0a1802"
+    },
+    {
+      "path": "src/user/windows/process/services.rs",
+      "bytes": 4376,
+      "sha256": "b851fed06e25dfda8943f5c32fd5e4d686b091dbf425e4ea96ac78a8e4e7136e"
+    },
+    {
+      "path": "src/user/windows/process/services/wait.rs",
+      "bytes": 1418,
+      "sha256": "d29dfd48a5e2d2330cf39aec723a2707a93a3af5ff9ea8b0b38734eff2060472"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests.rs",
+      "bytes": 48479,
+      "sha256": "85a3921134a1d9bdf5a1100d98e47b9d3daef92a228312c7044b38590ac38cd4"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/native_wait_tests.rs",
+      "bytes": 16804,
+      "sha256": "959afedad88bdb9762de9735a6246ca7b25a4201a29f97e8a10969a9b49cef32"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/native_wait_replay_tests.rs",
+      "bytes": 5678,
+      "sha256": "fe9dd3098ee38723b475648d49ca7ac68338d259100e6fdc31af9e8abc8e0b0f"
+    },
+    {
+      "path": "src/user/windows/nt.rs",
+      "bytes": 19367,
+      "sha256": "2c40255783566a955125879cf570ea2b87be28e3ba9d91b1333f46d9c617bd09"
+    },
+    {
+      "path": "src/user/windows/nt/time.rs",
+      "bytes": 406,
+      "sha256": "e2b75ab1c21ead94378bb92d73acfc6cbfbd8be3c07a5bf06ed13a79be5bb29e"
+    },
+    {
+      "path": "src/user/windows/dll/sysinfo.rs",
+      "bytes": 6887,
+      "sha256": "93745bdd705c8a84541629ce29dcfc201d72cabea6e2663b79a61da12aa78005"
+    },
+    {
+      "path": "src/user/windows/sync/native_wait/clock.rs",
+      "bytes": 2586,
+      "sha256": "fee1d3ec466667e3b531dfe0e4fce22cb228e2f16a48772ff961261acfecafae"
+    },
+    {
+      "path": "docs/specifications/windows/native-single-wait/replay/single-arm64.tsv",
+      "bytes": 57290,
+      "sha256": "8cde79e8888fae1dbf9c2982bd775b331950f84c2bada05c912e36ea17e05ab4"
+    },
+    {
+      "path": "docs/specifications/windows/native-single-wait/replay/single-x64.tsv",
+      "bytes": 57290,
+      "sha256": "8cde79e8888fae1dbf9c2982bd775b331950f84c2bada05c912e36ea17e05ab4"
+    },
+    {
+      "path": "docs/specifications/windows/native-single-wait/replay/single-x86-laa.tsv",
+      "bytes": 57290,
+      "sha256": "8cde79e8888fae1dbf9c2982bd775b331950f84c2bada05c912e36ea17e05ab4"
+    },
+    {
+      "path": "docs/specifications/windows/native-single-wait/replay/single-x86.tsv",
+      "bytes": 57290,
+      "sha256": "8cde79e8888fae1dbf9c2982bd775b331950f84c2bada05c912e36ea17e05ab4"
+    }
+  ],
+  "qualification": "Owned prototype inputs only; complete native transfer must enumerate the full tracked compilation-input closure."
+}

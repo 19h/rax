@@ -82,49 +82,18 @@ pub(super) fn sleep(c: &mut Ctx) -> ApiResult {
     delay(c, false, false)
 }
 pub(super) fn sleep_ex(c: &mut Ctx) -> ApiResult {
-    let alertable = c.bool(1)?;
+    let alertable = c.u32(1)? as u8 != 0;
     delay(c, alertable, true)
 }
 
 fn wait_object(c: &Ctx, handle: u64) -> Checked<ObjId> {
-    let id = if handle == c.arch().ptr(u64::MAX - 1) {
-        c.t.obj
-    } else if handle == c.arch().ptr(u64::MAX) {
-        c.p.objects
-            .iter()
-            .find_map(|(id, object)| match object {
-                Object::Process { pid, .. } if *pid == c.p.pid => Some(id),
-                _ => None,
-            })
-            .ok_or(ServiceError::Win32(ERROR_INVALID_HANDLE))?
-    } else {
-        let id =
-            c.p.objects
-                .id(handle)
-                .ok_or(ServiceError::Win32(ERROR_INVALID_HANDLE))?;
-        let access =
-            c.p.objects
-                .access(handle)
-                .ok_or(ServiceError::Win32(ERROR_INVALID_HANDLE))?;
-        if access & objects::SYNCHRONIZE == 0 {
-            return Err(ServiceError::Win32(ERROR_ACCESS_DENIED));
-        }
-        id
-    };
-    match c.p.objects.obj(id) {
-        Some(
-            Object::Event { .. }
-            | Object::Mutex { .. }
-            | Object::Semaphore { .. }
-            | Object::Thread { .. }
-            | Object::Process { .. }
-            | Object::Timer { .. }
-            | Object::IrTimer { .. }
-            | Object::WaitCompletionPacket { .. },
-        ) => Ok(id),
-        Some(_) => Err(ServiceError::Win32(ERROR_NOT_SUPPORTED)),
-        None => Err(ServiceError::Win32(ERROR_INVALID_HANDLE)),
-    }
+    sync::wait_object(c.p, c.t, handle).map_err(|error| {
+        ServiceError::Win32(match error {
+            sync::WaitTargetError::InvalidHandle => ERROR_INVALID_HANDLE,
+            sync::WaitTargetError::AccessDenied => ERROR_ACCESS_DENIED,
+            sync::WaitTargetError::Unsupported => ERROR_NOT_SUPPORTED,
+        })
+    })
 }
 
 fn wait(c: &mut Ctx, objs: Vec<ObjId>, all: bool, milliseconds: u32, alertable: bool) -> ApiResult {
@@ -134,8 +103,10 @@ fn wait(c: &mut Ctx, objs: Vec<ObjId>, all: bool, milliseconds: u32, alertable: 
         Ok(deadline) => deadline,
         Err(error) => return failure(c, error, WAIT_FAILED),
     };
-    if let Some(status) = sync::try_objects(c.p, c.t.tid, &objs, all)? {
-        return Flow::ret(status);
+    if !alertable || c.t.apcs.is_empty() {
+        if let Some(status) = sync::try_objects(c.p, c.t.tid, &objs, all)? {
+            return Flow::ret(status);
+        }
     }
     if milliseconds == 0 && (!alertable || c.t.apcs.is_empty()) {
         return Flow::ret(sync::WAIT_TIMEOUT);
@@ -165,7 +136,7 @@ pub(super) fn single(c: &mut Ctx) -> ApiResult {
     wait_single(c, false)
 }
 pub(super) fn single_ex(c: &mut Ctx) -> ApiResult {
-    let alertable = c.bool(2)?;
+    let alertable = c.u32(2)? as u8 != 0;
     wait_single(c, alertable)
 }
 
@@ -202,6 +173,6 @@ pub(super) fn multiple(c: &mut Ctx) -> ApiResult {
     wait_multiple(c, false)
 }
 pub(super) fn multiple_ex(c: &mut Ctx) -> ApiResult {
-    let alertable = c.bool(4)?;
+    let alertable = c.u32(4)? as u8 != 0;
     wait_multiple(c, alertable)
 }

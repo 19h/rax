@@ -1,0 +1,13 @@
+Junction created for C:\Windows\Temp\assist-native-rax-20261010\assist\vendor\rax <<===>> C:\Windows\Temp\assist-native-rax-20261010\src-wait-epoch3
+Retargeted verified task-owned RAX junction
+**********************************************************************
+** Visual Studio 2026 Developer PowerShell v18.7.1
+** Copyright (c) 2026 Microsoft Corporation
+**********************************************************************
+Verified 473 owning source identities and 3 helpers
+Verified 8 actual frozen Windows C++ sources against compared source snapshot
+assist-native-wait-final-shipping.log 00BEED1C7DC263072A5D29DF8EB3D9220FEF97AE09DD25A7DADD329A02563F82
+assist-native-wait-final-cpp.log B0F277678BC54485CF58C6295345A12235DF27C7D420C5085B93AB253E75E214
+validated rlib: C:\Windows\Temp\assist-native-rax-20261010\target-wait-owned\debug\deps\librax-934115059aa64c85.rlib
+Verified 473 owning source identities and 3 helpers
+windows [(848719124, 3946, 'd7dd5a1a654c596cdd0e813b1b05ef217c209dc1360a7068b6166deca20ea225'), (501722242, 20, 'dca3bad7109a30e7d8b186664738ee63181bbe4990ef355b665c5b7adf79bb6e')]

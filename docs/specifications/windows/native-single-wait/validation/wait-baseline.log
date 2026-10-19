@@ -1,0 +1,73 @@
+   Compiling vm-memory v0.17.1 (/Users/int/Library/Caches/assist-process-emulation/native-wait-20261019/wait-source/vendor/vm-memory)
+   Compiling linux-loader v0.13.2 (https://github.com/19h/linux-loader?rev=f745b555942c4e840a784bca61e6f3976d101960#f745b555)
+   Compiling rax v0.1.0 (/Users/int/Library/Caches/assist-process-emulation/native-wait-20261019/wait-source)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 20s
+     Running unittests src/lib.rs (/Users/int/Library/Caches/assist-process-emulation/native-mutant-create-20261018/target-macos-mutant/debug/deps/rax-dd79f0cd9ae9bb68)
+
+running 9 tests
+test user::windows::dll::threading::tests::native_wait_tests::native_single_wait_win32_multiple_apc_preserves_complete_signal_set_all_abis ... 
+thread 'user::windows::dll::threading::tests::native_wait_tests::native_single_wait_win32_multiple_apc_preserves_complete_signal_set_all_abis' (8371429) panicked at src/user/windows/dll/threading/tests.rs:58:10:
+called `Option::unwrap()` on a `None` value
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+test user::windows::dll::threading::tests::native_wait_tests::native_single_wait_win32_single_apc_priority_and_alert_byte_all_abis ... 
+thread 'user::windows::dll::threading::tests::native_wait_tests::native_single_wait_win32_single_apc_priority_and_alert_byte_all_abis' (8371430) panicked at src/user/windows/dll/threading/tests.rs:58:10:
+called `Option::unwrap()` on a `None` value
+FAILED
+test user::windows::dll::threading::tests::native_wait_tests::native_single_wait_win32_sleep_ex_retains_measured_alert_byte_all_abis ... 
+thread 'user::windows::dll::threading::tests::native_wait_tests::native_single_wait_win32_sleep_ex_retains_measured_alert_byte_all_abis' (8371431) panicked at src/user/windows/dll/threading/native_wait_tests.rs:14:13:
+high BOOL bytes must not enable alertable waiting
+FAILED
+test user::windows::process::sched::tests::services_tests::native_wait_tests::native_single_wait_alertable_low_byte_with_pending_apc_all_abis ... 
+thread 'user::windows::process::sched::tests::services_tests::native_wait_tests::native_single_wait_alertable_low_byte_with_pending_apc_all_abis' (8371432) panicked at src/user/windows/process/sched/tests/services_tests/native_wait_tests.rs:238:21:
+assertion `left == right` failed
+  left: Fail("native NTDLL service NtWaitForSingleObject (0x48) at 0x12340000 is not implemented")
+ right: Continue
+FAILED
+test user::windows::process::sched::tests::services_tests::native_wait_tests::native_single_wait_apc_precedes_signal_and_preserves_kernel_frame_all_abis ... 
+thread 'user::windows::process::sched::tests::services_tests::native_wait_tests::native_single_wait_apc_precedes_signal_and_preserves_kernel_frame_all_abis' (8371433) panicked at src/user/windows/process/sched/tests/services_tests/native_wait_tests.rs:150:9:
+assertion `left == right` failed
+  left: Fail("native NTDLL service NtWaitForSingleObject (0x48) at 0x12340000 is not implemented")
+ right: Park
+FAILED
+test user::windows::process::sched::tests::services_tests::native_wait_tests::native_single_wait_cancel_releases_pin_and_continuation_once_all_abis ... 
+thread 'user::windows::process::sched::tests::services_tests::native_wait_tests::native_single_wait_cancel_releases_pin_and_continuation_once_all_abis' (8371434) panicked at src/user/windows/process/sched/tests/services_tests/native_wait_tests.rs:128:9:
+assertion `left == right` failed
+  left: Fail("native NTDLL service NtWaitForSingleObject (0x48) at 0x12340000 is not implemented")
+ right: Park
+FAILED
+test user::windows::process::sched::tests::services_tests::native_wait_tests::native_single_wait_immediate_poll_and_native_return_all_abis ... 
+thread 'user::windows::process::sched::tests::services_tests::native_wait_tests::native_single_wait_immediate_poll_and_native_return_all_abis' (8371435) panicked at src/user/windows/process/sched/tests/services_tests/native_wait_tests.rs:78:13:
+assertion `left == right` failed
+  left: Fail("native NTDLL service NtWaitForSingleObject (0x48) at 0x12340000 is not implemented")
+ right: Continue
+FAILED
+test user::windows::process::sched::tests::services_tests::native_wait_tests::native_single_wait_park_pins_last_handle_and_wakes_without_hle_cleanup_all_abis ... 
+thread 'user::windows::process::sched::tests::services_tests::native_wait_tests::native_single_wait_park_pins_last_handle_and_wakes_without_hle_cleanup_all_abis' (8371436) panicked at src/user/windows/process/sched/tests/services_tests/native_wait_tests.rs:97:9:
+assertion `left == right` failed
+  left: Fail("native NTDLL service NtWaitForSingleObject (0x48) at 0x12340000 is not implemented")
+ right: Park
+FAILED
+test user::windows::process::sched::tests::services_tests::native_wait_tests::native_single_wait_signed_timeout_boundaries_remain_finite_all_abis ... 
+thread 'user::windows::process::sched::tests::services_tests::native_wait_tests::native_single_wait_signed_timeout_boundaries_remain_finite_all_abis' (8371437) panicked at src/user/windows/process/sched/tests/services_tests/native_wait_tests.rs:195:17:
+assertion `left == right` failed
+  left: Fail("native NTDLL service NtWaitForSingleObject (0x48) at 0x12340000 is not implemented")
+ right: Continue
+FAILED
+
+failures:
+
+failures:
+    user::windows::dll::threading::tests::native_wait_tests::native_single_wait_win32_multiple_apc_preserves_complete_signal_set_all_abis
+    user::windows::dll::threading::tests::native_wait_tests::native_single_wait_win32_single_apc_priority_and_alert_byte_all_abis
+    user::windows::dll::threading::tests::native_wait_tests::native_single_wait_win32_sleep_ex_retains_measured_alert_byte_all_abis
+    user::windows::process::sched::tests::services_tests::native_wait_tests::native_single_wait_alertable_low_byte_with_pending_apc_all_abis
+    user::windows::process::sched::tests::services_tests::native_wait_tests::native_single_wait_apc_precedes_signal_and_preserves_kernel_frame_all_abis
+    user::windows::process::sched::tests::services_tests::native_wait_tests::native_single_wait_cancel_releases_pin_and_continuation_once_all_abis
+    user::windows::process::sched::tests::services_tests::native_wait_tests::native_single_wait_immediate_poll_and_native_return_all_abis
+    user::windows::process::sched::tests::services_tests::native_wait_tests::native_single_wait_park_pins_last_handle_and_wakes_without_hle_cleanup_all_abis
+    user::windows::process::sched::tests::services_tests::native_wait_tests::native_single_wait_signed_timeout_boundaries_remain_finite_all_abis
+
+test result: FAILED. 0 passed; 9 failed; 0 ignored; 0 measured; 7947 filtered out; finished in 0.03s
+
+error: test failed, to rerun pass `--lib`

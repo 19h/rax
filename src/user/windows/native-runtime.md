@@ -2369,3 +2369,46 @@ Native wait services, private BNO, security and full execution remain incomplete
 Public ABI, defaults, dependency pins and package layouts are unchanged.
 
 [Contract and evidence](../../../docs/specifications/windows/native-mutant/README.md).
+
+
+## Native single-object waits and preserved synthetic ordinals (2026-10-19)
+
+NtWaitForSingleObject now uses private guest dispatcher objects, native saved
+contexts and cooperative parking. Timeout reads precede handle/access checks;
+queued ordinary APCs precede signal consumption. Relative 100 ns intervals retain
+an awake-time target, absolute intervals retain NT UTC, and finite extremes
+remain finite. Measured low-byte alertable behavior applies to the three
+Win32 alertable adapters; WaitAll keeps full BOOL semantics.
+
+The new native export table follows all existing synthetic NTDLL families.
+Every previous ordinal and symbol/trap RVA is retained on all three guest ABIs.
+The primary native export body is byte-identical to the published mutant parent.
+
+| Host | Full core passed/failed/ignored | Focus | C API |
+|---|---|---|---|
+| macOS ARM64 | 7961/0/2 | 16 | 168 |
+| Linux x86-64 container | 7955/0/2 | 16 | 168 |
+| Windows ARM64 | 7401/5/2 | 17 | 168 |
+
+Windows retains exactly the five established lowerer failures. Both ignored
+checks remain explicit. All-target checks pass; Unix runs544 integration cases
+and Windows runs4 native-memory cases. Native proof retains20 producer runs
+on one ARM64 kernel and four ABI profiles, including exact2240 fault/guard and
+336 object/APC replay rows, provider discrepancy and13 rejection controls.
+The complete final source snapshot binds22059 inputs and1510895073 bytes;
+three separate overrides preserve old synthetic ordinals. Retained consumers
+bind474 selected inputs and two actual complete Cargo archives per host. The
+final Windows helper verifies its actual carrier before and after five C++
+consumers. Frozen Assist RustABI184 is distinct from compared root8f49854b /
+ABI264; eight selected C++ sources match. Whole-current-root GUI/plugin/package
+validation is outside these retained-carrier results.
+
+Both unchanged ordinary programs now return0 from native NtWaitForSingleObject,
+with private mutant ownership transferred to the guest thread, and advance351
+observer turns to unsupported NtOpenSemaphore(0x136). Neither reaches a
+successful guest exit. Broader NT synchronization, private BNO/security contexts
+and complete ordinary process support remain required by the full goal.
+Public Rust Wait/NativeDeadline source types are extended; public C ABI,
+dependencies, defaults and package layout remain unchanged.
+
+[Contract, assumptions and evidence](../../../docs/specifications/windows/native-single-wait/README.md).

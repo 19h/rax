@@ -1,0 +1,13 @@
+{
+  "utc": "2026-10-19T01:24:40.184069+00:00",
+  "argv": [
+    "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+    "-B",
+    "C:\\Windows\\Temp\\assist-native-rax-20261010\\wait-final-proof-epoch4\\check_validation.py",
+    "--source-root",
+    "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-wait-epoch4"
+  ],
+  "exit-code": 1,
+  "log": "wait-final-check-windows.log",
+  "sha256": "3726a6cf08f774046c0e7fb26a4210dd5427c8801b3f848e80b4dcc4bf8ed9d3"
+}

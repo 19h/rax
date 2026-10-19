@@ -5,6 +5,8 @@
 //! [`status_to_error`] implements the `RtlNtStatusToDosError` translation
 //! for the status values this personality produces.
 
+pub(crate) mod time;
+
 /// `NTSTATUS` values.
 pub mod status {
     #![allow(missing_docs)]
