@@ -364,6 +364,22 @@ state changed.
 | Anza | `python3 tools/ebpf-reference/run.py` | 12 passed; 0 streamed programs rejected by the upstream verifier; every execution equal on 5 implementations |
 | Formal tier | `python3 tools/ebpf-formal/run.py --jobs 12` | 1,796 of 1,796 harnesses verified, 0 failed (the four default families) |
 
+### Continuous validation
+
+[`ebpf-validation.yml`](../../../.github/workflows/ebpf-validation.yml)
+reruns the live oracles and the formal tier on GitHub-hosted runners. Its
+first run (run `39338966500`, commit `b79c32ca2`, 2026-10-19) passed all 19
+jobs in 44 minutes:
+
+| Job | Runner | Result |
+|---|---|---|
+| `bpf_conformance` | `ubuntu-24.04` | 312/312 on each of the 4 planes; 45 negatives rejected; corpus equal to the pinned suite |
+| Anza | `ubuntu-24.04` | every stream of V0-V4 equal on 5 implementations; 0 programs rejected by the upstream verifier |
+| Linux kernel, little-endian | `ubuntu-24.04-arm` | Linux `6.17.0-1022-azure` aarch64 (Docker 28.0.4), a third kernel next to the two above: 154 forms, 190,738 kernel-verified cases, 0 rejected, 0 mismatches |
+| Linux kernel, big-endian | `ubuntu-24.04` | the pinned Debian s390x 6.12.107 under QEMU: 190,738 cases, 0 rejected, 0 mismatches |
+| Admission, big-endian | `ubuntu-24.04` | 1,980,208 encodings, 401 disagreements, 0 unexplained (the recorded table) |
+| Kani, 14 shards | `ubuntu-24.04-arm` | 1,796 of 1,796 harnesses verified, 0 failed (4 step and memory, 1,280 SBPF admission, 512 RFC 9669 direct) |
+
 The JIT gate test `ebpf_deferred_trap_is_interpreter_only` runs in the
 `--lib` set with `smir-jit`. Every native admission gate rejects a block that
 ends in `TrapKind::Ebpf` unless that block is excluded as an interpreter
