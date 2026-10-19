@@ -94,3 +94,13 @@ fn x86_string_io_trap_is_interpreter_only() {
         requires_apx: false,
     });
 }
+
+#[test]
+fn ebpf_deferred_trap_is_interpreter_only() {
+    // An unliftable eBPF instruction is a deferred exact trap; no native
+    // lowerer may admit it (eBPF native admission is closed regardless).
+    assert_trap_is_interpreter_only(TrapKind::Ebpf(crate::isa::ebpf::EbpfTrap::DecodeError {
+        pc: 0x1000,
+        error: crate::isa::ebpf::EbpfDecodeError::InvalidOpcode { opc: 0xff },
+    }));
+}

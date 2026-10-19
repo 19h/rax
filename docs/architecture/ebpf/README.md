@@ -10,13 +10,13 @@ The eBPF path in `rax` implements instruction decoding, canonical disassembly, d
 
 - **`EbpfDialect::Rfc9669`** — IETF RFC 9669 / Linux kernel v1–v4 (`Endian::Little` and `Endian::Big`), including:
   - 64-bit (`ALU64`) and 32-bit (`ALU32`) arithmetic/logic, `MOVSX` (8/16/32-bit sign-extending moves), `SDIV`/`SMOD` (`offset == 1`), and `BPF_END` (`TO_LE`, `TO_BE`, `BSWAP16/32/64`);
-  - 64-bit (`JMP`) and 32-bit (`JMP32`) conditional branches, `JA` (`0x05`), `JA32` (`0x06`), static helper calls (`src_reg == 0`), and BPF-to-BPF pseudo calls (`src_reg == 1`); BTF helper calls (`src_reg == 2`) decode for analysis but execution and lifting reject them without a platform BTF resolver;
-  - `LDDW` (`0x18`) 128-bit wide constant loads; subtypes 1-6 decode for analysis but execution and lifting explicitly reject them without a platform resolver;
+  - 64-bit (`JMP`) and 32-bit (`JMP32`) conditional branches, `JA` (`0x05`), `JA32` (`0x06`), static helper calls (`src_reg == 0`), BPF-to-BPF pseudo calls (`src_reg == 1`), and helper calls by BTF ID (`src_reg == 2`), which run a handler registered with `EbpfCpu::register_btf_helper` or exit to the host (`EbpfExit::BtfHelper`; in SMIR an `ExitReason::Syscall` whose key `EbpfHelperKey::from_smir` decodes as `Btf`) in a namespace separate from static IDs;
+  - `LDDW` (`0x18`) 128-bit wide loads with every RFC 9669 Table 12 subtype: the constant (0x0), `code_addr` (0x4, the instruction `imm + 1` slots after the LDDW, as the Linux verifier resolves it), and the platform objects bound in `EbpfConfig::platform` / `EbpfLifter::platform` (`EbpfPlatform`: `map_by_fd` 0x1, `map_val` + signed `next_imm` 0x2, `var_addr` 0x3, `map_by_idx` 0x5, 0x6); an unbound object traps with `UnsupportedPseudoLoad` before any state change;
   - unsigned (`LDX_MEM`) and sign-extending (`LDX_MEMSX`) loads, `ST_MEM`, `STX_MEM`, and `BPF_ATOMIC` (`ADD`, `OR`, `AND`, `XOR` with/without `FETCH`, `XCHG`, and `CMPXCHG`).
 - **`EbpfDialect::Solana(SbpfVersion::V0..=V4)`** — Solana Bytecode Format across `V0`, `V1`, `V2`, `V3`, and `V4`:
-  - **`V0` / `V1`**: 32-bit `ALU32` operations sign-extend their 32-bit result to 64 bits except `MOV32_IMM`, `MOV32_REG`, `LMUL32`, `UDIV32`, and `UREM32`; `R10` is read-only in V0, which supports 4 KiB stack gaps. V1 uses manual frame adjustment via `ADD64_IMM r10, imm`.
-  - **`V2`**: Enables `PQR` multiply/divide/remainder instructions (`LMUL32/64`, `UHMUL64`, `SHMUL64`, `UDIV32/64`, `UREM32/64`, `SDIV32/64`, `SREM32/64`), swaps `SUB32_IMM`/`SUB64_IMM` operand order to `dst = imm - dst`, zero-extends `ADD32`/`SUB32`/`MUL32`, replaces `LDDW` with `HOR64_IMM` (`0xF7`), relocates memory load/store opcodes (`0xX2`/`0xX3`/`0xX7`/`0xX8`/`0xXC`/`0xXD`), and permits dynamic stack-frame adjustments via `ADD64_IMM r10, imm`.
-  - **`V3` / `V4`**: Enables `JMP32` (`0xX6`) and disables legacy PQR/Bswap opcodes superseded in later `SBPF` revisions.
+  - **`V0` / `V1`**: `ADD32`, `SUB32`, and `MUL32` sign-extend their 32-bit result to 64 bits; every other 32-bit result (`MOV32`, bitwise, shift, `NEG32`, `DIV32`, `MOD32`) is zero-extended. `R10` is read-only in V0, which supports 4 KiB stack gaps. V1 uses manual frame adjustment via `ADD64_IMM r10, imm`.
+  - **`V2`**: Enables `PQR` multiply/divide/remainder instructions (`LMUL32/64`, `UHMUL64`, `SHMUL64`, `UDIV32/64`, `UREM32/64`, `SDIV32/64`, `SREM32/64`) in place of `MUL`/`DIV`/`MOD`, swaps `SUB32_IMM`/`SUB64_IMM` operand order to `dst = imm - dst`, zero-extends `ADD32`/`SUB32`, sign-extends `MOV32_REG`, removes `NEG` and `LE`, replaces `LDDW` with `HOR64_IMM` (`0xF7`), relocates memory loads to `0xXC`, immediate stores to `0xX7`, and register stores to `0xXF`, and permits dynamic stack-frame adjustments via `ADD64_IMM r10, imm`.
+  - **`V3` / `V4`**: Restore the V0 arithmetic, `LDDW`, `NEG`, `LE`, and memory classes; enable `JMP32` (`0xX6`), static syscalls (`CALL_IMM` `src` 0 vs PC-relative `src` 1), `CALLX` through `dst`, and segment-zero rodata.
 
 ## Architectural state and memory model
 
@@ -53,9 +53,38 @@ cargo run --bin rax_isa_oracle -- --arch sbpf --mode le,sbpf-v2 --seeded-effects
 
 | Cargo target | Scope |
 |---|---|
-| `ebpf_smir_lift` | Direct `EbpfCpu` vs `EbpfLifter` + `SmirInterpreter` at O0/O1/O2 across RFC 9669 (LE/BE) and Solana `SBPF` `V0`–`V4` |
-| `ebpf_diff` | Parity against a specification-derived evaluator for selected deterministic ALU, memory, and call programs, plus `llvm-mc -triple=bpfel` / `bpfeb` encoding comparisons |
+| `ebpf_smir_lift` | Direct `EbpfCpu` vs `EbpfLifter` + `SmirInterpreter` at O0/O1/O2 across RFC 9669 (LE/BE) and Solana `SBPF` `V0`–`V4`, including precise trap and meter parity |
+| `ebpf_diff` | Replays of the checked-in oracle corpora on every plane: the eBPF Foundation `bpf_conformance` suite (312 tests, 45 negatives), the Linux kernel (147,698 cases each on the arm64 JIT and the big-endian s390x interpreter), and the pinned Anza `solana-sbpf` interpreter (V0–V4); plus a specification-derived evaluator and `llvm-mc` encodings |
 | `isa_oracle` | Public JSON decode, SMIR lift, and seeded concrete execution side effects |
+
+The live oracles run outside the engine workspace:
+`python3 tools/ebpf-conformance/run.py` (conformance suite and both kernels; see
+its [README](../../../tools/ebpf-conformance/README.md)) and
+`python3 tools/ebpf-reference/run.py` (Anza interpreter and verifier). With
+`--export` / `RAX_SBPF_CORPUS_OUT=1` they regenerate `tests/generated/ebpf/`.
+`python3 tools/ebpf-formal/run.py` runs the Kani proofs, over all field,
+register, and memory values: RFC 9669 admission and direct execution of every
+opcode against an independent specification, and SBPF admission of every
+opcode against the pinned Anza verifier. The SMIR and SBPF-execution harnesses
+are defined but not discharged (see its
+[README](../../../tools/ebpf-formal/README.md)).
+
+## Conformance claims
+
+RFC 9669 conformance groups `base32`, `base64`, `atomic32`, `atomic64`,
+`divmul32`, and `divmul64` are implemented in both byte orders. The deprecated
+legacy `packet` group (`BPF_ABS`/`BPF_IND`) and the non-RFC uBPF `callx` group
+are rejected (RFC 9669 section 2.4 makes every group but `base32` optional;
+section 5.5 defines no semantics for `packet`). The RFC's platform objects
+are bound by the embedder: maps and platform variables for LDDW subtypes
+(`EbpfPlatform`), and helper functions, by static ID or BTF ID, as handlers
+or host exits; an unbound object traps precisely. `r10` is the read-only
+frame pointer, a platform contract (RFC 9669 section 6 puts verification out
+of scope). Solana admission is `verify_sbpf`, equal to the pinned
+`RequisiteVerifier`; syscalls charge compute units through the host exit
+(`insn_count`), as the `metered-syscall` corpus checks against Anza. ELF
+loading and relocation are not part of the engine.
+See [the conformance record](verification-2026-10-16.md).
 
 Primary specifications and reference sources are stored under [`docs/specifications/ebpf/`](../../specifications/ebpf/PROVENANCE.md).
 
@@ -66,8 +95,9 @@ advance by one contiguous frame. Manual-frame initial r10 defaults to the top of
 `stack_frame_size * max_call_depth` backing bytes and may be set explicitly when
 the embedding supplies a different stack size.
 
-See [the semantic verification record](verification-2026-10-15.md) for measured
-coverage and limitations.
+See [the semantic verification record](verification-2026-10-15.md) and
+[the conformance record](verification-2026-10-16.md) for measured coverage and
+limitations.
 
 `SbpfMemoryMapping::new_solana_with_config` accepts an explicit rodata address
 and an `EbpfConfig`, constructs V0 gaps when enabled, and rejects inconsistent
@@ -85,7 +115,11 @@ than IR operation counts. `SmirContext::new_ebpf_with_config` selects nondefault
 stack/depth/text policies. `SmirInterpreter::add_function` installs its blocks.
 `EbpfLifter::register_function` supplies legacy SBPF keys and possible CALLX
 entries; unknown indirect targets remain explicit BlockNotFound frontiers until
-the embedding registers/lifts their code. `EbpfLifter::lift_program` discovers the reachable program as distinct functions.
+the embedding registers/lifts their code (reusing the same `LiftContext`, so block
+identifiers stay unique). `EbpfLifter::lift_program` discovers the reachable program as distinct functions.
+A reachable instruction that cannot be lifted (unreadable slot, malformed encoding,
+unbound pseudo-load) becomes a guest marker and a `TrapKind::Ebpf` terminator that
+raises the direct CPU's exact trap only if execution reaches it.
 `lift_function` follows intraprocedural successors; each `guest_range` describes
 that function's minimum-to-maximum decoded byte extent and excludes its callees.
 It does not assert that every byte inside a sparse range is an instruction.

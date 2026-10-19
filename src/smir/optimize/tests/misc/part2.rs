@@ -161,3 +161,49 @@ fn block_merging_contracts_an_entire_linear_chain_without_dangling_targets() {
         Terminator::Return { ref values } if values.is_empty()
     ));
 }
+
+#[test]
+fn block_merging_never_consumes_the_function_entry() {
+    // entry: Nop; CondBranch(latch, exit). latch: Nop; Branch(entry).
+    // The entry's only *counted* predecessor is the latch's back edge, but
+    // the call into the function is an implicit second predecessor: merging
+    // the entry into the latch would leave an empty Unreachable entry.
+    let entry = BlockId(4);
+    let latch = BlockId(5);
+    let exit = BlockId(6);
+    let mut first = SmirBlock::new(entry, 0x1000);
+    first.push_op(SmirOp::new(OpId(0), 0x1000, OpKind::Nop));
+    first.set_terminator(Terminator::CondBranch {
+        cond: VReg::Virtual(crate::smir::ir::types::VirtualId(0)),
+        true_target: latch,
+        false_target: exit,
+    });
+    let mut second = SmirBlock::new(latch, 0x1001);
+    second.push_op(SmirOp::new(OpId(1), 0x1001, OpKind::Nop));
+    second.set_terminator(Terminator::Branch { target: entry });
+    let mut third = SmirBlock::new(exit, 0x1002);
+    third.set_terminator(Terminator::Return { values: Vec::new() });
+    let mut function = SmirFunction::new(FunctionId(0), entry, 0x1000);
+    function.add_block(first);
+    function.add_block(second);
+    function.add_block(third);
+
+    block_merging(&mut function);
+    let entry_block = function
+        .blocks
+        .iter()
+        .find(|block| block.id == entry)
+        .expect("entry block survives");
+    assert_eq!(entry_block.ops.len(), 1);
+    assert!(matches!(
+        entry_block.terminator,
+        Terminator::CondBranch { true_target, false_target, .. }
+            if true_target == latch && false_target == exit
+    ));
+    assert!(
+        function
+            .blocks
+            .iter()
+            .all(|block| !matches!(block.terminator, Terminator::Unreachable))
+    );
+}

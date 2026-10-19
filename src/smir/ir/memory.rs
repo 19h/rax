@@ -327,14 +327,25 @@ impl FlatMemory {
 
     /// Get offset from address
     fn offset(&self, addr: GuestAddr) -> Result<usize, MemoryError> {
-        if addr < self.base {
-            return Err(MemoryError::OutOfBounds { addr });
-        }
-        let off = (addr - self.base) as usize;
-        if off >= self.data.len() {
-            return Err(MemoryError::OutOfBounds { addr });
-        }
-        Ok(off)
+        let off = addr
+            .checked_sub(self.base)
+            .filter(|off| *off < self.data.len() as u64)
+            .ok_or(MemoryError::OutOfBounds { addr })?;
+        Ok(off as usize)
+    }
+
+    /// Exclusive end offset of a `len`-byte access starting at offset `off`
+    /// (address `addr`). Bounds use checked u64 arithmetic because guest
+    /// addresses span the full 2^64-byte space; an access beyond the store
+    /// reports its wrapped end address, as before.
+    fn end(&self, off: usize, addr: GuestAddr, len: usize) -> Result<usize, MemoryError> {
+        (off as u64)
+            .checked_add(len as u64)
+            .filter(|end| *end <= self.data.len() as u64)
+            .map(|end| end as usize)
+            .ok_or(MemoryError::OutOfBounds {
+                addr: addr.wrapping_add(len as u64),
+            })
     }
 
     /// Load the memory with initial data
@@ -349,31 +360,24 @@ impl FlatMemory {
 impl SmirMemory for FlatMemory {
     fn read(&mut self, addr: GuestAddr, buf: &mut [u8]) -> Result<(), MemoryError> {
         let off = self.offset(addr)?;
-        let end = off + buf.len();
-        if end > self.data.len() {
-            return Err(MemoryError::OutOfBounds {
-                addr: addr + buf.len() as u64,
-            });
-        }
+        let end = self.end(off, addr, buf.len())?;
         buf.copy_from_slice(&self.data[off..end]);
         Ok(())
     }
 
     fn write(&mut self, addr: GuestAddr, data: &[u8]) -> Result<(), MemoryError> {
         let off = self.offset(addr)?;
-        let end = off + data.len();
-        if end > self.data.len() {
-            return Err(MemoryError::OutOfBounds {
-                addr: addr + data.len() as u64,
-            });
-        }
+        let end = self.end(off, addr, data.len())?;
         self.data[off..end].copy_from_slice(data);
 
-        // Check exclusive monitor
+        // A write overlapping the monitored range clears the reservation.
+        // Ranges are compared in u128 because a valid access may end at 2^64.
         if let Some(excl_addr) = self.exclusive_addr {
-            let excl_end = excl_addr + self.exclusive_size.bytes() as u64;
-            let write_end = addr + data.len() as u64;
-            if !(write_end <= excl_addr || addr >= excl_end) {
+            let excl_start = u128::from(excl_addr);
+            let excl_end = excl_start + self.exclusive_size.bytes() as u128;
+            let write_start = u128::from(addr);
+            let write_end = write_start + data.len() as u128;
+            if !(write_end <= excl_start || write_start >= excl_end) {
                 self.exclusive_addr = None;
             }
         }
@@ -503,31 +507,31 @@ impl SmirMemory for FlatMemory {
     }
 
     fn probe(&self, addr: GuestAddr, size: usize, _write: bool) -> Result<(), MemoryError> {
-        if addr < self.base {
-            return Err(MemoryError::OutOfBounds { addr });
-        }
-        let off = (addr - self.base) as usize;
-        if off + size > self.data.len() {
-            return Err(MemoryError::OutOfBounds {
-                addr: addr + size as u64,
-            });
-        }
-        Ok(())
+        self.span(addr, size).map(|_| ())
+    }
+}
+
+impl FlatMemory {
+    /// Offset range of an access for `probe` and code fetch, which report
+    /// the start address below the base and the end address beyond the store.
+    fn span(&self, addr: GuestAddr, size: usize) -> Result<std::ops::Range<usize>, MemoryError> {
+        let off = addr
+            .checked_sub(self.base)
+            .ok_or(MemoryError::OutOfBounds { addr })?;
+        let end = off
+            .checked_add(size as u64)
+            .filter(|end| *end <= self.data.len() as u64)
+            .ok_or(MemoryError::OutOfBounds {
+                addr: addr.wrapping_add(size as u64),
+            })?;
+        Ok(off as usize..end as usize)
     }
 }
 
 impl MemoryReader for FlatMemory {
     fn read(&self, addr: GuestAddr, size: usize) -> Result<Vec<u8>, MemoryError> {
-        if addr < self.base {
-            return Err(MemoryError::OutOfBounds { addr });
-        }
-        let off = (addr - self.base) as usize;
-        if off + size > self.data.len() {
-            return Err(MemoryError::OutOfBounds {
-                addr: addr + size as u64,
-            });
-        }
-        Ok(self.data[off..off + size].to_vec())
+        let span = self.span(addr, size)?;
+        Ok(self.data[span].to_vec())
     }
 }
 
@@ -704,6 +708,33 @@ mod tests {
         // Store exclusive without load should fail
         let success = mem.store_exclusive(0x100, 200, MemWidth::B8).unwrap();
         assert!(!success);
+    }
+
+    #[test]
+    fn bounds_checks_at_the_top_of_the_address_space_never_overflow() {
+        // Guest-controlled addresses near 2^64 must fault, not overflow.
+        let mut low = FlatMemory::new(0x1000);
+        for addr in [u64::MAX, u64::MAX - 2, u64::MAX - 7] {
+            assert!(low.probe(addr, 8, true).is_err());
+            assert!(MemoryReader::read(&low, addr, 8).is_err());
+            assert!(SmirMemory::read(&mut low, addr, &mut [0; 8]).is_err());
+            assert!(SmirMemory::write(&mut low, addr, &[0; 8]).is_err());
+        }
+
+        // A region ending at the last address: accesses ending exactly at
+        // 2^64 succeed, and one byte further faults.
+        let mut high = FlatMemory::with_base(u64::MAX - 0xfff, 0x1000);
+        high.probe(u64::MAX - 1, 2, true).unwrap();
+        assert_eq!(MemoryReader::read(&high, u64::MAX - 1, 2).unwrap(), [0, 0]);
+        high.load_exclusive(u64::MAX - 7, MemWidth::B8).unwrap();
+        SmirMemory::write(&mut high, u64::MAX - 1, &[1, 2]).unwrap();
+        assert!(!high.store_exclusive(u64::MAX - 7, 9, MemWidth::B8).unwrap());
+        for (addr, len) in [(u64::MAX - 1, 4), (u64::MAX, 2)] {
+            assert!(high.probe(addr, len, false).is_err());
+            assert!(MemoryReader::read(&high, addr, len).is_err());
+            assert!(SmirMemory::read(&mut high, addr, &mut vec![0; len]).is_err());
+            assert!(SmirMemory::write(&mut high, addr, &vec![0; len]).is_err());
+        }
     }
 
     #[test]

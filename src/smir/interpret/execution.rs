@@ -72,18 +72,17 @@ impl SmirInterpreter {
             if let ArchRegState::Ebpf(state) = &mut ctx.arch_regs
                 && let Some(pending) = state.pending_call.take()
             {
-                if let Err(trap) = state
-                    .config
-                    .validate_target_pc(pending.fault_pc, pending.target_pc)
-                    .and_then(|()| {
-                        state.config.push_frame(
-                            &mut state.r,
-                            &mut state.call_frames,
-                            pending.fault_pc,
-                            pending.return_pc,
-                        )
-                    })
-                {
+                // The deferred phase of a legacy dual-resolution call is the
+                // registry call (V0-V2 only).
+                if let Err(trap) = state.config.enter_call(
+                    crate::isa::ebpf::cpu::CallForm::Registry,
+                    &mut state.r,
+                    &mut state.call_frames,
+                    pending.fault_pc,
+                    pending.target_pc,
+                    pending.return_pc,
+                    0,
+                ) {
                     ctx.pc = pending.fault_pc;
                     state.pc = ctx.pc;
                     return ExitReason::EbpfTrap(trap);
@@ -152,6 +151,34 @@ impl SmirInterpreter {
         self.execute_block_limited(ctx, memory, block, u64::MAX)
     }
 
+    /// Translate a failed eBPF guest access into the direct-CPU trap: the
+    /// faulting instruction, the effective start address computed from the
+    /// unmodified operands, the access width in bytes, and its direction
+    /// (read-modify-write atomics are writes). Backend error addresses are not
+    /// used because their convention differs (`FlatMemory` reports the end).
+    fn ebpf_memory_trap(
+        &self,
+        ctx: &SmirContext,
+        op: &SmirOp,
+    ) -> Option<crate::isa::ebpf::EbpfTrap> {
+        let (addr, width, write) = match &op.kind {
+            OpKind::Load { addr, width, .. } => (addr, *width, false),
+            OpKind::Store { addr, width, .. } => (addr, *width, true),
+            OpKind::AtomicRmw { addr, width, .. } | OpKind::Cas { addr, width, .. } => {
+                (addr, *width, true)
+            }
+            _ => return None,
+        };
+        Some(crate::isa::ebpf::EbpfTrap::MemoryFault {
+            pc: op.guest_pc,
+            fault: crate::isa::ebpf::EbpfMemFault {
+                addr: self.compute_address(ctx, addr),
+                size: width.bytes() as usize,
+                write,
+            },
+        })
+    }
+
     fn execute_block_limited(
         &self,
         ctx: &mut SmirContext,
@@ -183,15 +210,23 @@ impl SmirInterpreter {
                     state.pc = op.guest_pc;
                     return BlockResult::Exit(ExitReason::Breakpoint { addr: op.guest_pc });
                 }
-                if ctx.insn_count >= limit
-                    || state
-                        .config
-                        .max_instructions
-                        .is_some_and(|max| ctx.insn_count >= max)
-                {
+                // The configured eBPF instruction meter is a fatal guest trap,
+                // as in the direct CPU and the Anza reference; only the
+                // interpreter's own run budget is a resumable slice.
+                let meter_exhausted = state
+                    .config
+                    .max_instructions
+                    .is_some_and(|max| ctx.insn_count >= max);
+                if meter_exhausted || ctx.insn_count >= limit {
                     ctx.pc = op.guest_pc;
                     state.pc = op.guest_pc;
-                    return BlockResult::Exit(ExitReason::InsnLimit);
+                    return BlockResult::Exit(if meter_exhausted {
+                        ExitReason::EbpfTrap(crate::isa::ebpf::EbpfTrap::ExceededMaxInstructions {
+                            pc: op.guest_pc,
+                        })
+                    } else {
+                        ExitReason::InsnLimit
+                    });
                 }
                 if !matches!(size, 8 | 16) {
                     return BlockResult::Exit(ExitReason::Undefined {
@@ -204,9 +239,32 @@ impl SmirInterpreter {
                 ctx.pc = op.guest_pc;
                 state.pc = op.guest_pc;
                 ctx.insn_count = ctx.insn_count.saturating_add(1);
+                // Mirror the direct CPU fetch after its metering: the slot must
+                // be aligned and inside the text, and a 16-byte LDDW must end
+                // inside it.
+                if let Err(trap) = state.config.validate_target_pc(op.guest_pc, op.guest_pc) {
+                    return BlockResult::Exit(ExitReason::EbpfTrap(trap));
+                }
+                if size == 16
+                    && let Some((_, end)) = state.config.text_range
+                    && op.guest_pc.checked_add(16).is_none_or(|next| next > end)
+                {
+                    return BlockResult::Exit(ExitReason::EbpfTrap(
+                        crate::isa::ebpf::EbpfTrap::DecodeError {
+                            pc: op.guest_pc,
+                            error: crate::isa::ebpf::EbpfDecodeError::UnexpectedEof {
+                                needed: 16,
+                                available: end.saturating_sub(op.guest_pc) as usize,
+                            },
+                        },
+                    ));
+                }
             }
 
             if let Err(e) = self.execute_op(ctx, memory, op) {
+                if ebpf && let Some(trap) = self.ebpf_memory_trap(ctx, op) {
+                    return BlockResult::Exit(ExitReason::EbpfTrap(trap));
+                }
                 return BlockResult::Exit(ExitReason::MemoryFault {
                     addr: match e {
                         MemoryError::PageFault { addr, .. } => addr,
@@ -430,18 +488,27 @@ impl SmirInterpreter {
                         .get(continuation)
                         .copied()
                         .unwrap_or_else(|| ctx.pc.wrapping_add(8));
-                    if let Err(trap) = state
-                        .config
-                        .validate_target_pc(ctx.pc, target_addr)
-                        .and_then(|()| {
-                            state.config.push_frame(
-                                &mut state.r,
-                                &mut state.call_frames,
-                                ctx.pc,
-                                return_pc,
-                            )
-                        })
-                    {
+                    let form = crate::isa::ebpf::cpu::CallForm::of_guest_call(
+                        state.config.dialect,
+                        matches!(target, CallTarget::Indirect(_)),
+                    );
+                    // The direct CPU reports the slot-relative immediate (V3/V4
+                    // relative calls) or the register value as the call key.
+                    let key = match form {
+                        crate::isa::ebpf::cpu::CallForm::Relative => {
+                            (target_addr.wrapping_sub(return_pc) as i64 / 8) as u32
+                        }
+                        _ => target_addr as u32,
+                    };
+                    if let Err(trap) = state.config.enter_call(
+                        form,
+                        &mut state.r,
+                        &mut state.call_frames,
+                        ctx.pc,
+                        target_addr,
+                        return_pc,
+                        key,
+                    ) {
                         return BlockResult::Exit(ExitReason::EbpfTrap(trap));
                     }
                     return BlockResult::Continue(target_addr);
@@ -619,6 +686,7 @@ impl SmirInterpreter {
                             opcode: 0,
                         })
                     }
+                    TrapKind::Ebpf(trap) => BlockResult::Exit(ExitReason::EbpfTrap(*trap)),
                 }
             }
 

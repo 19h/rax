@@ -3,9 +3,10 @@ use rax::isa::ebpf::{EbpfDecodeError, EbpfOp, decode_insn};
 
 #[test]
 fn btf_helper_ids_do_not_alias_the_static_helper_registry() {
-    // RFC 9669 section 4.3.1 identifies helpers by distinct static/BTF IDs.
-    // The engine has no BTF platform resolver, so a static callback with the
-    // same numeric ID must not satisfy a src_reg=2 call.
+    // RFC 9669 section 4.3.1 identifies helpers by distinct static and BTF
+    // IDs. A static callback with the same numeric ID must not satisfy a
+    // src_reg=2 call: the call exits to the host in the BTF namespace, or
+    // runs a handler registered for that BTF ID.
     for endian in [Endian::Little, Endian::Big] {
         let bytes = encode_insn(0x85, 0, 2, 0, 7, endian);
         let insn = decode_insn(&bytes, EbpfDialect::Rfc9669, endian).unwrap();
@@ -16,16 +17,37 @@ fn btf_helper_ids_do_not_alias_the_static_helper_registry() {
         cpu.regs.r[0] = 42;
         cpu.register_syscall(7, |_, _| Ok(700));
         let mut memory = FlatMemory::new(16);
-        let direct = cpu.execute_decoded(&insn, &mut memory);
+        assert_eq!(
+            cpu.execute_decoded(&insn, &mut memory),
+            Ok(Some(EbpfExit::BtfHelper { id: 7, next_pc: 8 }))
+        );
+        assert_eq!((cpu.regs.r[0], cpu.regs.pc), (42, 8));
+
+        cpu.regs.pc = 0;
+        cpu.register_btf_helper(7, |registers, _| Ok(registers[1] + 7000));
+        cpu.regs.r[1] = 5;
+        assert_eq!(cpu.execute_decoded(&insn, &mut memory), Ok(None));
+        assert_eq!((cpu.regs.r[0], cpu.regs.pc), (7005, 8));
+
         let mut lifter = EbpfLifter::new(EbpfDialect::Rfc9669, endian);
-        let lifted = lifter.lift_insn(0, &bytes, &mut LiftContext::new(lifter.source_arch()));
-        assert_eq!(direct, Err(EbpfTrap::UnsupportedBtfHelper { pc: 0, id: 7 }));
-        assert!(matches!(
-            lifted,
-            Err(rax::smir::lift::LiftError::Unsupported { .. })
-        ));
-        assert_eq!(cpu.regs.r[0], 42);
-        assert_eq!(cpu.regs.pc, 0);
+        let lifted = lifter
+            .lift_insn(0, &bytes, &mut LiftContext::new(lifter.source_arch()))
+            .unwrap();
+        let keys: Vec<i64> = lifted
+            .ops
+            .iter()
+            .filter_map(|op| match op.kind {
+                rax::smir::ir::ops::OpKind::Mov {
+                    src: rax::smir::ir::types::SrcOperand::Imm(key),
+                    ..
+                } => Some(key),
+                _ => None,
+            })
+            .collect();
+        assert_eq!(
+            keys,
+            [rax::isa::ebpf::EbpfHelperKey::Btf(7).smir_key() as i64]
+        );
 
         let options = rax::oracle::OracleOptions {
             isa: rax::oracle::OracleIsa::Ebpf,
@@ -37,15 +59,11 @@ fn btf_helper_ids_do_not_alias_the_static_helper_registry() {
         };
         let decoded = rax::oracle::decode_to_json(&bytes, &options).unwrap();
         assert_eq!(decoded["decoded_ops"][0]["src"], 2);
-        assert!(
-            decoded["smir"]["error"]
-                .as_str()
-                .unwrap()
-                .contains("BTF helper call requires a platform resolver")
-        );
+        assert!(decoded["smir"]["error"].is_null(), "{decoded}");
 
         let static_bytes = encode_insn(0x85, 0, 0, 0, 7, endian);
         let static_insn = decode_insn(&static_bytes, EbpfDialect::Rfc9669, endian).unwrap();
+        cpu.regs.pc = 0;
         assert_eq!(cpu.execute_decoded(&static_insn, &mut memory), Ok(None));
         assert_eq!(cpu.regs.r[0], 700);
         assert_eq!(cpu.regs.pc, 8);
@@ -173,7 +191,10 @@ fn frame_pointer_writes_follow_the_reference_version_matrix() {
 }
 
 #[test]
-fn pseudo_loads_fail_explicitly_without_a_platform_resolver() {
+fn pseudo_loads_without_a_platform_binding_trap_precisely() {
+    // RFC 9669 section 5.4: subtypes 0x1, 0x2, 0x3, 0x5, and 0x6 name maps or
+    // platform variables. With none bound, each traps before any state
+    // change; subtype 0x4 (code_addr) needs no binding.
     for endian in [Endian::Little, Endian::Big] {
         for src_type in 1..=6 {
             let mut bytes = encode_lddw(1, 42, endian);
@@ -189,18 +210,23 @@ fn pseudo_loads_fail_explicitly_without_a_platform_resolver() {
             });
             cpu.regs.r[1] = 0x1234;
             let mut mem = FlatMemory::new(32);
-            assert!(
-                cpu.execute_decoded(&insn, &mut mem).is_err(),
-                "subtype={src_type}"
-            );
-            assert_eq!(cpu.regs.r[1], 0x1234);
-            assert_eq!(cpu.regs.pc, 0);
+            let result = cpu.execute_decoded(&insn, &mut mem);
             let mut lifter = EbpfLifter::new(EbpfDialect::Rfc9669, endian);
-            assert!(
-                lifter
-                    .lift_insn(0, &bytes, &mut LiftContext::new(lifter.source_arch()))
-                    .is_err()
-            );
+            let lifted = lifter.lift_insn(0, &bytes, &mut LiftContext::new(lifter.source_arch()));
+            if src_type == 4 {
+                // code_addr(42): instruction 42 + 1 slots after the LDDW.
+                assert_eq!(result, Ok(None));
+                assert_eq!((cpu.regs.r[1], cpu.regs.pc), (43 * 8, 16));
+                assert!(lifted.is_ok());
+            } else {
+                assert_eq!(
+                    result,
+                    Err(EbpfTrap::UnsupportedPseudoLoad { pc: 0, src_type }),
+                    "subtype={src_type}"
+                );
+                assert_eq!((cpu.regs.r[1], cpu.regs.pc), (0x1234, 0));
+                assert!(lifted.is_err());
+            }
         }
     }
 }

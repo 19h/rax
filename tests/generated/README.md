@@ -23,6 +23,18 @@ coverage and differential runners. It includes the AVX-512 case table, the
 extension-specific unimplemented-mnemonic sets, and the source-diagnostic
 inventory. These files are data inputs, not test targets.
 
+`ebpf/` contains external-oracle corpora replayed by the `ebpf_diff` target on
+every eBPF execution plane: the eBPF Foundation `bpf_conformance` vectors
+(`bpf_conformance.txt`), per-program digests of Linux kernel
+`BPF_PROG_TEST_RUN` results for the RFC 9669 campaign in both byte orders
+(`linux_kernel_le.txt`, `linux_kernel_be.txt`), both kernels' verifier
+verdicts on every RFC 9669 encoding partition with each disagreement and its
+reason (`linux_kernel_admission_le.txt`, `linux_kernel_admission_be.txt`), and
+digests of the pinned Anza interpreter's SBPF outcomes (`anza_sbpf.txt`). Their case streams are generated
+deterministically by `tests/support/ebpf_rfc_oracle.rs` and
+`tests/support/ebpf_sbpf_oracle.rs`; `tools/ebpf-conformance/run.py` and
+`tools/ebpf-reference/run.py` regenerate them from the live oracles.
+
 `manifest.toml` records the provenance that can be established from tracked
 files. A field set to `"unknown"` means the repository does not currently
 contain enough information to reproduce it exactly.

@@ -1,0 +1,24 @@
+[package]
+name = "rax-ebpf-formal"
+version = "0.1.0"
+edition = "2024"
+publish = false
+license = "MIT"
+
+# Independent verification tooling must not alter the engine workspace or lockfile.
+[workspace]
+
+[dependencies]
+rax = { path = "../..", default-features = false }
+# The pinned Anza source that tools/ebpf-reference/run.py verifies and extracts.
+solana-sbpf = { path = "../../target/ebpf-reference-source", default-features = false }
+# Named only by the proof stub for the reference registry's hasher seed.
+rand = "0.8.5"
+rand_chacha = "0.3.1"
+
+[patch.crates-io]
+vm-memory = { path = "../../vendor/vm-memory" }
+linux-loader = { git = "https://github.com/19h/linux-loader", rev = "f745b555942c4e840a784bca61e6f3976d101960" }
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ["cfg(kani)"] }

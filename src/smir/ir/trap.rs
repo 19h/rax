@@ -103,4 +103,10 @@ pub enum TrapKind {
     Halt,
     /// x86 general-protection exception with architectural error code zero.
     GeneralProtection,
+    /// eBPF/SBPF trap of an instruction that could not be lifted (unreadable
+    /// slot, malformed encoding, or unavailable platform facility). Lifting
+    /// defers it to execution: the preceding guest-instruction marker meters
+    /// and validates the fetch, then this terminator raises the exact trap the
+    /// direct CPU raises at that instruction.
+    Ebpf(crate::isa::ebpf::EbpfTrap),
 }

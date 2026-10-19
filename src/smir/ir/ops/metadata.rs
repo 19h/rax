@@ -725,8 +725,11 @@ impl OpKind {
     /// Check if this operation has side effects
     pub fn has_side_effects(&self) -> bool {
         // Guest memory reads can fault or trigger MMIO/device effects even when
-        // their destination is dead.
+        // their destination is dead. Canonical DivU/DivS raise a trap for a
+        // zero divisor (and x86 or SBPF quotient overflow) in every
+        // architecture context, so a dead division still has a fault effect.
         self.reads_memory()
+            || matches!(self, OpKind::DivU { .. } | OpKind::DivS { .. })
             || self.has_fp_status_side_effects()
             || matches!(self, OpKind::X86Opmask(op) if op.writes_memory())
             || matches!(

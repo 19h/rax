@@ -40,7 +40,7 @@ Each architecture-specific lifter translates a decoded guest instruction or regi
 - AArch64 supplies scalar, control-flow, floating-point, and expanding NEON lifting, with selected native AArch64 validation;
 - Hexagon has broad scalar/HVX lift coverage tested against its interpreter;
 - RISC-V has broad scalar, FP, vector, CSR, bit-manipulation, and crypto lift coverage tested against its interpreter;
-- eBPF (`src/smir/lift/ebpf/`) lifts IETF RFC 9669 (little- and big-endian) and Solana `SBPF` (`V0`–`V4`) instructions and functions into SMIR, tested against `EbpfCpu` and the specification reference evaluator at `O0` and `O2`.
+- eBPF (`src/smir/lift/ebpf/`) lifts IETF RFC 9669 (little- and big-endian) and Solana `SBPF` (`V0`–`V4`) instructions and functions into SMIR, tested against `EbpfCpu`, the Linux kernel, `bpf_conformance`, and the pinned Anza interpreter at `O0`, `O1`, and `O2`.
 
 “Lift complete” is only defensible when an executable source/manifest inventory defines the finite instruction set and the lift target rejects no reachable implemented instruction in that set.
 
@@ -157,8 +157,19 @@ sign/zero-extension rules, `V2` `SUB_IMM` operand order, `PQR` 64×64→128-bit 
 (`UHMUL64`/`SHMUL64`), and `BPF_ATOMIC` read-modify-write operations. The selected matrices run
 at O0/O1/O2 in `ebpf_smir_lift` and use the specification-derived evaluator in `ebpf_diff`.
 `EbpfLifter::lift_program` discovers separate functions; observable guest boundaries preserve
-instruction counting and precise exits. `tools/ebpf-reference` separately executes the pinned
-Anza interpreter for call/frame and memory-layout comparisons.
+instruction counting and precise exits. A guest boundary charges the instruction meter (whose
+exhaustion is the fatal `EbpfTrap::ExceededMaxInstructions`, distinct from the interpreter's
+resumable `InsnLimit` slice) and then validates the fetch exactly as `EbpfCpu` does. A reachable
+instruction that cannot be lifted ends its block with `TrapKind::Ebpf(EbpfTrap)`, which raises
+the direct CPU's trap only when executed; guest memory faults likewise surface as
+`EbpfTrap::MemoryFault` with the effective address, width, and direction. `ebpf_diff` replays
+the Linux kernel, `bpf_conformance`, and pinned Anza corpora on every plane;
+`tools/ebpf-conformance` and `tools/ebpf-reference` run those oracles live.
+
+Two optimizer contracts that every ISA relies on were made explicit by these campaigns: a
+function's entry block has an implicit external predecessor and is never merged into another
+block, and `DivU`/`DivS` are side-effecting because a zero divisor (or quotient overflow) traps
+even when the quotient is dead.
 
 ## Self-modifying code and cache identity
 

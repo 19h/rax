@@ -4,6 +4,8 @@
 #[path = "calls.rs"]
 mod calls;
 
+pub(crate) use calls::CallForm;
+
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -11,11 +13,13 @@ use serde::{Deserialize, Serialize};
 use vm_memory::GuestMemoryMmap;
 
 use crate::error::{Error, Result};
+use crate::isa::ebpf::arith;
 use crate::isa::ebpf::decode::{
     AluWidth, AtomicKind, BinAluOp, EbpfDecodeError, EbpfDialect, EbpfInsn, EbpfMemWidth, EbpfOp,
     EbpfSrc, EndianOp, FRAME_PTR_REG, INSN_SIZE, JmpCond, SbpfVersion, decode_insn,
 };
 use crate::isa::ebpf::memory::{EbpfMemFault, EbpfMemory, MM_STACK_START};
+use crate::isa::ebpf::platform::EbpfPlatform;
 use crate::smir::ir::types::Endian;
 use crate::vm::vcpu::{CpuState, VCpu, VcpuExit};
 
@@ -79,10 +83,9 @@ pub enum EbpfTrap {
     CallOutsideTextSegment { pc: u64, target_pc: u64 },
     /// Unregistered syscall or internal function key.
     UnsupportedSyscall { pc: u64, key: u32 },
-    /// A platform-specific LDDW subtype requires an unavailable resolver.
+    /// An LDDW subtype names a map or platform variable that
+    /// [`EbpfConfig::platform`] does not bind.
     UnsupportedPseudoLoad { pc: u64, src_type: u8 },
-    /// A BTF helper ID requires a platform resolver separate from static IDs.
-    UnsupportedBtfHelper { pc: u64, id: u32 },
     /// Instruction count limit / compute budget exceeded.
     ExceededMaxInstructions { pc: u64 },
 }
@@ -94,6 +97,9 @@ pub enum EbpfExit {
     Exit { r0: u64 },
     /// External syscall invoked (`CALL_IMM` with `src == 0` or non-static syscall).
     Syscall { key: u32, next_pc: u64 },
+    /// Unregistered RFC 9669 helper call by BTF ID (`CALL_IMM` with `src == 2`).
+    /// The host supplies `r0` and resumes at `next_pc`, as for [`Self::Syscall`].
+    BtfHelper { id: u32, next_pc: u64 },
     /// Architectural trap or fault occurred.
     Trap(EbpfTrap),
 }
@@ -115,6 +121,8 @@ pub struct EbpfConfig {
     pub max_instructions: Option<u64>,
     /// Optional executable `[start, end)` byte range for PC bounds checking.
     pub text_range: Option<(u64, u64)>,
+    /// Maps and platform variables that RFC 9669 LDDW subtypes name.
+    pub platform: EbpfPlatform,
 }
 
 impl Default for EbpfConfig {
@@ -127,6 +135,7 @@ impl Default for EbpfConfig {
             enable_stack_frame_gaps: true,
             max_instructions: None,
             text_range: None,
+            platform: EbpfPlatform::new(),
         }
     }
 }
@@ -154,15 +163,16 @@ pub struct EbpfCpu {
     /// Internal function registry mapping hash/key -> target byte PC (for SBPF V0–V2).
     pub function_registry: HashMap<u32, u64>,
     /// Registered syscall callbacks mapping key -> handler `(regs: &mut [u64; 11], mem: &mut dyn EbpfMemory) -> Result<u64, EbpfTrap>`.
-    #[allow(clippy::type_complexity)]
-    syscall_handlers: HashMap<
-        u32,
-        Box<
-            dyn FnMut(&mut [u64; 11], &mut dyn EbpfMemory) -> std::result::Result<u64, EbpfTrap>
-                + Send,
-        >,
-    >,
+    syscall_handlers: HashMap<u32, HelperHandler>,
+    /// Registered RFC 9669 helper callbacks by BTF ID, a namespace separate
+    /// from static helper IDs (RFC 9669 section 4.3.1).
+    btf_helpers: HashMap<u32, HelperHandler>,
 }
+
+/// A host helper: receives `r0..r10` and guest memory, returns `r0`.
+type HelperHandler = Box<
+    dyn FnMut(&mut [u64; 11], &mut dyn EbpfMemory) -> std::result::Result<u64, EbpfTrap> + Send,
+>;
 
 impl fmt::Debug for EbpfCpu {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -195,6 +205,7 @@ impl EbpfCpu {
             insn_count: 0,
             function_registry: HashMap::new(),
             syscall_handlers: HashMap::new(),
+            btf_helpers: HashMap::new(),
         }
     }
 
@@ -218,7 +229,7 @@ impl EbpfCpu {
     }
 
     /// Register a host syscall callback by 32-bit key. In RFC 9669 this
-    /// resolves static helper IDs only; BTF helper resolution is unsupported.
+    /// resolves static helper IDs only; see [`Self::register_btf_helper`].
     pub fn register_syscall<F>(&mut self, key: u32, handler: F)
     where
         F: FnMut(&mut [u64; 11], &mut dyn EbpfMemory) -> std::result::Result<u64, EbpfTrap>
@@ -226,6 +237,17 @@ impl EbpfCpu {
             + 'static,
     {
         self.syscall_handlers.insert(key, Box::new(handler));
+    }
+
+    /// Register an RFC 9669 helper callback by BTF ID (`CALL_IMM` with
+    /// `src == 2`). Its return value is written to `r0`.
+    pub fn register_btf_helper<F>(&mut self, id: u32, handler: F)
+    where
+        F: FnMut(&mut [u64; 11], &mut dyn EbpfMemory) -> std::result::Result<u64, EbpfTrap>
+            + Send
+            + 'static,
+    {
+        self.btf_helpers.insert(id, Box::new(handler));
     }
 
     /// Fetch and decode the instruction at `self.regs.pc`.
@@ -276,10 +298,10 @@ impl EbpfCpu {
                 src_type,
                 imm64,
             } => {
-                if self.config.dialect == EbpfDialect::Rfc9669 && src_type != 0 {
-                    return Err(EbpfTrap::UnsupportedPseudoLoad { pc, src_type });
-                }
-                self.regs.r[dst as usize] = imm64;
+                self.regs.r[dst as usize] =
+                    self.config
+                        .platform
+                        .load_imm64(self.config.dialect, pc, src_type, imm64)?;
             }
 
             EbpfOp::LoadReg {
@@ -402,11 +424,15 @@ impl EbpfCpu {
                     }
 
                     (AluWidth::W32, BinAluOp::Mul { sign_extend_32 }) => {
-                        let r32 = (d_val as i32).wrapping_mul(s_sext64 as i32);
+                        // The low 32 bits of a product do not depend on operand
+                        // signedness. The unsigned form is RFC 9669's definition,
+                        // and the formal tier can equate its multiplier circuit
+                        // bit-precisely (a signed one it cannot).
+                        let r32 = (d_val as u32).wrapping_mul(s_sext64 as u32);
                         if sign_extend_32 {
-                            r32 as i64 as u64
+                            r32 as i32 as i64 as u64
                         } else {
-                            r32 as u32 as u64
+                            u64::from(r32)
                         }
                     }
                     (AluWidth::W64, BinAluOp::Mul { .. }) => d_val.wrapping_mul(s_sext64),
@@ -427,7 +453,7 @@ impl EbpfCpu {
                             }
                             0
                         } else {
-                            u64::from(a / b)
+                            u64::from(arith::udiv32(a, b))
                         }
                     }
                     (
@@ -448,7 +474,7 @@ impl EbpfCpu {
                             }
                             0
                         } else {
-                            d_val / b
+                            arith::udiv64(d_val, b)
                         }
                     }
 
@@ -461,7 +487,7 @@ impl EbpfCpu {
                             }
                             u64::from(a)
                         } else {
-                            u64::from(a % b)
+                            u64::from(arith::urem32(a, b))
                         }
                     }
                     (
@@ -482,7 +508,7 @@ impl EbpfCpu {
                             }
                             d_val
                         } else {
-                            d_val % b
+                            arith::urem64(d_val, b)
                         }
                     }
 
@@ -505,7 +531,7 @@ impl EbpfCpu {
                             }
                             u64::from(i32::MIN as u32)
                         } else {
-                            u64::from((a / b) as u32)
+                            u64::from(arith::sdiv32(a, b) as u32)
                         }
                     }
                     (
@@ -527,7 +553,7 @@ impl EbpfCpu {
                             }
                             i64::MIN as u64
                         } else {
-                            (a / b) as u64
+                            arith::sdiv64(a, b) as u64
                         }
                     }
 
@@ -550,7 +576,7 @@ impl EbpfCpu {
                             }
                             0
                         } else {
-                            u64::from((a % b) as u32)
+                            u64::from(arith::srem32(a, b) as u32)
                         }
                     }
                     (
@@ -572,7 +598,7 @@ impl EbpfCpu {
                             }
                             0
                         } else {
-                            (a % b) as u64
+                            arith::srem64(a, b) as u64
                         }
                     }
 
@@ -710,7 +736,13 @@ impl EbpfCpu {
             EbpfOp::CallImm { src_kind, imm } => {
                 let key = imm as u32;
                 if self.config.dialect == EbpfDialect::Rfc9669 && src_kind == 2 {
-                    return Err(EbpfTrap::UnsupportedBtfHelper { pc, id: key });
+                    let Some(handler) = self.btf_helpers.get_mut(&key) else {
+                        self.regs.pc = next_pc;
+                        return Ok(Some(EbpfExit::BtfHelper { id: key, next_pc }));
+                    };
+                    self.regs.r[0] = handler(&mut self.regs.r, mem)?;
+                    self.regs.pc = next_pc;
+                    return Ok(None);
                 }
                 let static_syscalls = self
                     .config
@@ -730,17 +762,29 @@ impl EbpfCpu {
                     // PC-relative local function call: target_pc = next_pc + imm * 8
                     let delta_bytes = i64::from(imm).wrapping_mul(INSN_SIZE as i64);
                     let target_pc = (next_pc as i64).wrapping_add(delta_bytes) as u64;
-                    self.config.validate_target_pc(pc, target_pc)?;
-                    self.config
-                        .push_frame(&mut self.regs.r, &mut self.call_frames, pc, next_pc)?;
+                    self.config.enter_call(
+                        CallForm::Relative,
+                        &mut self.regs.r,
+                        &mut self.call_frames,
+                        pc,
+                        target_pc,
+                        next_pc,
+                        key,
+                    )?;
                     next_pc = target_pc;
                 } else if !static_syscalls
                     && let Some(&target_pc) = self.function_registry.get(&key)
                 {
                     // Legacy Solana SBPF V0–V2 internal function call by hash key
-                    self.config.validate_target_pc(pc, target_pc)?;
-                    self.config
-                        .push_frame(&mut self.regs.r, &mut self.call_frames, pc, next_pc)?;
+                    self.config.enter_call(
+                        CallForm::Registry,
+                        &mut self.regs.r,
+                        &mut self.call_frames,
+                        pc,
+                        target_pc,
+                        next_pc,
+                        key,
+                    )?;
                     next_pc = target_pc;
                 } else if external_resolved {
                     // The external-only legacy call has already completed.
@@ -761,9 +805,15 @@ impl EbpfCpu {
                 } else {
                     raw_target
                 };
-                self.config.validate_target_pc(pc, target_pc)?;
-                self.config
-                    .push_frame(&mut self.regs.r, &mut self.call_frames, pc, next_pc)?;
+                self.config.enter_call(
+                    CallForm::Register,
+                    &mut self.regs.r,
+                    &mut self.call_frames,
+                    pc,
+                    target_pc,
+                    next_pc,
+                    raw_target as u32,
+                )?;
                 next_pc = target_pc;
             }
 
@@ -794,12 +844,12 @@ impl EbpfCpu {
         {
             return Err(EbpfTrap::ExceededMaxInstructions { pc });
         }
-        let insn = self.fetch_and_decode(mem)?;
+        // The reference instruction meter charges an instruction before its
+        // fetch: a slot that overruns the text or fails to decode still
+        // consumes its compute unit (Anza `Interpreter::step`).
         self.insn_count = self.insn_count.wrapping_add(1);
-        match self.execute_decoded(&insn, mem) {
-            Ok(exit) => Ok(exit),
-            Err(trap) => Err(trap),
-        }
+        let insn = self.fetch_and_decode(mem)?;
+        self.execute_decoded(&insn, mem)
     }
 
     /// Run until an [`EbpfExit`] (program exit, unhandled syscall, or trap) occurs.
@@ -879,7 +929,9 @@ impl VCpu for EbpfVcpu {
                 self.halted = true;
                 Ok(Some(VcpuExit::Shutdown))
             }
-            Ok(Some(EbpfExit::Syscall { .. })) => Ok(Some(VcpuExit::SystemCall)),
+            Ok(Some(EbpfExit::Syscall { .. } | EbpfExit::BtfHelper { .. })) => {
+                Ok(Some(VcpuExit::SystemCall))
+            }
             Ok(Some(EbpfExit::Trap(trap))) | Err(trap) => {
                 self.halted = true;
                 Err(Error::Emulator(format!("eBPF trap: {trap:?}")))

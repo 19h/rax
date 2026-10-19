@@ -1374,8 +1374,12 @@ pub fn block_merging(func: &mut SmirFunction) -> usize {
             let Terminator::Branch { target } = &block.terminator else {
                 return None;
             };
+            // The entry block also has the function's implicit external
+            // predecessor (the caller), which `pred_count` does not see; it
+            // is never a single-predecessor merge target.
             (pred_count.get(target) == Some(&1)
                 && *target != block.id
+                && *target != func.entry
                 && !interpreter_frontiers.contains(target))
             .then_some((block.id, *target))
         });

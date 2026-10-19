@@ -302,12 +302,18 @@ fn instruction_limits_and_fault_pcs_survive_optimization() {
         assert_eq!(context.pc, 16);
         assert_eq!(context.insn_count, 2);
         assert_eq!(context.read_arch_reg(ArchReg::Ebpf(EbpfReg::R(1))), 2);
+        // The fault is the precise direct-CPU trap: instruction, effective
+        // start address, access width, and direction.
         assert!(matches!(
             interpreter.run(&mut context, &mut FlatMemory::new(32)),
-            ExitReason::MemoryFault {
-                addr: 0x1000,
-                write: false
-            }
+            ExitReason::EbpfTrap(EbpfTrap::MemoryFault {
+                pc: 16,
+                fault: rax::isa::ebpf::EbpfMemFault {
+                    addr: 0x1000,
+                    size: 8,
+                    write: false
+                }
+            })
         ));
         assert_eq!(context.pc, 16);
     }
@@ -447,4 +453,77 @@ fn syscall_exit_advances_pc_to_a_resumable_continuation() {
         ExitReason::Return { to: 42 }
     ));
     assert_eq!(context.pc, 24);
+}
+
+#[test]
+fn static_syscall_versions_trap_call_imm_with_other_source_kinds() {
+    // SBPF V3/V4 resolve CALL_IMM as a syscall only for source 0 and as a
+    // relative call only for source 1 (Anza `Interpreter::step`), while the
+    // verifier admits every source up to 10. Any other source kind is an
+    // unsupported instruction (a reserved-field decode trap here), even when
+    // the immediate is a registered syscall key: no plane may run the
+    // syscall or exit to the host.
+    const KEY: u32 = 0x1234_5678;
+    for version in [SbpfVersion::V3, SbpfVersion::V4] {
+        for src in 2..=10u8 {
+            let program = [
+                encode_insn(0x85, 0, src, 0, KEY as i32, Endian::Little),
+                encode_insn(0x95, 0, 0, 0, 0, Endian::Little),
+            ]
+            .concat();
+            assert_eq!(rax::isa::ebpf::verify_sbpf(&program, version), Ok(()));
+            let config = EbpfConfig {
+                text_range: Some((0, program.len() as u64)),
+                ..EbpfConfig::solana(version)
+            };
+            let expected = EbpfTrap::DecodeError {
+                pc: 0,
+                error: rax::isa::ebpf::EbpfDecodeError::ReservedField { opc: 0x85 },
+            };
+            let mut memory = FlatMemory::new(program.len());
+            memory.load(0, &program);
+
+            let mut direct = EbpfCpu::new(config.clone());
+            direct.register_syscall(KEY, |_, _| Ok(7));
+            let initial_regs = direct.regs.r;
+            assert_eq!(
+                direct.run(&mut memory),
+                EbpfExit::Trap(expected.clone()),
+                "{version:?} src={src}"
+            );
+            assert_eq!(direct.regs.r, initial_regs, "{version:?} src={src}");
+            assert_eq!(direct.regs.pc, 0);
+            assert_eq!(direct.insn_count, 1);
+
+            for opt in [OptLevel::O0, OptLevel::O1, OptLevel::O2] {
+                let mut lifter = EbpfLifter::solana(version);
+                lifter.register_syscall(KEY);
+                let mut function = lifter
+                    .lift_function(
+                        0,
+                        &CodeSlice(&program),
+                        &mut LiftContext::new(lifter.source_arch()),
+                    )
+                    .unwrap();
+                optimize_function(&mut function, opt);
+                let mut interpreter = SmirInterpreter::new();
+                interpreter.add_function(function);
+                let mut context = SmirContext::new_ebpf_with_config(config.clone());
+                let reason = interpreter.run(&mut context, &mut memory);
+                assert!(
+                    matches!(&reason, ExitReason::EbpfTrap(actual) if *actual == expected),
+                    "{version:?} src={src} {opt:?}: {reason:?}"
+                );
+                assert_eq!(context.pc, 0);
+                assert_eq!(context.insn_count, 1);
+                for (index, value) in initial_regs.iter().enumerate() {
+                    assert_eq!(
+                        context.read_arch_reg(ArchReg::Ebpf(EbpfReg::R(index as u8))),
+                        *value,
+                        "{version:?} src={src} {opt:?} r{index}"
+                    );
+                }
+            }
+        }
+    }
 }

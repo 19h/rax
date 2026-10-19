@@ -21,6 +21,7 @@ use crate::isa::ebpf::decode::{
     AluWidth, AtomicKind, BinAluOp, EbpfDecodeError, EbpfDialect, EbpfInsn, EbpfMemWidth, EbpfOp,
     EbpfSrc, EndianOp, INSN_SIZE, JmpCond, SbpfVersion, decode_insn,
 };
+use crate::isa::ebpf::platform::{EbpfHelperKey, EbpfPlatform};
 use crate::smir::ir::flags::FlagUpdate;
 use crate::smir::ir::ops::{OpKind, SmirOp};
 use crate::smir::ir::types::*;
@@ -40,6 +41,9 @@ pub struct EbpfLifter {
     pub function_registry: BTreeMap<u32, u64>,
     /// Loader syscall keys, needed to preserve legacy dual resolution.
     pub syscall_keys: BTreeSet<u32>,
+    /// Maps and platform variables that RFC 9669 LDDW subtypes name; the same
+    /// bindings as the executing [`crate::isa::ebpf::EbpfConfig::platform`].
+    pub platform: EbpfPlatform,
 }
 
 impl EbpfLifter {
@@ -50,6 +54,7 @@ impl EbpfLifter {
             endian,
             function_registry: BTreeMap::new(),
             syscall_keys: BTreeSet::new(),
+            platform: EbpfPlatform::new(),
         }
     }
 
@@ -76,7 +81,7 @@ impl EbpfLifter {
 
     fn emit_syscall(
         &self,
-        key: u32,
+        key: EbpfHelperKey,
         addr: GuestAddr,
         ctx: &mut LiftContext,
         ops: &mut Vec<SmirOp>,
@@ -87,7 +92,7 @@ impl EbpfLifter {
             addr,
             OpKind::Mov {
                 dst: num,
-                src: SrcOperand::Imm(key as i64),
+                src: SrcOperand::Imm(key.smir_key() as i64),
                 width: OpWidth::W64,
             },
         ));
@@ -788,19 +793,24 @@ impl EbpfLifter {
                 src_type,
                 imm64,
             } => {
-                if self.dialect == EbpfDialect::Rfc9669 && src_type != 0 {
-                    return Err(LiftError::Unsupported {
+                // Bindings are load-time constants (RFC 9669 section 5.4), so
+                // the resolved value is an immediate of the lifted program.
+                let value = self
+                    .platform
+                    .load_imm64(self.dialect, addr, src_type, imm64)
+                    .map_err(|_| LiftError::Unsupported {
                         addr,
-                        mnemonic: format!("LDDW subtype {src_type} requires a platform resolver"),
-                    });
-                }
+                        mnemonic: format!(
+                            "LDDW subtype {src_type} names an unbound platform object"
+                        ),
+                    })?;
                 let dst_reg = Self::reg(dst);
                 ops.push(SmirOp::new(
                     ctx.next_op_id(),
                     addr,
                     OpKind::Mov {
                         dst: dst_reg,
-                        src: SrcOperand::Imm64(imm64 as i64),
+                        src: SrcOperand::Imm64(value as i64),
                         width: OpWidth::W64,
                     },
                 ));
@@ -1224,10 +1234,9 @@ impl EbpfLifter {
 
             EbpfOp::CallImm { src_kind, imm } => {
                 if self.dialect == EbpfDialect::Rfc9669 && src_kind == 2 {
-                    return Err(LiftError::Unsupported {
-                        addr,
-                        mnemonic: "BTF helper call requires a platform resolver".into(),
-                    });
+                    // A BTF helper exits to the host in its own key namespace.
+                    self.emit_syscall(EbpfHelperKey::Btf(imm as u32), addr, ctx, &mut ops);
+                    return Ok((ops, ControlFlow::Syscall));
                 }
                 let static_syscalls = self
                     .dialect
@@ -1244,7 +1253,7 @@ impl EbpfLifter {
                     ))
                 } else if !static_syscalls && self.function_registry.contains_key(&(imm as u32)) {
                     if self.syscall_keys.contains(&(imm as u32)) {
-                        self.emit_syscall(imm as u32, addr, ctx, &mut ops);
+                        self.emit_syscall(EbpfHelperKey::Static(imm as u32), addr, ctx, &mut ops);
                     }
                     Ok((
                         ops,
@@ -1253,7 +1262,7 @@ impl EbpfLifter {
                         },
                     ))
                 } else {
-                    self.emit_syscall(imm as u32, addr, ctx, &mut ops);
+                    self.emit_syscall(EbpfHelperKey::Static(imm as u32), addr, ctx, &mut ops);
                     Ok((ops, ControlFlow::Syscall))
                 }
             }

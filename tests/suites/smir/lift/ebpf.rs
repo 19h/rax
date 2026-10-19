@@ -22,6 +22,10 @@ use rax::smir::lift::{LiftContext, MemoryReader, SmirLifter};
 use rax::smir::optimize::{OptLevel, optimize_function};
 use rax::smir::{EbpfLifter, ExitReason, SmirContext, SmirInterpreter};
 
+#[path = "ebpf_conformance_traps.rs"]
+mod conformance_traps;
+#[path = "ebpf_platform.rs"]
+mod platform;
 #[path = "ebpf_review_atomics.rs"]
 mod review_atomics;
 #[path = "ebpf_review_calls.rs"]
@@ -108,7 +112,9 @@ fn run_direct(
             regs: cpu.regs.r,
             r0,
         },
-        EbpfExit::Trap(_) | EbpfExit::Syscall { .. } => NormalizedOutcome::Trapped,
+        EbpfExit::Trap(_) | EbpfExit::Syscall { .. } | EbpfExit::BtfHelper { .. } => {
+            NormalizedOutcome::Trapped
+        }
     };
 
     let mut scratch_after = vec![0u8; init_scratch.len()];

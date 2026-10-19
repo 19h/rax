@@ -1,6 +1,7 @@
 //! Reachable control-flow discovery and exact guest byte extents.
 
 use super::EbpfLifter;
+use crate::isa::ebpf::{EbpfMemFault, EbpfOp, EbpfTrap, INSN_SIZE, WIDE_INSN_SIZE, decode_insn};
 use crate::smir::ir::ops::{OpKind, SmirOp};
 use crate::smir::ir::types::{FunctionId, GuestAddr, OpWidth};
 use crate::smir::ir::{
@@ -57,17 +58,48 @@ impl EbpfLifter {
 
         loop {
             // Try reading 16 bytes for potential LDDW; fall back to 8 bytes at end of buffer
-            let bytes = match mem.read(current_addr, 16) {
-                Ok(b) => b,
-                Err(_) => mem
-                    .read(current_addr, 8)
-                    .map_err(|e| LiftError::MemoryError {
-                        addr: current_addr,
-                        error: e,
-                    })?,
+            let bytes = mem
+                .read(current_addr, 16)
+                .or_else(|_| mem.read(current_addr, 8))
+                .ok();
+            let lifted = match &bytes {
+                Some(bytes) => self.lift_insn(current_addr, bytes, ctx),
+                None => Err(LiftError::Internal("unreadable eBPF slot".into())),
             };
-
-            let result = self.lift_insn(current_addr, &bytes, ctx)?;
+            let result = match lifted {
+                Ok(result) => result,
+                Err(error) => {
+                    // A reachable instruction that cannot be lifted traps only
+                    // if execution reaches it, exactly as the direct CPU does.
+                    let Some((trap, marker_size, consumed)) =
+                        self.deferred_trap(current_addr, bytes.as_deref())
+                    else {
+                        return Err(error);
+                    };
+                    all_ops.push(SmirOp::new(
+                        ctx.next_op_id(),
+                        current_addr,
+                        OpKind::EbpfInstruction {
+                            dialect: self.dialect,
+                            endian: self.endian,
+                            size: marker_size,
+                        },
+                    ));
+                    return Ok((
+                        SmirBlock {
+                            id: block_id,
+                            guest_pc: addr,
+                            phis: vec![],
+                            ops: all_ops,
+                            terminator: Terminator::Trap {
+                                kind: TrapKind::Ebpf(trap),
+                            },
+                            exec_count: 0,
+                        },
+                        current_addr.saturating_add(consumed),
+                    ));
+                }
+            };
             all_ops.extend(result.ops);
             current_addr = current_addr
                 .checked_add(result.bytes_consumed as u64)
@@ -144,6 +176,53 @@ impl EbpfLifter {
                 ));
             }
         }
+    }
+
+    /// The direct-CPU trap for an instruction at `pc` that cannot be lifted,
+    /// its fetch-marker size in bytes, and the guest bytes it occupies.
+    /// `bytes` holds up to 16 readable bytes, or `None` when the first slot
+    /// is unreadable. `EbpfCpu::fetch_and_decode` fetches 16 bytes for any
+    /// 0x18 opcode before decoding, so its second-slot fault precedes decode.
+    /// Returns `None` for failures with no direct-CPU equivalent.
+    fn deferred_trap(&self, pc: GuestAddr, bytes: Option<&[u8]>) -> Option<(EbpfTrap, u8, u64)> {
+        let slot = INSN_SIZE as u8;
+        if pc % INSN_SIZE as u64 != 0 {
+            return Some((
+                EbpfTrap::CallOutsideTextSegment { pc, target_pc: pc },
+                slot,
+                0,
+            ));
+        }
+        let fault = |addr| EbpfTrap::MemoryFault {
+            pc,
+            fault: EbpfMemFault {
+                addr,
+                size: INSN_SIZE,
+                write: false,
+            },
+        };
+        let Some(bytes) = bytes.filter(|bytes| bytes.len() >= INSN_SIZE) else {
+            return Some((fault(pc), slot, 0));
+        };
+        let wide = bytes[0] == 0x18;
+        let marker_size = if wide { WIDE_INSN_SIZE as u8 } else { slot };
+        if wide && bytes.len() < WIDE_INSN_SIZE {
+            return Some((fault(pc.wrapping_add(8)), marker_size, INSN_SIZE as u64));
+        }
+        let encoding = &bytes[..usize::from(marker_size)];
+        let trap = match decode_insn(encoding, self.dialect, self.endian) {
+            Err(error) => EbpfTrap::DecodeError { pc, error },
+            Ok(insn) => match insn.op {
+                EbpfOp::LoadImm64 {
+                    src_type, imm64, ..
+                } => self
+                    .platform
+                    .load_imm64(self.dialect, pc, src_type, imm64)
+                    .err()?,
+                _ => return None,
+            },
+        };
+        Some((trap, marker_size, u64::from(marker_size)))
     }
 
     pub(super) fn lift_reachable_function(

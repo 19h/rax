@@ -4,7 +4,75 @@ use super::{
     EbpfCallFrame, EbpfConfig, EbpfDialect, EbpfTrap, FRAME_PTR_REG, INSN_SIZE, MM_STACK_START,
 };
 
+/// How a call names its target; the reference interpreter orders its frame
+/// push and target check differently for each form.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum CallForm {
+    /// `CALLX` (register target).
+    Register,
+    /// `CALL_IMM` resolved through a legacy (V0-V2) function registry.
+    Registry,
+    /// `CALL_IMM` with a PC-relative immediate (RFC 9669 `src=1`, SBPF
+    /// V3/V4 `src=1`).
+    Relative,
+}
+
+impl CallForm {
+    /// Form of a lifted SMIR call: register calls are indirect; direct guest
+    /// targets are registry entries only in versions without static syscalls.
+    pub(crate) fn of_guest_call(dialect: EbpfDialect, indirect: bool) -> Self {
+        match (indirect, dialect.sbpf_version()) {
+            (true, _) => Self::Register,
+            (false, Some(version)) if !version.static_syscalls() => Self::Registry,
+            (false, _) => Self::Relative,
+        }
+    }
+}
+
 impl EbpfConfig {
+    /// Enter a call at `fault_pc` in the reference order, leaving every
+    /// register and frame unchanged when it traps.
+    ///
+    /// Anza `Interpreter::step` pushes the frame before checking a register
+    /// or registry target (`CallDepthExceeded` precedes
+    /// `CallOutsideTextSegment`), but resolves a V3/V4 relative call only
+    /// when its target lies in the text; an unresolved relative call is an
+    /// unsupported instruction (`UnsupportedSyscall` here) without a frame.
+    /// RFC 9669 defines no order; its calls check the target first.
+    pub(crate) fn enter_call(
+        &self,
+        form: CallForm,
+        regs: &mut [u64; 11],
+        frames: &mut Vec<EbpfCallFrame>,
+        fault_pc: u64,
+        target_pc: u64,
+        return_pc: u64,
+        key: u32,
+    ) -> std::result::Result<(), EbpfTrap> {
+        match (self.dialect, form) {
+            (EbpfDialect::Solana(_), CallForm::Register | CallForm::Registry) => {
+                let saved_frame_pointer = regs[FRAME_PTR_REG as usize];
+                self.push_frame(regs, frames, fault_pc, return_pc)?;
+                if let Err(trap) = self.validate_target_pc(fault_pc, target_pc) {
+                    frames.pop();
+                    regs[FRAME_PTR_REG as usize] = saved_frame_pointer;
+                    return Err(trap);
+                }
+                Ok(())
+            }
+            (EbpfDialect::Solana(_), CallForm::Relative) => {
+                if self.validate_target_pc(fault_pc, target_pc).is_err() {
+                    return Err(EbpfTrap::UnsupportedSyscall { pc: fault_pc, key });
+                }
+                self.push_frame(regs, frames, fault_pc, return_pc)
+            }
+            (EbpfDialect::Rfc9669, _) => {
+                self.validate_target_pc(fault_pc, target_pc)?;
+                self.push_frame(regs, frames, fault_pc, return_pc)
+            }
+        }
+    }
+
     pub(crate) fn initial_frame_pointer(&self) -> u64 {
         let stack_size = if self
             .dialect

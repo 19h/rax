@@ -1545,3 +1545,39 @@ fn x86_aes_sources_survive_dead_code_elimination() {
         OpKind::VBroadcast { dst, .. } if dst == key
     )));
 }
+
+#[test]
+fn dead_code_elimination_keeps_divisions_that_may_trap() {
+    // A division by a runtime divisor can raise a divide-by-zero (or signed
+    // overflow) trap even when its quotient and remainder are dead.
+    let quotient = VReg::Virtual(crate::smir::ir::types::VirtualId(0));
+    let divisor = VReg::Virtual(crate::smir::ir::types::VirtualId(1));
+    let dividend = VReg::Virtual(crate::smir::ir::types::VirtualId(2));
+    for signed in [false, true] {
+        let mut block = SmirBlock::new(BlockId(0), 0x1000);
+        let kind = if signed {
+            OpKind::DivS {
+                quot: quotient,
+                rem: None,
+                src1: dividend,
+                src2: SrcOperand::Reg(divisor),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            }
+        } else {
+            OpKind::DivU {
+                quot: quotient,
+                rem: None,
+                src1: dividend,
+                src2: SrcOperand::Reg(divisor),
+                width: OpWidth::W64,
+                flags: FlagUpdate::None,
+            }
+        };
+        assert!(kind.has_side_effects(), "{kind:?}");
+        block.push_op(SmirOp::new(OpId(0), 0x1000, kind));
+        block.set_terminator(Terminator::Return { values: Vec::new() });
+        dead_code_elimination_with(&mut block, &HashSet::new());
+        assert_eq!(block.ops.len(), 1, "signed={signed}");
+    }
+}

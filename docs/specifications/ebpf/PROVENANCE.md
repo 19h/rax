@@ -43,3 +43,37 @@ The 242 KiB archive supplies the complete interpreter/verifier and required sour
 modules for the independent execution tool; upstream Apache-2.0 license files are
 retained inside it. The four original bundled `ebpf.rs`, `program.rs`,
 `interpreter.rs`, and `verifier.rs` were verified identical to this commit.
+
+## External oracles for the conformance campaign (2026-10-15/16)
+
+### eBPF Foundation `bpf_conformance`
+
+`bpf_conformance/bpf_conformance-698e3795.tar.gz` is the unmodified source
+archive of Alan Jowett's `bpf_conformance` (the eBPF Foundation conformance
+suite, which treats the Linux kernel as the authoritative implementation) at
+commit `698e379525f44cf422bc1dbd43efe8495a76ab87`, retrieved 2026-10-15 from
+https://codeload.github.com/Alan-Jowett/bpf_conformance/tar.gz/698e379525f44cf422bc1dbd43efe8495a76ab87.
+SHA-256: `4e09b533c6713b39f5833500dcfbf56df3e18ce9403ee8d879e1d9004c17090e`
+(117 KiB). The project is MIT-licensed (`LICENSE`); test files carry SPDX
+`MIT` (Microsoft) or `Apache-2.0` (Big Switch Networks) headers, and the Apache
+License 2.0 text is included in `LICENSE`. It supplies the 313 test programs,
+the raw negative programs, the runner, the plugin protocol, and the assembler
+that produced `tests/generated/ebpf/bpf_conformance.txt`.
+
+Its runner requires the ELFIO submodule, which is not stored here:
+serge1/ELFIO commit `660e90514a2e80fba1c55f2cee07bbeda3d1c601` (the submodule
+pin of the commit above), from
+https://codeload.github.com/serge1/ELFIO/tar.gz/660e90514a2e80fba1c55f2cee07bbeda3d1c601,
+SHA-256 `418315e42d2c4e6745b66b672e05ca9e4d29a57d7d52404b2dda855155136084`
+(6.6 MiB, MIT). `tools/ebpf-conformance/run.py` downloads and verifies it.
+
+### Linux kernels
+
+| Byte order | Kernel | Execution | Provenance |
+|---|---|---|---|
+| Little | Linux `7.0.14-orbstack-00380-ga7e0a2dc9535` aarch64 (OrbStack 29.4.0 Docker engine) | arm64 BPF JIT; `CONFIG_BPF_JIT_ALWAYS_ON=y` (read from `/proc/config.gz`) | Host-provided; the freestanding harness runs in `alpine@sha256:294b683cb724975bec92580e1e685676bd4b50bda910ddb8c51d4cabeaec77e6`, which only supplies a filesystem |
+| Big | Debian 13 `linux-image-6.12.107+deb13-s390x` `6.12.107-1` | Generic interpreter: the package config sets `CONFIG_BPF_SYSCALL=y` and no `CONFIG_BPF_JIT` | http://deb.debian.org/debian/pool/main/l/linux/linux-image-6.12.107+deb13-s390x_6.12.107-1_s390x.deb, SHA-256 `72f968758d4ffbb07ad0887d968beec650f961fdc9d3fabcf87a678626ddfd26` (equal to the trixie `Packages` index entry), retrieved 2026-10-15; extracted `boot/vmlinuz-6.12.107+deb13-s390x` SHA-256 `354ea1113285149ad81e0487a34867fdfa827b02b21be8153f576ee7cbba71be`; GPL-2.0 |
+
+The 52 MiB package and the kernel are not stored: `run.py` downloads and
+verifies them. QEMU 11.1.1 `qemu-system-s390x` (Homebrew) boots the kernel
+under TCG (`-M s390-ccw-virtio -cpu max`) with the harness as PID 1.

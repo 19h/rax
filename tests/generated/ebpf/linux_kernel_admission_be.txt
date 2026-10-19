@@ -1,0 +1,589 @@
+# Linux kernel verifier admission of the RFC 9669 encoding partitions of
+# tests/support/ebpf_rfc_oracle.rs (admission_candidates, be),
+# compared with the rax RFC 9669 decoder.
+# Kernel: Linux 6.12.107+deb13-s390x (Debian 13) under QEMU TCG, BPF_PROG_TYPE_SYSCALL verifier
+# Generator: python3 tools/ebpf-conformance/run.py admission-be --export
+# `decoder` pins the digest of the rax verdicts the campaign compared;
+# `row` is one (rax verdict, kernel class, verifier message) class;
+# `disagree` lists each encoding where the two differ, with its reason.
+encodings 1980208
+decoder 0c7929672d4c3a20e8166a9f7716b8a9
+row 2500 rax=InvalidAtomicImm kernel=syntax [BPF_ATOMIC uses invalid atomic opcode #] e.g. c300000000000008
+row 500 rax=InvalidAtomicImm kernel=syntax [BPF_ATOMIC uses invalid atomic opcode #fffffff] e.g. c30000007fffffff
+row 500 rax=InvalidAtomicImm kernel=syntax [BPF_ATOMIC uses invalid atomic opcode ffffffc#] e.g. c3000000ffffffc0
+row 742 rax=InvalidAtomicImm kernel=syntax [BPF_ATOMIC uses invalid atomic opcode ffffffff] e.g. c3000000ffffffff
+row 13134 rax=InvalidEndianImm kernel=syntax [BPF_END uses reserved fields] e.g. d400000000000000
+row 4378 rax=InvalidEndianImm kernel=syntax [unknown opcode df] e.g. df00000000000000
+row 1 rax=InvalidOpcode kernel=accepted [] e.g. e500000100000000
+row 1 rax=InvalidOpcode kernel=semantic [ R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#=fp# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=#] e.g. e500ffff00000000
+row 45768 rax=InvalidOpcode kernel=semantic [BPF_LD_[ABS|IND] instructions not allowed for this program type] e.g. 2000000000000000
+row 2 rax=InvalidOpcode kernel=semantic [R#_rw=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#=fp# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=#] e.g. e500fff800000000
+row 1687 rax=InvalidOpcode kernel=semantic [invalid may_goto off # imm #] e.g. e500000000000000
+row 452 rax=InvalidOpcode kernel=semantic [invalid may_goto off # imm -#] e.g. e5000000ffffffff
+row 1761 rax=InvalidOpcode kernel=semantic [invalid may_goto off -# imm #] e.g. e500ffff00000001
+row 294 rax=InvalidOpcode kernel=semantic [invalid may_goto off -# imm -#] e.g. e500ffffffffffff
+row 34300 rax=InvalidOpcode kernel=semantic [jump out of range from insn # to #] e.g. 0d00000800000000
+row 189954 rax=InvalidOpcode kernel=syntax [BPF_LDX uses reserved fields] e.g. 0100000000000000
+row 237214 rax=InvalidOpcode kernel=syntax [unknown opcode #] e.g. 0000000000000000
+row 61024 rax=InvalidOpcode kernel=syntax [unknown opcode #a] e.g. 0a00000000000000
+row 61024 rax=InvalidOpcode kernel=syntax [unknown opcode #b] e.g. 0b00000000000000
+row 5428 rax=InvalidOpcode kernel=syntax [unknown opcode #c] e.g. 8c00000000000000
+row 17254 rax=InvalidOpcode kernel=syntax [unknown opcode #d] e.g. 0d00000000000000
+row 19454 rax=InvalidOpcode kernel=syntax [unknown opcode #e] e.g. 0e00000000000000
+row 5428 rax=InvalidOpcode kernel=syntax [unknown opcode #f] e.g. 8f00000000000000
+row 30512 rax=InvalidOpcode kernel=syntax [unknown opcode a#] e.g. a000000000000000
+row 7628 rax=InvalidOpcode kernel=syntax [unknown opcode aa] e.g. aa00000000000000
+row 7628 rax=InvalidOpcode kernel=syntax [unknown opcode ab] e.g. ab00000000000000
+row 30512 rax=InvalidOpcode kernel=syntax [unknown opcode b#] e.g. b000000000000000
+row 7628 rax=InvalidOpcode kernel=syntax [unknown opcode ba] e.g. ba00000000000000
+row 7628 rax=InvalidOpcode kernel=syntax [unknown opcode bb] e.g. bb00000000000000
+row 22884 rax=InvalidOpcode kernel=syntax [unknown opcode c#] e.g. c000000000000000
+row 7628 rax=InvalidOpcode kernel=syntax [unknown opcode ca] e.g. ca00000000000000
+row 7628 rax=InvalidOpcode kernel=syntax [unknown opcode cb] e.g. cb00000000000000
+row 30512 rax=InvalidOpcode kernel=syntax [unknown opcode d#] e.g. d000000000000000
+row 7628 rax=InvalidOpcode kernel=syntax [unknown opcode da] e.g. da00000000000000
+row 1050 rax=InvalidOpcode kernel=syntax [unknown opcode df] e.g. df00000000000010
+row 45566 rax=InvalidOpcode kernel=syntax [unknown opcode e#] e.g. e000000000000000
+row 7628 rax=InvalidOpcode kernel=syntax [unknown opcode ea] e.g. ea00000000000000
+row 7628 rax=InvalidOpcode kernel=syntax [unknown opcode eb] e.g. eb00000000000000
+row 3863 rax=InvalidOpcode kernel=syntax [unknown opcode ec] e.g. ec00000000000000
+row 4198 rax=InvalidOpcode kernel=syntax [unknown opcode ed] e.g. ed00000000000000
+row 4198 rax=InvalidOpcode kernel=syntax [unknown opcode ee] e.g. ee00000000000000
+row 3863 rax=InvalidOpcode kernel=syntax [unknown opcode ef] e.g. ef00000000000000
+row 49764 rax=InvalidOpcode kernel=syntax [unknown opcode f#] e.g. f000000000000000
+row 7628 rax=InvalidOpcode kernel=syntax [unknown opcode fa] e.g. fa00000000000000
+row 7628 rax=InvalidOpcode kernel=syntax [unknown opcode fb] e.g. fb00000000000000
+row 3863 rax=InvalidOpcode kernel=syntax [unknown opcode fc] e.g. fc00000000000000
+row 4198 rax=InvalidOpcode kernel=syntax [unknown opcode fd] e.g. fd00000000000000
+row 4198 rax=InvalidOpcode kernel=syntax [unknown opcode fe] e.g. fe00000000000000
+row 3863 rax=InvalidOpcode kernel=syntax [unknown opcode ff] e.g. ff00000000000000
+row 24 rax=InvalidRegister kernel=semantic [addr_space_cast insn can only be used in a program that has an associated arena] e.g. bf0b000100000001
+row 312 rax=InvalidRegister kernel=semantic [addr_space_cast insn can only convert between address space # and #] e.g. bf0b000100000000
+row 275 rax=InvalidRegister kernel=semantic [fd # is not pointing to valid bpf_map] e.g. 18b10000000000000000000000000000
+row 45 rax=InvalidRegister kernel=semantic [fd -# is not pointing to valid bpf_map] e.g. 18b20000ffffffff00000000ffffffff
+row 10 rax=InvalidRegister kernel=semantic [invalid module BTF object FD specified.] e.g. 18b30000000000010000000000000001
+row 58520 rax=InvalidRegister kernel=semantic [jump out of range from insn # to #] e.g. 15b0000800000000
+row 15 rax=InvalidRegister kernel=semantic [last insn is not an exit or jmp] e.g. 18b40000000000000000000000000000
+row 5 rax=InvalidRegister kernel=semantic [pseudo btf_id # in ldimm# isn't KIND_VAR or KIND_FUNC] e.g. 18b30000000000000000000000000000
+row 126578 rax=InvalidRegister kernel=syntax [BPF_ALU uses reserved fields] e.g. 04b0000100000000
+row 2400 rax=InvalidRegister kernel=syntax [BPF_ATOMIC uses invalid atomic opcode #] e.g. c30b000000000008
+row 480 rax=InvalidRegister kernel=syntax [BPF_ATOMIC uses invalid atomic opcode #fffffff] e.g. c30b00007fffffff
+row 480 rax=InvalidRegister kernel=syntax [BPF_ATOMIC uses invalid atomic opcode ffffffc#] e.g. c30b0000ffffffc0
+row 750 rax=InvalidRegister kernel=syntax [BPF_ATOMIC uses invalid atomic opcode ffffffff] e.g. c30b0000ffffffff
+row 6582 rax=InvalidRegister kernel=syntax [BPF_END uses reserved fields] e.g. d4b0000000000000
+row 16720 rax=InvalidRegister kernel=syntax [BPF_JMP/JMP# uses reserved fields] e.g. 1d0b000000000001
+row 23730 rax=InvalidRegister kernel=syntax [BPF_LDX uses reserved fields] e.g. 610b000000000001
+row 252 rax=InvalidRegister kernel=syntax [BPF_LD_IMM# uses reserved fields] e.g. 18b00001000000000000000000000000
+row 11070 rax=InvalidRegister kernel=syntax [BPF_MOV uses reserved fields] e.g. b4b0000100000000
+row 4386 rax=InvalidRegister kernel=syntax [BPF_NEG uses reserved fields] e.g. 84b0000000000001
+row 7620 rax=InvalidRegister kernel=syntax [BPF_ST uses reserved fields] e.g. 62b1000000000000
+row 13560 rax=InvalidRegister kernel=syntax [BPF_STX uses reserved fields] e.g. 630b000000000001
+row 69966 rax=InvalidRegister kernel=syntax [R# is invalid] e.g. 04b0000000000000
+row 20 rax=InvalidRegister kernel=syntax [fd_idx without fd_array is invalid] e.g. 18b50000000000000000000000000000
+row 7840 rax=InvalidRegister kernel=syntax [invalid bpf_ld_imm# insn] e.g. 18b00000000000001800000000000000
+row 2200 rax=InvalidRegister kernel=syntax [unknown opcode #c] e.g. 8cb0000000000000
+row 2200 rax=InvalidRegister kernel=syntax [unknown opcode #d] e.g. 8db0000000000000
+row 2200 rax=InvalidRegister kernel=syntax [unknown opcode #f] e.g. 8fb0000000000000
+row 2200 rax=InvalidRegister kernel=syntax [unknown opcode df] e.g. dfb0000000000000
+row 4400 rax=InvalidRegister kernel=syntax [unknown opcode e#] e.g. e4b0000000000000
+row 3765 rax=InvalidRegister kernel=syntax [unknown opcode ec] e.g. ec0b000000000000
+row 3765 rax=InvalidRegister kernel=syntax [unknown opcode ef] e.g. ef0b000000000000
+row 4400 rax=InvalidRegister kernel=syntax [unknown opcode f#] e.g. f4b0000000000000
+row 3765 rax=InvalidRegister kernel=syntax [unknown opcode fc] e.g. fc0b000000000000
+row 3765 rax=InvalidRegister kernel=syntax [unknown opcode ff] e.g. ff0b000000000000
+row 1535 rax=InvalidRegister kernel=syntax [unrecognized bpf_ld_imm# insn] e.g. 18b10000000000010000000000000001
+row 1011 rax=ReservedField kernel=semantic [JIT is required for calling kernel function] e.g. 8502000100000000
+row 25 rax=ReservedField kernel=semantic [addr_space_cast insn can only be used in a program that has an associated arena] e.g. bf00000100000001
+row 325 rax=ReservedField kernel=semantic [addr_space_cast insn can only convert between address space # and #] e.g. bf00000100000000
+row 759 rax=ReservedField kernel=semantic [call to invalid destination] e.g. 8501000100000008
+row 601 rax=ReservedField kernel=semantic [fd # is not pointing to valid bpf_map] e.g. 18010001000000000000000000000000
+row 93 rax=ReservedField kernel=semantic [fd -# is not pointing to valid bpf_map] e.g. 18020001ffffffff00000000ffffffff
+row 1597 rax=ReservedField kernel=semantic [frame pointer is read only] e.g. 04a0000000000000
+row 22 rax=ReservedField kernel=semantic [invalid module BTF object FD specified.] e.g. 18030000000000010000000000000001
+row 89776 rax=ReservedField kernel=semantic [jump out of range from insn # to #] e.g. 0500000800000001
+row 978 rax=ReservedField kernel=semantic [jump out of range from insn # to -#] e.g. 060000017fffffff
+row 275 rax=ReservedField kernel=semantic [last insn is not an exit or jmp] e.g. 8501000100000000
+row 1 rax=ReservedField kernel=semantic [pseudo btf_id # in ldimm# isn't KIND_VAR or KIND_FUNC] e.g. 18a30000000000000000000000000000
+row 11854 rax=ReservedField kernel=semantic [unreachable insn #] e.g. 0500000100000001
+row 198544 rax=ReservedField kernel=syntax [BPF_ALU uses reserved fields] e.g. 0400000100000000
+row 5555 rax=ReservedField kernel=syntax [BPF_CALL uses reserved fields] e.g. 8500000100000000
+row 3105 rax=ReservedField kernel=syntax [BPF_END uses reserved fields] e.g. d400000100000010
+row 2196 rax=ReservedField kernel=syntax [BPF_JA uses reserved fields] e.g. 0500000000000001
+row 98164 rax=ReservedField kernel=syntax [BPF_JMP/JMP# uses reserved fields] e.g. 1501000000000000
+row 24444 rax=ReservedField kernel=syntax [BPF_LDX uses reserved fields] e.g. 6100000000000001
+row 630 rax=ReservedField kernel=syntax [BPF_LD_IMM# uses reserved fields] e.g. 18000001000000000000000000000000
+row 17609 rax=ReservedField kernel=syntax [BPF_MOV uses reserved fields] e.g. b400000100000000
+row 10824 rax=ReservedField kernel=syntax [BPF_NEG uses reserved fields] e.g. 8400000000000001
+row 18780 rax=ReservedField kernel=syntax [BPF_ST uses reserved fields] e.g. 6201000000000000
+row 13968 rax=ReservedField kernel=syntax [BPF_STX uses reserved fields] e.g. 6300000000000001
+row 12 rax=ReservedField kernel=syntax [div by zero] e.g. 34a0000000000000
+row 4 rax=ReservedField kernel=syntax [fd_idx without fd_array is invalid] e.g. 18a50000000000000000000000000000
+row 19600 rax=ReservedField kernel=syntax [invalid bpf_ld_imm# insn] e.g. 18000000000000001800000000000000
+row 45 rax=ReservedField kernel=syntax [invalid shift #] e.g. 64a0000000000020
+row 18 rax=ReservedField kernel=syntax [invalid shift -#] e.g. 64a00000ffffffff
+row 3791 rax=ReservedField kernel=syntax [unrecognized bpf_ld_imm# insn] e.g. 18010000000000010000000000000001
+row 15583 rax=decodes kernel=accepted [] e.g. 0400000000000000
+row 330 rax=decodes kernel=semantic [ R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#=fp# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=#] e.g. 15a0ffff00000000
+row 88 rax=decodes kernel=semantic [#_rw=# R#_rw=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#=fp# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=#] e.g. 1d1afff800000000
+row 88 rax=decodes kernel=semantic [#_rw=# R#_w=# R#_rw=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#=fp# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=#] e.g. 1d2afff800000000
+row 44 rax=decodes kernel=semantic [#_rw=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_rw=# R#=fp# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=#] e.g. 1d9afff800000000
+row 470 rax=decodes kernel=semantic [#_rw=P# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#=fp# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=#] e.g. 1500ffff00000000
+row 150 rax=decodes kernel=semantic [#_w=# R#_rw=P# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#=fp# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=#] e.g. 1510ffff00000000
+row 150 rax=decodes kernel=semantic [#_w=# R#_w=# R#_rw=P# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#=fp# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=#] e.g. 1520ffff00000000
+row 150 rax=decodes kernel=semantic [#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_rw=P# R#=fp# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=#] e.g. 1590ffff00000000
+row 17 rax=decodes kernel=semantic [JIT is required for calling kernel function] e.g. 8502000000000000
+row 148 rax=decodes kernel=semantic [R# #-bit pointer arithmetic prohibited] e.g. 0c0a000000000000
+row 14 rax=decodes kernel=semantic [R# bitwise operator &= on pointer prohibited] e.g. 5f0a000000000000
+row 14 rax=decodes kernel=semantic [R# bitwise operator ^= on pointer prohibited] e.g. af0a000000000000
+row 14 rax=decodes kernel=semantic [R# bitwise operator |= on pointer prohibited] e.g. 4f0a000000000000
+row 7094 rax=decodes kernel=semantic [R# invalid mem access 'scalar'] e.g. 6100000000000000
+row 18 rax=decodes kernel=semantic [R# pointer arithmetic with %= operator prohibited] e.g. 9f0a000000000000
+row 14 rax=decodes kernel=semantic [R# pointer arithmetic with *= operator prohibited] e.g. 2f0a000000000000
+row 18 rax=decodes kernel=semantic [R# pointer arithmetic with /= operator prohibited] e.g. 3f0a000000000000
+row 14 rax=decodes kernel=semantic [R# pointer arithmetic with <<= operator prohibited] e.g. 6f0a000000000000
+row 14 rax=decodes kernel=semantic [R# pointer arithmetic with >>= operator prohibited] e.g. 7f0a000000000000
+row 14 rax=decodes kernel=semantic [R# pointer arithmetic with s>>= operator prohibited] e.g. cf0a000000000000
+row 14 rax=decodes kernel=semantic [R# tried to subtract pointer from scalar] e.g. 1f0a000000000000
+row 1 rax=decodes kernel=semantic [R# type=scalar expected=fp, pkt, pkt_meta, map_key, map_value, mem, ringbuf_mem, buf, trusted_ptr_] e.g. 8500000000000010
+row 2 rax=decodes kernel=semantic [R# type=scalar expected=map_ptr] e.g. 8500000000000001
+row 986 rax=decodes kernel=semantic [R#_rw=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#=fp# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=#] e.g. 1590fff000000000
+row 44 rax=decodes kernel=semantic [R#_w=# R#_rw=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#=fp# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=#] e.g. 1d1affff00000000
+row 44 rax=decodes kernel=semantic [R#_w=# R#_w=# R#_rw=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#=fp# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=#] e.g. 1d2affff00000000
+row 44 rax=decodes kernel=semantic [R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_rw=# R#=fp# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=#] e.g. 1d9affff00000000
+row 320 rax=decodes kernel=semantic [_rw=# R#_rw=P# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#=fp# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=#] e.g. 1510fff800000000
+row 320 rax=decodes kernel=semantic [_rw=# R#_w=# R#_rw=P# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#=fp# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=#] e.g. 1520fff800000000
+row 150 rax=decodes kernel=semantic [_rw=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_rw=P# R#=fp# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=#] e.g. 1590fff800000000
+row 11 rax=decodes kernel=semantic [call to invalid destination] e.g. 8501000000000008
+row 82 rax=decodes kernel=semantic [fd # is not pointing to valid bpf_map] e.g. 18010000000000000000000000000000
+row 18 rax=decodes kernel=semantic [fd -# is not pointing to valid bpf_map] e.g. 18020000ffffffff00000000ffffffff
+row 5 rax=decodes kernel=semantic [invalid func unknown##] e.g. 85000000000000e1
+row 3 rax=decodes kernel=semantic [invalid func unknown#-#] e.g. 85000000ffffffff
+row 538 rax=decodes kernel=semantic [invalid read from stack R# off=# size=#] e.g. 610a000000000000
+row 7 rax=decodes kernel=semantic [invalid size of register spill] e.g. 63aafff800000000
+row 474 rax=decodes kernel=semantic [invalid write to stack R# off=# size=#] e.g. 62a0000000000000
+row 10464 rax=decodes kernel=semantic [jump out of range from insn # to #] e.g. 0500000800000000
+row 2 rax=decodes kernel=semantic [jump out of range from insn # to -#] e.g. 060000007fffffff
+row 16 rax=decodes kernel=semantic [last insn is not an exit or jmp] e.g. 8501000000000000
+row 364 rax=decodes kernel=semantic [misaligned access off #+#+# size #] e.g. c300000100000000
+row 182 rax=decodes kernel=semantic [misaligned access off #+#+-# size #] e.g. c300ffff00000000
+row 258 rax=decodes kernel=semantic [misaligned access off (#x#; #xffffffffffffffff)+#+# size #] e.g. c300000000000001
+row 102 rax=decodes kernel=semantic [misaligned access off (#x#; #xffffffffffffffff)+#+-# size #] e.g. c300ffff00000001
+row 262 rax=decodes kernel=semantic [misaligned stack access off #+#+# size #] e.g. 610a000100000000
+row 131 rax=decodes kernel=semantic [misaligned stack access off #+#+-# size #] e.g. 610affff00000000
+row 1 rax=decodes kernel=semantic [program of this type cannot use helper bpf_bind##] e.g. 8500000000000040
+row 1 rax=decodes kernel=semantic [program of this type cannot use helper bpf_get_local_storage##] e.g. 8500000000000051
+row 1 rax=decodes kernel=semantic [program of this type cannot use helper bpf_skb_change_type##] e.g. 8500000000000020
+row 2 rax=decodes kernel=semantic [program of this type cannot use helper bpf_unspec##] e.g. 8500000000000000
+row 10 rax=decodes kernel=semantic [pseudo btf_id # in ldimm# isn't KIND_VAR or KIND_FUNC] e.g. 18030000000000000000000000000000
+row 60 rax=decodes kernel=semantic [rw=P# R#_rw=P# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#=fp# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=#] e.g. 1d01ffff00000000
+row 60 rax=decodes kernel=semantic [rw=P# R#_w=# R#_rw=P# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#=fp# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=#] e.g. 1d02ffff00000000
+row 40 rax=decodes kernel=semantic [rw=P# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_rw=P# R#=fp# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=#] e.g. 1d09ffff00000000
+row 10 rax=decodes kernel=semantic [unreachable insn #] e.g. 0500000100000000
+row 60 rax=decodes kernel=semantic [w=# R#_rw=P# R#_rw=P# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#=fp# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=#] e.g. 1d12ffff00000000
+row 40 rax=decodes kernel=semantic [w=# R#_rw=P# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_rw=P# R#=fp# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=#] e.g. 1d19ffff00000000
+row 40 rax=decodes kernel=semantic [w=# R#_w=# R#_rw=P# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_w=# R#_rw=P# R#=fp# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=# fp-#_w=#] e.g. 1d29ffff00000000
+row 72 rax=decodes kernel=syntax [div by zero] e.g. 3400000000000000
+row 40 rax=decodes kernel=syntax [fd_idx without fd_array is invalid] e.g. 18050000000000000000000000000000
+row 180 rax=decodes kernel=syntax [invalid shift #] e.g. 6400000000000020
+row 108 rax=decodes kernel=syntax [invalid shift -#] e.g. 64000000ffffffff
+disagree 3400000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 3400000100000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 3410000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 3410000100000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 3420000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 3420000100000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 3490000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 3490000100000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 3700000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 3700000100000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 3710000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 3710000100000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 3720000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 3720000100000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 3790000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 3790000100000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 64000000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 6400000000000020 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 6400000000000040 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 6400000000000051 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 64000000000000e1 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 64000000000000f1 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 6400000000000100 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 6400000000000110 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 640000007fffffff rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 64000000ffffffc0 rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 64100000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 6410000000000020 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 6410000000000040 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 6410000000000051 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 64100000000000e1 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 64100000000000f1 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 6410000000000100 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 6410000000000110 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 641000007fffffff rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 64100000ffffffc0 rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 64200000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 6420000000000020 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 6420000000000040 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 6420000000000051 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 64200000000000e1 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 64200000000000f1 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 6420000000000100 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 6420000000000110 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 642000007fffffff rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 64200000ffffffc0 rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 64900000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 6490000000000020 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 6490000000000040 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 6490000000000051 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 64900000000000e1 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 64900000000000f1 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 6490000000000100 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 6490000000000110 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 649000007fffffff rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 64900000ffffffc0 rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 67000000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 6700000000000040 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 6700000000000051 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 67000000000000e1 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 67000000000000f1 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 6700000000000100 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 6700000000000110 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 670000007fffffff rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 67000000ffffffc0 rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 67100000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 6710000000000040 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 6710000000000051 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 67100000000000e1 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 67100000000000f1 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 6710000000000100 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 6710000000000110 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 671000007fffffff rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 67100000ffffffc0 rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 67200000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 6720000000000040 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 6720000000000051 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 67200000000000e1 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 67200000000000f1 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 6720000000000100 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 6720000000000110 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 672000007fffffff rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 67200000ffffffc0 rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 67900000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 6790000000000040 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 6790000000000051 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 67900000000000e1 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 67900000000000f1 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 6790000000000100 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 6790000000000110 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 679000007fffffff rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 67900000ffffffc0 rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 74000000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 7400000000000020 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 7400000000000040 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 7400000000000051 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 74000000000000e1 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 74000000000000f1 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 7400000000000100 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 7400000000000110 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 740000007fffffff rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 74000000ffffffc0 rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 74100000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 7410000000000020 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 7410000000000040 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 7410000000000051 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 74100000000000e1 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 74100000000000f1 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 7410000000000100 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 7410000000000110 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 741000007fffffff rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 74100000ffffffc0 rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 74200000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 7420000000000020 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 7420000000000040 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 7420000000000051 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 74200000000000e1 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 74200000000000f1 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 7420000000000100 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 7420000000000110 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 742000007fffffff rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 74200000ffffffc0 rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 74900000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 7490000000000020 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 7490000000000040 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 7490000000000051 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 74900000000000e1 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 74900000000000f1 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 7490000000000100 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 7490000000000110 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 749000007fffffff rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 74900000ffffffc0 rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 77000000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 7700000000000040 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 7700000000000051 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 77000000000000e1 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 77000000000000f1 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 7700000000000100 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 7700000000000110 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 770000007fffffff rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 77000000ffffffc0 rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 77100000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 7710000000000040 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 7710000000000051 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 77100000000000e1 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 77100000000000f1 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 7710000000000100 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 7710000000000110 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 771000007fffffff rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 77100000ffffffc0 rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 77200000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 7720000000000040 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 7720000000000051 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 77200000000000e1 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 77200000000000f1 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 7720000000000100 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 7720000000000110 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 772000007fffffff rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 77200000ffffffc0 rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 77900000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 7790000000000040 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 7790000000000051 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 77900000000000e1 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 77900000000000f1 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 7790000000000100 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 7790000000000110 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 779000007fffffff rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 77900000ffffffc0 rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 9400000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 9400000100000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 9410000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 9410000100000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 9420000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 9420000100000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 9490000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 9490000100000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 9700000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 9700000100000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 9710000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 9710000100000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 9720000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 9720000100000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 9790000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 9790000100000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree c4000000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c400000000000020 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c400000000000040 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c400000000000051 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c4000000000000e1 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c4000000000000f1 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c400000000000100 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c400000000000110 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c40000007fffffff rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c4000000ffffffc0 rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c4100000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c410000000000020 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c410000000000040 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c410000000000051 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c4100000000000e1 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c4100000000000f1 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c410000000000100 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c410000000000110 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c41000007fffffff rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c4100000ffffffc0 rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c4200000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c420000000000020 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c420000000000040 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c420000000000051 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c4200000000000e1 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c4200000000000f1 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c420000000000100 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c420000000000110 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c42000007fffffff rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c4200000ffffffc0 rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c4900000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c490000000000020 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c490000000000040 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c490000000000051 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c4900000000000e1 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c4900000000000f1 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c490000000000100 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c490000000000110 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c49000007fffffff rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c4900000ffffffc0 rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c7000000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c700000000000040 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c700000000000051 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c7000000000000e1 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c7000000000000f1 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c700000000000100 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c700000000000110 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c70000007fffffff rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c7000000ffffffc0 rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c7100000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c710000000000040 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c710000000000051 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c7100000000000e1 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c7100000000000f1 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c710000000000100 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c710000000000110 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c71000007fffffff rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c7100000ffffffc0 rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c7200000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c720000000000040 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c720000000000051 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c7200000000000e1 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c7200000000000f1 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c720000000000100 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c720000000000110 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c72000007fffffff rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c7200000ffffffc0 rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c7900000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c790000000000040 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c790000000000051 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c7900000000000e1 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c7900000000000f1 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c790000000000100 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c790000000000110 rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c79000007fffffff rax=decodes kernel=syntax [invalid shift #] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c7900000ffffffc0 rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree e500000100000000 rax=InvalidOpcode kernel=accepted [] Linux may_goto (BPF_JCOND) is not part of RFC 9669
+disagree 18050000000000000000000000000000 rax=decodes kernel=syntax [fd_idx without fd_array is invalid] RFC 9669 5.4.1 map_by_idx indexes the program's map set; none was bound at load (rax: UnsupportedPseudoLoad when executed unbound)
+disagree 18060000000000000000000000000000 rax=decodes kernel=syntax [fd_idx without fd_array is invalid] RFC 9669 5.4.1 map_by_idx indexes the program's map set; none was bound at load (rax: UnsupportedPseudoLoad when executed unbound)
+disagree 18060000000000010000000000000001 rax=decodes kernel=syntax [fd_idx without fd_array is invalid] RFC 9669 5.4.1 map_by_idx indexes the program's map set; none was bound at load (rax: UnsupportedPseudoLoad when executed unbound)
+disagree 18060000ffffffff00000000ffffffff rax=decodes kernel=syntax [fd_idx without fd_array is invalid] RFC 9669 5.4.1 map_by_idx indexes the program's map set; none was bound at load (rax: UnsupportedPseudoLoad when executed unbound)
+disagree 18150000000000000000000000000000 rax=decodes kernel=syntax [fd_idx without fd_array is invalid] RFC 9669 5.4.1 map_by_idx indexes the program's map set; none was bound at load (rax: UnsupportedPseudoLoad when executed unbound)
+disagree 18160000000000000000000000000000 rax=decodes kernel=syntax [fd_idx without fd_array is invalid] RFC 9669 5.4.1 map_by_idx indexes the program's map set; none was bound at load (rax: UnsupportedPseudoLoad when executed unbound)
+disagree 18160000000000010000000000000001 rax=decodes kernel=syntax [fd_idx without fd_array is invalid] RFC 9669 5.4.1 map_by_idx indexes the program's map set; none was bound at load (rax: UnsupportedPseudoLoad when executed unbound)
+disagree 18160000ffffffff00000000ffffffff rax=decodes kernel=syntax [fd_idx without fd_array is invalid] RFC 9669 5.4.1 map_by_idx indexes the program's map set; none was bound at load (rax: UnsupportedPseudoLoad when executed unbound)
+disagree 18250000000000000000000000000000 rax=decodes kernel=syntax [fd_idx without fd_array is invalid] RFC 9669 5.4.1 map_by_idx indexes the program's map set; none was bound at load (rax: UnsupportedPseudoLoad when executed unbound)
+disagree 18260000000000000000000000000000 rax=decodes kernel=syntax [fd_idx without fd_array is invalid] RFC 9669 5.4.1 map_by_idx indexes the program's map set; none was bound at load (rax: UnsupportedPseudoLoad when executed unbound)
+disagree 18260000000000010000000000000001 rax=decodes kernel=syntax [fd_idx without fd_array is invalid] RFC 9669 5.4.1 map_by_idx indexes the program's map set; none was bound at load (rax: UnsupportedPseudoLoad when executed unbound)
+disagree 18260000ffffffff00000000ffffffff rax=decodes kernel=syntax [fd_idx without fd_array is invalid] RFC 9669 5.4.1 map_by_idx indexes the program's map set; none was bound at load (rax: UnsupportedPseudoLoad when executed unbound)
+disagree 18350000000000000000000000000000 rax=decodes kernel=syntax [fd_idx without fd_array is invalid] RFC 9669 5.4.1 map_by_idx indexes the program's map set; none was bound at load (rax: UnsupportedPseudoLoad when executed unbound)
+disagree 18360000000000000000000000000000 rax=decodes kernel=syntax [fd_idx without fd_array is invalid] RFC 9669 5.4.1 map_by_idx indexes the program's map set; none was bound at load (rax: UnsupportedPseudoLoad when executed unbound)
+disagree 18360000000000010000000000000001 rax=decodes kernel=syntax [fd_idx without fd_array is invalid] RFC 9669 5.4.1 map_by_idx indexes the program's map set; none was bound at load (rax: UnsupportedPseudoLoad when executed unbound)
+disagree 18360000ffffffff00000000ffffffff rax=decodes kernel=syntax [fd_idx without fd_array is invalid] RFC 9669 5.4.1 map_by_idx indexes the program's map set; none was bound at load (rax: UnsupportedPseudoLoad when executed unbound)
+disagree 18450000000000000000000000000000 rax=decodes kernel=syntax [fd_idx without fd_array is invalid] RFC 9669 5.4.1 map_by_idx indexes the program's map set; none was bound at load (rax: UnsupportedPseudoLoad when executed unbound)
+disagree 18460000000000000000000000000000 rax=decodes kernel=syntax [fd_idx without fd_array is invalid] RFC 9669 5.4.1 map_by_idx indexes the program's map set; none was bound at load (rax: UnsupportedPseudoLoad when executed unbound)
+disagree 18460000000000010000000000000001 rax=decodes kernel=syntax [fd_idx without fd_array is invalid] RFC 9669 5.4.1 map_by_idx indexes the program's map set; none was bound at load (rax: UnsupportedPseudoLoad when executed unbound)
+disagree 18460000ffffffff00000000ffffffff rax=decodes kernel=syntax [fd_idx without fd_array is invalid] RFC 9669 5.4.1 map_by_idx indexes the program's map set; none was bound at load (rax: UnsupportedPseudoLoad when executed unbound)
+disagree 18550000000000000000000000000000 rax=decodes kernel=syntax [fd_idx without fd_array is invalid] RFC 9669 5.4.1 map_by_idx indexes the program's map set; none was bound at load (rax: UnsupportedPseudoLoad when executed unbound)
+disagree 18560000000000000000000000000000 rax=decodes kernel=syntax [fd_idx without fd_array is invalid] RFC 9669 5.4.1 map_by_idx indexes the program's map set; none was bound at load (rax: UnsupportedPseudoLoad when executed unbound)
+disagree 18560000000000010000000000000001 rax=decodes kernel=syntax [fd_idx without fd_array is invalid] RFC 9669 5.4.1 map_by_idx indexes the program's map set; none was bound at load (rax: UnsupportedPseudoLoad when executed unbound)
+disagree 18560000ffffffff00000000ffffffff rax=decodes kernel=syntax [fd_idx without fd_array is invalid] RFC 9669 5.4.1 map_by_idx indexes the program's map set; none was bound at load (rax: UnsupportedPseudoLoad when executed unbound)
+disagree 18650000000000000000000000000000 rax=decodes kernel=syntax [fd_idx without fd_array is invalid] RFC 9669 5.4.1 map_by_idx indexes the program's map set; none was bound at load (rax: UnsupportedPseudoLoad when executed unbound)
+disagree 18660000000000000000000000000000 rax=decodes kernel=syntax [fd_idx without fd_array is invalid] RFC 9669 5.4.1 map_by_idx indexes the program's map set; none was bound at load (rax: UnsupportedPseudoLoad when executed unbound)
+disagree 18660000000000010000000000000001 rax=decodes kernel=syntax [fd_idx without fd_array is invalid] RFC 9669 5.4.1 map_by_idx indexes the program's map set; none was bound at load (rax: UnsupportedPseudoLoad when executed unbound)
+disagree 18660000ffffffff00000000ffffffff rax=decodes kernel=syntax [fd_idx without fd_array is invalid] RFC 9669 5.4.1 map_by_idx indexes the program's map set; none was bound at load (rax: UnsupportedPseudoLoad when executed unbound)
+disagree 18750000000000000000000000000000 rax=decodes kernel=syntax [fd_idx without fd_array is invalid] RFC 9669 5.4.1 map_by_idx indexes the program's map set; none was bound at load (rax: UnsupportedPseudoLoad when executed unbound)
+disagree 18760000000000000000000000000000 rax=decodes kernel=syntax [fd_idx without fd_array is invalid] RFC 9669 5.4.1 map_by_idx indexes the program's map set; none was bound at load (rax: UnsupportedPseudoLoad when executed unbound)
+disagree 18760000000000010000000000000001 rax=decodes kernel=syntax [fd_idx without fd_array is invalid] RFC 9669 5.4.1 map_by_idx indexes the program's map set; none was bound at load (rax: UnsupportedPseudoLoad when executed unbound)
+disagree 18760000ffffffff00000000ffffffff rax=decodes kernel=syntax [fd_idx without fd_array is invalid] RFC 9669 5.4.1 map_by_idx indexes the program's map set; none was bound at load (rax: UnsupportedPseudoLoad when executed unbound)
+disagree 18850000000000000000000000000000 rax=decodes kernel=syntax [fd_idx without fd_array is invalid] RFC 9669 5.4.1 map_by_idx indexes the program's map set; none was bound at load (rax: UnsupportedPseudoLoad when executed unbound)
+disagree 18860000000000000000000000000000 rax=decodes kernel=syntax [fd_idx without fd_array is invalid] RFC 9669 5.4.1 map_by_idx indexes the program's map set; none was bound at load (rax: UnsupportedPseudoLoad when executed unbound)
+disagree 18860000000000010000000000000001 rax=decodes kernel=syntax [fd_idx without fd_array is invalid] RFC 9669 5.4.1 map_by_idx indexes the program's map set; none was bound at load (rax: UnsupportedPseudoLoad when executed unbound)
+disagree 18860000ffffffff00000000ffffffff rax=decodes kernel=syntax [fd_idx without fd_array is invalid] RFC 9669 5.4.1 map_by_idx indexes the program's map set; none was bound at load (rax: UnsupportedPseudoLoad when executed unbound)
+disagree 18950000000000000000000000000000 rax=decodes kernel=syntax [fd_idx without fd_array is invalid] RFC 9669 5.4.1 map_by_idx indexes the program's map set; none was bound at load (rax: UnsupportedPseudoLoad when executed unbound)
+disagree 18960000000000000000000000000000 rax=decodes kernel=syntax [fd_idx without fd_array is invalid] RFC 9669 5.4.1 map_by_idx indexes the program's map set; none was bound at load (rax: UnsupportedPseudoLoad when executed unbound)
+disagree 18960000000000010000000000000001 rax=decodes kernel=syntax [fd_idx without fd_array is invalid] RFC 9669 5.4.1 map_by_idx indexes the program's map set; none was bound at load (rax: UnsupportedPseudoLoad when executed unbound)
+disagree 18960000ffffffff00000000ffffffff rax=decodes kernel=syntax [fd_idx without fd_array is invalid] RFC 9669 5.4.1 map_by_idx indexes the program's map set; none was bound at load (rax: UnsupportedPseudoLoad when executed unbound)
+disagree 3400000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 3410000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 3420000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 3430000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 3440000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 3450000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 3460000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 3470000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 3480000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 3490000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 3700000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 3710000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 3720000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 3730000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 3740000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 3750000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 3760000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 3770000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 3780000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 3790000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 64000000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 64100000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 64200000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 64300000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 64400000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 64500000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 64600000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 64700000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 64800000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 64900000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 67000000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 67100000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 67200000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 67300000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 67400000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 67500000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 67600000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 67700000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 67800000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 67900000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 74000000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 74100000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 74200000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 74300000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 74400000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 74500000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 74600000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 74700000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 74800000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 74900000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 77000000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 77100000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 77200000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 77300000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 77400000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 77500000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 77600000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 77700000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 77800000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 77900000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree 9400000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 9410000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 9420000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 9430000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 9440000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 9450000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 9460000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 9470000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 9480000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 9490000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 9700000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 9710000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 9720000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 9730000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 9740000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 9750000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 9760000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 9770000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 9780000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree 9790000000000000 rax=decodes kernel=syntax [div by zero] RFC 9669 4.1 defines division by zero; the verifier rejects an immediate zero divisor by policy
+disagree c4000000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c4100000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c4200000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c4300000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c4400000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c4500000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c4600000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c4700000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c4800000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c4900000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c7000000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c7100000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c7200000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c7300000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c7400000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c7500000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c7600000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c7700000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c7800000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy
+disagree c7900000ffffffff rax=decodes kernel=syntax [invalid shift -#] RFC 9669 4.1 masks shift counts; the verifier rejects out-of-range immediates by policy

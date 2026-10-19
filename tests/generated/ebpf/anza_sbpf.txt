@@ -1,0 +1,24 @@
+# Pinned Anza solana-sbpf 0.25.0 (commit 3e1510b1eac344af15c99dcdb4c3b3e6dc2b3d7b)
+# interpreter outcomes for the corpus streams of tests/support/ebpf_sbpf_oracle.rs.
+# Generator: RAX_SBPF_CORPUS_OUT=1 python3 tools/ebpf-reference/run.py
+# Columns: version campaign programs executions digest
+V0 boundary 2044 14140 0cb2a23c5717d5f9fd0829e5498831a0
+V0 metered-syscall 120 960 bac0ea917865de850b165b065b6ba07d
+V0 random-program 800 2400 0f6a57868611c41d1eeb83d6502ab265
+V0 single-instruction 1845 5535 7f8da016f1c895a04cd91eeb1e6bd7d2
+V1 boundary 2044 14140 849d60061d70e0a02fd26346330b61c9
+V1 metered-syscall 120 960 5586f30a2e50bbb6ed5c4e67fbfe15f8
+V1 random-program 800 2400 03c8ecc2234a712c5fa601cb737d8196
+V1 single-instruction 1845 5535 4b228ad2aed024d00b5632605a5f5bf5
+V2 boundary 2148 15692 3da4ba3d6ef83d5d0b701b9fe3a5fcc0
+V2 metered-syscall 120 960 b899e0758d46cf15baf95ed741d3024e
+V2 random-program 800 2400 f1e6865b60f8911a2a429058d8999ba8
+V2 single-instruction 2029 6087 91e769944e8584a6528a3c4a7431c5f2
+V3 boundary 2594 17902 3a3ee912fa0c4c24c78d8ddc76a96251
+V3 metered-syscall 120 960 6830a9642f0ac97f3a8a3ac380923585
+V3 random-program 800 2400 ba2e943fba62bcf4262d8b8c3f0ab3e4
+V3 single-instruction 2309 6927 bd3354d97c4e96312cc7374b1d34149c
+V4 boundary 2594 17902 7f63772dfafab357518716d8b6e18d36
+V4 metered-syscall 120 960 c38c50ca18c31c3cb6f39b83c3e05691
+V4 random-program 800 2400 21967ff92e0c75949250d07065eb03f4
+V4 single-instruction 2341 7023 79e5e824de59e83fa21cd25ffe4362f7

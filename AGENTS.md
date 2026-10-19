@@ -568,8 +568,23 @@ A-profile implementation merely because both execute Thumb encodings.
   sign-extension vs zero-extension rules, `V2` swapped `SUB_IMM` operand order
   (`dst = imm - dst`), `V2` `PQR` class (`LMUL32/64`, `UHMUL64`, `SHMUL64`,
   `UDIV32/64`, `UREM32/64`, `SDIV32/64`, `SREM32/64`), `V2` relocated load/store
-  opcodes (`0xX2`/`0xX3`/`0xX7`/`0xX8`/`0xXC`/`0xXD`), `HOR64_IMM`, and
-  `V3`/`V4` `JMP32`.
+  opcodes (`0xXC` loads, `0xX7` immediate stores, `0xXF` register stores),
+  `HOR64_IMM`, and `V3`/`V4` `JMP32`.
+- Program admission is `verify_sbpf`, an exact mirror of the pinned Anza
+  `RequisiteVerifier` (first error, variant, and slot index, including its
+  LDDW second-slot index). Decoding accepts a superset; keep admission and
+  execution separate.
+- The instruction meter charges each instruction before its fetch: a text
+  overrun or undecodable slot consumes one unit, as in the reference. SBPF
+  register and registry calls push the frame before validating the target;
+  V3/V4 relative calls outside the text are unresolved (`UnsupportedSyscall`)
+  without a frame. Traps leave registers and frames at the pre-instruction
+  state. SMIR defers unliftable instructions to an exact runtime trap.
+- RFC 9669 LDDW subtypes 0x1-0x6 (base64) and helper calls by BTF ID
+  (base32) are supported: `EbpfPlatform` binds maps and platform variables
+  (lifter and CPU must carry the same bindings), `code_addr` is the
+  instruction `imm + 1` slots after the LDDW, and BTF helpers use their own
+  registry and `EbpfExit::BtfHelper` / `EbpfHelperKey::Btf` exit namespace.
 - Model `SbpfMemoryMapping` 4 GiB segmented regions (`0x100000000` program/RODATA,
   `0x200000000` stack with optional V0 4 KiB frame gaps vs V1+ contiguous stack,
   `0x300000000` heap, `0x400000000` input) and test unmapped, read-only, and
@@ -990,9 +1005,18 @@ Use the strongest independent oracle available:
 - AArch64/AArch32: native EL0 where supported, otherwise QEMU user-mode and
   architecture specification.
 - RISC-V and Hexagon: QEMU/toolchain oracle plus the relevant ISA manual.
-- eBPF and Solana SBPF: LLVM MC (`llvm-mc -triple=bpfel` / `bpfeb`) for
-  encoding/disassembly plus the RFC 9669 / Anza `sbpf` specification reference
-  evaluator (`docs/specifications/ebpf/`).
+- eBPF and Solana SBPF: the Linux kernel through `BPF_PROG_TEST_RUN` (arm64
+  JIT little-endian, s390x interpreter big-endian) and the eBPF Foundation
+  `bpf_conformance` suite (`tools/ebpf-conformance/run.py`); the pinned Anza
+  `solana-sbpf` interpreter and verifier (`tools/ebpf-reference/run.py`); and
+  LLVM MC (`llvm-mc -triple=bpfel` / `bpfeb`) for encoding. Their results are
+  checked in under `tests/generated/ebpf/` and replayed by `ebpf_diff`. The
+  Kani proofs in `tools/ebpf-formal/run.py` check, over all field, register,
+  and memory values, RFC 9669 admission and direct execution of every opcode
+  against an independent specification, and SBPF admission of every opcode
+  against the pinned Anza verifier source. Its SMIR and SBPF-execution
+  harnesses are not discharged (see its README); those planes rest on the
+  replays.
 - Direct-vs-SMIR and interpreter-vs-JIT comparisons are essential parity tests,
   but they are not independent architectural oracles.
 
@@ -1020,7 +1044,7 @@ changes.
 | AArch64/AArch32 semantics | `arm`, `arm_vfp_a32` as applicable | `arm_diff`, `arm_diff32` with native/QEMU oracle |
 | RISC-V | `riscv_smir_lift`, affected library tests | `riscv_diff`, `riscv_vector`, `riscv_smir_x86_jit`, `riscv_smir_aarch64_jit`, `riscv_boot` |
 | Hexagon | `hexagon_smir_lift`, affected library tests | `hexagon_diff`, `hexagon_cf_diff`, `hexagon_float_diff`, `hexagon_mem_diff`, `hexagon_hvx_diff`, `hexagon_hvx_mem_diff` |
-| eBPF / Solana SBPF | `ebpf_smir_lift`, affected library tests | `ebpf_diff`, `isa_oracle` |
+| eBPF / Solana SBPF | `ebpf_smir_lift`, `ebpf_diff`, affected library tests | `isa_oracle`, `python3 tools/ebpf-conformance/run.py`, `python3 tools/ebpf-reference/run.py`, `python3 tools/ebpf-formal/run.py --harness <opcode>` |
 | KVM backend | `kvm_minimal` | `differential`, `diff_fuzz`, release build on Linux x86-64 with `/dev/kvm` |
 | PC/machine boot | `realmode_boot` or owning machine target | `microkernel_multiarch`, relevant boot fixture |
 | Linux user mode | `user_linux`, library `user::` tests | `user_linux -- --ignored` with `RAX_USER_DOCKER_ORACLE=1`; the x86-64 user-mode tests on an x86-64 host for JIT invalidation |

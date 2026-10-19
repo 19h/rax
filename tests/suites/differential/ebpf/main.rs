@@ -11,6 +11,24 @@
 //!    - `rax::smir::lift::ebpf::EbpfLifter` + `SmirInterpreter` (`OptLevel::O0`),
 //!    - `rax::smir::lift::ebpf::EbpfLifter` + `SmirInterpreter` (`OptLevel::O2`).
 
+#[path = "../../../support/ebpf_rfc_oracle.rs"]
+mod rfc_oracle;
+
+#[path = "admission_corpus.rs"]
+mod admission_corpus;
+
+#[path = "conformance_corpus.rs"]
+mod conformance_corpus;
+
+#[path = "kernel_corpus.rs"]
+mod kernel_corpus;
+
+#[path = "../../../support/ebpf_sbpf_oracle.rs"]
+mod sbpf_oracle;
+
+#[path = "sbpf_corpus.rs"]
+mod sbpf_corpus;
+
 use std::io::{Read, Write};
 use std::path::PathBuf;
 use std::process::{Command, Stdio};

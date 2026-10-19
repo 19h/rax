@@ -1,10 +1,13 @@
 //! eBPF (IETF RFC 9669 / Linux kernel v1–v4) and Solana Bytecode Format
 //! (SBPF V0–V4) instruction set architecture implementation.
 
+mod arith;
 pub mod cpu;
 pub mod decode;
 pub mod disasm;
 pub mod memory;
+pub mod platform;
+pub mod verifier;
 
 pub use cpu::{EbpfCallFrame, EbpfConfig, EbpfCpu, EbpfExit, EbpfRegisters, EbpfTrap, EbpfVcpu};
 pub use decode::{
@@ -15,6 +18,8 @@ pub use memory::{
     EbpfMemFault, EbpfMemory, MM_BYTECODE_START, MM_HEAP_START, MM_INPUT_START, MM_REGION_SIZE,
     MM_RODATA_START, MM_STACK_START, SbpfMemoryMapping, SbpfMemoryRegion, VIRTUAL_ADDRESS_BITS,
 };
+pub use platform::{BTF_HELPER_SYSCALL_KEY, EbpfHelperKey, EbpfMap, EbpfPlatform};
+pub use verifier::{SbpfVerifierError, verify_sbpf};
 
 #[cfg(test)]
 mod tests {
@@ -181,6 +186,101 @@ mod tests {
         assert_eq!(cpu_v2.regs.r[1], 0x1234_5678_9abc_def0);
         assert_eq!(cpu_v2.regs.r[2], 1);
         assert_eq!(cpu_v2.regs.r[4], 1);
+    }
+
+    #[test]
+    fn vcpu_adapter_steps_exits_resumes_traps_and_round_trips_state() {
+        use crate::vm::vcpu::{CpuState, VCpu, VcpuExit};
+        use std::sync::Arc;
+        use vm_memory::{Bytes, GuestAddress, GuestMemoryMmap};
+
+        let le = Endian::Little;
+        // r0 = 40; call 77 (unregistered helper); r0 += 2; exit
+        let program = [
+            encode_basic(0xb7, 0, 0, 0, 40, le),
+            encode_basic(0x85, 0, 0, 0, 77, le),
+            encode_basic(0x07, 0, 0, 0, 2, le),
+            encode_basic(0x95, 0, 0, 0, 0, le),
+        ]
+        .concat();
+        let memory = Arc::new(GuestMemoryMmap::from_ranges(&[(GuestAddress(0), 0x1000)]).unwrap());
+        memory.write_slice(&program, GuestAddress(0)).unwrap();
+        let mut vcpu = EbpfVcpu::new(3, memory.clone(), EbpfConfig::default());
+        assert_eq!((VCpu::id(&vcpu), vcpu.id()), (3, 3));
+        assert!(vcpu.supports_stepping());
+
+        // One step executes one guest instruction.
+        assert!(matches!(vcpu.step_insn(), Ok(None)));
+        assert_eq!((vcpu.current_pc(), vcpu.instruction_count()), (8, 1));
+        // The unregistered helper exits at its continuation; the host
+        // supplies r0 and resumes.
+        assert!(matches!(vcpu.run(), Ok(VcpuExit::SystemCall)));
+        assert_eq!((vcpu.current_pc(), vcpu.instruction_count()), (16, 2));
+        vcpu.cpu_mut().regs.r[0] = 40;
+        assert!(matches!(vcpu.run(), Ok(VcpuExit::Shutdown)));
+        assert_eq!((vcpu.cpu().regs.r[0], vcpu.instruction_count()), (42, 4));
+        // A halted vCPU reports Hlt until woken.
+        assert!(matches!(vcpu.run(), Ok(VcpuExit::Hlt)));
+        assert!(matches!(vcpu.step_insn(), Ok(Some(VcpuExit::Hlt))));
+
+        // State round trip; a foreign architecture's state is rejected.
+        let state = vcpu.get_state().unwrap();
+        let mut other = EbpfVcpu::new(4, memory.clone(), EbpfConfig::default());
+        other.set_state(&state).unwrap();
+        assert_eq!(other.cpu().regs, vcpu.cpu().regs);
+        let foreign = CpuState::riscv(Default::default());
+        assert!(other.set_state(&foreign).is_err());
+
+        // A fault is an error and halts the vCPU; wake clears the halt.
+        memory
+            .write_slice(&encode_basic(0x61, 0, 1, 0, 0, le), GuestAddress(0))
+            .unwrap();
+        let mut faulting = EbpfVcpu::new(5, memory.clone(), EbpfConfig::default());
+        faulting.cpu_mut().regs.r[1] = 0x10_0000;
+        assert!(faulting.run().is_err());
+        assert!(matches!(faulting.run(), Ok(VcpuExit::Hlt)));
+        faulting.wake();
+        assert!(faulting.step_insn().is_err());
+
+        // A spin loop yields Hlt after one batch without halting.
+        memory
+            .write_slice(&encode_basic(0x05, 0, 0, -1, 0, le), GuestAddress(0))
+            .unwrap();
+        let mut spinning = EbpfVcpu::new(6, memory.clone(), EbpfConfig::default());
+        assert!(matches!(spinning.run(), Ok(VcpuExit::Hlt)));
+        assert_eq!(spinning.instruction_count(), 100_000);
+        assert!(matches!(spinning.step_insn(), Ok(None)));
+        assert_eq!(spinning.instruction_count(), 100_001);
+
+        // Stores, atomics, and loads reach the shared guest memory:
+        // *(u64 *)(r1 + 0) = r2; lock *(u64 *)(r1 + 0) += r3;
+        // r0 = *(u64 *)(r1 + 0); exit
+        let program = [
+            encode_basic(0x7b, 1, 2, 0, 0, le),
+            encode_basic(0xdb, 1, 3, 0, 0x00, le),
+            encode_basic(0x79, 0, 1, 0, 0, le),
+            encode_basic(0x95, 0, 0, 0, 0, le),
+        ]
+        .concat();
+        memory.write_slice(&program, GuestAddress(0)).unwrap();
+        let mut storing = EbpfVcpu::new(7, memory.clone(), EbpfConfig::default());
+        storing.cpu_mut().regs.r[1] = 0x800;
+        storing.cpu_mut().regs.r[2] = 0x1122_3344_5566_7788;
+        storing.cpu_mut().regs.r[3] = 0x0101_0101_0101_0101;
+        assert!(matches!(storing.run(), Ok(VcpuExit::Shutdown)));
+        let stored: u64 = memory.read_obj(GuestAddress(0x800)).unwrap();
+        assert_eq!(stored, 0x1223_3445_5667_7889);
+        assert_eq!(storing.cpu().regs.r[0], stored);
+
+        // A store outside guest memory is a write fault at its start address.
+        let mut store_fault = EbpfVcpu::new(8, memory, EbpfConfig::default());
+        store_fault.cpu_mut().regs.r[1] = 0x10_0000;
+        let error = store_fault.run().unwrap_err().to_string();
+        assert!(
+            error.contains("addr: 1048576, size: 8, write: true"),
+            "{error}"
+        );
+        assert_eq!(store_fault.current_pc(), 0);
     }
 
     #[test]

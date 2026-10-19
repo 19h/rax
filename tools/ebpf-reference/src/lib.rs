@@ -2,6 +2,11 @@
 //! separately; it is not a substitute for the engine's portable regression suite.
 
 #[cfg(test)]
+mod exhaustive;
+#[cfg(test)]
+mod exhaustive_tests;
+
+#[cfg(test)]
 mod tests {
     use std::ptr::NonNull;
     use std::sync::Arc;
