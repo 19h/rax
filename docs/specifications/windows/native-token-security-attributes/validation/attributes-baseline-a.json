@@ -1,0 +1,86 @@
+{
+  "state": "failed",
+  "utc": "2026-10-19T15:30:09.366475+00:00",
+  "inputs": [
+    {
+      "path": "src/user/windows/dll/native.rs",
+      "sha256": "bbc4be181a0edac3c3fde205307ab889f04a086a99769c1107221480131ec25a",
+      "bytes": 20913
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests.rs",
+      "sha256": "bc96c1c974da81be60a894965238830bac9b8b2c5fb069d58703adc5308f78b7",
+      "bytes": 49157
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/access_check_tests.rs",
+      "sha256": "b864797c581503d3344b57c6e6e46be05d24490d6e406d85b61e6f872cd25f91",
+      "bytes": 25180
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/token_bno_tests.rs",
+      "sha256": "07b44aa0c06be0c616fbb1cd572c900301c170961d60ff03cd8efaa3d59f257f",
+      "bytes": 10547
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/token_scalar_tests.rs",
+      "sha256": "440f6bd67aeacd47ed7cb9961b8877d3fc250e6bb9eaccbc57c688535eec2c1c",
+      "bytes": 15208
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/token_security_attributes_tests.rs",
+      "sha256": "4b28babaabcab62fe989a22475b141f9b313df75a2bd7a23bb9a33e08b3ae50a",
+      "bytes": 4191
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/token_session_id_tests.rs",
+      "sha256": "2e405906f20e630cee07770ecf0eda7493fe775b71f154874f4531bf936b5750",
+      "bytes": 7963
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/token_user_tests.rs",
+      "sha256": "626c83ae73467f86c77150cd819ca12e707ea130b0ff5273effb7f05be2e577d",
+      "bytes": 16183
+    },
+    {
+      "path": "src/user/windows/security.rs",
+      "sha256": "97b015801f4c20d4547539602c7f1d944cfbeab9d9fcb14b4c72ee0e95a8351b",
+      "bytes": 7584
+    },
+    {
+      "path": "src/user/windows/security/token.rs",
+      "sha256": "bc21ddd9e0254e328c071424ec8f18485beb16117b978f5ab2b8db377ff837f4",
+      "bytes": 2349
+    },
+    {
+      "path": "src/user/windows/wnf/installed.rs",
+      "sha256": "4dabc4f7d3bdc2ef443011e6c8576a8c0dd0dcb2ee7b3595b2cc54f03244e62e",
+      "bytes": 5997
+    },
+    {
+      "path": "src/user/windows/wnf/tests.rs",
+      "sha256": "53b75d275da69b6be22ed67c3379bbad8a220062b0b0c51d1cd9f93db6eaa41c",
+      "bytes": 7169
+    }
+  ],
+  "argv": [
+    "cargo",
+    "+1.95.0",
+    "test",
+    "--locked",
+    "--offline",
+    "--no-default-features",
+    "--lib",
+    "native_token_security_attributes",
+    "--",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "exit-code": 101,
+  "log": "attributes-baseline-a.log",
+  "bytes": 3320,
+  "sha256": "eb87bee3ac542fb3d429e98d46dfd83651d52e22e80e6a625fc39e240f6d84f4",
+  "results": [
+    "FAILED. 0 passed; 3 failed; 0 ignored; 0 measured; 8039 filtered out; finished in 0.02s"
+  ]
+}

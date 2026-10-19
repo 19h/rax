@@ -1,0 +1,78 @@
+{
+  "utc": "2026-10-19T16:04:49.442417+00:00",
+  "scope": "Inputs sampled during epoch2-a build; reverify after completion, not a prelaunch manifest.",
+  "files": [
+    {
+      "path": "src/user/windows/dll/native.rs",
+      "sha256": "9a8f75a067d16858f9d7eaf3942f7508b5faffb499888a7291346bdcf7b99aaa"
+    },
+    {
+      "path": "src/user/windows/dll/native/token_attributes.rs",
+      "sha256": "ec2631c26eaf427bfdd36bf86cc8bcbb2f6b0a7baf61febd66ddd8960b677529"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests.rs",
+      "sha256": "ec924fead7e3841f1a50cd65741736cba954ff913619d54e45efda21bfefc603"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/access_check_tests.rs",
+      "sha256": "63996c0dcba88a27b31a52530cd5a78fcef6bd690198477fe204d485edf29219"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/token_bno_tests.rs",
+      "sha256": "f37d64a9a3427c06186a3b95475724580166705f7763d9e4329ed70fa8bade89"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/token_scalar_tests.rs",
+      "sha256": "fea4224a003775ab0dfbe959144e5353964d81c55e9cd7184616be118b868411"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/token_security_attributes_leaf_tests.rs",
+      "sha256": "0998f5a48f06861a93a1f4df086de8b388ca1b437e7c8b87726bd36126448cdf"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/token_security_attributes_replay_tests.rs",
+      "sha256": "1984f2aecab113bcdbc69bc3d53c459bc2d05f4f9ec2aeef51e9cd9fda66d2d7"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/token_security_attributes_tests.rs",
+      "sha256": "214494e37ce092f997776b684eaf5586caf75274ad2f3b38574e98655da44274"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/token_session_id_tests.rs",
+      "sha256": "255b812e60c0268c6829273faa77f8b83dfa794c66ae64b793578bb32d6afa07"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/token_user_tests.rs",
+      "sha256": "7edd639a573c2e7b20ad32818f928a0fe817becd3cb664e426195bf63a8d1dc9"
+    },
+    {
+      "path": "src/user/windows/security.rs",
+      "sha256": "36f01a814b132db0e6a7d209152382a097020508801108b7f78b5ce4b07971db"
+    },
+    {
+      "path": "src/user/windows/security/token.rs",
+      "sha256": "eb78f0fe8f31fd9b9b545eabf836a4310682f9886949e0b278bf3f22a92f73f5"
+    },
+    {
+      "path": "src/user/windows/security/token/attributes.rs",
+      "sha256": "37a772e813f59ea3d9bec49457b071876265017a9439691adcf7d62d15058355"
+    },
+    {
+      "path": "src/user/windows/security/token/attributes/installed.rs",
+      "sha256": "85ad1c06286641af632f496072dbea5fa97bbd165af6141d4c5562fc01ebbdb4"
+    },
+    {
+      "path": "src/user/windows/security/token/attributes/tests.rs",
+      "sha256": "06f2f7bea1b909e9856b48ec5dd37249239be1d27435a04848a20ae3ae16fc4c"
+    },
+    {
+      "path": "src/user/windows/wnf/installed.rs",
+      "sha256": "0af5083efa7551ac2c22a83c567abab99d28d3ee6f3f535ff6b99c175dad6006"
+    },
+    {
+      "path": "src/user/windows/wnf/tests.rs",
+      "sha256": "34f0aa9641ec55cbd7b25bbef1ac4d4848b42a82264bf5729693b5a9f39861f2"
+    }
+  ]
+}

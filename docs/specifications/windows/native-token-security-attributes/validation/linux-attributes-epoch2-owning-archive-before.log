@@ -1,0 +1,12 @@
+Traceback (most recent call last):
+  File "/validation/collect-attributes-archives-epoch2.py", line 79, in <module>
+    main()
+  File "/validation/collect-attributes-archives-epoch2.py", line 45, in main
+    manifest = json.loads(args.manifest.read_text())
+  File "/usr/lib/python3.9/pathlib.py", line 1255, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+  File "/usr/lib/python3.9/pathlib.py", line 1241, in open
+    return io.open(self, mode, buffering, encoding, errors, newline,
+  File "/usr/lib/python3.9/pathlib.py", line 1109, in _opener
+    return self._accessor.open(self, flags, mode)
+FileNotFoundError: [Errno 2] No such file or directory: '/validation/idle-owning-source-hashes-epoch2.json'

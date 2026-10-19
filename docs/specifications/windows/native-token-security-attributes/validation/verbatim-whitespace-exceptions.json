@@ -1,0 +1,3712 @@
+{
+  "files": [
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v1-arm64-build.log",
+      "bytes": 41,
+      "sha256": "664ef84bf4810894e7e01fe106cde79f2e10b54884a4fb3f539c05925b6c2e5e",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v1-arm64-source-after.json",
+      "bytes": 266,
+      "sha256": "91802768d73fc552467abe2d0f645e4823db621c2e0dc5d13d87865da16ecf8a",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v1-arm64.log",
+      "bytes": 74859,
+      "sha256": "f4177419bbe2549e7bfeff986b0dc7e14bd2b9d057d7df546d77fde972b979d2",
+      "warning-count": 79,
+      "line-ranges": [
+        [
+          1,
+          79
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v1-driver.log",
+      "bytes": 964,
+      "sha256": "81157a84a41f6d110e3d629b61f37581444b3f76aa427bed1014db5bce060e17",
+      "warning-count": 16,
+      "line-ranges": [
+        [
+          1,
+          16
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v1-launch.json",
+      "bytes": 354,
+      "sha256": "63e7a9a288db48249a20f930ad72493bc0df13274ea5ffb91b3d9b0510acf554",
+      "warning-count": 9,
+      "line-ranges": [
+        [
+          1,
+          9
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v1-modules-after.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v1-modules-before.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v1-outcomes.json",
+      "bytes": 548,
+      "sha256": "4cae0a24beccb31dbfab37e622f96b009d9d326a1c2bda6936661de1c998cb32",
+      "warning-count": 22,
+      "line-ranges": [
+        [
+          1,
+          22
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v1-x64-build.log",
+      "bytes": 41,
+      "sha256": "664ef84bf4810894e7e01fe106cde79f2e10b54884a4fb3f539c05925b6c2e5e",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v1-x64-source-after.json",
+      "bytes": 264,
+      "sha256": "6692094ebfb1bf34902002c72358b3e1c811f77756ac8be6992a3cd77a77ff44",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v1-x64.log",
+      "bytes": 74859,
+      "sha256": "9bb2a7470525ccea5e109b9197eb703b8696d6a76d6ce1031263225ab8669bc4",
+      "warning-count": 79,
+      "line-ranges": [
+        [
+          1,
+          79
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v1-x86-build.log",
+      "bytes": 41,
+      "sha256": "664ef84bf4810894e7e01fe106cde79f2e10b54884a4fb3f539c05925b6c2e5e",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v1-x86-laa-build.log",
+      "bytes": 41,
+      "sha256": "664ef84bf4810894e7e01fe106cde79f2e10b54884a4fb3f539c05925b6c2e5e",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v1-x86-laa-source-after.json",
+      "bytes": 268,
+      "sha256": "116b4dca17c288d751384b013687d173e374ffda270461103e2798bf8f8ccb6c",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v1-x86-laa.log",
+      "bytes": 74235,
+      "sha256": "368565d25c3965222ae581382c5542a7c61a8eca5a326364d201edd756f7d4e3",
+      "warning-count": 79,
+      "line-ranges": [
+        [
+          1,
+          79
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v1-x86-source-after.json",
+      "bytes": 264,
+      "sha256": "222cd0eb332f03014af2caefc6dd111f744dc661711448c19de072e2b97d6eec",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v1-x86.log",
+      "bytes": 74235,
+      "sha256": "ffcdd4290f4cdf5ac51bd1806d9fbdc7143045f65ae82d4f370aa192c70410e9",
+      "warning-count": 79,
+      "line-ranges": [
+        [
+          1,
+          79
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v2-arm64-build.log",
+      "bytes": 41,
+      "sha256": "1867a12aaa88a4216209cdaa3d119014b3b46a22930dffa8568dd4600b47a56f",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v2-arm64-source-after.json",
+      "bytes": 266,
+      "sha256": "0db5ee4549a00ae04f5f13a1c49bd894088fd338e061399836f42b2ddf619239",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v2-arm64.log",
+      "bytes": 533646,
+      "sha256": "a9fbd8a6e7b36cde20c0d0d03b2c3762e5fb751998d726e85383cf6747b67b49",
+      "warning-count": 673,
+      "line-ranges": [
+        [
+          1,
+          673
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v2-driver.log",
+      "bytes": 964,
+      "sha256": "81157a84a41f6d110e3d629b61f37581444b3f76aa427bed1014db5bce060e17",
+      "warning-count": 16,
+      "line-ranges": [
+        [
+          1,
+          16
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v2-launch.json",
+      "bytes": 355,
+      "sha256": "28b50d572c03514a60b35faccf8677e6bd0345e3d229697aa01e82c5102379a4",
+      "warning-count": 9,
+      "line-ranges": [
+        [
+          1,
+          9
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v2-modules-after.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v2-modules-before.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v2-outcomes.json",
+      "bytes": 548,
+      "sha256": "d7efe5e48430c3b9a8c8cacee0bda4ce863abf778fcb2a1ddeadd397acb8a66b",
+      "warning-count": 22,
+      "line-ranges": [
+        [
+          1,
+          22
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v2-x64-build.log",
+      "bytes": 41,
+      "sha256": "1867a12aaa88a4216209cdaa3d119014b3b46a22930dffa8568dd4600b47a56f",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v2-x64-source-after.json",
+      "bytes": 264,
+      "sha256": "fdb1fcf0eb371b54971a06df4da4e6401d62c85fdd167435eb72d78e726dd1e7",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v2-x64.log",
+      "bytes": 533646,
+      "sha256": "a54732101e343a4010e84d715b8d933b884c12053419ca29e0d092f88038b761",
+      "warning-count": 673,
+      "line-ranges": [
+        [
+          1,
+          673
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v2-x86-build.log",
+      "bytes": 41,
+      "sha256": "1867a12aaa88a4216209cdaa3d119014b3b46a22930dffa8568dd4600b47a56f",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v2-x86-laa-build.log",
+      "bytes": 41,
+      "sha256": "1867a12aaa88a4216209cdaa3d119014b3b46a22930dffa8568dd4600b47a56f",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v2-x86-laa-source-after.json",
+      "bytes": 268,
+      "sha256": "a8f3d5842fec9b2f6324405f6ce064e7fcb97df46a398e0282b7dfbf978dc465",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v2-x86-laa.log",
+      "bytes": 528270,
+      "sha256": "5c36c09ea90b649333efb79f61da383c22ce14164557bcd34e4d6ffbaa854fa6",
+      "warning-count": 673,
+      "line-ranges": [
+        [
+          1,
+          673
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v2-x86-source-after.json",
+      "bytes": 264,
+      "sha256": "05f2d417c95a4ec74862bf60b5de46b0820f1b9337950e4480c352277862754d",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v2-x86.log",
+      "bytes": 528270,
+      "sha256": "8e649b62dfdde87743e122f03fe0d182633f1c8f3a6dfe264f70a303dd3e8027",
+      "warning-count": 673,
+      "line-ranges": [
+        [
+          1,
+          673
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v3-arm64-build.log",
+      "bytes": 41,
+      "sha256": "bde7cb1759270cf11e51e1d517373f6c6c779ce2401d18bc3a4f82ceddf325af",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v3-arm64-source-after.json",
+      "bytes": 266,
+      "sha256": "51f47b881698f40afa01a4034596652a46bdb95eaf97ca29279d660a64524d1f",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v3-arm64.log",
+      "bytes": 1735866,
+      "sha256": "581ed0198fc24bd4bcb038fb2292d1588fb6db6cb5894cf4d2382baa9bf5784f",
+      "warning-count": 2563,
+      "line-ranges": [
+        [
+          1,
+          2563
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v3-driver.log",
+      "bytes": 964,
+      "sha256": "81157a84a41f6d110e3d629b61f37581444b3f76aa427bed1014db5bce060e17",
+      "warning-count": 16,
+      "line-ranges": [
+        [
+          1,
+          16
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v3-launch.json",
+      "bytes": 354,
+      "sha256": "bee1eda4d127c7f5b602ec894c090db7fe94351116445188b28b3d62066ab00b",
+      "warning-count": 9,
+      "line-ranges": [
+        [
+          1,
+          9
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v3-modules-after.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v3-modules-before.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v3-outcomes.json",
+      "bytes": 548,
+      "sha256": "0dbbaf157d047cea850951d950b408f8b376848fd74cae255e2dc7aae68f38e5",
+      "warning-count": 22,
+      "line-ranges": [
+        [
+          1,
+          22
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v3-x64-build.log",
+      "bytes": 41,
+      "sha256": "bde7cb1759270cf11e51e1d517373f6c6c779ce2401d18bc3a4f82ceddf325af",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v3-x64-source-after.json",
+      "bytes": 264,
+      "sha256": "0ebf48e344c85f671d89e3df08af3e8a05310875ed88b39ee3af904ae6ca5cc0",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v3-x64.log",
+      "bytes": 1735866,
+      "sha256": "7e9f32d1b68c7f777e61e53efad88bec4a26809ff9e89b4811ec9249a5532221",
+      "warning-count": 2563,
+      "line-ranges": [
+        [
+          1,
+          2563
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v3-x86-build.log",
+      "bytes": 41,
+      "sha256": "bde7cb1759270cf11e51e1d517373f6c6c779ce2401d18bc3a4f82ceddf325af",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v3-x86-laa-build.log",
+      "bytes": 41,
+      "sha256": "bde7cb1759270cf11e51e1d517373f6c6c779ce2401d18bc3a4f82ceddf325af",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v3-x86-laa-source-after.json",
+      "bytes": 268,
+      "sha256": "a82cf2d06e57ca3019a542a99c4bc56448286613b46cb39f925e112109d9f99d",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v3-x86-laa.log",
+      "bytes": 1653882,
+      "sha256": "0dd40cb98edad15abe5b95b6c546eb93bdbcd7922b406d11b82bd0d0abb96eaf",
+      "warning-count": 2563,
+      "line-ranges": [
+        [
+          1,
+          2563
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v3-x86-source-after.json",
+      "bytes": 264,
+      "sha256": "d7396b4653efc0707c0e9a61ea8cdee485f2c45e2f6c7a949559072c36a0899c",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v3-x86.log",
+      "bytes": 1653882,
+      "sha256": "86328287ab21e3092a8044f5de50985f7b3d982c329a0181548584fae930bf52",
+      "warning-count": 2563,
+      "line-ranges": [
+        [
+          1,
+          2563
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v4-arm64-build.log",
+      "bytes": 648,
+      "sha256": "3da3a213fdeac1bd5c7cfc57f3985c88fe1e943ef52ff2e2b861fd61b9720489",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v4-driver.log",
+      "bytes": 241,
+      "sha256": "77027ce0b25d2e321d7341c6fe2a80236a2837874cb1de4f2079588d47f29dc9",
+      "warning-count": 4,
+      "line-ranges": [
+        [
+          1,
+          4
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v4-launch.json",
+      "bytes": 499,
+      "sha256": "dd31d6616bbb38e446e56db1b4af4f9fcaa9a311edd6d9e48f425ff6baa08584",
+      "warning-count": 9,
+      "line-ranges": [
+        [
+          1,
+          9
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v4-modules-before.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v4b-arm64-build.log",
+      "bytes": 42,
+      "sha256": "52a679ea2754616977a6f3cfd54b5e17a6835884f186fb90d367c97300708f60",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v4b-arm64-source-after.json",
+      "bytes": 268,
+      "sha256": "34872f4708cdd55bd0f8e075bc7e742ad94d336ff21ff13d852df6690236b596",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v4b-arm64.log",
+      "bytes": 80855,
+      "sha256": "f19b0ec18790c8899b6f9a1846229b3d93b27b669a1ef2958da24b64a3427f6a",
+      "warning-count": 64,
+      "line-ranges": [
+        [
+          1,
+          64
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v4b-driver.log",
+      "bytes": 964,
+      "sha256": "81157a84a41f6d110e3d629b61f37581444b3f76aa427bed1014db5bce060e17",
+      "warning-count": 16,
+      "line-ranges": [
+        [
+          1,
+          16
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v4b-launch.json",
+      "bytes": 499,
+      "sha256": "7046faf927fc38144f63a0eb21ea2f3cdd6646e79c8f1ea9d3cc6a4f580470de",
+      "warning-count": 9,
+      "line-ranges": [
+        [
+          1,
+          9
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v4b-modules-after.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v4b-modules-before.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v4b-outcomes.json",
+      "bytes": 552,
+      "sha256": "dc9f3e1957ede04146e2da93b1a4c41969a4fb26897b3353e8fbdcfd33ca0397",
+      "warning-count": 22,
+      "line-ranges": [
+        [
+          1,
+          22
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v4b-x64-build.log",
+      "bytes": 42,
+      "sha256": "52a679ea2754616977a6f3cfd54b5e17a6835884f186fb90d367c97300708f60",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v4b-x64-source-after.json",
+      "bytes": 266,
+      "sha256": "18af0c4f5e87a27adc00422fdd88c2aec53e66da05c078b49924057a5ff53531",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v4b-x64.log",
+      "bytes": 80855,
+      "sha256": "94b061d33e91445862e31d8eff3f54347a29e5ccda975ba71d8d6a00ac35804a",
+      "warning-count": 64,
+      "line-ranges": [
+        [
+          1,
+          64
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v4b-x86-build.log",
+      "bytes": 42,
+      "sha256": "52a679ea2754616977a6f3cfd54b5e17a6835884f186fb90d367c97300708f60",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v4b-x86-laa-build.log",
+      "bytes": 42,
+      "sha256": "52a679ea2754616977a6f3cfd54b5e17a6835884f186fb90d367c97300708f60",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v4b-x86-laa-source-after.json",
+      "bytes": 270,
+      "sha256": "d89c06a90c2b931bc6358601912886a000896fcd9dce1ef65dc22b4d6bb30ce0",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v4b-x86-laa.log",
+      "bytes": 80400,
+      "sha256": "e9c299e5d99e758f49b719cce7f28dfe0bbc290b1bdd3ac4cf04a9401c217f63",
+      "warning-count": 64,
+      "line-ranges": [
+        [
+          1,
+          64
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v4b-x86-source-after.json",
+      "bytes": 266,
+      "sha256": "9cc074f485c3b8c74ce1ebd1aafa333e3028e4e5f5de13e605d3fc4c2c68cf44",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v4b-x86.log",
+      "bytes": 80400,
+      "sha256": "2aa8c7dffbafc4f931838d1b5191d9c8ada53384fd904e529e499988953542bb",
+      "warning-count": 64,
+      "line-ranges": [
+        [
+          1,
+          64
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v5-arm64-build.log",
+      "bytes": 41,
+      "sha256": "be509f0bc06ffcf0bf8becef24bb5378c9b239c2b3b9e5d2fa9f0ed6e452101c",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v5-arm64-source-after.json",
+      "bytes": 266,
+      "sha256": "2aa5d8e4872a7061aaf44cc09c1757a36a5b7733e229b7e29f4b03603bf1e3d8",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v5-arm64.log",
+      "bytes": 678280,
+      "sha256": "90e2ab5cc8531d4931cd55e2edec885bcfa429147a705bf3eec10275a3337b91",
+      "warning-count": 993,
+      "line-ranges": [
+        [
+          1,
+          993
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v5-driver.log",
+      "bytes": 964,
+      "sha256": "81157a84a41f6d110e3d629b61f37581444b3f76aa427bed1014db5bce060e17",
+      "warning-count": 16,
+      "line-ranges": [
+        [
+          1,
+          16
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v5-launch.json",
+      "bytes": 354,
+      "sha256": "67aea3f5c57b6c021554b1028457ca59dc6cc1d9284db90b7ebcc7ac3754cef4",
+      "warning-count": 9,
+      "line-ranges": [
+        [
+          1,
+          9
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v5-modules-after.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v5-modules-before.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v5-outcomes.json",
+      "bytes": 548,
+      "sha256": "6af4befa4c202a8e86c7af41235197882a4b4ceb1eebf40536c84bcc8409332f",
+      "warning-count": 22,
+      "line-ranges": [
+        [
+          1,
+          22
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v5-x64-build.log",
+      "bytes": 41,
+      "sha256": "be509f0bc06ffcf0bf8becef24bb5378c9b239c2b3b9e5d2fa9f0ed6e452101c",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v5-x64-source-after.json",
+      "bytes": 264,
+      "sha256": "22b5d8e9fbd2a0804d5b15291cf92276c7efaa57e978576e188eaba2913afb53",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v5-x64.log",
+      "bytes": 678280,
+      "sha256": "c8b405884f1f2e3a009699205f837671ff19c10a941ddf0332bd31aaf4654b6f",
+      "warning-count": 993,
+      "line-ranges": [
+        [
+          1,
+          993
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v5-x86-build.log",
+      "bytes": 41,
+      "sha256": "be509f0bc06ffcf0bf8becef24bb5378c9b239c2b3b9e5d2fa9f0ed6e452101c",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v5-x86-laa-build.log",
+      "bytes": 41,
+      "sha256": "be509f0bc06ffcf0bf8becef24bb5378c9b239c2b3b9e5d2fa9f0ed6e452101c",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v5-x86-laa-source-after.json",
+      "bytes": 268,
+      "sha256": "a396f0f7e8ab4c4630591a0c19569c0be120b2bbcd578e1985e7e1903f80a54c",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v5-x86-laa.log",
+      "bytes": 646536,
+      "sha256": "bea5a76b1aa09e5e389389f71e97fe872ddb70529122c4c64f3a8a9c9fab0232",
+      "warning-count": 993,
+      "line-ranges": [
+        [
+          1,
+          993
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v5-x86-source-after.json",
+      "bytes": 264,
+      "sha256": "3e30fbe50999754a8bccffb587b1eaf8435628fbada010cc2326bbfaf8da8ac9",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v5-x86.log",
+      "bytes": 646536,
+      "sha256": "bb12d35bdc377b0a2166d7a190cfd1fe6c796746a6a48e38b5e117625aa195e9",
+      "warning-count": 993,
+      "line-ranges": [
+        [
+          1,
+          993
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v6-arm64-build.log",
+      "bytes": 41,
+      "sha256": "a267fe88b93573964997dce23ea57783b941779c2d741ba3003da73021597f2c",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v6-arm64-source-after.json",
+      "bytes": 266,
+      "sha256": "dbb46368cbdf8b7b928effaf1d46f9f82ec2f75ccf70d44197383d6e4d544a6d",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v6-arm64.log",
+      "bytes": 794431,
+      "sha256": "6d7de4409806235995bdc188a61158203c1f6212df6bcb1a865ac875091dfadb",
+      "warning-count": 1153,
+      "line-ranges": [
+        [
+          1,
+          1153
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v6-driver.log",
+      "bytes": 964,
+      "sha256": "81157a84a41f6d110e3d629b61f37581444b3f76aa427bed1014db5bce060e17",
+      "warning-count": 16,
+      "line-ranges": [
+        [
+          1,
+          16
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v6-launch.json",
+      "bytes": 354,
+      "sha256": "de110cf63003b676325e8c7ce4fce9db48ab01ae05de9a5c5ddfb9bae0182a70",
+      "warning-count": 9,
+      "line-ranges": [
+        [
+          1,
+          9
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v6-modules-after.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v6-modules-before.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v6-outcomes.json",
+      "bytes": 548,
+      "sha256": "9f4196ec649dff7911726c84034885d9add2a3f2317d93b92891c86b5b5c3488",
+      "warning-count": 22,
+      "line-ranges": [
+        [
+          1,
+          22
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v6-x64-build.log",
+      "bytes": 41,
+      "sha256": "a267fe88b93573964997dce23ea57783b941779c2d741ba3003da73021597f2c",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v6-x64-source-after.json",
+      "bytes": 264,
+      "sha256": "5318e0abc310950a7b91d26b576d61e1cbbe1989b666baa1adfc663bbab1b8cd",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v6-x64.log",
+      "bytes": 794431,
+      "sha256": "323cc7948bdcadf8b77d65843a929d5eb227fd2372d3fcb7fc79006000ba46fc",
+      "warning-count": 1153,
+      "line-ranges": [
+        [
+          1,
+          1153
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v6-x86-build.log",
+      "bytes": 41,
+      "sha256": "a267fe88b93573964997dce23ea57783b941779c2d741ba3003da73021597f2c",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v6-x86-laa-build.log",
+      "bytes": 41,
+      "sha256": "a267fe88b93573964997dce23ea57783b941779c2d741ba3003da73021597f2c",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v6-x86-laa-source-after.json",
+      "bytes": 268,
+      "sha256": "03963aa182cc4d83e458914162d80a2ca3ebd564eed95a0639ea879de472af3d",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v6-x86-laa.log",
+      "bytes": 757567,
+      "sha256": "52227b1dbb9d66a80517e96a9e2a1016046f49fd3fc15dba5513cdccfb5199f9",
+      "warning-count": 1153,
+      "line-ranges": [
+        [
+          1,
+          1153
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v6-x86-source-after.json",
+      "bytes": 264,
+      "sha256": "ea273d63faf6d0a5049d1a30bd2d6df1939e412bd75ffca1effe26a984a656b7",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v6-x86.log",
+      "bytes": 757567,
+      "sha256": "9806f366f3c42061cd3ead937f6c2683066f49a03e8a39b5bdf7aac9ab77ff42",
+      "warning-count": 1153,
+      "line-ranges": [
+        [
+          1,
+          1153
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v7-arm64-build.log",
+      "bytes": 943,
+      "sha256": "8a590f8648e5930be347dbbe0007e0492e15503ba4c2145aba7bfebe32a9f8e2",
+      "warning-count": 11,
+      "line-ranges": [
+        [
+          1,
+          11
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v7-driver.log",
+      "bytes": 241,
+      "sha256": "77027ce0b25d2e321d7341c6fe2a80236a2837874cb1de4f2079588d47f29dc9",
+      "warning-count": 4,
+      "line-ranges": [
+        [
+          1,
+          4
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v7-launch.json",
+      "bytes": 396,
+      "sha256": "5afa4b3eae42d4815a4dffecd015397ae439d7e8e3f2290d69adce174a6e4b8b",
+      "warning-count": 9,
+      "line-ranges": [
+        [
+          1,
+          9
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v7-modules-before.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v7b-arm64-build.log",
+      "bytes": 42,
+      "sha256": "69be5399bf2df477a005626d790635b81114d58f647397db12a08691a4b89f9a",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v7b-arm64-source-after.json",
+      "bytes": 309,
+      "sha256": "57931b1e0f6ac9ac384ea4325da178bbb5a66cdcaf82ae8756a9991e9cd8211f",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v7b-arm64.log",
+      "bytes": 11601,
+      "sha256": "063485b6a8989125627af0c536ced3920bbb55dbd6b357e561541299b53d5b4a",
+      "warning-count": 10,
+      "line-ranges": [
+        [
+          1,
+          10
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v7b-driver.log",
+      "bytes": 964,
+      "sha256": "81157a84a41f6d110e3d629b61f37581444b3f76aa427bed1014db5bce060e17",
+      "warning-count": 16,
+      "line-ranges": [
+        [
+          1,
+          16
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v7b-launch.json",
+      "bytes": 396,
+      "sha256": "02104c79108a40b7171047d5efbe854fc88b35433ad22d322c77e3c98dbedeba",
+      "warning-count": 9,
+      "line-ranges": [
+        [
+          1,
+          9
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v7b-modules-after.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v7b-modules-before.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v7b-outcomes.json",
+      "bytes": 552,
+      "sha256": "b3dd89ba775b705435a0ac6725d58df93a459b981c46d5809225ffc16c6aa989",
+      "warning-count": 22,
+      "line-ranges": [
+        [
+          1,
+          22
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v7b-x64-build.log",
+      "bytes": 42,
+      "sha256": "69be5399bf2df477a005626d790635b81114d58f647397db12a08691a4b89f9a",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v7b-x64-source-after.json",
+      "bytes": 307,
+      "sha256": "154c7ee7c1ede3f6487baa54cd016b6e50679f960366e1dc81c2a56e027d394c",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v7b-x64.log",
+      "bytes": 11601,
+      "sha256": "790b17a6aca68498da90d774aad03061ef8d5221a9bb8925df9597dbb4e6cf8f",
+      "warning-count": 10,
+      "line-ranges": [
+        [
+          1,
+          10
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v7b-x86-build.log",
+      "bytes": 42,
+      "sha256": "69be5399bf2df477a005626d790635b81114d58f647397db12a08691a4b89f9a",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v7b-x86-laa-build.log",
+      "bytes": 42,
+      "sha256": "69be5399bf2df477a005626d790635b81114d58f647397db12a08691a4b89f9a",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v7b-x86-laa-source-after.json",
+      "bytes": 311,
+      "sha256": "52a2ae4f086cb9215e795caa97acac5c050e0dbf079467666778db014437e0b9",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v7b-x86-laa.log",
+      "bytes": 11536,
+      "sha256": "c06c3280ebb89702ac08dd9696034ea7bc346434a6a4d170e49b2990c4020e1e",
+      "warning-count": 10,
+      "line-ranges": [
+        [
+          1,
+          10
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v7b-x86-source-after.json",
+      "bytes": 307,
+      "sha256": "4792cabc089622ed18cfed23cbf4ace87bbb2ec3e86cb54e494d39bd3b34d095",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v7b-x86.log",
+      "bytes": 11536,
+      "sha256": "dbbd8bf8e79781d5f41d89d3aa7d41490f61729e19f61a38231be621e8a3bae0",
+      "warning-count": 10,
+      "line-ranges": [
+        [
+          1,
+          10
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v8-arm64-build.log",
+      "bytes": 41,
+      "sha256": "8320b579a6109b02a51f9286b625a09724d2f5788e9f8ea091462d11d15e658d",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v8-arm64-source-after.json",
+      "bytes": 307,
+      "sha256": "c082b9574735283bfd577b071d71fe42c85070fe8be71235558d6bbe7e425cac",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v8-arm64.log",
+      "bytes": 944,
+      "sha256": "addd51c131e438dac2c9e59e42cdcf9bdf40de4e64952c8ad5b2ba032876afb8",
+      "warning-count": 8,
+      "line-ranges": [
+        [
+          1,
+          8
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v8-driver.log",
+      "bytes": 964,
+      "sha256": "81157a84a41f6d110e3d629b61f37581444b3f76aa427bed1014db5bce060e17",
+      "warning-count": 16,
+      "line-ranges": [
+        [
+          1,
+          16
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v8-launch.json",
+      "bytes": 403,
+      "sha256": "a06d38070e9224684910148cd467f59675b97e93811e953b96be35a7eea869f4",
+      "warning-count": 9,
+      "line-ranges": [
+        [
+          1,
+          9
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v8-modules-after.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v8-modules-before.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v8-outcomes.json",
+      "bytes": 548,
+      "sha256": "ba6709666632ff161a8a2387fee236ace0c6d5e8f7e18448ea1d33360423064c",
+      "warning-count": 22,
+      "line-ranges": [
+        [
+          1,
+          22
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v8-x64-build.log",
+      "bytes": 41,
+      "sha256": "8320b579a6109b02a51f9286b625a09724d2f5788e9f8ea091462d11d15e658d",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v8-x64-source-after.json",
+      "bytes": 305,
+      "sha256": "eaabab849cb245476438f101d27b4f2caa21ffafe81f0aac510c26f87af6156b",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v8-x64.log",
+      "bytes": 944,
+      "sha256": "addd51c131e438dac2c9e59e42cdcf9bdf40de4e64952c8ad5b2ba032876afb8",
+      "warning-count": 8,
+      "line-ranges": [
+        [
+          1,
+          8
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v8-x86-build.log",
+      "bytes": 41,
+      "sha256": "8320b579a6109b02a51f9286b625a09724d2f5788e9f8ea091462d11d15e658d",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v8-x86-laa-build.log",
+      "bytes": 41,
+      "sha256": "8320b579a6109b02a51f9286b625a09724d2f5788e9f8ea091462d11d15e658d",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v8-x86-laa-source-after.json",
+      "bytes": 309,
+      "sha256": "e71ce9213a4b31b69b9d3fdc8f67338680ce74d18c18d0941ec2b59655606a83",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v8-x86-laa.log",
+      "bytes": 937,
+      "sha256": "ea0f56f9a38c008b407969bdaf5214f580d62fbd27264314e87f19b57e102a69",
+      "warning-count": 8,
+      "line-ranges": [
+        [
+          1,
+          8
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v8-x86-source-after.json",
+      "bytes": 305,
+      "sha256": "ad422ee590b4e92d27af7ffc8626606ac05a36769afe56b8ecda54841213ef52",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v8-x86.log",
+      "bytes": 937,
+      "sha256": "ea0f56f9a38c008b407969bdaf5214f580d62fbd27264314e87f19b57e102a69",
+      "warning-count": 8,
+      "line-ranges": [
+        [
+          1,
+          8
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v9-arm64-build.log",
+      "bytes": 41,
+      "sha256": "4819343ef4d10b9da360e1c2642a3913b339b1acd8c88484ec96fd92fe03d0a4",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v9-arm64-source-after.json",
+      "bytes": 307,
+      "sha256": "70dcb95e7e0fc85788f548f03db595746626191019cca9db5e77b797759507c8",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v9-arm64.log",
+      "bytes": 97158,
+      "sha256": "5a82bd900d5d8245dc957da0331848e64ab030bf70485255f71db2a454e2da45",
+      "warning-count": 145,
+      "line-ranges": [
+        [
+          1,
+          145
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v9-driver.log",
+      "bytes": 964,
+      "sha256": "81157a84a41f6d110e3d629b61f37581444b3f76aa427bed1014db5bce060e17",
+      "warning-count": 16,
+      "line-ranges": [
+        [
+          1,
+          16
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v9-launch.json",
+      "bytes": 354,
+      "sha256": "7f03f03b934d0ebf0d15454acf5316f8b8f84436a78cd814b168a4f745f00c31",
+      "warning-count": 9,
+      "line-ranges": [
+        [
+          1,
+          9
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v9-modules-after.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v9-modules-before.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v9-outcomes.json",
+      "bytes": 548,
+      "sha256": "8d527a3be7d88e0dff603b0c787f5b9b9c8a9ecf27b6cb6cb15c8b3ea7bfd71c",
+      "warning-count": 22,
+      "line-ranges": [
+        [
+          1,
+          22
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v9-x64-build.log",
+      "bytes": 41,
+      "sha256": "4819343ef4d10b9da360e1c2642a3913b339b1acd8c88484ec96fd92fe03d0a4",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v9-x64-source-after.json",
+      "bytes": 305,
+      "sha256": "a4eda6b2a937f1c4d2746aa3de98382c9dd9868cb0fb2b7320cc0e7cdbfbba45",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v9-x64.log",
+      "bytes": 97158,
+      "sha256": "d4b2c0cfff34adca00ef808346f9716cfbd8f0e28628e313fc0964dc2a031ecc",
+      "warning-count": 145,
+      "line-ranges": [
+        [
+          1,
+          145
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v9-x86-build.log",
+      "bytes": 41,
+      "sha256": "4819343ef4d10b9da360e1c2642a3913b339b1acd8c88484ec96fd92fe03d0a4",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v9-x86-laa-build.log",
+      "bytes": 41,
+      "sha256": "4819343ef4d10b9da360e1c2642a3913b339b1acd8c88484ec96fd92fe03d0a4",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v9-x86-laa-source-after.json",
+      "bytes": 309,
+      "sha256": "0808682ee3fc8d8544d84d0c7b4cf032e43242f1903085b97c72e083f128370d",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v9-x86-laa.log",
+      "bytes": 92550,
+      "sha256": "9b4a4f89fbd3df31dcfee95110cc3a6ffd030af30fab643d1aba96560e6368ff",
+      "warning-count": 145,
+      "line-ranges": [
+        [
+          1,
+          145
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v9-x86-source-after.json",
+      "bytes": 305,
+      "sha256": "743ab09bd92bb15fcc603a19bf9a44fe0438c2680e53b1ed4060fede2a6db769",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/native/native-token-security-attributes-v9-x86.log",
+      "bytes": 92550,
+      "sha256": "d0ef7bec3e9a2d972a6664bf3912e8ce2311f627a9486c07a1ea86763c9971e4",
+      "warning-count": 145,
+      "line-ranges": [
+        [
+          1,
+          145
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-all-targets-process-audit.json",
+      "bytes": 724,
+      "sha256": "9c180fe6bfa4f2e5f9e409f69af687675e6ed88c602992aff8b29d15fdc18fed",
+      "warning-count": 31,
+      "line-ranges": [
+        [
+          1,
+          31
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-baseline-a.log",
+      "bytes": 3320,
+      "sha256": "eb87bee3ac542fb3d429e98d46dfd83651d52e22e80e6a625fc39e240f6d84f4",
+      "warning-count": 3,
+      "line-ranges": [
+        [
+          8,
+          8
+        ],
+        [
+          15,
+          15
+        ],
+        [
+          21,
+          21
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-candidate-epoch1-focus.log",
+      "bytes": 3760,
+      "sha256": "4aead5758f653b4d993860d6326e8812bbed9fbed0286b0f2e15bda135d3b6b1",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          24,
+          24
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-candidate-epoch1-run.json",
+      "bytes": 1657,
+      "sha256": "0b91e0295d079e745f08d854c74c21a6c5240d0834e5825effc4d166839d4cf3",
+      "warning-count": 33,
+      "line-ranges": [
+        [
+          1,
+          33
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-candidate-epoch2-focus.log",
+      "bytes": 3444,
+      "sha256": "6dac5357ece00f14fe7b29ef4a36e385b33c1c7fd5b97a76383110a3e97a07ba",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          39,
+          39
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-candidate-epoch2-run-b.json",
+      "bytes": 7383,
+      "sha256": "e311d00259ef5d02a686480a70412e1fcadbfc083ce24ab28e78772df7b601ec",
+      "warning-count": 189,
+      "line-ranges": [
+        [
+          1,
+          189
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-candidate-epoch2-run.json",
+      "bytes": 1224,
+      "sha256": "14ca7ff57e7242fd630aacac097ef1a1a9dd5a9e8d59bd66611db83b3a41ef40",
+      "warning-count": 11,
+      "line-ranges": [
+        [
+          1,
+          11
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-capi-process-audit-a.json",
+      "bytes": 551,
+      "sha256": "9d5fe7bcc83c2435b432855aa535e3fd5789b4993b68eac8d5dbcb6c512845af",
+      "warning-count": 23,
+      "line-ranges": [
+        [
+          1,
+          23
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-empty-baseline-epoch2.log",
+      "bytes": 1816,
+      "sha256": "0ab4a775dba117a77d7f872684f50a773ffeb4d482a31f7ccf97899f448a7d7b",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          8,
+          8
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-epoch1-sockets-short-temp.log",
+      "bytes": 1437,
+      "sha256": "219a886db7429cb0c7a09906e621a28a333c7b46b343a47d12e4d075ccac3910",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          21,
+          21
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-final-check-windows.json",
+      "bytes": 949,
+      "sha256": "bb54973ae945c75fbd069a507d38916a509bf08cdfa67b652540b3e5317b3388",
+      "warning-count": 25,
+      "line-ranges": [
+        [
+          1,
+          25
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-final-check-windows.log",
+      "bytes": 195,
+      "sha256": "b9a42dcbafde9d985b64b1b176a9ae39fc24e44c44cb174336c9166ec0203e0d",
+      "warning-count": 8,
+      "line-ranges": [
+        [
+          1,
+          8
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-linux-epoch1-capi.log",
+      "bytes": 14074,
+      "sha256": "863b4b61bc1712af853e9127c5a006bd21c8a19fa335d9c76f944e0e2f193020",
+      "warning-count": 2,
+      "line-ranges": [
+        [
+          97,
+          97
+        ],
+        [
+          205,
+          205
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF.",
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-linux-epoch1-focus.log",
+      "bytes": 2033,
+      "sha256": "a14615fb01185b76f22e558375f91c0b6a8fee923deca981c6f7575cd26c12af",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          19,
+          19
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-linux-epoch1-full.log",
+      "bytes": 843298,
+      "sha256": "d0b87332b77b66b7a9fd0c207861e09dec2076415405777f6985f735a23e242e",
+      "warning-count": 6,
+      "line-ranges": [
+        [
+          1967,
+          1967
+        ],
+        [
+          5471,
+          5471
+        ],
+        [
+          5492,
+          5492
+        ],
+        [
+          5503,
+          5503
+        ],
+        [
+          5517,
+          5517
+        ],
+        [
+          8405,
+          8405
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF.",
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-linux-epoch1-integration.log",
+      "bytes": 35862,
+      "sha256": "d7aa55744b183ad151d77144b7046777136366c759a7f015d96fd575f55f92b8",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          558,
+          558
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-linux-epoch2-capi.log",
+      "bytes": 14074,
+      "sha256": "ccf140c925157a3ef63b15f54653b5bb8ba7cb476df2b2f806555fc6833b5570",
+      "warning-count": 2,
+      "line-ranges": [
+        [
+          97,
+          97
+        ],
+        [
+          205,
+          205
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF.",
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-linux-epoch2-focus.log",
+      "bytes": 2567,
+      "sha256": "e2882686318471477a8493d08a3d3b7b6b36786be31c85748c29ebcd26fe375f",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          22,
+          22
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-linux-epoch2-full.log",
+      "bytes": 843830,
+      "sha256": "e919e8fb536bffa9725d432814bba44c0cdd9d6443f9d2f0da1df94d9d91e766",
+      "warning-count": 6,
+      "line-ranges": [
+        [
+          1967,
+          1967
+        ],
+        [
+          5471,
+          5471
+        ],
+        [
+          5492,
+          5492
+        ],
+        [
+          5503,
+          5503
+        ],
+        [
+          5517,
+          5517
+        ],
+        [
+          8408,
+          8408
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF.",
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-linux-epoch2-integration.log",
+      "bytes": 35863,
+      "sha256": "270c99105b6b6516e3f0477617d1bcb6243fca861c3bb958f016d75b2346ae3f",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          558,
+          558
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-macos-epoch1-full.log",
+      "bytes": 843870,
+      "sha256": "d55d6e5ecc126d4ad029fc7336b845fbb7cffa935857f6e83418391c97052bbd",
+      "warning-count": 7,
+      "line-ranges": [
+        [
+          1933,
+          1933
+        ],
+        [
+          5419,
+          5419
+        ],
+        [
+          5440,
+          5440
+        ],
+        [
+          5451,
+          5451
+        ],
+        [
+          5465,
+          5465
+        ],
+        [
+          6873,
+          6873
+        ],
+        [
+          6893,
+          6893
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-macos-epoch2-capi.log",
+      "bytes": 14088,
+      "sha256": "275c15f9a4f960bbcf9b2bafccd6d429264f0c049356efbc31e66385e9232158",
+      "warning-count": 2,
+      "line-ranges": [
+        [
+          97,
+          97
+        ],
+        [
+          205,
+          205
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF.",
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-macos-epoch2-full.log",
+      "bytes": 843741,
+      "sha256": "5ecfa38269afcc364c331d950110640150bfea859d38b30a8d65dc559190d989",
+      "warning-count": 6,
+      "line-ranges": [
+        [
+          1933,
+          1933
+        ],
+        [
+          5419,
+          5419
+        ],
+        [
+          5440,
+          5440
+        ],
+        [
+          5451,
+          5451
+        ],
+        [
+          5465,
+          5465
+        ],
+        [
+          8376,
+          8376
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF.",
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-macos-epoch2-integration.log",
+      "bytes": 35819,
+      "sha256": "6522e985d17e275bc5db76a4723334cb3441875178ddc51c04ccbefc545d1c61",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          558,
+          558
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-native-epoch2-capi.log",
+      "bytes": 15001,
+      "sha256": "4297357e072809c3bc71eebd9393284ec4f6b2804fc85334bbe73748197723de",
+      "warning-count": 2,
+      "line-ranges": [
+        [
+          115,
+          115
+        ],
+        [
+          223,
+          223
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF.",
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-native-epoch2-focus.log",
+      "bytes": 3341,
+      "sha256": "b4e3c679211679f79a616a2a13573cdb33278ec714ae6df9b94a26e64271745f",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          38,
+          38
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-native-epoch2-full.log",
+      "bytes": 810201,
+      "sha256": "d27239a00ffd30fcb7bcaee5bd43c6e0f823833641b37439237ddc837164cf75",
+      "warning-count": 11,
+      "line-ranges": [
+        [
+          1950,
+          1950
+        ],
+        [
+          4866,
+          4866
+        ],
+        [
+          4876,
+          4876
+        ],
+        [
+          4883,
+          4883
+        ],
+        [
+          4889,
+          4889
+        ],
+        [
+          5418,
+          5418
+        ],
+        [
+          5460,
+          5460
+        ],
+        [
+          5481,
+          5481
+        ],
+        [
+          5492,
+          5492
+        ],
+        [
+          5506,
+          5506
+        ],
+        [
+          6272,
+          6272
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-native-epoch2-gates.json",
+      "bytes": 6028,
+      "sha256": "560792e8f3f9e058ca203a41e0c55c0d7850dfd4da46a173abce53914674d3f7",
+      "warning-count": 163,
+      "line-ranges": [
+        [
+          1,
+          163
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-native-epoch2-integration.log",
+      "bytes": 1782,
+      "sha256": "80bdb2b56f25be934d00bd9e1f5de4177d63349b3cfee04766c7ae1733f99b35",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          36,
+          36
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-native-owning-epoch2-b.json",
+      "bytes": 2401,
+      "sha256": "6d2282e15fcb77e338c07f2b20291a3d35ba35f6b01105c0b145c8d269578676",
+      "warning-count": 48,
+      "line-ranges": [
+        [
+          1,
+          48
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-native-owning-epoch2-c-archive-before.log",
+      "bytes": 182,
+      "sha256": "408c2f087d84ee26347573e8d196e0dbe7d6b93258597c05aeddd9b9f8bb1077",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-native-owning-epoch2-c-cpp.log",
+      "bytes": 667,
+      "sha256": "19a83dfade06de1a102b215055b1fe2e6a441f7d510a9389ad3de005a28ce84d",
+      "warning-count": 7,
+      "line-ranges": [
+        [
+          1,
+          7
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-native-owning-epoch2-c.json",
+      "bytes": 4661,
+      "sha256": "3d81a5ed1f35d4fe739b11a217a688e979958c627f33081579bfc61b60a660d8",
+      "warning-count": 90,
+      "line-ranges": [
+        [
+          1,
+          90
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-native-owning-epoch2-d-archive-after.log",
+      "bytes": 182,
+      "sha256": "408c2f087d84ee26347573e8d196e0dbe7d6b93258597c05aeddd9b9f8bb1077",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-native-owning-epoch2-d-archive-before.log",
+      "bytes": 182,
+      "sha256": "408c2f087d84ee26347573e8d196e0dbe7d6b93258597c05aeddd9b9f8bb1077",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-native-owning-epoch2-d-cpp.log",
+      "bytes": 3705,
+      "sha256": "669f12e91ce8508e90028178ca16c1f86a0a409f726a63a87f031913a187f779",
+      "warning-count": 54,
+      "line-ranges": [
+        [
+          1,
+          54
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-native-owning-epoch2-d.json",
+      "bytes": 5923,
+      "sha256": "2f23bddc0af9eaefa2840c747ee5084fd6c81f891eb660998508182756855c4d",
+      "warning-count": 136,
+      "line-ranges": [
+        [
+          1,
+          136
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-native-owning-epoch2.json",
+      "bytes": 1047,
+      "sha256": "e8cdc7ed43ac833e80788b563a7efd89a984785759798d8ddb6971b5042a9ff8",
+      "warning-count": 10,
+      "line-ranges": [
+        [
+          1,
+          10
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-native-parent-epoch2-audit.json",
+      "bytes": 27251,
+      "sha256": "5aebcaa4ee40964db57872efbe1b91018e16e80126dd58760b47de58e5d19fe1",
+      "warning-count": 662,
+      "line-ranges": [
+        [
+          1,
+          662
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-native-pipeline-epoch1.json",
+      "bytes": 2084,
+      "sha256": "6e178be44e13357b658729031c5b29d45eff9d01be78933d466593f672e9cc91",
+      "warning-count": 9,
+      "line-ranges": [
+        [
+          1,
+          9
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-native-pipeline-epoch2-b.json",
+      "bytes": 268,
+      "sha256": "d83ad46d8fca2bafb055769c8bebb82bf29f29788b05e60f50b21de9bebf5e50",
+      "warning-count": 14,
+      "line-ranges": [
+        [
+          1,
+          14
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-native-pipeline-epoch2-full.log",
+      "bytes": 4872,
+      "sha256": "df69cc3f0e8aab9eea3463a58d89684b2a01c7cbbc955a25747249e8eb1514bc",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-native-pipeline-epoch2.json",
+      "bytes": 1820,
+      "sha256": "ff0d52f0273399853e9e551c757c68657c365d8c5bc46b3ab4d5445447b8b92f",
+      "warning-count": 9,
+      "line-ranges": [
+        [
+          1,
+          9
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-owner-epoch2-build.log",
+      "bytes": 241,
+      "sha256": "77027ce0b25d2e321d7341c6fe2a80236a2837874cb1de4f2079588d47f29dc9",
+      "warning-count": 4,
+      "line-ranges": [
+        [
+          1,
+          4
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-owner-epoch2-launch.json",
+      "bytes": 7987,
+      "sha256": "ad9466b5bef66315353071c43a6e8d84e310c6e6a6d66c311260b7b7eb478eed",
+      "warning-count": 211,
+      "line-ranges": [
+        [
+          1,
+          211
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-post-wake-process-audit.json",
+      "bytes": 728,
+      "sha256": "c58cc7557b4928bd5f3b3eeac4d928426c3889d8ee4d0935e1a21cde30664498",
+      "warning-count": 31,
+      "line-ranges": [
+        [
+          1,
+          31
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-prototype-a.log",
+      "bytes": 2380,
+      "sha256": "26d28c85532a1ba405098c494f8e8c78a6f97dccd4baefdbe77a2b63df067d85",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          6,
+          6
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-prototype-b.log",
+      "bytes": 3309,
+      "sha256": "1d13df2160d9dce2e19be35a78b8ad7061dfca2dc0aeae48b40fb7abd97e740c",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          6,
+          6
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-prototype-c.log",
+      "bytes": 1904,
+      "sha256": "3be4df98b679e896e9b5485bce60ce7e0387b4564c372f17aaea67fd49a10f96",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          17,
+          17
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-prototype-d.log",
+      "bytes": 1766,
+      "sha256": "1233a0e5781036e551ae9854cfb6d2ca485c3a230623ffb8902c0510f9215c33",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          16,
+          16
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-prototype-epoch2-a.log",
+      "bytes": 2082,
+      "sha256": "0a2a269ba5468b1521b91f34a7ff16100f741463192ce5a056969641ad34bedd",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          18,
+          18
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-prototype-epoch2-b.log",
+      "bytes": 1998,
+      "sha256": "4573c67dd8d4495e526d73bad889a79c17a00240da09e1fada01138d6383ba5b",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          18,
+          18
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-prototype-epoch2-c.log",
+      "bytes": 2176,
+      "sha256": "640b35454c078f9413857680187cd9b0a5d480cd8b3e08261e7e96dd397aa5bf",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          19,
+          19
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-prototype-epoch2-d.log",
+      "bytes": 2361,
+      "sha256": "90122df54a7fab879769b4a1e9fda39cf24c442a0f3536424b2470cd940b2e82",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          20,
+          20
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-prototype-epoch2-e.log",
+      "bytes": 2301,
+      "sha256": "b7a611490a26bbb0179d0fcaa58d1d3677d22147e3d6029ef425d9ae1a2be217",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          19,
+          19
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-upper-baseline-epoch2.log",
+      "bytes": 2090,
+      "sha256": "038eda83242669f459e8934165ba6378bad83296ea9eded458368dae3ce07d65",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          6,
+          6
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/native-attributes-epoch2-c-pre-cpp-archives.json",
+      "bytes": 196591,
+      "sha256": "2fbfb51747bece8370f6b9b237acb6ed85353213f22a6e3dcefe83bb00de6297",
+      "warning-count": 4497,
+      "line-ranges": [
+        [
+          1,
+          4497
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/native-attributes-epoch2-d-final-owning-archive-identities.json",
+      "bytes": 196589,
+      "sha256": "8270e927413c2e7dc60b3c937c8a9d5229f3df55632dd35846b142263cb909df",
+      "warning-count": 4497,
+      "line-ranges": [
+        [
+          1,
+          4497
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/native-attributes-epoch2-d-pre-cpp-archives.json",
+      "bytes": 196590,
+      "sha256": "3e3c3d76e0b1045d10b5cb4501f553e4351e2ac52a9d29a56bf20c94b7f3c69c",
+      "warning-count": 4497,
+      "line-ranges": [
+        [
+          1,
+          4497
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/native-attributes-epoch2-pre-cpp-archives.json",
+      "bytes": 196590,
+      "sha256": "3e3c3d76e0b1045d10b5cb4501f553e4351e2ac52a9d29a56bf20c94b7f3c69c",
+      "warning-count": 4497,
+      "line-ranges": [
+        [
+          1,
+          4497
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/timer2-native-host-identity.json",
+      "bytes": 944,
+      "sha256": "824a29ad03161b2a10662cadb0d57b47f90c14184ef317e2840b770e8e79e2f3",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    }
+  ],
+  "other-owned-paths-pass": true
+}

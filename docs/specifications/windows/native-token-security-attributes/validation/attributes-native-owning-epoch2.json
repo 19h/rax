@@ -1,0 +1,10 @@
+{
+  "pid": 4316,
+  "state": "failed",
+  "utc": "2026-10-19T18:00:51.179961+00:00",
+  "source-epoch": 2,
+  "steps": [],
+  "exit-code": 1,
+  "error": "Traceback (most recent call last):\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-attributes-native-owning-epoch2.py\", line 28, in <module>\n    status=load(S/'attributes-native-epoch2-gates.json')\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-attributes-native-owning-epoch2.py\", line 10, in load\n    def load(path):return json.loads(path.read_text(encoding='utf-8-sig'))\n                                     ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^\n  File \"pathlib\\__init__.py\", line 792, in read_text\n  File \"pathlib\\__init__.py\", line 776, in open\nFileNotFoundError: [Errno 2] No such file or directory: 'C:\\\\Mac\\\\Home\\\\Downloads\\\\assist-native-allocate-ex-transfer-20261010-2154\\\\attributes-native-epoch2-gates.json'\n",
+  "completed-utc": "2026-10-19T18:00:52.357431+00:00"
+}

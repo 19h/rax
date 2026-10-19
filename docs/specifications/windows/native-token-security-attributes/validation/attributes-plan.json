@@ -1,0 +1,65 @@
+{
+  "utc": "2026-10-19T15:07:21.926189+00:00",
+  "base": "d03afec80afd8ef4281c839a8944a166aef02369",
+  "scope": "Implement observed NtQuerySecurityAttributesToken using immutable captured token attributes; no guest request forwarded to a host token API. All standard attribute value types and native/WoW buffer/fault/alias contracts need native evidence or explicit primary-layout proof. No product edits yet.",
+  "acceptance": [
+    "Actual pseudo-handle-4 two-name SYSAPPID/PKG query behaves like native; ordinary programs advance beyond current stop",
+    "Positive query-all and TSA://ProcUnique behavior tested; never fabricate generic empty attributes",
+    "Six-argument native/WoW transport, rights, type, capture/probe/write/ReturnLength order and failure atomicity covered",
+    "Captured data uses owned ABI-neutral values and no surviving host pointer/HANDLE; case folding follows captured Windows table without path normalization",
+    "All affected Windows/macOS/Linux configurations compile and run shared semantics, native Windows adapter/leaves execute, actual retained consumers and ordinary guests validated",
+    "Tests-only compiled baseline before implementation; all code/strategic tests before full gates; exact owned linear red publication to paired remotes"
+  ],
+  "assumptions": [
+    {
+      "id": "A1",
+      "assumption": "Installed build29683 and four ABI views define this measured compatibility scope.",
+      "basis": "3000 completed native observations plus actual-owner argument/name diagnostics on one ARM64 kernel.",
+      "dependent-result": "Native/WoW validation/serialization model.",
+      "stress-test": "V3 invalid buffers, name descriptors, return pointers, aliases, handle grants and signed/overflow counts; positive private-token fixtures.",
+      "falsification-probe": "Independent native checker or replay finds status/byte/guard/ReturnLength disagreement.",
+      "status": "retained pending comprehensive oracle"
+    },
+    {
+      "id": "A2",
+      "assumption": "Capturing full token attributes can preserve native identity without treating missing requested names as an empty token.",
+      "basis": "Actual caller requests SYSAPPID/PKG; query-all returns positive TSA://ProcUnique UINT64[2], flags0x41.",
+      "dependent-result": "New captured Subject attribute state and getter.",
+      "stress-test": "Duplicates, case aliases, mixed missing/present, all standard types, missing capture.",
+      "falsification-probe": "Guest query-all loses TSA or queried absent names succeed; a native capture pointer survives ownership conversion.",
+      "status": "retained"
+    },
+    {
+      "id": "A3",
+      "assumption": "The existing bounded subject-acquisition consistency loop can include immutable normalized attributes.",
+      "basis": "wnf/installed.rs captures current token twice and compares owned Subject state; existing Catalog provides Arc<Subject>.",
+      "dependent-result": "Capture integration and no unrelated feature regression.",
+      "stress-test": "Process-unique values stable within capture, pointer relocation ignored, unknown capture fails closed.",
+      "falsification-probe": "Repeat native captures differ solely because raw pointers were retained or selection makes previous token/WNF operations unavailable.",
+      "status": "retained"
+    }
+  ],
+  "known-observations": {
+    "native-query-all": "one attribute TSA://ProcUnique, type2 UINT64, count2, flags0x41; native required104bytes, WoW successful88bytes",
+    "names": "case-insensitive in observed TSA spellings; duplicate request returns duplicate attributes; any missing name yields STATUS_NOT_FOUND/ReturnLength0, any empty name invalid parameter",
+    "native-vs-wow": "native length0 returns INVALID_PARAMETER without publishing ReturnLength; WoW can return NOT_FOUND0 or BUFFER_TOO_SMALL/native requirement even at length0; WoW needs native capacity104/192 before successful converted length88/160",
+    "frontier": "Both ordinary ARM64 programs stop at service0x167 with pseudo-4,count2,length816,names SYSAPPID/PKG; no guest success"
+  },
+  "bounded-findings": [
+    {
+      "impact": "high",
+      "item": "Ordinary guest successful exit remains incomplete at this API; blocks full goal.",
+      "evidence": "observed-frontier.json"
+    },
+    {
+      "impact": "medium",
+      "item": "One installed kernel and current primary-token contexts do not prove all value types or alternative subject contexts.",
+      "evidence": "capture-plan-v1/v2.json; generic and private-token native fixture work required."
+    },
+    {
+      "impact": "low",
+      "item": "Adjacent WorkerFactory classes0/1 are declared in PHNT but all5120prospective captures returned INVALID_INFO_CLASS. No change in this token group.",
+      "evidence": "../native-worker-factory-relative-timeouts-20261019/prospective-precheck.json"
+    }
+  ]
+}

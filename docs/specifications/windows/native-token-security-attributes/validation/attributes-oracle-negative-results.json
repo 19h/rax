@@ -1,0 +1,101 @@
+{
+  "checker-sha256": "886c54a9d3d9acdce0cace8a6eba8c0f8afe58d84bc72af188ba6ac788420950",
+  "controls": [
+    {
+      "control": "uncorrupted-copy",
+      "exit-code": 0,
+      "output-sha256": "03dabbe91ddac541521c0c7f1d86c71b57136a4a91e476521271286bb7100fd8",
+      "detail": "checked 22656 failures 0\n"
+    },
+    {
+      "control": "source-identity",
+      "exit-code": 1,
+      "output-sha256": "b4742fc51fd34a8786c6ebc2f36a63fb6267f9620db1be6e8aa538686a917c3a",
+      "detail": "Traceback (most recent call last):\n  File \"/Users/int/.assist-token-20261019/build-tmp/attribute-oracle-ry60dqzb/check_layouts.py\", line 283, in <module>\n    raise SystemExit(main())\n                     ~~~~^^\n  File \"/Users/int/.assist-token-20261019/build-tmp/attribute-oracle-ry60dqzb/check_layouts.py\", line 120, in main\n    assert hashlib.sha256((CAPTURES / (prefix + '.cpp')).read_bytes()).hexdigest() == source_hashes[version]\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n"
+    },
+    {
+      "control": "launch-state",
+      "exit-code": 1,
+      "output-sha256": "1053354a8b0be5a80dc2839ad599a04a2b2b5d942c189152de7a86d1372135e9",
+      "detail": "Traceback (most recent call last):\n  File \"/Users/int/.assist-token-20261019/build-tmp/attribute-oracle-xt4r96v7/check_layouts.py\", line 283, in <module>\n    raise SystemExit(main())\n                     ~~~~^^\n  File \"/Users/int/.assist-token-20261019/build-tmp/attribute-oracle-xt4r96v7/check_layouts.py\", line 121, in main\n    assert load(prefix + '-launch.json')['state'] == 'finished'\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n"
+    },
+    {
+      "control": "pe-pair",
+      "exit-code": 1,
+      "output-sha256": "06a6c99b37b3d4cbd5eb3507d3b1ded5472d5667ae95ff919213727f96af794a",
+      "detail": "Traceback (most recent call last):\n  File \"/Users/int/.assist-token-20261019/build-tmp/attribute-oracle-_c18huly/check_layouts.py\", line 283, in <module>\n    raise SystemExit(main())\n                     ~~~~^^\n  File \"/Users/int/.assist-token-20261019/build-tmp/attribute-oracle-_c18huly/check_layouts.py\", line 133, in main\n    assert pe == load(prefix + '-' + profile + '-after.json')\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n"
+    },
+    {
+      "control": "pe-machine",
+      "exit-code": 1,
+      "output-sha256": "36860a9190cf158090cb8e5c73b0a1a804d2bec2804e598159fd585eb23ceafc",
+      "detail": "Traceback (most recent call last):\n  File \"/Users/int/.assist-token-20261019/build-tmp/attribute-oracle-r3fh_evv/check_layouts.py\", line 283, in <module>\n    raise SystemExit(main())\n                     ~~~~^^\n  File \"/Users/int/.assist-token-20261019/build-tmp/attribute-oracle-r3fh_evv/check_layouts.py\", line 135, in main\n    assert pe['machine'] == {'arm64': 0xAA64, 'x64': 0x8664, 'x86': 0x14C, 'x86-laa': 0x14C}[profile]\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n"
+    },
+    {
+      "control": "pe-laa",
+      "exit-code": 1,
+      "output-sha256": "5ee3a00e660a5096f1ae44c1577e8c1dd4d1be7e94c590b48e08452c80232482",
+      "detail": "Traceback (most recent call last):\n  File \"/Users/int/.assist-token-20261019/build-tmp/attribute-oracle-m8qpqoi4/check_layouts.py\", line 283, in <module>\n    raise SystemExit(main())\n                     ~~~~^^\n  File \"/Users/int/.assist-token-20261019/build-tmp/attribute-oracle-m8qpqoi4/check_layouts.py\", line 136, in main\n    assert pe['large-address-aware'] == (profile != 'x86')\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n"
+    },
+    {
+      "control": "source-after",
+      "exit-code": 1,
+      "output-sha256": "4bbe1a757dcc1ac6ec3619cea473f4654f0ec69ac9643a660e99245f62cfe973",
+      "detail": "Traceback (most recent call last):\n  File \"/Users/int/.assist-token-20261019/build-tmp/attribute-oracle-5j1yedk7/check_layouts.py\", line 283, in <module>\n    raise SystemExit(main())\n                     ~~~~^^\n  File \"/Users/int/.assist-token-20261019/build-tmp/attribute-oracle-5j1yedk7/check_layouts.py\", line 137, in main\n    assert load(prefix + '-' + profile + '-source-after.json')['Hash'].lower() == source_hashes[version]\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n"
+    },
+    {
+      "control": "module-drift",
+      "exit-code": 1,
+      "output-sha256": "ed43195ba6a331efcf4c46c37432759213b84968b3cb72f0925d7deca5e937e7",
+      "detail": "Traceback (most recent call last):\n  File \"/Users/int/.assist-token-20261019/build-tmp/attribute-oracle-gdzgz_1s/check_layouts.py\", line 283, in <module>\n    raise SystemExit(main())\n                     ~~~~^^\n  File \"/Users/int/.assist-token-20261019/build-tmp/attribute-oracle-gdzgz_1s/check_layouts.py\", line 127, in main\n    assert before == load(prefix + '-modules-after.json')\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n"
+    },
+    {
+      "control": "status-rebound",
+      "exit-code": 1,
+      "output-sha256": "1d278267593bb66e396e6207c2a4b26e8f6d9ae95fbdc2158d01a8f37df17ac6",
+      "detail": "checked 22656 failures 1\n{'version': 'v3', 'profile': 'arm64', 'case': '482', 'checks': [False, True, True], 'status': '00000000', 'returned': '00000068', 'expected-returned': '00000068', 'byte-differences': []}\n"
+    },
+    {
+      "control": "required-rebound",
+      "exit-code": 1,
+      "output-sha256": "f479c64ad799cb31efe3caa6a98d78d254d71130da4432911251c68f83186a35",
+      "detail": "checked 22656 failures 1\n{'version': 'v3', 'profile': 'arm64', 'case': '482', 'checks': [True, False, True], 'status': '00000000', 'returned': '00000068', 'expected-returned': '00000069', 'byte-differences': []}\n"
+    },
+    {
+      "control": "payload-rebound",
+      "exit-code": 1,
+      "output-sha256": "a30909e144b6b360767b713a94e740e4c0a35109846e03ca91546e74ad7c94e5",
+      "detail": "checked 22656 failures 1\n{'version': 'v3', 'profile': 'arm64', 'case': '482', 'checks': [True, True, False], 'status': '00000000', 'returned': '00000068', 'expected-returned': '00000068', 'byte-differences': [0]}\n"
+    },
+    {
+      "control": "guard-rebound",
+      "exit-code": 1,
+      "output-sha256": "82855221fed355c410609efbad836f812736bf71efd772e18461e97f9b907108",
+      "detail": "Traceback (most recent call last):\n  File \"/Users/int/.assist-token-20261019/build-tmp/attribute-oracle-bwxt888l/check_layouts.py\", line 283, in <module>\n    raise SystemExit(main())\n                     ~~~~^^\n  File \"/Users/int/.assist-token-20261019/build-tmp/attribute-oracle-bwxt888l/check_layouts.py\", line 167, in main\n    assert [regions[address + 4096 * i] for i in range(pages)] == [int(v, 16) for v in row[field].split(',')]\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n"
+    },
+    {
+      "control": "last-error-rebound",
+      "exit-code": 1,
+      "output-sha256": "7e6e2badfbe3ef7cd1ab6e9b711ca9582ebab8d592c0106f713fe1cf5cba1b3c",
+      "detail": "Traceback (most recent call last):\n  File \"/Users/int/.assist-token-20261019/build-tmp/attribute-oracle-5g2ndsra/check_layouts.py\", line 283, in <module>\n    raise SystemExit(main())\n                     ~~~~^^\n  File \"/Users/int/.assist-token-20261019/build-tmp/attribute-oracle-5g2ndsra/check_layouts.py\", line 160, in main\n    assert row['last-error'] == '0000C0DE'\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n"
+    },
+    {
+      "control": "empty-tail-rebound",
+      "exit-code": 1,
+      "output-sha256": "77fa322219dd6f6990517ea0c3ad4f7677984b117b9ee3afc44a379250f0f9c2",
+      "detail": "checked 22656 failures 1\n{'version': 'v7b', 'profile': 'arm64', 'case': '2', 'checks': [True, True, False], 'status': '00000000', 'returned': '00000010', 'expected-returned': '00000010', 'byte-differences': [16]}\n"
+    },
+    {
+      "control": "profile-membership",
+      "exit-code": 1,
+      "output-sha256": "b3a9a16b6548d8084d752d1726d254b67e81c7fef9de394cf43b4440a64fa8b3",
+      "detail": "Traceback (most recent call last):\n  File \"/Users/int/.assist-token-20261019/build-tmp/attribute-oracle-98pcec2e/check_layouts.py\", line 283, in <module>\n    raise SystemExit(main())\n                     ~~~~^^\n  File \"/Users/int/.assist-token-20261019/build-tmp/attribute-oracle-98pcec2e/check_layouts.py\", line 242, in main\n    assert [(g['version'], g['profile']) for g in corpus['groups']] == [(v, p) for v in ['v1', 'v2', 'v3', 'v4b', 'v5', 'v6'] for p in ['arm64', 'x64', 'x86', 'x86-laa']]\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n"
+    },
+    {
+      "control": "upper-required-rebound",
+      "exit-code": 1,
+      "output-sha256": "431b138cae664c4600f5e6cbe8e1846604f64fd96af7290e1e4370eb3351a9d3",
+      "detail": "checked 22656 failures 1\n{'version': 'v9', 'profile': 'arm64', 'case': '2', 'checks': [True, False, True], 'status': 'C0000005', 'returned': '11223344', 'expected-returned': '00000069', 'byte-differences': []}\n"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "scope": "Read-only current/real/pseudo/denied/wrong-type token error precedence, output/ReturnLength/UNICODE_STRING guard/noaccess/alignment and alias probes. All allocations and event/token aliases are task-owned, no token mutation.",
+  "source-sha256": "f6ee6a26d8f23ec2deaa03ee71ab6fa3a525f5dd601ab567bb7b4d1254bedecd",
+  "cases-per-profile": 2562,
+  "total-cases": 10248,
+  "enumeration": {
+    "output-priority": 1440,
+    "returned-priority": 600,
+    "name-priority": 432,
+    "aliases": 90
+  },
+  "profiles": [
+    "arm64",
+    "x64",
+    "x86",
+    "x86-laa"
+  ],
+  "kernel-count": 1
+}

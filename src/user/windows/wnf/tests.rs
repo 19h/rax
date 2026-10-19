@@ -28,6 +28,7 @@ pub(crate) fn rows(text: &str) -> Vec<HashMap<&str, &str>> {
 }
 fn subject() -> Subject {
     let mut subject = Subject {
+        attributes: None,
         user_attributes: 0,
         user: Vec::new(),
         groups: Vec::new(),

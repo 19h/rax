@@ -1,0 +1,8 @@
+{
+  "state": "expected-regression-failed",
+  "passed": 0,
+  "failed": 3,
+  "record": "attributes-baseline-a.json",
+  "record-sha256": "57a88bf9bd1af4e99fb6e7a982716eac71198a7bc44ab8151aae2c65d51210f7",
+  "qualification": "Tests-only compiled regression; exact unsupported-service failures, not compile errors."
+}

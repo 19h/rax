@@ -1,0 +1,8 @@
+{
+  "scope": "Read-only current/pseudo token discovery with actual SYSAPPID/PKG pair, positive TSA attribute, duplicate/case/partial/empty name requests, native/WoW sizing boundaries.",
+  "source-sha256": "9817133450d8fa848159116aeab334a3327395d1139fd2cb520f7c74c426480c",
+  "profiles": 4,
+  "cases-per-profile": 672,
+  "total-cases": 2688,
+  "enumeration": "2 handle modes * 14 name vectors * 24 lengths"
+}

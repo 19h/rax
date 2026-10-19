@@ -1,0 +1,26 @@
+   Compiling rax v0.1.0 (/Users/int/Library/Caches/assist-process-emulation/native-token-security-attributes-20261019/attributes-source)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 26s
+     Running unittests src/lib.rs (target-attributes/debug/deps/rax-dd79f0cd9ae9bb68)
+
+running 6 tests
+test user::windows::process::sched::tests::services_tests::token_security_attributes_replay_tests::native_token_security_attributes_replays_all_17440_native_cases ... 
+thread 'user::windows::process::sched::tests::services_tests::token_security_attributes_replay_tests::native_token_security_attributes_replays_all_17440_native_cases' (11530962) panicked at src/user/windows/process/sched/tests/services_tests/token_security_attributes_replay_tests.rs:320:13:
+assertion `left == right` failed: arm64/v2/{"bytes":"A5","case":"169","exception":"00000000","handle-mode":"0","handles":"57","last-error":"0000C0DE","length":"00000001","mode":"7","name":"005400530041003A002F002F00500072006F00630055006E0069007100750065","output":"000001D700560000","required":"00000068","status":"C0000023","width":"8"}
+  left: 3221226021
+ right: 3221225507
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+test user::windows::process::sched::tests::services_tests::token_security_attributes_tests::native_token_security_attributes_name_capture_and_output_guard_priority_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::token_security_attributes_tests::native_token_security_attributes_rejects_inconsistent_name_array_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::token_security_attributes_tests::native_token_security_attributes_returned_alignment_precedes_handle_all_abis ... ok
+test user::windows::security::token::attributes::tests::native_token_security_attributes_owned_parser_rejects_escaping_and_oversized_graphs ... ok
+test user::windows::security::token::attributes::tests::native_token_security_attributes_retains_opaque_flags_and_exact_name_grammar ... ok
+
+failures:
+
+failures:
+    user::windows::process::sched::tests::services_tests::token_security_attributes_replay_tests::native_token_security_attributes_replays_all_17440_native_cases
+
+test result: FAILED. 5 passed; 1 failed; 0 ignored; 0 measured; 8039 filtered out; finished in 0.40s
+
+error: test failed, to rerun pass `--lib`

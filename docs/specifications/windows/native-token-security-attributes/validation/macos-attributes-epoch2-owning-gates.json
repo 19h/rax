@@ -1,0 +1,68 @@
+{
+  "state": "failed",
+  "host": "macos",
+  "pid": 3940,
+  "source-inputs": 880,
+  "scope": "Retained Assist Rust ABI184; selected C++ consumers, not whole current-root products.",
+  "steps": [
+    {
+      "gate": "prime-artifacts",
+      "cwd": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/rust/assist-rs",
+      "command": [
+        "cmake",
+        "-E",
+        "env",
+        "CARGO_TARGET_DIR=/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes/assist-rs-target",
+        "CARGO_PROFILE_RELEASE_STRIP=false",
+        "MACOSX_DEPLOYMENT_TARGET=10.15",
+        "ASSIST_RESOURCE_PYTHON=/opt/homebrew/Frameworks/Python.framework/Versions/3.14/bin/python3.14",
+        "CARGO_BUILD_JOBS=2",
+        "RUSTUP_TOOLCHAIN=1.95.0",
+        "/Users/int/.cargo/bin/cargo",
+        "build",
+        "--locked",
+        "--offline",
+        "--manifest-path",
+        "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/rust/assist-rs/Cargo.toml",
+        "--package",
+        "assist-rs",
+        "--target",
+        "aarch64-apple-darwin",
+        "--features",
+        "rax",
+        "--message-format=json"
+      ],
+      "exit-code": 0,
+      "seconds": 147.77164412499405,
+      "log": "macos-attributes-epoch2-owning-prime-artifacts.log",
+      "sha256": "d8dcef3be96ec942e58294d9206472509704db627d2d0a599de0da9349ec0a04",
+      "bytes": 137970
+    },
+    {
+      "gate": "archive-before",
+      "command": [
+        "python3",
+        "-B",
+        "/Users/int/Library/Caches/assist-process-emulation/native-token-security-attributes-20261019/collect-attributes-archives-epoch2.py",
+        "--host",
+        "macos",
+        "--source",
+        "/Users/int/.assist-token-20261019",
+        "--manifest",
+        "/Users/int/Library/Caches/assist-process-emulation/native-token-security-attributes-20261019/idle-owning-source-hashes-epoch2.json",
+        "--messages",
+        "/Users/int/Library/Caches/assist-process-emulation/native-token-security-attributes-20261019/macos-attributes-epoch2-owning-prime-artifacts.log",
+        "--output",
+        "/Users/int/Library/Caches/assist-process-emulation/native-token-security-attributes-20261019/macos-attributes-epoch2-pre-cpp-archive-identities.json"
+      ],
+      "exit-code": 1,
+      "seconds": 0.3775572500017006,
+      "log": "macos-attributes-epoch2-owning-archive-before.log",
+      "sha256": "3ba30d831f18223faf21083a9afb34328038c845f6efe1ecf42332d1bd1c8ee9",
+      "bytes": 1270
+    }
+  ],
+  "current-step": "archive-before",
+  "child-pid": 8482,
+  "exit-code": 1
+}

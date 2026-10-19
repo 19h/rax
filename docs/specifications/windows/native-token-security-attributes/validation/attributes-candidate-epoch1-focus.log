@@ -1,0 +1,48 @@
+warning: "stdcall" is not a supported ABI for the current target
+  --> vendor\vm-memory\src\mmap\windows.rs:22:1
+   |
+22 | / extern "stdcall" {
+23 | |     pub fn VirtualAlloc(
+24 | |         lpAddress: *mut c_void,
+25 | |         dwSize: size_t,
+...  |
+49 | |     pub fn CloseHandle(hObject: RawHandle) -> u32; // BOOL
+50 | | }
+   | |_^
+   |
+   = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!
+   = note: for more information, see issue #137018 <https://github.com/rust-lang/rust/issues/137018>
+   = help: if you need `extern "stdcall"` on win32 and `extern "C"` everywhere else, use `extern "system"`
+   = note: `#[warn(unsupported_calling_conventions)]` (part of `#[warn(future_incompatible)]`) on by default
+
+warning: `vm-memory` (lib) generated 1 warning
+   Compiling rax v0.1.0 (C:\Windows\Temp\assist-native-rax-20261010\src-attributes-candidate-epoch1)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3m 30s
+     Running unittests src\lib.rs (target\normal\debug\deps\rax-b799307a7949aa6b.exe)
+
+running 10 tests
+test user::windows::process::sched::tests::services_tests::token_security_attributes_leaf_tests::native_token_security_attributes_installed_leaves_match_independent_capture_and_ret24 ... 
+thread 'user::windows::process::sched::tests::services_tests::token_security_attributes_leaf_tests::native_token_security_attributes_installed_leaves_match_independent_capture_and_ret24' (1504) panicked at src\user\windows\process\sched\tests\services_tests\token_security_attributes_leaf_tests.rs:200:13:
+assertion `left == right` failed
+  left: None
+ right: Some(Attributes([Attribute { name: [84, 83, 65, 58, 47, 47, 80, 114, 111, 99, 85, 110, 105, 113, 117, 101], flags: 65, values: Uint64([155, 168064107]) }]))
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+test user::windows::process::sched::tests::services_tests::token_security_attributes_replay_tests::native_token_security_attributes_replays_all_22048_native_cases ... ok
+test user::windows::process::sched::tests::services_tests::token_security_attributes_tests::native_token_security_attributes_impersonation_alias_owns_values_without_primary_subject ... ok
+test user::windows::process::sched::tests::services_tests::token_security_attributes_tests::native_token_security_attributes_missing_capture_is_explicit_and_preserves_destinations ... ok
+test user::windows::process::sched::tests::services_tests::token_security_attributes_tests::native_token_security_attributes_name_capture_and_output_guard_priority_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::token_security_attributes_tests::native_token_security_attributes_rejects_inconsistent_name_array_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::token_security_attributes_tests::native_token_security_attributes_returned_alignment_precedes_handle_all_abis ... ok
+test user::windows::security::token::attributes::tests::native_token_security_attributes_decodes_independent_all_type_native_captures ... ok
+test user::windows::security::token::attributes::tests::native_token_security_attributes_owned_parser_rejects_escaping_and_oversized_graphs ... ok
+test user::windows::security::token::attributes::tests::native_token_security_attributes_retains_opaque_flags_and_exact_name_grammar ... ok
+
+failures:
+
+failures:
+    user::windows::process::sched::tests::services_tests::token_security_attributes_leaf_tests::native_token_security_attributes_installed_leaves_match_independent_capture_and_ret24
+
+test result: FAILED. 9 passed; 1 failed; 0 ignored; 0 measured; 7506 filtered out; finished in 8.34s
+
+error: test failed, to rerun pass `--lib`

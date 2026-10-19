@@ -1,0 +1,126 @@
+{
+  "checked": 22048,
+  "profiles": [
+    {
+      "version": "v1",
+      "profile": "arm64",
+      "cases": 78
+    },
+    {
+      "version": "v1",
+      "profile": "x64",
+      "cases": 78
+    },
+    {
+      "version": "v1",
+      "profile": "x86",
+      "cases": 78
+    },
+    {
+      "version": "v1",
+      "profile": "x86-laa",
+      "cases": 78
+    },
+    {
+      "version": "v2",
+      "profile": "arm64",
+      "cases": 672
+    },
+    {
+      "version": "v2",
+      "profile": "x64",
+      "cases": 672
+    },
+    {
+      "version": "v2",
+      "profile": "x86",
+      "cases": 672
+    },
+    {
+      "version": "v2",
+      "profile": "x86-laa",
+      "cases": 672
+    },
+    {
+      "version": "v3",
+      "profile": "arm64",
+      "cases": 2562
+    },
+    {
+      "version": "v3",
+      "profile": "x64",
+      "cases": 2562
+    },
+    {
+      "version": "v3",
+      "profile": "x86",
+      "cases": 2562
+    },
+    {
+      "version": "v3",
+      "profile": "x86-laa",
+      "cases": 2562
+    },
+    {
+      "version": "v4b",
+      "profile": "arm64",
+      "cases": 56
+    },
+    {
+      "version": "v4b",
+      "profile": "x64",
+      "cases": 56
+    },
+    {
+      "version": "v4b",
+      "profile": "x86",
+      "cases": 56
+    },
+    {
+      "version": "v4b",
+      "profile": "x86-laa",
+      "cases": 56
+    },
+    {
+      "version": "v5",
+      "profile": "arm64",
+      "cases": 992
+    },
+    {
+      "version": "v5",
+      "profile": "x64",
+      "cases": 992
+    },
+    {
+      "version": "v5",
+      "profile": "x86",
+      "cases": 992
+    },
+    {
+      "version": "v5",
+      "profile": "x86-laa",
+      "cases": 992
+    },
+    {
+      "version": "v6",
+      "profile": "arm64",
+      "cases": 1152
+    },
+    {
+      "version": "v6",
+      "profile": "x64",
+      "cases": 1152
+    },
+    {
+      "version": "v6",
+      "profile": "x86",
+      "cases": 1152
+    },
+    {
+      "version": "v6",
+      "profile": "x86-laa",
+      "cases": 1152
+    }
+  ],
+  "failures": []
+}

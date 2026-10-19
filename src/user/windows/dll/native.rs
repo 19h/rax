@@ -32,6 +32,7 @@ mod system_time;
 mod thread_set;
 mod timers;
 mod token;
+mod token_attributes;
 mod token_query;
 mod topology;
 mod trace;
@@ -312,6 +313,12 @@ pub(super) static EXPORTS: &[Export] = &[
         Stdcall,
         &[Ptr, I32, Ptr, I32, Ptr],
         token_query::information,
+    ),
+    Export::func(
+        "NtQuerySecurityAttributesToken",
+        Stdcall,
+        &[Ptr, Ptr, I32, Ptr, I32, Ptr],
+        token_attributes::query,
     ),
     Export::func(
         "NtAccessCheck",

@@ -1,0 +1,9 @@
+{
+  "state": "expected-regression-failed",
+  "passed": 0,
+  "failed": 1,
+  "exit-code": 101,
+  "inputs-unchanged": true,
+  "log-sha256": "0ab4a775dba117a77d7f872684f50a773ffeb4d482a31f7ccf97899f448a7d7b",
+  "scope": "Compiled tests-only empty-set regression against epoch1 implementation; non-NULL header pointer disproved by native empty captures."
+}

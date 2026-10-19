@@ -1,0 +1,23 @@
+   Compiling vm-memory v0.17.1 (/Users/int/Library/Caches/assist-process-emulation/native-token-security-attributes-20261019/attributes-source-epoch2/vendor/vm-memory)
+   Compiling linux-loader v0.13.2 (https://github.com/19h/linux-loader?rev=f745b555942c4e840a784bca61e6f3976d101960#f745b555)
+   Compiling rax v0.1.0 (/Users/int/Library/Caches/assist-process-emulation/native-token-security-attributes-20261019/attributes-source-epoch2)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3m 57s
+     Running unittests src/lib.rs (target/debug/deps/rax-dd79f0cd9ae9bb68)
+
+running 1 test
+test user::windows::process::sched::tests::services_tests::token_security_attributes_tests::native_token_security_attributes_empty_set_matches_all_32_native_rows ... 
+thread 'user::windows::process::sched::tests::services_tests::token_security_attributes_tests::native_token_security_attributes_empty_set_matches_all_32_native_rows' (11635055) panicked at src/user/windows/process/sched/tests/services_tests/token_security_attributes_tests.rs:253:13:
+assertion `left == right` failed: arm64/{"bytes":"01000000000000000000000000000000","case":"1","last-error":"0000C0DE","length":"00000010","output":"000000C120AFE780","required":"00000010","status":"00000000","type":"0","width":"8"}
+  left: [1, 0, 0, 0, 0, 0, 0, 0, 16, 0, 34, 0, 0, 0, 0, 0]
+ right: [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+
+failures:
+
+failures:
+    user::windows::process::sched::tests::services_tests::token_security_attributes_tests::native_token_security_attributes_empty_set_matches_all_32_native_rows
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 8048 filtered out; finished in 0.02s
+
+error: test failed, to rerun pass `--lib`

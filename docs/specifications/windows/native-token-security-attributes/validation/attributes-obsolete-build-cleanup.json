@@ -1,0 +1,41 @@
+{
+  "utc": "2026-10-19T18:26:00.911654+00:00",
+  "removed": [
+    "/Users/int/Library/Caches/assist-process-emulation/native-token-security-attributes-20261019/attributes-source/target",
+    "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/generated",
+    "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/libassist_static_text_prompts.a",
+    "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/libassist_static_text_metadata.a",
+    "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/libassist_static_text_scripts.a",
+    "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/test",
+    "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/compile_commands.json",
+    "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/bin",
+    "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/CMakeFiles",
+    "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/libassist_static_text_manifest.a",
+    "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/options-pinned.h",
+    "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/.ninja_deps",
+    "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/cmake_install.cmake",
+    "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/build.ninja",
+    "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/libassist_monocypher.a",
+    "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/CTestTestfile.cmake",
+    "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/libassist_static_text.a",
+    "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/Testing",
+    "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/libassist_embedded_prompts.a",
+    "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/static-text.seed",
+    "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/assist_mcp_exports.exp",
+    "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/examples",
+    "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/assist-cli",
+    "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/libassist_masking.a",
+    "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/assist-mcp",
+    "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/sdk-contract",
+    "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/lib",
+    "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/CMakeCache.txt",
+    "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/libassist_frida_host_source.a",
+    "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/.ninja_log"
+  ],
+  "preserved": [
+    "All source worktrees and evidence",
+    "Dependency sources under legacy _deps",
+    "Final RAX target and retained Assist build-native-attributes for concrete next-frontier reuse"
+  ],
+  "basis": "All macOS/Linux drivers and owning consumers completed; no live command refers to either obsolete directory; legacy path absent from final CMake cache/Ninja graph."
+}

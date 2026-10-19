@@ -1,0 +1,31 @@
+{
+  "state": "finished",
+  "host": "linux",
+  "argv": [
+    "docker",
+    "run",
+    "--rm",
+    "--platform",
+    "linux/amd64",
+    "-v",
+    "/Users/int/.assist-token-20261019:/source:ro",
+    "-v",
+    "/Users/int/.assist-token-20261019/build-tmp:/source/build-tmp",
+    "-v",
+    "/Users/int/Library/Caches/assist-process-emulation/native-token-security-attributes-20261019:/validation:ro",
+    "-w",
+    "/source",
+    "assist-rax-validation-rustfmt:1.95-bullseye-20261015",
+    "python3",
+    "-B",
+    "/validation/run-attributes-proof-checks.py",
+    "/source"
+  ],
+  "checked-envelope-files": 522,
+  "utc": "2026-10-19T19:11:32.370462+00:00",
+  "exit-code": 0,
+  "log": "attributes-final-check-linux.log",
+  "bytes": 187,
+  "sha256": "e3696f2fa9f200111fe48e44846ecf77db994e0b305c499e37cd39b8ef3d65ce",
+  "completed-utc": "2026-10-19T19:11:44.066525+00:00"
+}

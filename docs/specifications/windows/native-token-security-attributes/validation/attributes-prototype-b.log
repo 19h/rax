@@ -1,0 +1,27 @@
+   Compiling rax v0.1.0 (/Users/int/Library/Caches/assist-process-emulation/native-token-security-attributes-20261019/attributes-source)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 20s
+     Running unittests src/lib.rs (target/debug/deps/rax-dd79f0cd9ae9bb68)
+
+running 7 tests
+test user::windows::process::sched::tests::services_tests::token_security_attributes_replay_tests::native_token_security_attributes_replays_all_22048_native_cases ... 
+thread 'user::windows::process::sched::tests::services_tests::token_security_attributes_replay_tests::native_token_security_attributes_replays_all_22048_native_cases' (11542611) panicked at src/user/windows/process/sched/tests/services_tests/token_security_attributes_replay_tests.rs:393:13:
+assertion `left == right` failed: bytes arm64/v4b/"4"
+  left: [165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165]
+ right: [1, 0, 0, 0, 1, 0, 0, 0, 224, 232, 15, 0, 128, 0, 0, 0, 28, 0, 28, 0, 0, 0, 0, 0, 8, 233, 15, 0, 128, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 40, 233, 15, 0, 128, 0, 0, 0, 65, 0, 115, 0, 115, 0, 105, 0, 115, 0, 116, 0, 46, 0, 70, 0, 105, 0, 120, 0, 116, 0, 117, 0, 114, 0, 101, 0, 0, 0, 0, 0, 255, 255, 255, 255, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 128, 255, 255, 255, 255, 255, 255, 255, 127, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+test user::windows::process::sched::tests::services_tests::token_security_attributes_tests::native_token_security_attributes_name_capture_and_output_guard_priority_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::token_security_attributes_tests::native_token_security_attributes_rejects_inconsistent_name_array_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::token_security_attributes_tests::native_token_security_attributes_returned_alignment_precedes_handle_all_abis ... ok
+test user::windows::security::token::attributes::tests::native_token_security_attributes_decodes_independent_all_type_native_captures ... ok
+test user::windows::security::token::attributes::tests::native_token_security_attributes_owned_parser_rejects_escaping_and_oversized_graphs ... ok
+test user::windows::security::token::attributes::tests::native_token_security_attributes_retains_opaque_flags_and_exact_name_grammar ... ok
+
+failures:
+
+failures:
+    user::windows::process::sched::tests::services_tests::token_security_attributes_replay_tests::native_token_security_attributes_replays_all_22048_native_cases
+
+test result: FAILED. 6 passed; 1 failed; 0 ignored; 0 measured; 8039 filtered out; finished in 2.76s
+
+error: test failed, to rerun pass `--lib`

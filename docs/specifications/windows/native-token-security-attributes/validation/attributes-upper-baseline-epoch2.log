@@ -1,0 +1,21 @@
+   Compiling rax v0.1.0 (/Users/int/.assist-token-20261019)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 28s
+     Running unittests src/lib.rs (target/debug/deps/rax-dd79f0cd9ae9bb68)
+
+running 1 test
+test user::windows::process::sched::tests::services_tests::token_security_attributes_tests::native_token_security_attributes_upper_output_faults_match_all_576_native_rows ... 
+thread 'user::windows::process::sched::tests::services_tests::token_security_attributes_tests::native_token_security_attributes_upper_output_faults_match_all_576_native_rows' (11737968) panicked at src/user/windows/process/sched/tests/services_tests/token_security_attributes_tests.rs:363:13:
+assertion `left == right` failed: x86/{"bytes":"A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5","case":"2","count":"0","exception":"00000000","handle-mode":"0","input":"039A0000","input-protect":"00000004,00000004,00000004,00000004","label":"upper-output","last-error":"0000C0DE","length":"00000068","names-mode":"1","out-base":"03FA0000","out-protect":"00000004,00000004","output":"FFFFFFF0","output-mode":"15","readable":"1","ret-base":"03FB0000","ret-protect":"00000004,00000004","returned":"00000068","returned-mode":"0","status":"C0000005","width":"4"}
+  left: Fail("native NTDLL service NtQuerySecurityAttributesToken: Unimplemented(\"NtQuerySecurityAttributesToken: token security-attribute address or packed result exceeds its bounds\")")
+ right: Continue
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+
+failures:
+
+failures:
+    user::windows::process::sched::tests::services_tests::token_security_attributes_tests::native_token_security_attributes_upper_output_faults_match_all_576_native_rows
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 8049 filtered out; finished in 0.03s
+
+error: test failed, to rerun pass `--lib`

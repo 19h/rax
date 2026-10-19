@@ -1,0 +1,31 @@
+{
+  "utc": "2026-10-19T18:53:20.659488+00:00",
+  "stage": "all-targets",
+  "processes": [
+    {
+      "pid": 4760,
+      "parent": 1568,
+      "name": "cargo.exe",
+      "threads": 7,
+      "kernel-seconds": 2.0625,
+      "user-seconds": 1.34375
+    },
+    {
+      "pid": 2484,
+      "parent": 4760,
+      "name": "rustc.exe",
+      "threads": 7,
+      "kernel-seconds": 84.5,
+      "user-seconds": 253.671875
+    },
+    {
+      "pid": 3688,
+      "parent": 4760,
+      "name": "rustc.exe",
+      "threads": 5,
+      "kernel-seconds": 65.71875,
+      "user-seconds": 126.28125
+    }
+  ],
+  "scope": "Read-only Toolhelp32/query-limited process audit; no process control or priority changes."
+}

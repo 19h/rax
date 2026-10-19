@@ -1,0 +1,33 @@
+{
+  "scope": "Harness/source transport corrections; frozen RAX epoch2 inputs unchanged. Original attempts retained.",
+  "items": [
+    {
+      "attempt": "macos-owning-b",
+      "observation": "All selected commands returned0, then controller assertion rejected differing carrier before/after hashes; core hash unchanged.",
+      "evidence": [
+        "macos-attributes-epoch2-pre-cpp-archive-identities.json",
+        "macos-attributes-epoch2-final-owning-archive-identities.json"
+      ],
+      "cause": "Harness artifact commands used Python3.14, actual CMake cargo command used3.15.",
+      "correction": "Attempt c uses exact CMake Python3.15 in prime/artifact commands; before/after hashes match."
+    },
+    {
+      "attempt": "native-owning-b",
+      "observation": "Cargo resource build failed importing missing lzfse_lzvn.py.",
+      "evidence": [
+        "attributes-native-owning-epoch2-b.json",
+        "attributes-native-owning-epoch2-artifacts-before.log"
+      ],
+      "correction": "Exact retained carrier helper restored from local carrier: 3200bytes SHA862f51f6c3bcd68092045827eeb024a8aef252cad649f1f207658226a3824d75."
+    },
+    {
+      "attempt": "native-owning-c",
+      "observation": "C++ helper requested canonical metadata filename absent after controller versioned its output name.",
+      "evidence": [
+        "attributes-native-owning-epoch2-c.json",
+        "attributes-native-owning-epoch2-c-cpp.log"
+      ],
+      "correction": "Attempt d records a byte-identical canonical alias for its exact pre-C++ selected archive metadata; helper source/hash unchanged."
+    }
+  ]
+}

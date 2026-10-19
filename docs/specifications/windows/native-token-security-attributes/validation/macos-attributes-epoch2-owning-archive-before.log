@@ -1,0 +1,14 @@
+Traceback (most recent call last):
+  File "/Users/int/Library/Caches/assist-process-emulation/native-token-security-attributes-20261019/collect-attributes-archives-epoch2.py", line 79, in <module>
+    main()
+    ~~~~^^
+  File "/Users/int/Library/Caches/assist-process-emulation/native-token-security-attributes-20261019/collect-attributes-archives-epoch2.py", line 45, in main
+    manifest = json.loads(args.manifest.read_text())
+                          ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/opt/homebrew/Cellar/python@3.15/3.15.0/Frameworks/Python.framework/Versions/3.15/lib/python3.15/pathlib/__init__.py", line 986, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.15/3.15.0/Frameworks/Python.framework/Versions/3.15/lib/python3.15/pathlib/__init__.py", line 970, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/Users/int/Library/Caches/assist-process-emulation/native-token-security-attributes-20261019/idle-owning-source-hashes-epoch2.json'

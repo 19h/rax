@@ -150,6 +150,9 @@ fn capture(
     Ok((
         Subject {
             user_attributes: user.attributes,
+            attributes: Some(crate::user::windows::security::token::attributes::capture(
+                token.0,
+            )?),
             user: user.sid,
             groups: enabled_groups,
             restricted,

@@ -1,0 +1,30 @@
+{
+  "scope": "Prospective valid-buffer discovery for the observed NtQuerySecurityAttributesToken frontier; no implementation yet.",
+  "source-sha256": "87f8c3af4bbc60c8f68bb06e86376bbbc8c218c19ecb6196bf8b308991147a43",
+  "profiles": 4,
+  "cases-per-profile": 78,
+  "total-cases": 312,
+  "queries": [
+    "all attributes",
+    "empty name",
+    "WIN://SYSAPPID",
+    "WIN://PKG",
+    "WIN://BNOISOLATION",
+    "Assist.Probe.Absent"
+  ],
+  "lengths-bytes": [
+    0,
+    1,
+    4,
+    8,
+    11,
+    12,
+    15,
+    16,
+    32,
+    64,
+    128,
+    512,
+    4096
+  ]
+}

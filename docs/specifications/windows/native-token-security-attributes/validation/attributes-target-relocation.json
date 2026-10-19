@@ -1,0 +1,6 @@
+{
+  "utc": "2026-10-19T15:40:46.621028+00:00",
+  "old": "/Users/int/Library/Caches/assist-process-emulation/native-wait-20261019/target-macos-wait-epoch3",
+  "new": "/Users/int/Library/Caches/assist-process-emulation/native-token-security-attributes-20261019/attributes-source/target-attributes",
+  "reason": "Compatible task-owned target reused inside current private source tree; no active task build at relocation."
+}

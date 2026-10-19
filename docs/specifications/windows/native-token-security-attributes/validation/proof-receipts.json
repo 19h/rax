@@ -1,0 +1,22 @@
+{
+  "checked-envelope-sha256": "1bc51ff3307e515de5b74cf7f2e9dfdf02a0ed928bdda67c9e48045171fd70c4",
+  "checked-envelope-files": 522,
+  "receipts": [
+    {
+      "host": "macos",
+      "receipt": "attributes-final-check-macos.json",
+      "checked-envelope-files": 522
+    },
+    {
+      "host": "linux",
+      "receipt": "attributes-final-check-linux.json",
+      "checked-envelope-files": 522
+    },
+    {
+      "host": "windows",
+      "receipt": "attributes-final-check-windows.json",
+      "checked-envelope-files": 522
+    }
+  ],
+  "scope": "All original checked files remain byte-identical; portable receipts and staging audit extend the current envelope without changing the original checked envelope."
+}

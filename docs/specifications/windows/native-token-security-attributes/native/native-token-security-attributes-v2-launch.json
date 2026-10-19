@@ -1,0 +1,9 @@
+{
+  "pid": 6136,
+  "utc": "2026-10-19T14:32:22.978518+00:00",
+  "state": "finished",
+  "scope": "Read-only native token-security-attribute discovery on the current process token, valid query handles and bounded allocated output; no token mutation.",
+  "child-pid": 10172,
+  "exit-code": 0,
+  "completed-utc": "2026-10-19T14:32:38.281938+00:00"
+}

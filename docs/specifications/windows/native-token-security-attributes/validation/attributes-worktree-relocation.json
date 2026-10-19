@@ -1,0 +1,7 @@
+{
+  "old": "/Users/int/Library/Caches/assist-process-emulation/native-token-security-attributes-20261019/attributes-source-epoch2",
+  "new": "/Users/int/.assist-token-20261019",
+  "reason": "Keep build and runtime temporaries inside the active worktree while satisfying native Unix socket path limits.",
+  "source-commit": "d03afec80afd8ef4281c839a8944a166aef02369",
+  "unchanged-epoch1-socket-diagnostic": "16 passed; 0 failed; 8032 filtered out; same epoch1 binary, short TMPDIR."
+}

@@ -1,0 +1,23 @@
+{
+  "utc": "2026-10-19T18:43:04.229839+00:00",
+  "stage": "capi",
+  "processes": [
+    {
+      "pid": 8032,
+      "parent": 1568,
+      "name": "cargo.exe",
+      "threads": 6,
+      "kernel-seconds": 1.515625,
+      "user-seconds": 0.15625
+    },
+    {
+      "pid": 8356,
+      "parent": 8032,
+      "name": "rustc.exe",
+      "threads": 11,
+      "kernel-seconds": 208.890625,
+      "user-seconds": 336.359375
+    }
+  ],
+  "scope": "Read-only Toolhelp32/query-limited process audit; no process control or priority changes."
+}

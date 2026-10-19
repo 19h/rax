@@ -1,0 +1,12 @@
+{
+  "source-sha256": "27875c004d769cddcdafa7ad137af433f8e1e7674bb0c23e9b87458a05a7eca6",
+  "scope": "Read-only disambiguation of absolute output alignment/padding/partial-overflow writes and competing name/output/ReturnLength faults.",
+  "cases-per-profile": 992,
+  "total-cases": 3968,
+  "profiles": 4,
+  "enumeration": [
+    252,
+    560,
+    180
+  ]
+}

@@ -1,0 +1,21 @@
+
+running 16 tests
+test user::linux::tests::sockets::a_send_that_faults_sends_what_linux_copied_whole ... ok
+test user::linux::tests::sockets::abstract_names_and_autobind ... ok
+test user::linux::tests::sockets::addresses_copy_out_as_move_addr_to_user ... ok
+test user::linux::tests::sockets::batches_send_and_receive_until_done ... ok
+test user::linux::tests::sockets::blocking_calls_end_by_timeout_or_signal ... ok
+test user::linux::tests::sockets::creation_checks_follow_sock_create ... ok
+test user::linux::tests::sockets::credentials_are_checked_and_delivered_with_so_passcred ... ok
+test user::linux::tests::sockets::descriptors_pass_as_scm_detach_fds_installs_them ... ok
+test user::linux::tests::sockets::inet_bind_and_connect_check_their_addresses ... ok
+test user::linux::tests::sockets::ipv6_loopback_carries_whole_addresses ... ok
+test user::linux::tests::sockets::message_headers_are_checked_as_copy_msghdr_does ... ok
+test user::linux::tests::sockets::options_follow_sk_setsockopt_and_sk_getsockopt ... ok
+test user::linux::tests::sockets::sigpipe_follows_the_protocol ... ok
+test user::linux::tests::sockets::socketpair_reserves_and_writes_its_descriptors_first ... ok
+test user::linux::tests::sockets::sockets_poll_and_answer_their_ioctls ... ok
+test user::linux::tests::sockets::unix_names_bind_resolve_and_report ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 8032 filtered out; finished in 0.26s
+

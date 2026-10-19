@@ -24,6 +24,8 @@ pub(crate) struct Subject {
     pub(crate) restricted: Vec<Group>,
     pub(crate) app_container: bool,
     pub(crate) privileges: Vec<Privilege>,
+    /// None means unavailable capture, never an empty attribute set.
+    pub(crate) attributes: Option<token::attributes::Attributes>,
 }
 
 impl Subject {

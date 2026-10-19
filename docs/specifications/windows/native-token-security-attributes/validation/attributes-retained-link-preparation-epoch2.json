@@ -1,0 +1,13 @@
+{
+  "link-before": "/Users/int/Library/Caches/assist-process-emulation/native-worker-factory-idle-timeout-20261019/idle-source-epoch2",
+  "link-after": "/Users/int/.assist-token-20261019",
+  "source-epoch": 2,
+  "retained-scope": "Assist carrier with existing ABI184; current-root ABI264 not promoted by these checks.",
+  "baseline-head": "e2fc5b483be7cad2dae17d889690cc398973c5e8",
+  "status-before": "## HEAD (no branch)\n",
+  "moved-build-output": {
+    "old": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/assist-rs-target",
+    "new": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes/assist-rs-target",
+    "reason": "Reuse compatible inactive task-owned Rust output within its owning retained worktree."
+  }
+}

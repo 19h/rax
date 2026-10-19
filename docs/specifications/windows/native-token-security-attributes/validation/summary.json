@@ -1,0 +1,90 @@
+{
+  "source-inputs": 24786,
+  "source-bytes": 1808385701,
+  "core-counts": {
+    "macos": [
+      8049,
+      0,
+      2
+    ],
+    "linux": [
+      8043,
+      0,
+      2
+    ],
+    "windows": [
+      7512,
+      5,
+      2
+    ]
+  },
+  "native-observations": 22656,
+  "rejected-native-controls": 15,
+  "shared-focus": 12,
+  "windows-focus": 13,
+  "owning-selected-inputs": 880,
+  "ordinary-programs": {
+    "actual-core": {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\debug\\deps\\librax-934115059aa64c85.rlib",
+      "bytes": 506136090,
+      "sha256": "41fa4b161609e88a2bf24943be1755e0dea8bfb65cab1048f60e85e64e9c736f",
+      "members": 20,
+      "structural-member-walk": "pass"
+    },
+    "programs": [
+      {
+        "program": {
+          "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-attributes-candidate-epoch2\\tests\\fixtures\\user\\windows\\bin\\arm64\\smoke.exe",
+          "bytes": 3584,
+          "sha256": "325730e33e981784bff4a60bc6f342cf95c2735e85042c89748fc471cbe7781b"
+        },
+        "log": "attributes-owner-epoch2-0.log",
+        "log-sha256": "71db7aab29c6bb2f7306e79419fa0b7cabbadb13ade770cb44e5da2e49dca628",
+        "controller-exit-code": 0,
+        "former-stop-turn": 2899173,
+        "new-terminal-turn": 2943177,
+        "additional-observer-turns": 44004,
+        "terminal-result": "Complete(Internal(\"native NTDLL service NtTestAlert (0x1d3) at 0x7fff38a42d70 is not implemented\"))",
+        "guest-exit-success": false,
+        "native-before": {
+          "exit-code": 0,
+          "stdout-hex": "",
+          "stderr-hex": ""
+        },
+        "native-after": {
+          "exit-code": 0,
+          "stdout-hex": "",
+          "stderr-hex": ""
+        }
+      },
+      {
+        "program": {
+          "path": "C:\\Windows\\System32\\whoami.exe",
+          "bytes": 84480,
+          "sha256": "48fde190b002a5a4c4b8b19db014377263ba94220f23a4f0a117fec082d46bf6"
+        },
+        "log": "attributes-owner-epoch2-1.log",
+        "log-sha256": "423535421c755f20b4d08f5a47b7545d7309ff41a97f669dc9a8bc4db5d63d1e",
+        "controller-exit-code": 0,
+        "former-stop-turn": 2901458,
+        "new-terminal-turn": 2966197,
+        "additional-observer-turns": 64739,
+        "terminal-result": "Complete(Internal(\"native NTDLL service NtQueryVirtualMemory: Unimplemented(\\\"NtQueryVirtualMemory: NtQueryVirtualMemory class 3\\\")\"))",
+        "guest-exit-success": false,
+        "native-before": {
+          "exit-code": 0,
+          "stdout-hex": "6e7420617574686f726974795c73797374656d0d0a",
+          "stderr-hex": ""
+        },
+        "native-after": {
+          "exit-code": 0,
+          "stdout-hex": "6e7420617574686f726974795c73797374656d0d0a",
+          "stderr-hex": ""
+        }
+      }
+    ],
+    "ordinary-guest-exit-success": false,
+    "scope": "Actual retained Assist carrier-derived core; both missing-name queries return STATUS_NOT_FOUND/ReturnLength0 and normal execution continues to the next unsupported calls. Controller exit0 is separate from guest exit."
+  },
+  "full-process-objective-complete": false
+}

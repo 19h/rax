@@ -1,0 +1,7 @@
+{
+  "state": "failed",
+  "utc": "2026-10-19T18:32:09.736547+00:00",
+  "steps": [],
+  "exit-code": 1,
+  "error": "Traceback (most recent call last):\n  File \"/Users/int/Library/Caches/assist-process-emulation/native-token-security-attributes-20261019/run-attributes-portable-checks.py\", line 11, in <module>\n    d=json.loads((K/'attributes-finalization.json').read_text());assert d['state']!='failed',d.get('error')\n                                                                        ^^^^^^^^^^^^^^^^^^^^\nAssertionError: Traceback (most recent call last):\n  File \"/Users/int/Library/Caches/assist-process-emulation/native-token-security-attributes-20261019/run-attributes-finalization.py\", line 21, in <module>\n    assert time.monotonic()<deadline,'bounded final-result observation expired; inspect live controllers before retry'\n           ^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: bounded final-result observation expired; inspect live controllers before retry\n\n"
+}

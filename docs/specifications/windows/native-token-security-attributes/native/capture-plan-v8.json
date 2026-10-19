@@ -1,0 +1,6 @@
+{
+  "source-sha256": "33ba9267dd95a5c04a800106880426458af4ae31b26834793d0b48025c1ba0a5",
+  "scope": "Private duplicate-token fixtures with ValueCount0 across all seven attribute types. Does not alter original primary token.",
+  "maximum-query-cases": 224,
+  "set-fixtures": 28
+}

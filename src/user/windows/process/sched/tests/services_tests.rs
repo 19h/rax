@@ -1293,3 +1293,13 @@ mod worker_factory_flags_tests;
 
 #[path = "services_tests/worker_factory_idle_tests.rs"]
 mod worker_factory_idle_tests;
+
+#[path = "services_tests/token_security_attributes_tests.rs"]
+mod token_security_attributes_tests;
+
+#[path = "services_tests/token_security_attributes_replay_tests.rs"]
+mod token_security_attributes_replay_tests;
+
+#[cfg(windows)]
+#[path = "services_tests/token_security_attributes_leaf_tests.rs"]
+mod token_security_attributes_leaf_tests;

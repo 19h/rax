@@ -1,0 +1,55 @@
+{
+  "scope": "Token-attribute semantic group; full goal incomplete",
+  "assumptions": [
+    {
+      "id": "A1",
+      "assumption": "Installed build29683 and four ABI views define this measured compatibility scope.",
+      "basis": "3000 completed native observations plus actual-owner argument/name diagnostics on one ARM64 kernel.; 22656 checked observations, twelve shared/thirteen native tests, stable installed selection and actual owning ordinary observations.",
+      "dependent-result": "Native/WoW validation/serialization model.",
+      "stress-test": "V3 invalid buffers, name descriptors, return pointers, aliases, handle grants and signed/overflow counts; positive private-token fixtures.",
+      "falsification-probe": "Independent native checker or replay finds status/byte/guard/ReturnLength disagreement.",
+      "status": "confirmed within installed build29683; behavior on other kernels remains unknown"
+    },
+    {
+      "id": "A2",
+      "assumption": "Capturing full token attributes can preserve native identity without treating missing requested names as an empty token.",
+      "basis": "Actual caller requests SYSAPPID/PKG; query-all returns positive TSA://ProcUnique UINT64[2], flags0x41.; 22656 checked observations, twelve shared/thirteen native tests, stable installed selection and actual owning ordinary observations.",
+      "dependent-result": "New captured Subject attribute state and getter.",
+      "stress-test": "Duplicates, case aliases, mixed missing/present, all standard types, missing capture.",
+      "falsification-probe": "Guest query-all loses TSA or queried absent names succeed; a native capture pointer survives ownership conversion.",
+      "status": "confirmed within installed build29683; behavior on other kernels remains unknown"
+    },
+    {
+      "id": "A3",
+      "assumption": "The existing bounded subject-acquisition consistency loop can include immutable normalized attributes.",
+      "basis": "wnf/installed.rs captures current token twice and compares owned Subject state; existing Catalog provides Arc<Subject>.; 22656 checked observations, twelve shared/thirteen native tests, stable installed selection and actual owning ordinary observations.",
+      "dependent-result": "Capture integration and no unrelated feature regression.",
+      "stress-test": "Process-unique values stable within capture, pointer relocation ignored, unknown capture fails closed.",
+      "falsification-probe": "Repeat native captures differ solely because raw pointers were retained or selection makes previous token/WNF operations unavailable.",
+      "status": "confirmed within installed build29683; behavior on other kernels remains unknown"
+    }
+  ],
+  "bounded-findings": [
+    {
+      "impact": "high",
+      "item": "Actual owning guests continue44004/64739 turns through token queries to NtTestAlert / NtQueryVirtualMemory class3; neither exits successfully.",
+      "evidence": "ordinary-program-summary.json"
+    },
+    {
+      "impact": "medium",
+      "item": "Seven native value types and empty sets are measured; individual zero-value attributes remain unavailable after28 rejected ADD controls. Other kernels and captures beyond explicit bounds remain unknown.",
+      "evidence": "../native-layout-check.json"
+    },
+    {
+      "impact": "low",
+      "item": "Adjacent WorkerFactory classes0/1 are declared in PHNT but all5120prospective captures returned INVALID_INFO_CLASS. No change in this token group.",
+      "evidence": "../native-worker-factory-relative-timeouts-20261019/prospective-precheck.json"
+    },
+    {
+      "impact": "medium",
+      "item": "Retained ABI184 linked consumers do not establish whole current-root ABI264 plugin/GUI/package results.",
+      "evidence": "attributes-owning-source-hashes-epoch2.json",
+      "blocks-this-group": false
+    }
+  ]
+}

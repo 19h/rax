@@ -33,6 +33,7 @@ fn subject_fixture() -> Subject {
             .collect()
     };
     Subject {
+        attributes: None,
         user_attributes: 0,
         user: hex(s["user"]["sid"].as_str().unwrap()),
         groups: groups("groups"),
@@ -85,10 +86,11 @@ fn setup(arch: WinArch, laa: bool, native: bool) -> (WindowsProcess, Thread, u64
         .cpu
         .set_sp(thread.cpu.sp().checked_sub(0x100).unwrap());
     if native {
-        assert_eq!(
-            p.objects.primary_token_subject().as_deref(),
-            Some(&subject_fixture())
-        );
+        let mut actual = p.objects.primary_token_subject().unwrap().as_ref().clone();
+        // This fixture pins the access-check subject fields. Attribute capture
+        // has an independent native byte and ownership suite.
+        assert!(actual.attributes.take().is_some());
+        assert_eq!(actual, subject_fixture());
     } else {
         let ntdll = p.modules.by_name("ntdll.dll").unwrap();
         p.modules.nt_services = Some((ntdll, table(arch, "NtAccessCheck", 0x21)));

@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "C:\Windows\Temp\assist-native-rax-20261010\assist\target\native-attributes\helpers\attributes-owned-cpp-build-epoch2.py", line 7, in <module>
+    metadata=json.loads((transfer/'native-attributes-epoch2-pre-cpp-archives.json').read_text())
+                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "pathlib\__init__.py", line 792, in read_text
+  File "pathlib\__init__.py", line 776, in open
+FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-attributes-epoch2-pre-cpp-archives.json'

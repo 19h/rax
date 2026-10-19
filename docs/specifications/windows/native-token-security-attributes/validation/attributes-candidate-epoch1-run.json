@@ -1,0 +1,33 @@
+{
+  "state": "failed",
+  "pid": 7164,
+  "source-epoch": 1,
+  "utc": "2026-10-19T15:52:12.008773+00:00",
+  "steps": [
+    {
+      "name": "focus",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "native_token_security_attributes",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 101,
+      "log": "attributes-candidate-epoch1-focus.log",
+      "bytes": 3760,
+      "sha256": "4aead5758f653b4d993860d6326e8812bbed9fbed0286b0f2e15bda135d3b6b1"
+    }
+  ],
+  "scope": "Candidate token security-attribute exploration: nine shared tests and 22048 independent native observations; native leaves, core build and ordinary continuation. Full parity/retained owning proof pending.",
+  "disk-free-before": 4132261888,
+  "child-pid": 5012,
+  "exit-code": 1,
+  "error": "Traceback (most recent call last):\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-attributes-candidate-epoch1.py\", line 101, in <module>\n    focus_log = run('focus', [cargo, 'test', '--locked', '--offline', '--no-default-features', '--lib',\n        'native_token_security_attributes', '--', '--nocapture', '--test-threads=1'], focus_env)\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-attributes-candidate-epoch1.py\", line 48, in run\n    assert code == 0, name\n           ^^^^^^^^^\nAssertionError: focus\n",
+  "completed-utc": "2026-10-19T15:56:37.342466+00:00"
+}

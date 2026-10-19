@@ -1,0 +1,8 @@
+{
+  "archive": "attributes-final-proof.tar.gz",
+  "bytes": 4550193,
+  "sha256": "f31df982a939dd1d7108f490583c8b483b420b28a316ced52599c9cf00a5b3ed",
+  "bound-evidence-files": 522,
+  "members": 524,
+  "scope": "Final evidence and appended runtime engineering record only; native verifier detaches all overwritten hardlinks before extraction."
+}

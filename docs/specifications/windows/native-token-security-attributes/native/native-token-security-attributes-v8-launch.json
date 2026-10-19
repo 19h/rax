@@ -1,0 +1,9 @@
+{
+  "pid": 7348,
+  "utc": "2026-10-19T16:01:27.598408+00:00",
+  "state": "finished",
+  "scope": "Private duplicated-token zero-value-count fixture; isolated thread privilege token with SeTcb enabled, replace-all on private target only, RevertToSelf and original primary privilege byte comparison.",
+  "child-pid": 6248,
+  "exit-code": 0,
+  "completed-utc": "2026-10-19T16:02:23.982087+00:00"
+}

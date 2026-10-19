@@ -1,0 +1,17 @@
+{
+  "state": "finished",
+  "host": "macos",
+  "argv": [
+    "/opt/homebrew/opt/python@3.15/bin/python3.15",
+    "-B",
+    "/Users/int/Library/Caches/assist-process-emulation/native-token-security-attributes-20261019/run-attributes-proof-checks.py",
+    "/Users/int/.assist-token-20261019"
+  ],
+  "checked-envelope-files": 522,
+  "utc": "2026-10-19T19:11:32.384955+00:00",
+  "exit-code": 0,
+  "log": "attributes-final-check-macos.log",
+  "bytes": 187,
+  "sha256": "e3696f2fa9f200111fe48e44846ecf77db994e0b305c499e37cd39b8ef3d65ce",
+  "completed-utc": "2026-10-19T19:11:35.413739+00:00"
+}

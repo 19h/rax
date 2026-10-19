@@ -1,0 +1,8 @@
+{
+  "utc": "2026-10-19T19:09:43.599626+00:00",
+  "impact": "medium",
+  "finding": "Windows desktop displays assist_masking_editor_tests.exe System Error: Qt6Guid.dll not found.",
+  "evidence": "Private host screenshot attributes-vm-screen-1908.png; not included in public evidence because it includes unrelated desktop content.",
+  "blocks-current-semantic-group": false,
+  "scope": "Selected current process consumers do not use Qt; no changes to the separate GUI test or DLL environment."
+}

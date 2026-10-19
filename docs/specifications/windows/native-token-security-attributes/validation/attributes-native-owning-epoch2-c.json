@@ -1,0 +1,90 @@
+{
+  "pid": 7888,
+  "state": "failed",
+  "utc": "2026-10-19T18:15:44.212428+00:00",
+  "source-epoch": 2,
+  "steps": [
+    {
+      "name": "toolchain",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "--version"
+      ],
+      "exit-code": 0,
+      "started-utc": "2026-10-19T18:15:45.134139+00:00",
+      "log": "attributes-native-owning-epoch2-c-toolchain.log",
+      "bytes": 36,
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5"
+    },
+    {
+      "name": "artifacts-before",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "build",
+        "--locked",
+        "--offline",
+        "--features",
+        "rax",
+        "--message-format=json"
+      ],
+      "exit-code": 0,
+      "started-utc": "2026-10-19T18:15:45.172210+00:00",
+      "log": "attributes-native-owning-epoch2-c-artifacts-before.log",
+      "bytes": 132448,
+      "sha256": "7f05ccb50cb2576e0a87431bffc7c2867c613138298a54b505e0243452e869b7"
+    },
+    {
+      "name": "archive-before",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\collect-attributes-archives-epoch2.py",
+        "--host",
+        "windows",
+        "--source",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-attributes-candidate-epoch2",
+        "--manifest",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\attributes-owning-source-hashes-epoch2.json",
+        "--messages",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\attributes-native-owning-epoch2-c-artifacts-before.log",
+        "--output",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-attributes-epoch2-c-pre-cpp-archives.json"
+      ],
+      "exit-code": 0,
+      "started-utc": "2026-10-19T18:16:41.945440+00:00",
+      "log": "attributes-native-owning-epoch2-c-archive-before.log",
+      "bytes": 182,
+      "sha256": "408c2f087d84ee26347573e8d196e0dbe7d6b93258597c05aeddd9b9f8bb1077"
+    },
+    {
+      "name": "cpp",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\helpers\\attributes-owned-cpp-build-epoch2.py"
+      ],
+      "exit-code": 1,
+      "started-utc": "2026-10-19T18:16:48.573781+00:00",
+      "log": "attributes-native-owning-epoch2-c-cpp.log",
+      "bytes": 667,
+      "sha256": "19a83dfade06de1a102b215055b1fe2e6a441f7d510a9389ad3de005a28ce84d"
+    }
+  ],
+  "junction": {
+    "before": "\\\\?\\C:\\Windows\\Temp\\assist-native-rax-20261010\\src-attributes-candidate-epoch2",
+    "after": "\\\\?\\C:\\Windows\\Temp\\assist-native-rax-20261010\\src-attributes-candidate-epoch2"
+  },
+  "carrier-build-helper": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\scripts\\static_text\\lzfse_lzvn.py",
+    "sha256": "862f51f6c3bcd68092045827eeb024a8aef252cad649f1f207658226a3824d75",
+    "bytes": 3200,
+    "scope": "Exact retained carrier helper restored after recorded missing-input import failure; no frozen RAX inputs changed."
+  },
+  "verified-source-inputs": 880,
+  "compared-cpp-inputs": 8,
+  "current-step": "cpp",
+  "child-pid": 10164,
+  "exit-code": 1,
+  "error": "Traceback (most recent call last):\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-attributes-native-owning-epoch2-c.py\", line 72, in <module>\n    run('cpp',[python,'-B',str(ROOT/'target/native-attributes/helpers/attributes-owned-cpp-build-epoch2.py')],env);verify()\n    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-attributes-native-owning-epoch2-c.py\", line 22, in run\n    raw=path.read_bytes();state['steps'].append({'name':name,'argv':args,'exit-code':code,'started-utc':started,'log':path.name,'bytes':len(raw),'sha256':hashlib.sha256(raw).hexdigest()});save();assert code==0,name\n                                                                                                                                                                                                          ^^^^^^^\nAssertionError: cpp\n",
+  "completed-utc": "2026-10-19T18:16:48.748727+00:00"
+}

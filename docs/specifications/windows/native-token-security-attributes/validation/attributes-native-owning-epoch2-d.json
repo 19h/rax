@@ -1,0 +1,136 @@
+{
+  "pid": 2468,
+  "state": "finished",
+  "utc": "2026-10-19T18:17:42.498988+00:00",
+  "source-epoch": 2,
+  "steps": [
+    {
+      "name": "toolchain",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "--version"
+      ],
+      "exit-code": 0,
+      "started-utc": "2026-10-19T18:17:43.614671+00:00",
+      "log": "attributes-native-owning-epoch2-d-toolchain.log",
+      "bytes": 36,
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5"
+    },
+    {
+      "name": "artifacts-before",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "build",
+        "--locked",
+        "--offline",
+        "--features",
+        "rax",
+        "--message-format=json"
+      ],
+      "exit-code": 0,
+      "started-utc": "2026-10-19T18:17:43.656834+00:00",
+      "log": "attributes-native-owning-epoch2-d-artifacts-before.log",
+      "bytes": 132251,
+      "sha256": "715fbc185a58f4a6105ac06c1eb1c9486b9ef05caf9d7c1a83808ba488725e96"
+    },
+    {
+      "name": "archive-before",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\collect-attributes-archives-epoch2.py",
+        "--host",
+        "windows",
+        "--source",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-attributes-candidate-epoch2",
+        "--manifest",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\attributes-owning-source-hashes-epoch2.json",
+        "--messages",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\attributes-native-owning-epoch2-d-artifacts-before.log",
+        "--output",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-attributes-epoch2-d-pre-cpp-archives.json"
+      ],
+      "exit-code": 0,
+      "started-utc": "2026-10-19T18:17:45.189834+00:00",
+      "log": "attributes-native-owning-epoch2-d-archive-before.log",
+      "bytes": 182,
+      "sha256": "408c2f087d84ee26347573e8d196e0dbe7d6b93258597c05aeddd9b9f8bb1077"
+    },
+    {
+      "name": "cpp",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\helpers\\attributes-owned-cpp-build-epoch2.py"
+      ],
+      "exit-code": 0,
+      "started-utc": "2026-10-19T18:17:52.727886+00:00",
+      "log": "attributes-native-owning-epoch2-d-cpp.log",
+      "bytes": 3705,
+      "sha256": "669f12e91ce8508e90028178ca16c1f86a0a409f726a63a87f031913a187f779"
+    },
+    {
+      "name": "artifacts-after",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "build",
+        "--locked",
+        "--offline",
+        "--features",
+        "rax",
+        "--message-format=json"
+      ],
+      "exit-code": 0,
+      "started-utc": "2026-10-19T18:19:17.743813+00:00",
+      "log": "attributes-native-owning-epoch2-d-artifacts-after.log",
+      "bytes": 132251,
+      "sha256": "099f0186facc6f739c9804aa53f87aa0a81807fe8a83d7e2c22c6423ae08aa02"
+    },
+    {
+      "name": "archive-after",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\collect-attributes-archives-epoch2.py",
+        "--host",
+        "windows",
+        "--source",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-attributes-candidate-epoch2",
+        "--manifest",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\attributes-owning-source-hashes-epoch2.json",
+        "--messages",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\attributes-native-owning-epoch2-d-artifacts-after.log",
+        "--output",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-attributes-epoch2-d-final-owning-archive-identities.json"
+      ],
+      "exit-code": 0,
+      "started-utc": "2026-10-19T18:19:18.279475+00:00",
+      "log": "attributes-native-owning-epoch2-d-archive-after.log",
+      "bytes": 182,
+      "sha256": "408c2f087d84ee26347573e8d196e0dbe7d6b93258597c05aeddd9b9f8bb1077"
+    }
+  ],
+  "junction": {
+    "before": "\\\\?\\C:\\Windows\\Temp\\assist-native-rax-20261010\\src-attributes-candidate-epoch2",
+    "after": "\\\\?\\C:\\Windows\\Temp\\assist-native-rax-20261010\\src-attributes-candidate-epoch2"
+  },
+  "carrier-build-helper": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\scripts\\static_text\\lzfse_lzvn.py",
+    "sha256": "862f51f6c3bcd68092045827eeb024a8aef252cad649f1f207658226a3824d75",
+    "bytes": 3200,
+    "scope": "Exact retained carrier helper restored after recorded missing-input import failure; no frozen RAX inputs changed."
+  },
+  "verified-source-inputs": 880,
+  "compared-cpp-inputs": 8,
+  "current-step": "archive-after",
+  "child-pid": 7864,
+  "cpp-metadata-alias": {
+    "canonical": "native-attributes-epoch2-pre-cpp-archives.json",
+    "source": "native-attributes-epoch2-d-pre-cpp-archives.json",
+    "sha256": "3e3c3d76e0b1045d10b5cb4501f553e4351e2ac52a9d29a56bf20c94b7f3c69c"
+  },
+  "exit-code": 0,
+  "post-source-inputs": 880,
+  "qualification": "Actual current Cargo archives, selected880 inputs, matching archive identities before and after five C++ consumers. Retained Assist Rust ABI184; eight C++ inputs were compared to root ABI264; no whole current-root GUI/plugin/package claim.",
+  "completed-utc": "2026-10-19T18:19:25.593418+00:00"
+}

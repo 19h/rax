@@ -1,0 +1,11 @@
+{
+  "state": "failed",
+  "pid": 4844,
+  "source-epoch": 2,
+  "utc": "2026-10-19T16:24:55.290593+00:00",
+  "steps": [],
+  "scope": "Candidate token security-attribute exploration: twelve shared tests and22656 independent native query observations; native leaves, core build and ordinary continuation. Full parity/retained owning proof pending.",
+  "exit-code": 1,
+  "error": "Traceback (most recent call last):\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-attributes-candidate-epoch2.py\", line 60, in <module>\n    assert identity(OLD / row['path'])['sha256'] == expected, row['path']\n           ~~~~~~~~^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-attributes-candidate-epoch2.py\", line 29, in identity\n    raw = path.read_bytes()\n  File \"pathlib\\__init__.py\", line 782, in read_bytes\n  File \"pathlib\\__init__.py\", line 776, in open\nFileNotFoundError: [Errno 2] No such file or directory: 'C:\\\\Windows\\\\Temp\\\\assist-native-rax-20261010\\\\src-attributes-candidate-epoch1\\\\docs\\\\architecture\\\\arm\\\\asl\\\\support.asl'\n",
+  "completed-utc": "2026-10-19T16:24:57.794240+00:00"
+}

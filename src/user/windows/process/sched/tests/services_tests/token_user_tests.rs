@@ -195,6 +195,7 @@ fn native_token_user_replays_all_2624_native_page_boundary_copies() {
 
 fn subject(user: Vec<u8>) -> crate::user::windows::security::Subject {
     crate::user::windows::security::Subject {
+        attributes: None,
         user_attributes: 0,
         user,
         groups: vec![],

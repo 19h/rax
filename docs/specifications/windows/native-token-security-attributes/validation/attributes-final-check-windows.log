@@ -1,0 +1,8 @@
+checked 22656 failures 0
+{
+  "source-inputs": 24786,
+  "three-host-full-gates": "pass",
+  "retained-consumers": "pass",
+  "ordinary-programs": 2,
+  "ordinary-guest-exit-success": false
+}

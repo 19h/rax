@@ -1,0 +1,12 @@
+{
+  "source-sha256": "70df6a77a6b2ea156532ca8bca5a9f89e10cbb276804d7e29672ced335f174d4",
+  "scope": "Read-only finer partial-zeroing/guard/copy boundary captures, same existing query handles.",
+  "cases-per-profile": 1152,
+  "total-cases": 4608,
+  "enumeration": [
+    36,
+    2,
+    4,
+    4
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "state": "expected-regression-failed",
+  "passed": 0,
+  "failed": 1,
+  "exit-code": 101,
+  "implementation-inputs-unchanged": true,
+  "log-sha256": "038eda83242669f459e8934165ba6378bad83296ea9eded458368dae3ce07d65",
+  "scope": "Compiled tests-only upper-output regression; epoch2 packer returned unsupported before the measured WoW copy fault/ReturnLength publication."
+}

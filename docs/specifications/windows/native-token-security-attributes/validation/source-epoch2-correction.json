@@ -1,0 +1,19 @@
+{
+  "source-epoch": 2,
+  "parent-manifest": "attributes-candidate-epoch1.json",
+  "source-root": "/Users/int/.assist-token-20261019",
+  "corrections": [
+    "Empty native attribute sets publish only a NULL-pointer fixed header; WoW clears capacity and returns12 after requiring16.",
+    "Native leaf decoder uses caller capacity because logical ReturnLength can omit absolute-alignment bias.",
+    "WoW publishes native ReturnLength and performs caller zero stores before pointer-bearing packing; invalid upper output faults first.",
+    "Unmeasured zero-valued records are unavailable; aggregate input name capture is bounded to1MiB with reached fault priority."
+  ],
+  "additional-native-query-cases": 608,
+  "total-native-query-cases": 22656,
+  "rejected-zero-value-creation-controls": 28,
+  "focused-shared-tests": 12,
+  "native-focused-tests-required": 13,
+  "epoch1-macos-full": "8044 passed;2 failed;2 ignored; both socket failures reproduce only with overlong TMPDIR. Same binary sockets16/0 under short in-tree temp.",
+  "epoch1-linux-full": "8040 passed;0 failed;2 ignored; C API183/0, integration544/0 and all-target check passed.",
+  "native-epoch1": "Nine shared tests passed; installed leaf failed while decoding a native unaligned result through logical ReturnLength. No ordinary candidate run occurred."
+}

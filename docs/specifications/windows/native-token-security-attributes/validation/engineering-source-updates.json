@@ -1,0 +1,19 @@
+{
+  "files": [
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/README.md",
+      "before-sha256": "2a4cf67d632e16d121326416e70f3d7df481b40ae82fa7b389a439f336b386f6",
+      "before-bytes": 9237,
+      "after-sha256": "e8697ac8e90331699ac91a3fd477bfe1c908e0fb97657e30f14c6550b4e92790",
+      "after-bytes": 11957
+    },
+    {
+      "path": "src/user/windows/native-runtime.md",
+      "before-sha256": "2cab4660459809de69962c11388f6a1813583ced58ea537dafff70ff4236bd05",
+      "before-bytes": 190824,
+      "after-sha256": "f5796f665c6e95bd143e8b6a79860667ef96d95ab37a37f67de16f08e3bf4940",
+      "after-bytes": 191507
+    }
+  ],
+  "scope": "Noncompiled engineering evidence updates after frozen-source compilation; every Rust/test/build/fixture input is unchanged."
+}

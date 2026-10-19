@@ -1,0 +1,6 @@
+{
+  "source-sha256": "6a132c1d2fe27dfdabc2f031f2cf5505a31b267ea4dc1a32495589e786c4c2db",
+  "scope": "Read-only upper-address and 32-bit pointer-wrap fault ordering.",
+  "cases-per-profile": 144,
+  "total-cases": 576
+}

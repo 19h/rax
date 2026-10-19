@@ -1,0 +1,116 @@
+{
+  "state": "finished",
+  "exit-code": 0,
+  "utc": "2026-10-19T16:20:50.839749+00:00",
+  "before-and-after-inputs": [
+    {
+      "path": "src/user/windows/dll/native.rs",
+      "bytes": 21093,
+      "sha256": "9a8f75a067d16858f9d7eaf3942f7508b5faffb499888a7291346bdcf7b99aaa"
+    },
+    {
+      "path": "src/user/windows/dll/native/token_attributes.rs",
+      "bytes": 9068,
+      "sha256": "d82ca3d029e472d5f11cd373360ac04aad0782d2c94debb0cd70fa8b8b6deff7"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests.rs",
+      "bytes": 49397,
+      "sha256": "ec924fead7e3841f1a50cd65741736cba954ff913619d54e45efda21bfefc603"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/access_check_tests.rs",
+      "bytes": 25409,
+      "sha256": "63996c0dcba88a27b31a52530cd5a78fcef6bd690198477fe204d485edf29219"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/token_bno_tests.rs",
+      "bytes": 10577,
+      "sha256": "f37d64a9a3427c06186a3b95475724580166705f7763d9e4329ed70fa8bade89"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/token_scalar_tests.rs",
+      "bytes": 15238,
+      "sha256": "fea4224a003775ab0dfbe959144e5353964d81c55e9cd7184616be118b868411"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/token_security_attributes_leaf_tests.rs",
+      "bytes": 7589,
+      "sha256": "0998f5a48f06861a93a1f4df086de8b388ca1b437e7c8b87726bd36126448cdf"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/token_security_attributes_replay_tests.rs",
+      "bytes": 15310,
+      "sha256": "1984f2aecab113bcdbc69bc3d53c459bc2d05f4f9ec2aeef51e9cd9fda66d2d7"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/token_security_attributes_tests.rs",
+      "bytes": 18472,
+      "sha256": "811632f27fcc4c1d1624e73959dee38427676c8bfc46e60785ec356d1ce279a2"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/token_session_id_tests.rs",
+      "bytes": 7997,
+      "sha256": "255b812e60c0268c6829273faa77f8b83dfa794c66ae64b793578bb32d6afa07"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/token_user_tests.rs",
+      "bytes": 16209,
+      "sha256": "7edd639a573c2e7b20ad32818f928a0fe817becd3cb664e426195bf63a8d1dc9"
+    },
+    {
+      "path": "src/user/windows/security.rs",
+      "bytes": 7720,
+      "sha256": "36f01a814b132db0e6a7d209152382a097020508801108b7f78b5ce4b07971db"
+    },
+    {
+      "path": "src/user/windows/security/token.rs",
+      "bytes": 2376,
+      "sha256": "eb78f0fe8f31fd9b9b545eabf836a4310682f9886949e0b278bf3f22a92f73f5"
+    },
+    {
+      "path": "src/user/windows/security/token/attributes.rs",
+      "bytes": 14384,
+      "sha256": "75870d5d11a8c06e313de151ba994f42090187ab7f845baac45a3517faeae9fe"
+    },
+    {
+      "path": "src/user/windows/security/token/attributes/installed.rs",
+      "bytes": 2760,
+      "sha256": "85ad1c06286641af632f496072dbea5fa97bbd165af6141d4c5562fc01ebbdb4"
+    },
+    {
+      "path": "src/user/windows/security/token/attributes/tests.rs",
+      "bytes": 5101,
+      "sha256": "5fc6aca439b419fc8c93c8f2176a35a65eaa4ff819682170a586fe121b55a0bf"
+    },
+    {
+      "path": "src/user/windows/wnf/installed.rs",
+      "bytes": 6128,
+      "sha256": "0af5083efa7551ac2c22a83c567abab99d28d3ee6f3f535ff6b99c175dad6006"
+    },
+    {
+      "path": "src/user/windows/wnf/tests.rs",
+      "bytes": 7195,
+      "sha256": "34f0aa9641ec55cbd7b25bbef1ac4d4848b42a82264bf5729693b5a9f39861f2"
+    }
+  ],
+  "argv": [
+    "cargo",
+    "+1.95.0",
+    "test",
+    "--locked",
+    "--offline",
+    "--no-default-features",
+    "--lib",
+    "native_token_security_attributes",
+    "--",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "log": "attributes-prototype-epoch2-e.log",
+  "bytes": 2301,
+  "sha256": "b7a611490a26bbb0179d0fcaa58d1d3677d22147e3d6029ef425d9ae1a2be217",
+  "results": [
+    "ok. 12 passed; 0 failed; 0 ignored; 0 measured; 8039 filtered out; finished in 23.27s"
+  ]
+}

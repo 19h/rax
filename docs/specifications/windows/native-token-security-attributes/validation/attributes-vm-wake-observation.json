@@ -1,0 +1,6 @@
+{
+  "utc": "2026-10-19T19:07:54.276001+00:00",
+  "event": "one Shift scancode42 press/release through Parallels",
+  "native-stage": "testing/all-targets",
+  "scope": "Wake probe only; no reset, restart, process termination or VM configuration change."
+}

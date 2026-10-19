@@ -1,0 +1,48 @@
+{
+  "pid": 2696,
+  "state": "failed",
+  "utc": "2026-10-19T18:02:56.736343+00:00",
+  "source-epoch": 2,
+  "steps": [
+    {
+      "name": "toolchain",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "--version"
+      ],
+      "exit-code": 0,
+      "started-utc": "2026-10-19T18:09:26.040761+00:00",
+      "log": "attributes-native-owning-epoch2-toolchain.log",
+      "bytes": 36,
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5"
+    },
+    {
+      "name": "artifacts-before",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "build",
+        "--locked",
+        "--offline",
+        "--features",
+        "rax",
+        "--message-format=json"
+      ],
+      "exit-code": 101,
+      "started-utc": "2026-10-19T18:09:26.162086+00:00",
+      "log": "attributes-native-owning-epoch2-artifacts-before.log",
+      "bytes": 131152,
+      "sha256": "68c8a49178652702644180a90e6f34a542d0de3730d40fe13985b9c471eaea16"
+    }
+  ],
+  "junction": {
+    "before": "\\\\?\\C:\\Windows\\Temp\\assist-native-rax-20261010\\src-idle-candidate-epoch2",
+    "after": "\\\\?\\C:\\Windows\\Temp\\assist-native-rax-20261010\\src-attributes-candidate-epoch2"
+  },
+  "verified-source-inputs": 880,
+  "compared-cpp-inputs": 8,
+  "current-step": "artifacts-before",
+  "child-pid": 2524,
+  "exit-code": 1,
+  "error": "Traceback (most recent call last):\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-attributes-native-owning-epoch2-b.py\", line 66, in <module>\n    messages=run('artifacts-before',command,env);verify()\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-attributes-native-owning-epoch2-b.py\", line 22, in run\n    raw=path.read_bytes();state['steps'].append({'name':name,'argv':args,'exit-code':code,'started-utc':started,'log':path.name,'bytes':len(raw),'sha256':hashlib.sha256(raw).hexdigest()});save();assert code==0,name\n                                                                                                                                                                                                          ^^^^^^^\nAssertionError: artifacts-before\n",
+  "completed-utc": "2026-10-19T18:15:43.731480+00:00"
+}

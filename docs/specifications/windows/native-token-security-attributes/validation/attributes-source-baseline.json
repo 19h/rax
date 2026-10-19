@@ -1,0 +1,6 @@
+{
+  "utc": "2026-10-19T15:00:32.307901+00:00",
+  "base": "d03afec80afd8ef4281c839a8944a166aef02369",
+  "clean": true,
+  "scope": "New private worktree for observed NtQuerySecurityAttributesToken frontier; no code or tests changed yet."
+}

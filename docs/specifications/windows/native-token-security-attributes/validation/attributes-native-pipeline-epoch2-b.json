@@ -1,0 +1,14 @@
+{
+  "state": "finished",
+  "pid": 4128,
+  "utc": "2026-10-19T17:52:22.715015+00:00",
+  "children": [
+    {
+      "name": "full",
+      "pid": 1568,
+      "exit-code": 0
+    }
+  ],
+  "exit-code": 0,
+  "completed-utc": "2026-10-19T19:10:45.597771+00:00"
+}

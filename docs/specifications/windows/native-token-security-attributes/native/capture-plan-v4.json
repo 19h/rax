@@ -1,0 +1,7 @@
+{
+  "source-sha256": "474d51806a74178090c6e9f19784088b8d75c755cd7e95ff638ee5e09a696d32",
+  "scope": "Positive standard value types1,2,3,4,5,6,16 on fresh private tokens; no changes to original process-token privileges, scoped private-thread impersonation only. Failed fixtures remain failures, never skipped as success.",
+  "expected-types-per-profile": 7,
+  "expected-cases-per-profile": 56,
+  "profiles": 4
+}

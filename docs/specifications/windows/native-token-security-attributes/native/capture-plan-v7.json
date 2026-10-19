@@ -1,0 +1,6 @@
+{
+  "source-sha256": "22356387c825c77f4284536676f77c6a43c372ec864a1102fe60754102015f6f",
+  "scope": "Empty attribute set on privately duplicated target, original process privilege bytes preserved. Build output inside frozen native repository target.",
+  "cases-per-profile": 8,
+  "total-cases": 32
+}

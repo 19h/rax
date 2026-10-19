@@ -1,0 +1,26 @@
+{
+  "scope": "Read-only diagnostics from the actual owning observer; no next-frontier implementation or native behavior inference. NtTestAlert has zero arguments; its printed volatile registers are diagnostic state only.",
+  "observations": [
+    {
+      "program-index": 0,
+      "log": "attributes-owner-epoch2-0.log",
+      "log-sha256": "71db7aab29c6bb2f7306e79419fa0b7cabbadb13ade770cb44e5da2e49dca628",
+      "terminal-turn": 2943177,
+      "terminal-result": "Complete(Internal(\"native NTDLL service NtTestAlert (0x1d3) at 0x7fff38a42d70 is not implemented\"))",
+      "later-native-call-lines": [
+        "later-native-call turn=2943177 tid=8 pc=0x7fff38a42d70 svc=0x1d3 args=[0, 0, 1484, 4, 93f920, 10, 0, 1104dd0]"
+      ]
+    },
+    {
+      "program-index": 1,
+      "log": "attributes-owner-epoch2-1.log",
+      "log-sha256": "423535421c755f20b4d08f5a47b7545d7309ff41a97f669dc9a8bc4db5d63d1e",
+      "terminal-turn": 2966197,
+      "terminal-result": "Complete(Internal(\"native NTDLL service NtQueryVirtualMemory: Unimplemented(\\\"NtQueryVirtualMemory: NtQueryVirtualMemory class 3\\\")\"))",
+      "later-native-call-lines": [
+        "later-native-call turn=2964059 tid=8 pc=0x7fff38a41240 svc=0x23 args=[ffffffffffffffff, 1d60000, e, 1a5e070, 18, 1a5e060, 8, 910]",
+        "later-native-call turn=2966197 tid=8 pc=0x7fff38a41240 svc=0x23 args=[ffffffffffffffff, 1d60000, 3, 1a5dc40, 30, 0, 0, 0]"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "utc": "2026-10-19T19:06:02.648713+00:00",
+  "scope": "Host observation/controller correction only; native validation processes not stopped, restarted or reprioritized.",
+  "native-pipeline": "attributes-native-epoch2-gates.json",
+  "last-completed-gates": {
+    "full": [
+      7512,
+      5,
+      2
+    ],
+    "capi": [
+      183,
+      0,
+      0
+    ],
+    "integration": [
+      4,
+      0,
+      0
+    ]
+  },
+  "pending": "all-targets",
+  "expired-host-observer": "attributes-finalization.json",
+  "replacement-host-observer": "attributes-finalization-b.json",
+  "replacement-portable-observer": "attributes-portable-driver-b.json",
+  "native-resource-diagnostic-result": "unknown: prlctl returned255/PrlJob_GetResult Invalid argument and no JSON receipt is available; do not infer guest process termination from that transport result."
+}

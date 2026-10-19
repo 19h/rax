@@ -1,0 +1,6 @@
+{
+  "source-sha256": "711bdee3db5e5da0203120a4c65fcd6da970db7bbcf7cd55b2db69d47c38dcb8",
+  "scope": "Corrected private-token empty-set fixture; v7 failed at compilation and supplied no behavioral rows.",
+  "cases-per-profile": 8,
+  "total-cases": 32
+}

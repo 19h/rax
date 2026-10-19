@@ -1,0 +1,22 @@
+﻿[
+    {
+        "profile":  "arm64",
+        "exit-code":  0,
+        "log":  "native-token-security-attributes-v7b-arm64.log"
+    },
+    {
+        "profile":  "x64",
+        "exit-code":  0,
+        "log":  "native-token-security-attributes-v7b-x64.log"
+    },
+    {
+        "profile":  "x86",
+        "exit-code":  0,
+        "log":  "native-token-security-attributes-v7b-x86.log"
+    },
+    {
+        "profile":  "x86-laa",
+        "exit-code":  0,
+        "log":  "native-token-security-attributes-v7b-x86-laa.log"
+    }
+]

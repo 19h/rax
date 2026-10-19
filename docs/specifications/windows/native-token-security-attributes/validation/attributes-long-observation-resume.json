@@ -1,0 +1,8 @@
+{
+  "state": "resuming-observation-only",
+  "scope": "No native validation process restarted; only an expired host result-collection wait is replaced.",
+  "children": [
+    2883,
+    2884
+  ]
+}

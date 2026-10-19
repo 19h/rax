@@ -1,0 +1,9 @@
+{
+  "pid": 5296,
+  "utc": "2026-10-19T15:18:18.132915+00:00",
+  "state": "finished",
+  "scope": "Controlled native value-type fixtures on private duplicated tokens; privilege enabled only on a separate private impersonation token scoped to this probe thread, reverted before exit. Original process token privileges compared unchanged. No guest implementation or unrelated host token mutation.",
+  "child-pid": 2024,
+  "exit-code": 0,
+  "completed-utc": "2026-10-19T15:18:35.946207+00:00"
+}

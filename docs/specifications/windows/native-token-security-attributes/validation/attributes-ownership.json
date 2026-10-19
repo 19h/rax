@@ -1,0 +1,27 @@
+{
+  "utc": "2026-10-19T15:14:52.602776+00:00",
+  "base": "d03afec80afd8ef4281c839a8944a166aef02369",
+  "source-owned-paths": [
+    "src/user/windows/dll/native.rs",
+    "src/user/windows/dll/native/token_attributes.rs",
+    "src/user/windows/native-runtime.md",
+    "src/user/windows/process/sched/tests/services_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/access_check_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/token_bno_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/token_scalar_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/token_security_attributes_leaf_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/token_security_attributes_replay_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/token_security_attributes_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/token_session_id_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/token_user_tests.rs",
+    "src/user/windows/security.rs",
+    "src/user/windows/security/token.rs",
+    "src/user/windows/security/token/attributes.rs",
+    "src/user/windows/security/token/attributes/installed.rs",
+    "src/user/windows/security/token/attributes/tests.rs",
+    "src/user/windows/wnf/installed.rs",
+    "src/user/windows/wnf/tests.rs"
+  ],
+  "evidence-prefix": "docs/specifications/windows/native-token-security-attributes/",
+  "scope": "Clean private source. Planned captured Subject attribute state, shared typed ABI/serialization, native selection capture, six-argument dispatcher and strategic tests; no unrelated policy/ABI/default/dependency changes. Exact list can expand only after call-site inspection."
+}

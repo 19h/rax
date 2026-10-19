@@ -1,0 +1,19 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.14s
+     Running unittests src/lib.rs (target/debug/deps/rax-dd79f0cd9ae9bb68)
+
+running 12 tests
+test user::windows::process::sched::tests::services_tests::token_security_attributes_replay_tests::native_token_security_attributes_replays_all_22048_native_cases ... ok
+test user::windows::process::sched::tests::services_tests::token_security_attributes_tests::native_token_security_attributes_empty_set_matches_all_32_native_rows ... ok
+test user::windows::process::sched::tests::services_tests::token_security_attributes_tests::native_token_security_attributes_impersonation_alias_owns_values_without_primary_subject ... ok
+test user::windows::process::sched::tests::services_tests::token_security_attributes_tests::native_token_security_attributes_missing_capture_is_explicit_and_preserves_destinations ... ok
+test user::windows::process::sched::tests::services_tests::token_security_attributes_tests::native_token_security_attributes_name_budget_is_explicit_and_preserves_reached_faults ... ok
+test user::windows::process::sched::tests::services_tests::token_security_attributes_tests::native_token_security_attributes_name_capture_and_output_guard_priority_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::token_security_attributes_tests::native_token_security_attributes_rejects_inconsistent_name_array_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::token_security_attributes_tests::native_token_security_attributes_returned_alignment_precedes_handle_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::token_security_attributes_tests::native_token_security_attributes_upper_output_faults_match_all_576_native_rows ... ok
+test user::windows::security::token::attributes::tests::native_token_security_attributes_decodes_independent_all_type_native_captures ... ok
+test user::windows::security::token::attributes::tests::native_token_security_attributes_owned_parser_rejects_escaping_and_oversized_graphs ... ok
+test user::windows::security::token::attributes::tests::native_token_security_attributes_retains_opaque_flags_and_exact_name_grammar ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 8039 filtered out; finished in 23.27s
+

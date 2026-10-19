@@ -1,0 +1,25 @@
+{
+  "state": "finished",
+  "pid": 1324,
+  "utc": "2026-10-19T19:11:34.339344+00:00",
+  "steps": [
+    {
+      "name": "validation",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\verify-attributes-epoch2\\docs\\specifications\\windows\\native-token-security-attributes\\check_validation.py",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\verify-attributes-epoch2"
+      ],
+      "exit-code": 0
+    }
+  ],
+  "checked-envelope-files": 522,
+  "scope": "New verification tree; all extracted proof/runtime documents detach from immutable parent hardlinks.",
+  "complete-inputs": 24786,
+  "exit-code": 0,
+  "log": "attributes-final-check-windows.log",
+  "bytes": 195,
+  "sha256": "b9a42dcbafde9d985b64b1b176a9ae39fc24e44c44cb174336c9166ec0203e0d",
+  "completed-utc": "2026-10-19T19:16:33.870220+00:00"
+}

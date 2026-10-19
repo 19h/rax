@@ -2674,3 +2674,17 @@ Actual retained-owner core: 503929600 bytes, SHA-256 `b912928105f461adf0bf338d7a
 Both ordinary ARM64 guests return class2 status0 and retain idle_timeout Some(-300000000), then advance359turns: smoke2898814->2899173 and whoami2901099->2901458. The next stop is unimplemented NtQuerySecurityAttributesToken (0x167). Neither guest exits successfully; both native controls exit0. Read-only final diagnostics capture pseudo token handle -4 and requested WIN://SYSAPPID/WIN://PKG names.
 Full process objective remains active until ordinary guests exit successfully.
 [Evidence, assumptions and limits](../../../docs/specifications/windows/native-worker-factory-idle-timeout/README.md).
+
+
+### Captured token security attributes
+
+`NtQuerySecurityAttributesToken` uses a selection-time owned snapshot, including
+all seven PHNT version1 value types. Native and WoW64 share token rights and
+name semantics while preserving their measured capture, buffer conversion,
+alignment, guard, partial-zeroing and ReturnLength alias order. No guest request
+queries a host token. The build29683 four-ABI observation scope, 22656 native
+rows, independent checker, bounded capture policy and validation state are in
+`docs/specifications/windows/native-token-security-attributes/README.md`.
+Successful ordinary-program exit remains a separate required validation result.
+
+Validation: twelve shared / thirteen Windows focused tests; 22656 independent native observations and 15 rejected native-evidence corruptions. Full selections macOS8049/0/2, Linux8043/0/2, Windows7512/5/2 (exact existing lowerer failures), C API183 each, integration544 non-Windows /4 Windows and all-target compilation. Retained ABI184 linked consumers pass; actual core 506136090 bytes SHA-256 `41fa4b161609e88a2bf24943be1755e0dea8bfb65cab1048f60e85e64e9c736f`. Both ordinary guests pass this query with STATUS_NOT_FOUND/ReturnLength0 and continue44004/64739 observer turns to NtTestAlert / NtQueryVirtualMemory class3. No successful guest exit; full process goal remains active.

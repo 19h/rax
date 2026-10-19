@@ -1,0 +1,33 @@
+{
+  "source-sha256": "33ba9267dd95a5c04a800106880426458af4ae31b26834793d0b48025c1ba0a5",
+  "scope-correction": "The original controller text inherited replace-all wording. The bound C++ source uses ADD (operation2) with ValueCount0 on private duplicated target tokens. Original primary privilege bytes are unchanged.",
+  "controls": [
+    {
+      "profile": "arm64",
+      "set-attempts": 7,
+      "successful-sets": 0,
+      "query-cases": 0
+    },
+    {
+      "profile": "x64",
+      "set-attempts": 7,
+      "successful-sets": 0,
+      "query-cases": 0
+    },
+    {
+      "profile": "x86",
+      "set-attempts": 7,
+      "successful-sets": 0,
+      "query-cases": 0
+    },
+    {
+      "profile": "x86-laa",
+      "set-attempts": 7,
+      "successful-sets": 0,
+      "query-cases": 0
+    }
+  ],
+  "total-set-attempts": 28,
+  "query-cases": 0,
+  "conclusion": "All seven zero-value creation attempts were rejected in all four ABI profiles. This supplies no successful empty-valued query layout."
+}
