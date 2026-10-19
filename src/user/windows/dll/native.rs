@@ -363,6 +363,12 @@ pub(super) static SEMAPHORE_EXPORTS: &[Export] = &[
     ),
 ];
 
+// Append after every prior family: existing ordinals and trap RVAs are stable.
+pub(super) static TIMER2_EXPORTS: &[Export] = &[
+    Export::func("NtSetTimer2", Stdcall, &[Ptr, Ptr, Ptr, Ptr], timers::set),
+    Export::func("NtCancelTimer2", Stdcall, &[Ptr, Ptr], timers::cancel),
+];
+
 fn status_error(c: &mut Ctx) -> ApiResult {
     Flow::ret(u64::from(super::super::nt::status_to_error(c.u32(0)?)))
 }

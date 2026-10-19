@@ -1,0 +1,32 @@
+[
+  {
+    "target": "assist_rax_process_tests",
+    "carrier": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/assist-rs-target/aarch64-apple-darwin/debug/libassist_rs.a",
+    "commands-sha256": "ce713da03ffab6ebf12f3e90da8c9269de7e0901b27c1a1dd601f620213885fe"
+  },
+  {
+    "target": "assist_process_tool_tests",
+    "carrier": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/assist-rs-target/aarch64-apple-darwin/debug/libassist_rs.a",
+    "commands-sha256": "7185fb59ee8c4cbe470cf47778d1f57368d02803a482dbcdd3f8b723277b0608"
+  },
+  {
+    "target": "assist_rust_archive_link_tests",
+    "carrier": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/assist-rs-target/aarch64-apple-darwin/debug/libassist_rs.a",
+    "commands-sha256": "62b312f86365c393aab5ae084fab16ad91b599ef13eeda84fe8503d7ca6d04d6"
+  },
+  {
+    "target": "assist_e14_rax_abi_drift_tests",
+    "carrier": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/assist-rs-target/aarch64-apple-darwin/debug/libassist_rs.a",
+    "commands-sha256": "345c664f503dbfd6c8b01056c5f2e941fad718fd87ca029aa7be0f876d6e7ffd"
+  },
+  {
+    "target": "assist_mcp",
+    "carrier": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/assist-rs-target/aarch64-apple-darwin/debug/libassist_rs.a",
+    "commands-sha256": "14337714c4bc964845a0b9f78166706744b1ac3d72a5a5e12d276292f5ef8248"
+  },
+  {
+    "target": "assist_idalib_cli",
+    "carrier": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/macos-owning-build/assist-rs-target/aarch64-apple-darwin/debug/libassist_rs.a",
+    "commands-sha256": "e91bd6a80d75a1b2c2a4dce911e9ef7426973f2a51fe9cc15b3262081f14503a"
+  }
+]

@@ -267,7 +267,7 @@ fn replay(arch: WinArch, text: &str, expected_rows: usize) -> (usize, usize) {
             assert_eq!(p.objects.access(handle), Some(n("grant", 16) as u32));
             assert_eq!(p.objects.flags(handle), Some(n("handle-flags", 10) as u32));
             assert!(
-                matches!(p.objects.get(handle),Some(Object::IrTimer{attributes,timer_id,signaled:false}) if u64::from(*attributes)==n("count",16) && *timer_id==(if n("count",16)&2!=0 {Some(id_value)} else {None}))
+                matches!(p.objects.get(handle),Some(Object::IrTimer{attributes,timer_id,signaled:false,schedule:None}) if u64::from(*attributes)==n("count",16) && *timer_id==(if n("count",16)&2!=0 {Some(id_value)} else {None}))
             );
             assert_eq!(
                 n("query", 16),

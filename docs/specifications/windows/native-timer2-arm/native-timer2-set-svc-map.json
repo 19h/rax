@@ -1,0 +1,44 @@
+{
+  "utc": "2026-10-19T02:57:24.179046+00:00",
+  "module-path": "C:\\Windows\\System32\\ntdll.dll",
+  "module-sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f",
+  "rows": [
+    {
+      "name": "NtCreateTimer2",
+      "address": "0x7fff38a41d00",
+      "first-16-bytes": "811900d4c0035fd60000000000000000",
+      "svc-offset": 0,
+      "svc": 204
+    },
+    {
+      "name": "NtSetTimer2",
+      "address": "0x7fff38a42c40",
+      "first-16-bytes": "013800d4c0035fd60000000000000000",
+      "svc-offset": 0,
+      "svc": 448
+    },
+    {
+      "name": "NtCancelTimer2",
+      "address": "0x7fff38a419a0",
+      "first-16-bytes": "c11200d4c0035fd60000000000000000",
+      "svc-offset": 0,
+      "svc": 150
+    },
+    {
+      "name": "NtQueryTimer",
+      "address": "0x7fff38a413c0",
+      "first-16-bytes": "010700d4c0035fd60000000000000000",
+      "svc-offset": 0,
+      "svc": 56
+    },
+    {
+      "name": "NtWaitForSingleObject",
+      "address": "0x7fff38a41040",
+      "first-16-bytes": "810000d4c0035fd60000000000000000",
+      "svc-offset": 0,
+      "svc": 4
+    }
+  ],
+  "source-sha256": "770f4369f531f81ee7fbe0709d60f2392fc9ea7abd754150eafd91e95a6c541c",
+  "scope": "Read-only installed ARM64 NTDLL function bytes; diagnostic labels only, no guest dispatch changes."
+}

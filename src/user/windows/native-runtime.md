@@ -2487,3 +2487,42 @@ Windows owning core is 503,963,010 bytes, SHA-256
 Sources, commands, logs, exact failure names, native captures and portable
 verification are under
 `docs/specifications/windows/native-state-separation-registry/`.
+
+
+## Native extended timer arming/cancellation (2026-10-19)
+
+NtSetTimer2 and NtCancelTimer2 now operate on the extended objects constructed
+by NtCreateTimer2. Native64 and WoW64 input capture order, full16-byte parameter
+reads, unaligned spans, guard consumption, modify access, typed handles and
+native value restrictions follow18,740 captured cases on four ABI profiles
+sharing one Windows ARM64 kernel. Portable replay checks18,528 exact records;
+asynchronous timing samples are bounded evidence rather than exact poll goldens.
+The independent checker rejects14 corrupted capture copies.
+
+Relative/absolute native clock domains, full signed64 100ns intervals, positive
+period phase/skip arithmetic and fast negative periods are retained without
+narrowing or overflowing host Instants. At most one expiry is delivered per
+scheduler turn. Successful rearm clears signal state; cancellation preserves
+it. Existing waits and completion packets consume the same object state and
+retain objects after public handle closure. Legacy timers and prior NTDLL
+ordinals/trap RVAs are unchanged. Timing quantum/power guarantees and a physical
+NtSetTimer2 suspend/resume experiment remain outside the demonstrated scope.
+
+Five strategic tests fail on the missing service before implementation. Final
+focus selections pass14 shared tests and15 native Windows tests, including real
+installed host/WoW64 NTDLL leaves. Complete unfiltered core pass/fail/ignore is
+macOS7990/0/2, Linux7984/0/2, Windows7434/5/2, retaining exactly the established
+five Windows lowerer failures. C API183, all-target checks and actual retained
+Assist consumers pass on all three hosts. Full archive walks before/after links
+bind519 selected inputs. Retained Assist Rust ABI184 and C++ inputs compared
+to root ABI264 do not establish whole-current-root GUI/plugin/package builds.
+The public C ABI remains1.14.0. The complete source epoch binds23,050 inputs
+and1,599,183,887 bytes; this engineering append is separately bound afterward.
+
+Both ordinary Windows programs return timer success at the former stop and
+advance695677 normally executed observer turns to an uncaptured SafeBoot/Option
+registry key. Neither guest exits successfully; controller exit0 is separate.
+The actual Windows owning core is503,289,084 bytes, SHA-256
+`082390d8d0aca0c04aa96dc484b1111c6a3bb756ae39faad4ca75c4b4a227e76`. Sources, captures, logs, commands, assumptions, complete
+counts and portable verification are recorded under
+`docs/specifications/windows/native-timer2-arm/`.

@@ -1,0 +1,75 @@
+{
+  "baseline-head": "0621926beb7d9f065ba2afddf9bcb95c74e26ba3",
+  "root": "/Users/int/Library/Caches/assist-process-emulation/native-timer2-set-20261019/timer2-source",
+  "scope": "Native NtSetTimer2/NtCancelTimer2 semantics for existing extended IRTimer objects and actual scheduler/wait integration. Ordinary Windows next frontier is measured, not substituted.",
+  "acceptance": [
+    "Capture independent native set/cancel/state/fault/access/guard/lifecycle behavior on ARM64, x64 compatibility, x86 and x86 LAA.",
+    "Support exact guest arm, reset, periodic expiry and cancellation state with precise units; existing wait-any/all, notification/synchronization, native wait and wait-packet consumers observe the same object.",
+    "Preserve existing NtCreateTimer2 construction, legacy timers, synthetic NTDLL ordinals/trap RVAs, C ABI and defaults.",
+    "Baseline strategic tests fail before product changes; all code changes precede final test gates.",
+    "Complete affected library targets and all-target checks plus CAPI and actual retained consumers on macOS/Linux/Windows; ordinary programs execute normally against rebuilt owning core.",
+    "Publish exact semantic owned paths with red, push RAX master and pair root pin/records to both remotes; no merge commits."
+  ],
+  "assumptions": [
+    {
+      "id": "A1",
+      "assumption": "The existing Object::IrTimer represents the extended kernel timer used by the observed NtSetTimer2 call.",
+      "basis": "Guest trace: handle0x2c, attributes8, timer_idNone, dormant signal; independent native exact request succeeds. Existing NtCreateTimer2 implementation records all extended types as IrTimer.",
+      "dependent-result": "Add real arming/cancellation state to this object rather than legacy Object::Timer.",
+      "stress-test": "Native regular/extended/event/invalid handles, all supported constructor attribute families and access grants.",
+      "falsification-probe": "Native NtSetTimer2 accepts a different dispatcher object or existing constructor representation disagrees with native type capture.",
+      "status": "retained; exact observed request confirmed"
+    },
+    {
+      "id": "A2",
+      "assumption": "Version/Reserved/NoWakeTolerance layout is two ULONGs plus LONGLONG in16bytes.",
+      "basis": "Stored pinned PHNT ntexapi.h lines1373-1394 and exact native ctypes sizeof16 success.",
+      "dependent-result": "Input capture, cross-ABI parsing and time-unit model.",
+      "stress-test": "All pointer alignments, crossing/guard/noaccess pages, nonzero version/reserved, boundary tolerance values; WoW64 fault ordering.",
+      "falsification-probe": "Native captures use different offsets/size or branch semantics than the declaration.",
+      "status": "retained"
+    },
+    {
+      "id": "A3",
+      "assumption": "All native test operations remain confined to anonymous handles in their own producer processes.",
+      "basis": "Fixed creation API, no object names, no host policy writes and unconditional cancellation/close cleanup.",
+      "dependent-result": "Native oracle scope.",
+      "stress-test": "Check handle counts, guard regions, before/after module and producer hashes; avoid unbounded waits.",
+      "falsification-probe": "Handle leak, non-private target, global policy mutation or an unbounded wait.",
+      "status": "retained"
+    }
+  ],
+  "bounded-scope": [
+    {
+      "impact": "high",
+      "item": "Full process goal remains incomplete; both ordinary programs currently stop at NtSetTimer2 without guest exit.",
+      "evidence": "../native-state-separation-registry/validation/ordinary-program-summary.json",
+      "blocks-full-goal": true
+    },
+    {
+      "impact": "medium",
+      "item": "Four ABI profiles share one ARM64 Windows kernel.",
+      "evidence": "Native29683 probes and pinned NTDLL502d4678 hash.",
+      "blocks-scoped-adapter-validation": false
+    },
+    {
+      "impact": "medium",
+      "item": "Native full core retains five existing unrelated lowerer failures; retained consumers do not establish whole-current-root packages/GUI.",
+      "evidence": "Published registry validation records.",
+      "blocks-new-feature": false
+    }
+  ],
+  "surface-map": {
+    "ISA-decode-execute-state-MMU": "unaffected; API and process scheduler only; no instruction or memory-access contract changes planned",
+    "SMIR-IR-lift-interpreter-optimizer-native-lowering-JIT": "unaffected; no new operations/admission or semantics",
+    "VM-machine-backends": "unaffected; process-level Windows dispatcher state only",
+    "Windows-objects": "affected; dormant extended timer gains actual state",
+    "Windows-native-HLE-kernel-synthetic-PE": "affected; new exports appended without renumbering existing leaves and same implementations on both routes",
+    "scheduler-waits-wait-packets": "affected; extended-timer deadline/signal consumers; existing wait packet and wait-any/all already admit IrTimer",
+    "legacy-timer": "must preserve current Win32/private Timer behavior; avoid incidental precision/policy changes",
+    "C-ABI-SDK-root-products": "public ABI unchanged; affected core archive rebuilt and actual retained C++/CLI/MCP consumers revalidated",
+    "platforms": "shared process semantics compile/run on macOS/Linux/Windows; host-native kernel probes on Windows; no silent skips for new cases",
+    "tests-docs": "independent native matrix, before/after baselines, strategic kernel/HLE/scheduler/lifecycle tests, full cross-platform gates and source-bound engineering evidence"
+  },
+  "source-ownership": "To be finalized after native capture and call-site search, before product edits; fresh worktree has no pre-existing changes."
+}

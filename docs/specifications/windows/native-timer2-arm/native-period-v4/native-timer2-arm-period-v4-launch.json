@@ -1,0 +1,9 @@
+{
+  "pid": 1380,
+  "utc": "2026-10-19T04:08:05.398128+00:00",
+  "state": "finished",
+  "scope": "Anonymous private timer handles only; set/poll/cancel/close, finite waits, status/access/value matrix. No registry/security/power policy changes.",
+  "child-pid": 1812,
+  "exit-code": 0,
+  "completed-utc": "2026-10-19T04:08:52.889980+00:00"
+}

@@ -23,6 +23,8 @@ pub use lpc::LpcPort;
 mod primary_token;
 mod scheduler;
 pub use scheduler::SchedulerData;
+mod timers;
+pub use timers::Timer2Schedule;
 mod wait_packets;
 mod wnf;
 pub use wait_packets::CompletionPacket;
@@ -131,14 +133,16 @@ pub enum Object {
         /// Period in milliseconds (0 = one-shot).
         period_ms: u32,
     },
-    /// A dormant extended NT timer, distinct from the legacy Timer object.
+    /// An extended NT timer, distinct from the legacy Timer object.
     IrTimer {
         /// Raw validated TIMER2 attributes, including notification/resolution.
         attributes: u32,
         /// Captured IR timer role, present only with TIMER2_ATTRIBUTE_IR_TIMER.
         timer_id: Option<u32>,
-        /// Constructor starts unsignaled; arming belongs to timer services.
+        /// Constructor starts unsignaled; successful arming resets the signal.
         signaled: bool,
+        /// Pending expiration, removed by cancellation or one-shot expiry.
+        schedule: Option<Timer2Schedule>,
     },
     /// A file mapping (section).
     Mapping {

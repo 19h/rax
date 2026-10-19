@@ -1,0 +1,51 @@
+   Compiling vm-memory v0.17.1 (/Users/int/Library/Caches/assist-process-emulation/native-timer2-set-20261019/timer2-source/vendor/vm-memory)
+   Compiling linux-loader v0.13.2 (https://github.com/19h/linux-loader?rev=f745b555942c4e840a784bca61e6f3976d101960#f745b555)
+   Compiling rax v0.1.0 (/Users/int/Library/Caches/assist-process-emulation/native-timer2-set-20261019/timer2-source)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 07s
+     Running unittests src/lib.rs (/Users/int/Library/Caches/assist-process-emulation/native-wait-20261019/target-macos-wait-epoch3/debug/deps/rax-754f4d2a527a4423)
+
+running 5 tests
+test user::windows::process::sched::tests::services_tests::timer2_arm_tests::native_timer2_arm_access_type_and_validation_order_match_native_all_abis ... 
+thread 'user::windows::process::sched::tests::services_tests::timer2_arm_tests::native_timer2_arm_access_type_and_validation_order_match_native_all_abis' (9485426) panicked at src/user/windows/process/sched/tests/services_tests/event_tests.rs:115:5:
+assertion `left == right` failed
+  left: Fail("native NTDLL service NtSetTimer2 (0x48) at 0x12340000 is not implemented")
+ right: Continue
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+test user::windows::process::sched::tests::services_tests::timer2_arm_tests::native_timer2_arm_null_due_and_optional_parameters_follow_native_precedence_all_abis ... 
+thread 'user::windows::process::sched::tests::services_tests::timer2_arm_tests::native_timer2_arm_null_due_and_optional_parameters_follow_native_precedence_all_abis' (9485427) panicked at src/user/windows/process/sched/tests/services_tests/event_tests.rs:115:5:
+assertion `left == right` failed
+  left: Fail("native NTDLL service NtSetTimer2 (0x48) at 0x12340000 is not implemented")
+ right: Continue
+FAILED
+test user::windows::process::sched::tests::services_tests::timer2_arm_tests::native_timer2_arm_observed_request_and_cancel_are_real_kernel_services_all_abis ... 
+thread 'user::windows::process::sched::tests::services_tests::timer2_arm_tests::native_timer2_arm_observed_request_and_cancel_are_real_kernel_services_all_abis' (9485428) panicked at src/user/windows/process/sched/tests/services_tests/event_tests.rs:115:5:
+assertion `left == right` failed
+  left: Fail("native NTDLL service NtSetTimer2 (0x48) at 0x12340000 is not implemented")
+ right: Continue
+FAILED
+test user::windows::process::sched::tests::services_tests::timer2_arm_tests::native_timer2_arm_period_and_due_boundaries_are_captured_without_narrowing_all_abis ... 
+thread 'user::windows::process::sched::tests::services_tests::timer2_arm_tests::native_timer2_arm_period_and_due_boundaries_are_captured_without_narrowing_all_abis' (9485430) panicked at src/user/windows/process/sched/tests/services_tests/event_tests.rs:115:5:
+assertion `left == right` failed
+  left: Fail("native NTDLL service NtSetTimer2 (0x48) at 0x12340000 is not implemented")
+ right: Continue
+FAILED
+test user::windows::process::sched::tests::services_tests::timer2_arm_tests::native_timer2_arm_rejected_values_and_cancel_preserve_notification_signal_all_abis ... 
+thread 'user::windows::process::sched::tests::services_tests::timer2_arm_tests::native_timer2_arm_rejected_values_and_cancel_preserve_notification_signal_all_abis' (9485431) panicked at src/user/windows/process/sched/tests/services_tests/event_tests.rs:115:5:
+assertion `left == right` failed
+  left: Fail("native NTDLL service NtSetTimer2 (0x48) at 0x12340000 is not implemented")
+ right: Continue
+FAILED
+
+failures:
+
+failures:
+    user::windows::process::sched::tests::services_tests::timer2_arm_tests::native_timer2_arm_access_type_and_validation_order_match_native_all_abis
+    user::windows::process::sched::tests::services_tests::timer2_arm_tests::native_timer2_arm_null_due_and_optional_parameters_follow_native_precedence_all_abis
+    user::windows::process::sched::tests::services_tests::timer2_arm_tests::native_timer2_arm_observed_request_and_cancel_are_real_kernel_services_all_abis
+    user::windows::process::sched::tests::services_tests::timer2_arm_tests::native_timer2_arm_period_and_due_boundaries_are_captured_without_narrowing_all_abis
+    user::windows::process::sched::tests::services_tests::timer2_arm_tests::native_timer2_arm_rejected_values_and_cancel_preserve_notification_signal_all_abis
+
+test result: FAILED. 0 passed; 5 failed; 0 ignored; 0 measured; 7978 filtered out; finished in 0.02s
+
+error: test failed, to rerun pass `--lib`

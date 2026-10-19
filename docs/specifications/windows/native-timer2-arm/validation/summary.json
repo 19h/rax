@@ -1,0 +1,69 @@
+{
+  "utc": "2026-10-19T04:45:47.758236+00:00",
+  "source-epoch": 1,
+  "scope": "Extended timer semantic group complete; full process objective incomplete",
+  "core-counts": {
+    "macos": [
+      7990,
+      0,
+      2
+    ],
+    "linux": [
+      7984,
+      0,
+      2
+    ],
+    "windows": [
+      7434,
+      5,
+      2
+    ]
+  },
+  "new-shared-tests": 14,
+  "new-native-tests": 15,
+  "capi-tests-each-host": 183,
+  "native-cases": 18740,
+  "native-replayed-records": 18528,
+  "native-negative-controls": 14,
+  "owning-selected-inputs": 519,
+  "ordinary-programs": {
+    "actual-core": {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-owned\\debug\\deps\\librax-934115059aa64c85.rlib",
+      "bytes": 503289084,
+      "sha256": "082390d8d0aca0c04aa96dc484b1111c6a3bb756ae39faad4ca75c4b4a227e76",
+      "members": 20,
+      "structural-member-walk": "pass"
+    },
+    "programs": [
+      {
+        "program": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-timer2-epoch1\\tests\\fixtures\\user\\windows\\bin\\arm64\\smoke.exe",
+        "former-stop-turn": 2188223,
+        "timer2-ntstatus": 0,
+        "new-terminal-turn": 2883900,
+        "additional-observer-turns": 695677,
+        "terminal-result": "Complete(Internal(\"native NTDLL service NtOpenKey: Unimplemented(\\\"NtOpenKey: registry key outside selected runtime snapshot\\\")\"))",
+        "guest-exit-success": false,
+        "controller-exit-code": 0,
+        "log": "timer2-owner-epoch1-0.log",
+        "log-sha256": "9f4d121836d73ead7aa9645f8fae33d4635167556fa427d894b13369c9534048",
+        "next-registry-path": "\\Registry\\MACHINE\\System\\CurrentControlSet\\Control\\SafeBoot\\Option"
+      },
+      {
+        "program": "C:\\Windows\\System32\\whoami.exe",
+        "former-stop-turn": 2190508,
+        "timer2-ntstatus": 0,
+        "new-terminal-turn": 2886185,
+        "additional-observer-turns": 695677,
+        "terminal-result": "Complete(Internal(\"native NTDLL service NtOpenKey: Unimplemented(\\\"NtOpenKey: registry key outside selected runtime snapshot\\\")\"))",
+        "guest-exit-success": false,
+        "controller-exit-code": 0,
+        "log": "timer2-owner-epoch1-1.log",
+        "log-sha256": "513ab7a5a442c6b6ae181dded7c7b49e94c51c8d4b6c0550e8cabc2336c4d016",
+        "next-registry-path": "\\Registry\\MACHINE\\System\\CurrentControlSet\\Control\\SafeBoot\\Option"
+      }
+    ],
+    "ordinary-guest-exit-success": false,
+    "scope": "All turns execute normally; source/PE/program/core/module hashes stable before/after. Controller exit0 records observations, not successful guest exit."
+  },
+  "validation-negative-controls": 13
+}

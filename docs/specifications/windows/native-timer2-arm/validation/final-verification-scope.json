@@ -1,0 +1,44 @@
+{
+  "checked-envelope-files": 252,
+  "proof-archive": {
+    "archive": "timer2-final-proof.tar.gz",
+    "bytes": 17385547,
+    "sha256": "fc3b7bf4ebf9af450a8607e56841a1ac3bb822f7a1d1760eb46897eb065d1017",
+    "bound-evidence-files": 252,
+    "members": 254,
+    "scope": "Final evidence and appended runtime engineering record only; native verifier detaches all overwritten hardlinks before extraction."
+  },
+  "later-receipts": [
+    {
+      "path": "validation/timer2-final-check-macos.json",
+      "bytes": 623,
+      "sha256": "552fadfd921b1ddd55e7acd429afed8a73fddc654e2989812d729f7a7e12319b"
+    },
+    {
+      "path": "validation/timer2-final-check-macos.log",
+      "bytes": 1826,
+      "sha256": "1c812f573e208280f1a2121297a0b31fec6f3b8f27f4b1dc276d4daabfe0e7db"
+    },
+    {
+      "path": "validation/timer2-final-check-linux.json",
+      "bytes": 825,
+      "sha256": "dd5be20fc62c46d6b3c736f91e7973a924b422ff686b3ff0aee72ce109d8ee41"
+    },
+    {
+      "path": "validation/timer2-final-check-linux.log",
+      "bytes": 1826,
+      "sha256": "1c812f573e208280f1a2121297a0b31fec6f3b8f27f4b1dc276d4daabfe0e7db"
+    },
+    {
+      "path": "validation/timer2-final-check-windows.json",
+      "bytes": 1388,
+      "sha256": "5c2c0997e213fbcff53fbbc8f9aeca404d02812eb95cf0b42b5b54cd2d1b7b27"
+    },
+    {
+      "path": "validation/timer2-final-check-windows.log",
+      "bytes": 1904,
+      "sha256": "d68f4d5ab20b70d2095202f0a6713db674e9a75539660a9fd802ecd76fc66583"
+    }
+  ],
+  "scope": "All three hosts checked the same original252-file envelope. These six unmodified receipt/log files and this declaration were added afterward; the owned-index whitespace audit is added at staging. No compiled source, capture, gate, consumer or ordinary-observation bytes changed."
+}

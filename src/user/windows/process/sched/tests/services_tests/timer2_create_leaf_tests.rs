@@ -126,7 +126,7 @@ fn installed_timer2_create_leaf_constructs_closes_and_returns_all_caller_argumen
                     handle = p.space.ptr(out, arch.ptr_size()).unwrap();
                     assert_eq!(p.objects.access(handle), Some(0x100002));
                     assert!(
-                        matches!(p.objects.get(handle), Some(Object::IrTimer{attributes,timer_id,signaled:false}) if u64::from(*attributes) == flags && *timer_id == (if flags & 2 != 0 {Some(1)} else {None}))
+                        matches!(p.objects.get(handle), Some(Object::IrTimer{attributes,timer_id,signaled:false,schedule:None}) if u64::from(*attributes) == flags && *timer_id == (if flags & 2 != 0 {Some(1)} else {None}))
                     );
                     assert_eq!(p.objects.handle_count(), before_handles + 1);
                     assert_eq!(p.objects.iter().count(), before_objects + 1);

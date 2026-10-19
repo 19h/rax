@@ -1,0 +1,9 @@
+from pathlib import Path
+import subprocess
+import sys
+
+source = Path(sys.argv[1]).resolve()
+evidence = source / 'docs/specifications/windows/native-timer2-arm'
+for argv in [[sys.executable, '-B', str(evidence / 'check-native-timer2.py'), str(evidence)],
+             [sys.executable, '-B', str(evidence / 'check_validation.py'), str(source)]]:
+    subprocess.run(argv, cwd=source, check=True)

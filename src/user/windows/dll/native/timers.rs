@@ -7,6 +7,9 @@ use crate::user::windows::memory::Mem;
 use crate::user::windows::nt::status::*;
 use crate::user::windows::objects::Object;
 
+mod arming;
+pub(super) use arming::{cancel, set};
+
 const IR: u32 = 2;
 const NO_WAKE: u32 = 8;
 const VALID: u32 = 0x8000_000E;
@@ -91,6 +94,7 @@ fn checked(c: &mut Ctx, out: u64, publishing: &mut bool) -> ApiResult {
             attributes,
             timer_id,
             signaled: false,
+            schedule: None,
         },
     )
 }

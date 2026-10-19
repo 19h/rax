@@ -1,0 +1,10 @@
+{
+  "scope": "NtSetTimer2/NtCancelTimer2 semantic group; full userland objective remains incomplete.",
+  "QG1": "pass: factual engineering task; no normative judgment needed",
+  "QG2": "pass: explicit bases, dependencies, stress tests and falsification probes; A4 remains a declared inference",
+  "QG3": "pass within group: actual state/expiry/cancel, all ABIs, native leaves, three-host complete selections, actual retained consumers and ordinary progress; full objective not declared complete",
+  "QG4": "pass: full signed64 input widths,100ns units, widened arithmetic, precise source/test counts and recorded timing limits",
+  "QG5": "pass within group: capture ordering/guards, error precedence, rearm/cancel signals, internal pins, wait-packet target release, legacy timers and export stability checked; timing/power limits explicit",
+  "QG6": "pass: pinned PHNT/header license, stored Microsoft documents, native producer/DLL identities and actual source/archive/program bindings",
+  "QG7": "pass: complete-process, current-product, single-physical-kernel, unrelated failures and timing precision limits recorded"
+}

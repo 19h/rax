@@ -1,0 +1,29 @@
+{
+  "base": "0621926beb7d9f065ba2afddf9bcb95c74e26ba3",
+  "started": "2026-10-19T04:15:46.220786+00:00",
+  "test_only_files": {
+    "src/user/windows/process/sched/tests/services_tests.rs": "026d995ff444083739d3c962e698e8d40a112fd6d40a72bdd7f60f573800db81",
+    "src/user/windows/process/sched/tests/services_tests/timer2_arm_tests.rs": "e3e432b44ba2c50421e5fdc02f034de7e9de1e98162ed7586b56112c742f5f0b"
+  },
+  "command": [
+    "cargo",
+    "+1.95.0",
+    "test",
+    "--locked",
+    "--offline",
+    "--no-default-features",
+    "--lib",
+    "native_timer2_arm",
+    "--",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "finished": "2026-10-19T04:17:19.933530+00:00",
+  "exit-code": 101,
+  "log": "timer2-tests-only-baseline.log",
+  "log-sha256": "f08d4f59456b6e02d671b21806d34b1e778d1800f54cdcc46b6c0d36d3bb9714",
+  "passed": 0,
+  "failed": 5,
+  "ignored": 0,
+  "failure": "Native service NtSetTimer2 missing, all five strategic tests compile then fail through the real kernel dispatcher."
+}

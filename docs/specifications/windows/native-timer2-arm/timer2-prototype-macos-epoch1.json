@@ -1,0 +1,10 @@
+{
+  "state": "finished",
+  "exit-code": 101,
+  "result": [
+    "test result: FAILED. 13 passed; 1 failed; 0 ignored; 0 measured; 7978 filtered out; finished in 4.44s"
+  ],
+  "log-sha256": "3f82d874f64b80d3aead16656d567d5a7cedf2dc02168afcd58ca122556479f4",
+  "finding": "13 of14 pass. Completion-packet test expected target retention after notification; existing object contract releases target at queue transfer. Corrected assertion to require destruction after final public handle and internal target pin are released; production code unchanged.",
+  "evidence": "objects/wait_packets.rs complete_wait_packet releases target; prior native wait-packet publication owns this contract."
+}

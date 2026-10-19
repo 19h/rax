@@ -1,0 +1,1306 @@
+{
+  "utc": "2026-10-19T04:47:51.009603+00:00",
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 10905,
+      "sha256": "269fc3ff903c74dda7081465d2cf94823f75954475348d02da2d7bb6f9e11e6a"
+    },
+    {
+      "path": "capture-timer2-set-svc-map.py",
+      "bytes": 1804,
+      "sha256": "770f4369f531f81ee7fbe0709d60f2392fc9ea7abd754150eafd91e95a6c541c"
+    },
+    {
+      "path": "check-native-timer2.py",
+      "bytes": 7152,
+      "sha256": "b0f1d67fd7000a0d62e8daff8b39e73eb6fdc4eb58e58cb21e6a22b2304d3cfc"
+    },
+    {
+      "path": "check_validation.py",
+      "bytes": 13297,
+      "sha256": "2ebe82e31c5f6d2dda787e64f8398f4fb63bb165b5932f25fb69dd999a99325f"
+    },
+    {
+      "path": "microsoft-exsettimer-retrieval.json",
+      "bytes": 414,
+      "sha256": "43f0f1302580467fa92a7f2ec5a70c9499a4ed2d63de0eec24e0ec3295dc19e3"
+    },
+    {
+      "path": "microsoft-exsettimer.html",
+      "bytes": 56512,
+      "sha256": "31314c2a9af8cf63219fd6aeaa0266b2d4e1f58a9488faf59f1105e9d5f4012b"
+    },
+    {
+      "path": "microsoft-setwaitabletimerex-retrieval.json",
+      "bytes": 410,
+      "sha256": "8a7d85a63416109f0bcba5a4a19020717e4ef89180692737f6b2e06d8bdd64fb"
+    },
+    {
+      "path": "microsoft-setwaitabletimerex.html",
+      "bytes": 58708,
+      "sha256": "5a329a69e0d9aae390fe7b722b7ffb4f03462b76d85b25152c1c9fafe4577e49"
+    },
+    {
+      "path": "native-fault-v2/native-timer2-arm-fault-v2-arm64-after.json",
+      "bytes": 534,
+      "sha256": "bdff84850e9314699b4c683025950d495ef40e300c51b37025ad5046f312ccc1"
+    },
+    {
+      "path": "native-fault-v2/native-timer2-arm-fault-v2-arm64-before.json",
+      "bytes": 534,
+      "sha256": "bdff84850e9314699b4c683025950d495ef40e300c51b37025ad5046f312ccc1"
+    },
+    {
+      "path": "native-fault-v2/native-timer2-arm-fault-v2-arm64-build.log",
+      "bytes": 32,
+      "sha256": "5ac16c6f85f8b9efad7e3cd1ea3ae5b43462abd1f84ca0e2dd7bc90d6e83a700"
+    },
+    {
+      "path": "native-fault-v2/native-timer2-arm-fault-v2-arm64-source-after.json",
+      "bytes": 248,
+      "sha256": "f340ee42d277b5aecad95ae799a372dacd48d92897ccf3a274c7ad0c055cd084"
+    },
+    {
+      "path": "native-fault-v2/native-timer2-arm-fault-v2-arm64.log",
+      "bytes": 967607,
+      "sha256": "8ba75e84c60b6ae85c334568ed52bd86b2e99eab928e34a8198f8c15318eb89f"
+    },
+    {
+      "path": "native-fault-v2/native-timer2-arm-fault-v2-driver.log",
+      "bytes": 964,
+      "sha256": "81157a84a41f6d110e3d629b61f37581444b3f76aa427bed1014db5bce060e17"
+    },
+    {
+      "path": "native-fault-v2/native-timer2-arm-fault-v2-launch.json",
+      "bytes": 350,
+      "sha256": "8f2f913f8e95fa9471d78a269d767a51ac8ece26eb0ee3d166943de3bcb04751"
+    },
+    {
+      "path": "native-fault-v2/native-timer2-arm-fault-v2-modules-after.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05"
+    },
+    {
+      "path": "native-fault-v2/native-timer2-arm-fault-v2-modules-before.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05"
+    },
+    {
+      "path": "native-fault-v2/native-timer2-arm-fault-v2-outcomes.json",
+      "bytes": 512,
+      "sha256": "e5e5c63ab318a984be1fbbe147db8cecf707e3791eeba49f82a82c4886540f6c"
+    },
+    {
+      "path": "native-fault-v2/native-timer2-arm-fault-v2-x64-after.json",
+      "bytes": 526,
+      "sha256": "3e93330fb0bd389592f1163e67a44087b9db38961b46ab03023756838da156e1"
+    },
+    {
+      "path": "native-fault-v2/native-timer2-arm-fault-v2-x64-before.json",
+      "bytes": 526,
+      "sha256": "3e93330fb0bd389592f1163e67a44087b9db38961b46ab03023756838da156e1"
+    },
+    {
+      "path": "native-fault-v2/native-timer2-arm-fault-v2-x64-build.log",
+      "bytes": 32,
+      "sha256": "5ac16c6f85f8b9efad7e3cd1ea3ae5b43462abd1f84ca0e2dd7bc90d6e83a700"
+    },
+    {
+      "path": "native-fault-v2/native-timer2-arm-fault-v2-x64-source-after.json",
+      "bytes": 246,
+      "sha256": "277b837a41c85b27c1cc941c9f8e6a6b485d7863d37886fbd0b1e2363e446601"
+    },
+    {
+      "path": "native-fault-v2/native-timer2-arm-fault-v2-x64.log",
+      "bytes": 967605,
+      "sha256": "c1d6bce3d1192f955f3950927b3374dd2a2d178a93b72dcbfa8cc86210932aa4"
+    },
+    {
+      "path": "native-fault-v2/native-timer2-arm-fault-v2-x86-after.json",
+      "bytes": 524,
+      "sha256": "ba2034ad92090fc84df3eddf3da0577aa0a538a7bf6dd8c59ba5de7a8191cdb7"
+    },
+    {
+      "path": "native-fault-v2/native-timer2-arm-fault-v2-x86-before.json",
+      "bytes": 524,
+      "sha256": "ba2034ad92090fc84df3eddf3da0577aa0a538a7bf6dd8c59ba5de7a8191cdb7"
+    },
+    {
+      "path": "native-fault-v2/native-timer2-arm-fault-v2-x86-build.log",
+      "bytes": 32,
+      "sha256": "5ac16c6f85f8b9efad7e3cd1ea3ae5b43462abd1f84ca0e2dd7bc90d6e83a700"
+    },
+    {
+      "path": "native-fault-v2/native-timer2-arm-fault-v2-x86-laa-after.json",
+      "bytes": 538,
+      "sha256": "56380d5caa5509df29e9c43d8b3243c55a609110ce186e1cda2cdff213d3727a"
+    },
+    {
+      "path": "native-fault-v2/native-timer2-arm-fault-v2-x86-laa-before.json",
+      "bytes": 538,
+      "sha256": "56380d5caa5509df29e9c43d8b3243c55a609110ce186e1cda2cdff213d3727a"
+    },
+    {
+      "path": "native-fault-v2/native-timer2-arm-fault-v2-x86-laa-build.log",
+      "bytes": 32,
+      "sha256": "5ac16c6f85f8b9efad7e3cd1ea3ae5b43462abd1f84ca0e2dd7bc90d6e83a700"
+    },
+    {
+      "path": "native-fault-v2/native-timer2-arm-fault-v2-x86-laa-source-after.json",
+      "bytes": 250,
+      "sha256": "e4a78a66739c92c75818a734982272a7a9dc09f60c0b49befa6f1ca54aae9578"
+    },
+    {
+      "path": "native-fault-v2/native-timer2-arm-fault-v2-x86-laa.log",
+      "bytes": 967689,
+      "sha256": "19fccfdc53ede918827397968840e6872c45ab8800536e9f3b589fbea49cdb95"
+    },
+    {
+      "path": "native-fault-v2/native-timer2-arm-fault-v2-x86-source-after.json",
+      "bytes": 246,
+      "sha256": "22ae22b30f608bdb416ed818d56b98e366941869237801e8bb92e50c73be6560"
+    },
+    {
+      "path": "native-fault-v2/native-timer2-arm-fault-v2-x86.log",
+      "bytes": 967685,
+      "sha256": "d48b79be624775e5cf2b1aa5a1dacf598f7279702693043bf38dc3d73c06ddbf"
+    },
+    {
+      "path": "native-fault-v2/native-timer2-arm-fault-v2.cpp",
+      "bytes": 9455,
+      "sha256": "5ff0b72b55f19f3204b3c9f7c9e5c30b2b9e6ee6d0af40e2814fbf16bab1c67d"
+    },
+    {
+      "path": "native-fault-v2/native-timer2-arm-fault-v2.ps1",
+      "bytes": 2564,
+      "sha256": "10bf8b91065114fa27ab215f374fab454e13851d230d9744c12198785d85efe5"
+    },
+    {
+      "path": "native-fault-v2/run-native-timer2-arm-fault-v2.py",
+      "bytes": 1219,
+      "sha256": "f1ecb65cba79184784034d495814eeb19cee4d10dff8b88000246e7b4284a63a"
+    },
+    {
+      "path": "native-period-v4/native-timer2-arm-period-v4-arm64-after.json",
+      "bytes": 536,
+      "sha256": "025da384152edf8054ad79f312ef8fe925a2c43400c6602ed47e5700538d6eec"
+    },
+    {
+      "path": "native-period-v4/native-timer2-arm-period-v4-arm64-before.json",
+      "bytes": 536,
+      "sha256": "025da384152edf8054ad79f312ef8fe925a2c43400c6602ed47e5700538d6eec"
+    },
+    {
+      "path": "native-period-v4/native-timer2-arm-period-v4-arm64-build.log",
+      "bytes": 33,
+      "sha256": "fdbc33e5e3729bca2a7e17769601f32d8f87d06452e55139dcc2eea0f772af2e"
+    },
+    {
+      "path": "native-period-v4/native-timer2-arm-period-v4-arm64-source-after.json",
+      "bytes": 250,
+      "sha256": "c7fb2f016468c9d4ca98b1a6229b44c7fea5141ab84dd2ea32ce3d632c7fe467"
+    },
+    {
+      "path": "native-period-v4/native-timer2-arm-period-v4-arm64.log",
+      "bytes": 4799,
+      "sha256": "96063d9c87457591c42a969e021d4489ef17c43bd5b05dc97421a2a642c4df4a"
+    },
+    {
+      "path": "native-period-v4/native-timer2-arm-period-v4-driver.log",
+      "bytes": 964,
+      "sha256": "81157a84a41f6d110e3d629b61f37581444b3f76aa427bed1014db5bce060e17"
+    },
+    {
+      "path": "native-period-v4/native-timer2-arm-period-v4-launch.json",
+      "bytes": 349,
+      "sha256": "c7a9fe2865182b6ff04a048633d56f5274db8328178a323487011d3282affefc"
+    },
+    {
+      "path": "native-period-v4/native-timer2-arm-period-v4-modules-after.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05"
+    },
+    {
+      "path": "native-period-v4/native-timer2-arm-period-v4-modules-before.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05"
+    },
+    {
+      "path": "native-period-v4/native-timer2-arm-period-v4-outcomes.json",
+      "bytes": 516,
+      "sha256": "776f7f22f2c017459adbd55986dd671997c061ae7ff575a2ec2d1ae672d2d882"
+    },
+    {
+      "path": "native-period-v4/native-timer2-arm-period-v4-x64-after.json",
+      "bytes": 528,
+      "sha256": "eb751bf68879176f5f6b2a7f676a0f4116a5089ee3d73ad4a10d140e5df8931c"
+    },
+    {
+      "path": "native-period-v4/native-timer2-arm-period-v4-x64-before.json",
+      "bytes": 528,
+      "sha256": "eb751bf68879176f5f6b2a7f676a0f4116a5089ee3d73ad4a10d140e5df8931c"
+    },
+    {
+      "path": "native-period-v4/native-timer2-arm-period-v4-x64-build.log",
+      "bytes": 33,
+      "sha256": "fdbc33e5e3729bca2a7e17769601f32d8f87d06452e55139dcc2eea0f772af2e"
+    },
+    {
+      "path": "native-period-v4/native-timer2-arm-period-v4-x64-source-after.json",
+      "bytes": 248,
+      "sha256": "a1af63cb5a6ea0284c55e89fd87c1399c8c513072250f56bf7fba4b8aaf3adc6"
+    },
+    {
+      "path": "native-period-v4/native-timer2-arm-period-v4-x64.log",
+      "bytes": 4795,
+      "sha256": "25dadb3d70d55be414223025872773a3bfb9a4433e40eb8179a43484633e058c"
+    },
+    {
+      "path": "native-period-v4/native-timer2-arm-period-v4-x86-after.json",
+      "bytes": 526,
+      "sha256": "d36971ed12408f6d0274f96a6b5f965874df85b0c744f53b3c8a8aa9385c6960"
+    },
+    {
+      "path": "native-period-v4/native-timer2-arm-period-v4-x86-before.json",
+      "bytes": 526,
+      "sha256": "d36971ed12408f6d0274f96a6b5f965874df85b0c744f53b3c8a8aa9385c6960"
+    },
+    {
+      "path": "native-period-v4/native-timer2-arm-period-v4-x86-build.log",
+      "bytes": 33,
+      "sha256": "fdbc33e5e3729bca2a7e17769601f32d8f87d06452e55139dcc2eea0f772af2e"
+    },
+    {
+      "path": "native-period-v4/native-timer2-arm-period-v4-x86-laa-after.json",
+      "bytes": 540,
+      "sha256": "29ef28ad375155fc573aa70552fef1161518543b1954b9181f62c3bb4c7c24c3"
+    },
+    {
+      "path": "native-period-v4/native-timer2-arm-period-v4-x86-laa-before.json",
+      "bytes": 540,
+      "sha256": "29ef28ad375155fc573aa70552fef1161518543b1954b9181f62c3bb4c7c24c3"
+    },
+    {
+      "path": "native-period-v4/native-timer2-arm-period-v4-x86-laa-build.log",
+      "bytes": 33,
+      "sha256": "fdbc33e5e3729bca2a7e17769601f32d8f87d06452e55139dcc2eea0f772af2e"
+    },
+    {
+      "path": "native-period-v4/native-timer2-arm-period-v4-x86-laa-source-after.json",
+      "bytes": 252,
+      "sha256": "f78521638fbdf36662237e098c48140e43a41bca67813fb97db4cc1700665884"
+    },
+    {
+      "path": "native-period-v4/native-timer2-arm-period-v4-x86-laa.log",
+      "bytes": 4802,
+      "sha256": "5c93f3af99d0142c197af5bf02e06e7c61ada326670c910d5789d4e2ff9fcc50"
+    },
+    {
+      "path": "native-period-v4/native-timer2-arm-period-v4-x86-source-after.json",
+      "bytes": 248,
+      "sha256": "1b2e22d4f44288cff30a3a2628db0ed08098a5c0318aa9e67e1a8319d5c5a8f1"
+    },
+    {
+      "path": "native-period-v4/native-timer2-arm-period-v4-x86.log",
+      "bytes": 4790,
+      "sha256": "3da43aa69858b4decf7686f6c443effc9624943158350673cbfb5fe005c76c52"
+    },
+    {
+      "path": "native-period-v4/native-timer2-arm-period-v4.cpp",
+      "bytes": 6145,
+      "sha256": "15edfa4272b01393d213495543ca7db00dbb08dcd7cd0bcbf7134652281239a5"
+    },
+    {
+      "path": "native-period-v4/native-timer2-arm-period-v4.ps1",
+      "bytes": 2578,
+      "sha256": "00ecdbd3bbb4f1ea41793868e75e327b78cecbb935d7b90d3201897a9df9fe86"
+    },
+    {
+      "path": "native-period-v4/run-native-timer2-arm-period-v4.py",
+      "bytes": 1223,
+      "sha256": "9a7962111c7a0f6f9004ca2bc1ce17ecf4bdad3d2b116961aa9c8e904bafa032"
+    },
+    {
+      "path": "native-state-v3/native-timer2-arm-state-v3-arm64-after.json",
+      "bytes": 534,
+      "sha256": "8cdb7eeef3409ba2917a718ca978a4e1383388238a55c2ac56adbbdfecf853ed"
+    },
+    {
+      "path": "native-state-v3/native-timer2-arm-state-v3-arm64-before.json",
+      "bytes": 534,
+      "sha256": "8cdb7eeef3409ba2917a718ca978a4e1383388238a55c2ac56adbbdfecf853ed"
+    },
+    {
+      "path": "native-state-v3/native-timer2-arm-state-v3-arm64-build.log",
+      "bytes": 32,
+      "sha256": "645f3365f068dd12f9e1271aa8d536623fb0358c6d3b98a4c2c8e82e18e0fb5d"
+    },
+    {
+      "path": "native-state-v3/native-timer2-arm-state-v3-arm64-source-after.json",
+      "bytes": 248,
+      "sha256": "b3d85e54aeca2250d7c0aff14efff67df38bfae4c447c1a90840a92919d8c5bd"
+    },
+    {
+      "path": "native-state-v3/native-timer2-arm-state-v3-arm64.log",
+      "bytes": 2125,
+      "sha256": "bdbff4943e632d83efba7e357b63c71891486abcdde2730def67d07bdfcb25c6"
+    },
+    {
+      "path": "native-state-v3/native-timer2-arm-state-v3-driver.log",
+      "bytes": 964,
+      "sha256": "81157a84a41f6d110e3d629b61f37581444b3f76aa427bed1014db5bce060e17"
+    },
+    {
+      "path": "native-state-v3/native-timer2-arm-state-v3-launch.json",
+      "bytes": 349,
+      "sha256": "136156e6f46561399112acdf64108c60d9f2cb926628200b2f8d629e5cadb7dd"
+    },
+    {
+      "path": "native-state-v3/native-timer2-arm-state-v3-modules-after.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05"
+    },
+    {
+      "path": "native-state-v3/native-timer2-arm-state-v3-modules-before.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05"
+    },
+    {
+      "path": "native-state-v3/native-timer2-arm-state-v3-outcomes.json",
+      "bytes": 512,
+      "sha256": "6b14bfa294ba6ad285925ef916cd113f6eaa45d40e8ad32b4191d922dda092f9"
+    },
+    {
+      "path": "native-state-v3/native-timer2-arm-state-v3-x64-after.json",
+      "bytes": 526,
+      "sha256": "a06b5fd2f740e16643c701d573bc6c6b1c9e0624c88b0ece72e585a84175e0af"
+    },
+    {
+      "path": "native-state-v3/native-timer2-arm-state-v3-x64-before.json",
+      "bytes": 526,
+      "sha256": "a06b5fd2f740e16643c701d573bc6c6b1c9e0624c88b0ece72e585a84175e0af"
+    },
+    {
+      "path": "native-state-v3/native-timer2-arm-state-v3-x64-build.log",
+      "bytes": 32,
+      "sha256": "645f3365f068dd12f9e1271aa8d536623fb0358c6d3b98a4c2c8e82e18e0fb5d"
+    },
+    {
+      "path": "native-state-v3/native-timer2-arm-state-v3-x64-source-after.json",
+      "bytes": 246,
+      "sha256": "3964607c49e66d9252f4f302335ebafd011c6c3db80c73ace11c2a5be2d96c1c"
+    },
+    {
+      "path": "native-state-v3/native-timer2-arm-state-v3-x64.log",
+      "bytes": 2123,
+      "sha256": "c5b6bcd9204f63f83acc63947e8c3b9ba1754eff453fe8206b960c8fed9f5ab5"
+    },
+    {
+      "path": "native-state-v3/native-timer2-arm-state-v3-x86-after.json",
+      "bytes": 524,
+      "sha256": "6413009d047f9c796ba2791e12562d599c46cddbe76a7b802121d0f554c93387"
+    },
+    {
+      "path": "native-state-v3/native-timer2-arm-state-v3-x86-before.json",
+      "bytes": 524,
+      "sha256": "6413009d047f9c796ba2791e12562d599c46cddbe76a7b802121d0f554c93387"
+    },
+    {
+      "path": "native-state-v3/native-timer2-arm-state-v3-x86-build.log",
+      "bytes": 32,
+      "sha256": "645f3365f068dd12f9e1271aa8d536623fb0358c6d3b98a4c2c8e82e18e0fb5d"
+    },
+    {
+      "path": "native-state-v3/native-timer2-arm-state-v3-x86-laa-after.json",
+      "bytes": 538,
+      "sha256": "137ce0590a03e7fd9f7aa4f363673c4ccb5681cc66bd849dd4835ba7758ee829"
+    },
+    {
+      "path": "native-state-v3/native-timer2-arm-state-v3-x86-laa-before.json",
+      "bytes": 538,
+      "sha256": "137ce0590a03e7fd9f7aa4f363673c4ccb5681cc66bd849dd4835ba7758ee829"
+    },
+    {
+      "path": "native-state-v3/native-timer2-arm-state-v3-x86-laa-build.log",
+      "bytes": 32,
+      "sha256": "645f3365f068dd12f9e1271aa8d536623fb0358c6d3b98a4c2c8e82e18e0fb5d"
+    },
+    {
+      "path": "native-state-v3/native-timer2-arm-state-v3-x86-laa-source-after.json",
+      "bytes": 250,
+      "sha256": "96aa1cfcde6c79587ba7c2a6275d0cc9adbcbf07cd82ca2fe948e524ee847999"
+    },
+    {
+      "path": "native-state-v3/native-timer2-arm-state-v3-x86-laa.log",
+      "bytes": 2127,
+      "sha256": "2fe61ace37f8d953fdd107c3e01d9612fe1fd7d0ec38192f1f8299dc4b8a7c22"
+    },
+    {
+      "path": "native-state-v3/native-timer2-arm-state-v3-x86-source-after.json",
+      "bytes": 246,
+      "sha256": "127949b2445d1ce039352a848004eec547ec024ec6d29906bf948805162999b2"
+    },
+    {
+      "path": "native-state-v3/native-timer2-arm-state-v3-x86.log",
+      "bytes": 2123,
+      "sha256": "75cc1d81f40b28e10130373304a9e7b53891dc4de86ab4b0d05b39395f16c613"
+    },
+    {
+      "path": "native-state-v3/native-timer2-arm-state-v3.cpp",
+      "bytes": 6795,
+      "sha256": "3d5e161da6d4a3dbdb8929c0799215e4b3ded4eac20f1e3704cadf70e9afc7bb"
+    },
+    {
+      "path": "native-state-v3/native-timer2-arm-state-v3.ps1",
+      "bytes": 2564,
+      "sha256": "b70611f248aa19d6e5c28f777823995fa3948e2e3b65b5bc097b3aa6bef46dde"
+    },
+    {
+      "path": "native-state-v3/run-native-timer2-arm-state-v3.py",
+      "bytes": 1219,
+      "sha256": "f459c1748a4b6a2063815f5550ddd7c309b993e8e4cf6cf9c0d077a6b02ae224"
+    },
+    {
+      "path": "native-timer2-logical-check.json",
+      "bytes": 1664,
+      "sha256": "2040a3fec787eca78107e016d1d17752f69faa7c6fcdd2e591af751ef29c760d"
+    },
+    {
+      "path": "native-timer2-set-observed-arm64.json",
+      "bytes": 1132,
+      "sha256": "6fed97dadbee2aa7f11c6619ac513e5fc64fc2492ed52699c3cbe0e60c4adaf8"
+    },
+    {
+      "path": "native-timer2-set-observed-arm64.py",
+      "bytes": 3675,
+      "sha256": "18476b805d41996ce2a087308788ecb41582353af2cb028a62dc70ee474f46d5"
+    },
+    {
+      "path": "native-timer2-set-svc-map.json",
+      "bytes": 1347,
+      "sha256": "4263b1b0ada0132dbc581bcd791649fc78fd72b7a6fe60dea097b26391ca3400"
+    },
+    {
+      "path": "native-v1/native-timer2-arm-v1-arm64-after.json",
+      "bytes": 522,
+      "sha256": "e25ec3e15e70fc533fdfb688d98d07d78aeb9115213f5b7fd3dfba412dae1b49"
+    },
+    {
+      "path": "native-v1/native-timer2-arm-v1-arm64-before.json",
+      "bytes": 522,
+      "sha256": "e25ec3e15e70fc533fdfb688d98d07d78aeb9115213f5b7fd3dfba412dae1b49"
+    },
+    {
+      "path": "native-v1/native-timer2-arm-v1-arm64-build.log",
+      "bytes": 26,
+      "sha256": "64c0a9b149e848c29466f03f8a678533496768bbbd7240e28cbc969c3782b064"
+    },
+    {
+      "path": "native-v1/native-timer2-arm-v1-arm64-source-after.json",
+      "bytes": 236,
+      "sha256": "4668c2a6fa3b046a7e742ebcafaac5dea55058a4ad2319b501186abce8c41a72"
+    },
+    {
+      "path": "native-v1/native-timer2-arm-v1-arm64.log",
+      "bytes": 277880,
+      "sha256": "deed883edd40ea43deddfc17fcc1ca3f723a7d4169973f629ad2ec89ba72e220"
+    },
+    {
+      "path": "native-v1/native-timer2-arm-v1-driver.log",
+      "bytes": 964,
+      "sha256": "81157a84a41f6d110e3d629b61f37581444b3f76aa427bed1014db5bce060e17"
+    },
+    {
+      "path": "native-v1/native-timer2-arm-v1-launch.json",
+      "bytes": 349,
+      "sha256": "5efbbdf78198e2850b9efa4f18c1aefb547befa1077238c87fc99317da74ac71"
+    },
+    {
+      "path": "native-v1/native-timer2-arm-v1-modules-after.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05"
+    },
+    {
+      "path": "native-v1/native-timer2-arm-v1-modules-before.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05"
+    },
+    {
+      "path": "native-v1/native-timer2-arm-v1-outcomes.json",
+      "bytes": 488,
+      "sha256": "f1e2cde8e757e7fb05a4c9f7bc5ca9a4d9a22d619a9e5822b52bdbb1ec382ebc"
+    },
+    {
+      "path": "native-v1/native-timer2-arm-v1-x64-after.json",
+      "bytes": 514,
+      "sha256": "d488bce175ff27fc5882dc4530cb1a7805ede5b8527a93262faa18bd657a40ea"
+    },
+    {
+      "path": "native-v1/native-timer2-arm-v1-x64-before.json",
+      "bytes": 514,
+      "sha256": "d488bce175ff27fc5882dc4530cb1a7805ede5b8527a93262faa18bd657a40ea"
+    },
+    {
+      "path": "native-v1/native-timer2-arm-v1-x64-build.log",
+      "bytes": 26,
+      "sha256": "64c0a9b149e848c29466f03f8a678533496768bbbd7240e28cbc969c3782b064"
+    },
+    {
+      "path": "native-v1/native-timer2-arm-v1-x64-source-after.json",
+      "bytes": 234,
+      "sha256": "ae86825c3b612c72aa54712bd0cb4a28c39700d2071284eeaacc09d714bcb13d"
+    },
+    {
+      "path": "native-v1/native-timer2-arm-v1-x64.log",
+      "bytes": 277878,
+      "sha256": "c76e45d04ebf557f56969989e2e6fb6c28fb1497865a42d226f0ec3fd1a73d49"
+    },
+    {
+      "path": "native-v1/native-timer2-arm-v1-x86-after.json",
+      "bytes": 512,
+      "sha256": "99709c589fd09e6f9f69ad04a994e53846db277340be7b92d39c3277a943b06b"
+    },
+    {
+      "path": "native-v1/native-timer2-arm-v1-x86-before.json",
+      "bytes": 512,
+      "sha256": "99709c589fd09e6f9f69ad04a994e53846db277340be7b92d39c3277a943b06b"
+    },
+    {
+      "path": "native-v1/native-timer2-arm-v1-x86-build.log",
+      "bytes": 26,
+      "sha256": "64c0a9b149e848c29466f03f8a678533496768bbbd7240e28cbc969c3782b064"
+    },
+    {
+      "path": "native-v1/native-timer2-arm-v1-x86-laa-after.json",
+      "bytes": 526,
+      "sha256": "8940fb21b04ff5f7c94ea4948f48dbb0e5621a09b31f317d3cb4d52a155472a3"
+    },
+    {
+      "path": "native-v1/native-timer2-arm-v1-x86-laa-before.json",
+      "bytes": 526,
+      "sha256": "8940fb21b04ff5f7c94ea4948f48dbb0e5621a09b31f317d3cb4d52a155472a3"
+    },
+    {
+      "path": "native-v1/native-timer2-arm-v1-x86-laa-build.log",
+      "bytes": 26,
+      "sha256": "64c0a9b149e848c29466f03f8a678533496768bbbd7240e28cbc969c3782b064"
+    },
+    {
+      "path": "native-v1/native-timer2-arm-v1-x86-laa-source-after.json",
+      "bytes": 238,
+      "sha256": "245fd61cd05ec6e3ceff9ee9f7ef5bddab5406eebb6a95dbe6e99bcac4f1e6ab"
+    },
+    {
+      "path": "native-v1/native-timer2-arm-v1-x86-laa.log",
+      "bytes": 277882,
+      "sha256": "afcec02b46386f9a294300a06cee4db14c3c0bcfbfbd55421854156774261cee"
+    },
+    {
+      "path": "native-v1/native-timer2-arm-v1-x86-source-after.json",
+      "bytes": 234,
+      "sha256": "fb89543b13f6e71b1eef7f78f279a191edc638c9bb3313acd22bc03cb0045f5d"
+    },
+    {
+      "path": "native-v1/native-timer2-arm-v1-x86.log",
+      "bytes": 277878,
+      "sha256": "11a7192e6e64eb7c2ac58465f880118017918d6c3d72c83b55ded24f8979cd7c"
+    },
+    {
+      "path": "native-v1/native-timer2-arm-v1.cpp",
+      "bytes": 10312,
+      "sha256": "4182abf0bdbc8e0b59ba7b331b734c78e1d167dba52f68f335bde4e7367fb33f"
+    },
+    {
+      "path": "native-v1/native-timer2-arm-v1.ps1",
+      "bytes": 2480,
+      "sha256": "079bf16b1e7fbf978d3053006a7e14ae3aa3149d2ef2ae58a4225beb051050bf"
+    },
+    {
+      "path": "native-v1/run-native-timer2-arm-v1.py",
+      "bytes": 1195,
+      "sha256": "25a8644d90ba56bce32333d6202ee53977cb1d27ac5e6ce9783ec80dc8dd7c96"
+    },
+    {
+      "path": "phnt-LICENSE",
+      "bytes": 1092,
+      "sha256": "ad2ab542c56c606e4c19d66a7f3cdcd3ef83beffb638e7c3893b22c7a6a6c0df"
+    },
+    {
+      "path": "phnt-ntexapi.h",
+      "bytes": 386368,
+      "sha256": "0510ac40fa1690cd73bed8afe3ed602aaa7bb6870ab95ea9aaba36ce1f4c3d53"
+    },
+    {
+      "path": "plan-and-ownership.json",
+      "bytes": 7047,
+      "sha256": "1e3d7d92ccb0f3130f1bd085133d8d0eee7fdd96c6766d1d845ea4d7da2f0f9b"
+    },
+    {
+      "path": "primary-retrieval.json",
+      "bytes": 511,
+      "sha256": "adfd0e9816012f4688e41e2ac8da3eb740bd9773a4fc2fb5f5f7c6f34c5496cc"
+    },
+    {
+      "path": "source-ownership.json",
+      "bytes": 1789,
+      "sha256": "164922d568972da28a3efbd1fb520f39854c779a69370039f4fb223e4094b3b7"
+    },
+    {
+      "path": "timer2-arguments-observer-0.log",
+      "bytes": 3002,
+      "sha256": "676e8d4256ad93328b16918580f5045564b0d288de473f43e417865e5229bf99"
+    },
+    {
+      "path": "timer2-arguments-observer-launch.json",
+      "bytes": 6537,
+      "sha256": "13684dae4ef050bbf3b22b3b01204a5eb50e72363ca7aa686220a2aa35c68c58"
+    },
+    {
+      "path": "timer2-arguments-observer.rs",
+      "bytes": 10429,
+      "sha256": "cf53b9f1ed35e90de3b340b228fced2368598d1d01a23af42f68012ad2563180"
+    },
+    {
+      "path": "timer2-prototype-macos-epoch1.json",
+      "bytes": 686,
+      "sha256": "97517e98933b18c8b11a8db866d98c1019dfc67d3394e05a944b2d5bd515a9ee"
+    },
+    {
+      "path": "timer2-prototype-macos-epoch1.log",
+      "bytes": 3414,
+      "sha256": "3f82d874f64b80d3aead16656d567d5a7cedf2dc02168afcd58ca122556479f4"
+    },
+    {
+      "path": "timer2-prototype-macos-epoch2.json",
+      "bytes": 465,
+      "sha256": "e237c4f1229b5f0b84e43995f246b4567f0ee709e16c182b3715b87eb034dd2e"
+    },
+    {
+      "path": "timer2-prototype-macos-epoch2.log",
+      "bytes": 2723,
+      "sha256": "8e39f10477182c3ed4a8867362998962693b22b4f25e62972ae0630da981a93f"
+    },
+    {
+      "path": "timer2-tests-only-baseline-inputs.json",
+      "bytes": 996,
+      "sha256": "c8d9b99c81c2894e49a66cd3905aff5fca1907f527fbd922c37b3c70a7de9f25"
+    },
+    {
+      "path": "timer2-tests-only-baseline.log",
+      "bytes": 4507,
+      "sha256": "f08d4f59456b6e02d671b21806d34b1e778d1800f54cdcc46b6c0d36d3bb9714"
+    },
+    {
+      "path": "validation/build-timer2-proof.py",
+      "bytes": 1824,
+      "sha256": "f7005098a424b4976e17ac0bbabc7845a46e2b916173d6be95354774bd38da78"
+    },
+    {
+      "path": "validation/capture-timer2-host-identity.py",
+      "bytes": 1001,
+      "sha256": "5ade1f4d6f320ce0874ad8429e0f7a4fdd57f5596fb034285b6363f98a518d43"
+    },
+    {
+      "path": "validation/check-timer2-validation.py",
+      "bytes": 13297,
+      "sha256": "2ebe82e31c5f6d2dda787e64f8398f4fb63bb165b5932f25fb69dd999a99325f"
+    },
+    {
+      "path": "validation/collect-timer2-archives-epoch1.py",
+      "bytes": 3340,
+      "sha256": "dcc90f06fc5f0166923591184a86ba490daa24851c216b22a3a925eabc8f03f2"
+    },
+    {
+      "path": "validation/collect-timer2-evidence.py",
+      "bytes": 2857,
+      "sha256": "b5c4582d51fd90c7f0a56ea72dca22eed19f7efe6903a610486253ebb8f256e2"
+    },
+    {
+      "path": "validation/engineering-source-updates.json",
+      "bytes": 381,
+      "sha256": "3073c6b36ceae0e0a617a4db17e1a0bb55d8ccd1f6cb06550f689fcf20289427"
+    },
+    {
+      "path": "validation/final-assumptions.json",
+      "bytes": 5835,
+      "sha256": "f6e2cc10ca008a7d625919e631288640ff8be34534e05f1d2688a6f10bb9e2a0"
+    },
+    {
+      "path": "validation/final-verification-scope.json",
+      "bytes": 1778,
+      "sha256": "8a96c6f474a991535191d931be096110f70de7a49f3a5b01c5642f913784dd91"
+    },
+    {
+      "path": "validation/finalize-timer2-records.py",
+      "bytes": 10003,
+      "sha256": "5087e8f1f46cdf48231b3394e4d9208287e7c04944a0442b64d084356419b715"
+    },
+    {
+      "path": "validation/freeze-timer2-epoch1.py",
+      "bytes": 2610,
+      "sha256": "0ac3af4388ab29fd62b843fd3d56fe1a345320a2e88bdbfa7aa8627bb9812345"
+    },
+    {
+      "path": "validation/linux-timer2-epoch1-final-owning-archive-identities.json",
+      "bytes": 103184,
+      "sha256": "41e2ad171e2b9080589bd9293482b0d9a0868bc9ba1e80514dc6593e0f6fa0b2"
+    },
+    {
+      "path": "validation/linux-timer2-epoch1-owning-archive-before.log",
+      "bytes": 180,
+      "sha256": "1ba17a9fa18585a2d0d9fb1a3c6f2700818a3179dfdfa38963f9d431ac668a10"
+    },
+    {
+      "path": "validation/linux-timer2-epoch1-owning-archive-identities.log",
+      "bytes": 180,
+      "sha256": "1ba17a9fa18585a2d0d9fb1a3c6f2700818a3179dfdfa38963f9d431ac668a10"
+    },
+    {
+      "path": "validation/linux-timer2-epoch1-owning-artifacts.log",
+      "bytes": 159806,
+      "sha256": "55b72362f04236d6f399dc25948a87ec917d0931582aa1d92803aea2a04632d0"
+    },
+    {
+      "path": "validation/linux-timer2-epoch1-owning-commands.json",
+      "bytes": 6912,
+      "sha256": "de0fa8844be2086fd66398d2ab49875674b4e5facbea1b93e9fda282016df07f"
+    },
+    {
+      "path": "validation/linux-timer2-epoch1-owning-cpp.log",
+      "bytes": 1944,
+      "sha256": "d1fa43b15b2db1f66a4ee9329111a233f3a0f7a5070bf99e929870e69528b93e"
+    },
+    {
+      "path": "validation/linux-timer2-epoch1-owning-gates.json",
+      "bytes": 8788,
+      "sha256": "af4137876281e174cab9576ffc1470dc77e1f327e68ed88444bfa2693afca005"
+    },
+    {
+      "path": "validation/linux-timer2-epoch1-owning-shipping.log",
+      "bytes": 160155,
+      "sha256": "1254db96c597a78dd958fec8ea5a64d72af916e59ba1f0f0505580017a244006"
+    },
+    {
+      "path": "validation/linux-timer2-epoch1-pre-cpp-archive-identities.json",
+      "bytes": 103185,
+      "sha256": "d7ad0769491d362a407d9d88d44f0b0a9f021be8225a1e51f760281e584a7533"
+    },
+    {
+      "path": "validation/macos-timer2-epoch1-final-owning-archive-identities.json",
+      "bytes": 104569,
+      "sha256": "d435eb7347c6a6ecb96c3bd24889ab17cad91691c51b164397ed72b2191ef468"
+    },
+    {
+      "path": "validation/macos-timer2-epoch1-linkage.json",
+      "bytes": 1957,
+      "sha256": "e10fc8a4cd78c1ccc498af25c1f573c279f5e33041f50d636cc549f9e96159e6"
+    },
+    {
+      "path": "validation/macos-timer2-epoch1-owning-archive-before.log",
+      "bytes": 180,
+      "sha256": "c3d84e32836c4496a8592af71decf52606e659e1090d6fcd33670d4ee1373b10"
+    },
+    {
+      "path": "validation/macos-timer2-epoch1-owning-archive-identities.log",
+      "bytes": 180,
+      "sha256": "c3d84e32836c4496a8592af71decf52606e659e1090d6fcd33670d4ee1373b10"
+    },
+    {
+      "path": "validation/macos-timer2-epoch1-owning-artifacts.log",
+      "bytes": 131080,
+      "sha256": "a00b8f58b5eea07d0dc923d83bbf02593687299d7167ee7b8bc26969a87a768d"
+    },
+    {
+      "path": "validation/macos-timer2-epoch1-owning-build.log",
+      "bytes": 32919,
+      "sha256": "38969145203b1e756bdb6a3d7efc239a3d0e0f6469967da509c879ac3b8ac9f2"
+    },
+    {
+      "path": "validation/macos-timer2-epoch1-owning-commands.json",
+      "bytes": 5714,
+      "sha256": "917cc9815acfc208415256337d18ebd39144b9d02e3bbe3a5875ea7efd41cdc1"
+    },
+    {
+      "path": "validation/macos-timer2-epoch1-owning-ctest.log",
+      "bytes": 1273,
+      "sha256": "cda7a1fdf33c537f9860d6ee32732f18c6307cc7e492bb41f470f1a851b0e564"
+    },
+    {
+      "path": "validation/macos-timer2-epoch1-owning-gates.json",
+      "bytes": 8162,
+      "sha256": "1f339d4b0ee1447796188d517e791b31a741c33b4b2ccb0f9bc2ac6262ab9e4d"
+    },
+    {
+      "path": "validation/macos-timer2-epoch1-owning-prime-artifacts.log",
+      "bytes": 131845,
+      "sha256": "77e74622938d1dc9470714fc296138b2f1765f1b9632e3963f1e6f0b1410e6cb"
+    },
+    {
+      "path": "validation/macos-timer2-epoch1-owning-protected-assist-cli.log",
+      "bytes": 42,
+      "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+    },
+    {
+      "path": "validation/macos-timer2-epoch1-owning-protected-assist-mcp.log",
+      "bytes": 42,
+      "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+    },
+    {
+      "path": "validation/macos-timer2-epoch1-pre-cpp-archive-identities.json",
+      "bytes": 104577,
+      "sha256": "4b93a193e46eb763595ba665b8fd3eeaad2163803368840b8ac8df44d7ba6674"
+    },
+    {
+      "path": "validation/native-timer2-epoch1-final-owning-archive-identities.json",
+      "bytes": 106540,
+      "sha256": "a85eb0ee7473df71dc40962511caf3045e5da732d8323276dca6318cf3187eb2"
+    },
+    {
+      "path": "validation/native-timer2-epoch1-pre-cpp-archives.json",
+      "bytes": 106543,
+      "sha256": "8ca56e50bf72fe1cecaf2672a3accafdac9bc7c75faddbd9747c2ba99b044c39"
+    },
+    {
+      "path": "validation/native-timer2-logical-check.json",
+      "bytes": 1664,
+      "sha256": "2040a3fec787eca78107e016d1d17752f69faa7c6fcdd2e591af751ef29c760d"
+    },
+    {
+      "path": "validation/ordinary-program-summary.json",
+      "bytes": 1976,
+      "sha256": "afc96ce86190160583619b24632d8c71ecd112c34695bdb9c5f7a5327a28384f"
+    },
+    {
+      "path": "validation/owning-linux-cpp-build-timer2-epoch1.py",
+      "bytes": 2202,
+      "sha256": "b1c76859a94193e50071d8aae4e6ba75d646a0aff333504cf41d6a7373a1fc82"
+    },
+    {
+      "path": "validation/prepare-timer2-native-epoch1.py",
+      "bytes": 2921,
+      "sha256": "3838e2b82eb1209d1fdb5a455de05880cbad46d6a8cdd63f3adad89c22eb7e0f"
+    },
+    {
+      "path": "validation/quality-gates.json",
+      "bytes": 1123,
+      "sha256": "35f3dd4fd34f792a3bf99e3de87d6d9c258afdc9d7ca26db3d26e22fb52ea33f"
+    },
+    {
+      "path": "validation/run-timer2-final-unix-check.py",
+      "bytes": 1642,
+      "sha256": "80269f7193b7aaf03ba688698335b0b4d0c8f6252891d004d23f29f149d2975a"
+    },
+    {
+      "path": "validation/run-timer2-final-windows-check.py",
+      "bytes": 3438,
+      "sha256": "faa63e6168eea29f48300535357da3c216b15152741ef1a6a02a40ffb686609e"
+    },
+    {
+      "path": "validation/run-timer2-native-epoch1.py",
+      "bytes": 5593,
+      "sha256": "44fae77f82cb0f9e407be05e7694a5ba19441e171cd33475a0aaaeeb860a136e"
+    },
+    {
+      "path": "validation/run-timer2-native-owning-epoch1.py",
+      "bytes": 5436,
+      "sha256": "27e3164afca806312e2a3e68275b0b4b5b32edad4de96defbf71ed199f365143"
+    },
+    {
+      "path": "validation/run-timer2-owner-epoch1.py",
+      "bytes": 4314,
+      "sha256": "4788e5cd8b9d180dcae5056176a94986ec0ffe0161b18f91ec33233c32ea646a"
+    },
+    {
+      "path": "validation/run-timer2-owning-epoch1.py",
+      "bytes": 3543,
+      "sha256": "ec01e7c77c85d94b986ca05dc4f4b7e23d08a86ac838acd2ee323d82d35875f2"
+    },
+    {
+      "path": "validation/run-timer2-proof-checks.py",
+      "bytes": 393,
+      "sha256": "08db42d8df79c0811b471d42c81bdb746358105f53b55677db7e7bbe9799f388"
+    },
+    {
+      "path": "validation/run-timer2-unix-epoch1.py",
+      "bytes": 4141,
+      "sha256": "0532d18d5bbc6527abfbb7b3aab57b64f19914f382cf6926c679ce3a076eac59"
+    },
+    {
+      "path": "validation/stress-native-timer2.py",
+      "bytes": 5308,
+      "sha256": "1ca13c9773c5b0e19864eb3af8eceb91bf259bbbd9bdf0505be50572cafc8cae"
+    },
+    {
+      "path": "validation/stress-timer2-validation.py",
+      "bytes": 3988,
+      "sha256": "56aee25a7fdc5ae56374bdffb003a478592fecfef357cd692567e63753a2cb65"
+    },
+    {
+      "path": "validation/summary.json",
+      "bytes": 2660,
+      "sha256": "7aa9c5649124eedbf4e767c9d24411a99a48d960544edb4307f2901c9f5df009"
+    },
+    {
+      "path": "validation/timer2-arguments-observer-0.log",
+      "bytes": 3002,
+      "sha256": "676e8d4256ad93328b16918580f5045564b0d288de473f43e417865e5229bf99"
+    },
+    {
+      "path": "validation/timer2-arguments-observer-build.log",
+      "bytes": 241,
+      "sha256": "77027ce0b25d2e321d7341c6fe2a80236a2837874cb1de4f2079588d47f29dc9"
+    },
+    {
+      "path": "validation/timer2-arguments-observer-launch.json",
+      "bytes": 6537,
+      "sha256": "13684dae4ef050bbf3b22b3b01204a5eb50e72363ca7aa686220a2aa35c68c58"
+    },
+    {
+      "path": "validation/timer2-final-check-linux.json",
+      "bytes": 825,
+      "sha256": "dd5be20fc62c46d6b3c736f91e7973a924b422ff686b3ff0aee72ce109d8ee41"
+    },
+    {
+      "path": "validation/timer2-final-check-linux.log",
+      "bytes": 1826,
+      "sha256": "1c812f573e208280f1a2121297a0b31fec6f3b8f27f4b1dc276d4daabfe0e7db"
+    },
+    {
+      "path": "validation/timer2-final-check-macos.json",
+      "bytes": 623,
+      "sha256": "552fadfd921b1ddd55e7acd429afed8a73fddc654e2989812d729f7a7e12319b"
+    },
+    {
+      "path": "validation/timer2-final-check-macos.log",
+      "bytes": 1826,
+      "sha256": "1c812f573e208280f1a2121297a0b31fec6f3b8f27f4b1dc276d4daabfe0e7db"
+    },
+    {
+      "path": "validation/timer2-final-check-windows.json",
+      "bytes": 1388,
+      "sha256": "5c2c0997e213fbcff53fbbc8f9aeca404d02812eb95cf0b42b5b54cd2d1b7b27"
+    },
+    {
+      "path": "validation/timer2-final-check-windows.log",
+      "bytes": 1904,
+      "sha256": "d68f4d5ab20b70d2095202f0a6713db674e9a75539660a9fd802ecd76fc66583"
+    },
+    {
+      "path": "validation/timer2-final-negative-controls.json",
+      "bytes": 1593,
+      "sha256": "3c0f4eab7a8a8294febceb2d535d588aca98e99c0b8b44381e132d89d41866e9"
+    },
+    {
+      "path": "validation/timer2-final-preflight.json",
+      "bytes": 162,
+      "sha256": "247f222f1e4642d4cbe6893e888ad3ea797c923c7b68ac18826fed35da2af048"
+    },
+    {
+      "path": "validation/timer2-linux-epoch1-all-targets.log",
+      "bytes": 309,
+      "sha256": "5607f1610cb648f1f4fcada0ef5fd0beb4440f30f05cd7837c1183e7d1e500b6"
+    },
+    {
+      "path": "validation/timer2-linux-epoch1-capi.log",
+      "bytes": 14068,
+      "sha256": "76927a43fa5288f67fe426a91c8a809aa1b008ce906085c7c5f27c880fa99c73"
+    },
+    {
+      "path": "validation/timer2-linux-epoch1-driver.log",
+      "bytes": 80,
+      "sha256": "4ea41ddf43cd6a155639f33296f7c2aadd6e210cd3f1fc9dae3f150578b97994"
+    },
+    {
+      "path": "validation/timer2-linux-epoch1-focus.log",
+      "bytes": 2776,
+      "sha256": "103a63a77c5ecc69e2947dcaf456bfd1e7123e9e4c9c6576901eb2ddac6928ca"
+    },
+    {
+      "path": "validation/timer2-linux-epoch1-full.log",
+      "bytes": 834137,
+      "sha256": "a3c34375773d5181f66c38624f714747e49d12a8c34212dc15de791b9d4fc6e5"
+    },
+    {
+      "path": "validation/timer2-linux-epoch1-gates.json",
+      "bytes": 7719,
+      "sha256": "79b5831b147fa0281fc62767955a3b6541c88f9454df4cc4f9476c7d3830c033"
+    },
+    {
+      "path": "validation/timer2-linux-epoch1-integration.log",
+      "bytes": 35852,
+      "sha256": "ffb040deca8fa8e08ed6c9ecdd7eb12be03dca8f18d9af3cd065c5706fbff536"
+    },
+    {
+      "path": "validation/timer2-linux-owning-epoch1-driver.log",
+      "bytes": 132,
+      "sha256": "7add6ad59b7846cc60fa7c9a8ed75c59ace54dfbeac2ec5d51640fbe053cc271"
+    },
+    {
+      "path": "validation/timer2-macos-epoch1-all-targets.log",
+      "bytes": 459,
+      "sha256": "ae4f781c02e56c1e73eccd31a1b31b6d79e47aa5719504d8bc889fe27f2f8c13"
+    },
+    {
+      "path": "validation/timer2-macos-epoch1-capi.log",
+      "bytes": 14292,
+      "sha256": "6cae1c94f4d552c5d9a0960b0bb674dd5d32b167739ef6280845746ae9593154"
+    },
+    {
+      "path": "validation/timer2-macos-epoch1-driver.log",
+      "bytes": 66,
+      "sha256": "5ba221b6fb031799a0ba0212f7227c1ae2337e5c5078becf00e4114dcd0c1871"
+    },
+    {
+      "path": "validation/timer2-macos-epoch1-full.log",
+      "bytes": 834530,
+      "sha256": "50cd92bacf5e8a256eefa7ddd4073be29785bbd17410c9680399e9037b2505e3"
+    },
+    {
+      "path": "validation/timer2-macos-epoch1-gates.json",
+      "bytes": 2839,
+      "sha256": "222f5c488ffdcec91d6f8ffc95d2683c5d9b945facc23794233df53a2dee8d95"
+    },
+    {
+      "path": "validation/timer2-macos-epoch1-integration.log",
+      "bytes": 36056,
+      "sha256": "aad40158ae06a9f4ac44689503592fdf152dcb68a044d3f300833483f6079e1a"
+    },
+    {
+      "path": "validation/timer2-macos-owning-epoch1-driver.log",
+      "bytes": 234,
+      "sha256": "00dabe481ce7b7b10340df441e2dd4241ad3447a25bd3aad77930e851fbc3763"
+    },
+    {
+      "path": "validation/timer2-macos-owning-link.json",
+      "bytes": 358,
+      "sha256": "2dbeacaba110a0aaaef8185001dbe77784b187ca2f260d833c2f540347434c63"
+    },
+    {
+      "path": "validation/timer2-native-epoch1-all-targets.log",
+      "bytes": 1000,
+      "sha256": "1d1050bbe572f75ac1272bd795b44da47e694daa5dffc193190aa93f17d31c48"
+    },
+    {
+      "path": "validation/timer2-native-epoch1-capi.log",
+      "bytes": 15023,
+      "sha256": "b71553ea73db7842b12af5bf3d1024ed89d488ceb21f7577d3309828f562f053"
+    },
+    {
+      "path": "validation/timer2-native-epoch1-driver.log",
+      "bytes": 63292,
+      "sha256": "b167217296d47ebe3c1d265dd699e1b22aed74ee5e2498ba8baf7074db84b312"
+    },
+    {
+      "path": "validation/timer2-native-epoch1-focus.log",
+      "bytes": 3661,
+      "sha256": "1a99260d0346ac5dec321c5bfeb73221722dffdf5a0664aa9130696f504216bd"
+    },
+    {
+      "path": "validation/timer2-native-epoch1-full.log",
+      "bytes": 797262,
+      "sha256": "858bcb79bc7c2d0858c41f6f2d0a90f002c705d0ee28f0a0d8e66ccf5cf91f0d"
+    },
+    {
+      "path": "validation/timer2-native-epoch1-gates.json",
+      "bytes": 37119,
+      "sha256": "5d31af1fc4743de1df3f562d5079728b5dfb3ad52490e2f3d7ed27a930e6d394"
+    },
+    {
+      "path": "validation/timer2-native-epoch1-integration.log",
+      "bytes": 1863,
+      "sha256": "d559e7648c2f8960d01929e9a5b4507b9f48f71ef82c85b3be4522878fd52768"
+    },
+    {
+      "path": "validation/timer2-native-epoch1-preparation.json",
+      "bytes": 30825,
+      "sha256": "d4c9957abd2337bfd90ccdadb218f802dcb6881b63d02d79e010e8412b5de11b"
+    },
+    {
+      "path": "validation/timer2-native-epoch1-toolchain.log",
+      "bytes": 36,
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5"
+    },
+    {
+      "path": "validation/timer2-native-host-identity.json",
+      "bytes": 944,
+      "sha256": "824a29ad03161b2a10662cadb0d57b47f90c14184ef317e2840b770e8e79e2f3"
+    },
+    {
+      "path": "validation/timer2-native-host.json",
+      "bytes": 272,
+      "sha256": "35d51018488335ef193176be665312fb8206d5248ca158c4b0759a07239d0993"
+    },
+    {
+      "path": "validation/timer2-native-negative-controls.json",
+      "bytes": 2894,
+      "sha256": "342e9052c93595fc64227a406c12c2aa57470b1f08bba7639759505d4559ef08"
+    },
+    {
+      "path": "validation/timer2-native-owning-epoch1-archive-after.log",
+      "bytes": 182,
+      "sha256": "d5806d62989930c615daac08beb7e99ece619bb8aa65a20eee0f1985ad5e0e53"
+    },
+    {
+      "path": "validation/timer2-native-owning-epoch1-archive-before.log",
+      "bytes": 182,
+      "sha256": "d5806d62989930c615daac08beb7e99ece619bb8aa65a20eee0f1985ad5e0e53"
+    },
+    {
+      "path": "validation/timer2-native-owning-epoch1-artifacts-after.log",
+      "bytes": 127707,
+      "sha256": "86413bfb66b2468ff0d8ab1cdb648b89142b81f9da5f51d5f01e00e7b99f58ed"
+    },
+    {
+      "path": "validation/timer2-native-owning-epoch1-artifacts-before.log",
+      "bytes": 127992,
+      "sha256": "5295c3ab5542844c4b4f5722ee546b064b144880d72991d9e13bb0da1c57bccf"
+    },
+    {
+      "path": "validation/timer2-native-owning-epoch1-cpp.log",
+      "bytes": 3385,
+      "sha256": "cbc551e102e9787779aaf346948ebec23c34bd18d2592725b26ab4172f6b3fc4"
+    },
+    {
+      "path": "validation/timer2-native-owning-epoch1-driver.log",
+      "bytes": 4382,
+      "sha256": "9c87b2e59f2ab43fc33b29ce06c62fb4452fe9dd36935c8920797804a4d5d32a"
+    },
+    {
+      "path": "validation/timer2-native-owning-epoch1-toolchain.log",
+      "bytes": 36,
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5"
+    },
+    {
+      "path": "validation/timer2-native-owning-epoch1.json",
+      "bytes": 5120,
+      "sha256": "b8d3e7c2ebdcdfb1018dd6dc38b590fa8f557ed5bbb97e556233362a20417583"
+    },
+    {
+      "path": "validation/timer2-owned-cpp-build-epoch1.py",
+      "bytes": 2694,
+      "sha256": "71a37ac78b2fc087f47697d704bfa2aa974f8355df73012c433ebf948e16c140"
+    },
+    {
+      "path": "validation/timer2-owner-epoch1-0.log",
+      "bytes": 24232292,
+      "sha256": "9f4d121836d73ead7aa9645f8fae33d4635167556fa427d894b13369c9534048"
+    },
+    {
+      "path": "validation/timer2-owner-epoch1-1.log",
+      "bytes": 24232152,
+      "sha256": "513ab7a5a442c6b6ae181dded7c7b49e94c51c8d4b6c0550e8cabc2336c4d016"
+    },
+    {
+      "path": "validation/timer2-owner-epoch1-build.log",
+      "bytes": 241,
+      "sha256": "77027ce0b25d2e321d7341c6fe2a80236a2837874cb1de4f2079588d47f29dc9"
+    },
+    {
+      "path": "validation/timer2-owner-epoch1-build.ps1",
+      "bytes": 1021,
+      "sha256": "e2ca0b7f58b8aa77d5a90833ca77ae509336e1056efb4ebccf1a796d03a4ce21"
+    },
+    {
+      "path": "validation/timer2-owner-epoch1-controller.log",
+      "bytes": 6028,
+      "sha256": "442817e87c6783b806ac1023a29f87d888b5cf8590bbbbb8798a85f7bf5f25d6"
+    },
+    {
+      "path": "validation/timer2-owner-epoch1-dispatch.json",
+      "bytes": 172,
+      "sha256": "42bd8b58291b8c95dee6a7d53e69899972dc37c832a9778270cac2292b41f220"
+    },
+    {
+      "path": "validation/timer2-owner-epoch1-launch.json",
+      "bytes": 7294,
+      "sha256": "0a55cba387f35336210efc400b4a7bb8222946a36980bdb606554047858bc14b"
+    },
+    {
+      "path": "validation/timer2-owner-epoch1-waiter.log",
+      "bytes": 154,
+      "sha256": "1e5a00cccfb6c33501726a8965ebc94b45a5eb23052efec96c3bf695f300c335"
+    },
+    {
+      "path": "validation/timer2-owner-epoch1.rs",
+      "bytes": 11907,
+      "sha256": "4a614e59728f1152ee29287c25cea9a9cf6c4aa155f614173359d28e1f4ddb68"
+    },
+    {
+      "path": "validation/timer2-owning-source-hashes-epoch1.json",
+      "bytes": 101910,
+      "sha256": "3cb68343c84d423dab8de1f03172ead85b10fa18338c9b6b155c6f10b411c77e"
+    },
+    {
+      "path": "validation/timer2-plan.json",
+      "bytes": 5674,
+      "sha256": "4293e6cab23ef1e29bf3f5a7ca9b435345b9ac4a50777ae2c5b8354ab01363d5"
+    },
+    {
+      "path": "validation/timer2-producer-identity.json",
+      "bytes": 11033,
+      "sha256": "5dc5f838caba939846e4f39cf25d1ac9968e6003ae672050ba71f71f3b7a9958"
+    },
+    {
+      "path": "validation/timer2-prototype-macos-epoch1.json",
+      "bytes": 686,
+      "sha256": "97517e98933b18c8b11a8db866d98c1019dfc67d3394e05a944b2d5bd515a9ee"
+    },
+    {
+      "path": "validation/timer2-prototype-macos-epoch1.log",
+      "bytes": 3414,
+      "sha256": "3f82d874f64b80d3aead16656d567d5a7cedf2dc02168afcd58ca122556479f4"
+    },
+    {
+      "path": "validation/timer2-prototype-macos-epoch2.json",
+      "bytes": 465,
+      "sha256": "e237c4f1229b5f0b84e43995f246b4567f0ee709e16c182b3715b87eb034dd2e"
+    },
+    {
+      "path": "validation/timer2-prototype-macos-epoch2.log",
+      "bytes": 2723,
+      "sha256": "8e39f10477182c3ed4a8867362998962693b22b4f25e62972ae0630da981a93f"
+    },
+    {
+      "path": "validation/timer2-source-epoch1-archive.json",
+      "bytes": 30574,
+      "sha256": "8f9988c2d354a48db850cd5fbc30519e0a9b74497c65b6d8343aa97f2e757a33"
+    },
+    {
+      "path": "validation/timer2-source-epoch1.json",
+      "bytes": 5317758,
+      "sha256": "49459284d6e7d47285149f4259e0edcd0a8ab203cbcac985b1326766d94187f3"
+    },
+    {
+      "path": "validation/timer2-source-ownership.json",
+      "bytes": 1789,
+      "sha256": "164922d568972da28a3efbd1fb520f39854c779a69370039f4fb223e4094b3b7"
+    },
+    {
+      "path": "validation/timer2-tests-only-baseline-inputs.json",
+      "bytes": 996,
+      "sha256": "c8d9b99c81c2894e49a66cd3905aff5fca1907f527fbd922c37b3c70a7de9f25"
+    },
+    {
+      "path": "validation/timer2-tests-only-baseline.log",
+      "bytes": 4507,
+      "sha256": "f08d4f59456b6e02d671b21806d34b1e778d1800f54cdcc46b6c0d36d3bb9714"
+    },
+    {
+      "path": "validation/verbatim-whitespace-exceptions.json",
+      "bytes": 73061,
+      "sha256": "bb302894c2f736c97859c332756143c65a956fd6e961c258693badbf22c8a600"
+    },
+    {
+      "path": "validation/wait-timer2-owner-epoch1.py",
+      "bytes": 1384,
+      "sha256": "b1df420d5d6ff69f8b55df91dc2f5142beeabab75249b00f2f6b63946994831b"
+    },
+    {
+      "path": "validation/windows-existing-failures.json",
+      "bytes": 482,
+      "sha256": "2476eeeaa1e9d69fd40bbe2df86206a5a5c3268381059bc5a59be0b30b366910"
+    }
+  ],
+  "scope": "Bound evidence files; manifest excludes itself. Verification receipts added later are documented with their original checked-envelope scope."
+}

@@ -125,6 +125,16 @@ mod etw_registration_tests;
 #[path = "services_tests/timer2_create_tests.rs"]
 mod timer2_create_tests;
 
+#[path = "services_tests/timer2_arm_tests.rs"]
+mod timer2_arm_tests;
+
+#[path = "services_tests/timer2_arm_replay_tests.rs"]
+mod timer2_arm_replay_tests;
+
+#[cfg(windows)]
+#[path = "services_tests/timer2_arm_leaf_tests.rs"]
+mod timer2_arm_leaf_tests;
+
 #[path = "services_tests/wait_packet_create_tests.rs"]
 mod wait_packet_create_tests;
 

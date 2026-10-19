@@ -1,0 +1,91 @@
+{
+  "checker-sha256": "b0f1d67fd7000a0d62e8daff8b39e73eb6fdc4eb58e58cb21e6a22b2304d3cfc",
+  "controls": [
+    {
+      "control": "source-byte",
+      "rejected": true,
+      "exit-code": 1,
+      "diagnostic-sha256": "bfb16ef934fe9ffc81ab90954835aeda50474b50c259b83c15c229d82a91b143"
+    },
+    {
+      "control": "failed-producer",
+      "rejected": true,
+      "exit-code": 1,
+      "diagnostic-sha256": "12136a6c668cc507770b629f4908dc471e243b25f078d9f45ffdebaa51f3da46"
+    },
+    {
+      "control": "missing-abi-profile",
+      "rejected": true,
+      "exit-code": 1,
+      "diagnostic-sha256": "cad4a9f650c3fdec17b8584f2421bd4a5220b9b80d56e64332e8dcb76103c3fb"
+    },
+    {
+      "control": "pe-machine",
+      "rejected": true,
+      "exit-code": 1,
+      "diagnostic-sha256": "692b0aadd7e2aabfc08d233d8db22c256f0b11fded75abcabfd04ed993b78719"
+    },
+    {
+      "control": "pe-laa",
+      "rejected": true,
+      "exit-code": 1,
+      "diagnostic-sha256": "692b0aadd7e2aabfc08d233d8db22c256f0b11fded75abcabfd04ed993b78719"
+    },
+    {
+      "control": "source-after",
+      "rejected": true,
+      "exit-code": 1,
+      "diagnostic-sha256": "10b51dd2c52c0377f7a8171009c07a049d281f7024697e7eaadeb2d3578d95a2"
+    },
+    {
+      "control": "module-after",
+      "rejected": true,
+      "exit-code": 1,
+      "diagnostic-sha256": "ff747e81039498ecca07e864f8ee8a49de136220acbce03e86848e7798f7825e"
+    },
+    {
+      "control": "pe-after",
+      "rejected": true,
+      "exit-code": 1,
+      "diagnostic-sha256": "97258a7cb25dc1ce76b0343ebccf8671ba619dbcf9c3c6a466b1bfc6e30a540f"
+    },
+    {
+      "control": "value-status",
+      "rejected": true,
+      "exit-code": 1,
+      "diagnostic-sha256": "625cd85626cefe2d64a54cac4dabd468ebceeba1f6324ed6a2db46f2b1cc1d51"
+    },
+    {
+      "control": "native-guard-consumption",
+      "rejected": true,
+      "exit-code": 1,
+      "diagnostic-sha256": "35bc166958ee25e8df993be7e7d132fa4f031b80c6c95fafa4f58a2e6e523004"
+    },
+    {
+      "control": "wow-guard-order",
+      "rejected": true,
+      "exit-code": 1,
+      "diagnostic-sha256": "1b903d14e4dc2c7b1257de2d602eb500ffed194b5250119398bb2e3ec87a4fb0"
+    },
+    {
+      "control": "reserved-cancel-pointer",
+      "rejected": true,
+      "exit-code": 1,
+      "diagnostic-sha256": "7d64eb5d43db0606381aa052fabb94e1876b559d548802b70a69dea1c44da028"
+    },
+    {
+      "control": "truncated-case-sequence",
+      "rejected": true,
+      "exit-code": 1,
+      "diagnostic-sha256": "3c1e0949884b486feb19a126f6e7f5f7f2099810c1f61bb5b8d47f70acf1759e"
+    },
+    {
+      "control": "maximum-period-early-expiry",
+      "rejected": true,
+      "exit-code": 1,
+      "diagnostic-sha256": "1a521919c949c0e1ffd640ea9d714fc6fcb90f07dd12f722972b7e5d23102c3c"
+    }
+  ],
+  "rejected": 14,
+  "scope": "Logical/identity corruptions in private copies; production native capture bytes remain unchanged."
+}

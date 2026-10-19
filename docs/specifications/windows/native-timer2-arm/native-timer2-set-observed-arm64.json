@@ -1,0 +1,36 @@
+{
+  "utc": "2026-10-19T03:00:33.582804+00:00",
+  "scope": "Only anonymous private timer creation, arming, zero-time polling, cancellation, query and close; no wake/power/security policy changes.",
+  "source-sha256": "18476b805d41996ce2a087308788ecb41582353af2cb028a62dc70ee474f46d5",
+  "module-sha256-before": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f",
+  "handles-before": 113,
+  "attributes": 8,
+  "desired-access": 2031619,
+  "observations": [
+    {
+      "operation": "set-observed",
+      "ntstatus": "00000000"
+    },
+    {
+      "operation": "poll-before-cancel",
+      "ntstatus": "00000102"
+    },
+    {
+      "operation": "cancel",
+      "ntstatus": "00000000"
+    },
+    {
+      "operation": "poll-after-cancel",
+      "ntstatus": "00000102"
+    }
+  ],
+  "create-status": "00000000",
+  "query": {
+    "ntstatus": "C0000024",
+    "bytes": "00000000000000000000000000000000",
+    "returned-length": 2779096485
+  },
+  "close-status": "00000000",
+  "handles-after": 113,
+  "module-sha256-after": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+}

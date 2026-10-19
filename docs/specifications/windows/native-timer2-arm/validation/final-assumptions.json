@@ -1,0 +1,79 @@
+{
+  "scope": "Extended timer semantic group only; complete process objective remains active.",
+  "assumptions": [
+    {
+      "id": "A1",
+      "assumption": "The existing Object::IrTimer represents the extended kernel timer used by the observed NtSetTimer2 call.",
+      "basis": "Guest trace: handle0x2c, attributes8, timer_idNone, dormant signal; independent native exact request succeeds. Existing NtCreateTimer2 implementation records all extended types as IrTimer.; all four native constructor/set/cancel profiles, shared dispatcher/HLE state and real installed host/WoW64 leaves agree.",
+      "dependent-result": "Add real arming/cancellation state to this object rather than legacy Object::Timer.",
+      "stress-test": "Native regular/extended/event/invalid handles, all supported constructor attribute families and access grants.",
+      "falsification-probe": "Native NtSetTimer2 accepts a different dispatcher object or existing constructor representation disagrees with native type capture.",
+      "status": "confirmed"
+    },
+    {
+      "id": "A2",
+      "assumption": "Version/Reserved/NoWakeTolerance layout is two ULONGs plus LONGLONG in16bytes.",
+      "basis": "Stored pinned PHNT ntexapi.h lines1373-1394 and exact native ctypes sizeof16 success.; native value/fault matrix confirms full16-byte read, ignored Reserved, validation and ABI-specific capture order.",
+      "dependent-result": "Input capture, cross-ABI parsing and time-unit model.",
+      "stress-test": "All pointer alignments, crossing/guard/noaccess pages, nonzero version/reserved, boundary tolerance values; WoW64 fault ordering.",
+      "falsification-probe": "Native captures use different offsets/size or branch semantics than the declaration.",
+      "status": "confirmed"
+    },
+    {
+      "id": "A3",
+      "assumption": "All native test operations remain confined to anonymous handles in their own producer processes.",
+      "basis": "Fixed creation API, no object names, no host policy writes and unconditional cancellation/close cleanup.; producer handle counts balance and PE/source/runtime identities remain unchanged.",
+      "dependent-result": "Native oracle scope.",
+      "stress-test": "Check handle counts, guard regions, before/after module and producer hashes; avoid unbounded waits.",
+      "falsification-probe": "Handle leak, non-private target, global policy mutation or an unbounded wait.",
+      "status": "confirmed"
+    },
+    {
+      "id": "A4",
+      "assumption": "Relative Timer2 uses the suspend-excluding clock domain documented for modern Windows waitable timers.",
+      "basis": "Stored Microsoft SetWaitableTimerEx Windows8+ clock contract, extended dispatcher model, and the existing three-platform native deadline adapter.",
+      "dependent-result": "Relative Timer2 deadlines and periodic scheduling reuse the native awake-time adapter; UTC absolute targets remain independent.",
+      "stress-test": "Full signed interval boundaries, synthetic UTC adjustments, periodic phase/skip arithmetic, native clock adapters on all hosts.",
+      "falsification-probe": "A controlled native NtSetTimer2 suspend/resume experiment in an isolated machine counts host low-power time against a relative target.",
+      "status": "retained: physical NtSetTimer2 suspend/resume experiment is unknown and is not claimed"
+    }
+  ],
+  "bounded-scope": [
+    {
+      "impact": "high",
+      "item": "Both ordinary programs pass the former timer frontier, advance695677 observer turns, and stop at the uncaptured SafeBoot/Option key without guest exit.",
+      "evidence": "validation/ordinary-program-summary.json",
+      "blocks-full-goal": true
+    },
+    {
+      "impact": "medium",
+      "item": "Four ABI profiles share one ARM64 Windows kernel.",
+      "evidence": "Native29683 probes and pinned NTDLL502d4678 hash.",
+      "blocks-scoped-adapter-validation": false
+    },
+    {
+      "impact": "medium",
+      "item": "Native full core retains five existing unrelated lowerer failures; retained consumers do not establish whole-current-root packages/GUI.",
+      "evidence": "Published registry validation records.",
+      "blocks-new-feature": false
+    },
+    {
+      "impact": "medium",
+      "item": "Native timer quantum, hardware resolution, power wakeup and physical suspend/resume were not equivalence-tested.",
+      "evidence": "Native timing captures and retained A4 clock-domain inference.",
+      "blocks-real-time-power-precision-claim": true
+    }
+  ],
+  "surface-map": {
+    "ISA-decode-execute-state-MMU": "unaffected; API and process scheduler only; no instruction or memory-access contract changes planned",
+    "SMIR-IR-lift-interpreter-optimizer-native-lowering-JIT": "unaffected; no new operations/admission or semantics",
+    "VM-machine-backends": "unaffected; process-level Windows dispatcher state only",
+    "Windows-objects": "affected; dormant extended timer gains actual state",
+    "Windows-native-HLE-kernel-synthetic-PE": "affected; new exports appended without renumbering existing leaves and same implementations on both routes",
+    "scheduler-waits-wait-packets": "affected; extended-timer deadline/signal consumers; existing wait packet and wait-any/all already admit IrTimer",
+    "legacy-timer": "must preserve current Win32/private Timer behavior; avoid incidental precision/policy changes",
+    "C-ABI-SDK-root-products": "public ABI unchanged; affected core archive rebuilt and actual retained C++/CLI/MCP consumers revalidated",
+    "platforms": "shared process semantics compile/run on macOS/Linux/Windows; host-native kernel probes on Windows; no silent skips for new cases",
+    "tests-docs": "independent native matrix, before/after baselines, strategic kernel/HLE/scheduler/lifecycle tests, full cross-platform gates and source-bound engineering evidence"
+  }
+}

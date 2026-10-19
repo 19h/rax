@@ -1,0 +1,78 @@
+{
+  "profiles": {
+    "native-timer2-arm-v1-arm64": {
+      "SET": 766,
+      "CANCEL": 60,
+      "STATE": 16
+    },
+    "native-timer2-arm-v1-x64": {
+      "SET": 766,
+      "CANCEL": 60,
+      "STATE": 16
+    },
+    "native-timer2-arm-v1-x86": {
+      "SET": 766,
+      "CANCEL": 60,
+      "STATE": 16
+    },
+    "native-timer2-arm-v1-x86-laa": {
+      "SET": 766,
+      "CANCEL": 60,
+      "STATE": 16
+    },
+    "native-timer2-arm-fault-v2-arm64": {
+      "FAULT": 3534,
+      "CANCEL-FAULT": 272
+    },
+    "native-timer2-arm-fault-v2-x64": {
+      "FAULT": 3534,
+      "CANCEL-FAULT": 272
+    },
+    "native-timer2-arm-fault-v2-x86": {
+      "FAULT": 3534,
+      "CANCEL-FAULT": 272
+    },
+    "native-timer2-arm-fault-v2-x86-laa": {
+      "FAULT": 3534,
+      "CANCEL-FAULT": 272
+    },
+    "native-timer2-arm-state-v3-arm64": {
+      "PERIOD": 10,
+      "REARM": 3
+    },
+    "native-timer2-arm-state-v3-x64": {
+      "PERIOD": 10,
+      "REARM": 3
+    },
+    "native-timer2-arm-state-v3-x86": {
+      "PERIOD": 10,
+      "REARM": 3
+    },
+    "native-timer2-arm-state-v3-x86-laa": {
+      "PERIOD": 10,
+      "REARM": 3
+    },
+    "native-timer2-arm-period-v4-arm64": {
+      "TIMING": 24
+    },
+    "native-timer2-arm-period-v4-x64": {
+      "TIMING": 24
+    },
+    "native-timer2-arm-period-v4-x86": {
+      "TIMING": 24
+    },
+    "native-timer2-arm-period-v4-x86-laa": {
+      "TIMING": 24
+    }
+  },
+  "captured-cases": 18740,
+  "replayed-records": 18528,
+  "scope": "Four ABI profiles, one Windows ARM64 kernel; producer hashes before/after, exact status/guard formulas and bounded state/timing evidence. Poll timing races are not exact goldens."
+}
+{
+  "source-inputs": 23050,
+  "three-host-full-gates": "pass",
+  "retained-consumers": "pass",
+  "ordinary-programs": 2,
+  "ordinary-guest-exit-success": false
+}

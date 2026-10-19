@@ -208,6 +208,7 @@ fn native_wait_packet_associate_replays_60_transitions_and_220_cancel_observatio
                     attributes: 8,
                     timer_id: None,
                     signaled: false,
+                    schedule: None,
                 }
             } else {
                 Object::Event {
@@ -319,6 +320,7 @@ fn native_wait_packet_associate_replays_52_native_target_observations() {
                         attributes: 8,
                         timer_id: None,
                         signaled: false,
+                        schedule: None,
                     }) as u64,
                     true,
                 ),

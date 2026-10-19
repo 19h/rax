@@ -117,7 +117,10 @@ impl Scheduler {
             }
 
             let now = Instant::now();
-            tick_timers(p, now);
+            if let Err(error) = tick_timers(p, now) {
+                p.fail(format!("timer expiration failed: {error}"));
+                continue;
+            }
             if let Err(error) = sync::pump_wait_packets(p) {
                 p.fail(format!("wait-packet notification failed: {error:?}"));
                 continue;
@@ -449,8 +452,22 @@ fn clear_on_thread_switch(p: &mut Proc, previous: u32, next: u32) {
     }
 }
 
-fn tick_timers(p: &mut Proc, now: Instant) {
+fn tick_timers(p: &mut Proc, now: Instant) -> std::io::Result<()> {
     for (_, object) in p.objects.iter_mut() {
+        if let Object::IrTimer {
+            signaled, schedule, ..
+        } = object
+        {
+            if let Some(pending) = schedule {
+                if pending.tick()? {
+                    *signaled = true;
+                    if !pending.periodic() {
+                        *schedule = None;
+                    }
+                }
+            }
+            continue;
+        }
         if let Object::Timer {
             signaled,
             due,
@@ -473,6 +490,7 @@ fn tick_timers(p: &mut Proc, now: Instant) {
             };
         }
     }
+    Ok(())
 }
 
 fn next_deadline(p: &mut Proc) -> Option<Instant> {
@@ -489,6 +507,10 @@ fn next_deadline(p: &mut Proc) -> Option<Instant> {
         .iter()
         .filter_map(|(_, object)| match object {
             Object::Timer { due, .. } => *due,
+            Object::IrTimer {
+                schedule: Some(pending),
+                ..
+            } => Some(pending.hint()),
             _ => None,
         })
         .min();
@@ -1153,7 +1175,7 @@ mod tests {
             period_ms: 10,
         });
         p.objects.retain(obj);
-        tick_timers(&mut p, now);
+        tick_timers(&mut p, now).unwrap();
         match p.objects.obj(obj) {
             Some(Object::Timer {
                 signaled,

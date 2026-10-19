@@ -1,0 +1,17 @@
+{
+  "state": "finished",
+  "host": "macos",
+  "argv": [
+    "/opt/homebrew/opt/python@3.15/bin/python3.15",
+    "-B",
+    "/Users/int/Library/Caches/assist-process-emulation/native-timer2-set-20261019/run-timer2-proof-checks.py",
+    "/Users/int/Library/Caches/assist-process-emulation/native-timer2-set-20261019/timer2-source"
+  ],
+  "checked-envelope-files": 252,
+  "utc": "2026-10-19T04:48:14.042548+00:00",
+  "exit-code": 0,
+  "log": "timer2-final-check-macos.log",
+  "bytes": 1826,
+  "sha256": "1c812f573e208280f1a2121297a0b31fec6f3b8f27f4b1dc276d4daabfe0e7db",
+  "completed-utc": "2026-10-19T04:48:15.929025+00:00"
+}

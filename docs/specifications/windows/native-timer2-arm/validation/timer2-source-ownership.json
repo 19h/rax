@@ -1,0 +1,28 @@
+{
+  "baseline-head": "0621926beb7d9f065ba2afddf9bcb95c74e26ba3",
+  "source-owned-paths": [
+    "src/user/windows/dll/mod.rs",
+    "src/user/windows/dll/native.rs",
+    "src/user/windows/dll/native/timers.rs",
+    "src/user/windows/dll/native/timers/arming.rs",
+    "src/user/windows/objects.rs",
+    "src/user/windows/objects/timers.rs",
+    "src/user/windows/process/sched.rs",
+    "src/user/windows/process/sched/tests/services_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/timer2_arm_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/timer2_arm_replay_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/timer2_create_leaf_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/timer2_create_replay_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/wait_packet_associate_replay_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/wait_packet_create_tests.rs",
+    "src/user/windows/dll/threading/tests.rs",
+    "src/user/windows/dll/threading/native_timer2_tests.rs",
+    "src/user/windows/native-runtime.md",
+    "src/user/windows/sync/native_wait.rs",
+    "src/user/windows/dll/threading/native_wait_tests.rs",
+    "src/user/windows/dll/threading/native_semaphore_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/timer2_arm_leaf_tests.rs"
+  ],
+  "evidence-prefix": "docs/specifications/windows/native-timer2-arm/",
+  "scope": "Fresh isolated worktree; no pre-existing tracked modifications. Final edits may omit untouched candidate paths; all actual edits must remain within this owned list or be explicitly recorded before addition. NativeDeadline receives additive shared-clock periodic advance/remaining access; existing native wait behavior is preserved."
+}

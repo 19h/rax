@@ -1,0 +1,35 @@
+{
+  "state": "finished",
+  "pid": 9796,
+  "utc": "2026-10-19T04:48:14.302487+00:00",
+  "steps": [
+    {
+      "name": "native",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\verify-timer2-epoch1\\docs\\specifications\\windows\\native-timer2-arm\\check-native-timer2.py",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\verify-timer2-epoch1\\docs\\specifications\\windows\\native-timer2-arm"
+      ],
+      "exit-code": 0
+    },
+    {
+      "name": "validation",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\verify-timer2-epoch1\\docs\\specifications\\windows\\native-timer2-arm\\check_validation.py",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\verify-timer2-epoch1"
+      ],
+      "exit-code": 0
+    }
+  ],
+  "checked-envelope-files": 252,
+  "scope": "New verification tree; all extracted proof/runtime documents detach from immutable parent hardlinks.",
+  "complete-inputs": 23050,
+  "exit-code": 0,
+  "log": "timer2-final-check-windows.log",
+  "bytes": 1904,
+  "sha256": "d68f4d5ab20b70d2095202f0a6713db674e9a75539660a9fd802ecd76fc66583",
+  "completed-utc": "2026-10-19T04:48:36.657262+00:00"
+}

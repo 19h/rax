@@ -1,0 +1,3246 @@
+{
+  "files": [
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/microsoft-exsettimer.html",
+      "bytes": 56512,
+      "sha256": "31314c2a9af8cf63219fd6aeaa0266b2d4e1f58a9488faf59f1105e9d5f4012b",
+      "warning-count": 166,
+      "line-ranges": [
+        [
+          11,
+          11
+        ],
+        [
+          19,
+          19
+        ],
+        [
+          31,
+          31
+        ],
+        [
+          33,
+          33
+        ],
+        [
+          39,
+          39
+        ],
+        [
+          42,
+          42
+        ],
+        [
+          44,
+          44
+        ],
+        [
+          46,
+          46
+        ],
+        [
+          48,
+          48
+        ],
+        [
+          50,
+          50
+        ],
+        [
+          52,
+          52
+        ],
+        [
+          54,
+          54
+        ],
+        [
+          56,
+          56
+        ],
+        [
+          58,
+          58
+        ],
+        [
+          60,
+          60
+        ],
+        [
+          62,
+          62
+        ],
+        [
+          64,
+          64
+        ],
+        [
+          66,
+          66
+        ],
+        [
+          68,
+          68
+        ],
+        [
+          70,
+          70
+        ],
+        [
+          72,
+          72
+        ],
+        [
+          74,
+          74
+        ],
+        [
+          76,
+          76
+        ],
+        [
+          78,
+          78
+        ],
+        [
+          80,
+          80
+        ],
+        [
+          82,
+          82
+        ],
+        [
+          84,
+          84
+        ],
+        [
+          86,
+          86
+        ],
+        [
+          88,
+          88
+        ],
+        [
+          90,
+          90
+        ],
+        [
+          92,
+          92
+        ],
+        [
+          94,
+          94
+        ],
+        [
+          96,
+          96
+        ],
+        [
+          98,
+          98
+        ],
+        [
+          100,
+          100
+        ],
+        [
+          102,
+          102
+        ],
+        [
+          104,
+          104
+        ],
+        [
+          106,
+          106
+        ],
+        [
+          108,
+          108
+        ],
+        [
+          110,
+          110
+        ],
+        [
+          112,
+          112
+        ],
+        [
+          114,
+          114
+        ],
+        [
+          116,
+          116
+        ],
+        [
+          118,
+          118
+        ],
+        [
+          120,
+          120
+        ],
+        [
+          122,
+          122
+        ],
+        [
+          124,
+          124
+        ],
+        [
+          126,
+          126
+        ],
+        [
+          128,
+          128
+        ],
+        [
+          130,
+          130
+        ],
+        [
+          132,
+          132
+        ],
+        [
+          134,
+          134
+        ],
+        [
+          136,
+          136
+        ],
+        [
+          138,
+          138
+        ],
+        [
+          140,
+          140
+        ],
+        [
+          142,
+          142
+        ],
+        [
+          144,
+          144
+        ],
+        [
+          146,
+          146
+        ],
+        [
+          148,
+          148
+        ],
+        [
+          150,
+          150
+        ],
+        [
+          152,
+          152
+        ],
+        [
+          154,
+          154
+        ],
+        [
+          156,
+          156
+        ],
+        [
+          158,
+          158
+        ],
+        [
+          160,
+          160
+        ],
+        [
+          162,
+          162
+        ],
+        [
+          164,
+          164
+        ],
+        [
+          166,
+          166
+        ],
+        [
+          168,
+          168
+        ],
+        [
+          170,
+          170
+        ],
+        [
+          172,
+          172
+        ],
+        [
+          174,
+          174
+        ],
+        [
+          216,
+          216
+        ],
+        [
+          218,
+          218
+        ],
+        [
+          222,
+          222
+        ],
+        [
+          268,
+          268
+        ],
+        [
+          271,
+          271
+        ],
+        [
+          273,
+          273
+        ],
+        [
+          283,
+          283
+        ],
+        [
+          286,
+          286
+        ],
+        [
+          289,
+          289
+        ],
+        [
+          293,
+          293
+        ],
+        [
+          303,
+          303
+        ],
+        [
+          357,
+          357
+        ],
+        [
+          360,
+          360
+        ],
+        [
+          364,
+          364
+        ],
+        [
+          367,
+          367
+        ],
+        [
+          375,
+          375
+        ],
+        [
+          422,
+          422
+        ],
+        [
+          433,
+          433
+        ],
+        [
+          460,
+          460
+        ],
+        [
+          468,
+          468
+        ],
+        [
+          474,
+          474
+        ],
+        [
+          477,
+          477
+        ],
+        [
+          501,
+          501
+        ],
+        [
+          506,
+          506
+        ],
+        [
+          512,
+          512
+        ],
+        [
+          526,
+          526
+        ],
+        [
+          542,
+          542
+        ],
+        [
+          557,
+          557
+        ],
+        [
+          571,
+          571
+        ],
+        [
+          586,
+          586
+        ],
+        [
+          600,
+          600
+        ],
+        [
+          616,
+          617
+        ],
+        [
+          632,
+          632
+        ],
+        [
+          648,
+          649
+        ],
+        [
+          656,
+          656
+        ],
+        [
+          668,
+          668
+        ],
+        [
+          670,
+          670
+        ],
+        [
+          687,
+          687
+        ],
+        [
+          702,
+          703
+        ],
+        [
+          707,
+          707
+        ],
+        [
+          710,
+          710
+        ],
+        [
+          731,
+          731
+        ],
+        [
+          733,
+          733
+        ],
+        [
+          740,
+          740
+        ],
+        [
+          747,
+          747
+        ],
+        [
+          762,
+          762
+        ],
+        [
+          764,
+          764
+        ],
+        [
+          766,
+          766
+        ],
+        [
+          788,
+          788
+        ],
+        [
+          871,
+          871
+        ],
+        [
+          877,
+          877
+        ],
+        [
+          894,
+          895
+        ],
+        [
+          971,
+          971
+        ],
+        [
+          1039,
+          1039
+        ],
+        [
+          1046,
+          1046
+        ],
+        [
+          1048,
+          1048
+        ],
+        [
+          1054,
+          1054
+        ],
+        [
+          1061,
+          1061
+        ],
+        [
+          1068,
+          1068
+        ],
+        [
+          1070,
+          1070
+        ],
+        [
+          1092,
+          1092
+        ],
+        [
+          1094,
+          1094
+        ],
+        [
+          1102,
+          1102
+        ],
+        [
+          1109,
+          1109
+        ],
+        [
+          1118,
+          1118
+        ],
+        [
+          1120,
+          1120
+        ],
+        [
+          1193,
+          1193
+        ],
+        [
+          1261,
+          1261
+        ],
+        [
+          1267,
+          1267
+        ],
+        [
+          1270,
+          1270
+        ],
+        [
+          1289,
+          1289
+        ],
+        [
+          1302,
+          1302
+        ],
+        [
+          1337,
+          1337
+        ],
+        [
+          1340,
+          1340
+        ],
+        [
+          1452,
+          1452
+        ],
+        [
+          1462,
+          1462
+        ],
+        [
+          1464,
+          1464
+        ],
+        [
+          1474,
+          1474
+        ],
+        [
+          1476,
+          1476
+        ],
+        [
+          1486,
+          1486
+        ],
+        [
+          1488,
+          1488
+        ],
+        [
+          1498,
+          1498
+        ],
+        [
+          1500,
+          1500
+        ],
+        [
+          1510,
+          1510
+        ],
+        [
+          1512,
+          1512
+        ],
+        [
+          1522,
+          1522
+        ],
+        [
+          1524,
+          1524
+        ],
+        [
+          1534,
+          1534
+        ],
+        [
+          1536,
+          1536
+        ],
+        [
+          1546,
+          1546
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/microsoft-setwaitabletimerex.html",
+      "bytes": 58708,
+      "sha256": "5a329a69e0d9aae390fe7b722b7ffb4f03462b76d85b25152c1c9fafe4577e49",
+      "warning-count": 174,
+      "line-ranges": [
+        [
+          11,
+          11
+        ],
+        [
+          19,
+          19
+        ],
+        [
+          33,
+          33
+        ],
+        [
+          39,
+          39
+        ],
+        [
+          42,
+          42
+        ],
+        [
+          44,
+          44
+        ],
+        [
+          46,
+          46
+        ],
+        [
+          48,
+          48
+        ],
+        [
+          50,
+          50
+        ],
+        [
+          52,
+          52
+        ],
+        [
+          54,
+          54
+        ],
+        [
+          56,
+          56
+        ],
+        [
+          58,
+          58
+        ],
+        [
+          60,
+          60
+        ],
+        [
+          62,
+          62
+        ],
+        [
+          64,
+          64
+        ],
+        [
+          66,
+          66
+        ],
+        [
+          68,
+          68
+        ],
+        [
+          70,
+          70
+        ],
+        [
+          72,
+          72
+        ],
+        [
+          74,
+          74
+        ],
+        [
+          76,
+          76
+        ],
+        [
+          78,
+          78
+        ],
+        [
+          80,
+          80
+        ],
+        [
+          82,
+          82
+        ],
+        [
+          84,
+          84
+        ],
+        [
+          86,
+          86
+        ],
+        [
+          88,
+          88
+        ],
+        [
+          90,
+          90
+        ],
+        [
+          92,
+          92
+        ],
+        [
+          94,
+          94
+        ],
+        [
+          96,
+          96
+        ],
+        [
+          98,
+          98
+        ],
+        [
+          100,
+          100
+        ],
+        [
+          102,
+          102
+        ],
+        [
+          104,
+          104
+        ],
+        [
+          106,
+          106
+        ],
+        [
+          108,
+          108
+        ],
+        [
+          110,
+          110
+        ],
+        [
+          112,
+          112
+        ],
+        [
+          114,
+          114
+        ],
+        [
+          116,
+          116
+        ],
+        [
+          118,
+          118
+        ],
+        [
+          120,
+          120
+        ],
+        [
+          122,
+          122
+        ],
+        [
+          124,
+          124
+        ],
+        [
+          126,
+          126
+        ],
+        [
+          128,
+          128
+        ],
+        [
+          130,
+          130
+        ],
+        [
+          132,
+          132
+        ],
+        [
+          134,
+          134
+        ],
+        [
+          136,
+          136
+        ],
+        [
+          138,
+          138
+        ],
+        [
+          140,
+          140
+        ],
+        [
+          142,
+          142
+        ],
+        [
+          144,
+          144
+        ],
+        [
+          146,
+          146
+        ],
+        [
+          148,
+          148
+        ],
+        [
+          150,
+          150
+        ],
+        [
+          152,
+          152
+        ],
+        [
+          154,
+          154
+        ],
+        [
+          156,
+          156
+        ],
+        [
+          158,
+          158
+        ],
+        [
+          160,
+          160
+        ],
+        [
+          162,
+          162
+        ],
+        [
+          164,
+          164
+        ],
+        [
+          166,
+          166
+        ],
+        [
+          168,
+          168
+        ],
+        [
+          170,
+          170
+        ],
+        [
+          172,
+          172
+        ],
+        [
+          174,
+          174
+        ],
+        [
+          176,
+          176
+        ],
+        [
+          178,
+          178
+        ],
+        [
+          180,
+          180
+        ],
+        [
+          182,
+          182
+        ],
+        [
+          184,
+          184
+        ],
+        [
+          186,
+          186
+        ],
+        [
+          188,
+          188
+        ],
+        [
+          190,
+          190
+        ],
+        [
+          192,
+          192
+        ],
+        [
+          234,
+          234
+        ],
+        [
+          236,
+          236
+        ],
+        [
+          240,
+          240
+        ],
+        [
+          286,
+          286
+        ],
+        [
+          289,
+          289
+        ],
+        [
+          291,
+          291
+        ],
+        [
+          301,
+          301
+        ],
+        [
+          304,
+          304
+        ],
+        [
+          307,
+          307
+        ],
+        [
+          311,
+          311
+        ],
+        [
+          321,
+          321
+        ],
+        [
+          375,
+          375
+        ],
+        [
+          378,
+          378
+        ],
+        [
+          382,
+          382
+        ],
+        [
+          385,
+          385
+        ],
+        [
+          393,
+          393
+        ],
+        [
+          440,
+          440
+        ],
+        [
+          451,
+          451
+        ],
+        [
+          478,
+          478
+        ],
+        [
+          486,
+          486
+        ],
+        [
+          492,
+          492
+        ],
+        [
+          495,
+          495
+        ],
+        [
+          519,
+          519
+        ],
+        [
+          524,
+          524
+        ],
+        [
+          530,
+          530
+        ],
+        [
+          544,
+          544
+        ],
+        [
+          560,
+          560
+        ],
+        [
+          575,
+          575
+        ],
+        [
+          589,
+          589
+        ],
+        [
+          604,
+          604
+        ],
+        [
+          618,
+          618
+        ],
+        [
+          634,
+          635
+        ],
+        [
+          650,
+          650
+        ],
+        [
+          666,
+          667
+        ],
+        [
+          674,
+          674
+        ],
+        [
+          686,
+          686
+        ],
+        [
+          688,
+          688
+        ],
+        [
+          705,
+          705
+        ],
+        [
+          720,
+          721
+        ],
+        [
+          725,
+          725
+        ],
+        [
+          728,
+          728
+        ],
+        [
+          749,
+          749
+        ],
+        [
+          751,
+          751
+        ],
+        [
+          758,
+          758
+        ],
+        [
+          765,
+          765
+        ],
+        [
+          780,
+          780
+        ],
+        [
+          782,
+          782
+        ],
+        [
+          784,
+          784
+        ],
+        [
+          806,
+          806
+        ],
+        [
+          913,
+          913
+        ],
+        [
+          919,
+          919
+        ],
+        [
+          936,
+          937
+        ],
+        [
+          1013,
+          1013
+        ],
+        [
+          1081,
+          1081
+        ],
+        [
+          1088,
+          1088
+        ],
+        [
+          1090,
+          1090
+        ],
+        [
+          1096,
+          1096
+        ],
+        [
+          1103,
+          1103
+        ],
+        [
+          1110,
+          1110
+        ],
+        [
+          1112,
+          1112
+        ],
+        [
+          1134,
+          1134
+        ],
+        [
+          1136,
+          1136
+        ],
+        [
+          1144,
+          1144
+        ],
+        [
+          1151,
+          1151
+        ],
+        [
+          1160,
+          1160
+        ],
+        [
+          1162,
+          1162
+        ],
+        [
+          1235,
+          1235
+        ],
+        [
+          1303,
+          1303
+        ],
+        [
+          1309,
+          1309
+        ],
+        [
+          1312,
+          1312
+        ],
+        [
+          1331,
+          1331
+        ],
+        [
+          1344,
+          1344
+        ],
+        [
+          1379,
+          1379
+        ],
+        [
+          1382,
+          1382
+        ],
+        [
+          1494,
+          1494
+        ],
+        [
+          1504,
+          1504
+        ],
+        [
+          1506,
+          1506
+        ],
+        [
+          1516,
+          1516
+        ],
+        [
+          1518,
+          1518
+        ],
+        [
+          1528,
+          1528
+        ],
+        [
+          1530,
+          1530
+        ],
+        [
+          1540,
+          1540
+        ],
+        [
+          1542,
+          1542
+        ],
+        [
+          1552,
+          1552
+        ],
+        [
+          1554,
+          1554
+        ],
+        [
+          1564,
+          1564
+        ],
+        [
+          1566,
+          1566
+        ],
+        [
+          1576,
+          1576
+        ],
+        [
+          1578,
+          1578
+        ],
+        [
+          1588,
+          1588
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-fault-v2/native-timer2-arm-fault-v2-arm64-build.log",
+      "bytes": 32,
+      "sha256": "5ac16c6f85f8b9efad7e3cd1ea3ae5b43462abd1f84ca0e2dd7bc90d6e83a700",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-fault-v2/native-timer2-arm-fault-v2-arm64-source-after.json",
+      "bytes": 248,
+      "sha256": "f340ee42d277b5aecad95ae799a372dacd48d92897ccf3a274c7ad0c055cd084",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-fault-v2/native-timer2-arm-fault-v2-arm64.log",
+      "bytes": 967607,
+      "sha256": "8ba75e84c60b6ae85c334568ed52bd86b2e99eab928e34a8198f8c15318eb89f",
+      "warning-count": 3808,
+      "line-ranges": [
+        [
+          1,
+          3808
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-fault-v2/native-timer2-arm-fault-v2-driver.log",
+      "bytes": 964,
+      "sha256": "81157a84a41f6d110e3d629b61f37581444b3f76aa427bed1014db5bce060e17",
+      "warning-count": 16,
+      "line-ranges": [
+        [
+          1,
+          16
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-fault-v2/native-timer2-arm-fault-v2-launch.json",
+      "bytes": 350,
+      "sha256": "8f2f913f8e95fa9471d78a269d767a51ac8ece26eb0ee3d166943de3bcb04751",
+      "warning-count": 9,
+      "line-ranges": [
+        [
+          1,
+          9
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-fault-v2/native-timer2-arm-fault-v2-modules-after.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-fault-v2/native-timer2-arm-fault-v2-modules-before.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-fault-v2/native-timer2-arm-fault-v2-outcomes.json",
+      "bytes": 512,
+      "sha256": "e5e5c63ab318a984be1fbbe147db8cecf707e3791eeba49f82a82c4886540f6c",
+      "warning-count": 22,
+      "line-ranges": [
+        [
+          1,
+          22
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-fault-v2/native-timer2-arm-fault-v2-x64-build.log",
+      "bytes": 32,
+      "sha256": "5ac16c6f85f8b9efad7e3cd1ea3ae5b43462abd1f84ca0e2dd7bc90d6e83a700",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-fault-v2/native-timer2-arm-fault-v2-x64-source-after.json",
+      "bytes": 246,
+      "sha256": "277b837a41c85b27c1cc941c9f8e6a6b485d7863d37886fbd0b1e2363e446601",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-fault-v2/native-timer2-arm-fault-v2-x64.log",
+      "bytes": 967605,
+      "sha256": "c1d6bce3d1192f955f3950927b3374dd2a2d178a93b72dcbfa8cc86210932aa4",
+      "warning-count": 3808,
+      "line-ranges": [
+        [
+          1,
+          3808
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-fault-v2/native-timer2-arm-fault-v2-x86-build.log",
+      "bytes": 32,
+      "sha256": "5ac16c6f85f8b9efad7e3cd1ea3ae5b43462abd1f84ca0e2dd7bc90d6e83a700",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-fault-v2/native-timer2-arm-fault-v2-x86-laa-build.log",
+      "bytes": 32,
+      "sha256": "5ac16c6f85f8b9efad7e3cd1ea3ae5b43462abd1f84ca0e2dd7bc90d6e83a700",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-fault-v2/native-timer2-arm-fault-v2-x86-laa-source-after.json",
+      "bytes": 250,
+      "sha256": "e4a78a66739c92c75818a734982272a7a9dc09f60c0b49befa6f1ca54aae9578",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-fault-v2/native-timer2-arm-fault-v2-x86-laa.log",
+      "bytes": 967689,
+      "sha256": "19fccfdc53ede918827397968840e6872c45ab8800536e9f3b589fbea49cdb95",
+      "warning-count": 3808,
+      "line-ranges": [
+        [
+          1,
+          3808
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-fault-v2/native-timer2-arm-fault-v2-x86-source-after.json",
+      "bytes": 246,
+      "sha256": "22ae22b30f608bdb416ed818d56b98e366941869237801e8bb92e50c73be6560",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-fault-v2/native-timer2-arm-fault-v2-x86.log",
+      "bytes": 967685,
+      "sha256": "d48b79be624775e5cf2b1aa5a1dacf598f7279702693043bf38dc3d73c06ddbf",
+      "warning-count": 3808,
+      "line-ranges": [
+        [
+          1,
+          3808
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-period-v4/native-timer2-arm-period-v4-arm64-build.log",
+      "bytes": 33,
+      "sha256": "fdbc33e5e3729bca2a7e17769601f32d8f87d06452e55139dcc2eea0f772af2e",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-period-v4/native-timer2-arm-period-v4-arm64-source-after.json",
+      "bytes": 250,
+      "sha256": "c7fb2f016468c9d4ca98b1a6229b44c7fea5141ab84dd2ea32ce3d632c7fe467",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-period-v4/native-timer2-arm-period-v4-arm64.log",
+      "bytes": 4799,
+      "sha256": "96063d9c87457591c42a969e021d4489ef17c43bd5b05dc97421a2a642c4df4a",
+      "warning-count": 26,
+      "line-ranges": [
+        [
+          1,
+          26
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-period-v4/native-timer2-arm-period-v4-driver.log",
+      "bytes": 964,
+      "sha256": "81157a84a41f6d110e3d629b61f37581444b3f76aa427bed1014db5bce060e17",
+      "warning-count": 16,
+      "line-ranges": [
+        [
+          1,
+          16
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-period-v4/native-timer2-arm-period-v4-launch.json",
+      "bytes": 349,
+      "sha256": "c7a9fe2865182b6ff04a048633d56f5274db8328178a323487011d3282affefc",
+      "warning-count": 9,
+      "line-ranges": [
+        [
+          1,
+          9
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-period-v4/native-timer2-arm-period-v4-modules-after.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-period-v4/native-timer2-arm-period-v4-modules-before.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-period-v4/native-timer2-arm-period-v4-outcomes.json",
+      "bytes": 516,
+      "sha256": "776f7f22f2c017459adbd55986dd671997c061ae7ff575a2ec2d1ae672d2d882",
+      "warning-count": 22,
+      "line-ranges": [
+        [
+          1,
+          22
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-period-v4/native-timer2-arm-period-v4-x64-build.log",
+      "bytes": 33,
+      "sha256": "fdbc33e5e3729bca2a7e17769601f32d8f87d06452e55139dcc2eea0f772af2e",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-period-v4/native-timer2-arm-period-v4-x64-source-after.json",
+      "bytes": 248,
+      "sha256": "a1af63cb5a6ea0284c55e89fd87c1399c8c513072250f56bf7fba4b8aaf3adc6",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-period-v4/native-timer2-arm-period-v4-x64.log",
+      "bytes": 4795,
+      "sha256": "25dadb3d70d55be414223025872773a3bfb9a4433e40eb8179a43484633e058c",
+      "warning-count": 26,
+      "line-ranges": [
+        [
+          1,
+          26
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-period-v4/native-timer2-arm-period-v4-x86-build.log",
+      "bytes": 33,
+      "sha256": "fdbc33e5e3729bca2a7e17769601f32d8f87d06452e55139dcc2eea0f772af2e",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-period-v4/native-timer2-arm-period-v4-x86-laa-build.log",
+      "bytes": 33,
+      "sha256": "fdbc33e5e3729bca2a7e17769601f32d8f87d06452e55139dcc2eea0f772af2e",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-period-v4/native-timer2-arm-period-v4-x86-laa-source-after.json",
+      "bytes": 252,
+      "sha256": "f78521638fbdf36662237e098c48140e43a41bca67813fb97db4cc1700665884",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-period-v4/native-timer2-arm-period-v4-x86-laa.log",
+      "bytes": 4802,
+      "sha256": "5c93f3af99d0142c197af5bf02e06e7c61ada326670c910d5789d4e2ff9fcc50",
+      "warning-count": 26,
+      "line-ranges": [
+        [
+          1,
+          26
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-period-v4/native-timer2-arm-period-v4-x86-source-after.json",
+      "bytes": 248,
+      "sha256": "1b2e22d4f44288cff30a3a2628db0ed08098a5c0318aa9e67e1a8319d5c5a8f1",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-period-v4/native-timer2-arm-period-v4-x86.log",
+      "bytes": 4790,
+      "sha256": "3da43aa69858b4decf7686f6c443effc9624943158350673cbfb5fe005c76c52",
+      "warning-count": 26,
+      "line-ranges": [
+        [
+          1,
+          26
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-state-v3/native-timer2-arm-state-v3-arm64-build.log",
+      "bytes": 32,
+      "sha256": "645f3365f068dd12f9e1271aa8d536623fb0358c6d3b98a4c2c8e82e18e0fb5d",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-state-v3/native-timer2-arm-state-v3-arm64-source-after.json",
+      "bytes": 248,
+      "sha256": "b3d85e54aeca2250d7c0aff14efff67df38bfae4c447c1a90840a92919d8c5bd",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-state-v3/native-timer2-arm-state-v3-arm64.log",
+      "bytes": 2125,
+      "sha256": "bdbff4943e632d83efba7e357b63c71891486abcdde2730def67d07bdfcb25c6",
+      "warning-count": 15,
+      "line-ranges": [
+        [
+          1,
+          15
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-state-v3/native-timer2-arm-state-v3-driver.log",
+      "bytes": 964,
+      "sha256": "81157a84a41f6d110e3d629b61f37581444b3f76aa427bed1014db5bce060e17",
+      "warning-count": 16,
+      "line-ranges": [
+        [
+          1,
+          16
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-state-v3/native-timer2-arm-state-v3-launch.json",
+      "bytes": 349,
+      "sha256": "136156e6f46561399112acdf64108c60d9f2cb926628200b2f8d629e5cadb7dd",
+      "warning-count": 9,
+      "line-ranges": [
+        [
+          1,
+          9
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-state-v3/native-timer2-arm-state-v3-modules-after.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-state-v3/native-timer2-arm-state-v3-modules-before.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-state-v3/native-timer2-arm-state-v3-outcomes.json",
+      "bytes": 512,
+      "sha256": "6b14bfa294ba6ad285925ef916cd113f6eaa45d40e8ad32b4191d922dda092f9",
+      "warning-count": 22,
+      "line-ranges": [
+        [
+          1,
+          22
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-state-v3/native-timer2-arm-state-v3-x64-build.log",
+      "bytes": 32,
+      "sha256": "645f3365f068dd12f9e1271aa8d536623fb0358c6d3b98a4c2c8e82e18e0fb5d",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-state-v3/native-timer2-arm-state-v3-x64-source-after.json",
+      "bytes": 246,
+      "sha256": "3964607c49e66d9252f4f302335ebafd011c6c3db80c73ace11c2a5be2d96c1c",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-state-v3/native-timer2-arm-state-v3-x64.log",
+      "bytes": 2123,
+      "sha256": "c5b6bcd9204f63f83acc63947e8c3b9ba1754eff453fe8206b960c8fed9f5ab5",
+      "warning-count": 15,
+      "line-ranges": [
+        [
+          1,
+          15
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-state-v3/native-timer2-arm-state-v3-x86-build.log",
+      "bytes": 32,
+      "sha256": "645f3365f068dd12f9e1271aa8d536623fb0358c6d3b98a4c2c8e82e18e0fb5d",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-state-v3/native-timer2-arm-state-v3-x86-laa-build.log",
+      "bytes": 32,
+      "sha256": "645f3365f068dd12f9e1271aa8d536623fb0358c6d3b98a4c2c8e82e18e0fb5d",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-state-v3/native-timer2-arm-state-v3-x86-laa-source-after.json",
+      "bytes": 250,
+      "sha256": "96aa1cfcde6c79587ba7c2a6275d0cc9adbcbf07cd82ca2fe948e524ee847999",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-state-v3/native-timer2-arm-state-v3-x86-laa.log",
+      "bytes": 2127,
+      "sha256": "2fe61ace37f8d953fdd107c3e01d9612fe1fd7d0ec38192f1f8299dc4b8a7c22",
+      "warning-count": 15,
+      "line-ranges": [
+        [
+          1,
+          15
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-state-v3/native-timer2-arm-state-v3-x86-source-after.json",
+      "bytes": 246,
+      "sha256": "127949b2445d1ce039352a848004eec547ec024ec6d29906bf948805162999b2",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-state-v3/native-timer2-arm-state-v3-x86.log",
+      "bytes": 2123,
+      "sha256": "75cc1d81f40b28e10130373304a9e7b53891dc4de86ab4b0d05b39395f16c613",
+      "warning-count": 15,
+      "line-ranges": [
+        [
+          1,
+          15
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-timer2-set-observed-arm64.json",
+      "bytes": 1132,
+      "sha256": "6fed97dadbee2aa7f11c6619ac513e5fc64fc2492ed52699c3cbe0e60c4adaf8",
+      "warning-count": 36,
+      "line-ranges": [
+        [
+          1,
+          36
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-timer2-set-svc-map.json",
+      "bytes": 1347,
+      "sha256": "4263b1b0ada0132dbc581bcd791649fc78fd72b7a6fe60dea097b26391ca3400",
+      "warning-count": 44,
+      "line-ranges": [
+        [
+          1,
+          44
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-v1/native-timer2-arm-v1-arm64-build.log",
+      "bytes": 26,
+      "sha256": "64c0a9b149e848c29466f03f8a678533496768bbbd7240e28cbc969c3782b064",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-v1/native-timer2-arm-v1-arm64-source-after.json",
+      "bytes": 236,
+      "sha256": "4668c2a6fa3b046a7e742ebcafaac5dea55058a4ad2319b501186abce8c41a72",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-v1/native-timer2-arm-v1-arm64.log",
+      "bytes": 277880,
+      "sha256": "deed883edd40ea43deddfc17fcc1ca3f723a7d4169973f629ad2ec89ba72e220",
+      "warning-count": 844,
+      "line-ranges": [
+        [
+          1,
+          844
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-v1/native-timer2-arm-v1-driver.log",
+      "bytes": 964,
+      "sha256": "81157a84a41f6d110e3d629b61f37581444b3f76aa427bed1014db5bce060e17",
+      "warning-count": 16,
+      "line-ranges": [
+        [
+          1,
+          16
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-v1/native-timer2-arm-v1-launch.json",
+      "bytes": 349,
+      "sha256": "5efbbdf78198e2850b9efa4f18c1aefb547befa1077238c87fc99317da74ac71",
+      "warning-count": 9,
+      "line-ranges": [
+        [
+          1,
+          9
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-v1/native-timer2-arm-v1-modules-after.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-v1/native-timer2-arm-v1-modules-before.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-v1/native-timer2-arm-v1-outcomes.json",
+      "bytes": 488,
+      "sha256": "f1e2cde8e757e7fb05a4c9f7bc5ca9a4d9a22d619a9e5822b52bdbb1ec382ebc",
+      "warning-count": 22,
+      "line-ranges": [
+        [
+          1,
+          22
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-v1/native-timer2-arm-v1-x64-build.log",
+      "bytes": 26,
+      "sha256": "64c0a9b149e848c29466f03f8a678533496768bbbd7240e28cbc969c3782b064",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-v1/native-timer2-arm-v1-x64-source-after.json",
+      "bytes": 234,
+      "sha256": "ae86825c3b612c72aa54712bd0cb4a28c39700d2071284eeaacc09d714bcb13d",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-v1/native-timer2-arm-v1-x64.log",
+      "bytes": 277878,
+      "sha256": "c76e45d04ebf557f56969989e2e6fb6c28fb1497865a42d226f0ec3fd1a73d49",
+      "warning-count": 844,
+      "line-ranges": [
+        [
+          1,
+          844
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-v1/native-timer2-arm-v1-x86-build.log",
+      "bytes": 26,
+      "sha256": "64c0a9b149e848c29466f03f8a678533496768bbbd7240e28cbc969c3782b064",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-v1/native-timer2-arm-v1-x86-laa-build.log",
+      "bytes": 26,
+      "sha256": "64c0a9b149e848c29466f03f8a678533496768bbbd7240e28cbc969c3782b064",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-v1/native-timer2-arm-v1-x86-laa-source-after.json",
+      "bytes": 238,
+      "sha256": "245fd61cd05ec6e3ceff9ee9f7ef5bddab5406eebb6a95dbe6e99bcac4f1e6ab",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-v1/native-timer2-arm-v1-x86-laa.log",
+      "bytes": 277882,
+      "sha256": "afcec02b46386f9a294300a06cee4db14c3c0bcfbfbd55421854156774261cee",
+      "warning-count": 844,
+      "line-ranges": [
+        [
+          1,
+          844
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-v1/native-timer2-arm-v1-x86-source-after.json",
+      "bytes": 234,
+      "sha256": "fb89543b13f6e71b1eef7f78f279a191edc638c9bb3313acd22bc03cb0045f5d",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/native-v1/native-timer2-arm-v1-x86.log",
+      "bytes": 277878,
+      "sha256": "11a7192e6e64eb7c2ac58465f880118017918d6c3d72c83b55ded24f8979cd7c",
+      "warning-count": 844,
+      "line-ranges": [
+        [
+          1,
+          844
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/timer2-arguments-observer-launch.json",
+      "bytes": 6537,
+      "sha256": "13684dae4ef050bbf3b22b3b01204a5eb50e72363ca7aa686220a2aa35c68c58",
+      "warning-count": 171,
+      "line-ranges": [
+        [
+          1,
+          171
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/timer2-prototype-macos-epoch1.log",
+      "bytes": 3414,
+      "sha256": "3f82d874f64b80d3aead16656d567d5a7cedf2dc02168afcd58ca122556479f4",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          11,
+          11
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/timer2-prototype-macos-epoch2.log",
+      "bytes": 2723,
+      "sha256": "8e39f10477182c3ed4a8867362998962693b22b4f25e62972ae0630da981a93f",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          22,
+          22
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/timer2-tests-only-baseline.log",
+      "bytes": 4507,
+      "sha256": "f08d4f59456b6e02d671b21806d34b1e778d1800f54cdcc46b6c0d36d3bb9714",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          8,
+          8
+        ],
+        [
+          15,
+          15
+        ],
+        [
+          21,
+          21
+        ],
+        [
+          27,
+          27
+        ],
+        [
+          33,
+          33
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/validation/native-timer2-epoch1-final-owning-archive-identities.json",
+      "bytes": 106540,
+      "sha256": "a85eb0ee7473df71dc40962511caf3045e5da732d8323276dca6318cf3187eb2",
+      "warning-count": 2692,
+      "line-ranges": [
+        [
+          1,
+          2692
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/validation/native-timer2-epoch1-pre-cpp-archives.json",
+      "bytes": 106543,
+      "sha256": "8ca56e50bf72fe1cecaf2672a3accafdac9bc7c75faddbd9747c2ba99b044c39",
+      "warning-count": 2692,
+      "line-ranges": [
+        [
+          1,
+          2692
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/validation/timer2-arguments-observer-build.log",
+      "bytes": 241,
+      "sha256": "77027ce0b25d2e321d7341c6fe2a80236a2837874cb1de4f2079588d47f29dc9",
+      "warning-count": 4,
+      "line-ranges": [
+        [
+          1,
+          4
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/validation/timer2-arguments-observer-launch.json",
+      "bytes": 6537,
+      "sha256": "13684dae4ef050bbf3b22b3b01204a5eb50e72363ca7aa686220a2aa35c68c58",
+      "warning-count": 171,
+      "line-ranges": [
+        [
+          1,
+          171
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/validation/timer2-final-check-windows.json",
+      "bytes": 1388,
+      "sha256": "5c2c0997e213fbcff53fbbc8f9aeca404d02812eb95cf0b42b5b54cd2d1b7b27",
+      "warning-count": 35,
+      "line-ranges": [
+        [
+          1,
+          35
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/validation/timer2-final-check-windows.log",
+      "bytes": 1904,
+      "sha256": "d68f4d5ab20b70d2095202f0a6713db674e9a75539660a9fd802ecd76fc66583",
+      "warning-count": 78,
+      "line-ranges": [
+        [
+          1,
+          78
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/validation/timer2-linux-epoch1-capi.log",
+      "bytes": 14068,
+      "sha256": "76927a43fa5288f67fe426a91c8a809aa1b008ce906085c7c5f27c880fa99c73",
+      "warning-count": 2,
+      "line-ranges": [
+        [
+          97,
+          97
+        ],
+        [
+          205,
+          205
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF.",
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/validation/timer2-linux-epoch1-focus.log",
+      "bytes": 2776,
+      "sha256": "103a63a77c5ecc69e2947dcaf456bfd1e7123e9e4c9c6576901eb2ddac6928ca",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          24,
+          24
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/validation/timer2-linux-epoch1-full.log",
+      "bytes": 834137,
+      "sha256": "a3c34375773d5181f66c38624f714747e49d12a8c34212dc15de791b9d4fc6e5",
+      "warning-count": 6,
+      "line-ranges": [
+        [
+          1967,
+          1967
+        ],
+        [
+          5471,
+          5471
+        ],
+        [
+          5492,
+          5492
+        ],
+        [
+          5503,
+          5503
+        ],
+        [
+          5517,
+          5517
+        ],
+        [
+          8349,
+          8349
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF.",
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/validation/timer2-linux-epoch1-integration.log",
+      "bytes": 35852,
+      "sha256": "ffb040deca8fa8e08ed6c9ecdd7eb12be03dca8f18d9af3cd065c5706fbff536",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          558,
+          558
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/validation/timer2-macos-epoch1-capi.log",
+      "bytes": 14292,
+      "sha256": "6cae1c94f4d552c5d9a0960b0bb674dd5d32b167739ef6280845746ae9593154",
+      "warning-count": 2,
+      "line-ranges": [
+        [
+          97,
+          97
+        ],
+        [
+          205,
+          205
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF.",
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/validation/timer2-macos-epoch1-full.log",
+      "bytes": 834530,
+      "sha256": "50cd92bacf5e8a256eefa7ddd4073be29785bbd17410c9680399e9037b2505e3",
+      "warning-count": 6,
+      "line-ranges": [
+        [
+          1936,
+          1936
+        ],
+        [
+          5422,
+          5422
+        ],
+        [
+          5443,
+          5443
+        ],
+        [
+          5454,
+          5454
+        ],
+        [
+          5468,
+          5468
+        ],
+        [
+          8320,
+          8320
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF.",
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/validation/timer2-macos-epoch1-integration.log",
+      "bytes": 36056,
+      "sha256": "aad40158ae06a9f4ac44689503592fdf152dcb68a044d3f300833483f6079e1a",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          558,
+          558
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/validation/timer2-native-epoch1-capi.log",
+      "bytes": 15023,
+      "sha256": "b71553ea73db7842b12af5bf3d1024ed89d488ceb21f7577d3309828f562f053",
+      "warning-count": 2,
+      "line-ranges": [
+        [
+          115,
+          115
+        ],
+        [
+          223,
+          223
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF.",
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/validation/timer2-native-epoch1-driver.log",
+      "bytes": 63292,
+      "sha256": "b167217296d47ebe3c1d265dd699e1b22aed74ee5e2498ba8baf7074db84b312",
+      "warning-count": 2,
+      "line-ranges": [
+        [
+          1,
+          2
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/validation/timer2-native-epoch1-focus.log",
+      "bytes": 3661,
+      "sha256": "1a99260d0346ac5dec321c5bfeb73221722dffdf5a0664aa9130696f504216bd",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          41,
+          41
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/validation/timer2-native-epoch1-full.log",
+      "bytes": 797262,
+      "sha256": "858bcb79bc7c2d0858c41f6f2d0a90f002c705d0ee28f0a0d8e66ccf5cf91f0d",
+      "warning-count": 11,
+      "line-ranges": [
+        [
+          1950,
+          1950
+        ],
+        [
+          4866,
+          4866
+        ],
+        [
+          4876,
+          4876
+        ],
+        [
+          4883,
+          4883
+        ],
+        [
+          4889,
+          4889
+        ],
+        [
+          5418,
+          5418
+        ],
+        [
+          5460,
+          5460
+        ],
+        [
+          5481,
+          5481
+        ],
+        [
+          5492,
+          5492
+        ],
+        [
+          5506,
+          5506
+        ],
+        [
+          6272,
+          6272
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/validation/timer2-native-epoch1-gates.json",
+      "bytes": 37119,
+      "sha256": "5d31af1fc4743de1df3f562d5079728b5dfb3ad52490e2f3d7ed27a930e6d394",
+      "warning-count": 455,
+      "line-ranges": [
+        [
+          1,
+          455
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/validation/timer2-native-epoch1-integration.log",
+      "bytes": 1863,
+      "sha256": "d559e7648c2f8960d01929e9a5b4507b9f48f71ef82c85b3be4522878fd52768",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          36,
+          36
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/validation/timer2-native-epoch1-preparation.json",
+      "bytes": 30825,
+      "sha256": "d4c9957abd2337bfd90ccdadb218f802dcb6881b63d02d79e010e8412b5de11b",
+      "warning-count": 297,
+      "line-ranges": [
+        [
+          1,
+          297
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/validation/timer2-native-host-identity.json",
+      "bytes": 944,
+      "sha256": "824a29ad03161b2a10662cadb0d57b47f90c14184ef317e2840b770e8e79e2f3",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/validation/timer2-native-host.json",
+      "bytes": 272,
+      "sha256": "35d51018488335ef193176be665312fb8206d5248ca158c4b0759a07239d0993",
+      "warning-count": 7,
+      "line-ranges": [
+        [
+          1,
+          7
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/validation/timer2-native-owning-epoch1-archive-after.log",
+      "bytes": 182,
+      "sha256": "d5806d62989930c615daac08beb7e99ece619bb8aa65a20eee0f1985ad5e0e53",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/validation/timer2-native-owning-epoch1-archive-before.log",
+      "bytes": 182,
+      "sha256": "d5806d62989930c615daac08beb7e99ece619bb8aa65a20eee0f1985ad5e0e53",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/validation/timer2-native-owning-epoch1-cpp.log",
+      "bytes": 3385,
+      "sha256": "cbc551e102e9787779aaf346948ebec23c34bd18d2592725b26ab4172f6b3fc4",
+      "warning-count": 54,
+      "line-ranges": [
+        [
+          1,
+          54
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/validation/timer2-native-owning-epoch1-driver.log",
+      "bytes": 4382,
+      "sha256": "9c87b2e59f2ab43fc33b29ce06c62fb4452fe9dd36935c8920797804a4d5d32a",
+      "warning-count": 2,
+      "line-ranges": [
+        [
+          1,
+          2
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/validation/timer2-native-owning-epoch1.json",
+      "bytes": 5120,
+      "sha256": "b8d3e7c2ebdcdfb1018dd6dc38b590fa8f557ed5bbb97e556233362a20417583",
+      "warning-count": 125,
+      "line-ranges": [
+        [
+          1,
+          125
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/validation/timer2-owner-epoch1-build.log",
+      "bytes": 241,
+      "sha256": "77027ce0b25d2e321d7341c6fe2a80236a2837874cb1de4f2079588d47f29dc9",
+      "warning-count": 4,
+      "line-ranges": [
+        [
+          1,
+          4
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/validation/timer2-owner-epoch1-controller.log",
+      "bytes": 6028,
+      "sha256": "442817e87c6783b806ac1023a29f87d888b5cf8590bbbbb8798a85f7bf5f25d6",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/validation/timer2-owner-epoch1-dispatch.json",
+      "bytes": 172,
+      "sha256": "42bd8b58291b8c95dee6a7d53e69899972dc37c832a9778270cac2292b41f220",
+      "warning-count": 7,
+      "line-ranges": [
+        [
+          1,
+          7
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/validation/timer2-owner-epoch1-launch.json",
+      "bytes": 7294,
+      "sha256": "0a55cba387f35336210efc400b4a7bb8222946a36980bdb606554047858bc14b",
+      "warning-count": 191,
+      "line-ranges": [
+        [
+          1,
+          191
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/validation/timer2-owner-epoch1-waiter.log",
+      "bytes": 154,
+      "sha256": "1e5a00cccfb6c33501726a8965ebc94b45a5eb23052efec96c3bf695f300c335",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/validation/timer2-producer-identity.json",
+      "bytes": 11033,
+      "sha256": "5dc5f838caba939846e4f39cf25d1ac9968e6003ae672050ba71f71f3b7a9958",
+      "warning-count": 226,
+      "line-ranges": [
+        [
+          1,
+          226
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/validation/timer2-prototype-macos-epoch1.log",
+      "bytes": 3414,
+      "sha256": "3f82d874f64b80d3aead16656d567d5a7cedf2dc02168afcd58ca122556479f4",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          11,
+          11
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/validation/timer2-prototype-macos-epoch2.log",
+      "bytes": 2723,
+      "sha256": "8e39f10477182c3ed4a8867362998962693b22b4f25e62972ae0630da981a93f",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          22,
+          22
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/validation/timer2-tests-only-baseline.log",
+      "bytes": 4507,
+      "sha256": "f08d4f59456b6e02d671b21806d34b1e778d1800f54cdcc46b6c0d36d3bb9714",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          8,
+          8
+        ],
+        [
+          15,
+          15
+        ],
+        [
+          21,
+          21
+        ],
+        [
+          27,
+          27
+        ],
+        [
+          33,
+          33
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    }
+  ],
+  "other-owned-paths-pass": true
+}

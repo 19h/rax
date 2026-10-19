@@ -1,0 +1,9 @@
+{
+  "state": "finished",
+  "exit-code": 0,
+  "results": [
+    "test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 7978 filtered out; finished in 4.37s"
+  ],
+  "log-sha256": "8e39f10477182c3ed4a8867362998962693b22b4f25e62972ae0630da981a93f",
+  "scope": "14 shared tests including18528 replay records, observed call, signal/lifetime/wait packet and appended exports; exact final source epoch is bound independently before full three-platform validation."
+}

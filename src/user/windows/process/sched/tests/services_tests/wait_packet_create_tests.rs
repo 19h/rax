@@ -293,16 +293,19 @@ fn native_wait_packet_create_public_timer_and_event_wait_parity_all_abis() {
                 attributes: 0,
                 timer_id: None,
                 signaled: false,
+                schedule: None,
             },
             Object::IrTimer {
                 attributes: 8,
                 timer_id: None,
                 signaled: false,
+                schedule: None,
             },
             Object::IrTimer {
                 attributes: 0x80000008,
                 timer_id: None,
                 signaled: false,
+                schedule: None,
             },
         ] {
             let id = p.objects.create(object);

@@ -36,7 +36,7 @@ impl NativeDeadline {
         }
     }
 
-    fn remaining(&self) -> io::Result<u128> {
+    pub(crate) fn remaining(&self) -> io::Result<u128> {
         match self.0 {
             Deadline::Relative(_) => Ok(self.remaining_at(clock::awake_nanoseconds()?, 0)),
             Deadline::Absolute(_) => {
@@ -58,7 +58,26 @@ impl NativeDeadline {
             .map_err(|_| SyncError::Invalid("native wait clock sampling failed"))
     }
 
-    pub(super) fn hint(&self) -> Instant {
+    /// Coalesce missed periodic expirations in constant time. After the first
+    /// absolute expiration, subsequent periods use the suspend-excluding clock.
+    pub(crate) fn advance_periodic(&mut self, period_ns: u128) -> io::Result<()> {
+        self.advance_at(clock::awake_nanoseconds()?, period_ns);
+        Ok(())
+    }
+
+    fn advance_at(&mut self, awake_ns: u128, period_ns: u128) {
+        assert!(period_ns > 0);
+        let target = match self.0 {
+            Deadline::Relative(target) => target,
+            Deadline::Absolute(_) => awake_ns,
+        };
+        // Inputs are bounded by normalized i64 seconds and i64 timer ticks.
+        // Their widened nanoseconds and one additional period fit u128.
+        let periods = awake_ns.saturating_sub(target) / period_ns + 1;
+        self.0 = Deadline::Relative(target + periods * period_ns);
+    }
+
+    pub(crate) fn hint(&self) -> Instant {
         // The scheduler needs a bounded recheck time, not an overflowing
         // Instant for a 2^63-tick interval or a stale UTC-to-monotonic mapping.
         // Expiration itself is checked against the original clock target.
@@ -117,6 +136,24 @@ pub(crate) fn wait_object(p: &Proc, t: &Thread, handle: u64) -> Result<ObjId, Wa
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn native_timer2_arm_periodic_deadlines_skip_missed_periods_without_drift_or_overflow() {
+        let mut relative = NativeDeadline(Deadline::Relative(1_000_000));
+        relative.advance_at(4_500_000, 1_000_000);
+        assert_eq!(relative.remaining_at(4_500_000, u64::MAX), 500_000);
+        relative.advance_at(10_500_000, 1_000_000);
+        assert_eq!(relative.remaining_at(10_500_000, 0), 500_000);
+        let max = u128::from(i64::MAX as u64) * 100;
+        relative.advance_at(10_500_000, max);
+        assert_eq!(relative.remaining_at(10_500_000, 0), max + 500_000);
+        let mut absolute = NativeDeadline(Deadline::Absolute(0));
+        absolute.advance_at(1_000_000, max);
+        assert_eq!(absolute.remaining_at(1_000_000, u64::MAX), max);
+        let mut fast = NativeDeadline(Deadline::Relative(0));
+        fast.advance_at(1_000_000_000_000, 100);
+        assert_eq!(fast.remaining_at(1_000_000_000_000, 0), 100);
+    }
 
     #[test]
     fn native_single_wait_absolute_clock_changes_and_relative_clock_domains() {

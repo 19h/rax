@@ -1,0 +1,6 @@
+{
+  "url": "https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/nf-wdm-exsettimer",
+  "retrieved": "2026-10-19T04:17:20.285375+00:00",
+  "sha256": "31314c2a9af8cf63219fd6aeaa0266b2d4e1f58a9488faf59f1105e9d5f4012b",
+  "scope": "Clock domains, 100 ns units, rearm/expiration mechanics only; NtSetTimer2 parameter validation and accepted domains come from native captures, not this driver-only API."
+}

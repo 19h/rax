@@ -1,0 +1,29 @@
+{
+  "state": "finished",
+  "host": "linux",
+  "argv": [
+    "docker",
+    "run",
+    "--rm",
+    "--platform",
+    "linux/amd64",
+    "-v",
+    "/Users/int/Library/Caches/assist-process-emulation/native-timer2-set-20261019/timer2-source:/source:ro",
+    "-v",
+    "/Users/int/Library/Caches/assist-process-emulation/native-timer2-set-20261019:/validation:ro",
+    "-w",
+    "/source",
+    "assist-rax-validation-rustfmt:1.95-bullseye-20261015",
+    "python3",
+    "-B",
+    "/validation/run-timer2-proof-checks.py",
+    "/source"
+  ],
+  "checked-envelope-files": 252,
+  "utc": "2026-10-19T04:48:14.042553+00:00",
+  "exit-code": 0,
+  "log": "timer2-final-check-linux.log",
+  "bytes": 1826,
+  "sha256": "1c812f573e208280f1a2121297a0b31fec6f3b8f27f4b1dc276d4daabfe0e7db",
+  "completed-utc": "2026-10-19T04:48:21.573487+00:00"
+}

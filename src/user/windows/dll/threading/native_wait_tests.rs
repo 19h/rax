@@ -8,7 +8,7 @@ fn native_single_wait_preserves_prior_ntdll_ordinals_and_trap_rvas_all_abis() {
     use crate::user::windows::loader::builtin;
 
     let current = dll::find("ntdll.dll").unwrap();
-    // Reconstruct the pre-wait DLL by removing the wait and the later semaphore additions.
+    // Reconstruct the pre-wait DLL by removing appended service families.
     // Keep the other source entries and architecture filters in their original
     // order. These bounded static test fixtures live until the test process exits.
     let prior: Vec<Export> = current
@@ -22,6 +22,8 @@ fn native_single_wait_preserves_prior_ntdll_ordinals_and_trap_rvas_all_abis() {
                 "NtOpenSemaphore",
                 "NtReleaseSemaphore",
                 "NtQuerySemaphore",
+                "NtSetTimer2",
+                "NtCancelTimer2",
             ]
             .contains(&export.name)
         })
@@ -46,7 +48,7 @@ fn native_single_wait_preserves_prior_ntdll_ordinals_and_trap_rvas_all_abis() {
         let before = builtin::build(&previous, arch, 0, &[]);
         let after = builtin::build(current, arch, 0, &[]);
         assert_eq!(after.ordinal_base, before.ordinal_base);
-        assert_eq!(after.symbols.len(), before.symbols.len() + 5);
+        assert_eq!(after.symbols.len(), before.symbols.len() + 7);
         assert_eq!(
             &after.symbols[..before.symbols.len()],
             before.symbols.as_slice(),

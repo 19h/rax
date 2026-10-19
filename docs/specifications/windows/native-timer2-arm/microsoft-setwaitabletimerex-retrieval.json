@@ -1,0 +1,6 @@
+{
+  "url": "https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-setwaitabletimerex",
+  "retrieved": "2026-10-19T04:24:01.836628+00:00",
+  "sha256": "5a329a69e0d9aae390fe7b722b7ffb4f03462b76d85b25152c1c9fafe4577e49",
+  "scope": "Windows8+ relative timer clock excludes low-power time. Win32 millisecond LONG period restrictions do not define the NtSetTimer2 native 64-bit period domain."
+}

@@ -1,0 +1,7 @@
+{
+  "source-inputs": 23050,
+  "three-host-full-gates": "pass",
+  "retained-consumers": "pass",
+  "ordinary-programs": 2,
+  "ordinary-guest-exit-success": false
+}
