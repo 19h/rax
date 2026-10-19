@@ -136,6 +136,17 @@ impl Registry {
             // The supplied case table need not be assumed idempotent here.
             return root.relative(&original[prefix.len()..]);
         }
+        if let Some(prefix) = &self.user_policy {
+            if name == prefix.as_ref() {
+                return Lookup::Missing;
+            }
+            if name.starts_with(prefix) && original.get(prefix.len()) == Some(&92) {
+                let Some(root) = self.keys.get(prefix.as_ref()) else {
+                    return Lookup::Missing;
+                };
+                return root.relative(&original[prefix.len()..]);
+            }
+        }
         Lookup::Unselected
     }
 }
@@ -184,7 +195,7 @@ impl Key {
         Lookup::Present(key)
     }
 }
-fn build(
+pub(super) fn build(
     upcase: Arc<[u16]>,
     path: Vec<u16>,
     tree: KeyTree,

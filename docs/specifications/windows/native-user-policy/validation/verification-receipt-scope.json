@@ -1,0 +1,46 @@
+{
+  "utc": "2026-10-19T08:08:39.599830+00:00",
+  "checked-evidence-files": 205,
+  "original-envelope-sha256": "bf337eb103513ca4326befd12b866ba455b63d9aadde326be04dd077d1ae18e8",
+  "proof-archive": {
+    "archive": "policy-final-proof.tar.gz",
+    "bytes": 2017469,
+    "sha256": "73612bcfbb03d4d12604459e5388cd156b10f892fb5a61c02ab0f58859321165",
+    "bound-evidence-files": 205,
+    "members": 207,
+    "scope": "Final evidence and appended runtime engineering record only; native verifier detaches all overwritten hardlinks before extraction."
+  },
+  "receipt-files": [
+    {
+      "path": "policy-final-check-macos.json",
+      "bytes": 624,
+      "sha256": "588ed2527e49da5c7e7edad8c1736f5324379580676f6d1eb7a20c21ed8f09bc"
+    },
+    {
+      "path": "policy-final-check-macos.log",
+      "bytes": 344,
+      "sha256": "3a2ee0152e2868cd7328988a0286491b7dd4360d1a83d0ccb00f3f1edeccbc03"
+    },
+    {
+      "path": "policy-final-check-linux.json",
+      "bytes": 826,
+      "sha256": "57b8d6031457345f357d2d7f8ee2198d323879ee5267dc850843cc069ac32e66"
+    },
+    {
+      "path": "policy-final-check-linux.log",
+      "bytes": 344,
+      "sha256": "3a2ee0152e2868cd7328988a0286491b7dd4360d1a83d0ccb00f3f1edeccbc03"
+    },
+    {
+      "path": "policy-final-check-windows.json",
+      "bytes": 1383,
+      "sha256": "d3ce54e5662373a734ddd2c58411722143b5d436c0b5cceb064796196b36da39"
+    },
+    {
+      "path": "policy-final-check-windows.log",
+      "bytes": 359,
+      "sha256": "da541543168e8b8ac67b65aa3968ffc2467b1f08cca565e4c526b74bc5d5b165"
+    }
+  ],
+  "scope": "All three receipts checked the original 205-file envelope. They do not verify themselves, the later receipt-scope note, or the subsequent verbatim-whitespace audit. The final envelope binds those later files; no compiled Rust/test/build inputs changed after the gates."
+}

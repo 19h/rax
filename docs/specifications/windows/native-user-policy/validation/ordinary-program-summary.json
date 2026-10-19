@@ -1,0 +1,63 @@
+{
+  "actual-core": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-owned\\debug\\deps\\librax-934115059aa64c85.rlib",
+    "bytes": 504324092,
+    "sha256": "8aae16fe5ebdfb13a6fca0340d48f6e9eee4d4e694f4d47240151e42d493c9be",
+    "members": 20,
+    "structural-member-walk": "pass"
+  },
+  "programs": [
+    {
+      "program": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-policy-candidate-epoch1\\tests\\fixtures\\user\\windows\\bin\\arm64\\smoke.exe",
+        "bytes": 3584,
+        "sha256": "325730e33e981784bff4a60bc6f342cf95c2735e85042c89748fc471cbe7781b"
+      },
+      "log": "policy-owner-epoch1-0.log",
+      "log-sha256": "e0400623a8ddb1e94f5cbc3eacde88a153b8a19ef4d751e6198da5f3ffb0ac1f",
+      "controller-exit-code": 0,
+      "former-stop-turn": 2886717,
+      "new-terminal-turn": 2889590,
+      "additional-observer-turns": 2873,
+      "terminal-result": "Complete(Internal(\"native NTDLL service NtOpenKey: Unimplemented(\\\"NtOpenKey: registry key outside selected runtime snapshot\\\")\"))",
+      "guest-exit-success": false,
+      "native-before": {
+        "exit-code": 0,
+        "stdout-hex": "",
+        "stderr-hex": ""
+      },
+      "native-after": {
+        "exit-code": 0,
+        "stdout-hex": "",
+        "stderr-hex": ""
+      }
+    },
+    {
+      "program": {
+        "path": "C:\\Windows\\System32\\whoami.exe",
+        "bytes": 84480,
+        "sha256": "48fde190b002a5a4c4b8b19db014377263ba94220f23a4f0a117fec082d46bf6"
+      },
+      "log": "policy-owner-epoch1-1.log",
+      "log-sha256": "4f3f493cbfbf0cb3bbcd402c5918258ba9566fa4e5512722926c33d32fc704f4",
+      "controller-exit-code": 0,
+      "former-stop-turn": 2889002,
+      "new-terminal-turn": 2891875,
+      "additional-observer-turns": 2873,
+      "terminal-result": "Complete(Internal(\"native NTDLL service NtOpenKey: Unimplemented(\\\"NtOpenKey: registry key outside selected runtime snapshot\\\")\"))",
+      "guest-exit-success": false,
+      "native-before": {
+        "exit-code": 0,
+        "stdout-hex": "6e7420617574686f726974795c73797374656d0d0a",
+        "stderr-hex": ""
+      },
+      "native-after": {
+        "exit-code": 0,
+        "stdout-hex": "6e7420617574686f726974795c73797374656d0d0a",
+        "stderr-hex": ""
+      }
+    }
+  ],
+  "ordinary-guest-exit-success": false,
+  "scope": "Both guests pass the selected per-user policy root and reach the still-unselected FileSystem registry root. Native controls exit0; controller exit0 does not mean guest success."
+}

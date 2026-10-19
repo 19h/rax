@@ -1,0 +1,9 @@
+{
+  "pid": 5708,
+  "utc": "2026-10-19T07:22:22.488183+00:00",
+  "state": "finished",
+  "scope": "Pure native SID formatting for bounded owned synthetic SID bytes; no token, registry, thread impersonation or security policy mutation.",
+  "child-pid": 7344,
+  "exit-code": 0,
+  "completed-utc": "2026-10-19T07:22:31.598810+00:00"
+}

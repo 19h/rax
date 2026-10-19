@@ -1,0 +1,9 @@
+{
+  "pid": 9600,
+  "utc": "2026-10-19T07:37:25.349952+00:00",
+  "state": "finished",
+  "scope": "Read-only native primary SID capture and controlled present per-user Environment opens with bounded path/view/right variants; no token, registry, thread impersonation or security policy mutation.",
+  "child-pid": 4432,
+  "exit-code": 0,
+  "completed-utc": "2026-10-19T07:37:33.926529+00:00"
+}

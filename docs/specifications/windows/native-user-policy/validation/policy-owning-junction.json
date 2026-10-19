@@ -1,0 +1,7 @@
+{
+  "utc": "2026-10-19T07:50:22.058757+00:00",
+  "path": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/vendor/rax",
+  "before": "/Users/int/Library/Caches/assist-process-emulation/native-token-user-20261019/user-source",
+  "after": "/Users/int/Library/Caches/assist-process-emulation/native-user-policy-20261019/policy-source",
+  "scope": "Task-owned retained Assist root only; shared main repository and its submodule remain unchanged."
+}

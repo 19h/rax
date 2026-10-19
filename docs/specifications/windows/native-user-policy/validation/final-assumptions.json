@@ -1,0 +1,63 @@
+{
+  "scope": "Fixed primary-user policy root; full process objective remains active.",
+  "assumptions": [
+    {
+      "id": "A1",
+      "assumption": "The selected per-user policy root is derived from the native primary token SID captured in the same immutable runtime selection.",
+      "basis": "Actual guest frontier and 320 native opens; existing primary_subject snapshot.; native runtime views match the captured primary SID, 512 independent SID-format observations and invalid/other-SID model tests pass.",
+      "dependent-result": "SID-bound selection only.",
+      "stress-test": "Different SID, parent and sibling roots stay Unselected; invalid SID and duplicate selection fail.",
+      "falsification-probe": "Native adapter primary SID/view comparison and pure selection tests.",
+      "status": "confirmed within recorded native subject and SID-format corpus"
+    },
+    {
+      "id": "A2",
+      "assumption": "The fixed per-user Policies subtree uses shared registry view semantics.",
+      "basis": "All four native profiles and explicit 32/64 view controls agree on absence; Microsoft registry-view primary source to be checked.; stored Microsoft shared-key table and HKCU/HKU relation confirm inherited sharing; native 0/32/64 view controls agree.",
+      "dependent-result": "One captured immutable tree serves all guest architecture/view requests.",
+      "stress-test": "Independent native opens in all three view modes and HLE ABI matrix.",
+      "falsification-probe": "Any native view-dependent presence/value difference.",
+      "status": "confirmed for documented shared path and recorded native views; one physical kernel"
+    },
+    {
+      "id": "A3",
+      "assumption": "The existing complete-tree capture contract remains sufficient for the SID-bound sixth root.",
+      "basis": "Reuse exact bounded capture/build code, aggregate budgets and immutable guest keys.",
+      "dependent-result": "No separate per-user capture policy or mutable native handles.",
+      "stress-test": "Root absence versus access/path failures, controlled present fixture, lifetime and aggregate budget edge.",
+      "falsification-probe": "Capture accepts incomplete enumeration, exceeds budgets or forwards a guest supplied path.",
+      "status": "retained: native positive HKU fixture has one key; generic native traversal and synthetic user-policy descendant tests cover the reused tree mechanics"
+    }
+  ],
+  "bounded-scope": [
+    {
+      "impact": "high",
+      "finding": "Both ordinary guests pass the per-user policy root and advance2873turns to the still-unselected FileSystem root, without successful guest exit.",
+      "blocks-full-goal": true,
+      "action": "Continue actual owning-archive guest validation.",
+      "evidence": "validation/ordinary-program-summary.json"
+    },
+    {
+      "impact": "medium",
+      "finding": "Exactly five pre-existing Windows lowerer failures remain outside the registry change.",
+      "blocks-group": false,
+      "action": "Require exact failure set and preserve logs."
+    },
+    {
+      "impact": "medium",
+      "finding": "Four native ABI profiles share one ARM64 Windows kernel; no physical x64-kernel coverage claim.",
+      "blocks-group": false,
+      "action": "Record the platform bound."
+    }
+  ],
+  "surface-map": {
+    "native-runtime": "affected: binds registry snapshot to existing captured primary subject",
+    "registry-model": "affected: one validated SID-derived fixed suffix and shared immutable capture",
+    "guest-nt-registry": "affected through existing lookup; no syscall/schema changes",
+    "platforms": "Windows native adapter; pure model/HLE compiled and run on all three OS hosts",
+    "C-ABI": "unaffected: private implementation only, retain 1.14.0",
+    "instruction-engines": "unaffected: no ISA/lifter/lowerer changes",
+    "Assist-products": "retained actual CAPI/static archive consumers must re-link; full current GUI/package not represented by those consumers",
+    "persistence-transport-permission-UI": "unaffected: no settings, wire formats, capability or widget changes"
+  }
+}

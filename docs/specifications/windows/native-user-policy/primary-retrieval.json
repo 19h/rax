@@ -1,0 +1,24 @@
+{
+  "utc": "2026-10-19T07:21:23.235273+00:00",
+  "sources": [
+    {
+      "file": "sid-components.html",
+      "url": "https://learn.microsoft.com/en-us/windows/win32/secauthz/sid-components",
+      "bytes": 49184,
+      "sha256": "8d9763a1fa0cfd0a395b80d17452dafa547bb0fa72bfe23947d316fbee9b97e3"
+    },
+    {
+      "file": "convert-sid.html",
+      "url": "https://learn.microsoft.com/en-us/windows/win32/api/sddl/nf-sddl-convertsidtostringsidw",
+      "bytes": 53854,
+      "sha256": "8781321bee49b201e550d989524d07fedd01d60069bd82964295882ffe1bbd7f"
+    },
+    {
+      "file": "shared-registry-keys.html",
+      "url": "https://learn.microsoft.com/en-us/windows/win32/winprog64/shared-registry-keys",
+      "bytes": 66038,
+      "sha256": "17f371043070ad9ead9c65b26a0718f99e8e37776c674ecbdc69ec107afc624c",
+      "retrieved-utc": "2026-10-19T07:43:45.432811+00:00"
+    }
+  ]
+}

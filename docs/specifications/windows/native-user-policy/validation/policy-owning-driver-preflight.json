@@ -1,0 +1,10 @@
+{
+  "initial-launches": [
+    "macos",
+    "linux"
+  ],
+  "failure": "Retained consumer launcher retained the previous group command JSON filename in an interpolated host suffix.",
+  "stage": "before any subprocess, gate record or compilation",
+  "correction": "All interpolated host suffixes now select -policy-epoch1 records/commands.",
+  "product-or-test-input-changes": false
+}

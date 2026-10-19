@@ -1,0 +1,16 @@
+   Compiling vm-memory v0.17.1 (/Users/int/Library/Caches/assist-process-emulation/native-user-policy-20261019/policy-source/vendor/vm-memory)
+   Compiling linux-loader v0.13.2 (https://github.com/19h/linux-loader?rev=f745b555942c4e840a784bca61e6f3976d101960#f745b555)
+   Compiling rax v0.1.0 (/Users/int/Library/Caches/assist-process-emulation/native-user-policy-20261019/policy-source)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 09s
+     Running unittests src/lib.rs (/Users/int/Library/Caches/assist-process-emulation/native-wait-20261019/target-macos-wait-epoch3/debug/deps/rax-dd79f0cd9ae9bb68)
+
+running 6 tests
+test user::windows::process::sched::tests::services_tests::registry_tests::user_policy::native_user_policy_absolute_children_serialize_raw_values_and_preserve_outside_frontier_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::registry_tests::user_policy::native_user_policy_known_absent_root_and_children_return_name_not_found_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::registry_tests::user_policy::native_user_policy_opens_relative_paths_with_observed_absence_and_root_lifetime_all_abis ... ok
+test user::windows::registry::user_policy_tests::user_policy_absence_is_bound_to_one_primary_sid_and_fixed_suffix ... ok
+test user::windows::registry::user_policy_tests::user_policy_present_tree_retains_values_lifetime_and_shared_six_root_budget ... ok
+test user::windows::registry::user_policy_tests::user_policy_sid_paths_match_all_512_native_format_observations_and_reject_invalid_sids ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 8015 filtered out; finished in 0.07s
+

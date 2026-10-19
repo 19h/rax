@@ -1,0 +1,465 @@
+{
+  "scope": "Native captures, exact reference corpus and primary sources; excludes checkers and later validation receipts.",
+  "files": [
+    {
+      "path": "convert-sid.html",
+      "bytes": 53854,
+      "sha256": "8781321bee49b201e550d989524d07fedd01d60069bd82964295882ffe1bbd7f"
+    },
+    {
+      "path": "native/inspect-system-time-v2-pe.py",
+      "bytes": 693,
+      "sha256": "ea32c13e299784c3cc9c30e797fdf363d3ffd42a8c08cbed69cab64ef5198e06"
+    },
+    {
+      "path": "native/native-sid-text-v1-arm64-after.json",
+      "bytes": 518,
+      "sha256": "f25d7fe1f40e7df7cce9a29bebec1a7e35912a5c35e5d3acc3c29835d219e1d0"
+    },
+    {
+      "path": "native/native-sid-text-v1-arm64-before.json",
+      "bytes": 518,
+      "sha256": "f25d7fe1f40e7df7cce9a29bebec1a7e35912a5c35e5d3acc3c29835d219e1d0"
+    },
+    {
+      "path": "native/native-sid-text-v1-arm64-build.log",
+      "bytes": 24,
+      "sha256": "718c67f4dde5b85b0dc7bc4013a6dd26537e18ac6dcc349e423f1017c95d06ad"
+    },
+    {
+      "path": "native/native-sid-text-v1-arm64-source-after.json",
+      "bytes": 232,
+      "sha256": "c53784040dabf7eb903a46e7433585275287927177f2838288b17e1b90bdc854"
+    },
+    {
+      "path": "native/native-sid-text-v1-arm64.log",
+      "bytes": 17715,
+      "sha256": "de758403f97b7ebc79e37b681ec56d3b90f0cad29bf8bc44571124d64e450bea"
+    },
+    {
+      "path": "native/native-sid-text-v1-driver.log",
+      "bytes": 964,
+      "sha256": "81157a84a41f6d110e3d629b61f37581444b3f76aa427bed1014db5bce060e17"
+    },
+    {
+      "path": "native/native-sid-text-v1-launch.json",
+      "bytes": 339,
+      "sha256": "8ec559f31a6215b7d3ebf2f0c94a33df9028130d6891d1ae8841ec57d430cb58"
+    },
+    {
+      "path": "native/native-sid-text-v1-modules-after.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05"
+    },
+    {
+      "path": "native/native-sid-text-v1-modules-before.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05"
+    },
+    {
+      "path": "native/native-sid-text-v1-outcomes.json",
+      "bytes": 480,
+      "sha256": "2c2feaa5627e3a51b898239d8c7e3c72d6803a7c0bf6486fd66860734e48743a"
+    },
+    {
+      "path": "native/native-sid-text-v1-x64-after.json",
+      "bytes": 510,
+      "sha256": "5aff7b497a97cbe422d23b27eba8471d024b4cd2e6a1675112cb803386ca40ba"
+    },
+    {
+      "path": "native/native-sid-text-v1-x64-before.json",
+      "bytes": 510,
+      "sha256": "5aff7b497a97cbe422d23b27eba8471d024b4cd2e6a1675112cb803386ca40ba"
+    },
+    {
+      "path": "native/native-sid-text-v1-x64-build.log",
+      "bytes": 24,
+      "sha256": "718c67f4dde5b85b0dc7bc4013a6dd26537e18ac6dcc349e423f1017c95d06ad"
+    },
+    {
+      "path": "native/native-sid-text-v1-x64-source-after.json",
+      "bytes": 230,
+      "sha256": "33cc11bb5c930eca252bb402b7e077383f46288cbac05ecfcdc6361eb1283e75"
+    },
+    {
+      "path": "native/native-sid-text-v1-x64.log",
+      "bytes": 17459,
+      "sha256": "ed92ce0381bcdf2402daea46f91ee74eabd6b6305f458fd3f4c27dfb5ad3a402"
+    },
+    {
+      "path": "native/native-sid-text-v1-x86-after.json",
+      "bytes": 508,
+      "sha256": "a31837a205836332bfa2c329c4e1c5d4a8648892b1c2833050f1916bee3242bf"
+    },
+    {
+      "path": "native/native-sid-text-v1-x86-before.json",
+      "bytes": 508,
+      "sha256": "a31837a205836332bfa2c329c4e1c5d4a8648892b1c2833050f1916bee3242bf"
+    },
+    {
+      "path": "native/native-sid-text-v1-x86-build.log",
+      "bytes": 24,
+      "sha256": "718c67f4dde5b85b0dc7bc4013a6dd26537e18ac6dcc349e423f1017c95d06ad"
+    },
+    {
+      "path": "native/native-sid-text-v1-x86-laa-after.json",
+      "bytes": 522,
+      "sha256": "750e9f0419936770bcf1834a07171b1639e6a1221fbe501795cbbaaab5ab8f77"
+    },
+    {
+      "path": "native/native-sid-text-v1-x86-laa-before.json",
+      "bytes": 522,
+      "sha256": "750e9f0419936770bcf1834a07171b1639e6a1221fbe501795cbbaaab5ab8f77"
+    },
+    {
+      "path": "native/native-sid-text-v1-x86-laa-build.log",
+      "bytes": 24,
+      "sha256": "718c67f4dde5b85b0dc7bc4013a6dd26537e18ac6dcc349e423f1017c95d06ad"
+    },
+    {
+      "path": "native/native-sid-text-v1-x86-laa-source-after.json",
+      "bytes": 234,
+      "sha256": "38ccb9d962b243a307bd59e2e6eb0f88ad08f8eb16c519507b42074f954b8ba7"
+    },
+    {
+      "path": "native/native-sid-text-v1-x86-laa.log",
+      "bytes": 17971,
+      "sha256": "b3b6a0c20e0594ed02af131ad8347778ed9ccea26213cdf3d075cb16c569c809"
+    },
+    {
+      "path": "native/native-sid-text-v1-x86-source-after.json",
+      "bytes": 230,
+      "sha256": "e42e7ba75bf62aa360f84db7f534e239ef75c7dcc1f6b00c268d1792721670a7"
+    },
+    {
+      "path": "native/native-sid-text-v1-x86.log",
+      "bytes": 17459,
+      "sha256": "59929dabad9617548dbb2a8928753bd45bac9d004a3aaf61eb0e0924f9844602"
+    },
+    {
+      "path": "native/native-sid-text-v1.cpp",
+      "bytes": 1658,
+      "sha256": "36a05ab559ebbd048c59d244cd811030e42473fbf728b2f1ead047e0aa4afaad"
+    },
+    {
+      "path": "native/native-sid-text-v1.ps1",
+      "bytes": 2465,
+      "sha256": "502306f0d29290a654d41d363bcbf40412baf9df34cb2515e9ef884a27705dae"
+    },
+    {
+      "path": "native/native-user-environment-v1-arm64-after.json",
+      "bytes": 534,
+      "sha256": "1cb106b0ab7c61328baeeb878d3b092676b80752027e01c15334f71933f1430d"
+    },
+    {
+      "path": "native/native-user-environment-v1-arm64-before.json",
+      "bytes": 534,
+      "sha256": "1cb106b0ab7c61328baeeb878d3b092676b80752027e01c15334f71933f1430d"
+    },
+    {
+      "path": "native/native-user-environment-v1-arm64-build.log",
+      "bytes": 32,
+      "sha256": "b06cd452630563c11dccc945836e0557eb13db7ead7b58991d4fbe3419bc4ac0"
+    },
+    {
+      "path": "native/native-user-environment-v1-arm64-source-after.json",
+      "bytes": 248,
+      "sha256": "c1fdc79e21037e6bfc601e45e6266f9f5ed1cc6aee0019c2edf613e847c031d9"
+    },
+    {
+      "path": "native/native-user-environment-v1-arm64.log",
+      "bytes": 6212,
+      "sha256": "ab656118431e05db57d11a01de3a3a072d7b01f1146a1116f9ead6fda7dc09db"
+    },
+    {
+      "path": "native/native-user-environment-v1-driver.log",
+      "bytes": 964,
+      "sha256": "81157a84a41f6d110e3d629b61f37581444b3f76aa427bed1014db5bce060e17"
+    },
+    {
+      "path": "native/native-user-environment-v1-launch.json",
+      "bytes": 399,
+      "sha256": "fa1e0882273cc6a8ec1b2d96244aacbb49a4a6643d1557467ac4c05e1b1095a4"
+    },
+    {
+      "path": "native/native-user-environment-v1-modules-after.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05"
+    },
+    {
+      "path": "native/native-user-environment-v1-modules-before.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05"
+    },
+    {
+      "path": "native/native-user-environment-v1-outcomes.json",
+      "bytes": 512,
+      "sha256": "1d164d40c099bd51c8caa35eee797e48f9c945992af4a76be7dd7e61646d706d"
+    },
+    {
+      "path": "native/native-user-environment-v1-x64-after.json",
+      "bytes": 526,
+      "sha256": "90aa5f7c15854d2bb409b353cf12e6ebd42ff6f1d17bf86c5ab7af1339c1c748"
+    },
+    {
+      "path": "native/native-user-environment-v1-x64-before.json",
+      "bytes": 526,
+      "sha256": "90aa5f7c15854d2bb409b353cf12e6ebd42ff6f1d17bf86c5ab7af1339c1c748"
+    },
+    {
+      "path": "native/native-user-environment-v1-x64-build.log",
+      "bytes": 32,
+      "sha256": "b06cd452630563c11dccc945836e0557eb13db7ead7b58991d4fbe3419bc4ac0"
+    },
+    {
+      "path": "native/native-user-environment-v1-x64-source-after.json",
+      "bytes": 246,
+      "sha256": "f99a237782079a244767ad0ef8975076716acefa0c8c3c8538e512fd1a0c1b30"
+    },
+    {
+      "path": "native/native-user-environment-v1-x64.log",
+      "bytes": 6210,
+      "sha256": "d1eb56e7b795a28917a74720196ea2f8473f4ec90a2fbda9f6dad73f19ad8432"
+    },
+    {
+      "path": "native/native-user-environment-v1-x86-after.json",
+      "bytes": 524,
+      "sha256": "dc4a5479f098fd913f8040ec7dbde1242d522245811087427ac95a74f6166086"
+    },
+    {
+      "path": "native/native-user-environment-v1-x86-before.json",
+      "bytes": 524,
+      "sha256": "dc4a5479f098fd913f8040ec7dbde1242d522245811087427ac95a74f6166086"
+    },
+    {
+      "path": "native/native-user-environment-v1-x86-build.log",
+      "bytes": 32,
+      "sha256": "b06cd452630563c11dccc945836e0557eb13db7ead7b58991d4fbe3419bc4ac0"
+    },
+    {
+      "path": "native/native-user-environment-v1-x86-laa-after.json",
+      "bytes": 538,
+      "sha256": "100c3fc0ccd822c9e8de14fb52288966ae5a92c1b9d263c4c5b0f311b3368b51"
+    },
+    {
+      "path": "native/native-user-environment-v1-x86-laa-before.json",
+      "bytes": 538,
+      "sha256": "100c3fc0ccd822c9e8de14fb52288966ae5a92c1b9d263c4c5b0f311b3368b51"
+    },
+    {
+      "path": "native/native-user-environment-v1-x86-laa-build.log",
+      "bytes": 32,
+      "sha256": "b06cd452630563c11dccc945836e0557eb13db7ead7b58991d4fbe3419bc4ac0"
+    },
+    {
+      "path": "native/native-user-environment-v1-x86-laa-source-after.json",
+      "bytes": 250,
+      "sha256": "dd644dac97f4ff7d662fa62086000a51dff5cf5ce9371ce8c84665dcc05ea917"
+    },
+    {
+      "path": "native/native-user-environment-v1-x86-laa.log",
+      "bytes": 6214,
+      "sha256": "81e46100ceace0cca79df41c2709f6f77f4d6417b4357e8cb15c5c074f7f37b1"
+    },
+    {
+      "path": "native/native-user-environment-v1-x86-source-after.json",
+      "bytes": 246,
+      "sha256": "00edda9a2593068d2c85d5557e8e65367789f5e88642807c87f9b0a5038f1fdf"
+    },
+    {
+      "path": "native/native-user-environment-v1-x86.log",
+      "bytes": 6210,
+      "sha256": "3dd3997efe1abb7244636a755f1e1b35cdc74eb536d32bd90d5632c4056b6331"
+    },
+    {
+      "path": "native/native-user-environment-v1.cpp",
+      "bytes": 3940,
+      "sha256": "049ff8e072a66406c44413224bfcba5d17ebce27fd524e8418059b591429f62d"
+    },
+    {
+      "path": "native/native-user-environment-v1.ps1",
+      "bytes": 2577,
+      "sha256": "7b826c24d9fd396ad9ef073821317b32f0690199b05c36fe7c161fe82d0c1c2b"
+    },
+    {
+      "path": "native/native-user-policy-v3-arm64-after.json",
+      "bytes": 524,
+      "sha256": "bdacd2a320929d694b87ea586949ef3dac010f1e08524b417e54f5525b303b26"
+    },
+    {
+      "path": "native/native-user-policy-v3-arm64-before.json",
+      "bytes": 524,
+      "sha256": "bdacd2a320929d694b87ea586949ef3dac010f1e08524b417e54f5525b303b26"
+    },
+    {
+      "path": "native/native-user-policy-v3-arm64-build.log",
+      "bytes": 27,
+      "sha256": "4b9f65c2712c14383f0cba30be5dcd3cbe11361f28a70c657902a0b02fd58145"
+    },
+    {
+      "path": "native/native-user-policy-v3-arm64-source-after.json",
+      "bytes": 238,
+      "sha256": "6d675791b67aacce1c60a33deb6d439128a0b9ff10851e9de1cbf6a07f289cd9"
+    },
+    {
+      "path": "native/native-user-policy-v3-arm64.log",
+      "bytes": 6212,
+      "sha256": "c7ba76b01a383df6b509ece7002e78a1c1d20e886241193d32dd69f2e070fe0c"
+    },
+    {
+      "path": "native/native-user-policy-v3-driver.log",
+      "bytes": 964,
+      "sha256": "81157a84a41f6d110e3d629b61f37581444b3f76aa427bed1014db5bce060e17"
+    },
+    {
+      "path": "native/native-user-policy-v3-launch.json",
+      "bytes": 387,
+      "sha256": "46dad71897a961e9b66e94383fa3351309fbe3e2223b323e84f662474435e8e5"
+    },
+    {
+      "path": "native/native-user-policy-v3-modules-after.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05"
+    },
+    {
+      "path": "native/native-user-policy-v3-modules-before.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05"
+    },
+    {
+      "path": "native/native-user-policy-v3-outcomes.json",
+      "bytes": 492,
+      "sha256": "9120ae30ac31890322ac26f6dfe6090e3b0bf1c3583ce6def12d48be29fe7982"
+    },
+    {
+      "path": "native/native-user-policy-v3-x64-after.json",
+      "bytes": 516,
+      "sha256": "4ad5807c452662f34d39d59ae478efa07d4aefeb5d7b1bb3de058a1d619091ff"
+    },
+    {
+      "path": "native/native-user-policy-v3-x64-before.json",
+      "bytes": 516,
+      "sha256": "4ad5807c452662f34d39d59ae478efa07d4aefeb5d7b1bb3de058a1d619091ff"
+    },
+    {
+      "path": "native/native-user-policy-v3-x64-build.log",
+      "bytes": 27,
+      "sha256": "4b9f65c2712c14383f0cba30be5dcd3cbe11361f28a70c657902a0b02fd58145"
+    },
+    {
+      "path": "native/native-user-policy-v3-x64-source-after.json",
+      "bytes": 236,
+      "sha256": "b1d1760122d613aa58f2a402c0356895f0432efd61ba9840225bc83db8e6ec91"
+    },
+    {
+      "path": "native/native-user-policy-v3-x64.log",
+      "bytes": 6210,
+      "sha256": "3a3edab0bb588f7a845f231f12fd7cc217df7e2152d96fb049efd89fabaead87"
+    },
+    {
+      "path": "native/native-user-policy-v3-x86-after.json",
+      "bytes": 514,
+      "sha256": "6646f6e0e031bd4fc037d2b5ddb6a6e8e108168e9eeee95bce9efc9005f2cdcb"
+    },
+    {
+      "path": "native/native-user-policy-v3-x86-before.json",
+      "bytes": 514,
+      "sha256": "6646f6e0e031bd4fc037d2b5ddb6a6e8e108168e9eeee95bce9efc9005f2cdcb"
+    },
+    {
+      "path": "native/native-user-policy-v3-x86-build.log",
+      "bytes": 27,
+      "sha256": "4b9f65c2712c14383f0cba30be5dcd3cbe11361f28a70c657902a0b02fd58145"
+    },
+    {
+      "path": "native/native-user-policy-v3-x86-laa-after.json",
+      "bytes": 528,
+      "sha256": "d9ce95acd52bba5396f59ae9d92d897d57a021bc3fad5940ddc086de3fd7ecea"
+    },
+    {
+      "path": "native/native-user-policy-v3-x86-laa-before.json",
+      "bytes": 528,
+      "sha256": "d9ce95acd52bba5396f59ae9d92d897d57a021bc3fad5940ddc086de3fd7ecea"
+    },
+    {
+      "path": "native/native-user-policy-v3-x86-laa-build.log",
+      "bytes": 27,
+      "sha256": "4b9f65c2712c14383f0cba30be5dcd3cbe11361f28a70c657902a0b02fd58145"
+    },
+    {
+      "path": "native/native-user-policy-v3-x86-laa-source-after.json",
+      "bytes": 240,
+      "sha256": "977ea3c736c080a8b8f8de926eb9331eb37ac979377d6504f181fe9264a496ce"
+    },
+    {
+      "path": "native/native-user-policy-v3-x86-laa.log",
+      "bytes": 6214,
+      "sha256": "85171179d21e10e04793be33b936afd639a04954338592ea37aec24bdb88c6a2"
+    },
+    {
+      "path": "native/native-user-policy-v3-x86-source-after.json",
+      "bytes": 236,
+      "sha256": "38771829fed01cbdc39f9c2946a2041f1f27d8e316790953827ea9321cba6fae"
+    },
+    {
+      "path": "native/native-user-policy-v3-x86.log",
+      "bytes": 6210,
+      "sha256": "7c2d9d2ce2b99b418aa5cf06281b8a80c46f79303f825a93ef6667ae268ee322"
+    },
+    {
+      "path": "native/native-user-policy-v3.cpp",
+      "bytes": 4003,
+      "sha256": "3a52bb10baf1ff9d8b206166bce84690839f67456ca26a885b83b0fd599e80ee"
+    },
+    {
+      "path": "native/native-user-policy-v3.ps1",
+      "bytes": 2507,
+      "sha256": "1863c9c6c91b64d623930c4279da47e24da288f811e59843c7525c61cce51fb3"
+    },
+    {
+      "path": "native/run-native-sid-text-v1.py",
+      "bytes": 1179,
+      "sha256": "5b55935933163c31fba133ef2921f3e612d2f8ca2e6a5b84d142e1f381b9e211"
+    },
+    {
+      "path": "native/run-native-user-environment-v1.py",
+      "bytes": 1271,
+      "sha256": "e718647142c8a60afa1293d5c4666e5b1803140f9dc233ebb12d0b249ed10ec7"
+    },
+    {
+      "path": "native/run-native-user-policy-v3.py",
+      "bytes": 1239,
+      "sha256": "defee5a2d0aee09a927cd0d9b3596065e9f97c85ef122effa7af21dd080eabd0"
+    },
+    {
+      "path": "policy-ownership.json",
+      "bytes": 1177,
+      "sha256": "0881f8628781fc0bd790c82027a687d3132399b9c6d07b9eef864074a4bb00cb"
+    },
+    {
+      "path": "policy-plan.json",
+      "bytes": 4264,
+      "sha256": "d6389f9bb34d471102f171b16c7dc819b9278f3a15e10c5cc6e996c649fc3529"
+    },
+    {
+      "path": "primary-retrieval.json",
+      "bytes": 881,
+      "sha256": "f0ec038ebbb812b117d2def56635c8053fd702af022178e75eea43e6ab794aa5"
+    },
+    {
+      "path": "shared-registry-keys.html",
+      "bytes": 66038,
+      "sha256": "17f371043070ad9ead9c65b26a0718f99e8e37776c674ecbdc69ec107afc624c"
+    },
+    {
+      "path": "sid-components.html",
+      "bytes": 49184,
+      "sha256": "8d9763a1fa0cfd0a395b80d17452dafa547bb0fa72bfe23947d316fbee9b97e3"
+    },
+    {
+      "path": "sid-text-cases.json",
+      "bytes": 25139,
+      "sha256": "a4c4de4853f1c95b0cd913bb99431d9d01d52829e38905ab5292d816177cb60a"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "base": "4671dc1314d31fd8387b754cbfc8c1860e68a3a1",
+  "source-root": "/Users/int/Library/Caches/assist-process-emulation/native-user-policy-20261019/policy-source",
+  "baseline-status": "## HEAD (no branch)\n",
+  "source-owned-paths": [
+    "src/user/windows/registry.rs",
+    "src/user/windows/registry/tree.rs",
+    "src/user/windows/registry/user_policy.rs",
+    "src/user/windows/registry/installed.rs",
+    "src/user/windows/registry/installed/tree.rs",
+    "src/user/windows/registry/installed/user_policy.rs",
+    "src/user/windows/native.rs",
+    "src/user/windows/registry/user_policy_tests.rs",
+    "src/user/windows/registry/installed/user_policy_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/registry_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/user_policy_registry_tests.rs",
+    "src/user/windows/native-runtime.md"
+  ],
+  "evidence-prefix": "docs/specifications/windows/native-user-policy/",
+  "scope": "One fixed per-user Safer policy suffix, derived only from the already captured primary SID; retain existing complete-or-known-absent read-only tree model and aggregate budgets. No guest path is forwarded."
+}

@@ -22,9 +22,15 @@ pub(super) fn capture_with(
 pub(super) fn capture_root_with(
     registry: &Registry,
     root: TreeRoot,
+    opener: impl FnMut(&[u16]) -> io::Result<OwnedKey>,
+) -> io::Result<Option<KeyTree>> {
+    capture_path_with(registry, root.path().encode_utf16().collect(), opener)
+}
+pub(super) fn capture_path_with(
+    registry: &Registry,
+    path: Vec<u16>,
     mut opener: impl FnMut(&[u16]) -> io::Result<OwnedKey>,
 ) -> io::Result<Option<KeyTree>> {
-    let path: Vec<_> = root.path().encode_utf16().collect();
     let key = match opener(&path) {
         Ok(key) => key,
         Err(error) if error.raw_os_error() == Some(2) => return Ok(None),

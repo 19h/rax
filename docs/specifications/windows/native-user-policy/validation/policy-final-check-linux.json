@@ -1,0 +1,29 @@
+{
+  "state": "finished",
+  "host": "linux",
+  "argv": [
+    "docker",
+    "run",
+    "--rm",
+    "--platform",
+    "linux/amd64",
+    "-v",
+    "/Users/int/Library/Caches/assist-process-emulation/native-user-policy-20261019/policy-source:/source:ro",
+    "-v",
+    "/Users/int/Library/Caches/assist-process-emulation/native-user-policy-20261019:/validation:ro",
+    "-w",
+    "/source",
+    "assist-rax-validation-rustfmt:1.95-bullseye-20261015",
+    "python3",
+    "-B",
+    "/validation/run-policy-proof-checks.py",
+    "/source"
+  ],
+  "checked-envelope-files": 205,
+  "utc": "2026-10-19T08:07:36.238031+00:00",
+  "exit-code": 0,
+  "log": "policy-final-check-linux.log",
+  "bytes": 344,
+  "sha256": "3a2ee0152e2868cd7328988a0286491b7dd4360d1a83d0ccb00f3f1edeccbc03",
+  "completed-utc": "2026-10-19T08:07:43.409759+00:00"
+}

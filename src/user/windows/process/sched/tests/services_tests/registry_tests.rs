@@ -1064,3 +1064,6 @@ mod srp;
 
 #[path = "safer_registry_tests.rs"]
 mod safer;
+
+#[path = "user_policy_registry_tests.rs"]
+mod user_policy;

@@ -1,0 +1,17 @@
+{
+  "state": "finished",
+  "host": "macos",
+  "argv": [
+    "/opt/homebrew/opt/python@3.15/bin/python3.15",
+    "-B",
+    "/Users/int/Library/Caches/assist-process-emulation/native-user-policy-20261019/run-policy-proof-checks.py",
+    "/Users/int/Library/Caches/assist-process-emulation/native-user-policy-20261019/policy-source"
+  ],
+  "checked-envelope-files": 205,
+  "utc": "2026-10-19T08:07:36.238033+00:00",
+  "exit-code": 0,
+  "log": "policy-final-check-macos.log",
+  "bytes": 344,
+  "sha256": "3a2ee0152e2868cd7328988a0286491b7dd4360d1a83d0ccb00f3f1edeccbc03",
+  "completed-utc": "2026-10-19T08:07:37.963376+00:00"
+}

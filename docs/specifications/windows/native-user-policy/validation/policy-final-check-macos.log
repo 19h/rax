@@ -1,0 +1,15 @@
+{
+  "key-opens": 640,
+  "sid-format-observations": 512,
+  "distinct-sid-format-cases": 128,
+  "native-ABI-profiles": 4,
+  "physical-Windows-kernels": 1,
+  "bound-native-files": 92
+}
+{
+  "source-inputs": 23683,
+  "three-host-full-gates": "pass",
+  "retained-consumers": "pass",
+  "ordinary-programs": 2,
+  "ordinary-guest-exit-success": false
+}

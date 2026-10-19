@@ -1,0 +1,81 @@
+{
+  "state": "finished",
+  "utc": "2026-10-19T07:43:11.584956+00:00",
+  "inputs": [
+    {
+      "path": "src/user/windows/registry.rs",
+      "sha256": "78a7ab378bbe9d54efb60f0a0c57fb95638a50cc5696167c0f7c174225f8144d",
+      "bytes": 8247
+    },
+    {
+      "path": "src/user/windows/registry/tree.rs",
+      "sha256": "fe886d0142924d7045f71237cafc367e505b4ab61f4e66dba311760e1ce29f6d",
+      "bytes": 8423
+    },
+    {
+      "path": "src/user/windows/registry/user_policy.rs",
+      "sha256": "8eb01ab92ba1495bc658cdd50e984b866c783267fd9642c7eb6e61ec4cf2d4a4",
+      "bytes": 1836
+    },
+    {
+      "path": "src/user/windows/registry/installed.rs",
+      "sha256": "e4b88dbc2c514afa563e3ade35f6bb136c2476ef79d65483daf026f5ad2e99c3",
+      "bytes": 10187
+    },
+    {
+      "path": "src/user/windows/registry/installed/tree.rs",
+      "sha256": "cca66959498fdb0d3bd73e8892ccf40619af5e11bb04d40c33cc1ad791f50486",
+      "bytes": 6705
+    },
+    {
+      "path": "src/user/windows/registry/installed/user_policy.rs",
+      "sha256": "047fbb4659261f11016a6ba542abeef228d708e755cc231b3a086db7f4c56f1d",
+      "bytes": 1606
+    },
+    {
+      "path": "src/user/windows/native.rs",
+      "sha256": "02111d6f350c96e6ae5e2c0cb405d1582cb17c3ad81ccdddc626ab1dc81ddd5f",
+      "bytes": 16455
+    },
+    {
+      "path": "src/user/windows/registry/user_policy_tests.rs",
+      "sha256": "b8efe737da80ba7947afe6c671ccc56dd679d4ad90aa184b7a820dd3d238ec04",
+      "bytes": 4960
+    },
+    {
+      "path": "src/user/windows/registry/installed/user_policy_tests.rs",
+      "sha256": "148b9b433d7ef56ff6d3232d433b50b1edffdda6bd864d0a3d5de82ee635d762",
+      "bytes": 6125
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/registry_tests.rs",
+      "sha256": "3891808d0d1ba2d789ebf2cd7ab68438835aea4db58cfb6c61e6d5047124652d",
+      "bytes": 38740
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/user_policy_registry_tests.rs",
+      "sha256": "4181948e1e0c951771477ccbf6ffcfea275a74c1d2850d2bf358028159b95f79",
+      "bytes": 6581
+    }
+  ],
+  "argv": [
+    "cargo",
+    "+1.95.0",
+    "test",
+    "--locked",
+    "--offline",
+    "--no-default-features",
+    "--lib",
+    "user_policy",
+    "--",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "exit-code": 0,
+  "log": "policy-prototype-a.log",
+  "bytes": 1691,
+  "sha256": "5138315389ac9ca9d40a24e11f74343b43b880ee7e03359f8ea16c8d49be7cef",
+  "results": [
+    "ok. 6 passed; 0 failed; 0 ignored; 0 measured; 8015 filtered out; finished in 0.07s"
+  ]
+}

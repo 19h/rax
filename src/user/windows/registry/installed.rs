@@ -3,6 +3,8 @@
 //! selection returns, and the kernel reads the resulting immutable records.
 #[path = "installed/tree.rs"]
 mod tree;
+#[path = "installed/user_policy.rs"]
+mod user_policy;
 use super::SEGMENT_HEAP_KEY;
 use super::{
     MAX_NAME_UNITS, MAX_VALUE_BYTES, MAX_VALUES, NLS_KEY, Registry, SESSION_MANAGER_KEY,
@@ -11,6 +13,7 @@ use super::{
 use std::ffi::c_void;
 use std::io;
 use std::ptr::null_mut;
+pub(crate) use user_policy::capture as capture_user_policy;
 
 type Hkey = *mut c_void;
 #[link(name = "advapi32")]
@@ -309,3 +312,7 @@ mod srp_tests;
 #[cfg(test)]
 #[path = "installed/safer_tests.rs"]
 mod safer_tests;
+
+#[cfg(test)]
+#[path = "installed/user_policy_tests.rs"]
+mod user_policy_tests;

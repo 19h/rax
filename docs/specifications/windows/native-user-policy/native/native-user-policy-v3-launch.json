@@ -1,0 +1,9 @@
+{
+  "pid": 2480,
+  "utc": "2026-10-19T07:13:52.375916+00:00",
+  "state": "finished",
+  "scope": "Read-only native primary SID capture and fixed per-user Safer policy opens with bounded path/view/right variants; no token, registry, thread impersonation or security policy mutation.",
+  "child-pid": 6064,
+  "exit-code": 0,
+  "completed-utc": "2026-10-19T07:14:00.723609+00:00"
+}

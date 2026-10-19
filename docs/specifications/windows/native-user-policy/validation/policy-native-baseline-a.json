@@ -1,0 +1,24 @@
+{
+  "state": "expected-regression-failed",
+  "pid": 3376,
+  "scope": "All published User product Rust is unchanged; only two owned test overrides add actual primary SID/user policy presence checking.",
+  "child": 2656,
+  "argv": [
+    "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+    "test",
+    "--locked",
+    "--offline",
+    "--no-default-features",
+    "--lib",
+    "installed_user_policy_snapshot_matches_primary_sid_and_native_views",
+    "--",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "exit-code": 101,
+  "passed": 0,
+  "failed": 1,
+  "log": "policy-native-baseline-a.log",
+  "bytes": 1973,
+  "sha256": "deea7876f8cc7b4b055f654ae12cfac2abd5455cb056ee0766eec515658cfc87"
+}

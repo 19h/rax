@@ -1,0 +1,19 @@
+{
+  "base": "4671dc1314d31fd8387b754cbfc8c1860e68a3a1",
+  "parent-manifest": "user-candidate-epoch1.json",
+  "test-only-overrides": [
+    {
+      "path": "src/user/windows/registry/installed.rs",
+      "transfer": "policy-baseline-installed.rs",
+      "bytes": 10073,
+      "sha256": "8525b9de8783607580ba44d64dcb8c103f6da209203ba8dd436d5ed1733ccefd"
+    },
+    {
+      "path": "src/user/windows/registry/installed/user_policy_tests.rs",
+      "transfer": "policy-baseline-user_policy_tests.rs",
+      "bytes": 3011,
+      "sha256": "d5c7a735cc29aa041003144e1261fdb83a80cd37dab5c107a14af31029fc82d3"
+    }
+  ],
+  "scope": "All published User product Rust is unchanged; only two owned test overrides add actual primary SID/user policy presence checking."
+}

@@ -1,0 +1,3174 @@
+{
+  "files": [
+    {
+      "path": "docs/specifications/windows/native-user-policy/convert-sid.html",
+      "bytes": 53854,
+      "sha256": "8781321bee49b201e550d989524d07fedd01d60069bd82964295882ffe1bbd7f",
+      "warning-count": 174,
+      "line-ranges": [
+        [
+          11,
+          11
+        ],
+        [
+          19,
+          19
+        ],
+        [
+          33,
+          33
+        ],
+        [
+          39,
+          39
+        ],
+        [
+          42,
+          42
+        ],
+        [
+          44,
+          44
+        ],
+        [
+          46,
+          46
+        ],
+        [
+          48,
+          48
+        ],
+        [
+          50,
+          50
+        ],
+        [
+          52,
+          52
+        ],
+        [
+          54,
+          54
+        ],
+        [
+          56,
+          56
+        ],
+        [
+          58,
+          58
+        ],
+        [
+          60,
+          60
+        ],
+        [
+          62,
+          62
+        ],
+        [
+          64,
+          64
+        ],
+        [
+          66,
+          66
+        ],
+        [
+          68,
+          68
+        ],
+        [
+          70,
+          70
+        ],
+        [
+          72,
+          72
+        ],
+        [
+          74,
+          74
+        ],
+        [
+          76,
+          76
+        ],
+        [
+          78,
+          78
+        ],
+        [
+          80,
+          80
+        ],
+        [
+          82,
+          82
+        ],
+        [
+          84,
+          84
+        ],
+        [
+          86,
+          86
+        ],
+        [
+          88,
+          88
+        ],
+        [
+          90,
+          90
+        ],
+        [
+          92,
+          92
+        ],
+        [
+          94,
+          94
+        ],
+        [
+          96,
+          96
+        ],
+        [
+          98,
+          98
+        ],
+        [
+          100,
+          100
+        ],
+        [
+          102,
+          102
+        ],
+        [
+          104,
+          104
+        ],
+        [
+          106,
+          106
+        ],
+        [
+          108,
+          108
+        ],
+        [
+          110,
+          110
+        ],
+        [
+          112,
+          112
+        ],
+        [
+          114,
+          114
+        ],
+        [
+          116,
+          116
+        ],
+        [
+          118,
+          118
+        ],
+        [
+          120,
+          120
+        ],
+        [
+          122,
+          122
+        ],
+        [
+          124,
+          124
+        ],
+        [
+          126,
+          126
+        ],
+        [
+          128,
+          128
+        ],
+        [
+          130,
+          130
+        ],
+        [
+          132,
+          132
+        ],
+        [
+          134,
+          134
+        ],
+        [
+          136,
+          136
+        ],
+        [
+          138,
+          138
+        ],
+        [
+          140,
+          140
+        ],
+        [
+          142,
+          142
+        ],
+        [
+          144,
+          144
+        ],
+        [
+          146,
+          146
+        ],
+        [
+          148,
+          148
+        ],
+        [
+          150,
+          150
+        ],
+        [
+          152,
+          152
+        ],
+        [
+          154,
+          154
+        ],
+        [
+          156,
+          156
+        ],
+        [
+          158,
+          158
+        ],
+        [
+          160,
+          160
+        ],
+        [
+          162,
+          162
+        ],
+        [
+          164,
+          164
+        ],
+        [
+          166,
+          166
+        ],
+        [
+          168,
+          168
+        ],
+        [
+          170,
+          170
+        ],
+        [
+          172,
+          172
+        ],
+        [
+          174,
+          174
+        ],
+        [
+          176,
+          176
+        ],
+        [
+          178,
+          178
+        ],
+        [
+          180,
+          180
+        ],
+        [
+          182,
+          182
+        ],
+        [
+          184,
+          184
+        ],
+        [
+          186,
+          186
+        ],
+        [
+          188,
+          188
+        ],
+        [
+          190,
+          190
+        ],
+        [
+          192,
+          192
+        ],
+        [
+          234,
+          234
+        ],
+        [
+          236,
+          236
+        ],
+        [
+          240,
+          240
+        ],
+        [
+          286,
+          286
+        ],
+        [
+          289,
+          289
+        ],
+        [
+          291,
+          291
+        ],
+        [
+          301,
+          301
+        ],
+        [
+          304,
+          304
+        ],
+        [
+          307,
+          307
+        ],
+        [
+          311,
+          311
+        ],
+        [
+          321,
+          321
+        ],
+        [
+          375,
+          375
+        ],
+        [
+          378,
+          378
+        ],
+        [
+          382,
+          382
+        ],
+        [
+          385,
+          385
+        ],
+        [
+          393,
+          393
+        ],
+        [
+          440,
+          440
+        ],
+        [
+          451,
+          451
+        ],
+        [
+          478,
+          478
+        ],
+        [
+          486,
+          486
+        ],
+        [
+          492,
+          492
+        ],
+        [
+          495,
+          495
+        ],
+        [
+          519,
+          519
+        ],
+        [
+          524,
+          524
+        ],
+        [
+          530,
+          530
+        ],
+        [
+          544,
+          544
+        ],
+        [
+          560,
+          560
+        ],
+        [
+          575,
+          575
+        ],
+        [
+          589,
+          589
+        ],
+        [
+          604,
+          604
+        ],
+        [
+          618,
+          618
+        ],
+        [
+          634,
+          635
+        ],
+        [
+          650,
+          650
+        ],
+        [
+          666,
+          667
+        ],
+        [
+          674,
+          674
+        ],
+        [
+          686,
+          686
+        ],
+        [
+          688,
+          688
+        ],
+        [
+          705,
+          705
+        ],
+        [
+          720,
+          721
+        ],
+        [
+          725,
+          725
+        ],
+        [
+          728,
+          728
+        ],
+        [
+          749,
+          749
+        ],
+        [
+          751,
+          751
+        ],
+        [
+          758,
+          758
+        ],
+        [
+          765,
+          765
+        ],
+        [
+          780,
+          780
+        ],
+        [
+          782,
+          782
+        ],
+        [
+          784,
+          784
+        ],
+        [
+          806,
+          806
+        ],
+        [
+          922,
+          922
+        ],
+        [
+          928,
+          928
+        ],
+        [
+          945,
+          946
+        ],
+        [
+          1022,
+          1022
+        ],
+        [
+          1090,
+          1090
+        ],
+        [
+          1097,
+          1097
+        ],
+        [
+          1099,
+          1099
+        ],
+        [
+          1105,
+          1105
+        ],
+        [
+          1112,
+          1112
+        ],
+        [
+          1119,
+          1119
+        ],
+        [
+          1121,
+          1121
+        ],
+        [
+          1143,
+          1143
+        ],
+        [
+          1145,
+          1145
+        ],
+        [
+          1153,
+          1153
+        ],
+        [
+          1160,
+          1160
+        ],
+        [
+          1169,
+          1169
+        ],
+        [
+          1171,
+          1171
+        ],
+        [
+          1244,
+          1244
+        ],
+        [
+          1312,
+          1312
+        ],
+        [
+          1318,
+          1318
+        ],
+        [
+          1321,
+          1321
+        ],
+        [
+          1340,
+          1340
+        ],
+        [
+          1353,
+          1353
+        ],
+        [
+          1388,
+          1388
+        ],
+        [
+          1391,
+          1391
+        ],
+        [
+          1503,
+          1503
+        ],
+        [
+          1513,
+          1513
+        ],
+        [
+          1515,
+          1515
+        ],
+        [
+          1525,
+          1525
+        ],
+        [
+          1527,
+          1527
+        ],
+        [
+          1537,
+          1537
+        ],
+        [
+          1539,
+          1539
+        ],
+        [
+          1549,
+          1549
+        ],
+        [
+          1551,
+          1551
+        ],
+        [
+          1561,
+          1561
+        ],
+        [
+          1563,
+          1563
+        ],
+        [
+          1573,
+          1573
+        ],
+        [
+          1575,
+          1575
+        ],
+        [
+          1585,
+          1585
+        ],
+        [
+          1587,
+          1587
+        ],
+        [
+          1597,
+          1597
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/native/native-sid-text-v1-arm64-build.log",
+      "bytes": 24,
+      "sha256": "718c67f4dde5b85b0dc7bc4013a6dd26537e18ac6dcc349e423f1017c95d06ad",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/native/native-sid-text-v1-arm64-source-after.json",
+      "bytes": 232,
+      "sha256": "c53784040dabf7eb903a46e7433585275287927177f2838288b17e1b90bdc854",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/native/native-sid-text-v1-arm64.log",
+      "bytes": 17715,
+      "sha256": "de758403f97b7ebc79e37b681ec56d3b90f0cad29bf8bc44571124d64e450bea",
+      "warning-count": 129,
+      "line-ranges": [
+        [
+          1,
+          129
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/native/native-sid-text-v1-driver.log",
+      "bytes": 964,
+      "sha256": "81157a84a41f6d110e3d629b61f37581444b3f76aa427bed1014db5bce060e17",
+      "warning-count": 16,
+      "line-ranges": [
+        [
+          1,
+          16
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/native/native-sid-text-v1-launch.json",
+      "bytes": 339,
+      "sha256": "8ec559f31a6215b7d3ebf2f0c94a33df9028130d6891d1ae8841ec57d430cb58",
+      "warning-count": 9,
+      "line-ranges": [
+        [
+          1,
+          9
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/native/native-sid-text-v1-modules-after.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/native/native-sid-text-v1-modules-before.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/native/native-sid-text-v1-outcomes.json",
+      "bytes": 480,
+      "sha256": "2c2feaa5627e3a51b898239d8c7e3c72d6803a7c0bf6486fd66860734e48743a",
+      "warning-count": 22,
+      "line-ranges": [
+        [
+          1,
+          22
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/native/native-sid-text-v1-x64-build.log",
+      "bytes": 24,
+      "sha256": "718c67f4dde5b85b0dc7bc4013a6dd26537e18ac6dcc349e423f1017c95d06ad",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/native/native-sid-text-v1-x64-source-after.json",
+      "bytes": 230,
+      "sha256": "33cc11bb5c930eca252bb402b7e077383f46288cbac05ecfcdc6361eb1283e75",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/native/native-sid-text-v1-x64.log",
+      "bytes": 17459,
+      "sha256": "ed92ce0381bcdf2402daea46f91ee74eabd6b6305f458fd3f4c27dfb5ad3a402",
+      "warning-count": 129,
+      "line-ranges": [
+        [
+          1,
+          129
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/native/native-sid-text-v1-x86-build.log",
+      "bytes": 24,
+      "sha256": "718c67f4dde5b85b0dc7bc4013a6dd26537e18ac6dcc349e423f1017c95d06ad",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/native/native-sid-text-v1-x86-laa-build.log",
+      "bytes": 24,
+      "sha256": "718c67f4dde5b85b0dc7bc4013a6dd26537e18ac6dcc349e423f1017c95d06ad",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/native/native-sid-text-v1-x86-laa-source-after.json",
+      "bytes": 234,
+      "sha256": "38ccb9d962b243a307bd59e2e6eb0f88ad08f8eb16c519507b42074f954b8ba7",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/native/native-sid-text-v1-x86-laa.log",
+      "bytes": 17971,
+      "sha256": "b3b6a0c20e0594ed02af131ad8347778ed9ccea26213cdf3d075cb16c569c809",
+      "warning-count": 129,
+      "line-ranges": [
+        [
+          1,
+          129
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/native/native-sid-text-v1-x86-source-after.json",
+      "bytes": 230,
+      "sha256": "e42e7ba75bf62aa360f84db7f534e239ef75c7dcc1f6b00c268d1792721670a7",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/native/native-sid-text-v1-x86.log",
+      "bytes": 17459,
+      "sha256": "59929dabad9617548dbb2a8928753bd45bac9d004a3aaf61eb0e0924f9844602",
+      "warning-count": 129,
+      "line-ranges": [
+        [
+          1,
+          129
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/native/native-user-environment-v1-arm64-build.log",
+      "bytes": 32,
+      "sha256": "b06cd452630563c11dccc945836e0557eb13db7ead7b58991d4fbe3419bc4ac0",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/native/native-user-environment-v1-arm64-source-after.json",
+      "bytes": 248,
+      "sha256": "c1fdc79e21037e6bfc601e45e6266f9f5ed1cc6aee0019c2edf613e847c031d9",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/native/native-user-environment-v1-arm64.log",
+      "bytes": 6212,
+      "sha256": "ab656118431e05db57d11a01de3a3a072d7b01f1146a1116f9ead6fda7dc09db",
+      "warning-count": 83,
+      "line-ranges": [
+        [
+          1,
+          83
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/native/native-user-environment-v1-driver.log",
+      "bytes": 964,
+      "sha256": "81157a84a41f6d110e3d629b61f37581444b3f76aa427bed1014db5bce060e17",
+      "warning-count": 16,
+      "line-ranges": [
+        [
+          1,
+          16
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/native/native-user-environment-v1-launch.json",
+      "bytes": 399,
+      "sha256": "fa1e0882273cc6a8ec1b2d96244aacbb49a4a6643d1557467ac4c05e1b1095a4",
+      "warning-count": 9,
+      "line-ranges": [
+        [
+          1,
+          9
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/native/native-user-environment-v1-modules-after.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/native/native-user-environment-v1-modules-before.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/native/native-user-environment-v1-outcomes.json",
+      "bytes": 512,
+      "sha256": "1d164d40c099bd51c8caa35eee797e48f9c945992af4a76be7dd7e61646d706d",
+      "warning-count": 22,
+      "line-ranges": [
+        [
+          1,
+          22
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/native/native-user-environment-v1-x64-build.log",
+      "bytes": 32,
+      "sha256": "b06cd452630563c11dccc945836e0557eb13db7ead7b58991d4fbe3419bc4ac0",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/native/native-user-environment-v1-x64-source-after.json",
+      "bytes": 246,
+      "sha256": "f99a237782079a244767ad0ef8975076716acefa0c8c3c8538e512fd1a0c1b30",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/native/native-user-environment-v1-x64.log",
+      "bytes": 6210,
+      "sha256": "d1eb56e7b795a28917a74720196ea2f8473f4ec90a2fbda9f6dad73f19ad8432",
+      "warning-count": 83,
+      "line-ranges": [
+        [
+          1,
+          83
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/native/native-user-environment-v1-x86-build.log",
+      "bytes": 32,
+      "sha256": "b06cd452630563c11dccc945836e0557eb13db7ead7b58991d4fbe3419bc4ac0",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/native/native-user-environment-v1-x86-laa-build.log",
+      "bytes": 32,
+      "sha256": "b06cd452630563c11dccc945836e0557eb13db7ead7b58991d4fbe3419bc4ac0",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/native/native-user-environment-v1-x86-laa-source-after.json",
+      "bytes": 250,
+      "sha256": "dd644dac97f4ff7d662fa62086000a51dff5cf5ce9371ce8c84665dcc05ea917",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/native/native-user-environment-v1-x86-laa.log",
+      "bytes": 6214,
+      "sha256": "81e46100ceace0cca79df41c2709f6f77f4d6417b4357e8cb15c5c074f7f37b1",
+      "warning-count": 83,
+      "line-ranges": [
+        [
+          1,
+          83
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/native/native-user-environment-v1-x86-source-after.json",
+      "bytes": 246,
+      "sha256": "00edda9a2593068d2c85d5557e8e65367789f5e88642807c87f9b0a5038f1fdf",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/native/native-user-environment-v1-x86.log",
+      "bytes": 6210,
+      "sha256": "3dd3997efe1abb7244636a755f1e1b35cdc74eb536d32bd90d5632c4056b6331",
+      "warning-count": 83,
+      "line-ranges": [
+        [
+          1,
+          83
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/native/native-user-policy-v3-arm64-build.log",
+      "bytes": 27,
+      "sha256": "4b9f65c2712c14383f0cba30be5dcd3cbe11361f28a70c657902a0b02fd58145",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/native/native-user-policy-v3-arm64-source-after.json",
+      "bytes": 238,
+      "sha256": "6d675791b67aacce1c60a33deb6d439128a0b9ff10851e9de1cbf6a07f289cd9",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/native/native-user-policy-v3-arm64.log",
+      "bytes": 6212,
+      "sha256": "c7ba76b01a383df6b509ece7002e78a1c1d20e886241193d32dd69f2e070fe0c",
+      "warning-count": 83,
+      "line-ranges": [
+        [
+          1,
+          83
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/native/native-user-policy-v3-driver.log",
+      "bytes": 964,
+      "sha256": "81157a84a41f6d110e3d629b61f37581444b3f76aa427bed1014db5bce060e17",
+      "warning-count": 16,
+      "line-ranges": [
+        [
+          1,
+          16
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/native/native-user-policy-v3-launch.json",
+      "bytes": 387,
+      "sha256": "46dad71897a961e9b66e94383fa3351309fbe3e2223b323e84f662474435e8e5",
+      "warning-count": 9,
+      "line-ranges": [
+        [
+          1,
+          9
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/native/native-user-policy-v3-modules-after.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/native/native-user-policy-v3-modules-before.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/native/native-user-policy-v3-outcomes.json",
+      "bytes": 492,
+      "sha256": "9120ae30ac31890322ac26f6dfe6090e3b0bf1c3583ce6def12d48be29fe7982",
+      "warning-count": 22,
+      "line-ranges": [
+        [
+          1,
+          22
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/native/native-user-policy-v3-x64-build.log",
+      "bytes": 27,
+      "sha256": "4b9f65c2712c14383f0cba30be5dcd3cbe11361f28a70c657902a0b02fd58145",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/native/native-user-policy-v3-x64-source-after.json",
+      "bytes": 236,
+      "sha256": "b1d1760122d613aa58f2a402c0356895f0432efd61ba9840225bc83db8e6ec91",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/native/native-user-policy-v3-x64.log",
+      "bytes": 6210,
+      "sha256": "3a3edab0bb588f7a845f231f12fd7cc217df7e2152d96fb049efd89fabaead87",
+      "warning-count": 83,
+      "line-ranges": [
+        [
+          1,
+          83
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/native/native-user-policy-v3-x86-build.log",
+      "bytes": 27,
+      "sha256": "4b9f65c2712c14383f0cba30be5dcd3cbe11361f28a70c657902a0b02fd58145",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/native/native-user-policy-v3-x86-laa-build.log",
+      "bytes": 27,
+      "sha256": "4b9f65c2712c14383f0cba30be5dcd3cbe11361f28a70c657902a0b02fd58145",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/native/native-user-policy-v3-x86-laa-source-after.json",
+      "bytes": 240,
+      "sha256": "977ea3c736c080a8b8f8de926eb9331eb37ac979377d6504f181fe9264a496ce",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/native/native-user-policy-v3-x86-laa.log",
+      "bytes": 6214,
+      "sha256": "85171179d21e10e04793be33b936afd639a04954338592ea37aec24bdb88c6a2",
+      "warning-count": 83,
+      "line-ranges": [
+        [
+          1,
+          83
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/native/native-user-policy-v3-x86-source-after.json",
+      "bytes": 236,
+      "sha256": "38771829fed01cbdc39f9c2946a2041f1f27d8e316790953827ea9321cba6fae",
+      "warning-count": 5,
+      "line-ranges": [
+        [
+          1,
+          5
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/native/native-user-policy-v3-x86.log",
+      "bytes": 6210,
+      "sha256": "7c2d9d2ce2b99b418aa5cf06281b8a80c46f79303f825a93ef6667ae268ee322",
+      "warning-count": 83,
+      "line-ranges": [
+        [
+          1,
+          83
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/shared-registry-keys.html",
+      "bytes": 66038,
+      "sha256": "17f371043070ad9ead9c65b26a0718f99e8e37776c674ecbdc69ec107afc624c",
+      "warning-count": 142,
+      "line-ranges": [
+        [
+          11,
+          11
+        ],
+        [
+          19,
+          19
+        ],
+        [
+          33,
+          33
+        ],
+        [
+          39,
+          39
+        ],
+        [
+          42,
+          42
+        ],
+        [
+          44,
+          44
+        ],
+        [
+          46,
+          46
+        ],
+        [
+          48,
+          48
+        ],
+        [
+          50,
+          50
+        ],
+        [
+          52,
+          52
+        ],
+        [
+          54,
+          54
+        ],
+        [
+          56,
+          56
+        ],
+        [
+          58,
+          58
+        ],
+        [
+          60,
+          60
+        ],
+        [
+          62,
+          62
+        ],
+        [
+          64,
+          64
+        ],
+        [
+          66,
+          66
+        ],
+        [
+          68,
+          68
+        ],
+        [
+          70,
+          70
+        ],
+        [
+          72,
+          72
+        ],
+        [
+          74,
+          74
+        ],
+        [
+          76,
+          76
+        ],
+        [
+          78,
+          78
+        ],
+        [
+          80,
+          80
+        ],
+        [
+          82,
+          82
+        ],
+        [
+          84,
+          84
+        ],
+        [
+          86,
+          86
+        ],
+        [
+          88,
+          88
+        ],
+        [
+          90,
+          90
+        ],
+        [
+          92,
+          92
+        ],
+        [
+          94,
+          94
+        ],
+        [
+          96,
+          96
+        ],
+        [
+          98,
+          98
+        ],
+        [
+          100,
+          100
+        ],
+        [
+          102,
+          102
+        ],
+        [
+          104,
+          104
+        ],
+        [
+          106,
+          106
+        ],
+        [
+          108,
+          108
+        ],
+        [
+          110,
+          110
+        ],
+        [
+          112,
+          112
+        ],
+        [
+          114,
+          114
+        ],
+        [
+          116,
+          116
+        ],
+        [
+          118,
+          118
+        ],
+        [
+          120,
+          120
+        ],
+        [
+          122,
+          122
+        ],
+        [
+          124,
+          124
+        ],
+        [
+          126,
+          126
+        ],
+        [
+          168,
+          168
+        ],
+        [
+          170,
+          170
+        ],
+        [
+          174,
+          174
+        ],
+        [
+          220,
+          220
+        ],
+        [
+          223,
+          223
+        ],
+        [
+          225,
+          225
+        ],
+        [
+          235,
+          235
+        ],
+        [
+          238,
+          238
+        ],
+        [
+          241,
+          241
+        ],
+        [
+          245,
+          245
+        ],
+        [
+          255,
+          255
+        ],
+        [
+          309,
+          309
+        ],
+        [
+          312,
+          312
+        ],
+        [
+          316,
+          316
+        ],
+        [
+          319,
+          319
+        ],
+        [
+          327,
+          327
+        ],
+        [
+          374,
+          374
+        ],
+        [
+          385,
+          385
+        ],
+        [
+          412,
+          412
+        ],
+        [
+          420,
+          420
+        ],
+        [
+          426,
+          426
+        ],
+        [
+          429,
+          429
+        ],
+        [
+          453,
+          453
+        ],
+        [
+          458,
+          458
+        ],
+        [
+          464,
+          464
+        ],
+        [
+          478,
+          478
+        ],
+        [
+          494,
+          494
+        ],
+        [
+          509,
+          509
+        ],
+        [
+          523,
+          523
+        ],
+        [
+          538,
+          538
+        ],
+        [
+          552,
+          552
+        ],
+        [
+          568,
+          569
+        ],
+        [
+          584,
+          584
+        ],
+        [
+          600,
+          601
+        ],
+        [
+          608,
+          608
+        ],
+        [
+          620,
+          620
+        ],
+        [
+          622,
+          622
+        ],
+        [
+          639,
+          639
+        ],
+        [
+          654,
+          655
+        ],
+        [
+          659,
+          659
+        ],
+        [
+          662,
+          662
+        ],
+        [
+          683,
+          683
+        ],
+        [
+          685,
+          685
+        ],
+        [
+          692,
+          692
+        ],
+        [
+          699,
+          699
+        ],
+        [
+          714,
+          714
+        ],
+        [
+          716,
+          716
+        ],
+        [
+          718,
+          718
+        ],
+        [
+          740,
+          740
+        ],
+        [
+          1120,
+          1120
+        ],
+        [
+          1126,
+          1126
+        ],
+        [
+          1143,
+          1144
+        ],
+        [
+          1220,
+          1220
+        ],
+        [
+          1288,
+          1288
+        ],
+        [
+          1295,
+          1295
+        ],
+        [
+          1297,
+          1297
+        ],
+        [
+          1303,
+          1303
+        ],
+        [
+          1310,
+          1310
+        ],
+        [
+          1317,
+          1317
+        ],
+        [
+          1324,
+          1324
+        ],
+        [
+          1326,
+          1326
+        ],
+        [
+          1348,
+          1348
+        ],
+        [
+          1350,
+          1350
+        ],
+        [
+          1358,
+          1358
+        ],
+        [
+          1365,
+          1365
+        ],
+        [
+          1374,
+          1374
+        ],
+        [
+          1376,
+          1376
+        ],
+        [
+          1449,
+          1449
+        ],
+        [
+          1517,
+          1517
+        ],
+        [
+          1523,
+          1523
+        ],
+        [
+          1526,
+          1526
+        ],
+        [
+          1545,
+          1545
+        ],
+        [
+          1558,
+          1558
+        ],
+        [
+          1593,
+          1593
+        ],
+        [
+          1596,
+          1596
+        ],
+        [
+          1708,
+          1708
+        ],
+        [
+          1718,
+          1718
+        ],
+        [
+          1720,
+          1720
+        ],
+        [
+          1730,
+          1730
+        ],
+        [
+          1732,
+          1732
+        ],
+        [
+          1742,
+          1742
+        ],
+        [
+          1744,
+          1744
+        ],
+        [
+          1754,
+          1754
+        ],
+        [
+          1756,
+          1756
+        ],
+        [
+          1766,
+          1766
+        ],
+        [
+          1768,
+          1768
+        ],
+        [
+          1778,
+          1778
+        ],
+        [
+          1780,
+          1780
+        ],
+        [
+          1790,
+          1790
+        ],
+        [
+          1792,
+          1792
+        ],
+        [
+          1802,
+          1802
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/sid-components.html",
+      "bytes": 49184,
+      "sha256": "8d9763a1fa0cfd0a395b80d17452dafa547bb0fa72bfe23947d316fbee9b97e3",
+      "warning-count": 139,
+      "line-ranges": [
+        [
+          11,
+          11
+        ],
+        [
+          19,
+          19
+        ],
+        [
+          33,
+          33
+        ],
+        [
+          39,
+          39
+        ],
+        [
+          42,
+          42
+        ],
+        [
+          44,
+          44
+        ],
+        [
+          46,
+          46
+        ],
+        [
+          48,
+          48
+        ],
+        [
+          50,
+          50
+        ],
+        [
+          52,
+          52
+        ],
+        [
+          54,
+          54
+        ],
+        [
+          56,
+          56
+        ],
+        [
+          58,
+          58
+        ],
+        [
+          60,
+          60
+        ],
+        [
+          62,
+          62
+        ],
+        [
+          64,
+          64
+        ],
+        [
+          66,
+          66
+        ],
+        [
+          68,
+          68
+        ],
+        [
+          70,
+          70
+        ],
+        [
+          72,
+          72
+        ],
+        [
+          74,
+          74
+        ],
+        [
+          76,
+          76
+        ],
+        [
+          78,
+          78
+        ],
+        [
+          80,
+          80
+        ],
+        [
+          82,
+          82
+        ],
+        [
+          84,
+          84
+        ],
+        [
+          86,
+          86
+        ],
+        [
+          88,
+          88
+        ],
+        [
+          90,
+          90
+        ],
+        [
+          92,
+          92
+        ],
+        [
+          94,
+          94
+        ],
+        [
+          96,
+          96
+        ],
+        [
+          98,
+          98
+        ],
+        [
+          100,
+          100
+        ],
+        [
+          102,
+          102
+        ],
+        [
+          104,
+          104
+        ],
+        [
+          106,
+          106
+        ],
+        [
+          108,
+          108
+        ],
+        [
+          110,
+          110
+        ],
+        [
+          112,
+          112
+        ],
+        [
+          114,
+          114
+        ],
+        [
+          116,
+          116
+        ],
+        [
+          118,
+          118
+        ],
+        [
+          120,
+          120
+        ],
+        [
+          162,
+          162
+        ],
+        [
+          164,
+          164
+        ],
+        [
+          168,
+          168
+        ],
+        [
+          214,
+          214
+        ],
+        [
+          217,
+          217
+        ],
+        [
+          219,
+          219
+        ],
+        [
+          229,
+          229
+        ],
+        [
+          232,
+          232
+        ],
+        [
+          235,
+          235
+        ],
+        [
+          239,
+          239
+        ],
+        [
+          249,
+          249
+        ],
+        [
+          303,
+          303
+        ],
+        [
+          306,
+          306
+        ],
+        [
+          310,
+          310
+        ],
+        [
+          313,
+          313
+        ],
+        [
+          321,
+          321
+        ],
+        [
+          368,
+          368
+        ],
+        [
+          379,
+          379
+        ],
+        [
+          406,
+          406
+        ],
+        [
+          414,
+          414
+        ],
+        [
+          420,
+          420
+        ],
+        [
+          423,
+          423
+        ],
+        [
+          447,
+          447
+        ],
+        [
+          452,
+          452
+        ],
+        [
+          458,
+          458
+        ],
+        [
+          472,
+          472
+        ],
+        [
+          488,
+          488
+        ],
+        [
+          503,
+          503
+        ],
+        [
+          517,
+          517
+        ],
+        [
+          532,
+          532
+        ],
+        [
+          546,
+          546
+        ],
+        [
+          562,
+          563
+        ],
+        [
+          578,
+          578
+        ],
+        [
+          594,
+          595
+        ],
+        [
+          602,
+          602
+        ],
+        [
+          614,
+          614
+        ],
+        [
+          616,
+          616
+        ],
+        [
+          633,
+          633
+        ],
+        [
+          648,
+          649
+        ],
+        [
+          653,
+          653
+        ],
+        [
+          656,
+          656
+        ],
+        [
+          677,
+          677
+        ],
+        [
+          679,
+          679
+        ],
+        [
+          686,
+          686
+        ],
+        [
+          693,
+          693
+        ],
+        [
+          708,
+          708
+        ],
+        [
+          710,
+          710
+        ],
+        [
+          712,
+          712
+        ],
+        [
+          734,
+          734
+        ],
+        [
+          768,
+          768
+        ],
+        [
+          774,
+          774
+        ],
+        [
+          791,
+          792
+        ],
+        [
+          868,
+          868
+        ],
+        [
+          936,
+          936
+        ],
+        [
+          943,
+          943
+        ],
+        [
+          945,
+          945
+        ],
+        [
+          951,
+          951
+        ],
+        [
+          958,
+          958
+        ],
+        [
+          965,
+          965
+        ],
+        [
+          972,
+          972
+        ],
+        [
+          974,
+          974
+        ],
+        [
+          996,
+          996
+        ],
+        [
+          998,
+          998
+        ],
+        [
+          1006,
+          1006
+        ],
+        [
+          1013,
+          1013
+        ],
+        [
+          1022,
+          1022
+        ],
+        [
+          1024,
+          1024
+        ],
+        [
+          1097,
+          1097
+        ],
+        [
+          1165,
+          1165
+        ],
+        [
+          1171,
+          1171
+        ],
+        [
+          1174,
+          1174
+        ],
+        [
+          1193,
+          1193
+        ],
+        [
+          1206,
+          1206
+        ],
+        [
+          1241,
+          1241
+        ],
+        [
+          1244,
+          1244
+        ],
+        [
+          1356,
+          1356
+        ],
+        [
+          1366,
+          1366
+        ],
+        [
+          1368,
+          1368
+        ],
+        [
+          1378,
+          1378
+        ],
+        [
+          1380,
+          1380
+        ],
+        [
+          1390,
+          1390
+        ],
+        [
+          1392,
+          1392
+        ],
+        [
+          1402,
+          1402
+        ],
+        [
+          1404,
+          1404
+        ],
+        [
+          1414,
+          1414
+        ],
+        [
+          1416,
+          1416
+        ],
+        [
+          1426,
+          1426
+        ],
+        [
+          1428,
+          1428
+        ],
+        [
+          1438,
+          1438
+        ],
+        [
+          1440,
+          1440
+        ],
+        [
+          1450,
+          1450
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/validation/native-policy-epoch1-final-owning-archive-identities.json",
+      "bytes": 109671,
+      "sha256": "3114963b5cdb49f5fb50e7d9df4ac5d8f9643f6f435241e3e64093dc42883c7f",
+      "warning-count": 2772,
+      "line-ranges": [
+        [
+          1,
+          2772
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/validation/native-policy-epoch1-pre-cpp-archives.json",
+      "bytes": 109674,
+      "sha256": "a196c497737fe211c03af3e4b30bca3512608f229020fd095ae0a59adff35471",
+      "warning-count": 2772,
+      "line-ranges": [
+        [
+          1,
+          2772
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/validation/policy-candidate-epoch1-focus.log",
+      "bytes": 2699,
+      "sha256": "845d96d3948d824bace9da085a86391ce6ab1ec26d1b8b8866d911a461bf3f90",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          36,
+          36
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/validation/policy-candidate-epoch1-run.json",
+      "bytes": 7060,
+      "sha256": "61eda18de91f1cdd9d56f81d1019e32a76124bbd6983282aefd56b4888a977d5",
+      "warning-count": 189,
+      "line-ranges": [
+        [
+          1,
+          189
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/validation/policy-final-check-windows.json",
+      "bytes": 1383,
+      "sha256": "d3ce54e5662373a734ddd2c58411722143b5d436c0b5cceb064796196b36da39",
+      "warning-count": 35,
+      "line-ranges": [
+        [
+          1,
+          35
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/validation/policy-final-check-windows.log",
+      "bytes": 359,
+      "sha256": "da541543168e8b8ac67b65aa3968ffc2467b1f08cca565e4c526b74bc5d5b165",
+      "warning-count": 15,
+      "line-ranges": [
+        [
+          1,
+          15
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/validation/policy-linux-epoch1-capi.log",
+      "bytes": 14068,
+      "sha256": "e23ad4c0c4fba31b81b7e935d75c800ab4f0ec25112d8b7a467adf6b3e22227e",
+      "warning-count": 2,
+      "line-ranges": [
+        [
+          97,
+          97
+        ],
+        [
+          205,
+          205
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF.",
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/validation/policy-linux-epoch1-focus.log",
+      "bytes": 1474,
+      "sha256": "98486039e947c14f3fa64cfc3eeb09aae08ad6891ec33b02966b2ed4a61a2a30",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          16,
+          16
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/validation/policy-linux-epoch1-full.log",
+      "bytes": 838789,
+      "sha256": "f000724ebfaff26259ee025affa2d3d7c030f7881aadef87726eb4ff0829d609",
+      "warning-count": 6,
+      "line-ranges": [
+        [
+          1967,
+          1967
+        ],
+        [
+          5471,
+          5471
+        ],
+        [
+          5492,
+          5492
+        ],
+        [
+          5503,
+          5503
+        ],
+        [
+          5517,
+          5517
+        ],
+        [
+          8378,
+          8378
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF.",
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/validation/policy-linux-epoch1-integration.log",
+      "bytes": 35852,
+      "sha256": "92f6bbad61eb45f8b997ae977c86048d7296a4454e05fa76c650894437062ba3",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          558,
+          558
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/validation/policy-macos-epoch1-capi.log",
+      "bytes": 14296,
+      "sha256": "97e5471abc93f0cf2e047edd49d0a94ab105d336582f3be25a657bdbec6a871b",
+      "warning-count": 2,
+      "line-ranges": [
+        [
+          97,
+          97
+        ],
+        [
+          205,
+          205
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF.",
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/validation/policy-macos-epoch1-full.log",
+      "bytes": 838795,
+      "sha256": "37361faa74897fbc7f348923ca2f329d2e9ebd03a688f7983769705c5c5e0b07",
+      "warning-count": 6,
+      "line-ranges": [
+        [
+          1933,
+          1933
+        ],
+        [
+          5419,
+          5419
+        ],
+        [
+          5440,
+          5440
+        ],
+        [
+          5451,
+          5451
+        ],
+        [
+          5465,
+          5465
+        ],
+        [
+          8346,
+          8346
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF.",
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/validation/policy-macos-epoch1-integration.log",
+      "bytes": 36057,
+      "sha256": "8b24844e397144694fb788984a064aea6800e280e0103a3147c73d401426e7ac",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          558,
+          558
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/validation/policy-native-baseline-a.json",
+      "bytes": 743,
+      "sha256": "36e07bc2fa189d629c2e55d55e1d482b80a8f69d17813b8a6125acca38b62f81",
+      "warning-count": 24,
+      "line-ranges": [
+        [
+          1,
+          24
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/validation/policy-native-baseline-a.log",
+      "bytes": 1973,
+      "sha256": "deea7876f8cc7b4b055f654ae12cfac2abd5455cb056ee0766eec515658cfc87",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          24,
+          24
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/validation/policy-native-epoch1-capi.log",
+      "bytes": 15041,
+      "sha256": "d70446a62304569ef60e079af2c25ec622192d2c1584281d118bc72dccfb3c45",
+      "warning-count": 2,
+      "line-ranges": [
+        [
+          115,
+          115
+        ],
+        [
+          223,
+          223
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF.",
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/validation/policy-native-epoch1-focus.log",
+      "bytes": 2601,
+      "sha256": "fa9b1cb994e39364791a7f3d36baaa2df351eb82656eaecc4b1abb7a58961042",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          35,
+          35
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/validation/policy-native-epoch1-full.log",
+      "bytes": 804117,
+      "sha256": "074bb353dc69f906e4080ee53145ad90801371c952cfc5064e7120ddfbf7c7e2",
+      "warning-count": 11,
+      "line-ranges": [
+        [
+          1950,
+          1950
+        ],
+        [
+          4866,
+          4866
+        ],
+        [
+          4876,
+          4876
+        ],
+        [
+          4883,
+          4883
+        ],
+        [
+          4889,
+          4889
+        ],
+        [
+          5418,
+          5418
+        ],
+        [
+          5460,
+          5460
+        ],
+        [
+          5481,
+          5481
+        ],
+        [
+          5492,
+          5492
+        ],
+        [
+          5506,
+          5506
+        ],
+        [
+          6272,
+          6272
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/validation/policy-native-epoch1-gates.json",
+      "bytes": 5953,
+      "sha256": "9ee89f4b0553f9d1503f846a781099842bc8a1607930b68816992d51fd0be216",
+      "warning-count": 163,
+      "line-ranges": [
+        [
+          1,
+          163
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/validation/policy-native-epoch1-integration.log",
+      "bytes": 1873,
+      "sha256": "24aa6c6d3abc3a123922f526c498aef5ce1ad2542b2407d95e6027a3c19ace92",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          36,
+          36
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/validation/policy-native-owning-epoch1-archive-after.log",
+      "bytes": 182,
+      "sha256": "9a33c748e8d4ccafe260d3ed2d9f272b4a9f1bfaff9f68909527fb2622e52c78",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/validation/policy-native-owning-epoch1-archive-before.log",
+      "bytes": 182,
+      "sha256": "9a33c748e8d4ccafe260d3ed2d9f272b4a9f1bfaff9f68909527fb2622e52c78",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/validation/policy-native-owning-epoch1-cpp.log",
+      "bytes": 3385,
+      "sha256": "a478960271b5695c2049cca57f3cd5fdb970babe9fdcd4eec62d8096bb9b9dc4",
+      "warning-count": 54,
+      "line-ranges": [
+        [
+          1,
+          54
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/validation/policy-native-owning-epoch1.json",
+      "bytes": 5156,
+      "sha256": "2a81b387de2b98276a3f326f0d86441c324cd8b6f807e8bb70a45f30e8111d1b",
+      "warning-count": 125,
+      "line-ranges": [
+        [
+          1,
+          125
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/validation/policy-owner-epoch1-build.log",
+      "bytes": 241,
+      "sha256": "77027ce0b25d2e321d7341c6fe2a80236a2837874cb1de4f2079588d47f29dc9",
+      "warning-count": 4,
+      "line-ranges": [
+        [
+          1,
+          4
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/validation/policy-owner-epoch1-launch.json",
+      "bytes": 7843,
+      "sha256": "8a7e49580286677b2d07741ce2459c6152963d50cc6fb7ccdc7f7432920791df",
+      "warning-count": 211,
+      "line-ranges": [
+        [
+          1,
+          211
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/validation/policy-prototype-a.log",
+      "bytes": 1691,
+      "sha256": "5138315389ac9ca9d40a24e11f74343b43b880ee7e03359f8ea16c8d49be7cef",
+      "warning-count": 1,
+      "line-ranges": [
+        [
+          16,
+          16
+        ]
+      ],
+      "messages": [
+        "new blank line at EOF."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/validation/timer2-native-host-identity.json",
+      "bytes": 944,
+      "sha256": "824a29ad03161b2a10662cadb0d57b47f90c14184ef317e2840b770e8e79e2f3",
+      "warning-count": 32,
+      "line-ranges": [
+        [
+          1,
+          32
+        ]
+      ],
+      "messages": [
+        "trailing whitespace."
+      ],
+      "scope": "Verbatim captured output/record or stored primary source; bytes preserved."
+    }
+  ],
+  "other-owned-paths-pass": true
+}

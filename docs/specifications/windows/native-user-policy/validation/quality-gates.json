@@ -1,0 +1,12 @@
+{
+  "scope": "Fixed primary-user policy semantic group; full same-host process objective remains incomplete.",
+  "QG1": "pass: factual implementation and validation; no normative judgment",
+  "QG2": "pass: assumptions, dependencies, stress tests and falsification probes reconciled; native positive-fixture/kernel bounds retained",
+  "QG3": "pass within group: primary-SID binding, exact fixed suffix, complete or absent acquisition, shared views, read-only grants, raw values/lifetime/budgets, six shared/nine Windows tests, three-host gates and selected retained consumers",
+  "QG4": "pass: SID8+4*N,N<=15; 48bit BE authority and32bit LE subauthorities; current81/max256 UTF16units=162/512bytes; recorded exact source/case/test counts",
+  "QG5": "pass within demonstrated scope: root-only ERROR_FILE_NOT_FOUND, other errors fail, SID/suffix/rights boundaries retained; next FileSystem frontier and absence of guest exit explicit",
+  "QG6": "pass: stored Microsoft primary sources, independent native producers/PE/modules, twelve rebound native controls, exact source/archive/program bindings and portable verification",
+  "QG7": "pass: one physical native kernel, five known lowerer failures, incomplete full objective, selected retained ABI184/current-product bounds and future FileSystem root recorded",
+  "RAX-QG8": "pass within group: real tests-only native regression failed before implementation, exact shared/native focus and unfiltered selections checked; candidate and actual owner separated",
+  "RAX-QG9": "pass: private source/module registration, feature/default/dependency/CABI consistency; engineering append is separate from compiled source"
+}

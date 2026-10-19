@@ -1,0 +1,35 @@
+warning: "stdcall" is not a supported ABI for the current target
+  --> vendor\vm-memory\src\mmap\windows.rs:22:1
+   |
+22 | / extern "stdcall" {
+23 | |     pub fn VirtualAlloc(
+24 | |         lpAddress: *mut c_void,
+25 | |         dwSize: size_t,
+...  |
+49 | |     pub fn CloseHandle(hObject: RawHandle) -> u32; // BOOL
+50 | | }
+   | |_^
+   |
+   = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!
+   = note: for more information, see issue #137018 <https://github.com/rust-lang/rust/issues/137018>
+   = help: if you need `extern "stdcall"` on win32 and `extern "C"` everywhere else, use `extern "system"`
+   = note: `#[warn(unsupported_calling_conventions)]` (part of `#[warn(future_incompatible)]`) on by default
+
+warning: `vm-memory` (lib) generated 1 warning
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.15s
+     Running unittests src\lib.rs (C:\Windows\Temp\assist-native-rax-20261010\target-wait-epoch3\debug\deps\rax-b799307a7949aa6b.exe)
+
+running 9 tests
+test user::windows::process::sched::tests::services_tests::registry_tests::user_policy::native_user_policy_absolute_children_serialize_raw_values_and_preserve_outside_frontier_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::registry_tests::user_policy::native_user_policy_known_absent_root_and_children_return_name_not_found_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::registry_tests::user_policy::native_user_policy_opens_relative_paths_with_observed_absence_and_root_lifetime_all_abis ... ok
+test user::windows::registry::installed::user_policy_tests::installed_user_policy_capture_distinguishes_root_absence_and_other_errors ... ok
+test user::windows::registry::installed::user_policy_tests::installed_user_policy_present_capture_reads_controlled_primary_user_environment ... native controlled user policy capture: 1 keys, 3 values, 256 bytes
+ok
+test user::windows::registry::installed::user_policy_tests::installed_user_policy_snapshot_matches_primary_sid_and_native_views ... ok
+test user::windows::registry::user_policy_tests::user_policy_absence_is_bound_to_one_primary_sid_and_fixed_suffix ... ok
+test user::windows::registry::user_policy_tests::user_policy_present_tree_retains_values_lifetime_and_shared_six_root_budget ... ok
+test user::windows::registry::user_policy_tests::user_policy_sid_paths_match_all_512_native_format_observations_and_reject_invalid_sids ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 7474 filtered out; finished in 0.38s
+

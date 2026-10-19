@@ -23,6 +23,9 @@ pub(crate) use tree::{
     IFEO_KEY, KeyTree, Lookup, REDIRECTION_KEYS_KEY, SAFEBOOT_OPTION_KEY,
     SAFER_CODE_IDENTIFIERS_KEY, SRP_DLL_KEY, TreeRoot,
 };
+#[path = "registry/user_policy.rs"]
+mod user_policy;
+pub(crate) use user_policy::user_policy_path;
 #[path = "registry/fixed.rs"]
 mod fixed;
 pub(crate) use fixed::SEGMENT_HEAP_KEY;
@@ -69,6 +72,7 @@ pub(crate) struct Registry {
     keys: BTreeMap<Vec<u16>, Arc<Key>>,
     upcase: Arc<[u16]>,
     selected_trees: BTreeSet<TreeRoot>,
+    user_policy: Option<Arc<[u16]>>,
 }
 impl Registry {
     #[cfg(test)]
@@ -90,6 +94,7 @@ impl Registry {
             keys: BTreeMap::new(),
             upcase: upcase.into(),
             selected_trees: BTreeSet::new(),
+            user_policy: None,
         };
         let mut budget = ValueBudget::default();
         for selected in selected {
@@ -147,7 +152,7 @@ impl Registry {
         }
     }
     pub(crate) fn lookup(&self, name: &[u16]) -> Lookup {
-        if self.keys.is_empty() && self.selected_trees.is_empty() {
+        if self.keys.is_empty() && self.selected_trees.is_empty() && self.user_policy.is_none() {
             return Lookup::Unselected;
         }
         let folded: Vec<_> = name.iter().map(|&u| self.upcase[usize::from(u)]).collect();
@@ -208,14 +213,22 @@ fn invalid(message: &str) -> io::Error {
 #[path = "registry/installed.rs"]
 mod installed;
 #[cfg(windows)]
-pub(crate) use installed::snapshot;
-#[cfg(windows)]
 pub(crate) use installed::wnf_values;
+#[cfg(windows)]
+pub(crate) use installed::{capture_user_policy, snapshot};
 #[cfg(not(windows))]
 pub(crate) fn snapshot() -> io::Result<Registry> {
     Err(io::Error::new(
         io::ErrorKind::Unsupported,
         "installed runtime registry metadata requires Windows",
+    ))
+}
+
+#[cfg(not(windows))]
+pub(crate) fn capture_user_policy(_: Registry, _: &[u8]) -> io::Result<Registry> {
+    Err(io::Error::new(
+        io::ErrorKind::Unsupported,
+        "installed per-user registry metadata requires Windows",
     ))
 }
 
@@ -234,3 +247,7 @@ mod srp_tests;
 #[cfg(test)]
 #[path = "registry/safer_tests.rs"]
 mod safer_tests;
+
+#[cfg(test)]
+#[path = "registry/user_policy_tests.rs"]
+mod user_policy_tests;
