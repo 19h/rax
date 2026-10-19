@@ -558,6 +558,16 @@ fn operation(op: &SmirOp) -> Checked<RaxSmirOp> {
             o.dst = reg(*dst)?;
             o.address = addr(a, op.guest_pc)?;
         }
+        OpKind::X86Lea {
+            dst,
+            addr: address,
+            width,
+        } => {
+            o.opcode = RAX_SMIR_LEA;
+            o.dst = reg(*dst)?;
+            o.address = addr(address, op.guest_pc)?;
+            o.width_bits = width.bits();
+        }
         OpKind::Load {
             dst,
             addr: a,

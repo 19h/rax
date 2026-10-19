@@ -89,6 +89,36 @@ fn address_size_segment_and_branch_targets_are_explicit() {
 }
 
 #[test]
+fn lea_preserves_destination_width_and_addressing() {
+    // The operand-size prefix selects AX, EAX, or RAX as the destination.
+    for (prefix, width) in [(&[][..], 32), (&[0x66][..], 16), (&[0x48][..], 64)] {
+        let mut bytes = prefix.to_vec();
+        bytes.extend_from_slice(&[0x8d, 0x43, 0x10]); // LEA destination, [RBX + 16].
+
+        let (_, ops) = lift(&bytes);
+        let lea = ops.iter().find(|op| op.opcode == RAX_SMIR_LEA).unwrap();
+
+        assert_eq!(lea.width_bits, width);
+        assert_eq!((lea.dst.kind, lea.dst.id), (2, 0));
+        assert_eq!((lea.address.base.kind, lea.address.base.id), (2, 3));
+        assert_eq!(lea.address.displacement, 16);
+        assert_eq!(lea.address.address_bits, 64);
+    }
+
+    let (_, ops) = lift(&[0x48, 0x8d, 0x0d, 0x00, 0x01, 0x00, 0x00]);
+    let lea = ops.iter().find(|op| op.opcode == RAX_SMIR_LEA).unwrap();
+    assert_eq!((lea.dst.kind, lea.dst.id), (2, 1));
+    assert_eq!(lea.address.base.kind, 0);
+    assert_eq!(lea.address.displacement, 0x1107);
+
+    // LEA ignores segment overrides because it does not access memory.
+    let (_, ops) = lift(&[0x64, 0x48, 0x8d, 0x43, 0x10]);
+    let lea = ops.iter().find(|op| op.opcode == RAX_SMIR_LEA).unwrap();
+    assert_eq!(lea.address.segment.kind, 0);
+    assert_eq!(lea.address.displacement, 16);
+}
+
+#[test]
 fn truncation_never_publishes_an_executable_prefix() {
     let bytes = [0x48u8, 0x01, 0xd8];
     let sentinel = RaxSmirOp {
