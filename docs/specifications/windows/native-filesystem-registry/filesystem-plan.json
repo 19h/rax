@@ -1,0 +1,61 @@
+{
+  "utc": "2026-10-19T08:16:29.273616+00:00",
+  "base": "399506af43fa9988140ba9a4d8c0d189af59b05f",
+  "acceptance": [
+    "Select one compile-time HKLM System CurrentControlSet Control FileSystem complete immutable subtree or known root absence during native Windows selection.",
+    "Reuse shared bounds, native capture, ordinal lookup, raw-value transport, read-only grants and guest-handle lifetime; preserve primary-user Safer selection and all unrelated boundaries.",
+    "Demonstrate actual tests-only Windows regression before implementation; independent native views/error/present traversal controls plus six shared/nine native tests.",
+    "Validate frozen source, full macOS/Linux/Windows gates, exact known five Windows failures, CAPI183, integration544/4, all-targets, actual retained consumers and ordinary guests.",
+    "Publish exact owned paths through red and paired linear RAX/root pushes; full process objective remains active until actual guest acceptance."
+  ],
+  "assumptions": [
+    {
+      "id": "A1",
+      "assumption": "The fixed FileSystem root is shared across native, 32-bit and 64-bit registry views.",
+      "basis": "Microsoft stored shared-key inheritance table and 320 native open observations across four ABI profiles.",
+      "dependent-result": "One immutable selected tree serves every guest architecture/view.",
+      "stress-test": "Independent native open/value comparisons across views and all guest ABI service tests.",
+      "falsification-probe": "A native view exposes different FileSystem presence or values.",
+      "status": "retained"
+    },
+    {
+      "id": "A2",
+      "assumption": "Existing complete bounded capture and read-only guest key semantics apply to this additional fixed root.",
+      "basis": "No native query/guest syscall implementation changes; reuse complete-tree native capture/build.",
+      "dependent-result": "Root-only ERROR_FILE_NOT_FOUND means absence; all other capture failures propagate; value budget includes previous roots and captured user policy.",
+      "stress-test": "Other error codes, recursive native traversal/disappearing child, duplicates, cross-root aggregate limit and handle lifetime.",
+      "falsification-probe": "New root accepts an incomplete tree, exceeds shared budgets or forwards guest paths.",
+      "status": "retained"
+    }
+  ],
+  "surface-map": {
+    "registry-model": "affected: fixed constant, TreeRoot membership and native snapshot selection",
+    "native-adapter": "existing HKLM adapter reused without mechanics/policy fork",
+    "guest-services": "existing NtOpenKey/NtQueryValueKey consume newly selected tree; no dispatch or schema change",
+    "targets/platforms": "shared model/HLE compiled/run on macOS/Linux/Windows; native adapter runs on Windows; actual retained Assist consumers relink",
+    "ABI/defaults/dependencies": "unaffected private changes; public CAPI1.14.0 unchanged",
+    "Linux/macOS process runtime": "unchanged host adapters; full shared library/integration and selected consumers must still pass",
+    "UI/persistence/transport/update": "unaffected: no widgets, storage schemas, wire formats or release behavior changed"
+  },
+  "bounded-scope": [
+    {
+      "impact": "high",
+      "finding": "Both ordinary guests currently stop at FileSystem after the prior policy frontier; successful guest exit is still absent.",
+      "blocks-full-goal": true,
+      "evidence": "Published native-user-policy ordinary logs at turns2889590/2891875.",
+      "action": "Run actual retained-owner ordinary guests after the change; continue to next observed frontier."
+    },
+    {
+      "impact": "medium",
+      "finding": "Four native ABI profiles share one physical ARM64 Windows kernel.",
+      "blocks-group": false,
+      "action": "Retain kernel bound; do not imply physical x64 Windows coverage."
+    },
+    {
+      "impact": "medium",
+      "finding": "Five established Windows lowerer failures and retained Assist Rust ABI184 versus current root product limits remain.",
+      "blocks-group": false,
+      "action": "Require exact failure set and distinguish retained consumer evidence from whole current GUI/plugin/package proof."
+    }
+  ]
+}

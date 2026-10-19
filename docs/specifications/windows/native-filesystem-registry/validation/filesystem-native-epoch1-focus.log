@@ -1,0 +1,35 @@
+warning: "stdcall" is not a supported ABI for the current target
+  --> vendor\vm-memory\src\mmap\windows.rs:22:1
+   |
+22 | / extern "stdcall" {
+23 | |     pub fn VirtualAlloc(
+24 | |         lpAddress: *mut c_void,
+25 | |         dwSize: size_t,
+...  |
+49 | |     pub fn CloseHandle(hObject: RawHandle) -> u32; // BOOL
+50 | | }
+   | |_^
+   |
+   = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!
+   = note: for more information, see issue #137018 <https://github.com/rust-lang/rust/issues/137018>
+   = help: if you need `extern "stdcall"` on win32 and `extern "C"` everywhere else, use `extern "system"`
+   = note: `#[warn(unsupported_calling_conventions)]` (part of `#[warn(future_incompatible)]`) on by default
+
+warning: `vm-memory` (lib) generated 1 warning
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.15s
+     Running unittests src\lib.rs (C:\Windows\Temp\assist-native-rax-20261010\target-wait-epoch3\debug\deps\rax-b799307a7949aa6b.exe)
+
+running 9 tests
+test user::windows::process::sched::tests::services_tests::registry_tests::filesystem_registry::native_filesystem_registry_absolute_children_serialize_raw_values_and_preserve_outside_frontier_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::registry_tests::filesystem_registry::native_filesystem_registry_known_absent_root_and_children_return_name_not_found_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::registry_tests::filesystem_registry::native_filesystem_registry_opens_relative_paths_with_observed_absence_and_root_lifetime_all_abis ... ok
+test user::windows::registry::filesystem_tests::native_filesystem_registry_absence_is_selected_per_root_and_does_not_admit_siblings ... ok
+test user::windows::registry::filesystem_tests::native_filesystem_registry_present_tree_keeps_raw_values_and_survives_registry_drop ... ok
+test user::windows::registry::filesystem_tests::native_filesystem_registry_selections_share_value_budget_and_reject_duplicates ... ok
+test user::windows::registry::installed::filesystem_tests::installed_filesystem_registry_capture_distinguishes_root_absence_from_other_errors ... ok
+test user::windows::registry::installed::filesystem_tests::installed_filesystem_registry_present_capture_uses_controlled_read_only_native_subtree ... native controlled FileSystem capture: 54 keys, 106 values, 4756 bytes
+ok
+test user::windows::registry::installed::filesystem_tests::installed_filesystem_registry_snapshot_matches_independent_native_presence_and_views ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 7483 filtered out; finished in 0.13s
+

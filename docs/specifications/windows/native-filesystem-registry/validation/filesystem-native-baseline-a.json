@@ -1,0 +1,24 @@
+{
+  "state": "expected-regression-failed",
+  "pid": 7220,
+  "scope": "Published policy product Rust/build/fixture inputs match the frozen native parent; only one new test and its module registration are added. Parent source predates append-only engineering records, which do not select FileSystem behavior. No production FileSystem implementation is present.",
+  "child": 8112,
+  "argv": [
+    "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+    "test",
+    "--locked",
+    "--offline",
+    "--no-default-features",
+    "--lib",
+    "installed_filesystem_snapshot_matches_independent_native_presence_and_views",
+    "--",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "exit-code": 101,
+  "passed": 0,
+  "failed": 1,
+  "log": "filesystem-native-baseline-a.log",
+  "bytes": 1992,
+  "sha256": "25d9165b647bf6b5c3e73687a3e78c2f695f01a9681dee7a79a99e6929f16917"
+}

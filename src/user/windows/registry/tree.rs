@@ -10,6 +10,8 @@ pub(crate) const SRP_DLL_KEY: &str =
     "\\Registry\\Machine\\System\\CurrentControlSet\\Control\\Srp\\GP\\DLL";
 pub(crate) const SAFER_CODE_IDENTIFIERS_KEY: &str =
     "\\Registry\\Machine\\Software\\Policies\\Microsoft\\Windows\\Safer\\CodeIdentifiers";
+pub(crate) const FILESYSTEM_KEY: &str =
+    "\\Registry\\Machine\\System\\CurrentControlSet\\Control\\FileSystem";
 pub(super) const MAX_TREE_KEYS: usize = 1024;
 pub(super) const MAX_TREE_DEPTH: usize = 32;
 pub(super) const MAX_COMPONENT_UNITS: usize = 255;
@@ -28,6 +30,7 @@ pub(crate) enum TreeRoot {
     SafeBootOption,
     SrpDll,
     SaferCodeIdentifiers,
+    FileSystem,
 }
 impl TreeRoot {
     pub(crate) fn path(self) -> &'static str {
@@ -37,6 +40,7 @@ impl TreeRoot {
             Self::SafeBootOption => SAFEBOOT_OPTION_KEY,
             Self::SrpDll => SRP_DLL_KEY,
             Self::SaferCodeIdentifiers => SAFER_CODE_IDENTIFIERS_KEY,
+            Self::FileSystem => FILESYSTEM_KEY,
         }
     }
 }

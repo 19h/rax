@@ -1,0 +1,7 @@
+{
+  "utc": "2026-10-19T08:25:55.041390+00:00",
+  "path": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/vendor/rax",
+  "before": "/Users/int/Library/Caches/assist-process-emulation/native-user-policy-20261019/policy-source",
+  "after": "/Users/int/Library/Caches/assist-process-emulation/native-filesystem-registry-20261019/filesystem-source",
+  "scope": "Task-owned retained Assist checkout only; shared main repository and submodule untouched."
+}

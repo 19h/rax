@@ -1,0 +1,50 @@
+program=C:\Windows\Temp\assist-native-rax-20261010\src-filesystem-candidate-epoch1\tests\fixtures\user\windows\bin\arm64\smoke.exe prefix-turns=2100000 result=BudgetExhausted
+directory turn=2150998 access=0xf root=Ok(0) flags=Ok(40)
+directory name="\\BaseNamedObjects" length=34 raw=[5c, 42, 61, 73, 65, 4e, 61, 6d, 65, 64, 4f, 62, 6a, 65, 63, 74, 73]
+mutant-call turn=2151112 tid=8 output=0x93df28 access=0x1f0001 attributes=0x93df30 owner=0x0
+mutant-result turn=2151112 tid=8 status=Some(0) handle=Ok(6c) kind=Some("Mutant")
+wait-call turn=2151176 tid=8 handle=0x6c alertable=0x0 timeout=0x0 timeout-value=Err(MemFault { addr: 0, write: false }) object=Some(Mutex { owner: None, count: 0, abandoned: false })
+wait-result turn=2151176 tid=8 status=Some(0) state=Some(Ready) object=Some(Mutex { owner: Some(8), count: 1, abandoned: false })
+semaphore-call turn=2151527 tid=8 name=NtOpenSemaphore svc=0x136 pc=0x7fff38a423a0 args=[93dc20, 1f0003, 93dc40, 18, 24f782e]
+semaphore-result turn=2151527 tid=8 name=NtOpenSemaphore result=BudgetExhausted return-register=Some(c0000034) output-value=Some(0) object=None
+semaphore-call turn=2172395 tid=8 name=NtCreateSemaphore svc=0xc7 pc=0x7fff38a41cb0 args=[93dc08, 1f0003, 93dc20, 441ba0, 441ba0]
+semaphore-result turn=2172395 tid=8 name=NtCreateSemaphore result=BudgetExhausted return-register=Some(0) output-value=Some(74) object=Some(Semaphore { count: 4463520, max: 4463520 })
+semaphore-call turn=2172685 tid=8 name=NtCreateSemaphore svc=0xc7 pc=0x7fff38a41cb0 args=[93dc00, 1f0003, 93dc20, 0, 1]
+semaphore-result turn=2172685 tid=8 name=NtCreateSemaphore result=BudgetExhausted return-register=Some(0) output-value=Some(78) object=Some(Semaphore { count: 0, max: 1 })
+registry-call turn=2178927 tid=8 desired=0x20019 output=0x93e150 attributes=0x93e180 root=Ok(0) flags=Ok(40)
+registry-name turn=2178927 length-bytes=172 name="\\Registry\\Machine\\System\\CurrentControlSet\\Control\\StateSeparation\\RedirectionMap\\Keys" raw=[5c, 52, 65, 67, 69, 73, 74, 72, 79, 5c, 4d, 61, 63, 68, 69, 6e, 65, 5c, 53, 79, 73, 74, 65, 6d, 5c, 43, 75, 72, 72, 65, 6e, 74, 43, 6f, 6e, 74, 72, 6f, 6c, 53, 65, 74, 5c, 43, 6f, 6e, 74, 72, 6f, 6c, 5c, 53, 74, 61, 74, 65, 53, 65, 70, 61, 72, 61, 74, 69, 6f, 6e, 5c, 52, 65, 64, 69, 72, 65, 63, 74, 69, 6f, 6e, 4d, 61, 70, 5c, 4b, 65, 79, 73]
+registry-root turn=2178927 object=None
+registry-result turn=2178927 tid=8 status=Some(c0000034) output=Ok(0) result=BudgetExhausted
+timer2-call turn=2188223 tid=8 name=NtSetTimer2 svc=0x1c0 pc=0x7fff38a42c40 handle=0x2c arguments=[93daf0, 0, 93daf8] object=Some(IrTimer { attributes: 8, timer_id: None, signaled: false, schedule: None })
+timer2-inputs turn=2188223 due=Ok(ffffffff4d2fa200) period=Ok(0) parameters=Ok([0, 0, 0, 0, 0, 0, 0, 0, 80, 17, b4, 2c, 0, 0, 0, 0])
+timer2-result turn=2188223 tid=8 name=NtSetTimer2 status=Some(0) result=BudgetExhausted object=Some(IrTimer { attributes: 8, timer_id: None, signaled: false, schedule: Some(Timer2Schedule { deadline: NativeDeadline(Relative(45206101774200)), period: 0 }) })
+registry-call turn=2196872 tid=8 desired=0x9 output=0x93df98 attributes=0x93dfe0 root=Ok(18) flags=Ok(240)
+registry-name turn=2196872 length-bytes=10 name="SYSTE" raw=[53, 59, 53, 54, 45]
+registry-root turn=2196872 object=Some("Key")
+registry-result turn=2196872 tid=8 status=Some(c0000034) output=Ok(0) result=BudgetExhausted
+registry-call turn=2883900 tid=8 desired=0x3 output=0x93e6f8 attributes=0x7fff38da2230 root=Ok(0) flags=Ok(40)
+registry-name turn=2883900 length-bytes=132 name="\\Registry\\MACHINE\\System\\CurrentControlSet\\Control\\SafeBoot\\Option" raw=[5c, 52, 65, 67, 69, 73, 74, 72, 79, 5c, 4d, 41, 43, 48, 49, 4e, 45, 5c, 53, 79, 73, 74, 65, 6d, 5c, 43, 75, 72, 72, 65, 6e, 74, 43, 6f, 6e, 74, 72, 6f, 6c, 53, 65, 74, 5c, 43, 6f, 6e, 74, 72, 6f, 6c, 5c, 53, 61, 66, 65, 42, 6f, 6f, 74, 5c, 4f, 70, 74, 69, 6f, 6e]
+registry-root turn=2883900 object=None
+registry-result turn=2883900 tid=8 status=Some(c0000034) output=Ok(0) result=BudgetExhausted
+registry-call turn=2883915 tid=8 desired=0x20019 output=0x93e710 attributes=0x7fff38dfe858 root=Ok(0) flags=Ok(40)
+registry-name turn=2883915 length-bytes=122 name="\\Registry\\Machine\\System\\CurrentControlSet\\Control\\Srp\\GP\\DLL" raw=[5c, 52, 65, 67, 69, 73, 74, 72, 79, 5c, 4d, 61, 63, 68, 69, 6e, 65, 5c, 53, 79, 73, 74, 65, 6d, 5c, 43, 75, 72, 72, 65, 6e, 74, 43, 6f, 6e, 74, 72, 6f, 6c, 53, 65, 74, 5c, 43, 6f, 6e, 74, 72, 6f, 6c, 5c, 53, 72, 70, 5c, 47, 50, 5c, 44, 4c, 4c]
+registry-root turn=2883915 object=None
+registry-result turn=2883915 tid=8 status=Some(c0000034) output=Ok(0) result=BudgetExhausted
+registry-call turn=2883923 tid=8 desired=0x1 output=0x93e6f8 attributes=0x7fff38da22c0 root=Ok(0) flags=Ok(40)
+registry-name turn=2883923 length-bytes=150 name="\\Registry\\Machine\\Software\\Policies\\Microsoft\\Windows\\Safer\\CodeIdentifiers" raw=[5c, 52, 65, 67, 69, 73, 74, 72, 79, 5c, 4d, 61, 63, 68, 69, 6e, 65, 5c, 53, 6f, 66, 74, 77, 61, 72, 65, 5c, 50, 6f, 6c, 69, 63, 69, 65, 73, 5c, 4d, 69, 63, 72, 6f, 73, 6f, 66, 74, 5c, 57, 69, 6e, 64, 6f, 77, 73, 5c, 53, 61, 66, 65, 72, 5c, 43, 6f, 64, 65, 49, 64, 65, 6e, 74, 69, 66, 69, 65, 72, 73]
+registry-root turn=2883923 object=None
+registry-result turn=2883923 tid=8 status=Some(0) output=Ok(88) result=BudgetExhausted
+token-user-call turn=2883974 tid=8 args=[fffffffffffffffa, 1, 93e648, 58, 93e630]
+token-user-result turn=2883974 tid=8 status=Some(0) output=0x93e648 required=Ok(1c)
+registry-call turn=2886717 tid=8 desired=0x1 output=0x93e6f8 attributes=0x93e740 root=Ok(0) flags=Ok(40)
+registry-name turn=2886717 length-bytes=162 name="\\REGISTRY\\USER\\S-1-5-18\\Software\\Policies\\Microsoft\\Windows\\Safer\\CodeIdentifiers" raw=[5c, 52, 45, 47, 49, 53, 54, 52, 59, 5c, 55, 53, 45, 52, 5c, 53, 2d, 31, 2d, 35, 2d, 31, 38, 5c, 53, 6f, 66, 74, 77, 61, 72, 65, 5c, 50, 6f, 6c, 69, 63, 69, 65, 73, 5c, 4d, 69, 63, 72, 6f, 73, 6f, 66, 74, 5c, 57, 69, 6e, 64, 6f, 77, 73, 5c, 53, 61, 66, 65, 72, 5c, 43, 6f, 64, 65, 49, 64, 65, 6e, 74, 69, 66, 69, 65, 72, 73]
+registry-root turn=2886717 object=None
+registry-result turn=2886717 tid=8 status=Some(c0000034) output=Ok(0) result=BudgetExhausted
+registry-call turn=2889590 tid=8 desired=0x20019 output=0x93e7a8 attributes=0x93e7b0 root=Ok(0) flags=Ok(40)
+registry-name turn=2889590 length-bytes=124 name="\\Registry\\Machine\\System\\CurrentControlSet\\Control\\FileSystem\\" raw=[5c, 52, 65, 67, 69, 73, 74, 72, 79, 5c, 4d, 61, 63, 68, 69, 6e, 65, 5c, 53, 79, 73, 74, 65, 6d, 5c, 43, 75, 72, 72, 65, 6e, 74, 43, 6f, 6e, 74, 72, 6f, 6c, 53, 65, 74, 5c, 43, 6f, 6e, 74, 72, 6f, 6c, 5c, 46, 69, 6c, 65, 53, 79, 73, 74, 65, 6d, 5c]
+registry-root turn=2889590 object=None
+registry-result turn=2889590 tid=8 status=Some(0) output=Ok(88) result=BudgetExhausted
+terminal turn=2898318 Complete(Internal("native NTDLL service NtSetInformationWorkerFactory: Unimplemented(\"NtSetInformationWorkerFactory: NtSetInformationWorkerFactory class 13\")"))
+guest-console program=C:\Windows\Temp\assist-native-rax-20261010\src-filesystem-candidate-epoch1\tests\fixtures\user\windows\bin\arm64\smoke.exe stream=stdout bytes=0 hex=
+guest-console program=C:\Windows\Temp\assist-native-rax-20261010\src-filesystem-candidate-epoch1\tests\fixtures\user\windows\bin\arm64\smoke.exe stream=stderr bytes=0 hex=
+observation-finished program=C:\Windows\Temp\assist-native-rax-20261010\src-filesystem-candidate-epoch1\tests\fixtures\user\windows\bin\arm64\smoke.exe turn-limit=10000000

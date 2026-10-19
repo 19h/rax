@@ -1,0 +1,29 @@
+{
+  "state": "finished",
+  "host": "linux",
+  "argv": [
+    "docker",
+    "run",
+    "--rm",
+    "--platform",
+    "linux/amd64",
+    "-v",
+    "/Users/int/Library/Caches/assist-process-emulation/native-filesystem-registry-20261019/filesystem-source:/source:ro",
+    "-v",
+    "/Users/int/Library/Caches/assist-process-emulation/native-filesystem-registry-20261019:/validation:ro",
+    "-w",
+    "/source",
+    "assist-rax-validation-rustfmt:1.95-bullseye-20261015",
+    "python3",
+    "-B",
+    "/validation/run-filesystem-proof-checks.py",
+    "/source"
+  ],
+  "checked-envelope-files": 162,
+  "utc": "2026-10-19T08:41:47.146417+00:00",
+  "exit-code": 0,
+  "log": "filesystem-final-check-linux.log",
+  "bytes": 274,
+  "sha256": "91957e4a8b64eec5a1da3e1acc52968629d852fa5c18c46c587b1662a703e739",
+  "completed-utc": "2026-10-19T08:41:54.454386+00:00"
+}

@@ -1,0 +1,46 @@
+{
+  "utc": "2026-10-19T08:42:27.003545+00:00",
+  "checked-evidence-files": 162,
+  "original-envelope-sha256": "38c520301d2a7a01e9bdfcc6e033a911e0c5387456fe5bb77b8373458caa1b86",
+  "proof-archive": {
+    "archive": "filesystem-final-proof.tar.gz",
+    "bytes": 2275493,
+    "sha256": "1792337fec0b9a74a294b2794ccf016ff0fc566387dc28e29bfba699795c8b2d",
+    "bound-evidence-files": 162,
+    "members": 164,
+    "scope": "Final evidence and appended runtime engineering record only; native verifier detaches all overwritten hardlinks before extraction."
+  },
+  "receipt-files": [
+    {
+      "path": "filesystem-final-check-macos.json",
+      "bytes": 652,
+      "sha256": "97221d7b05f6f7e9b5c679cde488bc3445164702a8f315fa568fd07adc7e75b6"
+    },
+    {
+      "path": "filesystem-final-check-macos.log",
+      "bytes": 274,
+      "sha256": "91957e4a8b64eec5a1da3e1acc52968629d852fa5c18c46c587b1662a703e739"
+    },
+    {
+      "path": "filesystem-final-check-linux.json",
+      "bytes": 854,
+      "sha256": "d401dedf50f45f6b122f80fffdefbf041bbbbc737af6194acc3e95f0ca3f485b"
+    },
+    {
+      "path": "filesystem-final-check-linux.log",
+      "bytes": 274,
+      "sha256": "91957e4a8b64eec5a1da3e1acc52968629d852fa5c18c46c587b1662a703e739"
+    },
+    {
+      "path": "filesystem-final-check-windows.json",
+      "bytes": 1427,
+      "sha256": "d569cd9e40441ec2f2c33c226aa71c45beb4568e0fc84dbf631c33125aabee93"
+    },
+    {
+      "path": "filesystem-final-check-windows.log",
+      "bytes": 287,
+      "sha256": "fdfbe4d9c6388e614a5c249513feb47ec53f680dfa9ea686d7bb54fa49b72f34"
+    }
+  ],
+  "scope": "All three receipts verify the original envelope only; receipts, this scope note and later whitespace audit do not verify themselves. Final envelope binds these later files; compiled inputs unchanged."
+}

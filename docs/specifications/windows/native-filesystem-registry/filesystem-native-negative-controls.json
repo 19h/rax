@@ -1,0 +1,79 @@
+{
+  "state": "finished",
+  "controls": [
+    {
+      "name": "present-status",
+      "rejected": true,
+      "failure-type": "AssertionError",
+      "outer-envelope-rebound": true
+    },
+    {
+      "name": "absent-status",
+      "rejected": true,
+      "failure-type": "AssertionError",
+      "outer-envelope-rebound": true
+    },
+    {
+      "name": "absent-output",
+      "rejected": true,
+      "failure-type": "AssertionError",
+      "outer-envelope-rebound": true
+    },
+    {
+      "name": "duplicate-open",
+      "rejected": true,
+      "failure-type": "AssertionError",
+      "outer-envelope-rebound": true
+    },
+    {
+      "name": "missing-open",
+      "rejected": true,
+      "failure-type": "AssertionError",
+      "outer-envelope-rebound": true
+    },
+    {
+      "name": "handle-leak",
+      "rejected": true,
+      "failure-type": "AssertionError",
+      "outer-envelope-rebound": true
+    },
+    {
+      "name": "wrong-PE-machine",
+      "rejected": true,
+      "failure-type": "AssertionError",
+      "outer-envelope-rebound": true
+    },
+    {
+      "name": "native-program-failure",
+      "rejected": true,
+      "failure-type": "AssertionError",
+      "outer-envelope-rebound": true
+    },
+    {
+      "name": "runtime-identity-change",
+      "rejected": true,
+      "failure-type": "AssertionError",
+      "outer-envelope-rebound": true
+    },
+    {
+      "name": "source-identity-change",
+      "rejected": true,
+      "failure-type": "AssertionError",
+      "outer-envelope-rebound": true
+    },
+    {
+      "name": "source-after-identity-change",
+      "rejected": true,
+      "failure-type": "AssertionError",
+      "outer-envelope-rebound": true
+    },
+    {
+      "name": "invalid-rights",
+      "rejected": true,
+      "failure-type": "AssertionError",
+      "outer-envelope-rebound": true
+    }
+  ],
+  "rejected": 12,
+  "scope": "Each intentional logical corruption has its file and outer manifest hashes rebound before checking."
+}

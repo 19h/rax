@@ -1,0 +1,9 @@
+{
+  "pid": 3724,
+  "utc": "2026-10-19T07:55:32.195942+00:00",
+  "state": "finished",
+  "scope": "Read-only native primary SID identity control and fixed HKLM System FileSystem registry opens with bounded path/view/right variants; no token, registry, thread impersonation or security policy mutation.",
+  "child-pid": 7776,
+  "exit-code": 0,
+  "completed-utc": "2026-10-19T07:55:45.713398+00:00"
+}

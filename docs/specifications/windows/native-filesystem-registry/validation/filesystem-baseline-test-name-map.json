@@ -1,0 +1,8 @@
+{
+  "baseline-name": "installed_filesystem_snapshot_matches_independent_native_presence_and_views",
+  "final-name": "installed_filesystem_registry_snapshot_matches_independent_native_presence_and_views",
+  "scope": "Same original native presence/value assertion and body; only the function name gains registry for the unique focus filter. Two additional adapter tests follow in the final file.",
+  "body-identity-after-name-normalization": true,
+  "baseline-source-sha256": "a77c1c4c974388b087819bb97cb58206b936a226b8be4f666fc58c79f7b897ac",
+  "final-first-test-sha256": "3b21b959cd49816afe78e5bdbfba88ee2ea72b6b97e77e58cc0810bb8db6cd8d"
+}

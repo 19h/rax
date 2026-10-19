@@ -1,0 +1,78 @@
+{
+  "state": "finished",
+  "pid": 13475,
+  "hosts": [
+    {
+      "host": "macos",
+      "original-record": "policy-macos-epoch1-gates.json",
+      "canonical-record": "filesystem-macos-epoch1-gates.json",
+      "log-mapping": [
+        {
+          "original": "policy-macos-epoch1-full.log",
+          "alias": "filesystem-macos-epoch1-full.log",
+          "bytes": 839807,
+          "sha256": "d6926c8a9f87e3a3695a1ef5840e3dabce1396fc402195ebb1a31e2ae57bf12a"
+        },
+        {
+          "original": "policy-macos-epoch1-capi.log",
+          "alias": "filesystem-macos-epoch1-capi.log",
+          "bytes": 14320,
+          "sha256": "833c6e4baac7efefd5eb2a8716fc7d4f7389bb7d2806b455ecec248bc9b6557c"
+        },
+        {
+          "original": "policy-macos-epoch1-integration.log",
+          "alias": "filesystem-macos-epoch1-integration.log",
+          "bytes": 36069,
+          "sha256": "b466be8dcb1a2bebf079d84a840fac1957ceda6bd923b0b9fe6289ddb82d6e15"
+        },
+        {
+          "original": "policy-macos-epoch1-all-targets.log",
+          "alias": "filesystem-macos-epoch1-all-targets.log",
+          "bytes": 485,
+          "sha256": "205ac73341f199317583ae02b309cf938141f2a0751bbc4d9ec6aef04c507be0"
+        }
+      ]
+    },
+    {
+      "host": "linux",
+      "original-record": "policy-linux-epoch1-gates.json",
+      "canonical-record": "filesystem-linux-epoch1-gates.json",
+      "log-mapping": [
+        {
+          "original": "policy-linux-epoch1-focus.log",
+          "alias": "filesystem-linux-epoch1-focus.log",
+          "bytes": 1538,
+          "sha256": "eda71dd623421509b2e6e8b59ee5b56172c9b76113f5039e1bb57dde1c3ab1b4"
+        },
+        {
+          "original": "policy-linux-epoch1-full.log",
+          "alias": "filesystem-linux-epoch1-full.log",
+          "bytes": 839801,
+          "sha256": "ce9c89fe74c876b4abd0d95784dc6a7906dbe9e28372f31c5f6a7c93b0afa194"
+        },
+        {
+          "original": "policy-linux-epoch1-capi.log",
+          "alias": "filesystem-linux-epoch1-capi.log",
+          "bytes": 14068,
+          "sha256": "10b703e82df967d5631e96ac4b4e25acca2490b346a3dd377018ce30489af29d"
+        },
+        {
+          "original": "policy-linux-epoch1-integration.log",
+          "alias": "filesystem-linux-epoch1-integration.log",
+          "bytes": 35852,
+          "sha256": "ac9c358297479268429090c3a1a4aa09d088bca2fa3ab1d949ef329c34dd247e"
+        },
+        {
+          "original": "policy-linux-epoch1-all-targets.log",
+          "alias": "filesystem-linux-epoch1-all-targets.log",
+          "bytes": 309,
+          "sha256": "0a26259d982fa5ab0ae6fdb48f9e1e475e265c455e45dc8a52df4e58ac82f788"
+        }
+      ]
+    }
+  ],
+  "utc": "2026-10-19T08:25:17.047048+00:00",
+  "scope": "The executed Unix driver retained a previous-group log prefix. Preserve its original record and log bytes; add traced FileSystem filename aliases without changing commands, results, hashes, or test selection.",
+  "exit-code": 0,
+  "completed-utc": "2026-10-19T08:41:25.262239+00:00"
+}

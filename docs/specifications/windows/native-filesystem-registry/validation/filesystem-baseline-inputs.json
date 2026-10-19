@@ -1,0 +1,22 @@
+{
+  "base": "399506af43fa9988140ba9a4d8c0d189af59b05f",
+  "parent-manifest": "policy-candidate-epoch1.json",
+  "test-only-overrides": [
+    {
+      "path": "src/user/windows/registry/installed.rs",
+      "transfer": "filesystem-baseline-installed.rs",
+      "bytes": 10265,
+      "sha256": "6123984943008ddfe18f517b7bc004c0339853081734eab67e35f69047a1d32f"
+    },
+    {
+      "path": "src/user/windows/registry/installed/filesystem_tests.rs",
+      "transfer": "filesystem-baseline-filesystem_tests.rs",
+      "bytes": 1390,
+      "sha256": "a77c1c4c974388b087819bb97cb58206b936a226b8be4f666fc58c79f7b897ac"
+    }
+  ],
+  "scope": "Published policy product Rust/build/fixture inputs match the frozen native parent; only one new test and its module registration are added. Parent source predates append-only engineering records, which do not select FileSystem behavior. No production FileSystem implementation is present.",
+  "matching-published-compiled-inputs": 8584,
+  "matching-published-compiled-input-bytes": 207233661,
+  "input-rule": "Parent paths under src/, tests/, capi/, plus Cargo.toml/Cargo.lock/build.rs; exclude .md engineering records and the two tests-only overrides."
+}

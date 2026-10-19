@@ -1,0 +1,12 @@
+{
+  "utc": "2026-10-19T08:18:37.982731+00:00",
+  "sources": [
+    {
+      "file": "shared-registry-keys.html",
+      "url": "https://learn.microsoft.com/en-us/windows/win32/winprog64/shared-registry-keys",
+      "bytes": 66038,
+      "sha256": "17f371043070ad9ead9c65b26a0718f99e8e37776c674ecbdc69ec107afc624c",
+      "basis": "Stored current primary source from the just-published policy group; HKLM shared default and subkey inheritance."
+    }
+  ]
+}

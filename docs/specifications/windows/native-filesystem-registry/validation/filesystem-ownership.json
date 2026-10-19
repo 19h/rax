@@ -1,0 +1,18 @@
+{
+  "utc": "2026-10-19T08:10:47.948118+00:00",
+  "base": "399506af43fa9988140ba9a4d8c0d189af59b05f",
+  "source-root": "/Users/int/Library/Caches/assist-process-emulation/native-filesystem-registry-20261019/filesystem-source",
+  "baseline-status": "## HEAD (no branch)\n",
+  "source-owned-paths": [
+    "src/user/windows/registry.rs",
+    "src/user/windows/registry/tree.rs",
+    "src/user/windows/registry/installed.rs",
+    "src/user/windows/registry/filesystem_tests.rs",
+    "src/user/windows/registry/installed/filesystem_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/registry_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/filesystem_registry_tests.rs",
+    "src/user/windows/native-runtime.md"
+  ],
+  "evidence-prefix": "docs/specifications/windows/native-filesystem-registry/",
+  "scope": "One fixed HKLM System CurrentControlSet Control FileSystem immutable complete-or-known-absent subtree; preserve captured primary-user selection and all shared budgets/guest permission boundaries. No arbitrary guest forwarding."
+}

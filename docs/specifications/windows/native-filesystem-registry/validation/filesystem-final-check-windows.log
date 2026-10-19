@@ -1,0 +1,13 @@
+{
+  "key-opens": 320,
+  "native-ABI-profiles": 4,
+  "physical-Windows-kernels": 1,
+  "bound-native-files": 35
+}
+{
+  "source-inputs": 23843,
+  "three-host-full-gates": "pass",
+  "retained-consumers": "pass",
+  "ordinary-programs": 2,
+  "ordinary-guest-exit-success": false
+}

@@ -1,0 +1,180 @@
+{
+  "scope": "Independent fixed FileSystem native capture, exact source/PE/module/handle controls and primary source.",
+  "files": [
+    {
+      "path": "capture-plan.json",
+      "bytes": 593,
+      "sha256": "0014daa04145983df402c1d088b1b9470421b4df1788a8a61119e9724dc3458e"
+    },
+    {
+      "path": "filesystem-ownership.json",
+      "bytes": 1070,
+      "sha256": "3d26039bcf890b59cb0f4c2aad66e3ff4e21097b75c27995d45d2c1b999653b4"
+    },
+    {
+      "path": "filesystem-plan.json",
+      "bytes": 4185,
+      "sha256": "fb2029bc9a49db507024702b7e11a424ac07e14fd6f667fd390a8bff53fb6d11"
+    },
+    {
+      "path": "native/inspect-system-time-v2-pe.py",
+      "bytes": 693,
+      "sha256": "ea32c13e299784c3cc9c30e797fdf363d3ffd42a8c08cbed69cab64ef5198e06"
+    },
+    {
+      "path": "native/native-filesystem-registry-v1-arm64-after.json",
+      "bytes": 540,
+      "sha256": "c0eb57e8a94a7c15b8fc998505d59e8f6c32ae17b4c6bde7051b7de321551f19"
+    },
+    {
+      "path": "native/native-filesystem-registry-v1-arm64-before.json",
+      "bytes": 540,
+      "sha256": "c0eb57e8a94a7c15b8fc998505d59e8f6c32ae17b4c6bde7051b7de321551f19"
+    },
+    {
+      "path": "native/native-filesystem-registry-v1-arm64-build.log",
+      "bytes": 35,
+      "sha256": "52ea401ef4e24001286beb432ab710072c8c905ac3230b9a34ce53bda2040efd"
+    },
+    {
+      "path": "native/native-filesystem-registry-v1-arm64-source-after.json",
+      "bytes": 254,
+      "sha256": "7deb68e6b7d25d362af72b6ba75239358d52897cd8ef4455b956a64c7b2ae8b8"
+    },
+    {
+      "path": "native/native-filesystem-registry-v1-arm64.log",
+      "bytes": 6212,
+      "sha256": "8e30607f0813b4518352e1d97c2820c8751f9ba71c62215f5e1f5d1f44b9a154"
+    },
+    {
+      "path": "native/native-filesystem-registry-v1-driver.log",
+      "bytes": 964,
+      "sha256": "81157a84a41f6d110e3d629b61f37581444b3f76aa427bed1014db5bce060e17"
+    },
+    {
+      "path": "native/native-filesystem-registry-v1-launch.json",
+      "bytes": 406,
+      "sha256": "d2e2c672357957117117f6e4794f7eb0bfabf7aed4894fb94a412d19998b911a"
+    },
+    {
+      "path": "native/native-filesystem-registry-v1-modules-after.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05"
+    },
+    {
+      "path": "native/native-filesystem-registry-v1-modules-before.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05"
+    },
+    {
+      "path": "native/native-filesystem-registry-v1-outcomes.json",
+      "bytes": 524,
+      "sha256": "4dc97044dfc79590d8708dc1dc2173e6ae8ca8d6229a2ae0cc9cd5c7b5b2d70d"
+    },
+    {
+      "path": "native/native-filesystem-registry-v1-x64-after.json",
+      "bytes": 532,
+      "sha256": "6ad17eb0b4ca106ec924447061c1b735a07cf98cf26dacda932325897b8670c7"
+    },
+    {
+      "path": "native/native-filesystem-registry-v1-x64-before.json",
+      "bytes": 532,
+      "sha256": "6ad17eb0b4ca106ec924447061c1b735a07cf98cf26dacda932325897b8670c7"
+    },
+    {
+      "path": "native/native-filesystem-registry-v1-x64-build.log",
+      "bytes": 35,
+      "sha256": "52ea401ef4e24001286beb432ab710072c8c905ac3230b9a34ce53bda2040efd"
+    },
+    {
+      "path": "native/native-filesystem-registry-v1-x64-source-after.json",
+      "bytes": 252,
+      "sha256": "d52fc321ac2939aec72e5a600bab272d28e67da747083b82b53cdb09ba4b039f"
+    },
+    {
+      "path": "native/native-filesystem-registry-v1-x64.log",
+      "bytes": 6210,
+      "sha256": "4d2ddc8583cc8e22aaa69e7e53e230d42356ff5b7dfe27bd34c6249381f96b83"
+    },
+    {
+      "path": "native/native-filesystem-registry-v1-x86-after.json",
+      "bytes": 530,
+      "sha256": "cfc2edd5184107982ddf3020aa9b526a6b9409bd1a21d1bb95fd0e55880300d9"
+    },
+    {
+      "path": "native/native-filesystem-registry-v1-x86-before.json",
+      "bytes": 530,
+      "sha256": "cfc2edd5184107982ddf3020aa9b526a6b9409bd1a21d1bb95fd0e55880300d9"
+    },
+    {
+      "path": "native/native-filesystem-registry-v1-x86-build.log",
+      "bytes": 35,
+      "sha256": "52ea401ef4e24001286beb432ab710072c8c905ac3230b9a34ce53bda2040efd"
+    },
+    {
+      "path": "native/native-filesystem-registry-v1-x86-laa-after.json",
+      "bytes": 544,
+      "sha256": "e160496608f11b59a69ea134d1d89a164645fba07731345bcb2db7c2c9ac7438"
+    },
+    {
+      "path": "native/native-filesystem-registry-v1-x86-laa-before.json",
+      "bytes": 544,
+      "sha256": "e160496608f11b59a69ea134d1d89a164645fba07731345bcb2db7c2c9ac7438"
+    },
+    {
+      "path": "native/native-filesystem-registry-v1-x86-laa-build.log",
+      "bytes": 35,
+      "sha256": "52ea401ef4e24001286beb432ab710072c8c905ac3230b9a34ce53bda2040efd"
+    },
+    {
+      "path": "native/native-filesystem-registry-v1-x86-laa-source-after.json",
+      "bytes": 256,
+      "sha256": "bca5778d6ddf1ba529ab6b8a6b581eed2d4827e98d150966b5606e82bb07726c"
+    },
+    {
+      "path": "native/native-filesystem-registry-v1-x86-laa.log",
+      "bytes": 6214,
+      "sha256": "6ed3f622d5de44a53fb7ed16b4fb182f136c30867d819f5d4056ebd4895161c1"
+    },
+    {
+      "path": "native/native-filesystem-registry-v1-x86-source-after.json",
+      "bytes": 252,
+      "sha256": "1cad17d28fbb2a7c3dd3e8f237d13455fd918704479b2bbf114ccabce627b419"
+    },
+    {
+      "path": "native/native-filesystem-registry-v1-x86.log",
+      "bytes": 6210,
+      "sha256": "06b2a80024e65fd5d0f90b6feec9c9c5187b85109c909baf3add3061673fe77f"
+    },
+    {
+      "path": "native/native-filesystem-registry-v1.cpp",
+      "bytes": 3970,
+      "sha256": "c2941920f387982505e702549e6e7318f66a55ffd7dd26edba2dc3496ede3777"
+    },
+    {
+      "path": "native/native-filesystem-registry-v1.ps1",
+      "bytes": 2619,
+      "sha256": "1f2516c070e3562584eb8ca814acee5baa7ce63cdc63284a716fbc05042c4334"
+    },
+    {
+      "path": "native/run-native-filesystem-registry-v1.py",
+      "bytes": 1290,
+      "sha256": "22729810245a5b1629c823aa3a866c983d6c378d513479471824bba7e2553557"
+    },
+    {
+      "path": "native-capture-precheck.json",
+      "bytes": 1148,
+      "sha256": "b9e9b7f2106a556e576ad416c93d0d0c4e86d4115247e08fc846702fb30ba884"
+    },
+    {
+      "path": "primary-retrieval.json",
+      "bytes": 453,
+      "sha256": "4d5bd70f1459aad0a8df848acebb125e152a3a682b6041b8059e59d318531900"
+    },
+    {
+      "path": "shared-registry-keys.html",
+      "bytes": 66038,
+      "sha256": "17f371043070ad9ead9c65b26a0718f99e8e37776c674ecbdc69ec107afc624c"
+    }
+  ]
+}

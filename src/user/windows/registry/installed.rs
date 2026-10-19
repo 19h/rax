@@ -290,6 +290,9 @@ pub(crate) fn snapshot() -> io::Result<Registry> {
     let registry = registry.with_tree(root, selected)?;
     let root = super::TreeRoot::SaferCodeIdentifiers;
     let selected = tree::capture_root(&registry, root)?;
+    let registry = registry.with_tree(root, selected)?;
+    let root = super::TreeRoot::FileSystem;
+    let selected = tree::capture_root(&registry, root)?;
     registry.with_tree(root, selected)
 }
 
@@ -316,3 +319,7 @@ mod safer_tests;
 #[cfg(test)]
 #[path = "installed/user_policy_tests.rs"]
 mod user_policy_tests;
+
+#[cfg(test)]
+#[path = "installed/filesystem_tests.rs"]
+mod filesystem_tests;

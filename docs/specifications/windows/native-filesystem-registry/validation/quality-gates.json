@@ -1,0 +1,12 @@
+{
+  "scope": "Fixed FileSystem semantic group; full same-host process objective incomplete.",
+  "QG1": "pass: factual implementation and validation; no normative judgment",
+  "QG2": "pass: assumptions, dependent results, native/shared tests and falsification probes reconciled",
+  "QG3": "pass within group: fixed-root capture or known absence, complete traversal/error handling, shared views, raw values, seven-root budget, read-only grants/lifetime, six shared/nine Windows tests and three-host/retained-consumer gates",
+  "QG4": "pass: root61UTF16units=122bytes, observed trailing form62units=124bytes; exact native/source/test counts and existing bounds retained",
+  "QG5": "pass within scope: actual native regression, root/error/duplicate/sibling/copy/lifetime/aggregate cases; class13 and absence of guest exit explicit",
+  "QG6": "pass: stored Microsoft primary source, exact producer/PE/module/control bindings, source/archive/program identity, portable verifiers and traced original Unix artifacts",
+  "QG7": "pass: one physical kernel, five known lowerer failures, retained ABI184/current-product bound, next worker-factory frontier and artifact-prefix issue documented",
+  "RAX-QG8": "pass: genuine native tests-only failure before selector edit, complete selections and actual retained-owner ordinary behavior; no test skips weakened",
+  "RAX-QG9": "pass: constant/enum/snapshot/test registration agree, no public ABI/default/dependency change, engineering append bound after compiled gates"
+}

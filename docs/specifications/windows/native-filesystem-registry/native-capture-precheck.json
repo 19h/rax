@@ -1,0 +1,42 @@
+{
+  "state": "finished",
+  "scope": "Prospective native capture precheck only; no source implementation or group publication yet.",
+  "profiles": [
+    {
+      "profile": "arm64",
+      "cases": 80,
+      "source-sha256": "c2941920f387982505e702549e6e7318f66a55ffd7dd26edba2dc3496ede3777",
+      "handle-count": 56
+    },
+    {
+      "profile": "x64",
+      "cases": 80,
+      "source-sha256": "c2941920f387982505e702549e6e7318f66a55ffd7dd26edba2dc3496ede3777",
+      "handle-count": 78
+    },
+    {
+      "profile": "x86",
+      "cases": 80,
+      "source-sha256": "c2941920f387982505e702549e6e7318f66a55ffd7dd26edba2dc3496ede3777",
+      "handle-count": 93
+    },
+    {
+      "profile": "x86-laa",
+      "cases": 80,
+      "source-sha256": "c2941920f387982505e702549e6e7318f66a55ffd7dd26edba2dc3496ede3777",
+      "handle-count": 93
+    }
+  ],
+  "key-opens": 320,
+  "producer-hash": "c2941920f387982505e702549e6e7318f66a55ffd7dd26edba2dc3496ede3777",
+  "status-by-path": {
+    "0": "00000000",
+    "1": "00000000",
+    "2": "C0000034",
+    "3": "C0000034",
+    "4": "C0000034",
+    "5": "00000000",
+    "6": "C0000034",
+    "7": "C0000034"
+  }
+}

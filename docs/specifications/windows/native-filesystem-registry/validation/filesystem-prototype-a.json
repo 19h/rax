@@ -1,0 +1,61 @@
+{
+  "state": "finished",
+  "utc": "2026-10-19T08:17:48.526207+00:00",
+  "inputs": [
+    {
+      "path": "src/user/windows/registry.rs",
+      "sha256": "0d74967dc4c5f9892292600b50eadff41b1861b9d12a3e483b68f30830880289",
+      "bytes": 8340
+    },
+    {
+      "path": "src/user/windows/registry/tree.rs",
+      "sha256": "600291732f1708f5d900f5a5365c8cf53a2d85b2d09783b0d35fa6e2d40a2d3f",
+      "bytes": 8602
+    },
+    {
+      "path": "src/user/windows/registry/installed.rs",
+      "sha256": "8b1cc194f88c3fdc6baa048b8368bab054ee33d71326d7472318604177847837",
+      "bytes": 10422
+    },
+    {
+      "path": "src/user/windows/registry/filesystem_tests.rs",
+      "sha256": "7088b4765a0c8e472783a6bae420a144df95de3ab34fd3fd7506b31d2b6017a0",
+      "bytes": 6198
+    },
+    {
+      "path": "src/user/windows/registry/installed/filesystem_tests.rs",
+      "sha256": "6ba07291e4df3d01ee09565406b7067c4bdbd7652776fc8bc62b724f09548929",
+      "bytes": 5157
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/registry_tests.rs",
+      "sha256": "75c91156767f4078b64ba99898d113029ea1fb580613a259b890f099ea025de6",
+      "bytes": 38807
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/filesystem_registry_tests.rs",
+      "sha256": "37a00939813266120f45097119a3484f07e68668931b75e0f48d08b8bd047755",
+      "bytes": 6504
+    }
+  ],
+  "argv": [
+    "cargo",
+    "+1.95.0",
+    "test",
+    "--locked",
+    "--offline",
+    "--no-default-features",
+    "--lib",
+    "filesystem_registry",
+    "--",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "exit-code": 0,
+  "log": "filesystem-prototype-a.log",
+  "bytes": 1779,
+  "sha256": "6cac98c41af795f5bb5b588e059f8dabc6badd7eb96cddc335f7af5a1acf461c",
+  "results": [
+    "ok. 6 passed; 0 failed; 0 ignored; 0 measured; 8021 filtered out; finished in 0.07s"
+  ]
+}

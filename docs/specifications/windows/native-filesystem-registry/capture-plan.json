@@ -1,0 +1,18 @@
+{
+  "utc": "2026-10-19T07:55:31.937162+00:00",
+  "scope": "Prospective evidence only for the next observed FileSystem root; no current policy-source edit and no registry mutation.",
+  "basis": "Both policy candidate ordinary guests pass the per-user policy root and stop at the FileSystem root.",
+  "source": "native-filesystem-registry-v1.cpp",
+  "source-sha256": "c2941920f387982505e702549e6e7318f66a55ffd7dd26edba2dc3496ede3777",
+  "native-profiles": [
+    "arm64",
+    "x64",
+    "x86",
+    "x86-laa"
+  ],
+  "expected-key-opens": 320,
+  "guest-frontiers": [
+    2889590,
+    2891875
+  ]
+}

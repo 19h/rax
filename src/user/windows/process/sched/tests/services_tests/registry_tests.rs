@@ -1067,3 +1067,6 @@ mod safer;
 
 #[path = "user_policy_registry_tests.rs"]
 mod user_policy;
+
+#[path = "filesystem_registry_tests.rs"]
+mod filesystem_registry;
