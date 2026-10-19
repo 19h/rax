@@ -178,6 +178,7 @@ fn native_token_session_id_preserves_nonzero_values_and_rejects_missing_identity
         let id = p
             .objects
             .create(Object::ImpersonationToken(std::sync::Arc::new(Subject {
+                user_attributes: 0,
                 user: vec![],
                 groups: vec![],
                 restricted: vec![],

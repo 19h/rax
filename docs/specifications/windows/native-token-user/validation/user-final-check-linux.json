@@ -1,0 +1,29 @@
+{
+  "state": "finished",
+  "host": "linux",
+  "argv": [
+    "docker",
+    "run",
+    "--rm",
+    "--platform",
+    "linux/amd64",
+    "-v",
+    "/Users/int/Library/Caches/assist-process-emulation/native-token-user-20261019/user-source:/source:ro",
+    "-v",
+    "/Users/int/Library/Caches/assist-process-emulation/native-token-user-20261019:/validation:ro",
+    "-w",
+    "/source",
+    "assist-rax-validation-rustfmt:1.95-bullseye-20261015",
+    "python3",
+    "-B",
+    "/validation/run-user-proof-checks.py",
+    "/source"
+  ],
+  "checked-envelope-files": 171,
+  "utc": "2026-10-19T07:14:38.740827+00:00",
+  "exit-code": 0,
+  "log": "user-final-check-linux.log",
+  "bytes": 628,
+  "sha256": "ab0e904435007da8b73008395a77c51b2fd33f47f15ac706012ae141bc7ab702",
+  "completed-utc": "2026-10-19T07:14:46.884049+00:00"
+}

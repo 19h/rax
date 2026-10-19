@@ -1,0 +1,22 @@
+{
+  "native-main-cases": 20064,
+  "native-boundary-cases": 2624,
+  "native-total-cases": 22688,
+  "abi-profiles": 4,
+  "native-kernels": 1,
+  "reference-user-sid": "010100000000000512000000",
+  "mapping": {
+    "arm64": 0,
+    "x64": 0,
+    "x86": 1,
+    "x86-laa": 1
+  },
+  "scope": "Captured SYSTEM subject. Opaque result pointers are represented by byte-index markers; statuses, byte counts, padding, aliases and fault-visible data remain native observations."
+}
+{
+  "source-inputs": 23442,
+  "three-host-full-gates": "pass",
+  "retained-consumers": "pass",
+  "ordinary-programs": 2,
+  "ordinary-guest-exit-success": false
+}

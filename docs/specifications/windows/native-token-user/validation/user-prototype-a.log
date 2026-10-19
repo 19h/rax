@@ -1,0 +1,13 @@
+   Compiling rax v0.1.0 (/Users/int/Library/Caches/assist-process-emulation/native-token-user-20261019/user-source)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 11s
+     Running unittests src/lib.rs (/Users/int/Library/Caches/assist-process-emulation/native-wait-20261019/target-macos-wait-epoch3/debug/deps/rax-dd79f0cd9ae9bb68)
+
+running 5 tests
+test user::windows::process::sched::tests::services_tests::token_query_tests::user_identity::native_token_user_refuses_uncaptured_primary_identity_without_fabricating_output ... ok
+test user::windows::process::sched::tests::services_tests::token_query_tests::user_identity::native_token_user_replays_all_20064_native_matrix_cases ... ok
+test user::windows::process::sched::tests::services_tests::token_query_tests::user_identity::native_token_user_replays_all_2624_native_page_boundary_copies ... ok
+test user::windows::process::sched::tests::services_tests::token_query_tests::user_identity::native_token_user_retains_variable_sid_bytes_and_native64_padding_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::token_query_tests::user_identity::native_token_user_uses_impersonation_identity_without_primary_catalog_all_abis ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 8010 filtered out; finished in 1.45s
+

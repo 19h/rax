@@ -1,0 +1,53 @@
+{
+  "controls": [
+    {
+      "name": "source",
+      "rejected": true
+    },
+    {
+      "name": "source-after",
+      "rejected": true
+    },
+    {
+      "name": "machine",
+      "rejected": true
+    },
+    {
+      "name": "module-after",
+      "rejected": true
+    },
+    {
+      "name": "producer-failed",
+      "rejected": true
+    },
+    {
+      "name": "ordinal",
+      "rejected": true
+    },
+    {
+      "name": "status",
+      "rejected": true
+    },
+    {
+      "name": "attributes",
+      "rejected": true
+    },
+    {
+      "name": "required-size",
+      "rejected": true
+    },
+    {
+      "name": "guard",
+      "rejected": true
+    },
+    {
+      "name": "boundary-omitted",
+      "rejected": true
+    },
+    {
+      "name": "corpus-drift",
+      "rejected": true
+    }
+  ],
+  "all-rejected": true
+}

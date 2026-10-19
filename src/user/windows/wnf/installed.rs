@@ -120,7 +120,7 @@ fn capture(
     crate::user::windows::security::token::scalars::Scalars,
     crate::user::windows::security::token::bno::Isolation,
 )> {
-    let user = group(&information(token, 1)?, 0)?.sid;
+    let user = group(&information(token, 1)?, 0)?;
     let enabled_groups = groups(&information(token, 2)?)?;
     let restricted = groups(&information(token, 11)?)?;
     let raw_privileges = information(token, 3)?;
@@ -149,7 +149,8 @@ fn capture(
     let session = u32::from_ne_bytes(session.try_into().unwrap());
     Ok((
         Subject {
-            user,
+            user_attributes: user.attributes,
+            user: user.sid,
             groups: enabled_groups,
             restricted,
             app_container: u32::from_ne_bytes(flags.try_into().unwrap()) != 0,

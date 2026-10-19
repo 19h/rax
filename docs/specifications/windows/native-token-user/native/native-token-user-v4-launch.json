@@ -1,0 +1,9 @@
+{
+  "pid": 1744,
+  "utc": "2026-10-19T06:07:19.516840+00:00",
+  "state": "finished",
+  "scope": "Read-only native TokenUser query capture over owned tokens/events and owned memory; no token, registry or security policy mutation.",
+  "child-pid": 5156,
+  "exit-code": 0,
+  "completed-utc": "2026-10-19T06:07:53.936990+00:00"
+}

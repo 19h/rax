@@ -1,0 +1,17 @@
+{
+  "state": "finished",
+  "host": "macos",
+  "argv": [
+    "/opt/homebrew/opt/python@3.15/bin/python3.15",
+    "-B",
+    "/Users/int/Library/Caches/assist-process-emulation/native-token-user-20261019/run-user-proof-checks.py",
+    "/Users/int/Library/Caches/assist-process-emulation/native-token-user-20261019/user-source"
+  ],
+  "checked-envelope-files": 171,
+  "utc": "2026-10-19T07:14:38.740845+00:00",
+  "exit-code": 0,
+  "log": "user-final-check-macos.log",
+  "bytes": 628,
+  "sha256": "ab0e904435007da8b73008395a77c51b2fd33f47f15ac706012ae141bc7ab702",
+  "completed-utc": "2026-10-19T07:14:41.158134+00:00"
+}

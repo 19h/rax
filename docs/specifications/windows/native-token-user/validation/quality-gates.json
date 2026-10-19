@@ -1,0 +1,10 @@
+{
+  "scope": "TokenUser semantic group; full same-host process objective incomplete.",
+  "QG1": "pass: factual implementation/verification; no normative judgment",
+  "QG2": "pass: bases, dependencies, stress tests and falsification probes; A2/A3 remain declared scope qualifications",
+  "QG3": "pass within group: captured SID/attributes, native64/WoW64 probes, typed/query handles, partial copies, aliases, LastError, five shared/six Windows tests, three-host full gates and retained consumers",
+  "QG4": "pass: SID8+4*N,N<=15; native64 header16 and WoW64 header8; current required28/20bytes, untouched padding; checked widened scratch arithmetic and exact counts",
+  "QG5": "pass within demonstrated scope: full original native/alias/guard data replay, independent native host identity, all previous selectors and ACL interpretation preserved; next registry frontier and scratch/copy limits explicit",
+  "QG6": "pass: stored Microsoft sources, native producer/PE/module identities, exact source/archive/program bindings, independent native TEB controls and portable verifiers",
+  "QG7": "pass: one physical native kernel, known five lowerer failures, incomplete process objective, retainedABI184/current-root product limitation and inferred scratch/other-SID-copy scope recorded"
+}

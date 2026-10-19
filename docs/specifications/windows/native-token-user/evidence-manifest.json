@@ -1,0 +1,901 @@
+{
+  "utc": "2026-10-19T07:13:53.425908+00:00",
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 5789,
+      "sha256": "af0d9781301642edfc11db2c7e914c6c651844222199d211cebd44fe9259cdbc"
+    },
+    {
+      "path": "capture-plan-v4.json",
+      "bytes": 1822,
+      "sha256": "677dc516865e19def23ddba0b1fd53a65e8b316e424999c7a409a6fe032bb484"
+    },
+    {
+      "path": "cases.json",
+      "bytes": 4241069,
+      "sha256": "790af11ad3d6acc33355d479cfc8c1a399f86dcce94374348751f9dd075588f6"
+    },
+    {
+      "path": "check_native.py",
+      "bytes": 8834,
+      "sha256": "435b4feb1939840c87c0302fe381c568b114a3a71472c3793675d9de27507ffc"
+    },
+    {
+      "path": "check_validation.py",
+      "bytes": 16761,
+      "sha256": "b44717c36f4b520af7fce7a52ceceebb3f82de22422eca9ac1a12377801388d9"
+    },
+    {
+      "path": "native/inspect-system-time-v2-pe.py",
+      "bytes": 693,
+      "sha256": "ea32c13e299784c3cc9c30e797fdf363d3ffd42a8c08cbed69cab64ef5198e06"
+    },
+    {
+      "path": "native/native-token-user-v4-arm64-after.json",
+      "bytes": 522,
+      "sha256": "f6637e3ad51df340d582e295bd4fdf4f19bce082b6e64c2562324e713f799ba1"
+    },
+    {
+      "path": "native/native-token-user-v4-arm64-before.json",
+      "bytes": 522,
+      "sha256": "f6637e3ad51df340d582e295bd4fdf4f19bce082b6e64c2562324e713f799ba1"
+    },
+    {
+      "path": "native/native-token-user-v4-arm64-build.log",
+      "bytes": 26,
+      "sha256": "1477cf111d20d942054de12620f9bc60069841a92b2fe3359eeeed85b25a4908"
+    },
+    {
+      "path": "native/native-token-user-v4-arm64-source-after.json",
+      "bytes": 236,
+      "sha256": "3ddfb87a7b1ba99c7fb671f0401b7c09a5c9d3e399fe602b08049a989b6fa6c6"
+    },
+    {
+      "path": "native/native-token-user-v4-arm64.log",
+      "bytes": 3254250,
+      "sha256": "cf99bfa55f8e4db34eb3f3479f344378568aa4989ad19458489d3bb726132027"
+    },
+    {
+      "path": "native/native-token-user-v4-driver.log",
+      "bytes": 964,
+      "sha256": "81157a84a41f6d110e3d629b61f37581444b3f76aa427bed1014db5bce060e17"
+    },
+    {
+      "path": "native/native-token-user-v4-launch.json",
+      "bytes": 335,
+      "sha256": "15f06e6f0c81a7a253192743dd99ea1a85b7e51035ce2574451ad4958ea96313"
+    },
+    {
+      "path": "native/native-token-user-v4-modules-after.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05"
+    },
+    {
+      "path": "native/native-token-user-v4-modules-before.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05"
+    },
+    {
+      "path": "native/native-token-user-v4-outcomes.json",
+      "bytes": 488,
+      "sha256": "16cee02431a853965761f04333d70616b3a1fd82ba39d450f3fe0ed323c8135c"
+    },
+    {
+      "path": "native/native-token-user-v4-x64-after.json",
+      "bytes": 514,
+      "sha256": "26007bf6efcde9124d968c725145368f54c7cdd67d982112165ac7c85df3515a"
+    },
+    {
+      "path": "native/native-token-user-v4-x64-before.json",
+      "bytes": 514,
+      "sha256": "26007bf6efcde9124d968c725145368f54c7cdd67d982112165ac7c85df3515a"
+    },
+    {
+      "path": "native/native-token-user-v4-x64-build.log",
+      "bytes": 26,
+      "sha256": "1477cf111d20d942054de12620f9bc60069841a92b2fe3359eeeed85b25a4908"
+    },
+    {
+      "path": "native/native-token-user-v4-x64-source-after.json",
+      "bytes": 234,
+      "sha256": "1179d5d973a85c3f231b93cf532f73684909cf4a62214495e5d58790208583e9"
+    },
+    {
+      "path": "native/native-token-user-v4-x64.log",
+      "bytes": 3256072,
+      "sha256": "5f0d208589226bdfaa6f082b3a950ec12dcdaacff1d67f379032f62889049912"
+    },
+    {
+      "path": "native/native-token-user-v4-x86-after.json",
+      "bytes": 512,
+      "sha256": "0dc9d7567a099390dd714483185dbfbd0c1a4cd05e9c31134efc5ba8a994f728"
+    },
+    {
+      "path": "native/native-token-user-v4-x86-before.json",
+      "bytes": 512,
+      "sha256": "0dc9d7567a099390dd714483185dbfbd0c1a4cd05e9c31134efc5ba8a994f728"
+    },
+    {
+      "path": "native/native-token-user-v4-x86-build.log",
+      "bytes": 26,
+      "sha256": "1477cf111d20d942054de12620f9bc60069841a92b2fe3359eeeed85b25a4908"
+    },
+    {
+      "path": "native/native-token-user-v4-x86-laa-after.json",
+      "bytes": 526,
+      "sha256": "6f61e3c9875912388ff2853e767632f987eaeb2d362386f9483d9440f16eb389"
+    },
+    {
+      "path": "native/native-token-user-v4-x86-laa-before.json",
+      "bytes": 526,
+      "sha256": "6f61e3c9875912388ff2853e767632f987eaeb2d362386f9483d9440f16eb389"
+    },
+    {
+      "path": "native/native-token-user-v4-x86-laa-build.log",
+      "bytes": 26,
+      "sha256": "1477cf111d20d942054de12620f9bc60069841a92b2fe3359eeeed85b25a4908"
+    },
+    {
+      "path": "native/native-token-user-v4-x86-laa-source-after.json",
+      "bytes": 238,
+      "sha256": "c1350fdec869bd09d08386886bcf36d26281e31cf73377a01f2f6751c48ee682"
+    },
+    {
+      "path": "native/native-token-user-v4-x86-laa.log",
+      "bytes": 2997566,
+      "sha256": "e8ad599732e40784da1419b961938b326ddb4606fc814102485c408c4aebabc8"
+    },
+    {
+      "path": "native/native-token-user-v4-x86-source-after.json",
+      "bytes": 234,
+      "sha256": "1548c18153fbb267c86682749d9e0d70e30344bed214a2fac5fc2fe7a50570be"
+    },
+    {
+      "path": "native/native-token-user-v4-x86.log",
+      "bytes": 2997562,
+      "sha256": "db0176a4cdf8d5ec5b836507ba98c50111542f9d7c39dcb4d26dd556586bb213"
+    },
+    {
+      "path": "native/native-token-user-v4.cpp",
+      "bytes": 14155,
+      "sha256": "4f95a76792ed8f7feff00d400a67d0152f7b10c945c1faf5f369d9d93fb7c183"
+    },
+    {
+      "path": "native/native-token-user-v4.ps1",
+      "bytes": 2495,
+      "sha256": "b38d37023dce99a87dcd6dddec5aa370ecc2fc7178d846a2edfe5ab7cb9269d1"
+    },
+    {
+      "path": "native/run-native-token-user-v4.py",
+      "bytes": 1181,
+      "sha256": "dee38e5721483730e93b81e644552f270117904c8acf9217cdff69e13b1d15aa"
+    },
+    {
+      "path": "native-user-negative-controls.json",
+      "bytes": 816,
+      "sha256": "8d79bf29534229550dc0f3fa5a43d6df10f2e927fa6eec146039b7883d4e730a"
+    },
+    {
+      "path": "plan-and-ownership.json",
+      "bytes": 6429,
+      "sha256": "ebeedd2ad1534f74040c48482dc5d855dc867fe8c69918da791ef81b7886849d"
+    },
+    {
+      "path": "query-token.html",
+      "bytes": 61920,
+      "sha256": "e520c8110781a24016bcfecebfdd1f8be25276755be4fa16f3bce6b55385521f"
+    },
+    {
+      "path": "source-ownership.json",
+      "bytes": 1607,
+      "sha256": "c870e675efd675705ad640a5ac819e1b61a214a9b3a67681c523624e407c4ab9"
+    },
+    {
+      "path": "stress_native.py",
+      "bytes": 2624,
+      "sha256": "d270756532c6c764015f67c7dce80daa2f1bf49beb813e7b27bbaa26acb78fb2"
+    },
+    {
+      "path": "token-user.html",
+      "bytes": 51031,
+      "sha256": "07e6f78e570184e825e0790463423a332a82e236fe6c338077f11a1c742c6011"
+    },
+    {
+      "path": "validation/README.pending.md",
+      "bytes": 5748,
+      "sha256": "0e93dbc0e2c6674305f0c55b4656d5031d51c88dbb0f62ae6f53eb0b00770530"
+    },
+    {
+      "path": "validation/baseline-token_query_tests.rs",
+      "bytes": 13827,
+      "sha256": "589f057aa226e184c17e137b3ec4be916047d07a212fdf4e55f26a0076be82d1"
+    },
+    {
+      "path": "validation/baseline-token_user_tests.rs",
+      "bytes": 15788,
+      "sha256": "7891dfe0364abe3f09f61651b8517bce6128939bc3dbf51e36dc6f5f903af9d2"
+    },
+    {
+      "path": "validation/build-user-proof.py",
+      "bytes": 1818,
+      "sha256": "23c32bc100a4486edd2214b6768acb606bd48cf96eb8e941b6cb9b355646b6e7"
+    },
+    {
+      "path": "validation/capture-timer2-host-identity.py",
+      "bytes": 1001,
+      "sha256": "5ade1f4d6f320ce0874ad8429e0f7a4fdd57f5596fb034285b6363f98a518d43"
+    },
+    {
+      "path": "validation/check-user-validation.py",
+      "bytes": 16761,
+      "sha256": "b44717c36f4b520af7fce7a52ceceebb3f82de22422eca9ac1a12377801388d9"
+    },
+    {
+      "path": "validation/collect-user-archives-epoch1.py",
+      "bytes": 3338,
+      "sha256": "22d7b3c8e576a2ac161b676415d597d73927eebd69a879eae3beeec12ebb59ce"
+    },
+    {
+      "path": "validation/collect-user-evidence.py",
+      "bytes": 3884,
+      "sha256": "4a1b5632c8a367e488b1339ce0f2d8403ddeb9083b494d22d7baba39897ff88e"
+    },
+    {
+      "path": "validation/engineering-source-updates.json",
+      "bytes": 381,
+      "sha256": "0fc3986a92791bc31e920dd723babb682cabecc7df857fb049905c32493f7553"
+    },
+    {
+      "path": "validation/final-assumptions.json",
+      "bytes": 5044,
+      "sha256": "99584e35e6b80b109cad71edd8fad11ea0934d3cc6e36f6029a34b03500263cf"
+    },
+    {
+      "path": "validation/finalize-user-records.py",
+      "bytes": 7466,
+      "sha256": "bf237781514f7a000354b6af93a2611e6ce387beac882bf06ab2d4b4e3c42d42"
+    },
+    {
+      "path": "validation/initial-ownership.json",
+      "bytes": 1607,
+      "sha256": "c870e675efd675705ad640a5ac819e1b61a214a9b3a67681c523624e407c4ab9"
+    },
+    {
+      "path": "validation/linux-user-epoch1-final-owning-archive-identities.json",
+      "bytes": 105282,
+      "sha256": "f9467f029e7b89030902b6c422469de0bb5fc6faf3440725bf7fc7e46dd0b65a"
+    },
+    {
+      "path": "validation/linux-user-epoch1-owning-archive-before.log",
+      "bytes": 180,
+      "sha256": "a6f1ff444b0e23a19083251c35ef9ee1d1d30ea53b30db96ca322afe02c94e58"
+    },
+    {
+      "path": "validation/linux-user-epoch1-owning-archive-identities.log",
+      "bytes": 180,
+      "sha256": "a6f1ff444b0e23a19083251c35ef9ee1d1d30ea53b30db96ca322afe02c94e58"
+    },
+    {
+      "path": "validation/linux-user-epoch1-owning-artifacts.log",
+      "bytes": 159806,
+      "sha256": "2ea7028b71b6fb3ae6c88d4f6c188049bc06595076bf8d9ae49fb0a1ea16551f"
+    },
+    {
+      "path": "validation/linux-user-epoch1-owning-commands.json",
+      "bytes": 6870,
+      "sha256": "855224e7451f84b555a14fed3d1f21ab4536ad270515bfc32e2ea68ed74cfac2"
+    },
+    {
+      "path": "validation/linux-user-epoch1-owning-cpp.log",
+      "bytes": 1944,
+      "sha256": "d47dcb4b4d925107b43f8b67b52ef2457898c18c80fba6777e7c84e6dfe7375c"
+    },
+    {
+      "path": "validation/linux-user-epoch1-owning-gates.json",
+      "bytes": 8735,
+      "sha256": "020c7546a04979af8d4d80fb57fd52aebb9efabed763a7346b1d65c433767645"
+    },
+    {
+      "path": "validation/linux-user-epoch1-owning-shipping.log",
+      "bytes": 160155,
+      "sha256": "b5062a9283979b76d15cbe5039ed1dcac5c0210650e8f5571d9cc0ad3bd991da"
+    },
+    {
+      "path": "validation/linux-user-epoch1-pre-cpp-archive-identities.json",
+      "bytes": 105283,
+      "sha256": "3014281d6c25140595dc6c38d4df07fa3ebe67b3465aeb7d6a6fa64f40e83988"
+    },
+    {
+      "path": "validation/macos-user-epoch1-final-owning-archive-identities.json",
+      "bytes": 106667,
+      "sha256": "e108f9e0fbb90c4e3af44543047d0c8c6f45f02e28a7cc2f27dd5eac696e2018"
+    },
+    {
+      "path": "validation/macos-user-epoch1-linkage.json",
+      "bytes": 1957,
+      "sha256": "e10fc8a4cd78c1ccc498af25c1f573c279f5e33041f50d636cc549f9e96159e6"
+    },
+    {
+      "path": "validation/macos-user-epoch1-owning-archive-before.log",
+      "bytes": 180,
+      "sha256": "079c8aae28b93c06dcab467aaa640a844e8615d408ff9a3e3d64ec3de5494b2a"
+    },
+    {
+      "path": "validation/macos-user-epoch1-owning-archive-identities.log",
+      "bytes": 180,
+      "sha256": "079c8aae28b93c06dcab467aaa640a844e8615d408ff9a3e3d64ec3de5494b2a"
+    },
+    {
+      "path": "validation/macos-user-epoch1-owning-artifacts.log",
+      "bytes": 131080,
+      "sha256": "a54a8fe24509b6e707f24e1399635a61e39982db791318d5450a31f313153db0"
+    },
+    {
+      "path": "validation/macos-user-epoch1-owning-build.log",
+      "bytes": 32919,
+      "sha256": "5d91cf11a52bcefb416b6e239d592ccfc55dbd3b5fc6b4b7a54c4f009b6dc80f"
+    },
+    {
+      "path": "validation/macos-user-epoch1-owning-commands.json",
+      "bytes": 5694,
+      "sha256": "d24c2e45c9659ae1eef31996aac2b38dd9267de60c36e79e636ac4c688ab0265"
+    },
+    {
+      "path": "validation/macos-user-epoch1-owning-ctest.log",
+      "bytes": 1273,
+      "sha256": "9d49c72b94fd3158170835b10abce890c6b527f140ec7436862d6e90bdfc1e8a"
+    },
+    {
+      "path": "validation/macos-user-epoch1-owning-gates.json",
+      "bytes": 8126,
+      "sha256": "67fcf76d2be61913690dd3e8c1e4fe403cf7978b284350bdd77328ebedd8f8cc"
+    },
+    {
+      "path": "validation/macos-user-epoch1-owning-prime-artifacts.log",
+      "bytes": 131845,
+      "sha256": "ff52f3b59798863e51d89fafc338e5c7b765b89fbb590d3c8c41ce4a0ac5eda3"
+    },
+    {
+      "path": "validation/macos-user-epoch1-owning-protected-assist-cli.log",
+      "bytes": 42,
+      "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+    },
+    {
+      "path": "validation/macos-user-epoch1-owning-protected-assist-mcp.log",
+      "bytes": 42,
+      "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+    },
+    {
+      "path": "validation/macos-user-epoch1-pre-cpp-archive-identities.json",
+      "bytes": 106675,
+      "sha256": "4899c1b05e41611d13f85a5ed6a9f7647a0ee37f869906c95ff8fd3df34c99f1"
+    },
+    {
+      "path": "validation/native-token-user-teb-v1-arm64-after.json",
+      "bytes": 530,
+      "sha256": "7501165e44de26f56e2e9efb3d43061cbcaa82b259d4760665d89a6f65b5ad29"
+    },
+    {
+      "path": "validation/native-token-user-teb-v1-arm64-before.json",
+      "bytes": 530,
+      "sha256": "7501165e44de26f56e2e9efb3d43061cbcaa82b259d4760665d89a6f65b5ad29"
+    },
+    {
+      "path": "validation/native-token-user-teb-v1-arm64-build.log",
+      "bytes": 30,
+      "sha256": "9497552c904538a411a85b5af57c372a6cc4725af65d95461a9d153631bcb0d1"
+    },
+    {
+      "path": "validation/native-token-user-teb-v1-arm64-source-after.json",
+      "bytes": 244,
+      "sha256": "14bfe86dc622bf1f43b9f7cc233b16b2234d2402ab27384d29b3531a1f226de9"
+    },
+    {
+      "path": "validation/native-token-user-teb-v1-arm64.log",
+      "bytes": 945,
+      "sha256": "461eb2fa938686fa8cc867fa7ebf5ef101d7e137b5bf3018aef2c18cbb0c760c"
+    },
+    {
+      "path": "validation/native-token-user-teb-v1-driver.log",
+      "bytes": 964,
+      "sha256": "81157a84a41f6d110e3d629b61f37581444b3f76aa427bed1014db5bce060e17"
+    },
+    {
+      "path": "validation/native-token-user-teb-v1-launch.json",
+      "bytes": 335,
+      "sha256": "aa1f0752d0b97ec16e2f32b62b02506dcdd50673a6a685138515a9ae797290e4"
+    },
+    {
+      "path": "validation/native-token-user-teb-v1-modules-after.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05"
+    },
+    {
+      "path": "validation/native-token-user-teb-v1-modules-before.json",
+      "bytes": 1146,
+      "sha256": "40d843dea2991c6fc3939f0a4ad45bb710d335c9953105f72339f48627459d05"
+    },
+    {
+      "path": "validation/native-token-user-teb-v1-outcomes.json",
+      "bytes": 504,
+      "sha256": "2daa73dae8dc9e86a7c743447763230b933b15a273d1e1d4825d9159fc1a18c4"
+    },
+    {
+      "path": "validation/native-token-user-teb-v1-x64-after.json",
+      "bytes": 522,
+      "sha256": "8f6b4d698292396edae6e8a75a9f5c9055378c33ce35a56e303845f49a9f2897"
+    },
+    {
+      "path": "validation/native-token-user-teb-v1-x64-before.json",
+      "bytes": 522,
+      "sha256": "8f6b4d698292396edae6e8a75a9f5c9055378c33ce35a56e303845f49a9f2897"
+    },
+    {
+      "path": "validation/native-token-user-teb-v1-x64-build.log",
+      "bytes": 30,
+      "sha256": "9497552c904538a411a85b5af57c372a6cc4725af65d95461a9d153631bcb0d1"
+    },
+    {
+      "path": "validation/native-token-user-teb-v1-x64-source-after.json",
+      "bytes": 242,
+      "sha256": "44045e0dcdf10179dcee96958ba424c9f3a6cef5d87427934d461fa8d7f502fc"
+    },
+    {
+      "path": "validation/native-token-user-teb-v1-x64.log",
+      "bytes": 927,
+      "sha256": "87316eee7bab2e5324b3a660479c3cb65ec3d4c7120f4080eefd66b4bc1787dc"
+    },
+    {
+      "path": "validation/native-token-user-teb-v1-x86-after.json",
+      "bytes": 520,
+      "sha256": "f11516f09b8d138d03b4d1dec37d7fa7480dd4dad8407eaf6cc40f0dfb82efb1"
+    },
+    {
+      "path": "validation/native-token-user-teb-v1-x86-before.json",
+      "bytes": 520,
+      "sha256": "f11516f09b8d138d03b4d1dec37d7fa7480dd4dad8407eaf6cc40f0dfb82efb1"
+    },
+    {
+      "path": "validation/native-token-user-teb-v1-x86-build.log",
+      "bytes": 30,
+      "sha256": "9497552c904538a411a85b5af57c372a6cc4725af65d95461a9d153631bcb0d1"
+    },
+    {
+      "path": "validation/native-token-user-teb-v1-x86-laa-after.json",
+      "bytes": 534,
+      "sha256": "b265ffbc87a3a6209923ecd6553bb4216165bc1d923b69ccc5075955949a788f"
+    },
+    {
+      "path": "validation/native-token-user-teb-v1-x86-laa-before.json",
+      "bytes": 534,
+      "sha256": "b265ffbc87a3a6209923ecd6553bb4216165bc1d923b69ccc5075955949a788f"
+    },
+    {
+      "path": "validation/native-token-user-teb-v1-x86-laa-build.log",
+      "bytes": 30,
+      "sha256": "9497552c904538a411a85b5af57c372a6cc4725af65d95461a9d153631bcb0d1"
+    },
+    {
+      "path": "validation/native-token-user-teb-v1-x86-laa-source-after.json",
+      "bytes": 246,
+      "sha256": "b3760355c97514a473902248c2485b05d4edf5674aa0da0f933887c2c032da85"
+    },
+    {
+      "path": "validation/native-token-user-teb-v1-x86-laa.log",
+      "bytes": 963,
+      "sha256": "a1b84a5fddbd21b0900f220a544e9500ee4c60a387c186af6b1191851eb4a81f"
+    },
+    {
+      "path": "validation/native-token-user-teb-v1-x86-source-after.json",
+      "bytes": 242,
+      "sha256": "366705bdcd6fef9f4a191d4dbc914575b3fd4cee4d74f7cefee1252fa643648e"
+    },
+    {
+      "path": "validation/native-token-user-teb-v1-x86.log",
+      "bytes": 927,
+      "sha256": "e56f4c5a29646b4fe6bacbb8b58dd5b520e15cb3c67c444621643079b7454189"
+    },
+    {
+      "path": "validation/native-token-user-teb-v1.cpp",
+      "bytes": 1371,
+      "sha256": "01beda923ed6c3c2560369123ca9aae9bec2ace49898afa5132a6081e91a79c1"
+    },
+    {
+      "path": "validation/native-token-user-teb-v1.ps1",
+      "bytes": 2549,
+      "sha256": "8a995b3c2d4837b8aaea3bded436d51fad7fa0c7204ab5704c121c5fb45cef54"
+    },
+    {
+      "path": "validation/native-user-epoch1-final-owning-archive-identities.json",
+      "bytes": 108693,
+      "sha256": "4783b9547c93e5757d5e4d1f0537a2733e74433dd760d25136a48b107ae54edf"
+    },
+    {
+      "path": "validation/native-user-epoch1-pre-cpp-archives.json",
+      "bytes": 108696,
+      "sha256": "f0b39978e3f993895c398f33da419efab9f4146d83495ee10dc4e9442888e076"
+    },
+    {
+      "path": "validation/ordinary-program-summary.json",
+      "bytes": 2514,
+      "sha256": "3afe3ac76e156bd30d2c2ff16e73a5e583a1f338588ed32987819c1360e3806a"
+    },
+    {
+      "path": "validation/owning-linux-cpp-build-user-epoch1.py",
+      "bytes": 2200,
+      "sha256": "8acaa054875a7f2b179fa2527aa10077616b853d5b07f4adcf5dd93c202988e6"
+    },
+    {
+      "path": "validation/quality-gates.json",
+      "bytes": 1284,
+      "sha256": "94d63190a09f65d9c4d917482a125964f74ee3a6833b954ce2fb2986141110e7"
+    },
+    {
+      "path": "validation/run-native-token-user-teb-v1.py",
+      "bytes": 1197,
+      "sha256": "0ba9523db98f4ca23817d75b4b7d43ef48cb7ae30c977322218b8081d39e88f1"
+    },
+    {
+      "path": "validation/run-user-candidate-epoch1.py",
+      "bytes": 7432,
+      "sha256": "22881fcd1b94e63af33f468fb5c6bfb8d3d07cf0e13c8997ffef5356641090b7"
+    },
+    {
+      "path": "validation/run-user-final-unix-check.py",
+      "bytes": 1630,
+      "sha256": "1c3a5d2444655052cf2f64b5907f72a5422d1e0f549cd9228089000f891cc654"
+    },
+    {
+      "path": "validation/run-user-final-windows-check.py",
+      "bytes": 3432,
+      "sha256": "8cfcaf136aecc3b629644600996628eb68c37e2707af281fd8355eaef5b192db"
+    },
+    {
+      "path": "validation/run-user-native-epoch1.py",
+      "bytes": 5793,
+      "sha256": "021bf1f63e6dc4853df2c7d9682aef7db47b55b005c57a526ed1e6d79b00d237"
+    },
+    {
+      "path": "validation/run-user-native-owning-epoch1.py",
+      "bytes": 5422,
+      "sha256": "cb7e4943ce37ec9db05d0cc97d87b28802d7bd0c0b94958482e3fb81ee185c5c"
+    },
+    {
+      "path": "validation/run-user-owner-epoch1.py",
+      "bytes": 4614,
+      "sha256": "af52d02be06552bef30747d5edb6ba507add0b1b31d28b801b024b390b2bab9b"
+    },
+    {
+      "path": "validation/run-user-owning-epoch1.py",
+      "bytes": 3527,
+      "sha256": "45de61b20b87a9615f85d9261217d3e6deb72573ea1d3c2f472787625b38bf51"
+    },
+    {
+      "path": "validation/run-user-proof-checks.py",
+      "bytes": 386,
+      "sha256": "554c0288f29cd5a118459753e5e5d1f5b999232842a3afdd28a6d581b46c17f8"
+    },
+    {
+      "path": "validation/run-user-unix-epoch1.py",
+      "bytes": 4134,
+      "sha256": "93cb3bccd00beb8798e1d2c0d1cc22ff802448a618fec645945f46f521314c83"
+    },
+    {
+      "path": "validation/runtime-append.pending.md",
+      "bytes": 2165,
+      "sha256": "2a9b345f360df6ddf209490f27d3e43f133c6a857a3fa7f55b17e0aeb6f27c4d"
+    },
+    {
+      "path": "validation/stress-user-validation.py",
+      "bytes": 4404,
+      "sha256": "c7d21a1671646f4cfce7016dbb9a193c078af45d853a2c53e3f27fd3090779f9"
+    },
+    {
+      "path": "validation/summary.json",
+      "bytes": 3193,
+      "sha256": "a29f23ad2af2e6d8237deff6afdc06b926ba665f22ede9b21f79a6c6bbb1fa52"
+    },
+    {
+      "path": "validation/timer2-native-host-identity.json",
+      "bytes": 944,
+      "sha256": "824a29ad03161b2a10662cadb0d57b47f90c14184ef317e2840b770e8e79e2f3"
+    },
+    {
+      "path": "validation/user-baseline-b.json",
+      "bytes": 702,
+      "sha256": "c8f518d9bb0478647e98eb7b66c361c9479fdc21a7c109bee5df1f2af7387f36"
+    },
+    {
+      "path": "validation/user-baseline-b.log",
+      "bytes": 4508,
+      "sha256": "0631d04eb85b3666d6f459a4b494ab91e6bd96d7d48dd928f941946fb355a89e"
+    },
+    {
+      "path": "validation/user-baseline-inputs.json",
+      "bytes": 603,
+      "sha256": "ac0d6b112c4cabd11c0f5e8d9c5a508a136222afd21fcb1ba352357f66ddbbd5"
+    },
+    {
+      "path": "validation/user-candidate-epoch1-archive.json",
+      "bytes": 16984,
+      "sha256": "ee92ca555aa4ec20d9a0a772ce061f1e88ef18c3f6afc4ab9bbff81a4ef1ace5"
+    },
+    {
+      "path": "validation/user-candidate-epoch1-build.log",
+      "bytes": 90583,
+      "sha256": "dea0c06138dc9f6dd3482533b7081898b731587d4366e9c24760d181fda5f476"
+    },
+    {
+      "path": "validation/user-candidate-epoch1-focus.log",
+      "bytes": 2287,
+      "sha256": "159c1f5243120cb4a7a5a4ce1547f2b3dfcac81aa1189529f0a91bc89644a65b"
+    },
+    {
+      "path": "validation/user-candidate-epoch1-observer-build.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "validation/user-candidate-epoch1-ordinary-0.log",
+      "bytes": 6940,
+      "sha256": "dd425d128167205d2e0970fe70c2780c7e6351c233977dfdd54c01b814eb44d7"
+    },
+    {
+      "path": "validation/user-candidate-epoch1-ordinary-1.log",
+      "bytes": 6619,
+      "sha256": "6729d5ada3119639ced37c68b72391f491eb77b8c4e1d1eac4c99da7e0377635"
+    },
+    {
+      "path": "validation/user-candidate-epoch1-run.json",
+      "bytes": 7020,
+      "sha256": "d90e256039764c9ddf3a02cf4d60be6e64286c52011e7fd06ff85b845d97886f"
+    },
+    {
+      "path": "validation/user-candidate-epoch1.json",
+      "bytes": 5415288,
+      "sha256": "5eb1ffe665e6caa66bcff761e2f682c607ce00c174d2d89d6be5a6203effc78a"
+    },
+    {
+      "path": "validation/user-candidate-owner-epoch1.rs",
+      "bytes": 14122,
+      "sha256": "c5b4c58bd15223f91bfa9bd48552e90462b5d977dbda731326af6f01e68506ed"
+    },
+    {
+      "path": "validation/user-final-check-linux.json",
+      "bytes": 818,
+      "sha256": "230d635ac8e931d2e5cc1e14c47db1cb4f3c8ab0f208f3e7837ec23a254229b7"
+    },
+    {
+      "path": "validation/user-final-check-linux.log",
+      "bytes": 628,
+      "sha256": "ab0e904435007da8b73008395a77c51b2fd33f47f15ac706012ae141bc7ab702"
+    },
+    {
+      "path": "validation/user-final-check-macos.json",
+      "bytes": 616,
+      "sha256": "74b932639c5d3f49db1cc32ea48be9c5fd0119a538aadadd44c2960012ed6ffd"
+    },
+    {
+      "path": "validation/user-final-check-macos.log",
+      "bytes": 628,
+      "sha256": "ab0e904435007da8b73008395a77c51b2fd33f47f15ac706012ae141bc7ab702"
+    },
+    {
+      "path": "validation/user-final-check-windows.json",
+      "bytes": 1370,
+      "sha256": "d361e39ec03d88369a04beda73fe78c7bc9c316d444932274a4a16675740bd32"
+    },
+    {
+      "path": "validation/user-final-check-windows.log",
+      "bytes": 650,
+      "sha256": "02cdc66c2462d1fd42b9413eb04062acb15ad1df5c71773205923b962a07092a"
+    },
+    {
+      "path": "validation/user-final-negative-controls.json",
+      "bytes": 1817,
+      "sha256": "30bcc9acf2ffb5e1a5ee0ce2ad62db7b0db5cf57f39117c4bb3d02a2cbdda332"
+    },
+    {
+      "path": "validation/user-linux-epoch1-all-targets.log",
+      "bytes": 309,
+      "sha256": "5c87412b96e8853c061bd458a0354800e5c2fefe8f7b59bfda89aa40b07e75e0"
+    },
+    {
+      "path": "validation/user-linux-epoch1-capi.log",
+      "bytes": 14068,
+      "sha256": "1fa421f3737cae6250c9292654296902b9322e2e1f8988f7901ae7a7131412f5"
+    },
+    {
+      "path": "validation/user-linux-epoch1-focus.log",
+      "bytes": 1380,
+      "sha256": "262e59372ec3a34a0a6a987c24e117d0f24b1ce2a42232e82144115388351892"
+    },
+    {
+      "path": "validation/user-linux-epoch1-full.log",
+      "bytes": 837841,
+      "sha256": "e49dddb1d2e4575fa22e9a2cfe9bfbedf22b28c1c683c6c1a5b5c177f03abba9"
+    },
+    {
+      "path": "validation/user-linux-epoch1-gates.json",
+      "bytes": 7689,
+      "sha256": "dcc87493584c581de6fad58c4e6d85d1fb507a4f3c43bcdb7516e8c8216eea7a"
+    },
+    {
+      "path": "validation/user-linux-epoch1-integration.log",
+      "bytes": 35852,
+      "sha256": "d1d98b3f71dfa8f3004cf0082d3cc7df8c9fd782a2b92b4f6ae86dc5b67fe40d"
+    },
+    {
+      "path": "validation/user-macos-epoch1-all-targets.log",
+      "bytes": 455,
+      "sha256": "d893a2164ccafbb93771ec75d8426360566abcc90404e208646a6f038d66b9c8"
+    },
+    {
+      "path": "validation/user-macos-epoch1-capi.log",
+      "bytes": 14288,
+      "sha256": "3714bc4490209ccfcca4497c19ba1d22449c547bb50406dc716f878c53214d54"
+    },
+    {
+      "path": "validation/user-macos-epoch1-full.log",
+      "bytes": 837847,
+      "sha256": "6c1c0ab2549cd1acaa0d8d5c21e50eb219a7a13f532263eb0979fe10c612024f"
+    },
+    {
+      "path": "validation/user-macos-epoch1-gates.json",
+      "bytes": 2829,
+      "sha256": "bc748d8d79bfef53ab6f9ec054924be0258667b28ea4e12dafe7448128faeae2"
+    },
+    {
+      "path": "validation/user-macos-epoch1-integration.log",
+      "bytes": 36054,
+      "sha256": "d10a9ed106ff22bf993582a15c821924bda0aff915f4610a5dc6b8e8f31b1b13"
+    },
+    {
+      "path": "validation/user-native-epoch1-all-targets.log",
+      "bytes": 1008,
+      "sha256": "8f6a3dfbbe2817d4b224bdd33a5678b358e4910c53d725ce130351488522653d"
+    },
+    {
+      "path": "validation/user-native-epoch1-capi.log",
+      "bytes": 15037,
+      "sha256": "1bc33658da863fe2431248d896456f1415fbf274a7f0f21a4b374c432e3229ef"
+    },
+    {
+      "path": "validation/user-native-epoch1-focus.log",
+      "bytes": 2191,
+      "sha256": "bf533b3457384ab16c463c4970b8781ebe4af04712304a9730f2eff665fd4d7f"
+    },
+    {
+      "path": "validation/user-native-epoch1-full.log",
+      "bytes": 802680,
+      "sha256": "a0e3f128975e696404df76a820576fc0d1352047031b51879c35562c789c3965"
+    },
+    {
+      "path": "validation/user-native-epoch1-gates.json",
+      "bytes": 5936,
+      "sha256": "5c11420528fc34f9665489cc7c68bad39ef21489ba20563014650da8dd5ac4e6"
+    },
+    {
+      "path": "validation/user-native-epoch1-integration.log",
+      "bytes": 1871,
+      "sha256": "55e98f677bc6288c1bc2f2359b1f6841d7a7078c23bda07b7d30e519407e4b53"
+    },
+    {
+      "path": "validation/user-native-epoch1-toolchain.log",
+      "bytes": 36,
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5"
+    },
+    {
+      "path": "validation/user-native-owning-epoch1-archive-after.log",
+      "bytes": 182,
+      "sha256": "3321e1f0af88800caf749e76dca568fe2989df3e613d77a33c27672231d1f84c"
+    },
+    {
+      "path": "validation/user-native-owning-epoch1-archive-before.log",
+      "bytes": 182,
+      "sha256": "3321e1f0af88800caf749e76dca568fe2989df3e613d77a33c27672231d1f84c"
+    },
+    {
+      "path": "validation/user-native-owning-epoch1-artifacts-after.log",
+      "bytes": 127707,
+      "sha256": "11e742294f069989399ae845c29fd88172e38c85eea09c29561e987c37045702"
+    },
+    {
+      "path": "validation/user-native-owning-epoch1-artifacts-before.log",
+      "bytes": 130767,
+      "sha256": "cdccbd0dbd850266c0316616c089c9d3ba88abcb742f0c6f9f78b8e9692171a2"
+    },
+    {
+      "path": "validation/user-native-owning-epoch1-cpp.log",
+      "bytes": 3385,
+      "sha256": "ccebcec3729632a643c27d6e35c835d70fc39850b7f1406e3abe691272d44ea8"
+    },
+    {
+      "path": "validation/user-native-owning-epoch1-toolchain.log",
+      "bytes": 36,
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5"
+    },
+    {
+      "path": "validation/user-native-owning-epoch1.json",
+      "bytes": 5122,
+      "sha256": "f61baf1e71d1357356c4f4d5ff7811b96f2e308507261308ab29c8b5bc4b48e5"
+    },
+    {
+      "path": "validation/user-owned-cpp-build-epoch1.py",
+      "bytes": 2700,
+      "sha256": "dcbd257e0987ae53def4f3b617b56bc2d157615b02f603f2a787386855a60f27"
+    },
+    {
+      "path": "validation/user-owner-epoch1-0.log",
+      "bytes": 6940,
+      "sha256": "548091632f90b9ddc7206ee2aa41a3c2a695e89dd0351f92b6a4cfa46b1e7d05"
+    },
+    {
+      "path": "validation/user-owner-epoch1-1.log",
+      "bytes": 6619,
+      "sha256": "2ba6bb10692f1d9193ebecd3e26780d4cbe82b7b24977c02a98c11b52497a40c"
+    },
+    {
+      "path": "validation/user-owner-epoch1-build.log",
+      "bytes": 241,
+      "sha256": "77027ce0b25d2e321d7341c6fe2a80236a2837874cb1de4f2079588d47f29dc9"
+    },
+    {
+      "path": "validation/user-owner-epoch1-build.ps1",
+      "bytes": 1013,
+      "sha256": "c29edeb55494a27b326cb1c5a95cb006d1f2d44f6c1b925e59011afe7731a1e9"
+    },
+    {
+      "path": "validation/user-owner-epoch1-launch.json",
+      "bytes": 7822,
+      "sha256": "87868a174492d743553dc4adaeb3f48a4ac52443b3ea6acc6021ef5aab76044e"
+    },
+    {
+      "path": "validation/user-owner-epoch1.rs",
+      "bytes": 14122,
+      "sha256": "c5b4c58bd15223f91bfa9bd48552e90462b5d977dbda731326af6f01e68506ed"
+    },
+    {
+      "path": "validation/user-owning-source-hashes-epoch1.json",
+      "bytes": 104008,
+      "sha256": "de898f0522013827bce55cd66b4b383e3ae9d0ad060633472eeab7fd3d0acaa0"
+    },
+    {
+      "path": "validation/user-plan.json",
+      "bytes": 6429,
+      "sha256": "ebeedd2ad1534f74040c48482dc5d855dc867fe8c69918da791ef81b7886849d"
+    },
+    {
+      "path": "validation/user-prototype-a.json",
+      "bytes": 2661,
+      "sha256": "f8ec28a84336b3c01af1a7d335ac95597b638b3da2c6c47040b97504a66dc8d9"
+    },
+    {
+      "path": "validation/user-prototype-a.log",
+      "bytes": 1325,
+      "sha256": "4253d8a9c62e709bd89e356ae33422d281814e8d9c3f84ac23caf596d3f5b243"
+    },
+    {
+      "path": "validation/verbatim-whitespace-exceptions.json",
+      "bytes": 48146,
+      "sha256": "bc39b9ce979415570b5462c5da621d63ed69800477597da0cd0124249fdc8d05"
+    },
+    {
+      "path": "validation/verification-receipt-scope.json",
+      "bytes": 490,
+      "sha256": "289ac4e009180af44cfd6af463982e92fb470e84a6f2f9e632750a49b2df8d93"
+    },
+    {
+      "path": "validation/wait-user-owner-epoch1.py",
+      "bytes": 461,
+      "sha256": "85f8d309b4490fcec6c9e81aaba7adb285bd7033af127f443adfed925e61f352"
+    },
+    {
+      "path": "validation/windows-existing-failures.json",
+      "bytes": 482,
+      "sha256": "2476eeeaa1e9d69fd40bbe2df86206a5a5c3268381059bc5a59be0b30b366910"
+    }
+  ],
+  "scope": "Bound evidence files; manifest excludes itself. Verification receipts added later are documented with their original checked-envelope scope."
+}

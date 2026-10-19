@@ -11,6 +11,9 @@ mod scalar_properties;
 #[path = "token_bno_tests.rs"]
 mod bno_isolation;
 
+#[path = "token_user_tests.rs"]
+mod user_identity;
+
 fn setup(arch: WinArch, laa: bool) -> (WindowsProcess, Thread, u64, [u64; 3]) {
     setup_runtime(arch, laa, false)
 }

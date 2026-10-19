@@ -1,0 +1,35 @@
+{
+  "state": "finished",
+  "pid": 2988,
+  "utc": "2026-10-19T07:14:38.944997+00:00",
+  "steps": [
+    {
+      "name": "native",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\verify-user-epoch1\\docs\\specifications\\windows\\native-token-user\\check_native.py",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\verify-user-epoch1\\docs\\specifications\\windows\\native-token-user"
+      ],
+      "exit-code": 0
+    },
+    {
+      "name": "validation",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\verify-user-epoch1\\docs\\specifications\\windows\\native-token-user\\check_validation.py",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\verify-user-epoch1"
+      ],
+      "exit-code": 0
+    }
+  ],
+  "checked-envelope-files": 171,
+  "scope": "New verification tree; all extracted proof/runtime documents detach from immutable parent hardlinks.",
+  "complete-inputs": 23442,
+  "exit-code": 0,
+  "log": "user-final-check-windows.log",
+  "bytes": 650,
+  "sha256": "02cdc66c2462d1fd42b9413eb04062acb15ad1df5c71773205923b962a07092a",
+  "completed-utc": "2026-10-19T07:15:01.527520+00:00"
+}

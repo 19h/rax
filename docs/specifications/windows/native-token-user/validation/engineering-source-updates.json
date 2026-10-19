@@ -1,0 +1,8 @@
+{
+  "path": "src/user/windows/native-runtime.md",
+  "before-sha256": "44484f8fe74b67807fca4f792a53cb2a977d6369b20a6f94d133664768f6dccb",
+  "before-bytes": 182292,
+  "after-sha256": "7231ae65ee6db7ec6eac4f876cdaf80cb8338869b6b2c0ad8632d701023ff6e2",
+  "after-bytes": 184498,
+  "scope": "Append-only engineering record after compiled gates; no Rust/test/build/fixture/ABI change."
+}

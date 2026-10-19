@@ -1,0 +1,23 @@
+{
+  "base": "4be14abe7c2dcb238bba92cb6779a24d8988d801",
+  "root": "/Users/int/Library/Caches/assist-process-emulation/native-token-user-20261019/user-source",
+  "baseline-status": "## HEAD (no branch)\n",
+  "source-owned-paths": [
+    "src/user/windows/dll/native/token_query.rs",
+    "src/user/windows/dll/native/token_query/user.rs",
+    "src/user/windows/wnf/installed.rs",
+    "src/user/windows/process/sched/tests/services_tests/token_query_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/token_user_tests.rs",
+    "src/user/windows/native-runtime.md",
+    "src/user/windows/security.rs",
+    "src/user/windows/wnf/tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/token_session_id_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/token_scalar_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/access_check_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/token_bno_tests.rs"
+  ],
+  "evidence-prefix": "docs/specifications/windows/native-token-user/",
+  "scope": "TokenUser native query with captured SID and opaque user attributes; native64/WoW64 output, preflight, scratch budget, LastError, partial-copy and alias semantics. Preserve existing scalar/BNO/token-access and ACL interpretation policy. Historical zero-attribute fixtures adopt an explicit field; captured native attributes remain verbatim.",
+  "initial-base": "9db68d792b386355b87a24b9d10466401ca71731",
+  "baseline-revision": "Adopted the published loader registry group by a clean detached checkout before any TokenUser repository edits."
+}

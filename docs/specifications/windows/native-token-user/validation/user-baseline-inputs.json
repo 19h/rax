@@ -1,0 +1,16 @@
+{
+  "base": "4be14abe7c2dcb238bba92cb6779a24d8988d801",
+  "scope": "Tests-only baseline. No product Rust implementation changed. New native capture/corpus is evidence.",
+  "tests": [
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/token_query_tests.rs",
+      "bytes": 13827,
+      "sha256": "589f057aa226e184c17e137b3ec4be916047d07a212fdf4e55f26a0076be82d1"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/token_user_tests.rs",
+      "bytes": 15788,
+      "sha256": "7891dfe0364abe3f09f61651b8517bce6128939bc3dbf51e36dc6f5f903af9d2"
+    }
+  ]
+}

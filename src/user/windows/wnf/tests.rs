@@ -28,6 +28,7 @@ pub(crate) fn rows(text: &str) -> Vec<HashMap<&str, &str>> {
 }
 fn subject() -> Subject {
     let mut subject = Subject {
+        user_attributes: 0,
         user: Vec::new(),
         groups: Vec::new(),
         restricted: Vec::new(),
@@ -45,7 +46,10 @@ fn subject() -> Subject {
             attributes: u32::from_str_radix(row["attributes"], 16).unwrap(),
         };
         match row["kind"] {
-            "user" => subject.user = group.sid,
+            "user" => {
+                subject.user_attributes = group.attributes;
+                subject.user = group.sid;
+            }
             "group" => subject.groups.push(group),
             "restricted" => subject.restricted.push(group),
             _ => panic!("unknown native token record"),

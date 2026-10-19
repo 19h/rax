@@ -33,6 +33,7 @@ fn subject_fixture() -> Subject {
             .collect()
     };
     Subject {
+        user_attributes: 0,
         user: hex(s["user"]["sid"].as_str().unwrap()),
         groups: groups("groups"),
         restricted: groups("restricted"),

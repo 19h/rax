@@ -1,0 +1,9 @@
+profile=arm64 role=0 length=00000000 status=C0000023 error=7E11ABCD ntstatus=C0000034 returned=0000001C
+profile=arm64 role=0 length=0000001C status=00000000 error=7E11ABCD ntstatus=C0000034 returned=0000001C
+profile=arm64 role=0 length=FFFFFFFF status=C0000005 error=7E11ABCD ntstatus=C0000034 returned=A5A5A5A5
+profile=arm64 role=1 length=00000000 status=C0000023 error=7E11ABCD ntstatus=C0000034 returned=0000001C
+profile=arm64 role=1 length=0000001C status=C0000005 error=7E11ABCD ntstatus=C0000034 returned=A5A5A5A5
+profile=arm64 role=1 length=FFFFFFFF status=C0000005 error=7E11ABCD ntstatus=C0000034 returned=A5A5A5A5
+profile=arm64 role=2 length=00000000 status=C0000008 error=7E11ABCD ntstatus=C0000034 returned=A5A5A5A5
+profile=arm64 role=2 length=0000001C status=C0000008 error=7E11ABCD ntstatus=C0000034 returned=A5A5A5A5
+profile=arm64 role=2 length=FFFFFFFF status=C0000005 error=7E11ABCD ntstatus=C0000034 returned=A5A5A5A5

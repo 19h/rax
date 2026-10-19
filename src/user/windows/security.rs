@@ -17,6 +17,8 @@ pub(crate) struct Privilege {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct Subject {
+    /// Opaque TOKEN_USER SID attributes, captured without interpretation.
+    pub(crate) user_attributes: u32,
     pub(crate) user: Vec<u8>,
     pub(crate) groups: Vec<Group>,
     pub(crate) restricted: Vec<Group>,

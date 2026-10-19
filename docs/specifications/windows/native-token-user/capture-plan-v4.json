@@ -1,0 +1,36 @@
+{
+  "utc": "2026-10-19T05:59:07.977949+00:00",
+  "phase": "reference acquisition only; no product edits",
+  "observed": "Both ordinary guests stop at NtQueryInformationToken class1 at turns2883974/2886259",
+  "source-sha256": "4f95a76792ed8f7feff00d400a67d0152f7b10c945c1faf5f369d9d93fb7c183",
+  "expected-cases": 22688,
+  "assumptions": [
+    {
+      "id": "A1",
+      "assumption": "Existing captured subject user SID can supply TokenUser after ABI-specific serialization and fault behavior are measured.",
+      "basis": "wnf/installed capture queries class1; primary_token_subject retains SID; Microsoft declares no current user attributes.",
+      "dependent-result": "Potential next semantic group",
+      "stress-test": "Four ABI profiles, length0..64 plus128/256/4096/FFFFFFFF, ten handle kinds,43memory/alias/guard roles.",
+      "falsification-probe": "Native TokenUser needs uncaptured subject fields or a distinct snapshot lifetime.",
+      "status": "retained pending captures"
+    }
+  ],
+  "primary-sources": [
+    {
+      "file": "token-user.html",
+      "url": "https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-token_user",
+      "bytes": 51031,
+      "sha256": "07e6f78e570184e825e0790463423a332a82e236fe6c338077f11a1c742c6011"
+    },
+    {
+      "file": "query-token.html",
+      "url": "https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/ntifs/nf-ntifs-ntqueryinformationtoken",
+      "bytes": 61920,
+      "sha256": "e520c8110781a24016bcfecebfdd1f8be25276755be4fa16f3bce6b55385521f"
+    }
+  ],
+  "revision": 4,
+  "scope": "Main matrix plus all0..40remaining-byte offsets, each adjacent protected page, four protection modes and primary/impersonation subjects. Read-only owned-object/native-memory acquisition only.",
+  "main-cases": 20064,
+  "page-boundary-cases": 2624
+}

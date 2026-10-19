@@ -1,0 +1,211 @@
+{
+  "pid": 3380,
+  "state": "finished",
+  "utc": "2026-10-19T06:48:08.247336+00:00",
+  "scope": "Read-only diagnostic linked to the exact validated retained-owner core archive; all prefix turns execute normally. Controller exit is separate from guest exit.",
+  "archive": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-owned\\debug\\deps\\librax-934115059aa64c85.rlib",
+    "bytes": 503968678,
+    "sha256": "b3ca4f9e090a00f7421860c941c45f50f7a77b7a8373625abbc6d273662ca784",
+    "members": 20,
+    "structural-member-walk": "pass"
+  },
+  "source-before": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\user-owner-epoch1.rs",
+    "bytes": 14122,
+    "sha256": "c5b4c58bd15223f91bfa9bd48552e90462b5d977dbda731326af6f01e68506ed"
+  },
+  "runtime-modules-before": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e"
+    },
+    {
+      "path": "C:\\Windows\\System32\\KernelBase.dll",
+      "bytes": 7213728,
+      "sha256": "6b2fa508ac4f9bce5d7351676485d1dc5b5236cd9656034e2fec1eaba3b82bc9"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\KernelBase.dll",
+      "bytes": 3073488,
+      "sha256": "e9c414d7c6bd2c6fde608f31b2f31da3c2014c801b3764a30ee42abd1e9c2d58"
+    },
+    {
+      "path": "C:\\Windows\\System32\\kernel32.dll",
+      "bytes": 1500304,
+      "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\kernel32.dll",
+      "bytes": 696392,
+      "sha256": "9c9a0c54a79ea712bb533fcc79ba9935ed9f9d3f777fd65cf62d9cec6699b9df"
+    }
+  ],
+  "svc-map": {
+    "utc": "2026-10-19T02:57:24.179046+00:00",
+    "module-path": "C:\\Windows\\System32\\ntdll.dll",
+    "module-sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f",
+    "rows": [
+      {
+        "name": "NtCreateTimer2",
+        "address": "0x7fff38a41d00",
+        "first-16-bytes": "811900d4c0035fd60000000000000000",
+        "svc-offset": 0,
+        "svc": 204
+      },
+      {
+        "name": "NtSetTimer2",
+        "address": "0x7fff38a42c40",
+        "first-16-bytes": "013800d4c0035fd60000000000000000",
+        "svc-offset": 0,
+        "svc": 448
+      },
+      {
+        "name": "NtCancelTimer2",
+        "address": "0x7fff38a419a0",
+        "first-16-bytes": "c11200d4c0035fd60000000000000000",
+        "svc-offset": 0,
+        "svc": 150
+      },
+      {
+        "name": "NtQueryTimer",
+        "address": "0x7fff38a413c0",
+        "first-16-bytes": "010700d4c0035fd60000000000000000",
+        "svc-offset": 0,
+        "svc": 56
+      },
+      {
+        "name": "NtWaitForSingleObject",
+        "address": "0x7fff38a41040",
+        "first-16-bytes": "810000d4c0035fd60000000000000000",
+        "svc-offset": 0,
+        "svc": 4
+      }
+    ],
+    "source-sha256": "770f4369f531f81ee7fbe0709d60f2392fc9ea7abd754150eafd91e95a6c541c",
+    "scope": "Read-only installed ARM64 NTDLL function bytes; diagnostic labels only, no guest dispatch changes."
+  },
+  "child": 4796,
+  "executable-before": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\user-owner-epoch1.exe",
+    "bytes": 26946048,
+    "sha256": "b513156534e8e84cd3a4548c984245d42328ec6f2897238d3e1f679ca803c6fa"
+  },
+  "outcomes": [
+    {
+      "program-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-user-candidate-epoch1\\tests\\fixtures\\user\\windows\\bin\\arm64\\smoke.exe",
+        "bytes": 3584,
+        "sha256": "325730e33e981784bff4a60bc6f342cf95c2735e85042c89748fc471cbe7781b"
+      },
+      "native-before": {
+        "exit-code": 0,
+        "stdout-hex": "",
+        "stderr-hex": ""
+      },
+      "log": "user-owner-epoch1-0.log",
+      "exit-code": 0,
+      "seconds": 49.58418849999725,
+      "program-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-user-candidate-epoch1\\tests\\fixtures\\user\\windows\\bin\\arm64\\smoke.exe",
+        "bytes": 3584,
+        "sha256": "325730e33e981784bff4a60bc6f342cf95c2735e85042c89748fc471cbe7781b"
+      },
+      "native-after": {
+        "exit-code": 0,
+        "stdout-hex": "",
+        "stderr-hex": ""
+      },
+      "log-identity": {
+        "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\user-owner-epoch1-0.log",
+        "bytes": 6940,
+        "sha256": "548091632f90b9ddc7206ee2aa41a3c2a695e89dd0351f92b6a4cfa46b1e7d05"
+      }
+    },
+    {
+      "program-before": {
+        "path": "C:\\Windows\\System32\\whoami.exe",
+        "bytes": 84480,
+        "sha256": "48fde190b002a5a4c4b8b19db014377263ba94220f23a4f0a117fec082d46bf6"
+      },
+      "native-before": {
+        "exit-code": 0,
+        "stdout-hex": "6e7420617574686f726974795c73797374656d0d0a",
+        "stderr-hex": ""
+      },
+      "log": "user-owner-epoch1-1.log",
+      "exit-code": 0,
+      "seconds": 51.07125354200252,
+      "program-after": {
+        "path": "C:\\Windows\\System32\\whoami.exe",
+        "bytes": 84480,
+        "sha256": "48fde190b002a5a4c4b8b19db014377263ba94220f23a4f0a117fec082d46bf6"
+      },
+      "native-after": {
+        "exit-code": 0,
+        "stdout-hex": "6e7420617574686f726974795c73797374656d0d0a",
+        "stderr-hex": ""
+      },
+      "log-identity": {
+        "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\user-owner-epoch1-1.log",
+        "bytes": 6619,
+        "sha256": "2ba6bb10692f1d9193ebecd3e26780d4cbe82b7b24977c02a98c11b52497a40c"
+      }
+    }
+  ],
+  "exit_code": 0,
+  "source-after": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\user-owner-epoch1.rs",
+    "bytes": 14122,
+    "sha256": "c5b4c58bd15223f91bfa9bd48552e90462b5d977dbda731326af6f01e68506ed"
+  },
+  "executable-after": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\user-owner-epoch1.exe",
+    "bytes": 26946048,
+    "sha256": "b513156534e8e84cd3a4548c984245d42328ec6f2897238d3e1f679ca803c6fa"
+  },
+  "archive-after": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-owned\\debug\\deps\\librax-934115059aa64c85.rlib",
+    "bytes": 503968678,
+    "sha256": "b3ca4f9e090a00f7421860c941c45f50f7a77b7a8373625abbc6d273662ca784"
+  },
+  "runtime-modules-after": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e"
+    },
+    {
+      "path": "C:\\Windows\\System32\\KernelBase.dll",
+      "bytes": 7213728,
+      "sha256": "6b2fa508ac4f9bce5d7351676485d1dc5b5236cd9656034e2fec1eaba3b82bc9"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\KernelBase.dll",
+      "bytes": 3073488,
+      "sha256": "e9c414d7c6bd2c6fde608f31b2f31da3c2014c801b3764a30ee42abd1e9c2d58"
+    },
+    {
+      "path": "C:\\Windows\\System32\\kernel32.dll",
+      "bytes": 1500304,
+      "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\kernel32.dll",
+      "bytes": 696392,
+      "sha256": "9c9a0c54a79ea712bb533fcc79ba9935ed9f9d3f777fd65cf62d9cec6699b9df"
+    }
+  ],
+  "completed-utc": "2026-10-19T06:49:54.925474+00:00"
+}

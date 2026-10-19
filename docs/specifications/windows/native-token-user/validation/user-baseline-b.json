@@ -1,0 +1,26 @@
+{
+  "state": "expected-regression-failed",
+  "exit-code": 101,
+  "passed": 0,
+  "failed": 5,
+  "argv": [
+    "cargo",
+    "+1.95.0",
+    "test",
+    "--locked",
+    "--offline",
+    "--no-default-features",
+    "--lib",
+    "native_token_user",
+    "--",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "log": "user-baseline-b.log",
+  "bytes": 4508,
+  "sha256": "0631d04eb85b3666d6f459a4b494ab91e6bd96d7d48dd928f941946fb355a89e",
+  "results": [
+    "FAILED. 0 passed; 5 failed; 0 ignored; 0 measured; 8010 filtered out; finished in 0.16s"
+  ],
+  "scope": "Tests-only cached rerun with exact exit status; the initial compilation launch did not retain its child exit code. Product Rust is unchanged."
+}

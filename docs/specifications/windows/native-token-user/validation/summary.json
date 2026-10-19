@@ -1,0 +1,94 @@
+{
+  "utc": "2026-10-19T07:09:26.896343+00:00",
+  "source-epoch": 1,
+  "source-inputs": 23442,
+  "source-bytes": 1695720818,
+  "core-counts": {
+    "macos": [
+      8013,
+      0,
+      2
+    ],
+    "linux": [
+      8007,
+      0,
+      2
+    ],
+    "windows": [
+      7467,
+      5,
+      2
+    ]
+  },
+  "shared-focus": 5,
+  "windows-focus": 6,
+  "capi-each": 183,
+  "native-cases": 22688,
+  "native-teb-controls": 36,
+  "native-negative-controls": 12,
+  "owning-selected-inputs": 530,
+  "ordinary-programs": {
+    "actual-core": {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-owned\\debug\\deps\\librax-934115059aa64c85.rlib",
+      "bytes": 503968678,
+      "sha256": "b3ca4f9e090a00f7421860c941c45f50f7a77b7a8373625abbc6d273662ca784",
+      "members": 20,
+      "structural-member-walk": "pass"
+    },
+    "programs": [
+      {
+        "program": {
+          "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-user-candidate-epoch1\\tests\\fixtures\\user\\windows\\bin\\arm64\\smoke.exe",
+          "bytes": 3584,
+          "sha256": "325730e33e981784bff4a60bc6f342cf95c2735e85042c89748fc471cbe7781b"
+        },
+        "log": "user-owner-epoch1-0.log",
+        "log-sha256": "548091632f90b9ddc7206ee2aa41a3c2a695e89dd0351f92b6a4cfa46b1e7d05",
+        "controller-exit-code": 0,
+        "former-stop-turn": 2883974,
+        "new-terminal-turn": 2886717,
+        "additional-observer-turns": 2743,
+        "terminal-result": "Complete(Internal(\"native NTDLL service NtOpenKey: Unimplemented(\\\"NtOpenKey: registry key outside selected runtime snapshot\\\")\"))",
+        "guest-exit-success": false,
+        "native-before": {
+          "exit-code": 0,
+          "stdout-hex": "",
+          "stderr-hex": ""
+        },
+        "native-after": {
+          "exit-code": 0,
+          "stdout-hex": "",
+          "stderr-hex": ""
+        }
+      },
+      {
+        "program": {
+          "path": "C:\\Windows\\System32\\whoami.exe",
+          "bytes": 84480,
+          "sha256": "48fde190b002a5a4c4b8b19db014377263ba94220f23a4f0a117fec082d46bf6"
+        },
+        "log": "user-owner-epoch1-1.log",
+        "log-sha256": "2ba6bb10692f1d9193ebecd3e26780d4cbe82b7b24977c02a98c11b52497a40c",
+        "controller-exit-code": 0,
+        "former-stop-turn": 2886259,
+        "new-terminal-turn": 2889002,
+        "additional-observer-turns": 2743,
+        "terminal-result": "Complete(Internal(\"native NTDLL service NtOpenKey: Unimplemented(\\\"NtOpenKey: registry key outside selected runtime snapshot\\\")\"))",
+        "guest-exit-success": false,
+        "native-before": {
+          "exit-code": 0,
+          "stdout-hex": "6e7420617574686f726974795c73797374656d0d0a",
+          "stderr-hex": ""
+        },
+        "native-after": {
+          "exit-code": 0,
+          "stdout-hex": "6e7420617574686f726974795c73797374656d0d0a",
+          "stderr-hex": ""
+        }
+      }
+    ],
+    "ordinary-guest-exit-success": false,
+    "scope": "Both guests return TokenUser success and reach the next unsupported per-user policy registry key. Native controls exit0; controller exit0 does not mean guest success."
+  },
+  "full-process-objective-complete": false
+}

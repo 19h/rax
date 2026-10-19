@@ -1,0 +1,67 @@
+{
+  "scope": "TokenUser identity and native ABI semantics; full process objective remains active.",
+  "assumptions": [
+    {
+      "id": "A1",
+      "assumption": "Primary or modeled impersonation subject snapshots are the owning identity for the query.",
+      "basis": "Native immutable subject capture already queries TokenUser; modeled token handles carry pinned Subject. Native matrix includes both primary and owned impersonation token.; native installed leaves independently match SID/attributes and exact retained-owner execution uses that identity.",
+      "dependent-result": "No live kernel query or host handle is forwarded from guest requests.",
+      "stress-test": "User SID lengths8..68, opaque attributes, no primary catalog, missing capture, typed/access errors, handle/object/RNG/commit stability.",
+      "falsification-probe": "Native TokenUser for an immutable selected subject changes independently of that captured subject during bounded repeated capture.",
+      "status": "confirmed for recorded native subject and bounded observations"
+    },
+    {
+      "id": "A2",
+      "assumption": "WoW64 converter temporary backing uses the existing personality no-paging-file budget.",
+      "basis": "Existing SystemRange/Mutant/TLS native converter adapters use commit-limit and address-span temporary charge; captured User huge capacities fail before handle checks with LastError8.",
+      "dependent-result": "Model temporary failure without allocating guest-sized host buffers or exposing host pointers.",
+      "stress-test": "FFFFFFFFcapacity, null-output bypass, all handle and guard roles, synthetic remaining commit limits.",
+      "falsification-probe": "A controlled bounded native converter allocation/reference comparison contradicts the scratch-before-kernel phase.",
+      "status": "retained: existing guest scratch-budget policy; physical heap exhaustion equivalence is not claimed"
+    },
+    {
+      "id": "A3",
+      "assumption": "SID copies up to68bytes reuse the existing native short-copy plan.",
+      "basis": "User12-byte SID boundary captures confirm head/tail order; existing BNO native copy evidence covers the same <=128byte short-copy mechanism.",
+      "dependent-result": "Variable SID lengths8..68 preserve the selected converter store plan.",
+      "stress-test": "All native User page offsets0..40, writable/read-only/guard combinations; all16SID sizes and opaque attributes in synthetic models.",
+      "falsification-probe": "A native TokenUser capture with a different SID length shows different fault-visible store order.",
+      "status": "retained: native User matrix has one SYSTEM SID; other SID sizes have synthetic data/layout coverage"
+    }
+  ],
+  "bounded-scope": [
+    {
+      "impact": "high",
+      "item": "Both ordinary guests return TokenUser success and advance2743turns to the per-user Safer policy key without successful guest exit.",
+      "blocks-full-goal": true,
+      "evidence": "validation/ordinary-program-summary.json"
+    },
+    {
+      "impact": "high",
+      "item": "Existing ACL interpretation of user attributes is preserved; this group retains the wire field and does not claim general mutable-token or extended-ACL parity.",
+      "evidence": "security::Subject::matches and native TOKEN_USER documentation",
+      "blocks-TokenUser-wire-group": false
+    },
+    {
+      "impact": "medium",
+      "item": "All four ABI captures share one ARM64 kernel; five established Windows lowerer failures and retained ABI184/current-root product coverage qualifications remain.",
+      "blocks-all-tests-or-whole-current-root-claim": true
+    },
+    {
+      "impact": "medium",
+      "item": "Other WoW64 converter scratch failures may have analogous Win32 LastError side effects; this group changes only measured TokenUser behavior.",
+      "evidence": "User C0000017 rows setLastError8; existing mutant/query scratch path",
+      "blocks-TokenUser-group": false
+    }
+  ],
+  "surface-map": {
+    "Windows-token-query": "affected: existing service class1 selected; no export/ordinal/schema change",
+    "immutable-native-subject": "affected: retain raw User.Attributes with SID; all literal construction sites updated explicitly",
+    "Win64-WoW64-adapter": "affected: native probes and copy order differ; use shared handle/access policy and narrow ABI mechanics",
+    "WNF-ACL-access": "data representation gains opaque field; existing permission/ACL interpretation unchanged and regression checked",
+    "CABI-defaults-dependencies-JIT-ISA": "unaffected: internal private Windows model only; publicCAPI1.14unchanged",
+    "Windows-macOS-Linux": "shared model tests/builds all three; native Win32 capture/installed leaves execute on Windows; all actual retained consumers required",
+    "root-products": "paired gitlink/engineering records with retainedABI184scope; no whole-current-root GUI/package claim",
+    "tests-docs": "native golden corpus, baseline, identity/alias/copy/subject tests, complete source/evidence binding and corruption controls"
+  }
+}

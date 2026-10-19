@@ -1,0 +1,17 @@
+{
+  "receipts": [
+    {
+      "host": "macos",
+      "checked-envelope-files": 171
+    },
+    {
+      "host": "linux",
+      "checked-envelope-files": 171
+    },
+    {
+      "host": "windows",
+      "checked-envelope-files": 171
+    }
+  ],
+  "scope": "Each receipt verifies the original171-file envelope. These six receipt/log files, this scope declaration and the subsequent whitespace audit are added afterward and bound by the final envelope; receipts do not claim self-verification."
+}

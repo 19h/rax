@@ -1,5 +1,6 @@
 //! Captured primary-token properties with measured caller-probe ordering.
 mod bno_copy;
+mod user;
 
 use super::query::{guard_result, probe_write, write_guard_result};
 use crate::user::windows::arch::WinArch;
@@ -22,7 +23,7 @@ pub(super) fn information(c: &mut Ctx) -> ApiResult {
 fn checked(c: &mut Ctx, direct_copies: &mut bool) -> ApiResult {
     let (token, class, output, length, returned) =
         (c.ptr(0)?, c.u32(1)?, c.ptr(2)?, c.u32(3)?, c.ptr(4)?);
-    if !matches!(class, 12 | 29 | 44) && !scalars::is_class(class) {
+    if !matches!(class, 1 | 12 | 29 | 44) && !scalars::is_class(class) {
         return Err(c.unsupported(format!("NtQueryInformationToken class {class}")));
     }
     // These WoW64 wrappers reject the selector without touching either
@@ -30,11 +31,15 @@ fn checked(c: &mut Ctx, direct_copies: &mut bool) -> ApiResult {
     if c.arch() == WinArch::X86 && matches!(class, 40 | 45) {
         return Flow::ret(STATUS_INVALID_INFO_CLASS.into());
     }
-    // The WoW64 class44 converter validates its private native result first,
-    // then stores ReturnLength and the converted fields directly. It neither
-    // aligns nor probes the caller's entire capacity. Other supported classes
-    // retain their complete-span probe before token validation.
-    *direct_copies = c.arch() == WinArch::X86 && class == 44;
+    // WoW64 User and BNO converters use private native results, followed by
+    // direct caller stores. They do not align or preflight the caller capacity.
+    *direct_copies = c.arch() == WinArch::X86 && matches!(class, 1 | 44);
+    if c.arch() == WinArch::X86
+        && class == 1
+        && let Some(status) = user::preflight(c, output, length, returned)?
+    {
+        return Flow::ret(status.into());
+    }
     if !*direct_copies && length != 0 {
         if output % 4 != 0 {
             return Flow::ret(STATUS_DATATYPE_MISALIGNMENT.into());
@@ -62,38 +67,48 @@ fn checked(c: &mut Ctx, direct_copies: &mut bool) -> ApiResult {
     let thread_token = c.arch().ptr(u64::MAX - 4);
     let effective_token = c.arch().ptr(u64::MAX - 5);
     if token == thread_token {
-        return Flow::ret(STATUS_NO_TOKEN.into());
+        return user::handle_error(c, class, returned, STATUS_NO_TOKEN);
     }
     let mut captured_value = None;
+    let mut captured_user = None;
     if token != process_token && token != effective_token {
         if token == c.arch().ptr(u64::MAX) || token == c.arch().ptr(u64::MAX - 1) {
-            return Flow::ret(STATUS_OBJECT_TYPE_MISMATCH.into());
+            return user::handle_error(c, class, returned, STATUS_OBJECT_TYPE_MISMATCH);
         }
         match c.p.objects.get(token) {
-            None => return Flow::ret(STATUS_INVALID_HANDLE.into()),
+            None => return user::handle_error(c, class, returned, STATUS_INVALID_HANDLE),
             Some(Object::PrimaryToken) => {
                 if c.p.objects.access(token).unwrap_or(0) & 8 == 0 {
-                    return Flow::ret(STATUS_ACCESS_DENIED.into());
+                    return user::handle_error(c, class, returned, STATUS_ACCESS_DENIED);
                 }
             }
             Some(Object::ImpersonationToken(subject)) => {
                 if c.p.objects.access(token).unwrap_or(0) & 8 == 0 {
-                    return Flow::ret(STATUS_ACCESS_DENIED.into());
+                    return user::handle_error(c, class, returned, STATUS_ACCESS_DENIED);
                 }
-                if class != 29 {
+                if class == 1 {
+                    captured_user = Some(subject.clone());
+                } else if class != 29 {
                     return Err(c.unsupported(if class == 12 {
                         "impersonation-token SessionId is not captured".to_owned()
                     } else {
                         format!("impersonation-token class {class} is not captured")
                     }));
+                } else {
+                    captured_value = Some(u32::from(subject.app_container));
                 }
-                captured_value = Some(u32::from(subject.app_container));
             }
             Some(Object::Opaque("Token")) => {
                 return Err(c.unsupported("opaque token has no modeled primary subject"));
             }
-            Some(_) => return Flow::ret(STATUS_OBJECT_TYPE_MISMATCH.into()),
+            Some(_) => return user::handle_error(c, class, returned, STATUS_OBJECT_TYPE_MISMATCH),
         }
+    }
+    if class == 1 {
+        let subject = captured_user
+            .or_else(|| c.p.objects.primary_token_subject())
+            .ok_or_else(|| c.unsupported("primary-token user SID is not captured"))?;
+        return user::publish(c, &subject, output, length, returned);
     }
     if class == 44 {
         return bno_information(c, output, length, returned);

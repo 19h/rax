@@ -1,0 +1,9 @@
+profile=x86-laa role=0 length=00000000 status=C0000023 error=7E11ABCD ntstatus=C0000034 returned=00000014
+profile=x86-laa role=0 length=0000001C status=00000000 error=7E11ABCD ntstatus=C0000034 returned=00000014
+profile=x86-laa role=0 length=FFFFFFFF status=C0000017 error=00000008 ntstatus=C0000034 returned=A5A5A5A5
+profile=x86-laa role=1 length=00000000 status=C0000023 error=7E11ABCD ntstatus=C0000034 returned=00000014
+profile=x86-laa role=1 length=0000001C status=C0000005 error=7E11ABCD ntstatus=C0000034 returned=FFFFFFF8
+profile=x86-laa role=1 length=FFFFFFFF status=C0000005 error=7E11ABCD ntstatus=C0000034 returned=FFFFFFF8
+profile=x86-laa role=2 length=00000000 status=C0000008 error=7E11ABCD ntstatus=C0000034 returned=FFFFFFF8
+profile=x86-laa role=2 length=0000001C status=C0000008 error=7E11ABCD ntstatus=C0000034 returned=FFFFFFF8
+profile=x86-laa role=2 length=FFFFFFFF status=C0000017 error=00000008 ntstatus=C0000034 returned=A5A5A5A5
