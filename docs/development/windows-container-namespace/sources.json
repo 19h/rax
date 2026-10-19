@@ -1,0 +1,11 @@
+{
+  "title": "NtQueryDirectoryObject function",
+  "publisher": "Microsoft",
+  "source_url": "https://learn.microsoft.com/en-us/windows/win32/devnotes/ntquerydirectoryobject",
+  "download_url": "https://raw.githubusercontent.com/MicrosoftDocs/win32/docs/desktop-src/DevNotes/ntquerydirectoryobject.md",
+  "retrieved_utc": "2026-10-19",
+  "license": "MicrosoftDocs/win32 documentation: Creative Commons Attribution 4.0 International",
+  "sha256": "562db6d4b7aa8d8f245c9d68bd0cfca7c297bb1628619197c20e440059ace22b",
+  "retained_file": "ntquerydirectoryobject.md.gz",
+  "retained_sha256": "a73ba43d601c424f10c6c8f53f389d26158566261ed9f564b7bb621fd6ae5360"
+}

@@ -112,6 +112,8 @@ pub(crate) mod csr;
 pub(crate) mod data;
 mod image;
 mod section;
+#[cfg(any(windows, test))]
+mod selection;
 pub use data::DataSection;
 pub(crate) use data::SelectedSection;
 pub(crate) use image::{ImageExtension, ImageRegion, ImageTemplate};

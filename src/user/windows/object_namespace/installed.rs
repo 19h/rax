@@ -332,6 +332,9 @@ pub(crate) fn snapshot(upcase: Arc<[u16]>, session: u32) -> io::Result<Namespace
     let mut selected = Vec::new();
     let mut incomplete = Vec::new();
     for units in selection_paths(Some(session)) {
+        if selection::captured_session_alias(&selected, &units, session)? {
+            continue;
+        }
         let path =
             String::from_utf16(&units).map_err(|_| invalid("selected NT path is not UTF-16"))?;
         let h = match open(&units, null_mut(), 0x0200_0000, false, 0x40)? {
@@ -410,7 +413,8 @@ pub(crate) fn snapshot(upcase: Arc<[u16]>, session: u32) -> io::Result<Namespace
                 && ["Local", "Global", "Session"]
                     .iter()
                     .any(|name| is(&entry.name, name));
-            if is(&entry.kind, "SymbolicLink") && (known_dll || base_link) {
+            let session_link = selection::session_base_link(&units, &entry.name, session);
+            if is(&entry.kind, "SymbolicLink") && (known_dll || base_link || session_link) {
                 let (target, access) = target(&h, &entry.name)?;
                 entry.target = Some(target);
                 entry.link_access = Some(access);
