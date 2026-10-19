@@ -301,21 +301,29 @@ Each corrected harness verifies against the engine unchanged.
 Not discharged:
 
 - SMIR planes (`smir_*`, `sbpf_smir_*`). The lifter and interpreter keep
-  blocks and functions in `std` hash maps, and CBMC's symbolic execution
-  does not resolve hashbrown's bucket iteration and probe loops even for
-  concrete keys. The lifter looks up a block's successors by iterating its
-  block cache. With admission and the register fields made concrete (one IR
-  shape), a symbolic-execution profile of a probe variant of `smir_o0_le_07`
-  shows the path guard growing to 77,326 terms inside that iteration while
-  the lifter had not yet returned; the harness did not finish in about one
-  CPU-hour at 11 GiB. The fully symbolic harnesses did not finish in 2.5
-  CPU-hours at 9-23 GiB. Heap storage as such is not the obstacle: an
-  operation read back from a presized, grown, or cloned `Vec` still prunes
-  its unreachable dispatch arms (6,375 steps against 12,451 with the arm
-  reachable), while a `BTreeMap` holding two concrete entries did not finish
-  symbolic execution in 30 minutes. Discharging these planes would need
-  verification models of the maps in the engine, which this task does not
-  add.
+  blocks, functions, and virtual-register values in `std` hash maps (every
+  IR operation reads and writes `SmirContext`'s `HashMap<VirtualId, u64>`),
+  and CBMC's symbolic execution does not resolve hashbrown's bucket
+  iteration and probe loops even for concrete keys. With admission and the
+  register fields made concrete (one IR shape), a symbolic-execution profile
+  of a probe variant of `smir_o0_le_07` shows the path guard growing to
+  77,326 terms inside the lifter's block-cache iteration; the harness did
+  not finish in about one CPU-hour at 11 GiB. The fully symbolic harnesses
+  did not finish in 2.5 CPU-hours at 9-23 GiB. A second probe (2026-10-20,
+  not kept) replaced every map and set on the eBPF lift and interpret path
+  with a verification-only linear map under `cfg(kani)`. Hashbrown left the
+  profile and, with admission concrete, the guard stayed at most 18 terms,
+  but symbolic execution then advanced at about four calls per second at
+  7-18 GiB while constructing IR values (`OpKind` has 365 variants; the
+  register and context types span every ISA). No probe finished lifting one
+  instruction: the ALU, load, and branch probes at O0 ran 41 minutes, and
+  the register-ALU and O2 probes were stopped after 10 minutes to bound
+  memory. Heap storage as such is not the obstacle: an operation read back
+  from a presized, grown, or cloned `Vec` still prunes its unreachable
+  dispatch arms (6,375 steps against 12,451 with the arm reachable), while a
+  `BTreeMap` holding two concrete entries did not finish symbolic execution
+  in 30 minutes. Discharging these planes would need map models in the
+  engine and a smaller IR representation, or a different prover.
 - SBPF execution against the Anza interpreter (`sbpf_step_*`,
   `sbpf_divider_*`). With the text served from a static array both
   interpreters dispatch on a concrete opcode; four probes reached 8-10 GiB

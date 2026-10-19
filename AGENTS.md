@@ -1133,6 +1133,8 @@ Use the exact setup and skip policy in:
 - `.github/workflows/differential.yml`
 - `.github/workflows/kvm.yml`
 - `.github/workflows/sanitizers.yml`
+- `.github/workflows/ebpf-validation.yml` (eBPF/SBPF live oracles and Kani
+  shards)
 
 Representative commands:
 

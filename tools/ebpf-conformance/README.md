@@ -31,7 +31,15 @@ SystemZ targets and `ld.lld` for the freestanding harness; Docker with a
 privileged arm64 Linux engine; `qemu-system-s390x`. The ELFIO submodule and
 the Debian kernel package are downloaded on first use and verified against
 the SHA-256 values in `run.py` and
-[PROVENANCE.md](../../docs/specifications/ebpf/PROVENANCE.md).
+[PROVENANCE.md](../../docs/specifications/ebpf/PROVENANCE.md). When the Debian
+pool drops the pinned kernel, `run.py` falls back to the same package on
+snapshot.debian.org, addressed by its SHA-1.
+
+CI ([`ebpf-validation.yml`](../../.github/workflows/ebpf-validation.yml)) runs
+`conformance`, `kernel-le` (against the runner's arm64 kernel), `kernel-be`,
+and `admission-be`. It does not run `admission-le`, whose comparison pins the
+disagreement table of the recorded Linux 7.0.14 verifier; a runner kernel of
+another version reports a different, equally valid table.
 
 ## Kernel campaign
 

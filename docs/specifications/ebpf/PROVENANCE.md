@@ -75,5 +75,11 @@ SHA-256 `418315e42d2c4e6745b66b672e05ca9e4d29a57d7d52404b2dda855155136084`
 | Big | Debian 13 `linux-image-6.12.107+deb13-s390x` `6.12.107-1` | Generic interpreter: the package config sets `CONFIG_BPF_SYSCALL=y` and no `CONFIG_BPF_JIT` | http://deb.debian.org/debian/pool/main/l/linux/linux-image-6.12.107+deb13-s390x_6.12.107-1_s390x.deb, SHA-256 `72f968758d4ffbb07ad0887d968beec650f961fdc9d3fabcf87a678626ddfd26` (equal to the trixie `Packages` index entry), retrieved 2026-10-15; extracted `boot/vmlinuz-6.12.107+deb13-s390x` SHA-256 `354ea1113285149ad81e0487a34867fdfa827b02b21be8153f576ee7cbba71be`; GPL-2.0 |
 
 The 52 MiB package and the kernel are not stored: `run.py` downloads and
-verifies them. QEMU 11.1.1 `qemu-system-s390x` (Homebrew) boots the kernel
+verifies them. Its fallback source is
+https://snapshot.debian.org/file/45344e32ea08150757ab7ec3aea54edfc8cc1039 (the
+package's SHA-1; snapshot.debian.org lists it in `debian` and
+`debian-security` under `pool/main/l/linux` and `pool/updates/main/l/linux`,
+checked 2026-10-19), verified against the same SHA-256. In CI
+(`ebpf-validation.yml`) the little-endian kernel is the runner's own arm64
+kernel, which `uname -a` reports in the job log. QEMU 11.1.1 `qemu-system-s390x` (Homebrew) boots the kernel
 under TCG (`-M s390-ccw-virtio -cpu max`) with the harness as PID 1.

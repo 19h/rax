@@ -38,9 +38,12 @@ CONFORMANCE_PREFIX = "bpf_conformance-698e379525f44cf422bc1dbd43efe8495a76ab87/"
 ELFIO_URL = "https://codeload.github.com/serge1/ELFIO/tar.gz/660e90514a2e80fba1c55f2cee07bbeda3d1c601"
 ELFIO_SHA256 = "418315e42d2c4e6745b66b672e05ca9e4d29a57d7d52404b2dda855155136084"
 ELFIO_PREFIX = "ELFIO-660e90514a2e80fba1c55f2cee07bbeda3d1c601/"
-DEBIAN_KERNEL_URL = (
+DEBIAN_KERNEL_URLS = (
     "http://deb.debian.org/debian/pool/main/l/linux/"
-    "linux-image-6.12.107+deb13-s390x_6.12.107-1_s390x.deb"
+    "linux-image-6.12.107+deb13-s390x_6.12.107-1_s390x.deb",
+    # The pool drops a superseded kernel; snapshot.debian.org keeps serving the
+    # same package by its SHA-1.
+    "https://snapshot.debian.org/file/45344e32ea08150757ab7ec3aea54edfc8cc1039",
 )
 DEBIAN_KERNEL_SHA256 = "72f968758d4ffbb07ad0887d968beec650f961fdc9d3fabcf87a678626ddfd26"
 VMLINUZ = "boot/vmlinuz-6.12.107+deb13-s390x"
@@ -69,13 +72,24 @@ def verified(path, expected):
     return path
 
 
-def fetch(url, expected, name):
+def fetch(urls, expected, name):
+    """Download `name` from the first of `urls` that serves the expected bytes."""
     path = WORK / "downloads" / name
     if not path.exists():
         path.parent.mkdir(parents=True, exist_ok=True)
-        with urllib.request.urlopen(url) as response:
-            data = response.read()
-        path.write_bytes(data)
+        for url in urls:
+            try:
+                with urllib.request.urlopen(url) as response:
+                    data = response.read()
+            except OSError as error:
+                print(f"{url}: {error}", flush=True)
+                continue
+            if hashlib.sha256(data).hexdigest() == expected:
+                path.write_bytes(data)
+                break
+            print(f"{url}: checksum mismatch", flush=True)
+        else:
+            raise SystemExit(f"no source served {name} with SHA-256 {expected}")
     return verified(path, expected)
 
 
@@ -116,7 +130,7 @@ def cargo_build():
 def conformance(binaries, export):
     source = extract(verified(CONFORMANCE_ARCHIVE, CONFORMANCE_SHA256), CONFORMANCE_PREFIX,
                      WORK / "bpf_conformance")
-    elfio = fetch(ELFIO_URL, ELFIO_SHA256, "elfio.tar.gz")
+    elfio = fetch([ELFIO_URL], ELFIO_SHA256, "elfio.tar.gz")
     extract(elfio, ELFIO_PREFIX, source / "external/elfio")
     build = WORK / "bpf_conformance-build"
     run(["cmake", "-S", source, "-B", build, "-DCMAKE_BUILD_TYPE=Release"],
@@ -220,7 +234,7 @@ def initramfs(harness_binary, payload):
 
 
 def vmlinuz():
-    package = fetch(DEBIAN_KERNEL_URL, DEBIAN_KERNEL_SHA256, "linux-image-s390x.deb")
+    package = fetch(DEBIAN_KERNEL_URLS, DEBIAN_KERNEL_SHA256, "linux-image-s390x.deb")
     output = WORK / "vmlinuz-s390x"
     if not output.exists():
         data = package.read_bytes()

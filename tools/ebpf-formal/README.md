@@ -11,6 +11,12 @@ python3 tools/ebpf-formal/run.py --harness direct_le_3f
 python3 tools/ebpf-formal/run.py --all            # also the intractable ones
 ```
 
+CI ([`ebpf-validation.yml`](../../.github/workflows/ebpf-validation.yml))
+runs the default families on `ubuntu-24.04-arm` in 14 shards of `--harness`
+filters (RFC 9669 by byte order and opcode nibble, the step and memory
+proofs, SBPF admission by version). The `ci_actions_pinned` contract checks
+that the shards select each default-family harness exactly once.
+
 Kani's C library model does not link on macOS, so `run.py` runs the proofs
 in a Linux arm64 container built from the pinned `rust` image in
 `BASE_IMAGE` and Kani 0.68.0. The package is outside the engine workspace
@@ -107,7 +113,13 @@ the lifter returned, and the run did not finish in about one CPU-hour at
 storage as such is not the obstacle: a dispatch on an operation read back
 from a `Vec` (presized, grown, or cloned) prunes its unreachable arms (6,375
 steps, against 12,451 with the arm reachable). A `BTreeMap` holding two
-concrete entries did not finish symbolic execution in 30 minutes.
+concrete entries did not finish symbolic execution in 30 minutes. A second
+probe replaced every map and set on the eBPF lift and interpret path with a
+verification-only linear map under `cfg(kani)` (not kept): hashbrown left
+the profile and the guard stayed at most 18 terms, but symbolic execution
+then ran at about four calls per second at 7-18 GiB constructing IR values
+(`OpKind` has 365 variants; register and context types span every ISA), and
+no probe finished lifting one instruction (the longest ran 41 minutes).
 
 The SBPF execution harnesses fetch from a static text (`TEXT`, so both
 interpreters dispatch on a concrete opcode, with

@@ -405,6 +405,184 @@ fn scheduled_full_suite_serializes_native_jit_shards_and_preserves_diagnostics()
     );
 }
 
+#[test]
+fn ebpf_validation_runs_every_oracle_and_partitions_the_formal_tier() {
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let workflow = root.join(".github/workflows/ebpf-validation.yml");
+    let contents = fs::read_to_string(&workflow)
+        .unwrap_or_else(|err| panic!("failed to read {}: {err}", workflow.display()));
+
+    for command in [
+        "python3 tools/ebpf-conformance/run.py conformance",
+        "python3 tools/ebpf-reference/run.py",
+        "python3 tools/ebpf-conformance/run.py kernel-le",
+        "python3 tools/ebpf-conformance/run.py kernel-be",
+        "python3 tools/ebpf-conformance/run.py admission-be",
+        "python3 tools/ebpf-formal/run.py --jobs ${{ matrix.shard.jobs }} ${{ matrix.shard.harnesses }}",
+    ] {
+        assert!(
+            contents.contains(command),
+            "eBPF validation workflow must run `{command}`"
+        );
+    }
+
+    // Every harness of run.py's default families must belong to exactly one
+    // formal shard, and no shard may select a harness outside them.
+    let formal = root.join("tools/ebpf-formal");
+    let families = default_kani_families(&formal.join("run.py"));
+    let mut harnesses = Vec::new();
+    collect_kani_harnesses(&formal.join("src"), &formal.join("src"), &mut harnesses);
+    let shards = formal_shard_filters(&workflow_block(&contents, "  formal:"));
+    assert!(
+        !families.is_empty() && !harnesses.is_empty() && !shards.is_empty(),
+        "eBPF validation contract found no Kani families, harnesses, or shards"
+    );
+
+    let mut violations = Vec::new();
+    for (shard, filters) in &shards {
+        for filter in filters {
+            // The filter selects the same harnesses whether Kani matches it as
+            // a prefix or as a substring of the qualified name.
+            let by_prefix = harnesses
+                .iter()
+                .filter(|harness| harness.starts_with(filter.as_str()))
+                .count();
+            let by_substring = harnesses
+                .iter()
+                .filter(|harness| harness.contains(filter.as_str()))
+                .count();
+            if by_prefix == 0 || by_prefix != by_substring {
+                violations.push(format!(
+                    "shard {shard}: --harness {filter} selects {by_prefix} harnesses by prefix and {by_substring} by substring"
+                ));
+            }
+        }
+    }
+
+    let mut selected = 0;
+    for harness in &harnesses {
+        let in_default_family = families
+            .iter()
+            .any(|family| harness.starts_with(family.as_str()));
+        let owners = shards
+            .iter()
+            .filter(|(_, filters)| {
+                filters
+                    .iter()
+                    .any(|filter| harness.starts_with(filter.as_str()))
+            })
+            .count();
+        match (in_default_family, owners) {
+            (true, 1) => selected += 1,
+            (false, 0) => {}
+            _ => violations.push(format!(
+                "{harness}: default family {in_default_family}, selected by {owners} shards"
+            )),
+        }
+    }
+
+    assert!(
+        violations.is_empty(),
+        "eBPF validation formal shards must partition the default Kani families:\n{}",
+        violations.join("\n")
+    );
+    assert!(
+        selected > 0,
+        "eBPF validation formal shards select no harness"
+    );
+}
+
+/// The quoted entries of `DEFAULT_FAMILIES = [...]` in `tools/ebpf-formal/run.py`.
+fn default_kani_families(run_py: &Path) -> Vec<String> {
+    let contents = fs::read_to_string(run_py)
+        .unwrap_or_else(|err| panic!("failed to read {}: {err}", run_py.display()));
+    contents
+        .lines()
+        .skip_while(|line| *line != "DEFAULT_FAMILIES = [")
+        .skip(1)
+        .take_while(|line| line.trim() != "]")
+        .map(|line| {
+            line.trim()
+                .trim_end_matches(',')
+                .trim_matches('"')
+                .to_string()
+        })
+        .collect()
+}
+
+/// Every `#[kani::proof]` harness under `dir`, named by its crate-relative
+/// path as Kani's `--harness` filter matches it.
+fn collect_kani_harnesses(src: &Path, dir: &Path, harnesses: &mut Vec<String>) {
+    let entries =
+        fs::read_dir(dir).unwrap_or_else(|err| panic!("failed to read {}: {err}", dir.display()));
+
+    for entry in entries {
+        let path = entry
+            .unwrap_or_else(|err| panic!("failed to read entry in {}: {err}", dir.display()))
+            .path();
+        if path.is_dir() {
+            collect_kani_harnesses(src, &path, harnesses);
+            continue;
+        }
+        if path.extension().and_then(|extension| extension.to_str()) != Some("rs") {
+            continue;
+        }
+
+        let relative = path.strip_prefix(src).unwrap_or(&path).with_extension("");
+        let mut module = relative
+            .iter()
+            .map(|component| component.to_string_lossy().into_owned())
+            .collect::<Vec<_>>();
+        if matches!(module.last().map(String::as_str), Some("mod" | "lib")) {
+            module.pop();
+        }
+
+        let contents = fs::read_to_string(&path)
+            .unwrap_or_else(|err| panic!("failed to read {}: {err}", path.display()));
+        let mut in_proof = false;
+        for line in contents.lines().map(str::trim) {
+            if line == "#[kani::proof]" {
+                in_proof = true;
+            } else if in_proof {
+                if let Some(signature) = line.strip_prefix("fn ") {
+                    let name = signature.split('(').next().unwrap_or(signature);
+                    let mut qualified = module.clone();
+                    qualified.push(name.to_string());
+                    harnesses.push(qualified.join("::"));
+                    in_proof = false;
+                }
+            }
+        }
+    }
+}
+
+/// Each `formal` matrix shard's name and `--harness` filters.
+fn formal_shard_filters(block: &str) -> Vec<(String, Vec<String>)> {
+    block
+        .lines()
+        .filter(|line| line.contains("harnesses:"))
+        .map(|line| {
+            let name = line
+                .split("name:")
+                .nth(1)
+                .and_then(|rest| rest.split(',').next())
+                .unwrap_or("")
+                .trim()
+                .to_string();
+            let tokens = line
+                .split_whitespace()
+                .map(|token| token.trim_matches(|ch| ch == '"' || ch == '}' || ch == ','))
+                .collect::<Vec<_>>();
+            let filters = tokens
+                .windows(2)
+                .filter(|pair| pair[0] == "--harness")
+                .map(|pair| pair[1].to_string())
+                .collect();
+            (name, filters)
+        })
+        .collect()
+}
+
 // This contract accepts the workflows' current indentation and simple shell
 // continuations; unfamiliar layouts fail closed instead of matching other jobs.
 fn workflow_block(contents: &str, marker: &str) -> String {

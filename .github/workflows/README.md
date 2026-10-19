@@ -13,6 +13,7 @@ build sweep over many more ISAs via cross-compilation.
 | [`full-suite.yml`](full-suite.yml) | nightly, dispatch | The registered suite, sharded by test binary across parallel jobs, on the declared Linux/macOS native platforms; runtime prerequisites can still cause self-skips. |
 | [`cross.yml`](cross.yml) | push, PR, nightly | **Cross-compile** the core to many CPU architectures (build-only) to guard portability. |
 | [`differential.yml`](differential.yml) | nightly, dispatch | Installs the **QEMU/llvm-mc/clang oracles** so the differential harnesses actually diff (they skip otherwise). One job per guest arch. |
+| [`ebpf-validation.yml`](ebpf-validation.yml) | push/PR (eBPF paths), weekly, dispatch | Runs the **eBPF/SBPF oracles live** on every plane (`bpf_conformance`, pinned Anza `solana-sbpf`, the runner's arm64 kernel, the pinned s390x kernel under QEMU and its verifier) and discharges the **Kani proofs** in 14 shards; pull requests run the oracle jobs only. |
 | [`kvm.yml`](kvm.yml) | push (kvm paths), nightly | Enables `/dev/kvm`, gates the **KVM backend** + release build, and retains host-dependent silicon differentials as nightly diagnostics. |
 | [`sanitizers.yml`](sanitizers.yml) | nightly, dispatch | **ASan/UBSan** on a core slice + a **stable/beta/nightly** toolchain sweep. |
 | [`microkernel.yml`](microkernel.yml) | every push, PR | Builds the **bare-metal microkernel test suite** for **x86_64, AArch64 and ARMv6** (nightly + build-std; custom ARMv6 target) and **boots each under the emulator**, asserting `RESULT PASS` and an identical cross-arch n-body checksum. |
@@ -103,6 +104,21 @@ The `macos-15` and `macos-15-intel` core lanes and the full-suite unit shard
 still select the target: there it builds, checks the generated tables and
 SDK layouts, and reports its native comparisons skipped. No macOS 27 Intel
 image exists.
+
+## eBPF validation
+
+`ci.yml` and `full-suite.yml` replay the checked-in eBPF oracle corpora
+(`ebpf_diff`). [`ebpf-validation.yml`](ebpf-validation.yml) runs the oracles
+themselves through `tools/ebpf-conformance/run.py` and
+`tools/ebpf-reference/run.py`, and the Kani tier through
+`tools/ebpf-formal/run.py` on `ubuntu-24.04-arm`, which builds the pinned
+arm64 Kani image natively. The 14 formal shards together select each
+harness of `run.py`'s default families exactly once; the `ci_actions_pinned`
+contract checks that partition. The little-endian admission campaign stays
+local: its comparison pins the disagreement table of the recorded Linux
+7.0.14 verifier, which a runner kernel of another version does not
+reproduce. See the
+[conformance record](../../docs/architecture/ebpf/verification-2026-10-16.md).
 
 ## C API binary releases
 

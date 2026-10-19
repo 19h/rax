@@ -1,0 +1,219 @@
+# eBPF / Solana SBPF oracle and formal validation.
+#
+# ci.yml and full-suite.yml replay the checked-in oracle corpora (`ebpf_diff`)
+# on every push. This workflow runs the oracles themselves on every plane
+# (direct CPU, SMIR O0/O1/O2) and discharges the Kani proofs:
+#
+#   * bpf_conformance  - eBPF Foundation suite (pinned archive) + its negatives
+#   * anza             - pinned Anza solana-sbpf interpreter and verifier
+#   * kernel-le        - the runner's arm64 Linux kernel (BPF JIT) in a
+#                        privileged container; compares every case live
+#   * kernel-be        - the pinned Debian 13 s390x kernel under QEMU TCG
+#                        (kernel BPF interpreter, big-endian)
+#   * admission-be     - that kernel's verifier against the decoder over
+#                        1,980,208 encodings
+#   * formal           - the four discharged Kani families of tools/ebpf-formal
+#                        (1,796 harnesses), sharded to fit the job limit
+#
+# The little-endian admission campaign is not run here: its comparison pins the
+# disagreement table recorded against Linux 7.0.14, and a runner kernel of
+# another version legitimately differs (for example, load-acquire and
+# store-release arrived in Linux 6.15). Pull requests run the oracle jobs; the
+# formal shards and the long admission campaign run on push, weekly, and on
+# demand.
+name: eBPF validation
+
+on:
+  push:
+    branches: [master, main]
+    paths:
+      - "src/isa/ebpf/**"
+      - "src/smir/lift/ebpf/**"
+      - "src/smir/ir/memory.rs"
+      - "tests/generated/ebpf/**"
+      - "tests/support/ebpf_*.rs"
+      - "tests/suites/differential/ebpf/**"
+      - "tools/ebpf-conformance/**"
+      - "tools/ebpf-reference/**"
+      - "tools/ebpf-formal/**"
+      - "docs/specifications/ebpf/**"
+      - ".github/workflows/ebpf-validation.yml"
+  pull_request:
+    paths:
+      - "src/isa/ebpf/**"
+      - "src/smir/lift/ebpf/**"
+      - "src/smir/ir/memory.rs"
+      - "tests/generated/ebpf/**"
+      - "tests/support/ebpf_*.rs"
+      - "tests/suites/differential/ebpf/**"
+      - "tools/ebpf-conformance/**"
+      - "tools/ebpf-reference/**"
+      - "tools/ebpf-formal/**"
+      - "docs/specifications/ebpf/**"
+      - ".github/workflows/ebpf-validation.yml"
+  schedule:
+    - cron: "0 7 * * 0" # weekly, Sunday 07:00 UTC
+  workflow_dispatch:
+
+concurrency:
+  group: ebpf-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  conformance:
+    name: bpf_conformance (4 planes)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+      - uses: ./.github/actions/setup-rust
+        with:
+          toolchain: stable
+          cache: "false"
+
+      - name: Install the conformance runner's build dependencies
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            cmake g++ libboost-program-options-dev libboost-filesystem-dev
+
+      - name: bpf_conformance on every plane
+        run: python3 tools/ebpf-conformance/run.py conformance
+
+  anza:
+    name: Anza solana-sbpf reference
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+      - uses: ./.github/actions/setup-rust
+        with:
+          toolchain: stable
+          cache: "false"
+
+      - name: Pinned interpreter and verifier against every plane
+        run: python3 tools/ebpf-reference/run.py
+
+  kernel-le:
+    name: Linux kernel (arm64 BPF JIT)
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+      - uses: ./.github/actions/setup-rust
+        with:
+          toolchain: stable
+          cache: "false"
+
+      - name: Install the freestanding harness toolchain
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends clang lld
+
+      - name: Report the oracle kernel
+        run: |
+          uname -a
+          docker version --format 'docker {{.Server.Version}} {{.Server.Os}}/{{.Server.Arch}}'
+
+      - name: Every RFC 9669 form against the runner kernel
+        run: python3 tools/ebpf-conformance/run.py kernel-le
+
+  kernel-be:
+    name: Linux kernel (s390x interpreter, QEMU)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+      - uses: ./.github/actions/setup-rust
+        with:
+          toolchain: stable
+          cache: "false"
+
+      - name: Install QEMU and the freestanding harness toolchain
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends clang lld qemu-system-s390x
+
+      - name: Every RFC 9669 form against the pinned big-endian kernel
+        run: python3 tools/ebpf-conformance/run.py kernel-be
+
+  admission-be:
+    name: Linux verifier admission (s390x, QEMU)
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+      - uses: ./.github/actions/setup-rust
+        with:
+          toolchain: stable
+          cache: "false"
+
+      - name: Install QEMU and the freestanding harness toolchain
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends clang lld qemu-system-s390x
+
+      - name: Decoder admission against the pinned kernel verifier
+        run: python3 tools/ebpf-conformance/run.py admission-be
+
+  formal:
+    name: kani ${{ matrix.shard.name }}
+    if: github.event_name != 'pull_request'
+    # run.py builds its pinned linux/arm64 Kani image; an arm64 runner builds
+    # and runs it natively.
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      matrix:
+        # Together the shards select every harness of run.py's default families
+        # exactly once (checked by the ci_actions_pinned test target).
+        shard:
+          - { name: rfc-le-0-3,        jobs: 3, harnesses: "--harness proofs::opcodes::direct_le_0 --harness proofs::opcodes::direct_le_1 --harness proofs::opcodes::direct_le_2 --harness proofs::opcodes::direct_le_3" }
+          - { name: rfc-le-4-7,        jobs: 3, harnesses: "--harness proofs::opcodes::direct_le_4 --harness proofs::opcodes::direct_le_5 --harness proofs::opcodes::direct_le_6 --harness proofs::opcodes::direct_le_7" }
+          - { name: rfc-le-8-b,        jobs: 3, harnesses: "--harness proofs::opcodes::direct_le_8 --harness proofs::opcodes::direct_le_9 --harness proofs::opcodes::direct_le_a --harness proofs::opcodes::direct_le_b" }
+          - { name: rfc-le-c-f,        jobs: 3, harnesses: "--harness proofs::opcodes::direct_le_c --harness proofs::opcodes::direct_le_d --harness proofs::opcodes::direct_le_e --harness proofs::opcodes::direct_le_f" }
+          - { name: rfc-be-0-3,        jobs: 3, harnesses: "--harness proofs::opcodes::direct_be_0 --harness proofs::opcodes::direct_be_1 --harness proofs::opcodes::direct_be_2 --harness proofs::opcodes::direct_be_3" }
+          - { name: rfc-be-4-7,        jobs: 3, harnesses: "--harness proofs::opcodes::direct_be_4 --harness proofs::opcodes::direct_be_5 --harness proofs::opcodes::direct_be_6 --harness proofs::opcodes::direct_be_7" }
+          - { name: rfc-be-8-b,        jobs: 3, harnesses: "--harness proofs::opcodes::direct_be_8 --harness proofs::opcodes::direct_be_9 --harness proofs::opcodes::direct_be_a --harness proofs::opcodes::direct_be_b" }
+          - { name: rfc-be-c-f,        jobs: 3, harnesses: "--harness proofs::opcodes::direct_be_c --harness proofs::opcodes::direct_be_d --harness proofs::opcodes::direct_be_e --harness proofs::opcodes::direct_be_f" }
+          - { name: step-and-memory,   jobs: 3, harnesses: "--harness proofs::fetch:: --harness proofs::memory::" }
+          - { name: sbpf-admission-v0, jobs: 4, harnesses: "--harness sbpf::opcodes::sbpf_admission_v0_" }
+          - { name: sbpf-admission-v1, jobs: 4, harnesses: "--harness sbpf::opcodes::sbpf_admission_v1_" }
+          - { name: sbpf-admission-v2, jobs: 4, harnesses: "--harness sbpf::opcodes::sbpf_admission_v2_" }
+          - { name: sbpf-admission-v3, jobs: 4, harnesses: "--harness sbpf::opcodes::sbpf_admission_v3_" }
+          - { name: sbpf-admission-v4, jobs: 4, harnesses: "--harness sbpf::opcodes::sbpf_admission_v4_" }
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+      - uses: ./.github/actions/setup-rust
+        with:
+          toolchain: stable
+          cache: "false"
+
+      - name: Free disk for the Kani image and goto models
+        run: |
+          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc /opt/hostedtoolcache/CodeQL
+          df -h /
+
+      - name: Kani proofs (${{ matrix.shard.name }})
+        run: python3 tools/ebpf-formal/run.py --jobs ${{ matrix.shard.jobs }} ${{ matrix.shard.harnesses }}
+
+      - name: Upload the Kani report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: kani-${{ matrix.shard.name }}
+          path: target/ebpf-formal-linux/report.txt
+          if-no-files-found: ignore
+          retention-days: 14
