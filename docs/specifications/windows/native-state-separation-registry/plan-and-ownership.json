@@ -1,0 +1,75 @@
+{
+  "baseline-head": "daecebd58bd574fd95281ff2635b0754f6e1dede",
+  "root": "/Users/int/Library/Caches/assist-process-emulation/native-registry-runtime-20261019/registry-source",
+  "source-owned-paths": [
+    "src/user/windows/registry.rs",
+    "src/user/windows/registry/tree.rs",
+    "src/user/windows/registry/installed.rs",
+    "src/user/windows/registry/installed/tree.rs",
+    "src/user/windows/registry/installed_tests.rs",
+    "src/user/windows/registry/redirection_tests.rs",
+    "src/user/windows/registry/installed/redirection_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/registry_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/redirection_registry_tests.rs",
+    "src/user/windows/native-runtime.md"
+  ],
+  "evidence-owned-prefix": "docs/specifications/windows/native-state-separation-registry",
+  "acceptance": [
+    "Fixed StateSeparation RedirectionMap Keys root captures absent or complete bounded present subtree during native-library selection.",
+    "Guest reads use immutable guest-owned records; arbitrary guest names never invoke host registry operations.",
+    "Keep IFEO/NLS/SessionManager/SegmentHeap behavior and shared aggregate value bounds.",
+    "Validate fixed native adapter present/absent/errors and no native HKEY retention.",
+    "Run complete affected Rust library target and all-target builds on macOS, Linux and Windows, C API and retained owning consumers, then ordinary Windows programs against actual owning archive.",
+    "Publish semantic RAX commit and paired root pin/engineering records through red and exact owned paths."
+  ],
+  "scope-expansion": [
+    {
+      "impact": "high",
+      "item": "Ordinary programs have additional unknown runtime frontiers after this key; full process exit remains unproven.",
+      "blocking-full-goal": true,
+      "evidence": "registry-arguments-observer-{0,1}.log"
+    },
+    {
+      "impact": "medium",
+      "item": "Four ABI profiles share one ARM64 Windows kernel; no physical x64-kernel claim.",
+      "blocking-group": false,
+      "evidence": "native-redirection-keys-v1-*"
+    }
+  ],
+  "assumptions": [
+    {
+      "id": "A1",
+      "assumption": "The fixed SYSTEM subtree has shared semantics across selected registry views.",
+      "basis": "Native ARM64/x64/x86/x86-LAA exact-path and view captures.",
+      "dependent-result": "One immutable selected subtree for all guest architectures.",
+      "stress-test": "Present controlled native source and all three view flags; native and kernel case/separator variants.",
+      "falsification-probe": "Native view captures disagree or installed present-key metadata differs by view.",
+      "status": "retained; absence confirmed on current kernel, controlled present adapter pending"
+    },
+    {
+      "id": "A2",
+      "assumption": "Only ERROR_FILE_NOT_FOUND at acquisition root establishes snapshot absence.",
+      "basis": "Existing IFEO capture contract and exact native NtOpenKey absent status.",
+      "dependent-result": "Absence never masks access, resource, or disappearing-child errors.",
+      "stress-test": "Inject 2/5/234/259 at root and 2 for enumerated child.",
+      "falsification-probe": "Any non-root/not-found error becomes a successful absent snapshot.",
+      "status": "retained"
+    }
+  ],
+  "surface-map": {
+    "direct-decode": "unaffected; no ISA source changes",
+    "direct-execute": "unaffected; no CPU source changes",
+    "cpu-state": "unaffected; no CPU fields or architectural semantics changes",
+    "memory-mmu": "unaffected; existing registry copy/probe APIs unchanged",
+    "smir-lift-ir-interpreter-optimizer-lowering-jit": "unaffected; no changes or new operations",
+    "backend-machine-device": "unaffected; immutable Windows runtime metadata only",
+    "oracle-analysis": "unaffected; no analysis schemas",
+    "c-api": "unaffected public layout; core registry dependency rebuild and API tests required",
+    "windows-host-adapter": "affected; bounded fixed-root read-only capture",
+    "shared-registry": "affected; named fixed tree presence, lookup and aggregate budgets",
+    "windows-guest-kernel-hle": "existing dispatch reused; all guest ABIs verified by kernel tests",
+    "macos-linux-native-personalities": "unaffected implementation; portable core compiles/runs all hosts",
+    "owning-assist-products": "retained core carrier consumers rebuilt; whole current GUI/plugin/package status remains separate",
+    "tests-docs": "native fixed-key captures, strategic shared/native/kernel tests and reproducible records"
+  }
+}

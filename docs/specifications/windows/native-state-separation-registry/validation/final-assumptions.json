@@ -1,0 +1,51 @@
+{
+  "scope": "Scoped registry semantic group; full process goal remains active and incomplete.",
+  "assumptions": [
+    {
+      "id": "A1",
+      "assumption": "The fixed SYSTEM subtree has shared semantics across selected registry views.",
+      "basis": "Native ARM64/x64/x86/x86-LAA exact-path and view captures.; inherited Microsoft shared-HKLM view contract and native default/32/64 view adapter checks.",
+      "dependent-result": "One immutable selected subtree for all guest architectures.",
+      "stress-test": "Present controlled native source and all three view flags; native and kernel case/separator variants.",
+      "falsification-probe": "Native view captures disagree or installed present-key metadata differs by view.",
+      "status": "confirmed"
+    },
+    {
+      "id": "A2",
+      "assumption": "Only ERROR_FILE_NOT_FOUND at acquisition root establishes snapshot absence.",
+      "basis": "Existing IFEO capture contract and exact native NtOpenKey absent status.",
+      "dependent-result": "Absence never masks access, resource, or disappearing-child errors.",
+      "stress-test": "Inject 2/5/234/259 at root and 2 for enumerated child.",
+      "falsification-probe": "Any non-root/not-found error becomes a successful absent snapshot.",
+      "status": "confirmed"
+    }
+  ],
+  "bounded-scope": [
+    {
+      "impact": "high",
+      "item": "Ordinary programs have additional unknown runtime frontiers after this key; full process exit remains unproven.",
+      "blocking-full-goal": true,
+      "evidence": "registry-arguments-observer-{0,1}.log"
+    },
+    {
+      "impact": "medium",
+      "item": "Four ABI profiles share one ARM64 Windows kernel; no physical x64-kernel claim.",
+      "blocking-group": false,
+      "evidence": "native-redirection-keys-v1-*"
+    },
+    {
+      "impact": "medium",
+      "item": "Native complete core retains exactly five pre-existing AArch64 lowerer failures.",
+      "blocks-registry-group": false,
+      "blocks-all-tests-passed-claim": true,
+      "evidence": "registry-native-epoch1-gates.json"
+    },
+    {
+      "impact": "high",
+      "item": "Retained consumer validation does not establish whole-current-root GUI/plugin/package builds.",
+      "blocks-registry-group": false,
+      "blocks-whole-product-build-claim": true,
+      "evidence": "All three owning gate records; retained Assist ABI184 and eight C++ inputs compared to root ABI264."
+    }
+  ]
+}

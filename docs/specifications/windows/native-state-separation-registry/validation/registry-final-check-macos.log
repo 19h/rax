@@ -1,0 +1,16 @@
+{
+  "profiles": 4,
+  "native-kernels": 1,
+  "cases": 256,
+  "selected-root-cases": 224,
+  "outside-selected-root-observations": 32,
+  "scope": "Root and descendants are selected; native path=4 is an outside-prefix control, which remains an unsupported guest frontier."
+}
+{
+  "source-inputs": 22779,
+  "three-host-full-gates": "pass",
+  "retained-consumers": "pass",
+  "ordinary-programs": 2,
+  "next-frontier": "NtSetTimer2",
+  "ordinary-guest-exit-success": false
+}

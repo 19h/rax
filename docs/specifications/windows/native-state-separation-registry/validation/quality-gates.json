@@ -1,0 +1,10 @@
+{
+  "scope": "Native StateSeparation registry semantic group only; full userland process goal is incomplete.",
+  "QG1": "pass: no normative judgment required",
+  "QG2": "pass: source-bound assumption register and native falsification probes",
+  "QG3": "pass within group: present/absent capture, shared model, all guest ABIs, all three hosts and retained consumers; ordinary guest exit remains false",
+  "QG4": "pass: UTF-16 bytes, native masks, source bytes, matrix counts and test counts reproducible",
+  "QG5": "pass within group: native root errors distinguished, disappearing child aborts, unknown sibling frontier retained, shared budgets and handle lifetime tested",
+  "QG6": "pass: stored Microsoft sources, pinned inherited PHNT references, native producer and archive/program/module identities",
+  "QG7": "pass: out-of-scope full-runtime, physical-kernel and current-product limitations explicitly recorded"
+}

@@ -1,4 +1,4 @@
-//! Fixed SYSTEM values and a complete IFEO subtree during native selection.
+//! Fixed SYSTEM values and complete fixed subtrees during native selection.
 //! No guest name reaches a host registry operation. All HKEYs close before
 //! selection returns, and the kernel reads the resulting immutable records.
 #[path = "installed/tree.rs"]
@@ -272,12 +272,19 @@ pub(crate) fn snapshot() -> io::Result<Registry> {
     let registry = Registry::selected(upcase, selected)?;
     let segment = segment_heap(&registry)?;
     let registry = registry.with_segment_heap(segment)?;
-    match tree::capture(&registry)? {
+    let registry = match tree::capture(&registry)? {
         Some(tree) => registry.with_ifeo(tree),
         None => registry.with_absent_ifeo(),
-    }
+    }?;
+    let root = super::TreeRoot::RedirectionKeys;
+    let selected = tree::capture_root(&registry, root)?;
+    registry.with_tree(root, selected)
 }
 
 #[cfg(test)]
 #[path = "installed_tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "installed/redirection_tests.rs"]
+mod redirection_tests;

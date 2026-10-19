@@ -1,0 +1,84 @@
+{
+  "disk": [
+    410668478464,
+    410659196928,
+    9281536
+  ],
+  "targets": [
+    {
+      "root": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3",
+      "large-files": [
+        {
+          "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\deps\\rax.lib",
+          "bytes": 576251694,
+          "modified": 1792376163.4642925
+        },
+        {
+          "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\deps\\rax-b799307a7949aa6b.exe",
+          "bytes": 503456256,
+          "modified": 1792374742.553412
+        },
+        {
+          "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\deps\\librax-b6577df3fbefbea4.rlib",
+          "bytes": 501613890,
+          "modified": 1792375696.2828672
+        },
+        {
+          "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\deps\\rax-b799307a7949aa6b.rax.4c2a6c3c9fa61063-cgu.12.rcgu.o",
+          "bytes": 372791289,
+          "modified": 1792377663.375807
+        },
+        {
+          "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\deps\\rax-b799307a7949aa6b.pdb",
+          "bytes": 347713536,
+          "modified": 1792374742.7540908
+        },
+        {
+          "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\rax.pdb",
+          "bytes": 196128768,
+          "modified": 1792376165.6785893
+        },
+        {
+          "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\deps\\rax.pdb",
+          "bytes": 196128768,
+          "modified": 1792376165.6785893
+        },
+        {
+          "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\deps\\rax-24d49cb87dffa633.pdb",
+          "bytes": 193425408,
+          "modified": 1792376166.7321665
+        }
+      ]
+    },
+    {
+      "root": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-owned",
+      "large-files": [
+        {
+          "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-owned\\debug\\assist_rs.lib",
+          "bytes": 850667668,
+          "modified": 1792376207.4814138
+        },
+        {
+          "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-owned\\debug\\deps\\assist_rs-0a651150b37c3b8b.lib",
+          "bytes": 850667668,
+          "modified": 1792376207.4814138
+        },
+        {
+          "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-owned\\debug\\deps\\rax.lib",
+          "bytes": 581414266,
+          "modified": 1792376188.888872
+        },
+        {
+          "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-owned\\debug\\deps\\librax-934115059aa64c85.rlib",
+          "bytes": 501801646,
+          "modified": 1792374983.019701
+        },
+        {
+          "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-owned\\debug\\deps\\rax.pdb",
+          "bytes": 191246336,
+          "modified": 1792376191.211897
+        }
+      ]
+    }
+  ]
+}

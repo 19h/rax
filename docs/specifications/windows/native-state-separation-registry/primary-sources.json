@@ -1,0 +1,20 @@
+[
+  {
+    "file": "regopenkeyexw.md",
+    "source-url": "https://raw.githubusercontent.com/MicrosoftDocs/sdk-api/docs/sdk-api-src/content/winreg/nf-winreg-regopenkeyexw.md",
+    "canonical-url": "https://learn.microsoft.com/en-us/windows/win32/api/winreg/nf-winreg-regopenkeyexw",
+    "issuing-organization": "Microsoft",
+    "retrieved-utc": "2026-10-19T02:38:35.653272+00:00",
+    "bytes": 7498,
+    "sha256": "715f8a2fbf567f271136210b7429f0da415c204f8f64e419903ee0047a1b4979"
+  },
+  {
+    "file": "zwopenkey.md",
+    "source-url": "https://raw.githubusercontent.com/MicrosoftDocs/windows-driver-docs-ddi/staging/wdk-ddi-src/content/wdm/nf-wdm-zwopenkey.md",
+    "canonical-url": "https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/nf-wdm-zwopenkey",
+    "issuing-organization": "Microsoft",
+    "retrieved-utc": "2026-10-19T02:38:36.413189+00:00",
+    "bytes": 4008,
+    "sha256": "5c0fa0d20ac50781c6082d4f9dc34bbf7f599a8c861993617210c7f0824d86df"
+  }
+]

@@ -1,0 +1,17 @@
+{
+  "state": "finished",
+  "host": "macos",
+  "argv": [
+    "/opt/homebrew/opt/python@3.15/bin/python3.15",
+    "-B",
+    "/Users/int/Library/Caches/assist-process-emulation/native-registry-runtime-20261019/run-registry-proof-checks.py",
+    "/Users/int/Library/Caches/assist-process-emulation/native-registry-runtime-20261019/registry-source"
+  ],
+  "checked-envelope-files": 159,
+  "utc": "2026-10-19T03:13:42.663316+00:00",
+  "exit-code": 0,
+  "log": "registry-final-check-macos.log",
+  "bytes": 467,
+  "sha256": "7b9c87111a0ca1fe734b34a9457dad829056e52fd142f32fa43e6f8363b2358d",
+  "completed-utc": "2026-10-19T03:13:44.097572+00:00"
+}

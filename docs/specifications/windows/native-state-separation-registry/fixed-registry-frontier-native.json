@@ -1,0 +1,39 @@
+{
+  "utc": "2026-10-19T02:36:59.848373+00:00",
+  "source-before": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\capture-fixed-registry-frontier.py",
+    "bytes": 4185,
+    "sha256": "dd48e1b29ffa380c90419378a143edc7e7426f017e6628e6dcea16b14feec882"
+  },
+  "module-before": {
+    "path": "C:\\Windows\\System32\\ntdll.dll",
+    "bytes": 4609312,
+    "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+  },
+  "path": "\\Registry\\Machine\\System\\CurrentControlSet\\Control\\StateSeparation\\RedirectionMap\\Keys",
+  "scope": "Read-only fixed system registry key; no creation, modification, or policy changes.",
+  "desired-access": 131097,
+  "attributes": 64,
+  "observations": [
+    {
+      "sample": 0,
+      "nt-open-status": "C0000034",
+      "handle-nonzero": false
+    },
+    {
+      "sample": 1,
+      "nt-open-status": "C0000034",
+      "handle-nonzero": false
+    }
+  ],
+  "source-after": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\capture-fixed-registry-frontier.py",
+    "bytes": 4185,
+    "sha256": "dd48e1b29ffa380c90419378a143edc7e7426f017e6628e6dcea16b14feec882"
+  },
+  "module-after": {
+    "path": "C:\\Windows\\System32\\ntdll.dll",
+    "bytes": 4609312,
+    "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+  }
+}

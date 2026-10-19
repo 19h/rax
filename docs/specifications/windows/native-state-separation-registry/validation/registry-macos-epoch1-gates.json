@@ -1,0 +1,107 @@
+{
+  "state": "finished",
+  "source-epoch": 1,
+  "host": "macos",
+  "driver-pid": 70267,
+  "steps": [
+    {
+      "name": "full",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 412.11603379200096,
+      "log": "registry-macos-epoch1-full.log",
+      "bytes": 831895,
+      "sha256": "fbfd1ed1c8f44378435a74f0ec55c7028dfb3b7a0fc3b6187eabb56745c08bc9",
+      "results": [
+        "ok. 7976 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 409.14s"
+      ]
+    },
+    {
+      "name": "capi",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "-p",
+        "rax-capi",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 63.008799499992165,
+      "log": "registry-macos-epoch1-capi.log",
+      "bytes": 14308,
+      "sha256": "cd744f482845130eacbd52ef8e913f28d4dd571da5b3de5867bae60acabb8781",
+      "results": [
+        "ok. 183 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 13.71s",
+        "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    {
+      "name": "integration",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--test",
+        "user_windows",
+        "--test",
+        "user_windows_memory",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 61.45189924999431,
+      "log": "registry-macos-epoch1-integration.log",
+      "bytes": 36064,
+      "sha256": "d661069942d17d68f14a7b15ceabf7b99db79a40b3744d239ca6f097b5299b53",
+      "results": [
+        "ok. 544 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 57.65s",
+        "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    {
+      "name": "all-targets",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "check",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--all-targets"
+      ],
+      "exit-code": 0,
+      "seconds": 53.979871916002594,
+      "log": "registry-macos-epoch1-all-targets.log",
+      "bytes": 475,
+      "sha256": "a3f7dbb5845efcf07466aaa83e539347a39eaf0432a923351dc53b0a7193d03f",
+      "results": []
+    }
+  ],
+  "utc": "2026-10-19T02:54:28.809880+00:00",
+  "child-pid": 79947,
+  "current-step": "all-targets",
+  "last-exit-code": 0,
+  "exit-code": 0,
+  "completed-utc": "2026-10-19T02:55:22.786267+00:00"
+}

@@ -1,0 +1,139 @@
+{
+  "utc": "2026-10-19T02:42:40.241812+00:00",
+  "state": "finished",
+  "inputs-before": [
+    {
+      "path": "src/user/windows/registry.rs",
+      "sha256": "a18e6bcd9fce7b886110bffe3a6f348498d11b9a0cd30ed76af45825bcac9280"
+    },
+    {
+      "path": "src/user/windows/registry/tree.rs",
+      "sha256": "b4ece89dd343b828ede737fb8c89c5100139065dcfbd98f6d70055d2600a19b1"
+    },
+    {
+      "path": "src/user/windows/registry/installed.rs",
+      "sha256": "35ed7e9f8d4c20abffae64a5d7355ce19c85748e894bf168be5c5c4354bb7944"
+    },
+    {
+      "path": "src/user/windows/registry/installed/tree.rs",
+      "sha256": "0f68841bced49ab29706e6d16ccb4859523992594803505f0a2db967e680dc09"
+    },
+    {
+      "path": "src/user/windows/registry/installed_tests.rs",
+      "sha256": "a455daffcdc2a611871b4ddcd4266a6983a1c4ffbb118db35ca98e69588dc9e2"
+    },
+    {
+      "path": "src/user/windows/registry/redirection_tests.rs",
+      "sha256": "dbfb22448b2724ffe417f3a4d7a84ae9990b807a21e7bf4d94380f86a1bb7801"
+    },
+    {
+      "path": "src/user/windows/registry/installed/redirection_tests.rs",
+      "sha256": "19744d83a7de4f72c35686de80cddfb70ea0a52a90c2ec80fa9f3f43e5488830"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/registry_tests.rs",
+      "sha256": "9432cf2067955bdf79f8ca5a853370a8aa1cdf51690b704b60d64442f8219bd8"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/redirection_registry_tests.rs",
+      "sha256": "ad1fcb092e5ed2fec1a62deeeebec4500397f03542ae68c4130ec8c94d5fa536"
+    },
+    {
+      "path": "src/user/windows/native-runtime.md",
+      "sha256": "cc4facdf19c99d61d4e4b329a609508537169164f8f9fbd568786cef2e2e5342"
+    }
+  ],
+  "steps": [
+    {
+      "name": "new",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "redirection",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 81.62205595900014,
+      "log": "registry-macos-prototype-new.log",
+      "sha256": "e75ffb63c658167f583d5ec017f00fde1cc182a89999e0c5c81e022be3ab14a9",
+      "results": [
+        "ok. 6 passed; 0 failed; 0 ignored; 0 measured; 7972 filtered out; finished in 0.07s"
+      ]
+    },
+    {
+      "name": "existing-ifeo",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "ifeo",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 0.28018362500006333,
+      "log": "registry-macos-prototype-existing-ifeo.log",
+      "sha256": "5cbcd0efbe09036435d30cba5f53b3b4fbbca661dd38be2e24eb8d4a0fdeefdb",
+      "results": [
+        "ok. 7 passed; 0 failed; 0 ignored; 0 measured; 7971 filtered out; finished in 0.09s"
+      ]
+    }
+  ],
+  "child-pid": 68567,
+  "inputs-after": [
+    {
+      "path": "src/user/windows/registry.rs",
+      "sha256": "a18e6bcd9fce7b886110bffe3a6f348498d11b9a0cd30ed76af45825bcac9280"
+    },
+    {
+      "path": "src/user/windows/registry/tree.rs",
+      "sha256": "b4ece89dd343b828ede737fb8c89c5100139065dcfbd98f6d70055d2600a19b1"
+    },
+    {
+      "path": "src/user/windows/registry/installed.rs",
+      "sha256": "35ed7e9f8d4c20abffae64a5d7355ce19c85748e894bf168be5c5c4354bb7944"
+    },
+    {
+      "path": "src/user/windows/registry/installed/tree.rs",
+      "sha256": "0f68841bced49ab29706e6d16ccb4859523992594803505f0a2db967e680dc09"
+    },
+    {
+      "path": "src/user/windows/registry/installed_tests.rs",
+      "sha256": "a455daffcdc2a611871b4ddcd4266a6983a1c4ffbb118db35ca98e69588dc9e2"
+    },
+    {
+      "path": "src/user/windows/registry/redirection_tests.rs",
+      "sha256": "dbfb22448b2724ffe417f3a4d7a84ae9990b807a21e7bf4d94380f86a1bb7801"
+    },
+    {
+      "path": "src/user/windows/registry/installed/redirection_tests.rs",
+      "sha256": "19744d83a7de4f72c35686de80cddfb70ea0a52a90c2ec80fa9f3f43e5488830"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/registry_tests.rs",
+      "sha256": "9432cf2067955bdf79f8ca5a853370a8aa1cdf51690b704b60d64442f8219bd8"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/redirection_registry_tests.rs",
+      "sha256": "ad1fcb092e5ed2fec1a62deeeebec4500397f03542ae68c4130ec8c94d5fa536"
+    },
+    {
+      "path": "src/user/windows/native-runtime.md",
+      "sha256": "cc4facdf19c99d61d4e4b329a609508537169164f8f9fbd568786cef2e2e5342"
+    }
+  ],
+  "exit-code": 0,
+  "completed-utc": "2026-10-19T02:44:02.149697+00:00"
+}

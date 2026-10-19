@@ -1,0 +1,38 @@
+{
+  "state": "failed",
+  "utc": "2026-10-19T02:39:09.875562+00:00",
+  "steps": [],
+  "scope": "New native presence regression with product registry implementation unchanged from semaphore parent.",
+  "overrides": [
+    {
+      "path": "src/user/windows/registry/installed.rs",
+      "source": "installed.rs",
+      "bytes": 9144,
+      "sha256": "47d6113e71a9aedb30372084c73527782d9af6cdbde014100e51934de3cb8e80"
+    },
+    {
+      "path": "src/user/windows/registry/installed/redirection_tests.rs",
+      "source": "redirection_tests.rs",
+      "bytes": 1370,
+      "sha256": "020f18927a67f96fe9560e6484dd551a3e7c70c20b15d5f3b8fe453874b6d95a"
+    }
+  ],
+  "pid": 1760,
+  "argv": [
+    "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+    "test",
+    "--locked",
+    "--offline",
+    "--no-default-features",
+    "--lib",
+    "installed_redirection_keys_snapshot_matches_independent_native_presence_all_views",
+    "--",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "exit-code": 101,
+  "log-sha256": "617cc870a2167890e1f60ff710f392b5d5b6b261623361309c9c62c1b695fef3",
+  "results": [],
+  "error": "Traceback (most recent call last):\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-registry-native-baseline.py\", line 40, in <module>\n    assert code==101 and '0 passed; 1 failed;' in text,text[-3000:]\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: ERROR: IO failure on output stream: no space on device\nerror: could not compile `rax` (lib test)\n\nCaused by:\n  process didn't exit successfully: `C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\rustc.exe --crate-name rax --edition=2024 src\\lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --emit=dep-info,link -C embed-bitcode=no -C debuginfo=2 --allow=warnings --allow=clippy::all --test --check-cfg cfg(docsrs,test) --check-cfg \"cfg(feature, values(\\\"debug\\\", \\\"default\\\", \\\"hvf\\\", \\\"kvm\\\", \\\"kvm-bindings\\\", \\\"kvm-ioctls\\\", \\\"profiling\\\", \\\"smir-jit\\\", \\\"trace\\\", \\\"x86-suite\\\", \\\"x86_64-suite\\\"))\" -C metadata=a2ad77c6e855e753 -C extra-filename=-b799307a7949aa6b --out-dir C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\deps -L dependency=C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\deps --extern bincode=C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\deps\\libbincode-390b45752ed3b7fb.rlib --extern bitflags=C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\deps\\libbitflags-4bfec726c06abbe5.rlib --extern clap=C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\deps\\libclap-f0e88c73e6552646.rlib --extern ctrlc=C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\deps\\libctrlc-9ae478b51a86ee49.rlib --extern getrandom=C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\deps\\libgetrandom-1c1ca01b74677f78.rlib --extern goblin=C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\deps\\libgoblin-133d8ac4e0306d37.rlib --extern libc=C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\deps\\liblibc-ba25a10d36687d7b.rlib --extern linux_loader=C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\deps\\liblinux_loader-1f53705ba8944ec8.rlib --extern serde=C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\deps\\libserde-a92dcbe8c911ba9c.rlib --extern serde_json=C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\deps\\libserde_json-51133d8839e87d53.rlib --extern thiserror=C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\deps\\libthiserror-9201ab52612f2215.rlib --extern toml=C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\deps\\libtoml-19b3ca2cf28f3238.rlib --extern tracing=C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\deps\\libtracing-9b47460a04eb3bc6.rlib --extern tracing_subscriber=C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\deps\\libtracing_subscriber-685dc02915f27ac9.rlib --extern vm_memory=C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\deps\\libvm_memory-0d6137a334e2a735.rlib --extern zstd=C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\deps\\libzstd-8c9c7617241439e2.rlib -L native=C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\build\\zstd-sys-93af8f4d968366d3\\out` (exit code: 101)\n\n",
+  "completed-utc": "2026-10-19T02:41:15.939955+00:00"
+}

@@ -1,0 +1,7 @@
+{
+  "utc": "2026-10-19T02:45:09.025865+00:00",
+  "link": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/vendor/rax",
+  "before": "/Users/int/Library/Caches/assist-process-emulation/native-semaphore-20261019/semaphore-integrated-source",
+  "after": "/Users/int/Library/Caches/assist-process-emulation/native-registry-runtime-20261019/registry-source",
+  "scope": "Only the task-owned retained Assist consumer checkout symlink. Shared main worktree and its submodule unchanged."
+}

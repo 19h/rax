@@ -1,6 +1,6 @@
 //! Immutable, explicitly selected runtime registry metadata. Guest key handles
 //! reference these records; they never contain or forward a host HKEY.
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::io;
 use std::sync::Arc;
 
@@ -17,7 +17,9 @@ const MAX_TOTAL_BYTES: usize = 16 << 20;
 
 #[path = "registry/tree.rs"]
 mod tree;
-pub(crate) use tree::{IFEO_KEY, IfeoTree, Lookup};
+#[cfg(test)]
+pub(crate) use tree::KeyTree as IfeoTree;
+pub(crate) use tree::{IFEO_KEY, KeyTree, Lookup, REDIRECTION_KEYS_KEY, TreeRoot};
 #[path = "registry/fixed.rs"]
 mod fixed;
 pub(crate) use fixed::SEGMENT_HEAP_KEY;
@@ -63,7 +65,7 @@ impl Key {
 pub(crate) struct Registry {
     keys: BTreeMap<Vec<u16>, Arc<Key>>,
     upcase: Arc<[u16]>,
-    ifeo_selected: bool,
+    selected_trees: BTreeSet<TreeRoot>,
 }
 impl Registry {
     #[cfg(test)]
@@ -84,7 +86,7 @@ impl Registry {
         let mut result = Self {
             keys: BTreeMap::new(),
             upcase: upcase.into(),
-            ifeo_selected: false,
+            selected_trees: BTreeSet::new(),
         };
         let mut budget = ValueBudget::default();
         for selected in selected {
@@ -142,14 +144,14 @@ impl Registry {
         }
     }
     pub(crate) fn lookup(&self, name: &[u16]) -> Lookup {
-        if self.keys.is_empty() && !self.ifeo_selected {
+        if self.keys.is_empty() && self.selected_trees.is_empty() {
             return Lookup::Unselected;
         }
         let folded: Vec<_> = name.iter().map(|&u| self.upcase[usize::from(u)]).collect();
         if let Some(key) = self.keys.get(&folded) {
             return Lookup::Present(key.clone());
         }
-        match self.ifeo_lookup(&folded, name) {
+        match self.tree_lookup(&folded, name) {
             Lookup::Unselected => self.segment_heap_lookup(&folded, name),
             selected => selected,
         }

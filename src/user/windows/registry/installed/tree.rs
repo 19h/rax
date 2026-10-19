@@ -1,22 +1,32 @@
-//! Selection-only capture of the fixed, complete IFEO loader-policy subtree.
+//! Selection-only capture of explicitly fixed, complete runtime subtrees.
 //! Native parents close before descendant opens; guest names never reach here.
 use super::super::tree::{MAX_COMPONENT_UNITS, MAX_TREE_KEYS, TreeBudget, child_path};
 use super::super::{
-    IFEO_KEY, IfeoTree, MAX_TOTAL_BYTES, MAX_VALUES, Registry, Value, ValueBudget, invalid,
+    KeyTree, MAX_TOTAL_BYTES, MAX_VALUES, Registry, TreeRoot, Value, ValueBudget, invalid,
 };
 use super::{Hkey, Info, OwnedKey, RegEnumKeyExW, RegOpenKeyExW, info, null_mut, values};
 use std::io;
 
-pub(super) fn capture(registry: &Registry) -> io::Result<Option<IfeoTree>> {
-    capture_with(registry, open)
+pub(super) fn capture(registry: &Registry) -> io::Result<Option<KeyTree>> {
+    capture_root(registry, TreeRoot::Ifeo)
+}
+pub(super) fn capture_root(registry: &Registry, root: TreeRoot) -> io::Result<Option<KeyTree>> {
+    capture_root_with(registry, root, |path| open(root, path))
 }
 pub(super) fn capture_with(
     registry: &Registry,
+    opener: impl FnMut(&[u16]) -> io::Result<OwnedKey>,
+) -> io::Result<Option<KeyTree>> {
+    capture_root_with(registry, TreeRoot::Ifeo, opener)
+}
+pub(super) fn capture_root_with(
+    registry: &Registry,
+    root: TreeRoot,
     mut opener: impl FnMut(&[u16]) -> io::Result<OwnedKey>,
-) -> io::Result<Option<IfeoTree>> {
-    let path: Vec<_> = IFEO_KEY.encode_utf16().collect();
-    let root = match opener(&path) {
-        Ok(root) => root,
+) -> io::Result<Option<KeyTree>> {
+    let path: Vec<_> = root.path().encode_utf16().collect();
+    let key = match opener(&path) {
+        Ok(key) => key,
         Err(error) if error.raw_os_error() == Some(2) => return Ok(None),
         Err(error) => return Err(error),
     };
@@ -29,19 +39,28 @@ pub(super) fn capture_with(
         &mut value_budget,
         &mut metadata,
         &mut reserved,
-        Some(root),
+        Some(key),
         &mut opener,
     )
     .map(Some)
 }
-fn open(path: &[u16]) -> io::Result<OwnedKey> {
+fn open(root: TreeRoot, path: &[u16]) -> io::Result<OwnedKey> {
+    let fixed: Vec<_> = root.path().encode_utf16().collect();
+    if path != fixed && (!path.starts_with(&fixed) || path.get(fixed.len()) != Some(&92)) {
+        return Err(invalid(
+            "native registry subtree path outside fixed selection",
+        ));
+    }
+    if path.contains(&0) {
+        return Err(invalid("native registry subtree path contains NUL"));
+    }
     let prefix: Vec<_> = "\\Registry\\Machine\\".encode_utf16().collect();
     let suffix = path
         .strip_prefix(prefix.as_slice())
-        .ok_or_else(|| invalid("fixed IFEO path lacks native HKLM root"))?;
+        .ok_or_else(|| invalid("fixed runtime path lacks native HKLM root"))?;
     let name: Vec<_> = suffix.iter().copied().chain(Some(0)).collect();
     let mut handle = null_mut();
-    // SAFETY: only the fixed IFEO root and validated native-enumerated child
+    // SAFETY: only an enumerated fixed root and validated native-enumerated child
     // components form this terminated path; query/enumerate access only,
     // exclusive HKEY output and no retained pointers.
     let status = unsafe {
@@ -82,7 +101,7 @@ fn names(key: &OwnedKey, metadata: &Info) -> io::Result<Vec<Vec<u16>>> {
             return Err(io::Error::from_raw_os_error(status));
         }
         if length as usize >= scratch.len() {
-            return Err(invalid("IFEO child enumeration exceeded its buffer"));
+            return Err(invalid("runtime child enumeration exceeded its buffer"));
         }
         let name = scratch[..length as usize].to_vec();
         child_path(&[], &name)?;
@@ -107,7 +126,9 @@ fn stable(
             || before.max_child as usize > MAX_COMPONENT_UNITS
             || before.values as usize > MAX_VALUES - budget.count
         {
-            return Err(invalid("installed IFEO metadata exceeds aggregate bounds"));
+            return Err(invalid(
+                "installed subtree metadata exceeds aggregate bounds",
+            ));
         }
         let sample = || -> io::Result<_> {
             Ok((
@@ -130,7 +151,7 @@ fn stable(
         }
     }
     Err(invalid(
-        "installed IFEO key changed during bounded snapshot",
+        "installed runtime key changed during bounded snapshot",
     ))
 }
 fn node(
@@ -141,7 +162,7 @@ fn node(
     reserved: &mut usize,
     root: Option<OwnedKey>,
     opener: &mut impl FnMut(&[u16]) -> io::Result<OwnedKey>,
-) -> io::Result<IfeoTree> {
+) -> io::Result<KeyTree> {
     metadata.charge(&path, depth)?;
     let (values, names) = {
         let key = match root {
@@ -162,5 +183,5 @@ fn node(
             node(next, depth + 1, budget, metadata, reserved, None, opener)?,
         ));
     }
-    Ok(IfeoTree { values, children })
+    Ok(KeyTree { values, children })
 }

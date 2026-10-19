@@ -1,0 +1,25 @@
+from pathlib import Path
+import shutil
+Q=Path(__file__).parent;O=Q.parent/'native-semaphore-20261019'
+s=(O/'run-semaphore-unix-epoch1.py').read_text().replace("R = O / 'semaphore-source'", "R = O / 'registry-source'").replace('semaphore-source-epoch1','registry-source-epoch1').replace('semaphore-', 'registry-').replace('native_semaphore','redirection')
+s=s.replace("'9 passed; 0 failed;'", "'6 passed; 0 failed;'")
+(Q/'run-registry-unix-epoch1.py').write_text(s)
+p=(O/'prepare-semaphore-native-epoch2.py').read_text()
+p=p.replace("OLD = B / 'src-semaphore-epoch1'", "OLD = B / 'src-semaphore-epoch2'").replace("R = B / 'src-semaphore-epoch2'", "R = B / 'src-registry-epoch1'")
+p=p.replace("manifest = json.loads((S / 'semaphore-source-epoch2.json').read_text())", "manifest = json.loads((S / 'registry-source-epoch1.json').read_text())")
+p=p.replace("meta = json.loads((S / 'semaphore-source-epoch2-archive.json').read_text())", "meta = json.loads((S / 'registry-source-epoch1-archive.json').read_text())")
+p=p.replace("parent_raw = (S / 'semaphore-source-epoch1.json').read_bytes()", "parent_raw = (S / 'semaphore-source-epoch2.json').read_bytes()")
+p=p.replace("(S / 'semaphore-native-epoch1-gates.json')", "(S / 'semaphore-native-epoch2-gates.json')")
+p=p.replace("'source-epoch': 2", "'source-epoch': 1").replace('semaphore-native-epoch2-preparation','registry-native-epoch1-preparation')
+(Q/'prepare-registry-native-epoch1.py').write_text(p)
+s=(O/'run-semaphore-native-epoch2.py').read_text()
+s=s.replace("R = B / 'src-semaphore-epoch2'", "R = B / 'src-registry-epoch1'").replace('semaphore-native-epoch2','registry-native-epoch1').replace('semaphore-source-epoch2','registry-source-epoch1')
+s=s.replace('prepare-semaphore-native-epoch2.py','prepare-registry-native-epoch1.py').replace("'source-epoch': 2", "'source-epoch': 1")
+s=s.replace("gates = [('capi', ['test', '-p', 'rax-capi']), ('all-targets', ['check', '-p', 'rax-capi', '--all-targets'])]", "gates = [('focus', ['test', '--lib', 'redirection']), ('full', ['test', '--lib']), ('capi', ['test', '-p', 'rax-capi']), ('integration', ['test', '--test', 'user_windows', '--test', 'user_windows_memory']), ('all-targets', ['check', '--all-targets'])]")
+s=s.replace('7410 passed; 5 failed;', '7419 passed; 5 failed;')
+s=s.replace("'qualification': 'Parent gates completed; complete immutable source snapshot with separate current-mtime overrides, exact9 new tests and preserved native ordinals.'", "'qualification': 'Fixed StateSeparation subtree capture; six shared and three native adapter regressions; complete immutable inputs.'")
+s=s.replace("manifest = json.loads((S / 'registry-source-epoch1.json').read_text())", "manifest = json.loads((S / 'registry-source-epoch1.json').read_text())\n    regression = json.loads((S / 'registry-native-baseline-b.json').read_text())\n    assert regression['state'] == 'expected-regression-failed'")
+(Q/'run-registry-native-epoch1.py').write_text(s)
+for n in ['run-registry-native-epoch1.py','prepare-registry-native-epoch1.py']:
+ shutil.copy2(Q/n,Path('/Users/int/Downloads/assist-native-allocate-ex-transfer-20261010-2154')/n)
+print('portable and native gate drivers prepared; inspect before launch')

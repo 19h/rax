@@ -1,0 +1,2047 @@
+{
+  "utc": "2026-10-19T02:42:06.018366+00:00",
+  "before": [
+    410668478464,
+    410659188736,
+    9289728
+  ],
+  "scope": "Only inventoried disposable PDB debug symbols in this goal task-owned obsolete build targets; current target-wait-owned is excluded. No executable, archive, source, capture, runtime library, or policy mutation.",
+  "removed": [
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target\\debug\\build\\rax-capi-5e251e99edf260a8\\build_script_build-5e251e99edf260a8.pdb",
+      "bytes": 1355776,
+      "sha256": "d4e713857ef43fbfc2510c39969463ee0c3391c69ae3d4601f8c9fb2b10390ab"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target\\debug\\build\\rax-capi-5e251e99edf260a8\\build_script_build.pdb",
+      "bytes": 1355776,
+      "sha256": "d4e713857ef43fbfc2510c39969463ee0c3391c69ae3d4601f8c9fb2b10390ab"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-bno-isolation-prototype\\debug\\rax.pdb",
+      "bytes": 140595200,
+      "sha256": "acbe695c6bb00335e9812819d7ea3b618e74b2f59ece0b0ebf876cdb19a1e222"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-bno-isolation-prototype\\debug\\rax_isa_oracle.pdb",
+      "bytes": 100446208,
+      "sha256": "4110102c0bb8b37be2a509ba7603a4b609d377ad4680b1b274f56048bf5d5f9e"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-bno-isolation-prototype\\debug\\rax_user.pdb",
+      "bytes": 1363968,
+      "sha256": "5932d05acc2626ff9e7898de740928a87b903fef2a6d530206eae9a369e0dcdd"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-bno-isolation-prototype\\debug\\deps\\clap_derive-f7c422b4deb7c571.pdb",
+      "bytes": 2904064,
+      "sha256": "33559a99aa95bfd1d0493a430b01685bec1a8b3f378dfb635be5cb094bbb37b3"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-bno-isolation-prototype\\debug\\deps\\rax-24d49cb87dffa633.pdb",
+      "bytes": 191565824,
+      "sha256": "a812edb57ebc019ff05a17d10b37cea43c2f51622c814c3e591736b51d6333b8"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-bno-isolation-prototype\\debug\\deps\\rax-b799307a7949aa6b.pdb",
+      "bytes": 344879104,
+      "sha256": "b9fc4e915b3d28824e808f283fbde2236327db24b56a3340c244b06342103f86"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-bno-isolation-prototype\\debug\\deps\\rax-d14b0f3429d3d485.pdb",
+      "bytes": 172904448,
+      "sha256": "50d2f6665212b93605cdb2468a657ffa4cf7c38e2940a655cefb721422e1982e"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-bno-isolation-prototype\\debug\\deps\\rax-d861ee8f992d7cb6.pdb",
+      "bytes": 349999104,
+      "sha256": "d63a7bbd6f057e61013c967b0075829a7272b3b24eb87d946c9f18a6de1061b3"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-bno-isolation-prototype\\debug\\deps\\rax.pdb",
+      "bytes": 140595200,
+      "sha256": "acbe695c6bb00335e9812819d7ea3b618e74b2f59ece0b0ebf876cdb19a1e222"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-bno-isolation-prototype\\debug\\deps\\rax_isa_oracle.pdb",
+      "bytes": 100446208,
+      "sha256": "4110102c0bb8b37be2a509ba7603a4b609d377ad4680b1b274f56048bf5d5f9e"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-bno-isolation-prototype\\debug\\deps\\rax_user.pdb",
+      "bytes": 1363968,
+      "sha256": "5932d05acc2626ff9e7898de740928a87b903fef2a6d530206eae9a369e0dcdd"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-bno-isolation-prototype\\debug\\deps\\scroll_derive-1612bc43fc260760.pdb",
+      "bytes": 2527232,
+      "sha256": "6dfc9c9c719ccfc84732d5780042e7b9df8c0f3e630eb478d0ea76d472059ceb"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-bno-isolation-prototype\\debug\\deps\\serde_derive-99b58877542aef55.pdb",
+      "bytes": 3092480,
+      "sha256": "a54034e375633dfe80c96bf342e00162b932aa6b056f06cff2996ce436f8ee22"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-bno-isolation-prototype\\debug\\deps\\thiserror_impl-ee3ee93f5fe510ab.pdb",
+      "bytes": 2854912,
+      "sha256": "a27918ea7b90e7e88ee98a110409988f8401bb1bfccf4cba7ce0e7b1afabb1f0"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-bno-isolation-prototype\\debug\\deps\\tracing_attributes-5ab72022508808ba.pdb",
+      "bytes": 3059712,
+      "sha256": "0717e43a631b3f69b0f47e8d751994046e857fc60ae3cfe7defe888f0fd71536"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-bno-isolation-prototype\\debug\\deps\\user_windows-e7d78e1ede169446.pdb",
+      "bytes": 3117056,
+      "sha256": "107b9abe58899d2f254cca55c5ddb81c8cff6a871250fc90e6967ba9edb3414f"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-bno-isolation-prototype\\debug\\deps\\user_windows-feeced1d96826915.pdb",
+      "bytes": 3043328,
+      "sha256": "80ad70bf8376bb4346f5d419c0e29224fa713282f2abf3be408aa37150c3b002"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-bno-isolation-prototype\\debug\\deps\\user_windows_memory-184b1c8bfebf3d24.pdb",
+      "bytes": 4345856,
+      "sha256": "8b968cb7551d0dd013fac5046e1f90c96b0cfdd2f162aa8fd557dce17678ddcf"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-bno-isolation-prototype\\debug\\deps\\user_windows_memory-e106de1a46d1b2ff.pdb",
+      "bytes": 4550656,
+      "sha256": "1d083bbdd3620ee206cde91a441d15c77faa7e48f35e31144916a21b84d035e9"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-bno-isolation-prototype\\debug\\build\\getrandom-3e8a70be616e6bf6\\build_script_build-3e8a70be616e6bf6.pdb",
+      "bytes": 1355776,
+      "sha256": "6d3d0f280298b236ed0c137ef0e414659df2ba5f9d2d47cd3a5eb376c2585115"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-bno-isolation-prototype\\debug\\build\\getrandom-3e8a70be616e6bf6\\build_script_build.pdb",
+      "bytes": 1355776,
+      "sha256": "6d3d0f280298b236ed0c137ef0e414659df2ba5f9d2d47cd3a5eb376c2585115"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-bno-isolation-prototype\\debug\\build\\getrandom-c0d8fffd88125a7a\\build_script_build-c0d8fffd88125a7a.pdb",
+      "bytes": 1355776,
+      "sha256": "67c525133dfcb7bcb473bd88a121184875cbad550539b3791e1ed9190ce3f13f"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-bno-isolation-prototype\\debug\\build\\getrandom-c0d8fffd88125a7a\\build_script_build.pdb",
+      "bytes": 1355776,
+      "sha256": "67c525133dfcb7bcb473bd88a121184875cbad550539b3791e1ed9190ce3f13f"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-bno-isolation-prototype\\debug\\build\\libc-715e13bc90434038\\build_script_build-715e13bc90434038.pdb",
+      "bytes": 1699840,
+      "sha256": "7c3059b458ad15906d667575c85f4eac6522e7bdc85741cd3142f5b97d805250"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-bno-isolation-prototype\\debug\\build\\libc-715e13bc90434038\\build_script_build.pdb",
+      "bytes": 1699840,
+      "sha256": "7c3059b458ad15906d667575c85f4eac6522e7bdc85741cd3142f5b97d805250"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-bno-isolation-prototype\\debug\\build\\proc-macro2-b3c67b531f10d71b\\build_script_build-b3c67b531f10d71b.pdb",
+      "bytes": 1732608,
+      "sha256": "33fa7c8295deafca98ed3edc46fe489291eb9bb3521ba4bfc28f0050eac00e8e"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-bno-isolation-prototype\\debug\\build\\proc-macro2-b3c67b531f10d71b\\build_script_build.pdb",
+      "bytes": 1732608,
+      "sha256": "33fa7c8295deafca98ed3edc46fe489291eb9bb3521ba4bfc28f0050eac00e8e"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-bno-isolation-prototype\\debug\\build\\quote-393984b48f18ac92\\build_script_build-393984b48f18ac92.pdb",
+      "bytes": 1650688,
+      "sha256": "617fee96081750fcd1fcaf299ef783e9b24bff5af4a54d46c53e7a2357f095fa"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-bno-isolation-prototype\\debug\\build\\quote-393984b48f18ac92\\build_script_build.pdb",
+      "bytes": 1650688,
+      "sha256": "617fee96081750fcd1fcaf299ef783e9b24bff5af4a54d46c53e7a2357f095fa"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-bno-isolation-prototype\\debug\\build\\rax-capi-5e251e99edf260a8\\build_script_build-5e251e99edf260a8.pdb",
+      "bytes": 1355776,
+      "sha256": "6f2d1cffc3fae6e5c96a2442b73e2dc44b8c065a902226a5aa321dc6eb40f5d1"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-bno-isolation-prototype\\debug\\build\\rax-capi-5e251e99edf260a8\\build_script_build.pdb",
+      "bytes": 1355776,
+      "sha256": "6f2d1cffc3fae6e5c96a2442b73e2dc44b8c065a902226a5aa321dc6eb40f5d1"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-bno-isolation-prototype\\debug\\build\\rax-capi-cab0129d60286c1d\\build_script_build-cab0129d60286c1d.pdb",
+      "bytes": 1355776,
+      "sha256": "14e2c0cdbb720ecacdd1dc4301093c2169d401e086dd09775a77fcc27bf01fae"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-bno-isolation-prototype\\debug\\build\\rax-capi-cab0129d60286c1d\\build_script_build.pdb",
+      "bytes": 1355776,
+      "sha256": "14e2c0cdbb720ecacdd1dc4301093c2169d401e086dd09775a77fcc27bf01fae"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-bno-isolation-prototype\\debug\\build\\serde-17e6b8bb88b7f4fc\\build_script_build-17e6b8bb88b7f4fc.pdb",
+      "bytes": 1667072,
+      "sha256": "e1b882ba09057f65711b31e994a4590d071046b19f8249cdca9d65e1ae4f2de2"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-bno-isolation-prototype\\debug\\build\\serde-17e6b8bb88b7f4fc\\build_script_build.pdb",
+      "bytes": 1667072,
+      "sha256": "e1b882ba09057f65711b31e994a4590d071046b19f8249cdca9d65e1ae4f2de2"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-bno-isolation-prototype\\debug\\build\\serde_core-88e5d38ed408f617\\build_script_build-88e5d38ed408f617.pdb",
+      "bytes": 1667072,
+      "sha256": "2bdc77334cf331a26231c992ef638f08da47cc1836ca7c15fea74c3fffee729f"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-bno-isolation-prototype\\debug\\build\\serde_core-88e5d38ed408f617\\build_script_build.pdb",
+      "bytes": 1667072,
+      "sha256": "2bdc77334cf331a26231c992ef638f08da47cc1836ca7c15fea74c3fffee729f"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-bno-isolation-prototype\\debug\\build\\serde_json-96cb1b397eadc502\\build_script_build-96cb1b397eadc502.pdb",
+      "bytes": 1355776,
+      "sha256": "91db1e48697ba165238d59eb7028c4aa56106c033146b8b1f454832fc30542f2"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-bno-isolation-prototype\\debug\\build\\serde_json-96cb1b397eadc502\\build_script_build.pdb",
+      "bytes": 1355776,
+      "sha256": "91db1e48697ba165238d59eb7028c4aa56106c033146b8b1f454832fc30542f2"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-bno-isolation-prototype\\debug\\build\\thiserror-2900ecdfabac3c4d\\build_script_build-2900ecdfabac3c4d.pdb",
+      "bytes": 1748992,
+      "sha256": "7422a7fd468cb777e085ab4005502e83bdfcdd6f4a1f98de3c4985f69d6eeacf"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-bno-isolation-prototype\\debug\\build\\thiserror-2900ecdfabac3c4d\\build_script_build.pdb",
+      "bytes": 1748992,
+      "sha256": "7422a7fd468cb777e085ab4005502e83bdfcdd6f4a1f98de3c4985f69d6eeacf"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-bno-isolation-prototype\\debug\\build\\winapi-c4dbd173f7adaa07\\build_script_build-c4dbd173f7adaa07.pdb",
+      "bytes": 1454080,
+      "sha256": "ba1f5268e4dcd423f0a3587f8b43b59aa57392fd5f5d8b36b6c88f9c16d100ab"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-bno-isolation-prototype\\debug\\build\\winapi-c4dbd173f7adaa07\\build_script_build.pdb",
+      "bytes": 1454080,
+      "sha256": "ba1f5268e4dcd423f0a3587f8b43b59aa57392fd5f5d8b36b6c88f9c16d100ab"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-bno-isolation-prototype\\debug\\build\\zmij-f3b7cec877cd4f5c\\build_script_build-f3b7cec877cd4f5c.pdb",
+      "bytes": 1658880,
+      "sha256": "4eaae114b64c3952518cd54b0ff59b802fa0fc20154ee91e7d08c85784a695d4"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-bno-isolation-prototype\\debug\\build\\zmij-f3b7cec877cd4f5c\\build_script_build.pdb",
+      "bytes": 1658880,
+      "sha256": "4eaae114b64c3952518cd54b0ff59b802fa0fc20154ee91e7d08c85784a695d4"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-bno-isolation-prototype\\debug\\build\\zstd-safe-8cecbdd9318480cd\\build_script_build-8cecbdd9318480cd.pdb",
+      "bytes": 1355776,
+      "sha256": "72c87fdb02eb87bcc4b82ef60a24a8cce18a8489c16ffebf376e6ea874c2e841"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-bno-isolation-prototype\\debug\\build\\zstd-safe-8cecbdd9318480cd\\build_script_build.pdb",
+      "bytes": 1355776,
+      "sha256": "72c87fdb02eb87bcc4b82ef60a24a8cce18a8489c16ffebf376e6ea874c2e841"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-bno-isolation-prototype\\debug\\build\\zstd-sys-70e3cee10f865bf6\\build_script_build-70e3cee10f865bf6.pdb",
+      "bytes": 2838528,
+      "sha256": "c9fb86e1d390fbb0b8d8b5077be11d56426fbaaf7741f33d6b9e9c783f288ace"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-bno-isolation-prototype\\debug\\build\\zstd-sys-70e3cee10f865bf6\\build_script_build.pdb",
+      "bytes": 2838528,
+      "sha256": "c9fb86e1d390fbb0b8d8b5077be11d56426fbaaf7741f33d6b9e9c783f288ace"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-bno-isolation-prototype\\debug\\build\\zstd-sys-7f0f5a081e2ca035\\build_script_build-7f0f5a081e2ca035.pdb",
+      "bytes": 2838528,
+      "sha256": "2fa9afd985a51fd08e8c1ef49533cf9ca76a0cd368c08303b19b44955869a930"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-bno-isolation-prototype\\debug\\build\\zstd-sys-7f0f5a081e2ca035\\build_script_build.pdb",
+      "bytes": 2838528,
+      "sha256": "2fa9afd985a51fd08e8c1ef49533cf9ca76a0cd368c08303b19b44955869a930"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-image-extension-final\\debug\\rax.pdb",
+      "bytes": 195874816,
+      "sha256": "d8b34ca9097af9f8b297d66f6c4306661ad8752f2bdf7c20efb50cb1ae06a712"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-image-extension-final\\debug\\rax_isa_oracle.pdb",
+      "bytes": 101617664,
+      "sha256": "8584f7faf61165a3d31a3a32826fc10bd198114edd0fe688210693df52bc1e72"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-image-extension-final\\debug\\rax_user.pdb",
+      "bytes": 1388544,
+      "sha256": "24c2af88b55ae5676ca7ffb3b0b1aa7e0f75b84ad689d7fe5c4c9541380dde3c"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-image-extension-final\\debug\\deps\\clap_derive-f7c422b4deb7c571.pdb",
+      "bytes": 2904064,
+      "sha256": "6e3142e230d1c19c1b2969835ec031f9f46a6522ed225bc06c578665cbcbef20"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-image-extension-final\\debug\\deps\\rax-d14b0f3429d3d485.pdb",
+      "bytes": 170545152,
+      "sha256": "424488b3563b1de3e7547fb626821587094458d7cc4a4e44bbd4b254c3b77990"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-image-extension-final\\debug\\deps\\rax-d861ee8f992d7cb6.pdb",
+      "bytes": 344395776,
+      "sha256": "9e98101eddaf84f0a0def7ed5f8619d37c49c8a61e1b4e60ca204435420a0f10"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-image-extension-final\\debug\\deps\\rax.pdb",
+      "bytes": 195874816,
+      "sha256": "d8b34ca9097af9f8b297d66f6c4306661ad8752f2bdf7c20efb50cb1ae06a712"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-image-extension-final\\debug\\deps\\rax_isa_oracle.pdb",
+      "bytes": 101617664,
+      "sha256": "8584f7faf61165a3d31a3a32826fc10bd198114edd0fe688210693df52bc1e72"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-image-extension-final\\debug\\deps\\rax_user.pdb",
+      "bytes": 1388544,
+      "sha256": "24c2af88b55ae5676ca7ffb3b0b1aa7e0f75b84ad689d7fe5c4c9541380dde3c"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-image-extension-final\\debug\\deps\\scroll_derive-1612bc43fc260760.pdb",
+      "bytes": 2527232,
+      "sha256": "7dbf4cb44d6b571bce85befab1ef68f5050156585dac59db631ecd3b3541f76a"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-image-extension-final\\debug\\deps\\serde_derive-99b58877542aef55.pdb",
+      "bytes": 3092480,
+      "sha256": "fb3ec4f531f9c4340bd5b4cccb17507d58472a5e716d25b0107a0d5e4b1281d5"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-image-extension-final\\debug\\deps\\thiserror_impl-ee3ee93f5fe510ab.pdb",
+      "bytes": 2854912,
+      "sha256": "1a1e5f697836c25844add0e83f2c5a692fd96664f6dc4b014af1a523c34c128b"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-image-extension-final\\debug\\deps\\tracing_attributes-5ab72022508808ba.pdb",
+      "bytes": 3059712,
+      "sha256": "0be3c651def02c1c3d9f7e07606cd1f962424b4ead4e2a1ec606d02e6a924ece"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-image-extension-final\\debug\\deps\\user_windows-feeced1d96826915.pdb",
+      "bytes": 3043328,
+      "sha256": "07a24d5099a3c3263950f214028f5db63e0679d3fcd149577cee3fae6efbf507"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-image-extension-final\\debug\\deps\\user_windows_memory-e106de1a46d1b2ff.pdb",
+      "bytes": 4550656,
+      "sha256": "b47f7b7fce80836f43b6f4ef860a60b4b44460db0aba4b5835ccff257d22c164"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-image-extension-final\\debug\\build\\getrandom-3e8a70be616e6bf6\\build_script_build-3e8a70be616e6bf6.pdb",
+      "bytes": 1355776,
+      "sha256": "c651418914571533541771ce797f9a6bb0a05090ea16e3f3aadaf699cd5faf0c"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-image-extension-final\\debug\\build\\getrandom-3e8a70be616e6bf6\\build_script_build.pdb",
+      "bytes": 1355776,
+      "sha256": "c651418914571533541771ce797f9a6bb0a05090ea16e3f3aadaf699cd5faf0c"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-image-extension-final\\debug\\build\\getrandom-c0d8fffd88125a7a\\build_script_build-c0d8fffd88125a7a.pdb",
+      "bytes": 1355776,
+      "sha256": "3f15c9e23ce3cb4d83208beb1cdf41d8f67ac697ef42310aae4b312d46eb9559"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-image-extension-final\\debug\\build\\getrandom-c0d8fffd88125a7a\\build_script_build.pdb",
+      "bytes": 1355776,
+      "sha256": "3f15c9e23ce3cb4d83208beb1cdf41d8f67ac697ef42310aae4b312d46eb9559"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-image-extension-final\\debug\\build\\libc-715e13bc90434038\\build_script_build-715e13bc90434038.pdb",
+      "bytes": 1699840,
+      "sha256": "7da2e404b657858e1c227dfdc8e00a0ed9d1e4fedae0805b7c2629a6b567af98"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-image-extension-final\\debug\\build\\libc-715e13bc90434038\\build_script_build.pdb",
+      "bytes": 1699840,
+      "sha256": "7da2e404b657858e1c227dfdc8e00a0ed9d1e4fedae0805b7c2629a6b567af98"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-image-extension-final\\debug\\build\\proc-macro2-b3c67b531f10d71b\\build_script_build-b3c67b531f10d71b.pdb",
+      "bytes": 1732608,
+      "sha256": "a4557086f2be30bf51d4f623ff415de7376921728d8efff30ba0a77a6f673780"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-image-extension-final\\debug\\build\\proc-macro2-b3c67b531f10d71b\\build_script_build.pdb",
+      "bytes": 1732608,
+      "sha256": "a4557086f2be30bf51d4f623ff415de7376921728d8efff30ba0a77a6f673780"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-image-extension-final\\debug\\build\\quote-393984b48f18ac92\\build_script_build-393984b48f18ac92.pdb",
+      "bytes": 1650688,
+      "sha256": "c224783fab85d698fa5b533b026a546415783d6714907556983de9ae17ed15ce"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-image-extension-final\\debug\\build\\quote-393984b48f18ac92\\build_script_build.pdb",
+      "bytes": 1650688,
+      "sha256": "c224783fab85d698fa5b533b026a546415783d6714907556983de9ae17ed15ce"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-image-extension-final\\debug\\build\\rax-capi-5e251e99edf260a8\\build_script_build-5e251e99edf260a8.pdb",
+      "bytes": 1355776,
+      "sha256": "c97feae550fb3433c71fbd620c5d57f00ddb7d0dad7112be0bba02cf0843f94a"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-image-extension-final\\debug\\build\\rax-capi-5e251e99edf260a8\\build_script_build.pdb",
+      "bytes": 1355776,
+      "sha256": "c97feae550fb3433c71fbd620c5d57f00ddb7d0dad7112be0bba02cf0843f94a"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-image-extension-final\\debug\\build\\serde-17e6b8bb88b7f4fc\\build_script_build-17e6b8bb88b7f4fc.pdb",
+      "bytes": 1667072,
+      "sha256": "955e512fdfb0b2a1f98296f1300698f15cf0900e320ed7df43628a0d55d6d2e8"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-image-extension-final\\debug\\build\\serde-17e6b8bb88b7f4fc\\build_script_build.pdb",
+      "bytes": 1667072,
+      "sha256": "955e512fdfb0b2a1f98296f1300698f15cf0900e320ed7df43628a0d55d6d2e8"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-image-extension-final\\debug\\build\\serde_core-88e5d38ed408f617\\build_script_build-88e5d38ed408f617.pdb",
+      "bytes": 1667072,
+      "sha256": "be8c2b25052ddec3322c07f2aaf33800f81184d59ea18f55aa083d29ba8c7bd1"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-image-extension-final\\debug\\build\\serde_core-88e5d38ed408f617\\build_script_build.pdb",
+      "bytes": 1667072,
+      "sha256": "be8c2b25052ddec3322c07f2aaf33800f81184d59ea18f55aa083d29ba8c7bd1"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-image-extension-final\\debug\\build\\serde_json-96cb1b397eadc502\\build_script_build-96cb1b397eadc502.pdb",
+      "bytes": 1355776,
+      "sha256": "770246cc59b4267f0ca710ed3acb51addba7719064873b7edd61981b4333f083"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-image-extension-final\\debug\\build\\serde_json-96cb1b397eadc502\\build_script_build.pdb",
+      "bytes": 1355776,
+      "sha256": "770246cc59b4267f0ca710ed3acb51addba7719064873b7edd61981b4333f083"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-image-extension-final\\debug\\build\\thiserror-2900ecdfabac3c4d\\build_script_build-2900ecdfabac3c4d.pdb",
+      "bytes": 1748992,
+      "sha256": "2b16559d7f816ea45439e2f8de44adf1c1ac3e16236e81db0fdc63dfd4115224"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-image-extension-final\\debug\\build\\thiserror-2900ecdfabac3c4d\\build_script_build.pdb",
+      "bytes": 1748992,
+      "sha256": "2b16559d7f816ea45439e2f8de44adf1c1ac3e16236e81db0fdc63dfd4115224"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-image-extension-final\\debug\\build\\winapi-c4dbd173f7adaa07\\build_script_build-c4dbd173f7adaa07.pdb",
+      "bytes": 1454080,
+      "sha256": "8e093730ec50c7984f35f3e46eb850ce4f9529fdcec089a200a5bf8e43cf7967"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-image-extension-final\\debug\\build\\winapi-c4dbd173f7adaa07\\build_script_build.pdb",
+      "bytes": 1454080,
+      "sha256": "8e093730ec50c7984f35f3e46eb850ce4f9529fdcec089a200a5bf8e43cf7967"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-image-extension-final\\debug\\build\\zmij-f3b7cec877cd4f5c\\build_script_build-f3b7cec877cd4f5c.pdb",
+      "bytes": 1658880,
+      "sha256": "ecb4eb4c756965e46245d874640c3b0cb38cb03b863a028cdf7584aebda9d412"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-image-extension-final\\debug\\build\\zmij-f3b7cec877cd4f5c\\build_script_build.pdb",
+      "bytes": 1658880,
+      "sha256": "ecb4eb4c756965e46245d874640c3b0cb38cb03b863a028cdf7584aebda9d412"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-image-extension-final\\debug\\build\\zstd-safe-8cecbdd9318480cd\\build_script_build-8cecbdd9318480cd.pdb",
+      "bytes": 1355776,
+      "sha256": "b4c094d9dff6341fdb977a149131e7aa6f96b844096d9feba56499ac73f48646"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-image-extension-final\\debug\\build\\zstd-safe-8cecbdd9318480cd\\build_script_build.pdb",
+      "bytes": 1355776,
+      "sha256": "b4c094d9dff6341fdb977a149131e7aa6f96b844096d9feba56499ac73f48646"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-image-extension-final\\debug\\build\\zstd-sys-70e3cee10f865bf6\\build_script_build-70e3cee10f865bf6.pdb",
+      "bytes": 2838528,
+      "sha256": "bfcf3dcedb5196c13021e539f043e647281add3d11638f9788db2e3429ff3bd6"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-image-extension-final\\debug\\build\\zstd-sys-70e3cee10f865bf6\\build_script_build.pdb",
+      "bytes": 2838528,
+      "sha256": "bfcf3dcedb5196c13021e539f043e647281add3d11638f9788db2e3429ff3bd6"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-image-extension-final\\debug\\build\\zstd-sys-7f0f5a081e2ca035\\build_script_build-7f0f5a081e2ca035.pdb",
+      "bytes": 2838528,
+      "sha256": "02e8ce4e7a7f5bf4064887dfaf5ed7e2fa66d23b6b19bbba6fa7244ffb3bf6f6"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-image-extension-final\\debug\\build\\zstd-sys-7f0f5a081e2ca035\\build_script_build.pdb",
+      "bytes": 2838528,
+      "sha256": "02e8ce4e7a7f5bf4064887dfaf5ed7e2fa66d23b6b19bbba6fa7244ffb3bf6f6"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\deps\\clap_derive-c8932dfaa5a360af.pdb",
+      "bytes": 5877760,
+      "sha256": "5e01e1bd2b982f3e5452abd680d2d4b03d97fd889a31e2a44e1f4ee5cb0f8841"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\deps\\rax.pdb",
+      "bytes": 238563328,
+      "sha256": "3704c0d39e75a82643ca42b938e216aadd95f5e1320b4882e5054424a45d678e"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\deps\\scroll_derive-d47eef83832d0a19.pdb",
+      "bytes": 5500928,
+      "sha256": "fac16640fc0e1608334e0cc1719c526fef1d98dc13da00728af670d64e9e1873"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\deps\\serde_derive-699af79b0e0ce593.pdb",
+      "bytes": 6066176,
+      "sha256": "2d682ad44cd45cecc2c0d8dc2c9c169de0783ef19b3b7dc4cdfcbb7a8add7b61"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\deps\\thiserror_impl-399fee6ced00cc89.pdb",
+      "bytes": 5828608,
+      "sha256": "a1a6888e289854a337f50be6173cf3c0474881598121dd93a43944e9ef9e6d52"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\deps\\tracing_attributes-6bc05492947a4ff8.pdb",
+      "bytes": 6033408,
+      "sha256": "cc32f8b7e6a59788fdb14614e02634c2f5eb800009ced9274d2c841a8c2a5d74"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\build\\assist-rs-00ed9ec6f2fcfe6e\\build_script_build-00ed9ec6f2fcfe6e.pdb",
+      "bytes": 4665344,
+      "sha256": "2131d7edb62a89ef9f896bfe4a0b95a432ab350a3f0362896a4095c2258ca3ce"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\build\\assist-rs-00ed9ec6f2fcfe6e\\build_script_build.pdb",
+      "bytes": 4665344,
+      "sha256": "2131d7edb62a89ef9f896bfe4a0b95a432ab350a3f0362896a4095c2258ca3ce"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\build\\assist-rs-92875a6e711cc8f2\\build_script_build-92875a6e711cc8f2.pdb",
+      "bytes": 4689920,
+      "sha256": "5de9ca3be19eb3ed63b707ee0115f57279f2ac2ee12e3cd65e108a77b924e67e"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\build\\assist-rs-92875a6e711cc8f2\\build_script_build.pdb",
+      "bytes": 4689920,
+      "sha256": "5de9ca3be19eb3ed63b707ee0115f57279f2ac2ee12e3cd65e108a77b924e67e"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\build\\getrandom-38724a7f58030d3b\\build_script_build-38724a7f58030d3b.pdb",
+      "bytes": 4386816,
+      "sha256": "e341f9f2780f76ac880ee4ff8c5de6888bb7736a328c05e26c241cbc71f3e21f"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\build\\getrandom-38724a7f58030d3b\\build_script_build.pdb",
+      "bytes": 4386816,
+      "sha256": "e341f9f2780f76ac880ee4ff8c5de6888bb7736a328c05e26c241cbc71f3e21f"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\build\\getrandom-ccfdf309ee05a9a6\\build_script_build-ccfdf309ee05a9a6.pdb",
+      "bytes": 4386816,
+      "sha256": "1a801718d04917c469f46e5dcb1c5f1597f9c0d9365994ae7bf8c6d59762c3db"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\build\\getrandom-ccfdf309ee05a9a6\\build_script_build.pdb",
+      "bytes": 4386816,
+      "sha256": "1a801718d04917c469f46e5dcb1c5f1597f9c0d9365994ae7bf8c6d59762c3db"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\build\\httparse-27542a0c672f5498\\build_script_build-27542a0c672f5498.pdb",
+      "bytes": 4706304,
+      "sha256": "a49f596dde74ee78746362a7a29d9b39b0a131ffccb74c7387cd8197500a873c"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\build\\httparse-27542a0c672f5498\\build_script_build.pdb",
+      "bytes": 4706304,
+      "sha256": "a49f596dde74ee78746362a7a29d9b39b0a131ffccb74c7387cd8197500a873c"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\build\\libc-0e9bf3ab1ff9ab28\\build_script_build-0e9bf3ab1ff9ab28.pdb",
+      "bytes": 4730880,
+      "sha256": "d2a8211c3cd8aaae724762651cc2d8c86044570deae5ec4f5552aa7a13b66a67"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\build\\libc-0e9bf3ab1ff9ab28\\build_script_build.pdb",
+      "bytes": 4730880,
+      "sha256": "d2a8211c3cd8aaae724762651cc2d8c86044570deae5ec4f5552aa7a13b66a67"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\build\\proc-macro2-8d4a9e1196386393\\build_script_build-8d4a9e1196386393.pdb",
+      "bytes": 4763648,
+      "sha256": "07a5a94b0a7c393fd35de4846f9e4984410058157d6565fc1b5816a4df9dc025"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\build\\proc-macro2-8d4a9e1196386393\\build_script_build.pdb",
+      "bytes": 4763648,
+      "sha256": "07a5a94b0a7c393fd35de4846f9e4984410058157d6565fc1b5816a4df9dc025"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\build\\quote-efb43d634f032b50\\build_script_build-efb43d634f032b50.pdb",
+      "bytes": 4673536,
+      "sha256": "8674b4fabf2efc15ddacc85b4467ae0f00dd16bd83322de853a3f7a9b05a92dc"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\build\\quote-efb43d634f032b50\\build_script_build.pdb",
+      "bytes": 4673536,
+      "sha256": "8674b4fabf2efc15ddacc85b4467ae0f00dd16bd83322de853a3f7a9b05a92dc"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\build\\rax-capi-cc42a427d06cbacf\\build_script_build-cc42a427d06cbacf.pdb",
+      "bytes": 4386816,
+      "sha256": "10c3a18cd9c852a0447654240c3cd6c8b684315f427c3a30a4879f1c05912d50"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\build\\rax-capi-cc42a427d06cbacf\\build_script_build.pdb",
+      "bytes": 4386816,
+      "sha256": "10c3a18cd9c852a0447654240c3cd6c8b684315f427c3a30a4879f1c05912d50"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\build\\rax-capi-ee1f7418809bb4b9\\build_script_build-ee1f7418809bb4b9.pdb",
+      "bytes": 4378624,
+      "sha256": "179f028d5c90fa6719e181ae70063e86040903cca324b8d4a356513cd58c1fd4"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\build\\rax-capi-ee1f7418809bb4b9\\build_script_build.pdb",
+      "bytes": 4378624,
+      "sha256": "179f028d5c90fa6719e181ae70063e86040903cca324b8d4a356513cd58c1fd4"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\build\\ring-74308272cf459490\\build_script_build-74308272cf459490.pdb",
+      "bytes": 5754880,
+      "sha256": "05d06bda6107f1202b71662defe4aa9096bdc3521adee2377b520e4b7389804f"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\build\\ring-74308272cf459490\\build_script_build.pdb",
+      "bytes": 5754880,
+      "sha256": "05d06bda6107f1202b71662defe4aa9096bdc3521adee2377b520e4b7389804f"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\build\\rustls-0ff82c51251d28ac\\build_script_build-0ff82c51251d28ac.pdb",
+      "bytes": 4345856,
+      "sha256": "87d80870019c58484f932af11877f03d62b66e2a472787bad2f271357a23f918"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\build\\rustls-0ff82c51251d28ac\\build_script_build.pdb",
+      "bytes": 4345856,
+      "sha256": "87d80870019c58484f932af11877f03d62b66e2a472787bad2f271357a23f918"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\build\\serde-9c93fce9d06c9ddd\\build_script_build-9c93fce9d06c9ddd.pdb",
+      "bytes": 4689920,
+      "sha256": "30b810889310594730e29f6b346dc14f415493fc202f6710d17ec225666945de"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\build\\serde-9c93fce9d06c9ddd\\build_script_build.pdb",
+      "bytes": 4689920,
+      "sha256": "30b810889310594730e29f6b346dc14f415493fc202f6710d17ec225666945de"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\build\\serde_core-a3681b1b4fa741c4\\build_script_build-a3681b1b4fa741c4.pdb",
+      "bytes": 4689920,
+      "sha256": "93113ee3e70eae52efe738ddd6eca1cc6e154f7e8c87688ac73ddcd78ffccb19"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\build\\serde_core-a3681b1b4fa741c4\\build_script_build.pdb",
+      "bytes": 4689920,
+      "sha256": "93113ee3e70eae52efe738ddd6eca1cc6e154f7e8c87688ac73ddcd78ffccb19"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\build\\serde_json-36dfb4606b2d1762\\build_script_build-36dfb4606b2d1762.pdb",
+      "bytes": 4378624,
+      "sha256": "f855ca0cfeb726526a8d73824b27ad799f89a7f461ca98a45f05922663be9ffa"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\build\\serde_json-36dfb4606b2d1762\\build_script_build.pdb",
+      "bytes": 4378624,
+      "sha256": "f855ca0cfeb726526a8d73824b27ad799f89a7f461ca98a45f05922663be9ffa"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\build\\thiserror-e19c6eefa52b27ba\\build_script_build-e19c6eefa52b27ba.pdb",
+      "bytes": 4771840,
+      "sha256": "5112813d80840e21c04f348f9a9f37f98b3513f92c791e68dd79305c4c0bbe06"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\build\\thiserror-e19c6eefa52b27ba\\build_script_build.pdb",
+      "bytes": 4771840,
+      "sha256": "5112813d80840e21c04f348f9a9f37f98b3513f92c791e68dd79305c4c0bbe06"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\build\\winapi-816e1e0ba84b36a2\\build_script_build-816e1e0ba84b36a2.pdb",
+      "bytes": 4468736,
+      "sha256": "b07b293750d52097a5e318490e951d8b7fe30621538d2bda38c3eb08a1c2e694"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\build\\winapi-816e1e0ba84b36a2\\build_script_build.pdb",
+      "bytes": 4468736,
+      "sha256": "b07b293750d52097a5e318490e951d8b7fe30621538d2bda38c3eb08a1c2e694"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\build\\windows_aarch64_msvc-b648d10bb5eb5ef9\\build_script_build-b648d10bb5eb5ef9.pdb",
+      "bytes": 4403200,
+      "sha256": "1c362b14fe854c485894b5802626d30b236302d25f3ae0efddf100a512218b1f"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\build\\windows_aarch64_msvc-b648d10bb5eb5ef9\\build_script_build.pdb",
+      "bytes": 4403200,
+      "sha256": "1c362b14fe854c485894b5802626d30b236302d25f3ae0efddf100a512218b1f"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\build\\zmij-c90a4a524327545a\\build_script_build-c90a4a524327545a.pdb",
+      "bytes": 4681728,
+      "sha256": "38fc72dd6386ca840204a8e419a949e998dd7b2d8a5d821acdce346656f27eba"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\build\\zmij-c90a4a524327545a\\build_script_build.pdb",
+      "bytes": 4681728,
+      "sha256": "38fc72dd6386ca840204a8e419a949e998dd7b2d8a5d821acdce346656f27eba"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\build\\zstd-safe-2a4f1fae6c6f7afd\\build_script_build-2a4f1fae6c6f7afd.pdb",
+      "bytes": 4378624,
+      "sha256": "7cabb11eaf21d4d638a1b53390a4a96d05f191d698804362bb980064bafd3fa2"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\build\\zstd-safe-2a4f1fae6c6f7afd\\build_script_build.pdb",
+      "bytes": 4378624,
+      "sha256": "7cabb11eaf21d4d638a1b53390a4a96d05f191d698804362bb980064bafd3fa2"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\build\\zstd-sys-9b30b4938816604e\\build_script_build-9b30b4938816604e.pdb",
+      "bytes": 5853184,
+      "sha256": "c7001a699674e782005510bf5263268e5ff8ac055cce0b69415a518bfaf3eb83"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-owned\\debug\\build\\zstd-sys-9b30b4938816604e\\build_script_build.pdb",
+      "bytes": 5853184,
+      "sha256": "c7001a699674e782005510bf5263268e5ff8ac055cce0b69415a518bfaf3eb83"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\rax.pdb",
+      "bytes": 195555328,
+      "sha256": "11aeb918633b4c224e56415ca92f00799e2cd50d3bb3c037997fdf5ccf652cd3"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\rax_isa_oracle.pdb",
+      "bytes": 101437440,
+      "sha256": "7d9299769a5221436981e72131d85d8eba05bb993be777604867eb3d64bcee24"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\rax_user.pdb",
+      "bytes": 1388544,
+      "sha256": "2e60cb078fb250fe786ed5769314d5dee090c71ee8dd132b69caf46a30e87197"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\aarch64_smir_native-a23633dde82f519b.pdb",
+      "bytes": 3133440,
+      "sha256": "de86d5c97f3ad1884c65d1efe70389dcce36254d8aa377cd7543e161f4a6ddc0"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\aarch64_smir_programs-cfdd39eb28382222.pdb",
+      "bytes": 112930816,
+      "sha256": "7b1ab6561722b15028d8bbe770e253a71b9a9f29c1d6777667b976918462b7b8"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\arm-50fbec410fc37a50.pdb",
+      "bytes": 253677568,
+      "sha256": "f9829f410bcd1caade57be6231b9095b627dcf307ae42d622edf197232a91556"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\arm_diff-ef900b5504f1632c.pdb",
+      "bytes": 3133440,
+      "sha256": "c109cfed052d81b6432985c1d51a4dcfb5ae6e77ff84ddb4e609596a04d34489"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\arm_diff32-5e588684153adce8.pdb",
+      "bytes": 3133440,
+      "sha256": "0645839ed062fa2192435600b18021961eae030506f0042726143f99e53afc92"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\arm_vfp_a32-407f9fb18c939b07.pdb",
+      "bytes": 106713088,
+      "sha256": "ff3d4e840e233249a08e1d5e25ceae19695f87c6f1377a7c025424b471a8e3a4"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\asm_instructions-205a9199f1fc5505.pdb",
+      "bytes": 121663488,
+      "sha256": "6e111c13903df2c268ad9e0a0e3327dd0481c3fe799e811d5e91a17bb611468b"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\ci_actions_pinned-9e0975b4bfb3bbfd.pdb",
+      "bytes": 9023488,
+      "sha256": "f8049a631b61b6972ff801402897e1ed3721f563c21928d51825bcfaec1a32a7"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\clap_derive-cc1a869dcdf4c61e.pdb",
+      "bytes": 5869568,
+      "sha256": "da44647a63cf853f5f9302811faaaef27c3ccf2260faf73f1fd636d553345874"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\clap_derive-f7c422b4deb7c571.pdb",
+      "bytes": 2904064,
+      "sha256": "24b985b33080401d8b49c29f93042d29340ff17e5dfc4332f572eab9d3087c36"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\differential-31dc649660079d67.pdb",
+      "bytes": 3133440,
+      "sha256": "c09529feb6e16c2cce4bc1b1eb6cbdeb442a85db04b72da30db470fe86167254"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\diff_fuzz-6c8a635d29a9171e.pdb",
+      "bytes": 3133440,
+      "sha256": "edf78012418835eaeb732f1fe751ece70c757005735c0b1456eff8c574734346"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\hexagon_bare_metal-d8ce498192e3720f.pdb",
+      "bytes": 106917888,
+      "sha256": "72323685fc67d8cd3cba9e0fcc864c3d5a9a23450dc89f7c957e1bcdc63c391f"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\hexagon_cf_diff-d202892f1be7f4f9.pdb",
+      "bytes": 3133440,
+      "sha256": "645fae26f2c034d8c06d3d0c1fe5ae55215c7169db4edb9662d3d3a2c96aea18"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\hexagon_diff-ee42b29b8f6a0581.pdb",
+      "bytes": 3133440,
+      "sha256": "488b5857526ec55b92ab9064c89cded9afc9e75d3740563c5891d366b8388927"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\hexagon_float_diff-ef16fbdb58c17269.pdb",
+      "bytes": 3133440,
+      "sha256": "0a322bdd9e070ebc52d48505786f5c2151fc3eb08baa2bac33702b2249fc55f9"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\hexagon_hvx_diff-ff6206b3e25ad805.pdb",
+      "bytes": 3133440,
+      "sha256": "5a4909a99dc3b988cbc97d737a2d4214b26cfddad55ec8edc78a09113e9fc165"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\hexagon_hvx_mem_diff-708cbbc2a5902f1e.pdb",
+      "bytes": 3133440,
+      "sha256": "cb1b3e83935e3cfca42b05c3d6863066656012a0e4d0625cfecc7a7c2bce6ed6"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\hexagon_mem_diff-b9865cc3c17c69ca.pdb",
+      "bytes": 3133440,
+      "sha256": "64d4bfd606b5617951c228c9f15838999afe66914e8bd4266264bcc099a0409a"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\hexagon_smir_lift-b55334e57297f174.pdb",
+      "bytes": 3133440,
+      "sha256": "cf04ef9956fe7d799c9c178f33fcf6e832ce8486f3247b74c98c4b5d9c704681"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\isa_oracle-03dde3bf000d990a.pdb",
+      "bytes": 115945472,
+      "sha256": "b33d2d3092e465ccd8f841b5339f7f6301c19dd6202e80a728ddc924bfebc5e1"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\kvm_minimal-d405cb04141a715d.pdb",
+      "bytes": 3133440,
+      "sha256": "a804c47a342f3d5a052bfc116de58375d6ff0a002aef0e4206722d948f467fc5"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\microkernel_multiarch-fc2b88ade2f744e3.pdb",
+      "bytes": 4444160,
+      "sha256": "a35d3800525271c61231b8fa6453fdd47c6f683c4ea6fc12b1fb297a499bc7c3"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\pgo_build_script-2d45fb8957d5df48.pdb",
+      "bytes": 3633152,
+      "sha256": "d1e986f3df77a5e06fe3a00ed17b0d15f8c989c106637acfd72708a1868471b7"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\pgo_script_safe-e1e3e504e32cc21b.pdb",
+      "bytes": 3633152,
+      "sha256": "26a609812906c9cb4f1e032263154da86e7fe815f6f800f2f501e2b8595fdd37"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\rax-263873d7bde4559a.pdb",
+      "bytes": 170135552,
+      "sha256": "276e8d067d509ca16fead0fba4d14bdf0c0c323450db719e7bacc7672c1b1b0b"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\rax-34b728e33cbe6d97.pdb",
+      "bytes": 313151488,
+      "sha256": "e20cd2dd73f5d5c10beac69c19145393c9c70e82be966969b075d0c916ce77d7"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\rax-d14b0f3429d3d485.pdb",
+      "bytes": 196407296,
+      "sha256": "fb02b565dd895c2c9f732d929d91ed4906b8bfd42d01cb59d8bcdcd3297f1c58"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\rax-d861ee8f992d7cb6.pdb",
+      "bytes": 352604160,
+      "sha256": "b28a0ae37139ad354e262d22eb6dff320c0e4874c4ac16639d7e6a9619673cc8"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\rax-df8d5902429c7ed0.pdb",
+      "bytes": 3862528,
+      "sha256": "5523b6174441755b156ff5ab06055295c3959006208aa743d7c8f68e2a1132e9"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\rax.pdb",
+      "bytes": 195555328,
+      "sha256": "11aeb918633b4c224e56415ca92f00799e2cd50d3bb3c037997fdf5ccf652cd3"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\rax_isa_oracle-4e9e5c9347a9d566.pdb",
+      "bytes": 3141632,
+      "sha256": "0d1a69a3c5258c1091e4a77d9e045706c2e31079f67cac60ef3900b0fe11011e"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\rax_isa_oracle.pdb",
+      "bytes": 101437440,
+      "sha256": "7d9299769a5221436981e72131d85d8eba05bb993be777604867eb3d64bcee24"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\rax_user-927e6d5fd0bc020e.pdb",
+      "bytes": 3133440,
+      "sha256": "8cc116cfcd7d9c90c12ec98908e601ad3a3dffaee155f26694210b4ef7c94188"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\rax_user.pdb",
+      "bytes": 1388544,
+      "sha256": "2e60cb078fb250fe786ed5769314d5dee090c71ee8dd132b69caf46a30e87197"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\realmode_boot-a93bd44ea0b9a820.pdb",
+      "bytes": 3133440,
+      "sha256": "64c595eb9b553e77ac0429bacdd3294617a8e38cd3e186992f51a519247cd1bf"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\riscv_boot-cef9ce3ec264c928.pdb",
+      "bytes": 106426368,
+      "sha256": "5dd6c43da085952ca4ce1725fe09eacf72262979b9789fe8abbb77c316fc38f6"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\riscv_diff-fc4e25bfd4477831.pdb",
+      "bytes": 3133440,
+      "sha256": "7f37857939f43fcc0d43861e5d9f5e456107fb6b80c87c202606a4b10de4625d"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\riscv_smir_aarch64_jit-be1bce370073083c.pdb",
+      "bytes": 3133440,
+      "sha256": "199c3044b8a6f27006f7534f16be47494d0ec713d5ba0ab167d8b4899cdab876"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\riscv_smir_lift-392a8ca2ad2117ea.pdb",
+      "bytes": 3133440,
+      "sha256": "f3b7a981ebecca0e6d6324375ecf864b19868f3402e644a5d2aa7907552b69c0"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\riscv_smir_x86_jit-ea762b7bf7d6eee0.pdb",
+      "bytes": 3133440,
+      "sha256": "2d3565e5f1b6c22c6b12d396049f92d033e7a98b6b1c70de64c9af5cf1f6b9f2"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\riscv_vector-f1eaf0a4c0aa91b5.pdb",
+      "bytes": 3133440,
+      "sha256": "9298012e0abe0b0a2b15aeaf3c17a0b182b2e0402be615d85e74618c8df8dd76"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\scroll_derive-1612bc43fc260760.pdb",
+      "bytes": 2527232,
+      "sha256": "cc86cf567996e3686081c80e979f5b9e59f49d0e3d218f9807f8b8903e2547f6"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\scroll_derive-1add2f2362a76467.pdb",
+      "bytes": 5500928,
+      "sha256": "4745e7ffc7193b21b91f655a24b519f9b6a1a6666a829c51111498bb49e11ca1"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\serde_derive-99b58877542aef55.pdb",
+      "bytes": 3092480,
+      "sha256": "2720573859d9219da57e9ca916a86c7937a60bb6e1f740df6c44d5cb568a235a"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\serde_derive-b0dda888e9e2363e.pdb",
+      "bytes": 6066176,
+      "sha256": "3946885fadf7a5caaf3ea6c25a83ee76532b65815e474a19e3bc1e9dd91ba1e5"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\smir_avx10_roundtrip-36694bc0579bfe37.pdb",
+      "bytes": 105861120,
+      "sha256": "858dc12b735566f8a964cc4166b35802cca5f6113a7d7728c8a3222a9c98cf5f"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\smir_jit_aarch32_aarch64-89cf18a5ade9232c.pdb",
+      "bytes": 3133440,
+      "sha256": "1c70f2b85eb67b49ce5dbb7abb5de4c8ad606c12669937b1b5a812c909ca7efd"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\smir_jit_evex_masking-9ef8e4eb3ea004c9.pdb",
+      "bytes": 3133440,
+      "sha256": "fdb05992ea08d25b20378900a7cffa423d8bc78efbec87cc17c89b31c1296325"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\smir_jit_thumb_aarch64-82e2e425509bfa8a.pdb",
+      "bytes": 3133440,
+      "sha256": "133118cfea22715f294f03a221dd01a00d3d623df8c4c0378f1b7f4c982fcc1f"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\smir_jit_vcpu-41c5a48ae805d2d3.pdb",
+      "bytes": 3133440,
+      "sha256": "77c443d55bfb3f4df26b2280c9f0c18105ad59108d3d545b7793d29030620f0a"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\smir_jit_x86_aarch64-8e294f27934a625f.pdb",
+      "bytes": 3133440,
+      "sha256": "9ac911e7b8fd7d3cfd69292820c2c2b6eb368f590cfe10e6a72da75512c555fb"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\thiserror_impl-9896ea3fb6d70e77.pdb",
+      "bytes": 5828608,
+      "sha256": "ba850de14a669042e7f15a696e7f07eca1992db8fffae263d1c78749ba012984"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\thiserror_impl-ee3ee93f5fe510ab.pdb",
+      "bytes": 2854912,
+      "sha256": "e0c17587526951ffd6cc6ae4ecd91d581817dfa1fb0dcef45e0abb09ef74dfb3"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\tracing_attributes-5ab72022508808ba.pdb",
+      "bytes": 3059712,
+      "sha256": "2d648ef03be38361bbba100a8620cdfec3582f551c1ac140f39a5f7c130a923b"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\tracing_attributes-f4790c743498b06e.pdb",
+      "bytes": 6041600,
+      "sha256": "602161ff7e96cf898860a1d8847a60ed262ac7bbc52c64e12d4991a6dd8e286f"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\user_darwin-78b93decafc72e29.pdb",
+      "bytes": 3133440,
+      "sha256": "baa2024e90b10872dc0955308115316bc18b38b8103ce89765b2f1ef7bfdf66e"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\user_linux-2271be082a429e91.pdb",
+      "bytes": 3133440,
+      "sha256": "3c9e0174d2541c792fdf92b870b1d5769eac8a7b9ae8a8a8ce4557a082979821"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\user_windows-fe88eae894fb5145.pdb",
+      "bytes": 6074368,
+      "sha256": "c2823a208feaa340586ad349eeea331477542adbe0da2727c828c849534a17f3"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\user_windows-feeced1d96826915.pdb",
+      "bytes": 3133440,
+      "sha256": "e98367f05331c491dfe7f163a1d1780d2ccc2f03241f73422d7350d7e3ef47f4"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\user_windows_memory-1b0e9ef88e670e21.pdb",
+      "bytes": 7589888,
+      "sha256": "1e3eeee75460586a374b9332cc40089934e2d2b200ca7a919e003566a1ae6576"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\user_windows_memory-e106de1a46d1b2ff.pdb",
+      "bytes": 4747264,
+      "sha256": "68daf117b8d71b06fec16a8fe985727122cb1a7bf695e06e5f752ef068445154"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\x86_64_apx_map4_qemu_diff-08aa01347b228c32.pdb",
+      "bytes": 3133440,
+      "sha256": "b8d57f8d1773aded8fb916cafd1c044f5544e436de6628215da2aa3fd9d14681"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\x86_64_avx512_inventory-a0965ec9451718f9.pdb",
+      "bytes": 3133440,
+      "sha256": "6cab940d5a1537181e12f04472bf0183cbe1718bea5696f88895cad14c45e8f2"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\x86_64_avx512_kvm_diff-459d90ce4f3d6d37.pdb",
+      "bytes": 3133440,
+      "sha256": "b0335d2010ad248d48ece7650b8f6f30eaa270b1bf9b71ecaf9f2a986e7a2ff7"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\x86_64_evex_qemu_diff-f5fc425a5b3946d6.pdb",
+      "bytes": 3133440,
+      "sha256": "8d83fa9813904551ce62547a6e626aa8b1a42ff8c6fec655a4c30e2cad4de576"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\x86_64_unimplemented_manifests-fb1406b39206efa6.pdb",
+      "bytes": 3133440,
+      "sha256": "a85e20505d32af28fba44701414e55f1ed261c940571fbb332b365f196e49f9f"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\x86_64_unimplemented_qemu_diff-4223d987934d098e.pdb",
+      "bytes": 3133440,
+      "sha256": "beeeff6b83151a802210da5aff1bbaa3f615db08b3f4c6c22edd54b570af15f6"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\deps\\x86_64_unimplemented_source_inventory-b4cbf0b59bf6d931.pdb",
+      "bytes": 3133440,
+      "sha256": "4a9665f72a1271ba75a7aa86e52604028d11f69e08cf28d1e458e1d40fe32161"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\examples\\bench_loop.pdb",
+      "bytes": 119664640,
+      "sha256": "fa11ae61700d569913f7f0f8d297d6ad1ca0ca8e65c50061bdca7ef6b952f84e"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\examples\\bench_mem.pdb",
+      "bytes": 119664640,
+      "sha256": "79ce0b4e03a7bfab2179f59d77a5d48038e2a9864a97ae456422ca5d7a651025"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\examples\\dec_test.pdb",
+      "bytes": 103362560,
+      "sha256": "fd6c1109da03df27fce91aa1e470671c2eb0ad80ac34360cdb076b21126abb5f"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\examples\\disasm.pdb",
+      "bytes": 103559168,
+      "sha256": "74e76fec2db910984621ed3323dcc7357046da240504b5c90e5ca0a564655639"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\examples\\run_microkernel.pdb",
+      "bytes": 119590912,
+      "sha256": "89d3454a01a572d59d85d51d7c9ee177b8f69779ff688f480bc8f7abf33a20b0"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\examples\\run_test.pdb",
+      "bytes": 119697408,
+      "sha256": "5f6b3aa3cb23781e20b9e88da99ff8b0f8a757a43d4e629069901b5b375f8333"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\getrandom-38724a7f58030d3b\\build_script_build-38724a7f58030d3b.pdb",
+      "bytes": 4386816,
+      "sha256": "c3da71a9f634ade7300e6326520c696c6bb037dfa587a58e707951e5e41c983e"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\getrandom-38724a7f58030d3b\\build_script_build.pdb",
+      "bytes": 4386816,
+      "sha256": "c3da71a9f634ade7300e6326520c696c6bb037dfa587a58e707951e5e41c983e"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\getrandom-3e8a70be616e6bf6\\build_script_build-3e8a70be616e6bf6.pdb",
+      "bytes": 1355776,
+      "sha256": "8aaa4364f14a2cce3c29401f2963f367909585fe66d02cec2609a8eb6b40ea89"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\getrandom-3e8a70be616e6bf6\\build_script_build.pdb",
+      "bytes": 1355776,
+      "sha256": "8aaa4364f14a2cce3c29401f2963f367909585fe66d02cec2609a8eb6b40ea89"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\getrandom-c0d8fffd88125a7a\\build_script_build-c0d8fffd88125a7a.pdb",
+      "bytes": 1355776,
+      "sha256": "148048b57bbc8aca2b14122810f148974eab9d774b6a0658f15c1ad27eca11e2"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\getrandom-c0d8fffd88125a7a\\build_script_build.pdb",
+      "bytes": 1355776,
+      "sha256": "148048b57bbc8aca2b14122810f148974eab9d774b6a0658f15c1ad27eca11e2"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\getrandom-ccfdf309ee05a9a6\\build_script_build-ccfdf309ee05a9a6.pdb",
+      "bytes": 4386816,
+      "sha256": "d1d78593bf34fe7908d45d7b81e8796e9884aaede67ef72198c86d42a81eefe6"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\getrandom-ccfdf309ee05a9a6\\build_script_build.pdb",
+      "bytes": 4386816,
+      "sha256": "d1d78593bf34fe7908d45d7b81e8796e9884aaede67ef72198c86d42a81eefe6"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\libc-0e9bf3ab1ff9ab28\\build_script_build-0e9bf3ab1ff9ab28.pdb",
+      "bytes": 4730880,
+      "sha256": "079851c8259ad4188c73667dd1c20d0ca6ac4adfc3115798300efa8056adad52"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\libc-0e9bf3ab1ff9ab28\\build_script_build.pdb",
+      "bytes": 4730880,
+      "sha256": "079851c8259ad4188c73667dd1c20d0ca6ac4adfc3115798300efa8056adad52"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\libc-715e13bc90434038\\build_script_build-715e13bc90434038.pdb",
+      "bytes": 1699840,
+      "sha256": "081986bf0eb45138bd438fefebec31e811e08ea6db44e513a3f182c1494e0036"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\libc-715e13bc90434038\\build_script_build.pdb",
+      "bytes": 1699840,
+      "sha256": "081986bf0eb45138bd438fefebec31e811e08ea6db44e513a3f182c1494e0036"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\proc-macro2-8d4a9e1196386393\\build_script_build-8d4a9e1196386393.pdb",
+      "bytes": 4763648,
+      "sha256": "c192cfb4eb9c6729425efc3ea4b61b284b8c9ef11dc620c267db7de06222b9bf"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\proc-macro2-8d4a9e1196386393\\build_script_build.pdb",
+      "bytes": 4763648,
+      "sha256": "c192cfb4eb9c6729425efc3ea4b61b284b8c9ef11dc620c267db7de06222b9bf"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\proc-macro2-b3c67b531f10d71b\\build_script_build-b3c67b531f10d71b.pdb",
+      "bytes": 1732608,
+      "sha256": "650dd0b229927aff256725740cef2638b4a30c18fa3ccc100b07c7851514e5b0"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\proc-macro2-b3c67b531f10d71b\\build_script_build.pdb",
+      "bytes": 1732608,
+      "sha256": "650dd0b229927aff256725740cef2638b4a30c18fa3ccc100b07c7851514e5b0"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\quote-393984b48f18ac92\\build_script_build-393984b48f18ac92.pdb",
+      "bytes": 1650688,
+      "sha256": "abe8da5251307b188897da74ca177a724161a6ecf788b1bdefe45031a8c8af8e"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\quote-393984b48f18ac92\\build_script_build.pdb",
+      "bytes": 1650688,
+      "sha256": "abe8da5251307b188897da74ca177a724161a6ecf788b1bdefe45031a8c8af8e"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\quote-efb43d634f032b50\\build_script_build-efb43d634f032b50.pdb",
+      "bytes": 4673536,
+      "sha256": "ed7a53c0b0e42036ab884b675bfa49a594071837915243565dbcee9a6804137d"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\quote-efb43d634f032b50\\build_script_build.pdb",
+      "bytes": 4673536,
+      "sha256": "ed7a53c0b0e42036ab884b675bfa49a594071837915243565dbcee9a6804137d"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\rax-capi-5e251e99edf260a8\\build_script_build-5e251e99edf260a8.pdb",
+      "bytes": 1355776,
+      "sha256": "83e9b4103b8878e1fe43c802905e9b52aea9152be70611bec9985eb8fb13024e"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\rax-capi-5e251e99edf260a8\\build_script_build.pdb",
+      "bytes": 1355776,
+      "sha256": "83e9b4103b8878e1fe43c802905e9b52aea9152be70611bec9985eb8fb13024e"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\rax-capi-8a21d854b20c8836\\build_script_build-8a21d854b20c8836.pdb",
+      "bytes": 4386816,
+      "sha256": "b026f64604c8eb4c198679ddca2ccc0504e4dbe58e8357389b3a4de6ec0aedbe"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\rax-capi-8a21d854b20c8836\\build_script_build.pdb",
+      "bytes": 4386816,
+      "sha256": "b026f64604c8eb4c198679ddca2ccc0504e4dbe58e8357389b3a4de6ec0aedbe"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\serde-17e6b8bb88b7f4fc\\build_script_build-17e6b8bb88b7f4fc.pdb",
+      "bytes": 1667072,
+      "sha256": "c350239bd425ee26aadb051945e272ea4cc4ac7cdfb8985c14b65faa10e636dd"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\serde-17e6b8bb88b7f4fc\\build_script_build.pdb",
+      "bytes": 1667072,
+      "sha256": "c350239bd425ee26aadb051945e272ea4cc4ac7cdfb8985c14b65faa10e636dd"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\serde-9c93fce9d06c9ddd\\build_script_build-9c93fce9d06c9ddd.pdb",
+      "bytes": 4689920,
+      "sha256": "41555cd3b4f04a492815b9c1245b07a8e2a1f5aa2e0f651103783abd87954ba7"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\serde-9c93fce9d06c9ddd\\build_script_build.pdb",
+      "bytes": 4689920,
+      "sha256": "41555cd3b4f04a492815b9c1245b07a8e2a1f5aa2e0f651103783abd87954ba7"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\serde_core-88e5d38ed408f617\\build_script_build-88e5d38ed408f617.pdb",
+      "bytes": 1667072,
+      "sha256": "92b0b40100e128d1c72b861d77846910a358a3e85f53e17e305da1107c1adc7e"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\serde_core-88e5d38ed408f617\\build_script_build.pdb",
+      "bytes": 1667072,
+      "sha256": "92b0b40100e128d1c72b861d77846910a358a3e85f53e17e305da1107c1adc7e"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\serde_core-a3681b1b4fa741c4\\build_script_build-a3681b1b4fa741c4.pdb",
+      "bytes": 4689920,
+      "sha256": "a4402a3dff98b4d05874b328e8fad1db54a9e7be07bce9f2e0887f0bceee7bb4"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\serde_core-a3681b1b4fa741c4\\build_script_build.pdb",
+      "bytes": 4689920,
+      "sha256": "a4402a3dff98b4d05874b328e8fad1db54a9e7be07bce9f2e0887f0bceee7bb4"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\serde_json-36dfb4606b2d1762\\build_script_build-36dfb4606b2d1762.pdb",
+      "bytes": 4378624,
+      "sha256": "0e0b3fb3c27ea2d82e418a5effc547cded6cdcb9d7de7681bad780c296835be0"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\serde_json-36dfb4606b2d1762\\build_script_build.pdb",
+      "bytes": 4378624,
+      "sha256": "0e0b3fb3c27ea2d82e418a5effc547cded6cdcb9d7de7681bad780c296835be0"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\serde_json-96cb1b397eadc502\\build_script_build-96cb1b397eadc502.pdb",
+      "bytes": 1355776,
+      "sha256": "7581e6b3b65fa368db6dcbfcd3bbe90993caf2101379daecd076e960b8698872"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\serde_json-96cb1b397eadc502\\build_script_build.pdb",
+      "bytes": 1355776,
+      "sha256": "7581e6b3b65fa368db6dcbfcd3bbe90993caf2101379daecd076e960b8698872"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\thiserror-2900ecdfabac3c4d\\build_script_build-2900ecdfabac3c4d.pdb",
+      "bytes": 1748992,
+      "sha256": "eeb580a744d68f08431e034c9ce9fa699b198904630713d3041f904e5831bb61"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\thiserror-2900ecdfabac3c4d\\build_script_build.pdb",
+      "bytes": 1748992,
+      "sha256": "eeb580a744d68f08431e034c9ce9fa699b198904630713d3041f904e5831bb61"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\thiserror-e19c6eefa52b27ba\\build_script_build-e19c6eefa52b27ba.pdb",
+      "bytes": 4771840,
+      "sha256": "e5aaf7ec32f3f0333aa53a064284cedbde08f6e8b6fd987426b56f23a4cb79c2"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\thiserror-e19c6eefa52b27ba\\build_script_build.pdb",
+      "bytes": 4771840,
+      "sha256": "e5aaf7ec32f3f0333aa53a064284cedbde08f6e8b6fd987426b56f23a4cb79c2"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\winapi-816e1e0ba84b36a2\\build_script_build-816e1e0ba84b36a2.pdb",
+      "bytes": 4468736,
+      "sha256": "aecd76948935b3d9693e320d66b2fa4ad0070818b1422b6f005b5cda6284cf9b"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\winapi-816e1e0ba84b36a2\\build_script_build.pdb",
+      "bytes": 4468736,
+      "sha256": "aecd76948935b3d9693e320d66b2fa4ad0070818b1422b6f005b5cda6284cf9b"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\winapi-c4dbd173f7adaa07\\build_script_build-c4dbd173f7adaa07.pdb",
+      "bytes": 1454080,
+      "sha256": "90ccc2920065b7d7351f9722bd6b50ec998295d42b96919c153b5aa1f39c124e"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\winapi-c4dbd173f7adaa07\\build_script_build.pdb",
+      "bytes": 1454080,
+      "sha256": "90ccc2920065b7d7351f9722bd6b50ec998295d42b96919c153b5aa1f39c124e"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\zmij-c90a4a524327545a\\build_script_build-c90a4a524327545a.pdb",
+      "bytes": 4681728,
+      "sha256": "74555023c68f621fe08db98f8fcdea93b56acaeaf5f178d1ef0e0feda28193b2"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\zmij-c90a4a524327545a\\build_script_build.pdb",
+      "bytes": 4681728,
+      "sha256": "74555023c68f621fe08db98f8fcdea93b56acaeaf5f178d1ef0e0feda28193b2"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\zmij-f3b7cec877cd4f5c\\build_script_build-f3b7cec877cd4f5c.pdb",
+      "bytes": 1658880,
+      "sha256": "d30ee66ecbd6eaf24b03daebaeda920b2470dd47ebab43eb30c29d1a9515e155"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\zmij-f3b7cec877cd4f5c\\build_script_build.pdb",
+      "bytes": 1658880,
+      "sha256": "d30ee66ecbd6eaf24b03daebaeda920b2470dd47ebab43eb30c29d1a9515e155"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\zstd-safe-2a4f1fae6c6f7afd\\build_script_build-2a4f1fae6c6f7afd.pdb",
+      "bytes": 4378624,
+      "sha256": "e473436bad63bebd90422e483bd38d7d5c3ff3d28adc2094246ec144fb256ed8"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\zstd-safe-2a4f1fae6c6f7afd\\build_script_build.pdb",
+      "bytes": 4378624,
+      "sha256": "e473436bad63bebd90422e483bd38d7d5c3ff3d28adc2094246ec144fb256ed8"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\zstd-safe-8cecbdd9318480cd\\build_script_build-8cecbdd9318480cd.pdb",
+      "bytes": 1355776,
+      "sha256": "ea8b03b6c8497698b5d0c62dce3c96606e618574921b68a18d091e544c6c210e"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\zstd-safe-8cecbdd9318480cd\\build_script_build.pdb",
+      "bytes": 1355776,
+      "sha256": "ea8b03b6c8497698b5d0c62dce3c96606e618574921b68a18d091e544c6c210e"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\zstd-sys-70e3cee10f865bf6\\build_script_build-70e3cee10f865bf6.pdb",
+      "bytes": 2838528,
+      "sha256": "aeef789211bff895f1b00f3baa873862489c1d27c00c7f61d1cf08e68221c3a5"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\zstd-sys-70e3cee10f865bf6\\build_script_build.pdb",
+      "bytes": 2838528,
+      "sha256": "aeef789211bff895f1b00f3baa873862489c1d27c00c7f61d1cf08e68221c3a5"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\zstd-sys-7f0f5a081e2ca035\\build_script_build-7f0f5a081e2ca035.pdb",
+      "bytes": 2838528,
+      "sha256": "3fffffe1a4f3925c607665a5e28f92ea469c9487372f27ef5521c10b0277cd47"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\zstd-sys-7f0f5a081e2ca035\\build_script_build.pdb",
+      "bytes": 2838528,
+      "sha256": "3fffffe1a4f3925c607665a5e28f92ea469c9487372f27ef5521c10b0277cd47"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\zstd-sys-9c988169d793a894\\build_script_build-9c988169d793a894.pdb",
+      "bytes": 5853184,
+      "sha256": "3037d88de8cfb3e5e5dbd298bddc973a75309432aafa8bd3dd41fda84ab36e3f"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\zstd-sys-9c988169d793a894\\build_script_build.pdb",
+      "bytes": 5853184,
+      "sha256": "3037d88de8cfb3e5e5dbd298bddc973a75309432aafa8bd3dd41fda84ab36e3f"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\zstd-sys-bea07681de92b07e\\build_script_build-bea07681de92b07e.pdb",
+      "bytes": 5853184,
+      "sha256": "1ed7383493189d6df811a51940d1430fe3f42f60aed8be62f8e35e20dbb05e8f"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-io-completion-tests\\debug\\build\\zstd-sys-bea07681de92b07e\\build_script_build.pdb",
+      "bytes": 5853184,
+      "sha256": "1ed7383493189d6df811a51940d1430fe3f42f60aed8be62f8e35e20dbb05e8f"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-section-map\\debug\\deps\\clap_derive-cc1a869dcdf4c61e.pdb",
+      "bytes": 5877760,
+      "sha256": "9d859be0965cf6463d9b91a71d5ab1935e6422dabed314c4d690a949e0e02c1a"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-section-map\\debug\\deps\\rax-34b728e33cbe6d97.pdb",
+      "bytes": 308588544,
+      "sha256": "c14b65072ba6f358c31b13aaf7c70d5683652405d00a88c64f0bf691cf156f30"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-section-map\\debug\\deps\\scroll_derive-1add2f2362a76467.pdb",
+      "bytes": 5500928,
+      "sha256": "4750a775f149d3a686c7efe213735f750c269dd541995b092bc10ccd0f6ea8b3"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-section-map\\debug\\deps\\serde_derive-b0dda888e9e2363e.pdb",
+      "bytes": 6066176,
+      "sha256": "4b4ccbcf1ebab67bc360ab26b4587f0aa4497376cdb5f573511e67946e417580"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-section-map\\debug\\deps\\thiserror_impl-9896ea3fb6d70e77.pdb",
+      "bytes": 5828608,
+      "sha256": "c47a9c18f011c1afa4865b5d12ee56807c24c591ecca557fdf8722bf8b7a4763"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-section-map\\debug\\deps\\tracing_attributes-f4790c743498b06e.pdb",
+      "bytes": 6041600,
+      "sha256": "c4943123f2bee7be6786c31fe032f4af4c0b692ee8913baa0e423996e747a4d8"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-section-map\\debug\\build\\getrandom-38724a7f58030d3b\\build_script_build-38724a7f58030d3b.pdb",
+      "bytes": 4386816,
+      "sha256": "d7af5bd64173a336a4e93b148fed30dab9c0697c6b96063da8ad62aa76d71071"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-section-map\\debug\\build\\getrandom-38724a7f58030d3b\\build_script_build.pdb",
+      "bytes": 4386816,
+      "sha256": "d7af5bd64173a336a4e93b148fed30dab9c0697c6b96063da8ad62aa76d71071"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-section-map\\debug\\build\\getrandom-ccfdf309ee05a9a6\\build_script_build-ccfdf309ee05a9a6.pdb",
+      "bytes": 4386816,
+      "sha256": "e7738db72b015ffb2eb5bb9b13cf7832488fc4c8d57201cee2a4d8376e7765e5"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-section-map\\debug\\build\\getrandom-ccfdf309ee05a9a6\\build_script_build.pdb",
+      "bytes": 4386816,
+      "sha256": "e7738db72b015ffb2eb5bb9b13cf7832488fc4c8d57201cee2a4d8376e7765e5"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-section-map\\debug\\build\\libc-0e9bf3ab1ff9ab28\\build_script_build-0e9bf3ab1ff9ab28.pdb",
+      "bytes": 4730880,
+      "sha256": "0ed90c0c574a991802f45362104e0a30be7fa4cf525aa0499ef11111c958dfaa"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-section-map\\debug\\build\\libc-0e9bf3ab1ff9ab28\\build_script_build.pdb",
+      "bytes": 4730880,
+      "sha256": "0ed90c0c574a991802f45362104e0a30be7fa4cf525aa0499ef11111c958dfaa"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-section-map\\debug\\build\\proc-macro2-8d4a9e1196386393\\build_script_build-8d4a9e1196386393.pdb",
+      "bytes": 4755456,
+      "sha256": "a2185600908f615399ac48894cda004d7e507698d701489cc3fe9b129c09d64a"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-section-map\\debug\\build\\proc-macro2-8d4a9e1196386393\\build_script_build.pdb",
+      "bytes": 4755456,
+      "sha256": "a2185600908f615399ac48894cda004d7e507698d701489cc3fe9b129c09d64a"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-section-map\\debug\\build\\quote-efb43d634f032b50\\build_script_build-efb43d634f032b50.pdb",
+      "bytes": 4673536,
+      "sha256": "43b91fae7d35fc68fb7f92412b5366a1e32da4da9300cf6ee30a5f9f12b401bd"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-section-map\\debug\\build\\quote-efb43d634f032b50\\build_script_build.pdb",
+      "bytes": 4673536,
+      "sha256": "43b91fae7d35fc68fb7f92412b5366a1e32da4da9300cf6ee30a5f9f12b401bd"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-section-map\\debug\\build\\serde-9c93fce9d06c9ddd\\build_script_build-9c93fce9d06c9ddd.pdb",
+      "bytes": 4689920,
+      "sha256": "b8b61a5e663fd99c05c6bafedb4c15b94d42c88ae05bb0d4d0cce4322ab39ea2"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-section-map\\debug\\build\\serde-9c93fce9d06c9ddd\\build_script_build.pdb",
+      "bytes": 4689920,
+      "sha256": "b8b61a5e663fd99c05c6bafedb4c15b94d42c88ae05bb0d4d0cce4322ab39ea2"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-section-map\\debug\\build\\serde_core-a3681b1b4fa741c4\\build_script_build-a3681b1b4fa741c4.pdb",
+      "bytes": 4689920,
+      "sha256": "f116441860e78fbfad99efec305f674010f6309e4272c4fe3086976cc8d9e6af"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-section-map\\debug\\build\\serde_core-a3681b1b4fa741c4\\build_script_build.pdb",
+      "bytes": 4689920,
+      "sha256": "f116441860e78fbfad99efec305f674010f6309e4272c4fe3086976cc8d9e6af"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-section-map\\debug\\build\\serde_json-36dfb4606b2d1762\\build_script_build-36dfb4606b2d1762.pdb",
+      "bytes": 4378624,
+      "sha256": "212c4ab0408c900e4dbe46493076e3defffcc543111761bd3a8c7517a2f09b35"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-section-map\\debug\\build\\serde_json-36dfb4606b2d1762\\build_script_build.pdb",
+      "bytes": 4378624,
+      "sha256": "212c4ab0408c900e4dbe46493076e3defffcc543111761bd3a8c7517a2f09b35"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-section-map\\debug\\build\\thiserror-e19c6eefa52b27ba\\build_script_build-e19c6eefa52b27ba.pdb",
+      "bytes": 4771840,
+      "sha256": "b9d0e652d04914ae46254b1b6759be0333a7c7a611a3fbf0566be95974ed5d77"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-section-map\\debug\\build\\thiserror-e19c6eefa52b27ba\\build_script_build.pdb",
+      "bytes": 4771840,
+      "sha256": "b9d0e652d04914ae46254b1b6759be0333a7c7a611a3fbf0566be95974ed5d77"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-section-map\\debug\\build\\winapi-816e1e0ba84b36a2\\build_script_build-816e1e0ba84b36a2.pdb",
+      "bytes": 4476928,
+      "sha256": "27c88571356241e69e299271e438755fd7e3eea4a373a3bb4297635d2a21a3d1"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-section-map\\debug\\build\\winapi-816e1e0ba84b36a2\\build_script_build.pdb",
+      "bytes": 4476928,
+      "sha256": "27c88571356241e69e299271e438755fd7e3eea4a373a3bb4297635d2a21a3d1"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-section-map\\debug\\build\\zmij-c90a4a524327545a\\build_script_build-c90a4a524327545a.pdb",
+      "bytes": 4681728,
+      "sha256": "80d5f8ee9bae58a423f1b539bbe4092b4bd53867119b2a60c345d616f6e880dc"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-section-map\\debug\\build\\zmij-c90a4a524327545a\\build_script_build.pdb",
+      "bytes": 4681728,
+      "sha256": "80d5f8ee9bae58a423f1b539bbe4092b4bd53867119b2a60c345d616f6e880dc"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-section-map\\debug\\build\\zstd-safe-2a4f1fae6c6f7afd\\build_script_build-2a4f1fae6c6f7afd.pdb",
+      "bytes": 4378624,
+      "sha256": "007730a30ae5f8bc68d3562007b7c29b35a63de468efc4de1728035954ffecae"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-section-map\\debug\\build\\zstd-safe-2a4f1fae6c6f7afd\\build_script_build.pdb",
+      "bytes": 4378624,
+      "sha256": "007730a30ae5f8bc68d3562007b7c29b35a63de468efc4de1728035954ffecae"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-section-map\\debug\\build\\zstd-sys-bea07681de92b07e\\build_script_build-bea07681de92b07e.pdb",
+      "bytes": 5853184,
+      "sha256": "b96100a55872af6cce8e7ece13ebda7ec544b1ea211632168b15001a3f733d8b"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-section-map\\debug\\build\\zstd-sys-bea07681de92b07e\\build_script_build.pdb",
+      "bytes": 5853184,
+      "sha256": "b96100a55872af6cce8e7ece13ebda7ec544b1ea211632168b15001a3f733d8b"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-system-time-final\\debug\\rax.pdb",
+      "bytes": 198373376,
+      "sha256": "d1fa59e8a53ad8cdc1966a32d82878d59a6eaccbb1db2490e874e791253b1829"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-system-time-final\\debug\\rax_isa_oracle.pdb",
+      "bytes": 102944768,
+      "sha256": "c71039282dfc5daddcdb84850f97ae15e2a9fd08c29b60ddfcdafad787eb36e4"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-system-time-final\\debug\\rax_user.pdb",
+      "bytes": 1388544,
+      "sha256": "729b9135fd44e89c32cda2d65d25f7ac72ba84e9f3c7bf67886ed0b2d110c1a8"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-system-time-final\\debug\\deps\\clap_derive-f7c422b4deb7c571.pdb",
+      "bytes": 2904064,
+      "sha256": "b500d2cc5ce21ed8120a95bbafbcaba55c0f98aa07f2191ec253982a147be649"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-system-time-final\\debug\\deps\\rax-d14b0f3429d3d485.pdb",
+      "bytes": 196505600,
+      "sha256": "fc7cfb05d26b28810e5dbcd91251ca24cac535ba4e67921afe687fcbd277f3b0"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-system-time-final\\debug\\deps\\rax-d861ee8f992d7cb6.pdb",
+      "bytes": 352137216,
+      "sha256": "ca02632b119e0246acad2c7af5a336f7217d454c94a611444100937d96501f1e"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-system-time-final\\debug\\deps\\rax.pdb",
+      "bytes": 198373376,
+      "sha256": "d1fa59e8a53ad8cdc1966a32d82878d59a6eaccbb1db2490e874e791253b1829"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-system-time-final\\debug\\deps\\rax_isa_oracle.pdb",
+      "bytes": 102944768,
+      "sha256": "c71039282dfc5daddcdb84850f97ae15e2a9fd08c29b60ddfcdafad787eb36e4"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-system-time-final\\debug\\deps\\rax_user.pdb",
+      "bytes": 1388544,
+      "sha256": "729b9135fd44e89c32cda2d65d25f7ac72ba84e9f3c7bf67886ed0b2d110c1a8"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-system-time-final\\debug\\deps\\scroll_derive-1612bc43fc260760.pdb",
+      "bytes": 2527232,
+      "sha256": "d2851fb5165274fa0cc4bd569cc98231551af71bc5e16b9ea4ac5c9c6d3d7312"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-system-time-final\\debug\\deps\\serde_derive-99b58877542aef55.pdb",
+      "bytes": 3092480,
+      "sha256": "f591821e0d166c74b7d024378422ef10b2a9c3a8a42b72902ef603b08e50d677"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-system-time-final\\debug\\deps\\thiserror_impl-ee3ee93f5fe510ab.pdb",
+      "bytes": 2854912,
+      "sha256": "ac695bf62b6de6175c8abd5c2bd883b189168ed98142306ece8d12407f6e5b05"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-system-time-final\\debug\\deps\\tracing_attributes-5ab72022508808ba.pdb",
+      "bytes": 3059712,
+      "sha256": "9581500adaa397787ac99df917e090e160fdc64ec98d00833b4d7e24977af2d9"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-system-time-final\\debug\\deps\\user_windows-feeced1d96826915.pdb",
+      "bytes": 3133440,
+      "sha256": "83fe07a29774b1ba9420a3c2cd220be7ba4b346f092b54824108d2a72259bfd3"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-system-time-final\\debug\\deps\\user_windows_memory-e106de1a46d1b2ff.pdb",
+      "bytes": 4763648,
+      "sha256": "5ea92d1a2128de058b937be686a1adfdc648a5c4f19a5eb51b78bcbf01c1858e"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-system-time-final\\debug\\build\\getrandom-3e8a70be616e6bf6\\build_script_build-3e8a70be616e6bf6.pdb",
+      "bytes": 1355776,
+      "sha256": "1772589487305a94b71414c9d5fda6fbd8b05910d1f0d5a10ed0cab7db998f1b"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-system-time-final\\debug\\build\\getrandom-3e8a70be616e6bf6\\build_script_build.pdb",
+      "bytes": 1355776,
+      "sha256": "1772589487305a94b71414c9d5fda6fbd8b05910d1f0d5a10ed0cab7db998f1b"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-system-time-final\\debug\\build\\getrandom-c0d8fffd88125a7a\\build_script_build-c0d8fffd88125a7a.pdb",
+      "bytes": 1355776,
+      "sha256": "977f9b7dc68fc1ea33784fee3ed880282aac24620c4b1e2618c6add78b20eac7"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-system-time-final\\debug\\build\\getrandom-c0d8fffd88125a7a\\build_script_build.pdb",
+      "bytes": 1355776,
+      "sha256": "977f9b7dc68fc1ea33784fee3ed880282aac24620c4b1e2618c6add78b20eac7"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-system-time-final\\debug\\build\\libc-715e13bc90434038\\build_script_build-715e13bc90434038.pdb",
+      "bytes": 1699840,
+      "sha256": "055b7a2427b5c23b4541c4008e01fc954d99438e2fb2971fa38d9d3117b317fd"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-system-time-final\\debug\\build\\libc-715e13bc90434038\\build_script_build.pdb",
+      "bytes": 1699840,
+      "sha256": "055b7a2427b5c23b4541c4008e01fc954d99438e2fb2971fa38d9d3117b317fd"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-system-time-final\\debug\\build\\proc-macro2-b3c67b531f10d71b\\build_script_build-b3c67b531f10d71b.pdb",
+      "bytes": 1732608,
+      "sha256": "25c21461da658eef8b3c8676014da45ed49b9aa748eb1ad239d0f2b1b3b7c7e9"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-system-time-final\\debug\\build\\proc-macro2-b3c67b531f10d71b\\build_script_build.pdb",
+      "bytes": 1732608,
+      "sha256": "25c21461da658eef8b3c8676014da45ed49b9aa748eb1ad239d0f2b1b3b7c7e9"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-system-time-final\\debug\\build\\quote-393984b48f18ac92\\build_script_build-393984b48f18ac92.pdb",
+      "bytes": 1650688,
+      "sha256": "05e01987afbcb78c3c4949dbf967604718ca97d49f65c553b214d6a2b3f268c4"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-system-time-final\\debug\\build\\quote-393984b48f18ac92\\build_script_build.pdb",
+      "bytes": 1650688,
+      "sha256": "05e01987afbcb78c3c4949dbf967604718ca97d49f65c553b214d6a2b3f268c4"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-system-time-final\\debug\\build\\rax-capi-5e251e99edf260a8\\build_script_build-5e251e99edf260a8.pdb",
+      "bytes": 1355776,
+      "sha256": "0d5ab3282b88d6ff0668831d6c94d29d06d949d7ed2dbeebbdbb492cb22a160c"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-system-time-final\\debug\\build\\rax-capi-5e251e99edf260a8\\build_script_build.pdb",
+      "bytes": 1355776,
+      "sha256": "0d5ab3282b88d6ff0668831d6c94d29d06d949d7ed2dbeebbdbb492cb22a160c"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-system-time-final\\debug\\build\\serde-17e6b8bb88b7f4fc\\build_script_build-17e6b8bb88b7f4fc.pdb",
+      "bytes": 1667072,
+      "sha256": "f5b99963a0e5e3723ed9d6ef1f8c7497a51702e23cb46d128001abc6cd819416"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-system-time-final\\debug\\build\\serde-17e6b8bb88b7f4fc\\build_script_build.pdb",
+      "bytes": 1667072,
+      "sha256": "f5b99963a0e5e3723ed9d6ef1f8c7497a51702e23cb46d128001abc6cd819416"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-system-time-final\\debug\\build\\serde_core-88e5d38ed408f617\\build_script_build-88e5d38ed408f617.pdb",
+      "bytes": 1667072,
+      "sha256": "1c84c12c7442d5c84601b48c28f5bf0e2855242104d020fb24218972f9086f36"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-system-time-final\\debug\\build\\serde_core-88e5d38ed408f617\\build_script_build.pdb",
+      "bytes": 1667072,
+      "sha256": "1c84c12c7442d5c84601b48c28f5bf0e2855242104d020fb24218972f9086f36"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-system-time-final\\debug\\build\\serde_json-96cb1b397eadc502\\build_script_build-96cb1b397eadc502.pdb",
+      "bytes": 1355776,
+      "sha256": "7dbb4f8d5f349238e7f23e66d9841a71dfc70800d41e7866c98f26f2c9062719"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-system-time-final\\debug\\build\\serde_json-96cb1b397eadc502\\build_script_build.pdb",
+      "bytes": 1355776,
+      "sha256": "7dbb4f8d5f349238e7f23e66d9841a71dfc70800d41e7866c98f26f2c9062719"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-system-time-final\\debug\\build\\thiserror-2900ecdfabac3c4d\\build_script_build-2900ecdfabac3c4d.pdb",
+      "bytes": 1748992,
+      "sha256": "b7128098c240831e1e4944d2cb529e51a9610695557693c65cb56e6a7f3ad4e9"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-system-time-final\\debug\\build\\thiserror-2900ecdfabac3c4d\\build_script_build.pdb",
+      "bytes": 1748992,
+      "sha256": "b7128098c240831e1e4944d2cb529e51a9610695557693c65cb56e6a7f3ad4e9"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-system-time-final\\debug\\build\\winapi-c4dbd173f7adaa07\\build_script_build-c4dbd173f7adaa07.pdb",
+      "bytes": 1454080,
+      "sha256": "258ebd42d0b0527a5e9e8a6e2c6fc255e17fcd0b4ff9cf7f99d1de7dc2074bea"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-system-time-final\\debug\\build\\winapi-c4dbd173f7adaa07\\build_script_build.pdb",
+      "bytes": 1454080,
+      "sha256": "258ebd42d0b0527a5e9e8a6e2c6fc255e17fcd0b4ff9cf7f99d1de7dc2074bea"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-system-time-final\\debug\\build\\zmij-f3b7cec877cd4f5c\\build_script_build-f3b7cec877cd4f5c.pdb",
+      "bytes": 1658880,
+      "sha256": "7f1b84888dbcc8d04b50db296311824867aa048c87e5df54cbac871d98667de0"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-system-time-final\\debug\\build\\zmij-f3b7cec877cd4f5c\\build_script_build.pdb",
+      "bytes": 1658880,
+      "sha256": "7f1b84888dbcc8d04b50db296311824867aa048c87e5df54cbac871d98667de0"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-system-time-final\\debug\\build\\zstd-safe-8cecbdd9318480cd\\build_script_build-8cecbdd9318480cd.pdb",
+      "bytes": 1355776,
+      "sha256": "75b7f52edae61d96f202dbbb7c7a75d480593ac9c952c43f3150cf95f61bc540"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-system-time-final\\debug\\build\\zstd-safe-8cecbdd9318480cd\\build_script_build.pdb",
+      "bytes": 1355776,
+      "sha256": "75b7f52edae61d96f202dbbb7c7a75d480593ac9c952c43f3150cf95f61bc540"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-system-time-final\\debug\\build\\zstd-sys-70e3cee10f865bf6\\build_script_build-70e3cee10f865bf6.pdb",
+      "bytes": 2838528,
+      "sha256": "fc7853bd25963ae6bf43290cd0ecf808cad6b8efa5320a97ecca599946e19633"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-system-time-final\\debug\\build\\zstd-sys-70e3cee10f865bf6\\build_script_build.pdb",
+      "bytes": 2838528,
+      "sha256": "fc7853bd25963ae6bf43290cd0ecf808cad6b8efa5320a97ecca599946e19633"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-system-time-final\\debug\\build\\zstd-sys-7f0f5a081e2ca035\\build_script_build-7f0f5a081e2ca035.pdb",
+      "bytes": 2838528,
+      "sha256": "23a3359bec361d7b55e243fc0ad70a5653cf91ef0124260cc7b90e99a105e0ee"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-system-time-final\\debug\\build\\zstd-sys-7f0f5a081e2ca035\\build_script_build.pdb",
+      "bytes": 2838528,
+      "sha256": "23a3359bec361d7b55e243fc0ad70a5653cf91ef0124260cc7b90e99a105e0ee"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\rax.pdb",
+      "bytes": 196128768,
+      "sha256": "349c7dcf350a15293c13867f271ffb764f150e004cf18d0170ab141ac6f00044"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\rax_isa_oracle.pdb",
+      "bytes": 100544512,
+      "sha256": "9a28d0d8966d1fcfb9024f3bd949f730e93bc210acff57146ac8aacdf17e77e8"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\rax_user.pdb",
+      "bytes": 1363968,
+      "sha256": "dd64ed807673e426b86fe2a93331bce621032aecf51b95552e9f8cb334f2b8fc"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\deps\\clap_derive-f7c422b4deb7c571.pdb",
+      "bytes": 2904064,
+      "sha256": "85333aaa240300957011ddb005e76cdbd3b0cf14524d4ab3558c0e9afc7751c9"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\deps\\rax-24d49cb87dffa633.pdb",
+      "bytes": 193425408,
+      "sha256": "24fbeec33de9b7c377c48587040470136bde1b3db606ae4717a51474d3be3efd"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\deps\\rax-b799307a7949aa6b.pdb",
+      "bytes": 347713536,
+      "sha256": "0c9eab8d4c945f7cc1d273ca0112346c7f261d855e2dc5dd3006f351892b2f87"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\deps\\rax.pdb",
+      "bytes": 196128768,
+      "sha256": "349c7dcf350a15293c13867f271ffb764f150e004cf18d0170ab141ac6f00044"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\deps\\rax_isa_oracle.pdb",
+      "bytes": 100544512,
+      "sha256": "9a28d0d8966d1fcfb9024f3bd949f730e93bc210acff57146ac8aacdf17e77e8"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\deps\\rax_user.pdb",
+      "bytes": 1363968,
+      "sha256": "dd64ed807673e426b86fe2a93331bce621032aecf51b95552e9f8cb334f2b8fc"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\deps\\scroll_derive-1612bc43fc260760.pdb",
+      "bytes": 2527232,
+      "sha256": "591c78c3f3dc6fcedd6adf716e995193e48826aba5bc8045699fe619166a28cd"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\deps\\serde_derive-99b58877542aef55.pdb",
+      "bytes": 3092480,
+      "sha256": "54bf46fa0a11769ef70509334bcca8406c08a9477ee141199c14974797abda4a"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\deps\\thiserror_impl-ee3ee93f5fe510ab.pdb",
+      "bytes": 2854912,
+      "sha256": "d96c6f7adc64902c5967858ea7f3391642200069c08811ca88a18777ee623889"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\deps\\tracing_attributes-5ab72022508808ba.pdb",
+      "bytes": 3059712,
+      "sha256": "47a55fea95ad5a87a94e0f3db88c043337fbd18e058784e43d360e00ccfb1a17"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\deps\\user_windows-e7d78e1ede169446.pdb",
+      "bytes": 3117056,
+      "sha256": "a8d8791cbbc6a2710936a4de11f107726df8e6db77be4f5d540cacf40ffa3f3a"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\deps\\user_windows_memory-184b1c8bfebf3d24.pdb",
+      "bytes": 4354048,
+      "sha256": "b8c444a982a6fa6418c3d92a39984b471cc1988468286ba3ff48923a68d92ea8"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\build\\getrandom-3e8a70be616e6bf6\\build_script_build-3e8a70be616e6bf6.pdb",
+      "bytes": 1355776,
+      "sha256": "199f67f5293ebbaa80808745df8e9e8c463bf553296423aba4b236b7560540b1"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\build\\getrandom-3e8a70be616e6bf6\\build_script_build.pdb",
+      "bytes": 1355776,
+      "sha256": "199f67f5293ebbaa80808745df8e9e8c463bf553296423aba4b236b7560540b1"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\build\\getrandom-c0d8fffd88125a7a\\build_script_build-c0d8fffd88125a7a.pdb",
+      "bytes": 1355776,
+      "sha256": "812c2f3aa4750eec2af2875b0de9271d9d9db72561b6787c6f6ea5eea790e596"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\build\\getrandom-c0d8fffd88125a7a\\build_script_build.pdb",
+      "bytes": 1355776,
+      "sha256": "812c2f3aa4750eec2af2875b0de9271d9d9db72561b6787c6f6ea5eea790e596"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\build\\libc-715e13bc90434038\\build_script_build-715e13bc90434038.pdb",
+      "bytes": 1699840,
+      "sha256": "d6d528d1ac6dbc041d6d0704b528c552a63746fcd5d9f2652677c9da743b82b3"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\build\\libc-715e13bc90434038\\build_script_build.pdb",
+      "bytes": 1699840,
+      "sha256": "d6d528d1ac6dbc041d6d0704b528c552a63746fcd5d9f2652677c9da743b82b3"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\build\\proc-macro2-b3c67b531f10d71b\\build_script_build-b3c67b531f10d71b.pdb",
+      "bytes": 1732608,
+      "sha256": "ab8c8f011474ccd246f833c4ec0791fbb552bc961fee6adcc598c16f381bcd43"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\build\\proc-macro2-b3c67b531f10d71b\\build_script_build.pdb",
+      "bytes": 1732608,
+      "sha256": "ab8c8f011474ccd246f833c4ec0791fbb552bc961fee6adcc598c16f381bcd43"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\build\\quote-393984b48f18ac92\\build_script_build-393984b48f18ac92.pdb",
+      "bytes": 1650688,
+      "sha256": "fc9de32a94d06fc67cbd97c241c2cb70578629b1ca0fd705bcf98c309e6e4e64"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\build\\quote-393984b48f18ac92\\build_script_build.pdb",
+      "bytes": 1650688,
+      "sha256": "fc9de32a94d06fc67cbd97c241c2cb70578629b1ca0fd705bcf98c309e6e4e64"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\build\\rax-capi-cab0129d60286c1d\\build_script_build-cab0129d60286c1d.pdb",
+      "bytes": 1355776,
+      "sha256": "ae4e6fcd551afc1a08d05fae2c8487802caef784a25578bf9951a6ad858b2ac4"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\build\\rax-capi-cab0129d60286c1d\\build_script_build.pdb",
+      "bytes": 1355776,
+      "sha256": "ae4e6fcd551afc1a08d05fae2c8487802caef784a25578bf9951a6ad858b2ac4"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\build\\serde-17e6b8bb88b7f4fc\\build_script_build-17e6b8bb88b7f4fc.pdb",
+      "bytes": 1667072,
+      "sha256": "1e0a50480537c7991a68438a0d43d4ac002a28c8da088f34545b6d674febbdcf"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\build\\serde-17e6b8bb88b7f4fc\\build_script_build.pdb",
+      "bytes": 1667072,
+      "sha256": "1e0a50480537c7991a68438a0d43d4ac002a28c8da088f34545b6d674febbdcf"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\build\\serde_core-88e5d38ed408f617\\build_script_build-88e5d38ed408f617.pdb",
+      "bytes": 1667072,
+      "sha256": "2afa8e32e09787edac33fe4c0458222ac0ee2b7b61bfde3ae06ecf5e3e0af178"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\build\\serde_core-88e5d38ed408f617\\build_script_build.pdb",
+      "bytes": 1667072,
+      "sha256": "2afa8e32e09787edac33fe4c0458222ac0ee2b7b61bfde3ae06ecf5e3e0af178"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\build\\serde_json-96cb1b397eadc502\\build_script_build-96cb1b397eadc502.pdb",
+      "bytes": 1355776,
+      "sha256": "d6a1f24d7db25b6b1b34626fc92391f7a83af810f7a95f06b44348579f962634"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\build\\serde_json-96cb1b397eadc502\\build_script_build.pdb",
+      "bytes": 1355776,
+      "sha256": "d6a1f24d7db25b6b1b34626fc92391f7a83af810f7a95f06b44348579f962634"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\build\\thiserror-2900ecdfabac3c4d\\build_script_build-2900ecdfabac3c4d.pdb",
+      "bytes": 1748992,
+      "sha256": "b07fe498a9a9cbe3ae569c8c5532993fd038e4449bc195efc91ae652227dbe75"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\build\\thiserror-2900ecdfabac3c4d\\build_script_build.pdb",
+      "bytes": 1748992,
+      "sha256": "b07fe498a9a9cbe3ae569c8c5532993fd038e4449bc195efc91ae652227dbe75"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\build\\winapi-c4dbd173f7adaa07\\build_script_build-c4dbd173f7adaa07.pdb",
+      "bytes": 1454080,
+      "sha256": "37553779eccd4d075bc11889504627c50b47d91a232344f3ccfabb86c0eb9225"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\build\\winapi-c4dbd173f7adaa07\\build_script_build.pdb",
+      "bytes": 1454080,
+      "sha256": "37553779eccd4d075bc11889504627c50b47d91a232344f3ccfabb86c0eb9225"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\build\\zmij-f3b7cec877cd4f5c\\build_script_build-f3b7cec877cd4f5c.pdb",
+      "bytes": 1658880,
+      "sha256": "9886bf5589a9dda6de75d0e3cc763a0fd6ae86735f4adf9aaa709823971a563a"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\build\\zmij-f3b7cec877cd4f5c\\build_script_build.pdb",
+      "bytes": 1658880,
+      "sha256": "9886bf5589a9dda6de75d0e3cc763a0fd6ae86735f4adf9aaa709823971a563a"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\build\\zstd-safe-8cecbdd9318480cd\\build_script_build-8cecbdd9318480cd.pdb",
+      "bytes": 1355776,
+      "sha256": "3b3c2feaf0711d0e3c0ca8f6846fd87b0e164e9b70005718a4d6ac3c7e20c29a"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\build\\zstd-safe-8cecbdd9318480cd\\build_script_build.pdb",
+      "bytes": 1355776,
+      "sha256": "3b3c2feaf0711d0e3c0ca8f6846fd87b0e164e9b70005718a4d6ac3c7e20c29a"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\build\\zstd-sys-70e3cee10f865bf6\\build_script_build-70e3cee10f865bf6.pdb",
+      "bytes": 2838528,
+      "sha256": "96e68f39058eb268f3bd82b462ecfe1bb91f02f3ad58e7c63de43fede915fc74"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\build\\zstd-sys-70e3cee10f865bf6\\build_script_build.pdb",
+      "bytes": 2838528,
+      "sha256": "96e68f39058eb268f3bd82b462ecfe1bb91f02f3ad58e7c63de43fede915fc74"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\build\\zstd-sys-7f0f5a081e2ca035\\build_script_build-7f0f5a081e2ca035.pdb",
+      "bytes": 2838528,
+      "sha256": "c81859b71717def75bce64605e1e6d7be023551b5145c9d06c30dad5931ac2b9"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-epoch3\\debug\\build\\zstd-sys-7f0f5a081e2ca035\\build_script_build.pdb",
+      "bytes": 2838528,
+      "sha256": "c81859b71717def75bce64605e1e6d7be023551b5145c9d06c30dad5931ac2b9"
+    }
+  ],
+  "after": [
+    410668478464,
+    402544099328,
+    8124379136
+  ],
+  "free-bytes-restored": 8115089408
+}

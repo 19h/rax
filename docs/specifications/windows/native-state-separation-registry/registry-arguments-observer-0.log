@@ -1,0 +1,18 @@
+program=C:\Windows\Temp\assist-native-rax-20261010\src-semaphore-epoch2\tests\fixtures\user\windows\bin\arm64\smoke.exe prefix-turns=2100000 result=BudgetExhausted
+directory turn=2150998 access=0xf root=Ok(0) flags=Ok(40)
+directory name="\\BaseNamedObjects" length=34 raw=[5c, 42, 61, 73, 65, 4e, 61, 6d, 65, 64, 4f, 62, 6a, 65, 63, 74, 73]
+mutant-call turn=2151112 tid=8 output=0x93df28 access=0x1f0001 attributes=0x93df30 owner=0x0
+mutant-result turn=2151112 tid=8 status=Some(0) handle=Ok(6c) kind=Some("Mutant")
+wait-call turn=2151176 tid=8 handle=0x6c alertable=0x0 timeout=0x0 timeout-value=Err(MemFault { addr: 0, write: false }) object=Some(Mutex { owner: None, count: 0, abandoned: false })
+wait-result turn=2151176 tid=8 status=Some(0) state=Some(Ready) object=Some(Mutex { owner: Some(8), count: 1, abandoned: false })
+semaphore-call turn=2151527 tid=8 name=NtOpenSemaphore svc=0x136 pc=0x7fff38a423a0 args=[93dc20, 1f0003, 93dc40, 18, 24f782e]
+semaphore-result turn=2151527 tid=8 name=NtOpenSemaphore result=BudgetExhausted return-register=Some(c0000034) output-value=Some(0) object=None
+semaphore-call turn=2172395 tid=8 name=NtCreateSemaphore svc=0xc7 pc=0x7fff38a41cb0 args=[93dc08, 1f0003, 93dc20, 441ba0, 441ba0]
+semaphore-result turn=2172395 tid=8 name=NtCreateSemaphore result=BudgetExhausted return-register=Some(0) output-value=Some(74) object=Some(Semaphore { count: 4463520, max: 4463520 })
+semaphore-call turn=2172685 tid=8 name=NtCreateSemaphore svc=0xc7 pc=0x7fff38a41cb0 args=[93dc00, 1f0003, 93dc20, 0, 1]
+semaphore-result turn=2172685 tid=8 name=NtCreateSemaphore result=BudgetExhausted return-register=Some(0) output-value=Some(78) object=Some(Semaphore { count: 0, max: 1 })
+registry-call turn=2178927 tid=8 desired=0x20019 output=0x93e150 attributes=0x93e180 root=Ok(0) flags=Ok(40)
+registry-name turn=2178927 length-bytes=172 name="\\Registry\\Machine\\System\\CurrentControlSet\\Control\\StateSeparation\\RedirectionMap\\Keys" raw=[5c, 52, 65, 67, 69, 73, 74, 72, 79, 5c, 4d, 61, 63, 68, 69, 6e, 65, 5c, 53, 79, 73, 74, 65, 6d, 5c, 43, 75, 72, 72, 65, 6e, 74, 43, 6f, 6e, 74, 72, 6f, 6c, 53, 65, 74, 5c, 43, 6f, 6e, 74, 72, 6f, 6c, 5c, 53, 74, 61, 74, 65, 53, 65, 70, 61, 72, 61, 74, 69, 6f, 6e, 5c, 52, 65, 64, 69, 72, 65, 63, 74, 69, 6f, 6e, 4d, 61, 70, 5c, 4b, 65, 79, 73]
+registry-root turn=2178927 object=None
+terminal turn=2178927 Complete(Internal("native NTDLL service NtOpenKey: Unimplemented(\"NtOpenKey: registry key outside selected runtime snapshot\")"))
+observation-finished program=C:\Windows\Temp\assist-native-rax-20261010\src-semaphore-epoch2\tests\fixtures\user\windows\bin\arm64\smoke.exe turn-limit=3000000

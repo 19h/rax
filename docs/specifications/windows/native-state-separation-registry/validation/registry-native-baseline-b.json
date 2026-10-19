@@ -1,0 +1,39 @@
+{
+  "state": "expected-regression-failed",
+  "utc": "2026-10-19T02:42:51.844393+00:00",
+  "steps": [],
+  "scope": "New native presence regression with product registry implementation unchanged from semaphore parent.",
+  "overrides": [
+    {
+      "path": "src/user/windows/registry/installed.rs",
+      "source": "installed.rs",
+      "bytes": 9144,
+      "sha256": "47d6113e71a9aedb30372084c73527782d9af6cdbde014100e51934de3cb8e80"
+    },
+    {
+      "path": "src/user/windows/registry/installed/redirection_tests.rs",
+      "source": "redirection_tests.rs",
+      "bytes": 1370,
+      "sha256": "020f18927a67f96fe9560e6484dd551a3e7c70c20b15d5f3b8fe453874b6d95a"
+    }
+  ],
+  "pid": 5232,
+  "argv": [
+    "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+    "test",
+    "--locked",
+    "--offline",
+    "--no-default-features",
+    "--lib",
+    "installed_redirection_keys_snapshot_matches_independent_native_presence_all_views",
+    "--",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "exit-code": 101,
+  "log-sha256": "02f3b33cce0e1798ab6fd19092bd960ff43f095c96f914b8d4660fee857094d0",
+  "results": [
+    "FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 7417 filtered out; finished in 0.01s"
+  ],
+  "completed-utc": "2026-10-19T02:45:27.249785+00:00"
+}

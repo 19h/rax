@@ -2446,3 +2446,44 @@ cross-process namespace equivalence remain outside this single-principal
 semaphore group. See `docs/specifications/windows/native-semaphore/README.md`
 for source snapshots, exact native producers, output budgets, assumptions,
 consumer qualifications and the executable evidence verifier.
+
+
+## Native StateSeparation registry evidence (2026-10-19)
+
+Native-library selection now snapshots the fixed SYSTEM
+`StateSeparation\RedirectionMap\Keys` subtree, using known absence only for
+fixed-root `ERROR_FILE_NOT_FOUND` and complete bounded descendants when present.
+Guest handles retain immutable records; arbitrary guest names do not invoke
+host registry operations. IFEO and the new fixed root share the same key-tree
+model and aggregate value budgets. Other keys and prefix lookalikes retain the
+explicit unsupported frontier.
+
+The native producer records 256 fixed-key/view observations across ARM64,
+x64 compatibility, x86, and x86 LAA on one Windows ARM64 kernel, with stable
+producer/source/module identities and handle counts. Of these, 224 lie inside
+the selected root and 32 are outside-prefix controls. Twelve native-evidence
+corruptions are rejected. The unchanged implementation fails the new native
+presence regression (0 passed, 1 failed); the first baseline compile failed
+because the guest disk filled, and the distinct retry reached the assertion.
+Task-owned obsolete PDB cleanup restored 8,115,089,408 bytes without removing
+sources, executables, archives, runtime libraries, or captures.
+
+Six new shared tests pass on macOS/Linux and nine pass on native Windows.
+Complete unfiltered core results are macOS 7,976/0/2, Linux 7,970/0/2, and
+Windows 7,419/5/2 (passed/failed/ignored), retaining exactly the five established
+Windows lowerer failures. All three C API selections pass 183 tests, and all
+three all-target checks pass. The source snapshot binds 22,779 inputs and
+1,583,474,670 bytes. Actual retained Assist core/carrier archives, 513 selected
+inputs, full archive walks before/after C++ links, seven macOS CTests and five
+Linux/Windows C++ consumers pass. Retained Assist Rust ABI184 and C++ inputs
+compared to root ABI264 remain explicit limitations; this is not a
+whole-current-root GUI/plugin/package result. The public RAX C API stays 1.14.0.
+
+Both ordinary Windows programs return the native missing-key status at the
+former registry stop and advance 9,296 observer turns. They stop separately at
+unimplemented `NtSetTimer2` (0x1C0), without a successful guest exit. The current
+Windows owning core is 503,963,010 bytes, SHA-256
+`790ba7cd4d87fe35b63fdbb4aff228cb0b3996a3a2583d09537139fc029db05e`.
+Sources, commands, logs, exact failure names, native captures and portable
+verification are under
+`docs/specifications/windows/native-state-separation-registry/`.

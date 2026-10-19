@@ -1,0 +1,65 @@
+{
+  "controls": [
+    {
+      "name": "wrong-status",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "output-nonzero",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "duplicate-case",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "wrong-pointer-width",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "handle-leak",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "source-mutation",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "after-source-hash",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "pe-machine",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "pe-after-hash",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "module-after-hash",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "producer-exit",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "partial-launch",
+      "rejected": true,
+      "error-type": "AssertionError"
+    }
+  ],
+  "all-rejected": true
+}

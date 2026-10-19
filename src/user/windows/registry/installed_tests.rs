@@ -410,7 +410,7 @@ fn installed_ifeo_snapshot_matches_independent_complete_tree_and_raw_queries() {
         eprintln!("native IFEO disappearing-child injection: 2 opens, acquisition error 2");
     }
 }
-fn check_ifeo(
+pub(super) fn check_ifeo(
     registry: &Registry,
     host: &OwnedKey,
     path: &[u16],

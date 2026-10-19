@@ -100,6 +100,9 @@ mod installed;
 #[path = "registry_tree_tests.rs"]
 mod tree;
 
+#[path = "redirection_registry_tests.rs"]
+mod redirection;
+
 #[path = "registry_fixed_tests.rs"]
 mod fixed;
 

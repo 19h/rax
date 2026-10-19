@@ -1,0 +1,84 @@
+{
+  "utc": "2026-10-19T03:12:12.924210+00:00",
+  "source-epoch": 1,
+  "scope": "Scoped registry feature complete, full process goal incomplete",
+  "core-counts": {
+    "macos": [
+      7976,
+      0,
+      2
+    ],
+    "linux": [
+      7970,
+      0,
+      2
+    ],
+    "windows": [
+      7419,
+      5,
+      2
+    ]
+  },
+  "capi-tests-each-host": 183,
+  "native-cases": 256,
+  "native-selected-root-cases": 224,
+  "new-shared-tests": 6,
+  "new-windows-tests": 9,
+  "native-negative-controls": 12,
+  "owning-selected-inputs": 513,
+  "ordinary-programs": {
+    "source-epoch": 1,
+    "actual-core": {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\target-wait-owned\\debug\\deps\\librax-934115059aa64c85.rlib",
+      "bytes": 503963010,
+      "sha256": "790ba7cd4d87fe35b63fdbb4aff228cb0b3996a3a2583d09537139fc029db05e",
+      "members": 20,
+      "structural-member-walk": "pass"
+    },
+    "source": {
+      "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\redirection-owner-epoch1.rs",
+      "bytes": 9786,
+      "sha256": "f73f278d4b8e53417453c4cbe06a6eead338710653e5249a0d35d96c30be133a"
+    },
+    "runtime-module-identity-preserved": true,
+    "ordinary-guest-exit-success": false,
+    "programs": [
+      {
+        "program": {
+          "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-registry-epoch1\\tests\\fixtures\\user\\windows\\bin\\arm64\\smoke.exe",
+          "bytes": 3584,
+          "sha256": "325730e33e981784bff4a60bc6f342cf95c2735e85042c89748fc471cbe7781b"
+        },
+        "former-stop-turn": 2178927,
+        "new-terminal-turn": 2188223,
+        "additional-observer-turns": 9296,
+        "registry-ntstatus": "C0000034",
+        "output-handle": 0,
+        "guest-exit-success": false,
+        "terminal": "native NTDLL service NtSetTimer2 (0x1c0) at 0x7fff38a42c40 is not implemented",
+        "log": "redirection-owner-epoch1-0.log",
+        "log-sha256": "823ef40d34afcce912aa63aca83c4d1ffa2cb6e8b6cfd7ade09c032ab00f86e8",
+        "controller-exit-code": 0
+      },
+      {
+        "program": {
+          "path": "C:\\Windows\\System32\\whoami.exe",
+          "bytes": 84480,
+          "sha256": "48fde190b002a5a4c4b8b19db014377263ba94220f23a4f0a117fec082d46bf6"
+        },
+        "former-stop-turn": 2181212,
+        "new-terminal-turn": 2190508,
+        "additional-observer-turns": 9296,
+        "registry-ntstatus": "C0000034",
+        "output-handle": 0,
+        "guest-exit-success": false,
+        "terminal": "native NTDLL service NtSetTimer2 (0x1c0) at 0x7fff38a42c40 is not implemented",
+        "log": "redirection-owner-epoch1-1.log",
+        "log-sha256": "469089e81379019a6364a7630575b7562e13db8da6ca9b66b3310bc92a69a8dc",
+        "controller-exit-code": 0
+      }
+    ],
+    "scope": "The complete instruction prefix executes normally. The observed missing registry result matches native capture; no syscall result substitution. Controller exit zero does not imply successful guest exit."
+  },
+  "final-logical-corruptions-rejected": 13
+}

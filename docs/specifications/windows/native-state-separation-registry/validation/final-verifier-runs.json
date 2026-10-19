@@ -1,0 +1,13 @@
+{
+  "all-three-hosts-finished-zero": true,
+  "checked-envelope-files": 159,
+  "receipts-added-after-verification": [
+    "validation/registry-final-check-macos.json",
+    "validation/registry-final-check-macos.log",
+    "validation/registry-final-check-linux.json",
+    "validation/registry-final-check-linux.log",
+    "validation/registry-final-check-windows.json",
+    "validation/registry-final-check-windows.log"
+  ],
+  "scope": "All prior bound evidence and source are unchanged. Only these receipts, this declaration, and the later verbatim-whitespace audit are appended after the three-host check."
+}

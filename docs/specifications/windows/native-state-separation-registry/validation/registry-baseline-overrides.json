@@ -1,0 +1,14 @@
+[
+  {
+    "path": "src/user/windows/registry/installed.rs",
+    "source": "installed.rs",
+    "bytes": 9144,
+    "sha256": "47d6113e71a9aedb30372084c73527782d9af6cdbde014100e51934de3cb8e80"
+  },
+  {
+    "path": "src/user/windows/registry/installed/redirection_tests.rs",
+    "source": "redirection_tests.rs",
+    "bytes": 1370,
+    "sha256": "020f18927a67f96fe9560e6484dd551a3e7c70c20b15d5f3b8fe453874b6d95a"
+  }
+]
