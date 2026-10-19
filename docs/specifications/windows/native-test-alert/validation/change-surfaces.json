@@ -1,0 +1,10 @@
+{
+  "native-service/export/ABI": "affected: zero-argument service and installed WoW64 plain RET leaf; complete direct leaf accepted without masking encoded number, selected exported transition thunk still required. Existing RET imm16/conditional forms preserved.",
+  "thread/APC/cancellation": "affected: consume owned user alert before queued Win32 APC delivery; scheduler cancellation retains frames and forced exit drops them",
+  "scheduler/callbacks": "affected: existing RegContext save/drain/resume route must remain consistent",
+  "installed-host-runtime": "no guest host-call forwarding; native leaf/producers run only for validation",
+  "ISA/SMIR/JIT": "unaffected unless evidence shows missing context mechanics; use existing CPU/ABI path",
+  "public-CABI/dependencies/defaults/persistence": "public Rust Thread source literals add user_alerted; internal constructors updated. Opaque C ABI, dependency pins, defaults and persistence unchanged.",
+  "UI/mesh/permissions/tool-schema": "unaffected: existing process-emulation service boundary, no new tool or scheduling policy",
+  "targets/platforms": "mandatory shared semantic compile/run Windows/macOS/Linux, native Windows leaves/adapter, retained linked consumers and actual ordinary programs"
+}

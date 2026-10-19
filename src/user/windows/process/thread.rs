@@ -85,6 +85,9 @@ pub struct Thread {
     pub suspend: u32,
     /// Queued user APCs: (routine, argument).
     pub apcs: VecDeque<(u64, u64)>,
+    /// Pending user-mode alert; a test consumes it before delivering APCs.
+    /// This is guest-owned state, independent of the executing host thread.
+    pub user_alerted: bool,
     /// The status of a completed wait, for the waiting continuation.
     pub wait_status: Option<u64>,
     /// `TerminateThread` requested with this exit code.
@@ -409,6 +412,7 @@ fn create_inner(
             main,
             suspend: 0,
             apcs: VecDeque::new(),
+            user_alerted: false,
             wait_status: None,
             terminate: None,
             tls_array,

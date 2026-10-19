@@ -1,0 +1,14 @@
+{
+  "assumptions": [
+    {
+      "id": "A5",
+      "assumption": "The unchanged nine feature-source paths remain valid after the concurrent master changes.",
+      "basis": "111 non-overlapping upstream paths from b8ef4239 to1b25f343 are preserved; overlay.json records exact before/after identities.",
+      "dependent-result": "Final linear source integration and publication.",
+      "stress-test": "Fresh full libraries/CAPI/integrations/all-targets on all three hosts, and rebuilt owning archives/consumers/ordinary programs with3808 inputs.",
+      "falsification-probe": "Any protected path changes, an overlay is unaccounted for, a fresh host gate differs unexpectedly, or actual artifacts/sources drift.",
+      "status": "confirmed",
+      "validation": "All nine protected feature paths unchanged; fresh full/CAPI/integration/all-targets selections on all three hosts, 3808 owning inputs, stable actual Cargo archives/consumer outputs and both ordinary runs completed. Windows retains exactly the established five lowerer failures."
+    }
+  ]
+}

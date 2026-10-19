@@ -1,0 +1,26 @@
+{
+  "host": "linux",
+  "state": "verified",
+  "source-files": 25088,
+  "owning-source-inputs": 884,
+  "library-gates": {
+    "macos": {
+      "passed": 8057,
+      "failed": 0,
+      "ignored": 2
+    },
+    "linux": {
+      "passed": 8051,
+      "failed": 0,
+      "ignored": 2
+    },
+    "windows": {
+      "passed": 7521,
+      "failed": 5,
+      "ignored": 2
+    }
+  },
+  "native-checks": 216,
+  "native-callbacks": 144,
+  "scope": "One Windows kernel; exact compiled selections and retained ABI184 consumers. Whole current-root products and full-process completion remain separate."
+}

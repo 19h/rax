@@ -1,0 +1,71 @@
+{
+  "host": "linux",
+  "state": "verified",
+  "source-files": 25088,
+  "owning-source-inputs": 884,
+  "library-gates": {
+    "macos": {
+      "passed": 8070,
+      "failed": 0,
+      "ignored": 2
+    },
+    "linux": {
+      "passed": 8064,
+      "failed": 0,
+      "ignored": 2
+    },
+    "windows": {
+      "passed": 7530,
+      "failed": 5,
+      "ignored": 2
+    }
+  },
+  "native-checks": 216,
+  "native-callbacks": 144,
+  "scope": "One Windows kernel; exact compiled selections and retained ABI184 consumers. Whole current-root products and full-process completion remain separate.",
+  "pre-integration-library-gates": {
+    "macos": {
+      "passed": 8057,
+      "failed": 0,
+      "ignored": 2
+    },
+    "linux": {
+      "passed": 8051,
+      "failed": 0,
+      "ignored": 2
+    },
+    "windows": {
+      "passed": 7521,
+      "failed": 5,
+      "ignored": 2
+    }
+  },
+  "integration": {
+    "source-epoch": 4,
+    "source-files": 25066,
+    "owning-source-inputs": 3808,
+    "library-gates": {
+      "macos": {
+        "passed": 8070,
+        "failed": 0,
+        "ignored": 2
+      },
+      "linux": {
+        "passed": 8064,
+        "failed": 0,
+        "ignored": 2
+      },
+      "windows": {
+        "passed": 7530,
+        "failed": 5,
+        "ignored": 2
+      }
+    },
+    "actual-core": {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\debug\\deps\\librax-934115059aa64c85.rlib",
+      "bytes": 508200048,
+      "sha256": "bc6d2a0a6e1f59d75f3db0bad382db820723b162dce8ebb5dcc331e40acbb120"
+    },
+    "scope": "Fresh complete gates and actual owning continuation on the combined source; historical epoch3 receipts remain separately bounded."
+  }
+}

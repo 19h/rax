@@ -1,0 +1,86 @@
+{
+  "controls": [
+    {
+      "name": "summary-library-count",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "coherent-library-count",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "filtered-full-selection",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "unrecognized-windows-failure",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "capi-count",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "integration-count",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "core-feature-set",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "archive-drift",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "compiled-helper-input",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "ordinary-core-drift",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "native-control-failure",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "false-guest-success",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "alert-return-status",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "false-full-objective",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "missing-assumption-register",
+      "rejected": true,
+      "error-type": "FileNotFoundError"
+    },
+    {
+      "name": "false-whole-root-products",
+      "rejected": true,
+      "error-type": "AssertionError"
+    }
+  ],
+  "all-rejected": true,
+  "scope": "Outer envelope rebound after each corruption; log/record hashes also rebound when applicable. Product source and proof checker unchanged."
+}

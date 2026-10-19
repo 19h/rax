@@ -1,0 +1,68 @@
+profile=arm64 pointer-bytes=8 test-alert=00007FFF38A42D70 alert-thread=00007FFF38A41740 queue-apc=00007FFF38A41490
+check case=0 call=0 status=00000000 last=0000C0DE before=0 after=0 tid=000005E0 sp-before=D98A5FF3A0 sp-after=D98A5FF3A0 nonvolatile=1
+check case=0 call=1 status=00000000 last=0000C0DE before=0 after=0 tid=000005E0 sp-before=D98A5FF3A0 sp-after=D98A5FF3A0 nonvolatile=1
+alert case=1 status=00000000 last=0000C0DE seen=0
+check case=1 call=0 status=00000101 last=0000C0DE before=0 after=0 tid=00002490 sp-before=D98A5FEFD0 sp-after=D98A5FEFD0 nonvolatile=1
+check case=1 call=1 status=00000000 last=0000C0DE before=0 after=0 tid=00002490 sp-before=D98A5FEFD0 sp-after=D98A5FEFD0 nonvolatile=1
+alert case=2 status=00000000 last=0000C0DE seen=0
+check case=2 call=0 status=00000101 last=0000C0DE before=0 after=0 tid=00000E60 sp-before=D98A5FF070 sp-after=D98A5FF070 nonvolatile=1
+check case=2 call=1 status=00000000 last=0000C0DE before=0 after=0 tid=00000E60 sp-before=D98A5FF070 sp-after=D98A5FF070 nonvolatile=1
+check case=2 call=2 status=00000000 last=0000C0DE before=0 after=0 tid=00000E60 sp-before=D98A5FF070 sp-after=D98A5FF070 nonvolatile=1
+queue case=3 kind=1 arg=1111 result=00000001 last=0000C0DE seen=0
+check case=3 call=0 status=00000000 last=0000C0DE before=0 after=1 tid=00001C2C sp-before=D98A5FF2D0 sp-after=D98A5FF2D0 nonvolatile=1
+check case=3 call=1 status=00000000 last=0000C0DE before=1 after=1 tid=00001C2C sp-before=D98A5FF2D0 sp-after=D98A5FF2D0 nonvolatile=1
+event case=3 index=0 phase=4 kind=1 a=1111 b=0 c=0 tid=00001C2C last=0000C0DE nested=00000000
+queue case=4 kind=1 arg=1111 result=00000001 last=0000C0DE seen=0
+queue case=4 kind=1 arg=2222 result=00000001 last=0000C0DE seen=0
+check case=4 call=0 status=00000000 last=0000C0DE before=0 after=2 tid=00001EDC sp-before=D98A5FF270 sp-after=D98A5FF270 nonvolatile=1
+check case=4 call=1 status=00000000 last=0000C0DE before=2 after=2 tid=00001EDC sp-before=D98A5FF270 sp-after=D98A5FF270 nonvolatile=1
+event case=4 index=0 phase=4 kind=1 a=1111 b=0 c=0 tid=00001EDC last=0000C0DE nested=00000000
+event case=4 index=1 phase=4 kind=1 a=2222 b=0 c=0 tid=00001EDC last=0000C0DE nested=00000000
+queue case=5 kind=1 arg=1111 result=00000001 last=0000C0DE seen=0
+queue case=5 kind=1 arg=2222 result=00000001 last=0000C0DE seen=0
+check case=5 call=0 status=00000000 last=0000C0DE before=0 after=3 tid=00001C74 sp-before=D98A5FF300 sp-after=D98A5FF300 nonvolatile=1
+check case=5 call=1 status=00000000 last=0000C0DE before=3 after=3 tid=00001C74 sp-before=D98A5FF300 sp-after=D98A5FF300 nonvolatile=1
+event case=5 index=0 phase=4 kind=1 a=1111 b=0 c=0 tid=00001C74 last=0000C0DE nested=00000000
+event case=5 index=1 phase=4 kind=1 a=2222 b=0 c=0 tid=00001C74 last=0000C0DE nested=00000000
+event case=5 index=2 phase=4 kind=1 a=3333 b=0 c=0 tid=00001C74 last=0000C0DE nested=00000000
+queue case=6 kind=1 arg=1111 result=00000001 last=0000C0DE seen=0
+queue case=6 kind=1 arg=2222 result=00000001 last=0000C0DE seen=0
+check case=6 call=0 status=00000000 last=0000C0DE before=0 after=2 tid=000017A8 sp-before=D98A5FF220 sp-after=D98A5FF220 nonvolatile=1
+check case=6 call=1 status=00000000 last=0000C0DE before=2 after=2 tid=000017A8 sp-before=D98A5FF220 sp-after=D98A5FF220 nonvolatile=1
+event case=6 index=0 phase=4 kind=1 a=1111 b=0 c=0 tid=000017A8 last=0000C0DE nested=00000000
+event case=6 index=1 phase=6 kind=1 a=2222 b=0 c=0 tid=000017A8 last=0000C0DE nested=00000000
+queue case=7 kind=3 arg=5555 result=00000000 last=0000C0DE seen=0
+check case=7 call=0 status=00000000 last=0000C0DE before=0 after=1 tid=00000994 sp-before=D98A5FF360 sp-after=D98A5FF360 nonvolatile=1
+check case=7 call=1 status=00000000 last=0000C0DE before=1 after=1 tid=00000994 sp-before=D98A5FF360 sp-after=D98A5FF360 nonvolatile=1
+event case=7 index=0 phase=4 kind=3 a=5555 b=5556 c=5557 tid=00000994 last=0000C0DE nested=00000000
+queue case=8 kind=3 arg=5555 result=00000000 last=0000C0DE seen=0
+queue case=8 kind=3 arg=6666 result=00000000 last=0000C0DE seen=0
+queue case=8 kind=3 arg=7777 result=00000000 last=0000C0DE seen=0
+check case=8 call=0 status=00000000 last=0000C0DE before=0 after=3 tid=00000E14 sp-before=D98A5FF780 sp-after=D98A5FF780 nonvolatile=1
+check case=8 call=1 status=00000000 last=0000C0DE before=3 after=3 tid=00000E14 sp-before=D98A5FF780 sp-after=D98A5FF780 nonvolatile=1
+event case=8 index=0 phase=4 kind=3 a=5555 b=5556 c=5557 tid=00000E14 last=0000C0DE nested=00000000
+event case=8 index=1 phase=4 kind=3 a=6666 b=6667 c=6668 tid=00000E14 last=0000C0DE nested=00000000
+event case=8 index=2 phase=4 kind=3 a=7777 b=7778 c=7779 tid=00000E14 last=0000C0DE nested=00000000
+queue case=9 kind=3 arg=5555 result=00000000 last=0000C0DE seen=0
+queue case=9 kind=1 arg=1111 result=00000001 last=0000C0DE seen=0
+queue case=9 kind=3 arg=6666 result=00000000 last=0000C0DE seen=0
+check case=9 call=0 status=00000000 last=0000C0DE before=0 after=3 tid=00000EBC sp-before=D98A5FF390 sp-after=D98A5FF390 nonvolatile=1
+check case=9 call=1 status=00000000 last=0000C0DE before=3 after=3 tid=00000EBC sp-before=D98A5FF390 sp-after=D98A5FF390 nonvolatile=1
+event case=9 index=0 phase=4 kind=3 a=5555 b=5556 c=5557 tid=00000EBC last=0000C0DE nested=00000000
+event case=9 index=1 phase=4 kind=1 a=1111 b=0 c=0 tid=00000EBC last=0000C0DE nested=00000000
+event case=9 index=2 phase=4 kind=3 a=6666 b=6667 c=6668 tid=00000EBC last=0000C0DE nested=00000000
+queue case=10 kind=3 arg=5555 result=00000000 last=0000C0DE seen=0
+alert case=10 status=00000000 last=0000C0DE seen=0
+check case=10 call=0 status=00000101 last=0000C0DE before=0 after=0 tid=000016EC sp-before=D98A5FF110 sp-after=D98A5FF110 nonvolatile=1
+check case=10 call=1 status=00000000 last=0000C0DE before=0 after=1 tid=000016EC sp-before=D98A5FF110 sp-after=D98A5FF110 nonvolatile=1
+event case=10 index=0 phase=5 kind=3 a=5555 b=5556 c=5557 tid=000016EC last=0000C0DE nested=00000000
+queue case=11 kind=1 arg=1111 result=00000001 last=0000C0DE seen=0
+alert case=11 status=00000000 last=0000C0DE seen=0
+check case=11 call=0 status=00000101 last=0000C0DE before=0 after=0 tid=00001DE4 sp-before=D98A5FF0D0 sp-after=D98A5FF0D0 nonvolatile=1
+check case=11 call=1 status=00000000 last=0000C0DE before=0 after=1 tid=00001DE4 sp-before=D98A5FF0D0 sp-after=D98A5FF0D0 nonvolatile=1
+event case=11 index=0 phase=5 kind=1 a=1111 b=0 c=0 tid=00001DE4 last=0000C0DE nested=00000000
+queue case=12 kind=1 arg=4444 result=00000001 last=0000C0DE seen=0
+check case=12 call=0 status=00000000 last=0000ABCD before=0 after=1 tid=0000180C sp-before=D98A5FF4D0 sp-after=D98A5FF4D0 nonvolatile=1
+check case=12 call=1 status=00000000 last=0000C0DE before=1 after=1 tid=0000180C sp-before=D98A5FF4D0 sp-after=D98A5FF4D0 nonvolatile=1
+event case=12 index=0 phase=4 kind=1 a=4444 b=0 c=0 tid=0000180C last=0000C0DE nested=00000000
+complete cases=13 checks=27

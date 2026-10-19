@@ -1,0 +1,10 @@
+{
+  "pid": 5676,
+  "state": "failed",
+  "utc": "2026-10-19T20:24:27.638318+00:00",
+  "source-epoch": 1,
+  "steps": [],
+  "exit-code": 1,
+  "error": "Traceback (most recent call last):\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-alert-native-owning-epoch3.py\", line 39, in <module>\n    assert link.is_junction() and link.resolve() in [old.resolve(),R.resolve()]\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+  "completed-utc": "2026-10-19T20:34:32.730780+00:00"
+}

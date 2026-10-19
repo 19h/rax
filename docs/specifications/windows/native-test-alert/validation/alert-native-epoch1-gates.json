@@ -1,0 +1,9 @@
+{
+  "state": "failed",
+  "pid": 1692,
+  "utc": "2026-10-19T20:07:39.666067+00:00",
+  "steps": [],
+  "exit-code": 1,
+  "error": "Traceback (most recent call last):\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-alert-native-epoch1.py\", line 34, in <module>\n    assert row['kind']=='file',row['path']\n           ^^^^^^^^^^^^^^^^^^^\nAssertionError: initrd_root/bin/cat\n",
+  "completed-utc": "2026-10-19T20:07:46.334507+00:00"
+}

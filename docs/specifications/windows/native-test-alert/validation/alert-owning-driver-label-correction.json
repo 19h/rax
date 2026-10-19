@@ -1,0 +1,5 @@
+{
+  "before-sha256": "62d4b783a41fcc94e265929789cb08e75aadbe24184d489b4f79046a8a4e6eb3",
+  "after-sha256": "6cf91d9fdf4dc6e2ff497d8d00de804dd689e816a2cbfdbbbdc1bd4639ddfd64",
+  "change": "Correct inherited numeric source-epoch label1 to3; source root, input manifest, every command and acceptance condition unchanged. Corrected before guest receipt appeared; actual receipt label is checked independently."
+}

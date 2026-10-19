@@ -1,0 +1,55 @@
+{
+  "utc": "2026-10-19T19:57:43.584730+00:00",
+  "exit-code": 101,
+  "argv": [
+    "cargo",
+    "+1.95.0",
+    "test",
+    "--locked",
+    "--offline",
+    "--no-default-features",
+    "--lib",
+    "native_test_alert",
+    "--",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "before-and-after-inputs": [
+    {
+      "path": "src/user/windows/dll/native.rs",
+      "bytes": 21164,
+      "sha256": "f913e7ec599a16e69352d51662e26b8ef84de48f6a75ff2ea56eb8f4e33bd169"
+    },
+    {
+      "path": "src/user/windows/dll/native/alert.rs",
+      "bytes": 1234,
+      "sha256": "a012ba176a11f79f1ab949b615db810a1f490d48fd669f8191b1fd87f12cf5ed"
+    },
+    {
+      "path": "src/user/windows/process/thread.rs",
+      "bytes": 19896,
+      "sha256": "83782378fef650aebb82760ca14f93e2951e64116ac5fc002b20d7415e58ed58"
+    },
+    {
+      "path": "src/user/windows/process/sched.rs",
+      "bytes": 62243,
+      "sha256": "dd86fc67ad6e68be1a885ec8382fd9956c126db8638d7b2be3462170678f42cc"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests.rs",
+      "bytes": 49467,
+      "sha256": "40bc69cc6c10622e4756ed54e206c55c325a8507a2d10c6f347b34b46d3f630e"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/test_alert_tests.rs",
+      "bytes": 5268,
+      "sha256": "89cda5b1dbbf4fe53d0fb3ce9ca45d0faa0199a5f69a0f857fe7a053477b8438"
+    }
+  ],
+  "log": "alert-prototype-a.log",
+  "bytes": 1638,
+  "sha256": "70f337a5cb39ba29cbdaaa4d195a6fd2b55566433907b2b0079f356ed53d1565",
+  "results": [
+    "FAILED. 3 passed; 1 failed; 0 ignored; 0 measured; 8051 filtered out; finished in 0.04s"
+  ]
+}

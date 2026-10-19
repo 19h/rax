@@ -1,0 +1,46 @@
+{
+  "scope": "This semantic group; full process objective remains active.",
+  "assumptions": [
+    {
+      "id": "A1",
+      "assumption": "One installed build29683 kernel and four producer ABI views define the measurable compatibility scope.",
+      "basis": "Previous group runtime identities and actual owning NtTestAlert0x1d3 stop.; status101 consumes an existing user alert before any queued APC, status0 drains FIFO/appended/nested queues, callback LastError persists and stack/nonvolatile snapshots match.",
+      "dependent-result": "Native status/queue/alert ordering model.",
+      "stress-test": "Empty/repeated/self-alerted calls, Win32/native APC callbacks, queue append and recursion.",
+      "falsification-probe": "Completed native rows disagree across profiles or an independent checker finds altered order/status/state.",
+      "status": "confirmed",
+      "validation": "confirmed within captured kernel/profile scope:216checks/144callbacks, fourABIs/twoindependentbuild-launch paths"
+    },
+    {
+      "id": "A2",
+      "assumption": "Existing scheduler APC context restoration can support a synchronous no-argument alert check.",
+      "basis": "begin_apcs captures RegContext, drains owned Win32 APC queue and resumes a saved wait continuation.",
+      "dependent-result": "Implementation design; no additional host callbacks.",
+      "stress-test": "FIFO, callbacks that append, nested checks, preserved stack/nonvolatile context, thread exit/cancellation.",
+      "falsification-probe": "Native ordering or scheduler/installed leaf evidence contradicts the proposed route.",
+      "status": "confirmed",
+      "validation": "confirmed: eight shared/nine Windows focus tests, actual CPU callbacks in installed native/WoW64 leaves, complete three-host selections and cancellation/forced-exit checks"
+    },
+    {
+      "id": "A3",
+      "assumption": "The currently modeled Win32 APC queue and an owned per-thread user-alert bit represent this service without forwarding guest calls to a host thread.",
+      "basis": "NtAlertThread has no registered implementation; source inspection of Thread/wait state remains required.; complete source search of Windows DLL/thread/synchronization modules found only QueueUserAPC as the product queue setter and no native alert/queue registrations.",
+      "dependent-result": "New owned per-thread user_alerted bit is required to represent the observed getter state. Native NtAlertThread/NtQueueApcThread guest producers remain explicit separate frontiers; C API stays opaque.",
+      "stress-test": "Native self-alert and repeated check/wait behavior; search all alert setters and pending states.",
+      "falsification-probe": "A supported guest operation can create an alert state that NtTestAlert must consume but the route loses.",
+      "status": "revised",
+      "validation": "revised and confirmed: false-initialized Thread.user_alerted added; queue remains routine/one-argument. Native alert and native three-argument queue producers remain explicit unsupported frontiers."
+    },
+    {
+      "id": "A4",
+      "assumption": "The reached installed WoW64 zero-argument service uses the complete direct plain-RET form, with the full encoded service identity and exported transition target preserved.",
+      "basis": "Hashed installed NTDLL bytes identify 0x000201d3, plain RET, and the exact FF25 Wow64Transition slot; compiled decoder baseline0pass1fail and real native/WoW64 leaf success.",
+      "dependent-result": "Narrow C3 admission alongside unchanged existing C2 and conditional-C2 forms.",
+      "stress-test": "Three encoded service numbers including0/u32MAX, every truncated prefix, changed opcodes and wrong transition slot.",
+      "falsification-probe": "Actual installed bytes/thunk differ, a malformed/truncated leaf is admitted, identity is masked or installed leaf fails.",
+      "status": "confirmed",
+      "validation": "confirmed within the recorded kernel/image scope"
+    }
+  ],
+  "source-compatibility": "Public Rust Thread literals require user_alerted. Internal constructors updated and all-targets checked on all three hosts. Opaque C API1.14, dependencies/defaults/persistence unchanged."
+}

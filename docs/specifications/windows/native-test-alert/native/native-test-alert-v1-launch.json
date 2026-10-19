@@ -1,0 +1,17 @@
+{
+  "state": "finished",
+  "pid": 3696,
+  "utc": "2026-10-19T19:34:40.527958+00:00",
+  "scope": "Private worker threads in the producer process only. No other-process APC queue, executable memory mutation, real Assist state or Defender policy change.",
+  "source-before": {
+    "sha256": "6393a325c24f1b1c93bed00b05d8d4ecb54fab80693962f3bc278560f0fe9172",
+    "bytes": 6975
+  },
+  "child": 6480,
+  "exit-code": 0,
+  "source-after": {
+    "sha256": "6393a325c24f1b1c93bed00b05d8d4ecb54fab80693962f3bc278560f0fe9172",
+    "bytes": 6975
+  },
+  "completed-utc": "2026-10-19T19:47:13.974536+00:00"
+}

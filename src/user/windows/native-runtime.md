@@ -2688,3 +2688,15 @@ rows, independent checker, bounded capture policy and validation state are in
 Successful ordinary-program exit remains a separate required validation result.
 
 Validation: twelve shared / thirteen Windows focused tests; 22656 independent native observations and 15 rejected native-evidence corruptions. Full selections macOS8049/0/2, Linux8043/0/2, Windows7512/5/2 (exact existing lowerer failures), C API183 each, integration544 non-Windows /4 Windows and all-target compilation. Retained ABI184 linked consumers pass; actual core 506136090 bytes SHA-256 `41fa4b161609e88a2bf24943be1755e0dea8bfb65cab1048f60e85e64e9c736f`. Both ordinary guests pass this query with STATUS_NOT_FOUND/ReturnLength0 and continue44004/64739 observer turns to NtTestAlert / NtQueryVirtualMemory class3. No successful guest exit; full process goal remains active.
+
+
+### Owned native alert checks
+
+`NtTestAlert` consumes a pending guest user alert with STATUS_ALERTED before
+processing queued Win32 APCs. Otherwise it drains existing scheduler callbacks
+and returns STATUS_SUCCESS, preserving interrupted register/stack context and
+callback TEB writes. Native/Win32 queue arguments are not conflated: the current
+guest queue retains one argument, and native three-argument queue producers
+remain separate unsupported frontiers. `Thread.user_alerted` is owned Rust
+state initialized false; no guest call invokes a host alert operation.
+[Native observations, replay scope and validation](../../../docs/specifications/windows/native-test-alert/README.md).

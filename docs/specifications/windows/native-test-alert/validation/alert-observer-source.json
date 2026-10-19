@@ -1,0 +1,6 @@
+{
+  "path": "/Users/int/.assist-alert-20261019/target/alert-ordinary-owner.rs",
+  "bytes": 4454,
+  "sha256": "098ca80b921e52a474250ad0d1840e5b5c2b8a94097a0b21d716b2f4088c5cce",
+  "scope": "Read-only actual owning core observer; no source-state/guest API bypasses, single-instruction scheduling and owned isolated guest config."
+}

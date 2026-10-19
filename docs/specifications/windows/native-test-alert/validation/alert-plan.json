@@ -1,0 +1,77 @@
+{
+  "utc": "2026-10-19T19:29:05.472385+00:00",
+  "base": "b8ef4239e577d07793ca08dcac83f25c36d7c81c",
+  "scope": "Measure and implement reached NtTestAlert semantics with existing owned guest APC state; no product edits until compiled/native baseline evidence. Whole process objective remains active.",
+  "acceptance": [
+    "Native no-argument status and currently reachable APC delivery behavior measured, including FIFO/appending/recursive callbacks, LastError and native/WoW entry behavior",
+    "Shared implementation preserves callback/thread context, queued state, cancellation and normal empty behavior; no guest request forwarded to host NtTestAlert",
+    "Compiled tests-only failing baseline before implementation; strategic dispatcher/scheduler and installed leaf tests",
+    "Shared Windows/macOS/Linux and corresponding native adapter validation; owning ordinary smoke advances past turn2943177",
+    "Exact owned linear red commits; paired root gitlink/engineering records pushed to both remotes; shared worktrees/indexes preserved"
+  ],
+  "assumptions": [
+    {
+      "id": "A1",
+      "assumption": "One installed build29683 kernel and four producer ABI views define the measurable compatibility scope.",
+      "basis": "Previous group runtime identities and actual owning NtTestAlert0x1d3 stop.; status101 consumes an existing user alert before any queued APC, status0 drains FIFO/appended/nested queues, callback LastError persists and stack/nonvolatile snapshots match.",
+      "dependent-result": "Native status/queue/alert ordering model.",
+      "stress-test": "Empty/repeated/self-alerted calls, Win32/native APC callbacks, queue append and recursion.",
+      "falsification-probe": "Completed native rows disagree across profiles or an independent checker finds altered order/status/state.",
+      "status": "confirmed within captured kernel/profile scope:216checks/144callbacks, fourABIs/twoindependentbuild-launch paths"
+    },
+    {
+      "id": "A2",
+      "assumption": "Existing scheduler APC context restoration can support a synchronous no-argument alert check.",
+      "basis": "begin_apcs captures RegContext, drains owned Win32 APC queue and resumes a saved wait continuation.",
+      "dependent-result": "Implementation design; no additional host callbacks.",
+      "stress-test": "FIFO, callbacks that append, nested checks, preserved stack/nonvolatile context, thread exit/cancellation.",
+      "falsification-probe": "Native ordering or scheduler/installed leaf evidence contradicts the proposed route.",
+      "status": "confirmed for seven shared semantic tests including nested frames, retained TEB writes, pending cancellation and forced thread exit; installed leaf validation pending"
+    },
+    {
+      "id": "A3",
+      "assumption": "The current guest model has no independently reachable pending native alert flag outside supported queues.",
+      "basis": "NtAlertThread has no registered implementation; source inspection of Thread/wait state remains required.; complete source search of Windows DLL/thread/synchronization modules found only QueueUserAPC as the product queue setter and no native alert/queue registrations.",
+      "dependent-result": "New owned per-thread user_alerted bit is required to represent the observed getter state. Native NtAlertThread/NtQueueApcThread guest producers remain explicit separate frontiers; C API stays opaque.",
+      "stress-test": "Native self-alert and repeated check/wait behavior; search all alert setters and pending states.",
+      "falsification-probe": "A supported guest operation can create an alert state that NtTestAlert must consume but the route loses.",
+      "status": "revised: owned per-thread user_alerted state added with false initial value; guest native alert and native three-argument queue producers remain separate unsupported frontiers"
+    }
+  ],
+  "surface-map": {
+    "native-service/export/ABI": "affected: zero-argument NTDLL export and existing native syscall/Stdcall transport; x86 caller return4bytes",
+    "thread/APC/cancellation": "affected: consume owned user alert before queued Win32 APC delivery; scheduler cancellation retains frames and forced exit drops them",
+    "scheduler/callbacks": "affected: existing RegContext save/drain/resume route must remain consistent",
+    "installed-host-runtime": "no guest host-call forwarding; native leaf/producers run only for validation",
+    "ISA/SMIR/JIT": "unaffected unless evidence shows missing context mechanics; use existing CPU/ABI path",
+    "public-CABI/dependencies/defaults/persistence": "public Rust Thread source literals add user_alerted; internal constructors updated. Opaque C ABI, dependency pins, defaults and persistence unchanged.",
+    "UI/mesh/permissions/tool-schema": "unaffected: existing process-emulation service boundary, no new tool or scheduling policy",
+    "targets/platforms": "mandatory shared semantic compile/run Windows/macOS/Linux, native Windows leaves/adapter, retained linked consumers and actual ordinary programs"
+  },
+  "bounded-findings": [
+    {
+      "impact": "high",
+      "item": "Ordinary smoke stops at NtTestAlert; whoami independently stops at NtQueryVirtualMemory class3. Successful guest exit remains unproved.",
+      "evidence": "../native-token-security-attributes/validation/ordinary-program-summary.json",
+      "blocks-full-goal": true
+    },
+    {
+      "impact": "medium",
+      "item": "Native three-argument/special APC queue APIs and alert state may require a broader reachable-state representation; scope determined by native evidence and existing supported setters.",
+      "evidence": "existing Thread.apcs/ scheduler and pinned PHNT declarations",
+      "blocks-current-design": false
+    },
+    {
+      "impact": "medium",
+      "item": "Host load can delay Windows validation substantially; preserve actual subprocesses and observe receipts instead of restarting on prlctl transport errors.",
+      "evidence": "previous group all-targets22m43s and source/receipt controls",
+      "blocks-feature": false
+    },
+    {
+      "impact": "medium",
+      "item": "Public Rust Thread literals gain a boolean alert-state field; internal constructors are updated. Opaque C ABI/persistence/defaults unchanged. Existing modeled queue carries single-argument Win32 callbacks; native three-argument queue API remains unsupported.",
+      "evidence": "native-test-alert-v1/v1b raw controls and current Thread.apcs definition",
+      "blocks-current-group": false
+    }
+  ]
+}

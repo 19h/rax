@@ -1,0 +1,15 @@
+{
+  "base": "b8ef4239e577d07793ca08dcac83f25c36d7c81c",
+  "source-owned-paths": [
+    "src/user/windows/dll/native.rs",
+    "src/user/windows/dll/native/alert.rs",
+    "src/user/windows/process/thread.rs",
+    "src/user/windows/process/sched.rs",
+    "src/user/windows/process/sched/tests/services_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/test_alert_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/test_alert_leaf_tests.rs",
+    "src/user/windows/native-runtime.md"
+  ],
+  "evidence-prefix": "docs/specifications/windows/native-test-alert/",
+  "scope": "Measured NtTestAlert query and owned per-thread user-alert flag; existing APC queue/context route. Native alert/queue producer APIs remain separate unsupported frontiers. No product code changed yet; initial tests-only baseline begins now."
+}

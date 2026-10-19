@@ -1,0 +1,13 @@
+   Compiling rax v0.1.0 (/Users/int/.assist-alert-20261019)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 21s
+     Running unittests src/lib.rs (target/debug/deps/rax-dd79f0cd9ae9bb68)
+
+running 5 tests
+test user::windows::process::sched::tests::services_tests::test_alert_tests::native_test_alert_consumes_alert_before_pending_callbacks_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::test_alert_tests::native_test_alert_delivery_restores_context_and_preserves_callback_teb_writes_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::test_alert_tests::native_test_alert_empty_call_ignores_argument_slots_and_returns_native_status_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::test_alert_tests::native_test_alert_nested_check_drains_remaining_queue_and_keeps_both_continuations_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::test_alert_tests::native_test_alert_pending_callbacks_enter_owned_scheduler_delivery_all_abis ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 8051 filtered out; finished in 0.05s
+

@@ -1,0 +1,16 @@
+{
+  "scope": "Completed NtTestAlert semantic group; full userland-process objective remains active.",
+  "gates": {
+    "QG1": "pass: no normative judgment required",
+    "QG2": "pass: final assumptions with concrete falsification probes",
+    "QG3": "pass within group: native contract, implementation, tests, parity, actual owning continuation and evidence; commit/push audited separately",
+    "QG4": "pass: explicit byte widths, x86return4/x64return8/ARM64return0; smoke2943204-2943177=27observerturns",
+    "QG5": "pass: raw controller-label and harness errors preserved and qualified; exact five Windows baseline failures retained",
+    "QG6": "pass: hashed native source/PE/runtime records, pinned PHNT declarations, compiled baseline failures and artifact linkage",
+    "QG7": "pass: remaining native producers and ordinary frontiers bounded separately",
+    "QG8": "pass: eight shared/nine native focused tests, complete suites/CAPI/integration/all-targets, real native/WoW64 leaves and owning programs",
+    "QG9": "pass: explicit module registration and source ownership; no default/dependency/public-CABI change"
+  },
+  "native-observation-scope": "One Windows29683 ARM64 kernel; four ABI views and two independent original native build/launch paths.",
+  "whole-current-root-products": "Not claimed; retained Assist ABI184 consumers were exercised, not current-root ABI264 GUI/plugin/packages."
+}

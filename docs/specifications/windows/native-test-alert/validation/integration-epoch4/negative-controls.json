@@ -1,0 +1,56 @@
+{
+  "controls": [
+    {
+      "name": "coherent-current-library-count",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "filtered-current-full",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "unexpected-current-windows-failure",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "current-capi-count",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "current-owning-core-drift",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "zero-current-archive-walk",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "current-source-hash",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "false-full-process-completion",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "false-whole-current-root-validation",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "false-unchanged-feature",
+      "rejected": true,
+      "error-type": "AssertionError"
+    }
+  ],
+  "all-rejected": true,
+  "scope": "Fresh integration checker is invoked independently of the outer envelope. Relevant launch/log hashes and coherent summary counts are rebound; source/checker semantics remain fixed."
+}

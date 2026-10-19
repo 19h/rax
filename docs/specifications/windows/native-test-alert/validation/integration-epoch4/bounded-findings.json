@@ -1,0 +1,30 @@
+[
+  {
+    "impact": "high",
+    "item": "Smoke still stops at NtContinue alertable APC delivery and whoami at virtual-memory class3; neither guest exits.",
+    "evidence": "ordinary.json and source/core/observer/exe/program/runtime before-after identities",
+    "blocks-current-group": false,
+    "blocks-full-process-goal": true
+  },
+  {
+    "impact": "medium",
+    "item": "Concurrent upstream changed111paths, including shared SMIR/decode/Linux/BPF surfaces.",
+    "evidence": "overlay.json and full fresh three-host/owning source integration receipts",
+    "blocks-current-group": false,
+    "resolution": "Linear integration preserves all upstream changes; nine feature paths are byte-identical; no merge or force-push."
+  },
+  {
+    "impact": "high",
+    "item": "Retained Assist ABI184 consumers do not prove whole current-root ABI264 GUI/plugin/packages.",
+    "evidence": "Owning receipts/source manifests and exact CTest/CPP selections",
+    "blocks-current-group": false,
+    "blocks-full-process-goal": true
+  },
+  {
+    "impact": "medium",
+    "item": "The pinned vm-memory Windows adapter emits the compiler unsupported_calling_conventions warning for extern stdcall on ARM64.",
+    "evidence": "alert-native-epoch4-all-targets.log; current Rust1.95 check exits0",
+    "blocks-current-group": false,
+    "resolution": "Preexisting vendored warning retained; no dependency refresh or calling-convention change in this feature."
+  }
+]

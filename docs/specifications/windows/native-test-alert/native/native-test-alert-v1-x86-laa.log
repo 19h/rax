@@ -1,0 +1,68 @@
+profile=x86-laa pointer-bytes=4 test-alert=777EDD50 alert-thread=777EC720 queue-apc=777EC470
+check case=0 call=0 status=00000000 last=0000C0DE before=0 after=0 tid=00000C74 sp-before=5E1FEB0 sp-after=5E1FEB0 nonvolatile=1
+check case=0 call=1 status=00000000 last=0000C0DE before=0 after=0 tid=00000C74 sp-before=5E1FEB0 sp-after=5E1FEB0 nonvolatile=1
+alert case=1 status=00000000 last=0000C0DE seen=0
+check case=1 call=0 status=00000101 last=0000C0DE before=0 after=0 tid=000010E4 sp-before=5F5FC90 sp-after=5F5FC90 nonvolatile=1
+check case=1 call=1 status=00000000 last=0000C0DE before=0 after=0 tid=000010E4 sp-before=5F5FC90 sp-after=5F5FC90 nonvolatile=1
+alert case=2 status=00000000 last=0000C0DE seen=0
+check case=2 call=0 status=00000101 last=0000C0DE before=0 after=0 tid=000027EC sp-before=5F5FAD0 sp-after=5F5FAD0 nonvolatile=1
+check case=2 call=1 status=00000000 last=0000C0DE before=0 after=0 tid=000027EC sp-before=5F5FAD0 sp-after=5F5FAD0 nonvolatile=1
+check case=2 call=2 status=00000000 last=0000C0DE before=0 after=0 tid=000027EC sp-before=5F5FAD0 sp-after=5F5FAD0 nonvolatile=1
+queue case=3 kind=1 arg=1111 result=00000001 last=0000C0DE seen=0
+check case=3 call=0 status=00000000 last=0000C0DE before=0 after=1 tid=0000259C sp-before=5F5FC50 sp-after=5F5FC50 nonvolatile=1
+check case=3 call=1 status=00000000 last=0000C0DE before=1 after=1 tid=0000259C sp-before=5F5FC50 sp-after=5F5FC50 nonvolatile=1
+event case=3 index=0 phase=4 kind=1 a=1111 b=0 c=0 tid=0000259C last=0000C0DE nested=00000000
+queue case=4 kind=1 arg=1111 result=00000001 last=0000C0DE seen=0
+queue case=4 kind=1 arg=2222 result=00000001 last=0000C0DE seen=0
+check case=4 call=0 status=00000000 last=0000C0DE before=0 after=2 tid=00001388 sp-before=5F5FDC0 sp-after=5F5FDC0 nonvolatile=1
+check case=4 call=1 status=00000000 last=0000C0DE before=2 after=2 tid=00001388 sp-before=5F5FDC0 sp-after=5F5FDC0 nonvolatile=1
+event case=4 index=0 phase=4 kind=1 a=1111 b=0 c=0 tid=00001388 last=0000C0DE nested=00000000
+event case=4 index=1 phase=4 kind=1 a=2222 b=0 c=0 tid=00001388 last=0000C0DE nested=00000000
+queue case=5 kind=1 arg=1111 result=00000001 last=0000C0DE seen=0
+queue case=5 kind=1 arg=2222 result=00000001 last=0000C0DE seen=0
+check case=5 call=0 status=00000000 last=0000C0DE before=0 after=3 tid=00000220 sp-before=5F5F8C0 sp-after=5F5F8C0 nonvolatile=1
+check case=5 call=1 status=00000000 last=0000C0DE before=3 after=3 tid=00000220 sp-before=5F5F8C0 sp-after=5F5F8C0 nonvolatile=1
+event case=5 index=0 phase=4 kind=1 a=1111 b=0 c=0 tid=00000220 last=0000C0DE nested=00000000
+event case=5 index=1 phase=4 kind=1 a=2222 b=0 c=0 tid=00000220 last=0000C0DE nested=00000000
+event case=5 index=2 phase=4 kind=1 a=3333 b=0 c=0 tid=00000220 last=0000C0DE nested=00000000
+queue case=6 kind=1 arg=1111 result=00000001 last=0000C0DE seen=0
+queue case=6 kind=1 arg=2222 result=00000001 last=0000C0DE seen=0
+check case=6 call=0 status=00000000 last=0000C0DE before=0 after=2 tid=00000D0C sp-before=5F5FB00 sp-after=5F5FB00 nonvolatile=1
+check case=6 call=1 status=00000000 last=0000C0DE before=2 after=2 tid=00000D0C sp-before=5F5FB00 sp-after=5F5FB00 nonvolatile=1
+event case=6 index=0 phase=4 kind=1 a=1111 b=0 c=0 tid=00000D0C last=0000C0DE nested=00000000
+event case=6 index=1 phase=6 kind=1 a=2222 b=0 c=0 tid=00000D0C last=0000C0DE nested=00000000
+queue case=7 kind=3 arg=5555 result=00000000 last=0000C0DE seen=0
+check case=7 call=0 status=00000000 last=0000C0DE before=0 after=1 tid=00001C18 sp-before=5F5FD20 sp-after=5F5FD20 nonvolatile=1
+check case=7 call=1 status=00000000 last=0000C0DE before=1 after=1 tid=00001C18 sp-before=5F5FD20 sp-after=5F5FD20 nonvolatile=1
+event case=7 index=0 phase=4 kind=3 a=5555 b=5556 c=5557 tid=00001C18 last=0000C0DE nested=00000000
+queue case=8 kind=3 arg=5555 result=00000000 last=0000C0DE seen=0
+queue case=8 kind=3 arg=6666 result=00000000 last=0000C0DE seen=0
+queue case=8 kind=3 arg=7777 result=00000000 last=0000C0DE seen=0
+check case=8 call=0 status=00000000 last=0000C0DE before=0 after=3 tid=00000590 sp-before=5F5FEA0 sp-after=5F5FEA0 nonvolatile=1
+check case=8 call=1 status=00000000 last=0000C0DE before=3 after=3 tid=00000590 sp-before=5F5FEA0 sp-after=5F5FEA0 nonvolatile=1
+event case=8 index=0 phase=4 kind=3 a=5555 b=5556 c=5557 tid=00000590 last=0000C0DE nested=00000000
+event case=8 index=1 phase=4 kind=3 a=6666 b=6667 c=6668 tid=00000590 last=0000C0DE nested=00000000
+event case=8 index=2 phase=4 kind=3 a=7777 b=7778 c=7779 tid=00000590 last=0000C0DE nested=00000000
+queue case=9 kind=3 arg=5555 result=00000000 last=0000C0DE seen=0
+queue case=9 kind=1 arg=1111 result=00000001 last=0000C0DE seen=0
+queue case=9 kind=3 arg=6666 result=00000000 last=0000C0DE seen=0
+check case=9 call=0 status=00000000 last=0000C0DE before=0 after=3 tid=00002134 sp-before=5F5FAF0 sp-after=5F5FAF0 nonvolatile=1
+check case=9 call=1 status=00000000 last=0000C0DE before=3 after=3 tid=00002134 sp-before=5F5FAF0 sp-after=5F5FAF0 nonvolatile=1
+event case=9 index=0 phase=4 kind=3 a=5555 b=5556 c=5557 tid=00002134 last=0000C0DE nested=00000000
+event case=9 index=1 phase=4 kind=1 a=1111 b=0 c=0 tid=00002134 last=0000C0DE nested=00000000
+event case=9 index=2 phase=4 kind=3 a=6666 b=6667 c=6668 tid=00002134 last=0000C0DE nested=00000000
+queue case=10 kind=3 arg=5555 result=00000000 last=0000C0DE seen=0
+alert case=10 status=00000000 last=0000C0DE seen=0
+check case=10 call=0 status=00000101 last=0000C0DE before=0 after=0 tid=00000D38 sp-before=5F5F8A0 sp-after=5F5F8A0 nonvolatile=1
+check case=10 call=1 status=00000000 last=0000C0DE before=0 after=1 tid=00000D38 sp-before=5F5F8A0 sp-after=5F5F8A0 nonvolatile=1
+event case=10 index=0 phase=5 kind=3 a=5555 b=5556 c=5557 tid=00000D38 last=0000C0DE nested=00000000
+queue case=11 kind=1 arg=1111 result=00000001 last=0000C0DE seen=0
+alert case=11 status=00000000 last=0000C0DE seen=0
+check case=11 call=0 status=00000101 last=0000C0DE before=0 after=0 tid=00001518 sp-before=5F5F760 sp-after=5F5F760 nonvolatile=1
+check case=11 call=1 status=00000000 last=0000C0DE before=0 after=1 tid=00001518 sp-before=5F5F760 sp-after=5F5F760 nonvolatile=1
+event case=11 index=0 phase=5 kind=1 a=1111 b=0 c=0 tid=00001518 last=0000C0DE nested=00000000
+queue case=12 kind=1 arg=4444 result=00000001 last=0000C0DE seen=0
+check case=12 call=0 status=00000000 last=0000ABCD before=0 after=1 tid=00001058 sp-before=5F5FB70 sp-after=5F5FB70 nonvolatile=1
+check case=12 call=1 status=00000000 last=0000C0DE before=1 after=1 tid=00001058 sp-before=5F5FB70 sp-after=5F5FB70 nonvolatile=1
+event case=12 index=0 phase=4 kind=1 a=4444 b=0 c=0 tid=00001058 last=0000C0DE nested=00000000
+complete cases=13 checks=27

@@ -1,0 +1,1063 @@
+{
+  "prior-source-base": "b8ef4239e577d07793ca08dcac83f25c36d7c81c",
+  "prior-feature-commit": "12dfbedf9550379f7a199d77d0b25303eeb2505d",
+  "upstream-commit": "1b25f3438f63d8cc256ae05ca4270e675a084163",
+  "rebased-candidate": "711876bcf74e4113fe9ce2d31b439033243fc5c0",
+  "upstream-commits": [
+    "9ed7d3c5f1d36ca163b36092c0de714557e24301",
+    "1b25f3438f63d8cc256ae05ca4270e675a084163"
+  ],
+  "files": [
+    {
+      "path": ".github/workflows/ci.yml",
+      "before": {
+        "bytes": 13031,
+        "sha256": "8f41e1b8cfc9957ce58a91858bf648e0ebd0f338dc903aa75fd265556c37ce65"
+      },
+      "after": {
+        "bytes": 13098,
+        "sha256": "ec8cf8e100d88ba2992e9bff6272f6bf853536ee173b3692820a808b733066fe"
+      }
+    },
+    {
+      "path": ".github/workflows/full-suite.yml",
+      "before": {
+        "bytes": 5442,
+        "sha256": "6f02a9e05493d30838bebb8cbaf89b0844149e68ae4874b7bdad033e9b0b9354"
+      },
+      "after": {
+        "bytes": 5481,
+        "sha256": "4b90124307c497e1b1ceceaa8cd67c5a1f13c04ab0c7cca8d93ca69e84398b78"
+      }
+    },
+    {
+      "path": "AGENTS.md",
+      "before": {
+        "bytes": 67276,
+        "sha256": "2f2a10fb8488cf96aa961cac86d9bbc43210ba3e78165dd703487bd6a350ac61"
+      },
+      "after": {
+        "bytes": 69139,
+        "sha256": "d2ac529c7d89a8b088e7aaec5aed377497d1458f0dfc130da070403f16683a09"
+      }
+    },
+    {
+      "path": "README.md",
+      "before": {
+        "bytes": 17523,
+        "sha256": "f3450018f586850ec1073dd7ea288f25655599223425ff71721e9412b3ea6191"
+      },
+      "after": {
+        "bytes": 17829,
+        "sha256": "33ff0143b9f0a9fb842e4423fbd1cca64e44d597da7c27aa3977988da42cb275"
+      }
+    },
+    {
+      "path": "docs/architecture/ebpf/README.md",
+      "before": {
+        "bytes": 8520,
+        "sha256": "f8dbcc5e5033b6ff3a1e3bb5a96bc1eb65e9e1d56a2420c8b68e070d9bbafb4c"
+      },
+      "after": {
+        "bytes": 11539,
+        "sha256": "35a8c79e991502bd5e1929435496988e257384bfc9ec70a5de40930f3ab271ca"
+      }
+    },
+    {
+      "path": "docs/architecture/ebpf/verification-2026-10-16.md",
+      "before": null,
+      "after": {
+        "bytes": 37850,
+        "sha256": "310660a9c523f67b52182b3cf6b63c2481743d913749cf2e564fa30e946362d1"
+      }
+    },
+    {
+      "path": "docs/architecture/smir.md",
+      "before": {
+        "bytes": 12384,
+        "sha256": "691e935e0f90e4d3c0bdc944418370784cce3f6d39528d253cc02942975ef36b"
+      },
+      "after": {
+        "bytes": 13282,
+        "sha256": "ef468fde32ae4e40b31978b8ecb156af52dcc4423b8b62be9a51db437c4dafd3"
+      }
+    },
+    {
+      "path": "docs/development/rax-user-sde-repro/README.md",
+      "before": null,
+      "after": {
+        "bytes": 13448,
+        "sha256": "e6caafc7346151b4581080ca02fb62d8f233c4b3d89f3ac1042c0a4bc1147bab"
+      }
+    },
+    {
+      "path": "docs/development/rax-user-sde-repro/generate_pin_pointer.py",
+      "before": null,
+      "after": {
+        "bytes": 1162,
+        "sha256": "de38dee32128cc57d86c0f7a565ac1823507b4f4960cee66f1a72f482920b188"
+      }
+    },
+    {
+      "path": "docs/development/rax-user-sde-repro/ptracefamily.c",
+      "before": null,
+      "after": {
+        "bytes": 3576,
+        "sha256": "24f2a885822829919dddb77dee1b395f28c9e6c3110f0a7b66acdf3e06ed65ce"
+      }
+    },
+    {
+      "path": "docs/development/rax-user-sde-repro/remotememfd.c",
+      "before": null,
+      "after": {
+        "bytes": 1964,
+        "sha256": "7df0ce2b1afec2767ced94f8a509e7a51200768f77fe6e7c04bb05a76e8a2fbc"
+      }
+    },
+    {
+      "path": "docs/reference/status-and-limitations.md",
+      "before": {
+        "bytes": 61862,
+        "sha256": "567937475b7486e0fd8abe0a1a997bb9bed33cef16884f785b0467eb52fabdac"
+      },
+      "after": {
+        "bytes": 62119,
+        "sha256": "f78fbedb6d6caa505ddc5afc800cd4be7c5448fb4f53da0ff4898d433d7561a6"
+      }
+    },
+    {
+      "path": "docs/specifications/ebpf/PROVENANCE.md",
+      "before": {
+        "bytes": 4261,
+        "sha256": "d09402b68653b48f212d8179e804af87f50165157fab58e7811b5380a403c88f"
+      },
+      "after": {
+        "bytes": 6820,
+        "sha256": "f3050349f7b3a1e332b3a213365a18fad0835750693722ac04131db59882dc4d"
+      }
+    },
+    {
+      "path": "docs/specifications/ebpf/bpf_conformance/bpf_conformance-698e3795.tar.gz",
+      "before": null,
+      "after": {
+        "bytes": 117383,
+        "sha256": "4e09b533c6713b39f5833500dcfbf56df3e18ce9403ee8d879e1d9004c17090e"
+      }
+    },
+    {
+      "path": "docs/specifications/linux/kernel-6.19/security/yama/SOURCE.md",
+      "before": null,
+      "after": {
+        "bytes": 648,
+        "sha256": "ed7220f5962d2209c7d83bcb66cdc91bcf6dea158cd0337d6b6e43a340b222ce"
+      }
+    },
+    {
+      "path": "docs/specifications/linux/kernel-6.19/security/yama/yama_lsm.c",
+      "before": null,
+      "after": {
+        "bytes": 12110,
+        "sha256": "146cc6229f8218b37d221a6485def295bd4ebca008ad8ecaec81325d65cab903"
+      }
+    },
+    {
+      "path": "src/isa/ebpf/arith.rs",
+      "before": null,
+      "after": {
+        "bytes": 1350,
+        "sha256": "ff4efc842ac89b68cd692e383dc6ebb54e6312acbaa34f7418d001ca7a81d360"
+      }
+    },
+    {
+      "path": "src/isa/ebpf/calls.rs",
+      "before": {
+        "bytes": 2655,
+        "sha256": "ac5b73f04dec9b0aa770bdcbb32c4e6b3a8d877cf031f8a743cff136d61bdbce"
+      },
+      "after": {
+        "bytes": 5498,
+        "sha256": "bfda109202438b40f5591d02a542e2781470fd33d4aeaf7d23621098322035d7"
+      }
+    },
+    {
+      "path": "src/isa/ebpf/cpu.rs",
+      "before": {
+        "bytes": 35615,
+        "sha256": "059a8c048f10c1affb01c57f35c0854e90154336a5981e5790d6757b9f9be6b0"
+      },
+      "after": {
+        "bytes": 37883,
+        "sha256": "8853660d82650de5e3b622f115bcbefe7969da350169668e3d111b48fdff692c"
+      }
+    },
+    {
+      "path": "src/isa/ebpf/mod.rs",
+      "before": {
+        "bytes": 9274,
+        "sha256": "c7862fed5b74f50b7aff0f4b62c354bfbe462b517cab3a8ce5caafbb422e88f4"
+      },
+      "after": {
+        "bytes": 14016,
+        "sha256": "0b9b7b23d0403f078f83472fcfd46ba62a65873285d681c8def3d31e2765b530"
+      }
+    },
+    {
+      "path": "src/isa/ebpf/platform.rs",
+      "before": null,
+      "after": {
+        "bytes": 4619,
+        "sha256": "67c88768f441b7934a4e1de43c70e02dfef7a5f6ea0c2399aaeaebb23a7afa46"
+      }
+    },
+    {
+      "path": "src/isa/ebpf/verifier.rs",
+      "before": null,
+      "after": {
+        "bytes": 17446,
+        "sha256": "a5ec8ba229a4627686337670a619b9e5327fd5e4d6615fd099742cee345f05df"
+      }
+    },
+    {
+      "path": "src/isa/x86_64/decode/dispatch/mod.rs",
+      "before": {
+        "bytes": 4182,
+        "sha256": "fae6f4996749e8606f7c12b2ac5dcad075a9bf0415a2522da3ee4483f99dc36b"
+      },
+      "after": {
+        "bytes": 4281,
+        "sha256": "7a5282447fb2d96a60e12cad2f632063fec3d338ae0eaf8dceb32df44abf80e4"
+      }
+    },
+    {
+      "path": "src/isa/x86_64/decode/dispatch/twobyte/dispatch/escape_3a.rs",
+      "before": {
+        "bytes": 43425,
+        "sha256": "f381f9eab94100bc8e1845d62165f09431b5da5ba278cf28a7267de2c0415866"
+      },
+      "after": {
+        "bytes": 43571,
+        "sha256": "b8f401181610034921049f3d455ed1ed80fd21609d9b128672e7711eee57d310"
+      }
+    },
+    {
+      "path": "src/isa/x86_64/decode/dispatch/twobyte/dispatch/primary.rs",
+      "before": {
+        "bytes": 23333,
+        "sha256": "b76d1ba1fd9b1c73ff82f308ced514e146adf354dbdc27c35fb5c33186717cb9"
+      },
+      "after": {
+        "bytes": 23568,
+        "sha256": "d14e222781e0b8299b02dc016b5ce217444ee4af5c2798a87d76b39f27721846"
+      }
+    },
+    {
+      "path": "src/isa/x86_64/user_mode_tests.rs",
+      "before": {
+        "bytes": 35452,
+        "sha256": "72e342eed7210215a5dfb28476832899b8e9ab16f6d8dd81686725685b8ea129"
+      },
+      "after": {
+        "bytes": 35471,
+        "sha256": "fb4c28068e0644fbda3cf5f9ce6095b0d6c00176ea6723b07fe4a158671e3c96"
+      }
+    },
+    {
+      "path": "src/isa/x86_64/user_mode_tests/rip_relative.rs",
+      "before": null,
+      "after": {
+        "bytes": 7465,
+        "sha256": "4457c337186ff9bce4cbeef85c7dfe3951098d94109d1e414dacbd9d80aceb1c"
+      }
+    },
+    {
+      "path": "src/smir/interpret/execution.rs",
+      "before": {
+        "bytes": 25852,
+        "sha256": "afcc78bd996cac13f673969ba79962a9643a6b5ac20c62bdf73cde176b4a84c9"
+      },
+      "after": {
+        "bytes": 29368,
+        "sha256": "04109e2a0b60ea528379f15d064c6d442240fc2cc5a0353d334c21bb9b7aba6f"
+      }
+    },
+    {
+      "path": "src/smir/ir/memory.rs",
+      "before": {
+        "bytes": 22932,
+        "sha256": "d72cfeac255643603fb65cd23123a8cd27fc9943ab3087f3beca94f61ac483e4"
+      },
+      "after": {
+        "bytes": 25046,
+        "sha256": "66726ed604c6436c418f9f343481b00eb09635f80c7a2efb61ccd690cdfa3a4e"
+      }
+    },
+    {
+      "path": "src/smir/ir/ops/metadata.rs",
+      "before": {
+        "bytes": 42923,
+        "sha256": "1fe9ad3e17f064b5600a34b79d77cf93a80bb6810247a67bec035689e47799a7"
+      },
+      "after": {
+        "bytes": 43182,
+        "sha256": "c4a8e42326b8b99de6769f6bbde6b5a0fc3a1a5812fd10e78ba5317d5046e59c"
+      }
+    },
+    {
+      "path": "src/smir/ir/trap.rs",
+      "before": {
+        "bytes": 3670,
+        "sha256": "4e2d2e28861a9dd0f24aee03e30b2e9285c29edb67ac9a3654c1f1962fce909a"
+      },
+      "after": {
+        "bytes": 4068,
+        "sha256": "deaab852eb24981571568dfb2aab5eb5ad2b92e0b9ab7add4e72c74fbfb448af"
+      }
+    },
+    {
+      "path": "src/smir/lift/ebpf/control_flow.rs",
+      "before": {
+        "bytes": 8076,
+        "sha256": "6f3dc4d325626215fe3da90045bf7f0382584069f11d38a2cbf14d446a12e191"
+      },
+      "after": {
+        "bytes": 11560,
+        "sha256": "49679bf2e2929d6b13dd694b48a57eae0bada0fce19471518d3b8e783ff267c4"
+      }
+    },
+    {
+      "path": "src/smir/lift/ebpf/mod.rs",
+      "before": {
+        "bytes": 47789,
+        "sha256": "9e09904ca2789b8fbff56e92d0a325d7e5541ddfcb301f2bc597c16d4166769c"
+      },
+      "after": {
+        "bytes": 48440,
+        "sha256": "0476cb4f1cffa00e2d493c3c6cf1e2d631995d2f0cb3a4a3a1ad7e58869e28ab"
+      }
+    },
+    {
+      "path": "src/smir/lower/runtime/jit_gate_tests/trap.rs",
+      "before": {
+        "bytes": 2883,
+        "sha256": "475a148bc773bfa24a3e288578a7f56027ace006710661b0ff1564eb038d8e74"
+      },
+      "after": {
+        "bytes": 3289,
+        "sha256": "3d86d7ac34fdfe8faef552d8e18be0bbae016f25866d28e657c96675ceb96d06"
+      }
+    },
+    {
+      "path": "src/smir/optimize/mod.rs",
+      "before": {
+        "bytes": 56072,
+        "sha256": "279586de1b6b0dfa4759d31b5d6cf267693cdcc549860ec2dd8067f0bafd5a58"
+      },
+      "after": {
+        "bytes": 56322,
+        "sha256": "b7527450809b98d5e3aa266e409e6cecc30912b208ae5bccdab718be3cb8092f"
+      }
+    },
+    {
+      "path": "src/smir/optimize/tests/dead_code.rs",
+      "before": {
+        "bytes": 43582,
+        "sha256": "507209ff431c31c796ef51f15d21c1f55c51b17aa36895b07ca965842d27577f"
+      },
+      "after": {
+        "bytes": 44998,
+        "sha256": "55c4023a0ea45021f2296fa3ee1221d581107686ac59db1d2ac54d666614b7f1"
+      }
+    },
+    {
+      "path": "src/smir/optimize/tests/misc/part2.rs",
+      "before": {
+        "bytes": 5541,
+        "sha256": "86a0c899402c6d77023572a4de311bfe67779fa974c3ac7da642bc2a40a4797f"
+      },
+      "after": {
+        "bytes": 7310,
+        "sha256": "b69c555881fdb62e5e3a51cd23aaf76986714efaca501a41f9e02943ad153547"
+      }
+    },
+    {
+      "path": "src/user/linux/fs/fd.rs",
+      "before": {
+        "bytes": 27060,
+        "sha256": "edb0852a74e249487d4bb572138ccbcc102dfe6966374cf185b31e16f7845895"
+      },
+      "after": {
+        "bytes": 27895,
+        "sha256": "ea84c53ce9e4a00cf2de80f5387d089aec9067953798f129888633b5114daf28"
+      }
+    },
+    {
+      "path": "src/user/linux/fs/mod.rs",
+      "before": {
+        "bytes": 15306,
+        "sha256": "ba366a1f8a4e644f937b549251f7932f5ae79bff5dae18f8763837d06272f8c7"
+      },
+      "after": {
+        "bytes": 15342,
+        "sha256": "3e2c5ffa4d44c12f5fe022c078855c223ed4dc970fac86bb0afb957529df7e0e"
+      }
+    },
+    {
+      "path": "src/user/linux/fs/reopen.rs",
+      "before": null,
+      "after": {
+        "bytes": 9584,
+        "sha256": "53b593658ed625dfed97e6a16edba873ebb5ac87a966a80c97100841ce901b42"
+      }
+    },
+    {
+      "path": "src/user/linux/process.rs",
+      "before": {
+        "bytes": 33973,
+        "sha256": "f0d196e30f11e19a3002214fc8c8a04230201cbb534c88c218c063bc3d24a178"
+      },
+      "after": {
+        "bytes": 34122,
+        "sha256": "d18f3a72380f6df25fc9f699bbac5ad90330b352d0c2e38d1ab0954b60bdc195"
+      }
+    },
+    {
+      "path": "src/user/linux/procfs.rs",
+      "before": {
+        "bytes": 23003,
+        "sha256": "0c5937ea5febf3042846161827d6b28ee9004d424bb336af686c71a7f7066da9"
+      },
+      "after": {
+        "bytes": 24212,
+        "sha256": "5da80cb23c742f89ef9d910f8eeb14703e8ea90479e9585951f22d3878f34116"
+      }
+    },
+    {
+      "path": "src/user/linux/ptrace/family.rs",
+      "before": null,
+      "after": {
+        "bytes": 9441,
+        "sha256": "08e1f5f6a095fba99b7dccd109ae6d291b7ccd1d02fb237454ab5996ab59c37e"
+      }
+    },
+    {
+      "path": "src/user/linux/ptrace/mod.rs",
+      "before": {
+        "bytes": 33118,
+        "sha256": "efb06018b7efeb2690c911826949df561453c1fdc356aaaa2caadf2d9b0f21d3"
+      },
+      "after": {
+        "bytes": 36690,
+        "sha256": "9a255ae8df6d81efe9b9be084fe3e928315cc05ec62dfa3129b1a7703c022978"
+      }
+    },
+    {
+      "path": "src/user/linux/ptrace/procfs.rs",
+      "before": null,
+      "after": {
+        "bytes": 4144,
+        "sha256": "9f940dc2e12634a64a0f9c5cda9e5b24bfd372aa5a56e5d144328413a2e4184b"
+      }
+    },
+    {
+      "path": "src/user/linux/ptrace/tracee.rs",
+      "before": {
+        "bytes": 43802,
+        "sha256": "ded22f1aba7fbc797c0f3f4909fc7076371958a63fe836d830d757622b43923d"
+      },
+      "after": {
+        "bytes": 46229,
+        "sha256": "0b93846a1b721457ad06633320a84f7737ffac9330a80bf8bf58a67aad9c3a0f"
+      }
+    },
+    {
+      "path": "src/user/linux/syscall/child.rs",
+      "before": {
+        "bytes": 25553,
+        "sha256": "0e866f7486595bae2bd5ce3e8ec27453d522183d52ef87c3e023a82deaa4a6a2"
+      },
+      "after": {
+        "bytes": 25697,
+        "sha256": "4666b6afff4c711bb1dcd56a0632fd4ea9a8f55b0be85f100536225adf66b436"
+      }
+    },
+    {
+      "path": "src/user/linux/syscall/fcntl.rs",
+      "before": {
+        "bytes": 10993,
+        "sha256": "da9fc254478b4ae293b65144aed93da312b05213057f5586c63fdceabc3fe394"
+      },
+      "after": {
+        "bytes": 11220,
+        "sha256": "66dc2afca8e579049e6e43ba288a6e6cfc57c3a6ef9270e7843bd367b873e7f8"
+      }
+    },
+    {
+      "path": "src/user/linux/syscall/path.rs",
+      "before": {
+        "bytes": 43293,
+        "sha256": "48c7fee1d9be6f064c739c53eca925006546fdfb4f61346635a1072f390b906d"
+      },
+      "after": {
+        "bytes": 44718,
+        "sha256": "b82d18f69c3fa4e42b45520848ba74bbdef625f02f87b9e7726429f456d4404d"
+      }
+    },
+    {
+      "path": "src/user/linux/syscall/process.rs",
+      "before": {
+        "bytes": 25960,
+        "sha256": "bcdc89ec12619ebfbf21871fd80a0893717b968372d8e41d68ecebd10f34f18b"
+      },
+      "after": {
+        "bytes": 26081,
+        "sha256": "8761b2ac2dc0818e6ba92d20a1f9dcd2bd0fd8c5929bad9547c98181abdba8fe"
+      }
+    },
+    {
+      "path": "src/user/linux/syscall/ptrace.rs",
+      "before": {
+        "bytes": 17961,
+        "sha256": "b0cc617899444f9efcdfeb00ef25676204fe7acd49426bff0216c52c0a8bd5fe"
+      },
+      "after": {
+        "bytes": 17972,
+        "sha256": "28e64a2bb4c0572d40715d3fbe704bb38dc5bfcbd1f9e82504cbc3ccdd0c29b5"
+      }
+    },
+    {
+      "path": "src/user/linux/tests/mod.rs",
+      "before": {
+        "bytes": 1601,
+        "sha256": "d164ef8d73cb35e8ab92a850916336b7d04a448140442537bb2e2799abef5ff2"
+      },
+      "after": {
+        "bytes": 1612,
+        "sha256": "5eecf8c5167fb93e94af260ed16356e18476e2eac17125131a441a3ade6f45e9"
+      }
+    },
+    {
+      "path": "src/user/linux/tests/ptrace.rs",
+      "before": {
+        "bytes": 19148,
+        "sha256": "913d78f693a01c42229c1e94a31e972f78ac923e9cce772039bc815997f44ca9"
+      },
+      "after": {
+        "bytes": 19204,
+        "sha256": "40e611b5b9b7ac612488534771b02ee9ca90e85679052508a4b207ca03dd95f3"
+      }
+    },
+    {
+      "path": "src/user/linux/tests/ptrace_fork.rs",
+      "before": {
+        "bytes": 13564,
+        "sha256": "0faac2236a2a57c68900917621cc63b6f5ec5535c5aa58efd68aa7aad82b47e9"
+      },
+      "after": {
+        "bytes": 13588,
+        "sha256": "7dd825b599cf0c86eeaadfeb29f490ac30f756b3371c0b338145669ec6c3ea66"
+      }
+    },
+    {
+      "path": "src/user/linux/tests/ptrace_jobctl.rs",
+      "before": {
+        "bytes": 14538,
+        "sha256": "1c610ec3f350fd2add3e1d8f41d2d188930f59bdfd147d8cfde4d7bf386f828f"
+      },
+      "after": {
+        "bytes": 14562,
+        "sha256": "6a8bd575f0c00cbf8d45c1164ab8f73d5cbc12c888c21125fdc3d9b82ffb9c27"
+      }
+    },
+    {
+      "path": "src/user/linux/wait.rs",
+      "before": {
+        "bytes": 9558,
+        "sha256": "3df34f3d5587c1f1aade460612bb6f6d95d85a2c347c1c9cc4579f526d2faf3f"
+      },
+      "after": {
+        "bytes": 9733,
+        "sha256": "cec508a399e27b27135c30f002529117819128abcff87c54356e462a32bbab2e"
+      }
+    },
+    {
+      "path": "tests/generated/README.md",
+      "before": {
+        "bytes": 1596,
+        "sha256": "fa8fb8565ab6e6d6ee60e3cdc493ba4c8bbbd26de9b42e0534531883b42f806f"
+      },
+      "after": {
+        "bytes": 2421,
+        "sha256": "fd7f4f25fa3addb247345fb93b4482eee9aab54cf23f374c6dd55881222bb3ab"
+      }
+    },
+    {
+      "path": "tests/generated/ebpf/anza_sbpf.txt",
+      "before": null,
+      "after": {
+        "bytes": 1498,
+        "sha256": "3e812301b475fe5f8be4c0f70b96967d50369e820e934fb6ba8d2a5652f3faad"
+      }
+    },
+    {
+      "path": "tests/generated/ebpf/bpf_conformance.txt",
+      "before": null,
+      "after": {
+        "bytes": 57950,
+        "sha256": "499ee96e47781f4abec4cdbe1266a6eced881487ef8273c7f607504c671938a1"
+      }
+    },
+    {
+      "path": "tests/generated/ebpf/linux_kernel_admission_be.txt",
+      "before": null,
+      "after": {
+        "bytes": 87491,
+        "sha256": "749334f31576fe870e5684ee811565799e8b3f1c72998b13dcfd08b97abd4370"
+      }
+    },
+    {
+      "path": "tests/generated/ebpf/linux_kernel_admission_le.txt",
+      "before": null,
+      "after": {
+        "bytes": 97611,
+        "sha256": "809c4897ddc7d68d983fc861573e8fdf3f28908a746d883025dbd84f25fd7b0b"
+      }
+    },
+    {
+      "path": "tests/generated/ebpf/linux_kernel_be.txt",
+      "before": null,
+      "after": {
+        "bytes": 83748,
+        "sha256": "c41f48c805bac2a6b4229d2ffe0d54b9a28d30ae7afd7900e3a952d945d58c59"
+      }
+    },
+    {
+      "path": "tests/generated/ebpf/linux_kernel_le.txt",
+      "before": null,
+      "after": {
+        "bytes": 83711,
+        "sha256": "69e431b515a496b531ffa5c5369270337b1ebe8fc2eddfe3a2b7f24cc696d909"
+      }
+    },
+    {
+      "path": "tests/generated/manifest.toml",
+      "before": {
+        "bytes": 3115,
+        "sha256": "ee9558b7bb1c6e266aa9153ddd435cf18bcd683c8de67c5f27ec58ab319e6120"
+      },
+      "after": {
+        "bytes": 7114,
+        "sha256": "336f47393d28d3f1e51cac7f9ec4a4fd8196a1d107f41653a10c588d654ed221"
+      }
+    },
+    {
+      "path": "tests/suites/differential/ebpf/admission_corpus.rs",
+      "before": null,
+      "after": {
+        "bytes": 2023,
+        "sha256": "42eb9d34e319fa109f14782122eac796b07da055d0ea448041e9c867d67a89a7"
+      }
+    },
+    {
+      "path": "tests/suites/differential/ebpf/conformance_corpus.rs",
+      "before": null,
+      "after": {
+        "bytes": 3284,
+        "sha256": "2862de8b739abd15e23a3f24c16084232515a6fcdb16bbe08a37e84f5c3af4d6"
+      }
+    },
+    {
+      "path": "tests/suites/differential/ebpf/kernel_corpus.rs",
+      "before": null,
+      "after": {
+        "bytes": 4254,
+        "sha256": "bcfa21623d2cbb4ba507eebc0c08feb2233337a2c9e1170d87fc3579dd4fe5ad"
+      }
+    },
+    {
+      "path": "tests/suites/differential/ebpf/main.rs",
+      "before": {
+        "bytes": 60736,
+        "sha256": "606ce224b6ff2aa2389386ac149feeab77b21f5ad30eb44fa2acca891c42ca8d"
+      },
+      "after": {
+        "bytes": 61076,
+        "sha256": "e2fd415d9d52c00fc0a9a9cb9886cfa8ce5c0e4c7b9ae6e912947c64aae9591b"
+      }
+    },
+    {
+      "path": "tests/suites/differential/ebpf/sbpf_corpus.rs",
+      "before": null,
+      "after": {
+        "bytes": 4371,
+        "sha256": "788b14fd0de93cb089fcec1eb768b58591b107f800a7e6b6e9a5b91fb153a43f"
+      }
+    },
+    {
+      "path": "tests/suites/smir/lift/ebpf.rs",
+      "before": {
+        "bytes": 23343,
+        "sha256": "04772d2c900d8cf31487dd2f2f41d98a259e46da039557b02ec71fa72fb32d11"
+      },
+      "after": {
+        "bytes": 23499,
+        "sha256": "16425ac07e918ff50a54718ea680fe3e431fd2264b6c58f2cc866d6ebe3def8d"
+      }
+    },
+    {
+      "path": "tests/suites/smir/lift/ebpf_conformance_traps.rs",
+      "before": null,
+      "after": {
+        "bytes": 22015,
+        "sha256": "0ecabb096ea7ed35881522fc05001209ba17631cd4cc50664f2f41fe161a1e75"
+      }
+    },
+    {
+      "path": "tests/suites/smir/lift/ebpf_platform.rs",
+      "before": null,
+      "after": {
+        "bytes": 11208,
+        "sha256": "9b1866d84064d8525a2e872513a9bb20da89c451fa71eded3268aa6564054c9f"
+      }
+    },
+    {
+      "path": "tests/suites/smir/lift/ebpf_review_calls.rs",
+      "before": {
+        "bytes": 15814,
+        "sha256": "f1c87f8b669a8a612ba37420ab0bf96722a2af16bc93302e1d8eea455574c4d9"
+      },
+      "after": {
+        "bytes": 19353,
+        "sha256": "57923625214f4ff88dc5acbd0f68315381adf7f69bc333102c967d31ff14ad45"
+      }
+    },
+    {
+      "path": "tests/suites/smir/lift/ebpf_review_decode.rs",
+      "before": {
+        "bytes": 10028,
+        "sha256": "95b372257cb8f2831b95919cf36d23ff427786e2d8aba94487c94d54b24b93dd"
+      },
+      "after": {
+        "bytes": 11206,
+        "sha256": "db88cbcd39f1e41d8007b3121646b67e91ac84611a507403007db33adb14d5f7"
+      }
+    },
+    {
+      "path": "tests/support/ebpf_rfc_oracle.rs",
+      "before": null,
+      "after": {
+        "bytes": 55629,
+        "sha256": "9536444fe1656db577b942339356d4414f7a2b2d5ff230ad15f1cffab98815d3"
+      }
+    },
+    {
+      "path": "tests/support/ebpf_sbpf_oracle.rs",
+      "before": null,
+      "after": {
+        "bytes": 32928,
+        "sha256": "7f24cad97a84143dbe0d67f9d9be2b8bd6c942b6bdd05ef9bcdacb08e51ee797"
+      }
+    },
+    {
+      "path": "tools/ebpf-conformance/Cargo.lock",
+      "before": null,
+      "after": {
+        "bytes": 20454,
+        "sha256": "479877d2c475b1cbb63a6a6a9e8096af0f4fb879b2abdb2e8a9e46c74ef45646"
+      }
+    },
+    {
+      "path": "tools/ebpf-conformance/Cargo.toml",
+      "before": null,
+      "after": {
+        "bytes": 462,
+        "sha256": "fc787750ca4e4c6eb23ba23b910e58d0d179424ef4d55e8c1ec427fd957944ca"
+      }
+    },
+    {
+      "path": "tools/ebpf-conformance/README.md",
+      "before": null,
+      "after": {
+        "bytes": 4989,
+        "sha256": "7840f7b2239162167c1b67934390e91ce1cc7506c59ac998cb2ba9143e4c03d8"
+      }
+    },
+    {
+      "path": "tools/ebpf-conformance/conformance/export_corpus.cc",
+      "before": null,
+      "after": {
+        "bytes": 4631,
+        "sha256": "1dbac509ffc7a5ca6b5d45bc56e9336bae78513a0b541a6ac3235598cf9a072a"
+      }
+    },
+    {
+      "path": "tools/ebpf-conformance/kernel/harness.c",
+      "before": null,
+      "after": {
+        "bytes": 13603,
+        "sha256": "8e42fd08514af78579effe0bca33197534e6fceb9e33d250e275f7d3ac65b811"
+      }
+    },
+    {
+      "path": "tools/ebpf-conformance/run.py",
+      "before": null,
+      "after": {
+        "bytes": 15596,
+        "sha256": "5d4d95924567c576baef80bd038e7d66505f30a36ab7db40888c475b82d8bc7e"
+      }
+    },
+    {
+      "path": "tools/ebpf-conformance/src/bin/rax-bpf-conformance-plugin.rs",
+      "before": null,
+      "after": {
+        "bytes": 4093,
+        "sha256": "8b826293e8c9f94112b74f89aadca0bb1a236c2769456946aa148bfc0237c41a"
+      }
+    },
+    {
+      "path": "tools/ebpf-conformance/src/bin/rax-ebpf-kernel-admission.rs",
+      "before": null,
+      "after": {
+        "bytes": 9892,
+        "sha256": "11b4d0729e7b9aaf5b88165567b4d7def80c395b9ac5d04cd32549e69f109646"
+      }
+    },
+    {
+      "path": "tools/ebpf-conformance/src/bin/rax-ebpf-kernel-campaign.rs",
+      "before": null,
+      "after": {
+        "bytes": 7275,
+        "sha256": "55ce4719e763e342a0adb12a286e8822bf99e285e8d7df03cf685171fdb2ea6d"
+      }
+    },
+    {
+      "path": "tools/ebpf-conformance/src/kernel.rs",
+      "before": null,
+      "after": {
+        "bytes": 5823,
+        "sha256": "e595b4bdaa7d449718b89477cb0c1a100f0bad06232f69900ffd9dd866ee6129"
+      }
+    },
+    {
+      "path": "tools/ebpf-conformance/src/lib.rs",
+      "before": null,
+      "after": {
+        "bytes": 421,
+        "sha256": "320eb33aa5091a9035bc53051d1cb9f10ab63049599c648cfe75c8cee264dba3"
+      }
+    },
+    {
+      "path": "tools/ebpf-formal/BASE_IMAGE",
+      "before": null,
+      "after": {
+        "bytes": 72,
+        "sha256": "c5366019135845ca6232b3d0be14523b71394df1d8d6f6e95cccbd54fcb3d27e"
+      }
+    },
+    {
+      "path": "tools/ebpf-formal/Cargo.lock",
+      "before": null,
+      "after": {
+        "bytes": 24260,
+        "sha256": "2b5783f37cdefd93f27c8f2f9b5293eacd61177103b6dfd96545d6e6ba01837f"
+      }
+    },
+    {
+      "path": "tools/ebpf-formal/Cargo.toml",
+      "before": null,
+      "after": {
+        "bytes": 803,
+        "sha256": "36c09b0299d6aab2067e0b4d5451bf3a5d45b0ee0ec47b76ba0a9bb9f9d49c67"
+      }
+    },
+    {
+      "path": "tools/ebpf-formal/README.md",
+      "before": null,
+      "after": {
+        "bytes": 7972,
+        "sha256": "798f009d9e1c6bf9963bed58cf5d591508142fb6913682d53f4dda53fe86f5a8"
+      }
+    },
+    {
+      "path": "tools/ebpf-formal/gen_proofs.py",
+      "before": null,
+      "after": {
+        "bytes": 6389,
+        "sha256": "f6b63475b17051ab14ffcbcca619a4981b16a9d54cf7c6a3ab75376e80d43de3"
+      }
+    },
+    {
+      "path": "tools/ebpf-formal/gen_registry.py",
+      "before": null,
+      "after": {
+        "bytes": 4962,
+        "sha256": "03d0e68d18294a0fa46695606f0e09e662806945de93e8dc87ab061a2333fb9f"
+      }
+    },
+    {
+      "path": "tools/ebpf-formal/run.py",
+      "before": null,
+      "after": {
+        "bytes": 4630,
+        "sha256": "c2ba977a71ae7b6cfb3e4d76900227b566a57014bd3ab9a38651bed7c2666db6"
+      }
+    },
+    {
+      "path": "tools/ebpf-formal/src/lib.rs",
+      "before": null,
+      "after": {
+        "bytes": 912,
+        "sha256": "3af4ad0d5b0aaa94ec7cbddcc768cb4691f9a3b5301f104bcf71d40ae6454b67"
+      }
+    },
+    {
+      "path": "tools/ebpf-formal/src/proofs/fetch.rs",
+      "before": null,
+      "after": {
+        "bytes": 4291,
+        "sha256": "11b87de30e7f7e954b0edc0674410e22b8b1992515019f89a120e6e1b166bc90"
+      }
+    },
+    {
+      "path": "tools/ebpf-formal/src/proofs/memory.rs",
+      "before": null,
+      "after": {
+        "bytes": 14567,
+        "sha256": "01c911fc74398b8d627fe59f45acc16802ca3f318218078456e81bd7f46f3eaf"
+      }
+    },
+    {
+      "path": "tools/ebpf-formal/src/proofs/mod.rs",
+      "before": null,
+      "after": {
+        "bytes": 7430,
+        "sha256": "aea4a3fc0aaf6f617c914cb6338586156235a8a473bfd06b376645585d37773a"
+      }
+    },
+    {
+      "path": "tools/ebpf-formal/src/proofs/opcodes.rs",
+      "before": null,
+      "after": {
+        "bytes": 1754818,
+        "sha256": "177e8c12e79b6f3f4a1f244735dcf087b0a74f65667779d1309bc0f90d9ea6d7"
+      }
+    },
+    {
+      "path": "tools/ebpf-formal/src/proofs/operators.rs",
+      "before": null,
+      "after": {
+        "bytes": 2981,
+        "sha256": "aec566d896d6540d3e5b0500bf66729204b7a19a0710284623d6485bd83d54df"
+      }
+    },
+    {
+      "path": "tools/ebpf-formal/src/proofs/smir.rs",
+      "before": null,
+      "after": {
+        "bytes": 7960,
+        "sha256": "76e097df3a67a84160214a91293d320f46a807aed6d79739a00f022d96f55a2e"
+      }
+    },
+    {
+      "path": "tools/ebpf-formal/src/registry.rs",
+      "before": null,
+      "after": {
+        "bytes": 42761,
+        "sha256": "44e94afab9e4b260125e2ecf8147cc2f5419169db0e5c26bfe9bcea42a538782"
+      }
+    },
+    {
+      "path": "tools/ebpf-formal/src/sbpf/mod.rs",
+      "before": null,
+      "after": {
+        "bytes": 29175,
+        "sha256": "03f4a3c758cf15b1cf6d33fd4bd98c8841bf721c56fe13edc029c25644b54648"
+      }
+    },
+    {
+      "path": "tools/ebpf-formal/src/sbpf/opcodes.rs",
+      "before": null,
+      "after": {
+        "bytes": 1510956,
+        "sha256": "011c4f2001d6999e6f0a2ef77f04ba6397f36ab88e383b989b41b1a5762faf4a"
+      }
+    },
+    {
+      "path": "tools/ebpf-formal/src/sbpf/smir.rs",
+      "before": null,
+      "after": {
+        "bytes": 6029,
+        "sha256": "6ba79e559839fe4c99b3ba0ad8a66a4e1210030a4f376f28cc395be22a9751eb"
+      }
+    },
+    {
+      "path": "tools/ebpf-formal/src/spec.rs",
+      "before": null,
+      "after": {
+        "bytes": 21299,
+        "sha256": "78eefd051e68a25398734acb9117b7eead15fb8a63e028489eb291385f768790"
+      }
+    },
+    {
+      "path": "tools/ebpf-reference/README.md",
+      "before": {
+        "bytes": 1658,
+        "sha256": "fcb93f8e448e8ba0b45f7abf0e7a9b5608cee13bf6cae0663458d21183ca09c9"
+      },
+      "after": {
+        "bytes": 3038,
+        "sha256": "ac50d85edfad63581c2d5fb3ac99fa9bde52bb29cc09b7d66bd64f7bfdb3d009"
+      }
+    },
+    {
+      "path": "tools/ebpf-reference/run.py",
+      "before": {
+        "bytes": 2395,
+        "sha256": "bd2e2e8f7702aced2f02f0903b38476105d9d2659aa89dea4081cc822a43a4f3"
+      },
+      "after": {
+        "bytes": 2862,
+        "sha256": "674f012bf15d7111bacdae9e2133bd870784630b912f5350ea5204e1708377c0"
+      }
+    },
+    {
+      "path": "tools/ebpf-reference/src/exhaustive.rs",
+      "before": null,
+      "after": {
+        "bytes": 12844,
+        "sha256": "9f774373be78d6d527b505598d7872a2fabc7a3828fd5cd32b8058008170595e"
+      }
+    },
+    {
+      "path": "tools/ebpf-reference/src/exhaustive_tests.rs",
+      "before": null,
+      "after": {
+        "bytes": 17909,
+        "sha256": "ef6bc9a7b3d551daf6e831a313136126a6a7db35488563b27a6c4121aded443f"
+      }
+    },
+    {
+      "path": "tools/ebpf-reference/src/lib.rs",
+      "before": {
+        "bytes": 15115,
+        "sha256": "e0d036be4a3818516d002aa35203bdaa1346d5cd8c7c046aee69a2da97630556"
+      },
+      "after": {
+        "bytes": 15180,
+        "sha256": "d08fc8aae10f8a753f963c6f2d2f284c73d3e811f5feb6e6b01ac76bdba73086"
+      }
+    }
+  ],
+  "protected-feature-paths": [
+    "src/user/windows/dll/native.rs",
+    "src/user/windows/dll/native/alert.rs",
+    "src/user/windows/process/thread.rs",
+    "src/user/windows/process/sched.rs",
+    "src/user/windows/process/sched/tests/services_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/test_alert_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/test_alert_leaf_tests.rs",
+    "src/user/windows/native-runtime.md",
+    "src/user/windows/loader/services.rs"
+  ],
+  "feature-code-unchanged": true,
+  "scope": "Historical epoch3 receipts remain exact for their frozen source. This overlay describes only concurrent upstream changes; epoch4 validates the combined source separately. Derived current-feature evidence is outside the epoch4 compilation-input graph."
+}

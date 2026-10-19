@@ -1,0 +1,8 @@
+{
+  "state": "expected-regression-failed",
+  "passed": 0,
+  "failed": 2,
+  "record": "alert-baseline-a.json",
+  "record-sha256": "590aeff7433af22eb3e1acb8ef9b58de928126b579a2ddcf93c6c3477a11ae87",
+  "scope": "Tests-only baseline compiled before product changes; both failed at unimplemented native NtTestAlert, not a compile error."
+}

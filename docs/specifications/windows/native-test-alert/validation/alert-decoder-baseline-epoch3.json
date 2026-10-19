@@ -1,0 +1,65 @@
+{
+  "utc": "2026-10-19T20:19:54.469746+00:00",
+  "exit-code": 101,
+  "argv": [
+    "cargo",
+    "+1.95.0",
+    "test",
+    "--locked",
+    "--offline",
+    "--no-default-features",
+    "--lib",
+    "native_test_alert_wow64_decoder",
+    "--",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "inputs": [
+    {
+      "path": "src/user/windows/dll/native.rs",
+      "bytes": 21164,
+      "sha256": "f913e7ec599a16e69352d51662e26b8ef84de48f6a75ff2ea56eb8f4e33bd169"
+    },
+    {
+      "path": "src/user/windows/dll/native/alert.rs",
+      "bytes": 1234,
+      "sha256": "a012ba176a11f79f1ab949b615db810a1f490d48fd669f8191b1fd87f12cf5ed"
+    },
+    {
+      "path": "src/user/windows/process/thread.rs",
+      "bytes": 19896,
+      "sha256": "83782378fef650aebb82760ca14f93e2951e64116ac5fc002b20d7415e58ed58"
+    },
+    {
+      "path": "src/user/windows/process/sched.rs",
+      "bytes": 62243,
+      "sha256": "dd86fc67ad6e68be1a885ec8382fd9956c126db8638d7b2be3462170678f42cc"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests.rs",
+      "bytes": 49563,
+      "sha256": "226c9db7dd36770fb844b00d3800072654a65a9c470aa126bdab75f80af9acb2"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/test_alert_tests.rs",
+      "bytes": 13705,
+      "sha256": "595b4f9a1dd442a9030959d4447bba96ae3c64e57d1fe69b5a6e1e0cb05b588c"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/test_alert_leaf_tests.rs",
+      "bytes": 5908,
+      "sha256": "e246334c31f713422485281a868b752918bdb7d006e8a3cba3703bef371986de"
+    },
+    {
+      "path": "src/user/windows/loader/services.rs",
+      "bytes": 19293,
+      "sha256": "e3fda2bf2bb6ec9886d8e4540ef9a74d0340d0dccd75a63e61afc59e3ba9881c"
+    }
+  ],
+  "log": "alert-decoder-baseline-epoch3.log",
+  "bytes": 1227,
+  "sha256": "0fa7bbca05db035a774534d1db84790b1c26a9a2438c91da1dbff042cbc581a5",
+  "results": [
+    "FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 8058 filtered out; finished in 0.00s"
+  ]
+}

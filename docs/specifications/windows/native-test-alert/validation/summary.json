@@ -1,0 +1,113 @@
+{
+  "utc": "2026-10-19T20:58:53.306268+00:00",
+  "source-parent": "b8ef4239e577d07793ca08dcac83f25c36d7c81c",
+  "source-epoch": 3,
+  "source-files": 25088,
+  "source-bytes": 1830323541,
+  "native-top-level-checks": 216,
+  "native-callbacks": 144,
+  "nested-native-checks": 8,
+  "modeled-top-level-checks": 152,
+  "modeled-callbacks": 80,
+  "focused-shared-tests": 8,
+  "focused-native-windows-tests": 9,
+  "native-logical-corruptions-rejected": 14,
+  "library-gates": {
+    "macos": {
+      "passed": 8057,
+      "failed": 0,
+      "ignored": 2
+    },
+    "linux": {
+      "passed": 8051,
+      "failed": 0,
+      "ignored": 2
+    },
+    "windows": {
+      "passed": 7521,
+      "failed": 5,
+      "ignored": 2
+    }
+  },
+  "capi-per-host": 183,
+  "integration": {
+    "macos": 544,
+    "linux": 544,
+    "windows": 4
+  },
+  "ordinary-programs": {
+    "actual-core": {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\debug\\deps\\librax-934115059aa64c85.rlib",
+      "bytes": 507091576,
+      "sha256": "d4606aa7733aef0aea679b473ce9d22ccaecf30862908ce441b31d17cca9002c"
+    },
+    "outcomes": [
+      {
+        "name": "smoke",
+        "terminal-turn": 2943204,
+        "terminal": "Complete(Internal(\"native NTDLL service NtContinue: Unimplemented(\\\"NtContinue: NtContinue alertable APC delivery\\\")\"))",
+        "native": {
+          "exit-code": 0,
+          "stdout-hex": "",
+          "stderr-hex": ""
+        },
+        "alert-calls": [
+          "turn=2943177 tid=8 pc=0x7fff38a42d70 user-alerted=false queued=0"
+        ],
+        "alert-results": [
+          "turn=2943177 tid=8 status=0x0 pc=0x7fff38a42d74 user-alerted=false queued=0 frames=0"
+        ],
+        "console": [
+          "program=C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alert-epoch3\\tests\\fixtures\\user\\windows\\bin\\arm64\\smoke.exe stream=stdout bytes=0 hex=",
+          "program=C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alert-epoch3\\tests\\fixtures\\user\\windows\\bin\\arm64\\smoke.exe stream=stderr bytes=0 hex="
+        ]
+      },
+      {
+        "name": "whoami",
+        "terminal-turn": 2966197,
+        "terminal": "Complete(Internal(\"native NTDLL service NtQueryVirtualMemory: Unimplemented(\\\"NtQueryVirtualMemory: NtQueryVirtualMemory class 3\\\")\"))",
+        "native": {
+          "exit-code": 0,
+          "stdout-hex": "6e7420617574686f726974795c73797374656d0d0a",
+          "stderr-hex": ""
+        },
+        "alert-calls": [],
+        "alert-results": [],
+        "console": [
+          "program=C:\\Windows\\System32\\whoami.exe stream=stdout bytes=0 hex=",
+          "program=C:\\Windows\\System32\\whoami.exe stream=stderr bytes=0 hex="
+        ]
+      }
+    ]
+  },
+  "scope": "One Windows29683 ARM64 kernel, four ABI views, two independent native build/launch paths. Native host/WoW64 installed leaves. Retained Assist ABI184 consumers, not whole current-root ABI264 GUI/plugin/packages.",
+  "full-process-goal-complete": false,
+  "controller-label-qualification": "Final Unix controllers retained numeric source-epoch label2; their selected immutable manifest, source root, before/after checks and actual compiled inputs are epoch3. Raw receipts are preserved. The first native owning attempt rejected an incorrect prior-junction path; b corrected it and completed the actual Cargo build/archive walk, then stopped on a redundant alias assertion. The final c controller reverified those exact archives and completed CPP/after checks without restarting the build. Product inputs were unchanged by controller corrections.",
+  "retained-assist-abi": 184,
+  "current-root-abi": 264,
+  "whole-current-root-products-validated": false,
+  "final-logical-corruptions-rejected": 17,
+  "portable-proof-round1": {
+    "macos": {
+      "exit-code": 0,
+      "envelope": {
+        "bytes": 30602,
+        "sha256": "aad65c539e2553bf38f4dda23dcf692f3d1f567131a82bd4fba5d05244d916a5"
+      }
+    },
+    "linux": {
+      "exit-code": 0,
+      "envelope": {
+        "bytes": 30602,
+        "sha256": "aad65c539e2553bf38f4dda23dcf692f3d1f567131a82bd4fba5d05244d916a5"
+      }
+    },
+    "windows": {
+      "exit-code": 0,
+      "envelope": {
+        "bytes": 30602,
+        "sha256": "aad65c539e2553bf38f4dda23dcf692f3d1f567131a82bd4fba5d05244d916a5"
+      }
+    }
+  }
+}

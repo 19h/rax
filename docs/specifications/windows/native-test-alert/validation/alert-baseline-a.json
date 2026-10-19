@@ -1,0 +1,35 @@
+{
+  "utc": "2026-10-19T19:54:10.340297+00:00",
+  "exit-code": 101,
+  "argv": [
+    "cargo",
+    "+1.95.0",
+    "test",
+    "--locked",
+    "--offline",
+    "--no-default-features",
+    "--lib",
+    "native_test_alert",
+    "--",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "log": "alert-baseline-a.log",
+  "bytes": 2138,
+  "sha256": "e187b51426fbdd3d0a738f2196b2d2277c7214b2bf250563e5180d4df0e60b76",
+  "inputs": [
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests.rs",
+      "bytes": 49467,
+      "sha256": "40bc69cc6c10622e4756ed54e206c55c325a8507a2d10c6f347b34b46d3f630e"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/test_alert_tests.rs",
+      "bytes": 2371,
+      "sha256": "56ee3b5423f912d27752d2f2194b920a88b84ebe38e27844ca77b1d9f00da73f"
+    }
+  ],
+  "results": [
+    "FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 8051 filtered out; finished in 0.01s"
+  ]
+}

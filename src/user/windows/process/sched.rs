@@ -869,6 +869,7 @@ mod tests {
             main: false,
             suspend: 0,
             apcs: VecDeque::new(),
+            user_alerted: false,
             wait_status: None,
             terminate: None,
             tls_array: 0,

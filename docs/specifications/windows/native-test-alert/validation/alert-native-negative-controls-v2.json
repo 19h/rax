@@ -1,0 +1,66 @@
+{
+  "controls": [
+    {
+      "name": "projection-drift",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "normalized-raw-drift",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "alert-priority",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "fifo",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "nested-phase",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "callback-last-error",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "context-restore",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "native-callback-args",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "callback-thread",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "profile-width",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "machine-pair",
+      "rejected": true,
+      "error-type": "AssertionError"
+    },
+    {
+      "name": "source-drift",
+      "rejected": true,
+      "error-type": "AssertionError"
+    }
+  ],
+  "all-rejected": true,
+  "scope": "Each mutated native file is rebound into its outer manifest; rejection depends on independent semantic/ABI/source checks."
+}

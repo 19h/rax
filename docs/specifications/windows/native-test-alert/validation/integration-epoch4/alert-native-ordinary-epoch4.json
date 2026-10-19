@@ -1,0 +1,51 @@
+{
+  "state": "failed",
+  "pid": 1324,
+  "utc": "2026-10-19T21:29:37.164859+00:00",
+  "steps": [
+    {
+      "name": "build",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\rustc.exe",
+        "--edition=2024",
+        "--crate-name",
+        "alert_ordinary_owner",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\helpers\\alert-ordinary-owner-epoch4.rs",
+        "-C",
+        "target-feature=+crt-static",
+        "--extern",
+        "rax=C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\debug\\deps\\librax-934115059aa64c85.rlib",
+        "-L",
+        "dependency=C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\debug\\deps",
+        "-o",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\alert-ordinary-owner-epoch4.exe"
+      ],
+      "seconds": 4.596026416998939,
+      "exit-code": 0,
+      "log": "alert-native-ordinary-epoch4-build.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "outcomes": [],
+  "core-before": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\debug\\deps\\librax-934115059aa64c85.rlib",
+    "bytes": 508200048,
+    "sha256": "bc6d2a0a6e1f59d75f3db0bad382db820723b162dce8ebb5dcc331e40acbb120"
+  },
+  "observer-before": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\helpers\\alert-ordinary-owner-epoch4.rs",
+    "bytes": 5050,
+    "sha256": "27252a2d5ffe5e84db0fafbf6929cb630512c5f009533deee6c4630ae10d8550"
+  },
+  "current-step": "build",
+  "child-pid": 7408,
+  "executable-before": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\alert-ordinary-owner-epoch4.exe",
+    "bytes": 26992640,
+    "sha256": "48d04e5dba943a0caca8600c27ac9d6c5ba0c9b044ae9726c942329955beb2ac"
+  },
+  "exit-code": 1,
+  "error": "Traceback (most recent call last):\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-alert-native-ordinary-epoch4.py\", line 36, in <module>\n    launch=json.loads((R/'docs/specifications/windows/native-test-alert/native/native-test-alert-v1b-launch.json').read_text());modules=[Path(x['path'])for x in launch['runtime-modules-before']];state['runtime-before']=[identity(x)for x in modules];assert[x['sha256']for x in state['runtime-before']]==[x['sha256']for x in launch['runtime-modules-before']]\n                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^\n  File \"pathlib\\__init__.py\", line 792, in read_text\n  File \"pathlib\\__init__.py\", line 776, in open\nFileNotFoundError: [Errno 2] No such file or directory: 'C:\\\\Windows\\\\Temp\\\\assist-native-rax-20261010\\\\src-alert-epoch4\\\\docs\\\\specifications\\\\windows\\\\native-test-alert\\\\native\\\\native-test-alert-v1b-launch.json'\n",
+  "completed-utc": "2026-10-19T21:39:41.429658+00:00"
+}

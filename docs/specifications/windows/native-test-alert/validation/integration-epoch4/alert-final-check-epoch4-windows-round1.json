@@ -1,0 +1,36 @@
+{
+  "state": "finished",
+  "pid": 2876,
+  "utc": "2026-10-19T22:05:48.026359+00:00",
+  "round": 1,
+  "steps": [
+    {
+      "name": "portable-proof",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\verify-alert-epoch4\\docs\\specifications\\windows\\native-test-alert\\check_validation.py",
+        "--host",
+        "windows",
+        "--source",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\verify-alert-epoch4"
+      ],
+      "exit-code": 0,
+      "log": "alert-final-check-epoch4-windows-round1.log",
+      "bytes": 1789,
+      "sha256": "cc78b461b117f2c9502a99dea6b29ef49588b03f55e2481aa4c6a58cfb6dff1a"
+    }
+  ],
+  "child-pid": 2240,
+  "exit-code": 0,
+  "verification-root": "C:\\Windows\\Temp\\assist-native-rax-20261010\\verify-alert-epoch4",
+  "source-root": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alert-epoch4",
+  "source-inputs": 25066,
+  "document-inputs": 260,
+  "envelope": {
+    "bytes": 46945,
+    "sha256": "a33671d2959d3cc4c993751fc1454fe69c6e44971b6cab27f6bf69c48a142c09"
+  },
+  "qualification": "Separate verification source; native product source remains unchanged. Only this task-owned verification documentation is replaced between rounds.",
+  "completed-utc": "2026-10-19T22:06:53.232616+00:00"
+}

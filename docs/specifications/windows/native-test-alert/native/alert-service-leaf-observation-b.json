@@ -1,0 +1,47 @@
+[
+  {
+    "path": "C:\\Windows\\System32\\ntdll.dll",
+    "bytes": 4609312,
+    "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f",
+    "preferred-base": 6442450944,
+    "machine": 43620,
+    "exports": {
+      "NtTestAlert": {
+        "rva": 11632,
+        "bytes64-hex": "613a00d4c0035fd60000000000000000813a00d4c0035fd60000000000000000a13a00d4c0035fd60000000000000000c13a00d4c0035fd60000000000000000"
+      },
+      "NtYieldExecution": {
+        "rva": 5280,
+        "bytes64-hex": "c10800d4c0035fd60000000000000000e10800d4c0035fd60000000000000000010900d4c0035fd60000000000000000210900d4c0035fd60000000000000000"
+      }
+    },
+    "after-sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+  },
+  {
+    "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+    "bytes": 1849976,
+    "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e",
+    "preferred-base": 1260912640,
+    "machine": 332,
+    "exports": {
+      "NtTestAlert": {
+        "rva": 488256,
+        "bytes64-hex": "b8d3010200ba70c3334bffd2c38d4900b8d4010000ba70c3334bffd2c38d4900b8d5010000ba70c3334bffd2c38d4900b8d6010000ba70c3334bffd2c2180090",
+        "transition-thunk": {
+          "address": 1261683568,
+          "rva": 770928,
+          "bytes6-hex": "ff2514103c4b"
+        }
+      },
+      "NtYieldExecution": {
+        "rva": 481904,
+        "bytes64-hex": "b846000100ba70c3334bffd2c38d4900b847000a00ba70c3334bffd2c20c0090b848000000ba70c3334bffd2c2140090b849000000ba70c3334bffd2c2140090"
+      },
+      "Wow64Transition": {
+        "rva": 1314836,
+        "bytes64-hex": "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+      }
+    },
+    "after-sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e"
+  }
+]

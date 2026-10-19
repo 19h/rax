@@ -1,0 +1,40 @@
+[
+  {
+    "impact": "high",
+    "item": "Ordinary smoke stops at NtTestAlert; whoami independently stops at NtQueryVirtualMemory class3. Successful guest exit remains unproved.",
+    "evidence": "../native-token-security-attributes/validation/ordinary-program-summary.json",
+    "blocks-full-goal": true
+  },
+  {
+    "impact": "medium",
+    "item": "Native three-argument/special APC queue APIs and alert state may require a broader reachable-state representation; scope determined by native evidence and existing supported setters.",
+    "evidence": "existing Thread.apcs/ scheduler and pinned PHNT declarations",
+    "blocks-current-design": false
+  },
+  {
+    "impact": "medium",
+    "item": "Host load can delay Windows validation substantially; preserve actual subprocesses and observe receipts instead of restarting on prlctl transport errors.",
+    "evidence": "previous group all-targets22m43s and source/receipt controls",
+    "blocks-feature": false
+  },
+  {
+    "impact": "medium",
+    "item": "Public Rust Thread literals gain a boolean alert-state field; internal constructors are updated. Opaque C ABI/persistence/defaults unchanged. Existing modeled queue carries single-argument Win32 callbacks; native three-argument queue API remains unsupported.",
+    "evidence": "native-test-alert-v1/v1b raw controls and current Thread.apcs definition",
+    "blocks-current-group": false
+  },
+  {
+    "impact": "high",
+    "item": "Actual installed WoW64 NtTestAlert uses plain RET; prior decoder rejects it although shared dispatch tests pass. Include narrow zero-argument leaf recognition and adversarial decoder test in the same feature.",
+    "evidence": "Native epoch2 compiled7pass1fail; native/alert-service-leaf-observation-b.json binds actual bytes and transition thunk.",
+    "blocks-current-group": false,
+    "resolution": "Decoder extended narrowly and validated by shared/native leaf checks."
+  },
+  {
+    "impact": "high",
+    "item": "Ordinary smoke now passes NtTestAlert status0 and advances27turns to explicit NtContinue TestAlert support; whoami remains at virtual-memory class3. Neither guest exits successfully.",
+    "evidence": "ordinary.json and exact source/core/observer/PE/runtime identities",
+    "blocks-current-group": false,
+    "blocks-full-process-objective": true
+  }
+]

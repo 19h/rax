@@ -5,6 +5,7 @@ use super::super::memory::Mem;
 use super::super::nt::status::*;
 
 mod access_check;
+mod alert;
 mod allocate;
 mod apphelp;
 mod directory;
@@ -308,6 +309,7 @@ pub(super) static EXPORTS: &[Export] = &[
         performance_counter::query,
     ),
     Export::func("NtQuerySystemTime", Stdcall, &[Ptr], system_time::query),
+    Export::func("NtTestAlert", Stdcall, &[], alert::test),
     Export::func(
         "NtQueryInformationToken",
         Stdcall,

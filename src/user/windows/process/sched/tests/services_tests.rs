@@ -1303,3 +1303,10 @@ mod token_security_attributes_replay_tests;
 #[cfg(windows)]
 #[path = "services_tests/token_security_attributes_leaf_tests.rs"]
 mod token_security_attributes_leaf_tests;
+
+#[path = "services_tests/test_alert_tests.rs"]
+mod test_alert_tests;
+
+#[cfg(windows)]
+#[path = "services_tests/test_alert_leaf_tests.rs"]
+mod test_alert_leaf_tests;

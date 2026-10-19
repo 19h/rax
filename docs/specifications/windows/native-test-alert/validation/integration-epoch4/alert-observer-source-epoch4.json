@@ -1,0 +1,6 @@
+{
+  "path": "/Users/int/.assist-alert3-20261019/target/alert-ordinary-owner-epoch4.rs",
+  "bytes": 5050,
+  "sha256": "27252a2d5ffe5e84db0fafbf6929cb630512c5f009533deee6c4630ae10d8550",
+  "scope": "Read-only owning observer with decoded CONTEXT diagnostics at reached TestAlert1; no dispatch bypass or guest mutation."
+}

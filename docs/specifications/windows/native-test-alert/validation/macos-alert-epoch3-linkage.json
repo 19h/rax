@@ -1,0 +1,32 @@
+[
+  {
+    "target": "assist_rax_process_tests",
+    "carrier": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes/assist-rs-target/aarch64-apple-darwin/debug/libassist_rs.a",
+    "commands-sha256": "89c53921bb685ffebaf47bf8ab0c7de4b0701de3f1ec2b463d54a4022be24da5"
+  },
+  {
+    "target": "assist_process_tool_tests",
+    "carrier": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes/assist-rs-target/aarch64-apple-darwin/debug/libassist_rs.a",
+    "commands-sha256": "4ca50d9df865bc35fb1a5434c8cb49e7ad0a4c94b68ab3c1e807f4756b104d78"
+  },
+  {
+    "target": "assist_rust_archive_link_tests",
+    "carrier": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes/assist-rs-target/aarch64-apple-darwin/debug/libassist_rs.a",
+    "commands-sha256": "d4d01412188aafbbd80f0a259ce0832caea8d39dc17624b6d8189cce86815027"
+  },
+  {
+    "target": "assist_e14_rax_abi_drift_tests",
+    "carrier": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes/assist-rs-target/aarch64-apple-darwin/debug/libassist_rs.a",
+    "commands-sha256": "29731eb9f9b2201d5ebea290046db2b629fb1756d1df46c81e0345c1dcb2a86f"
+  },
+  {
+    "target": "assist_mcp",
+    "carrier": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes/assist-rs-target/aarch64-apple-darwin/debug/libassist_rs.a",
+    "commands-sha256": "be83a518c69756e22eab1e06940d3f2f270e23dcc95d961f982a122cc5120166"
+  },
+  {
+    "target": "assist_idalib_cli",
+    "carrier": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes/assist-rs-target/aarch64-apple-darwin/debug/libassist_rs.a",
+    "commands-sha256": "0eed54017690d0e2b314d09b07ed1f5c63835d59f0d2fb3b112b8940e0c6a3e9"
+  }
+]

@@ -1,0 +1,8 @@
+{
+  "state": "verified",
+  "files": 25079,
+  "bytes": 1830278903,
+  "overrides": 299,
+  "archive-bytes": 4001886,
+  "qualification": "Initial transfer assertion found already-present immutable parent manifest after transferring all three current files. Existing parent bytes match exactly; all current transfer bytes verified. No source or running gate changed."
+}

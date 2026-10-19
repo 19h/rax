@@ -1,0 +1,21 @@
+   Compiling vm-memory v0.17.1 (/Users/int/.assist-alert3-20261019/vendor/vm-memory)
+   Compiling linux-loader v0.13.2 (https://github.com/19h/linux-loader?rev=f745b555942c4e840a784bca61e6f3976d101960#f745b555)
+   Compiling rax v0.1.0 (/Users/int/.assist-alert3-20261019)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2m 11s
+     Running unittests src/lib.rs (target/debug/deps/rax-dd79f0cd9ae9bb68)
+
+running 1 test
+test user::windows::loader::services::tests::native_test_alert_wow64_decoder_admits_complete_zero_argument_ret_without_masking_identity ... 
+thread 'user::windows::loader::services::tests::native_test_alert_wow64_decoder_admits_complete_zero_argument_ret_without_masking_identity' (13239455) panicked at src/user/windows/loader/services.rs:329:30:
+complete installed zero-argument leaf must be admitted
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+
+failures:
+
+failures:
+    user::windows::loader::services::tests::native_test_alert_wow64_decoder_admits_complete_zero_argument_ret_without_masking_identity
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 8058 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `--lib`

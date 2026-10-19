@@ -188,10 +188,13 @@ struct X86Entry {
 
 fn x86_entry(bytes: &[u8]) -> Option<X86Entry> {
     // Installed WoW64 leaf: MOV EAX, encoded service; MOV EDX, thunk;
-    // CALL EDX; RET imm16. High service bits encode WoW64 marshaling and
+    // CALL EDX; RET (zero arguments) or RET imm16. High bits encode marshaling and
     // remain part of identity rather than being masked to 16 bits.
     let tail = bytes.get(5..)?;
-    if tail.first()? == &0xBA && tail.get(5..8)? == [0xFF, 0xD2, 0xC2] && tail.len() >= 10 {
+    if tail.first()? == &0xBA
+        && tail.get(5..7)? == [0xFF, 0xD2]
+        && (tail.get(7) == Some(&0xC3) || (tail.get(7) == Some(&0xC2) && tail.get(8..10).is_some()))
+    {
         return Some(X86Entry {
             thunk: u32::from_le_bytes(tail[1..5].try_into().ok()?),
             conditional_base: None,
@@ -305,6 +308,49 @@ pub(crate) mod tests {
         .unwrap()
         .unwrap();
         (table, image)
+    }
+
+    #[test]
+    fn native_test_alert_wow64_decoder_admits_complete_zero_argument_ret_without_masking_identity()
+    {
+        for number in [0, 0x0002_01D3, u32::MAX] {
+            let (_, mut image) = x86_image_table("NtTestAlert", number);
+            image[0x20c] = 0xC3;
+            let read = |image: &[u8]| {
+                ServiceTable::read(
+                    WinArch::X86,
+                    image,
+                    DataDirectory {
+                        rva: 0x100,
+                        size: 40,
+                    },
+                    0x1000_0000,
+                )
+                .unwrap()
+            };
+            let table =
+                read(&image).expect("complete installed zero-argument leaf must be admitted");
+            assert_eq!(table.name(WinArch::X86, number), Some("NtTestAlert"));
+            if number > 0xffff {
+                assert_eq!(table.name(WinArch::X86, number & 0xffff), None);
+            }
+            let code = &image[0x200..0x20d];
+            assert_eq!(stub_number(WinArch::X86, code), Some(number));
+            for end in 0..code.len() {
+                assert_eq!(
+                    stub_number(WinArch::X86, &code[..end]),
+                    None,
+                    "truncated at {end}"
+                );
+            }
+            for at in [0, 5, 10, 11, 12] {
+                let mut bad = image.clone();
+                bad[0x200 + at] = 0x90;
+                assert!(read(&bad).is_none(), "changed instruction at {at}");
+            }
+            image[0x242..0x246].copy_from_slice(&0x1000_0304u32.to_le_bytes());
+            assert!(read(&image).is_none(), "wrong transition slot");
+        }
     }
 
     #[test]

@@ -1,0 +1,7 @@
+{
+  "utc": "2026-10-19T19:58:24.682830+00:00",
+  "path": "src/user/windows/process/sched/tests/services_tests/test_alert_tests.rs",
+  "before-sha256": "89cda5b1dbbf4fe53d0fb3ce9ca45d0faa0199a5f69a0f857fe7a053477b8438",
+  "after-sha256": "6a029428b4177bc05b1021ee0e968206e8d897a3e0892c670e87ae41a24643b8",
+  "scope": "The call helper poisons ARM64 argument registers0..7. Snapshot the interrupted register3 after that helper, then assert APC restoration against it; no product change. Added independent nested queue/continuation regression."
+}

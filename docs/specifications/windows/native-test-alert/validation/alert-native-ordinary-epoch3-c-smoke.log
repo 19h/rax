@@ -1,0 +1,8 @@
+program=C:\Windows\Temp\assist-native-rax-20261010\src-alert-epoch3\tests\fixtures\user\windows\bin\arm64\smoke.exe prefix-turns=2100000 result=BudgetExhausted
+alert-call turn=2943177 tid=8 pc=0x7fff38a42d70 user-alerted=false queued=0
+alert-result turn=2943177 tid=8 status=0x0 pc=0x7fff38a42d74 user-alerted=false queued=0 frames=0
+terminal turn=2943204 Complete(Internal("native NTDLL service NtContinue: Unimplemented(\"NtContinue: NtContinue alertable APC delivery\")"))
+final-thread tid=8 pc=0x7fff38a41474 sp=0x93fbd0 args=[93fc30, 1, 1484, 4, 93f920, 10, 0, 1104dd0] bytes=Ok([c0, 3, 5f, d6, 0, 0, 0, 0, 0, 0, 0, 0, 81, 8, 0, d4]) last-error=Ok(6)
+guest-console program=C:\Windows\Temp\assist-native-rax-20261010\src-alert-epoch3\tests\fixtures\user\windows\bin\arm64\smoke.exe stream=stdout bytes=0 hex=
+guest-console program=C:\Windows\Temp\assist-native-rax-20261010\src-alert-epoch3\tests\fixtures\user\windows\bin\arm64\smoke.exe stream=stderr bytes=0 hex=
+observation-finished program=C:\Windows\Temp\assist-native-rax-20261010\src-alert-epoch3\tests\fixtures\user\windows\bin\arm64\smoke.exe turn-limit=10000000 reached-alert=1 terminal=true

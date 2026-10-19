@@ -1,0 +1,50 @@
+{
+  "state": "failed",
+  "pid": 1380,
+  "utc": "2026-10-19T20:11:28.905093+00:00",
+  "steps": [
+    {
+      "name": "toolchain",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "--version"
+      ],
+      "exit-code": 0,
+      "seconds": 0.02944345900323242,
+      "log": "alert-native-epoch2-toolchain.log",
+      "bytes": 36,
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5",
+      "results": []
+    },
+    {
+      "name": "focus",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "native_test_alert",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 101,
+      "seconds": 191.0024896249961,
+      "log": "alert-native-epoch2-focus.log",
+      "bytes": 3282,
+      "sha256": "a1b87c96e009a0364b10d3d7f53fb993e398e6af5cd60c3b0a9b0a8a5685ffbc",
+      "results": [
+        "FAILED. 7 passed; 1 failed; 0 ignored; 0 measured; 7519 filtered out; finished in 1.65s"
+      ]
+    }
+  ],
+  "verified-source-inputs": 25079,
+  "verified-source-bytes": 1830279032,
+  "current-step": "focus",
+  "child-pid": 3576,
+  "exit-code": 1,
+  "error": "Traceback (most recent call last):\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-alert-native-epoch2.py\", line 61, in <module>\n    else:assert code==0,name\n                ^^^^^^^\nAssertionError: focus\n",
+  "completed-utc": "2026-10-19T20:15:08.125749+00:00"
+}

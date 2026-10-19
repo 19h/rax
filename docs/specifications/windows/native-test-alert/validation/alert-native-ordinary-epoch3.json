@@ -1,0 +1,10 @@
+{
+  "state": "failed",
+  "pid": 5368,
+  "utc": "2026-10-19T20:24:13.014044+00:00",
+  "steps": [],
+  "outcomes": [],
+  "exit-code": 1,
+  "error": "Traceback (most recent call last):\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-alert-native-ordinary-epoch3.py\", line 25, in <module>\n    row=json.loads(f.read_text());assert row['state']!='failed',row.get('error','owning validation failed')\n                                         ^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Traceback (most recent call last):\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-alert-native-owning-epoch3.py\", line 39, in <module>\n    assert link.is_junction() and link.resolve() in [old.resolve(),R.resolve()]\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n\n",
+  "completed-utc": "2026-10-19T20:34:33.941714+00:00"
+}
