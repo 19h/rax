@@ -124,3 +124,33 @@ fn selected_data_partial_reserved_views_and_failed_map_are_exact() {
     );
     assert!(vm.is_free(0x5100_0000, section.size));
 }
+
+#[test]
+fn region_copy_charge_includes_reserved_section_pages_and_preserves_acquired_charge() {
+    let mut vm = memory();
+    let section = sample();
+    let base = 0x5000_0000;
+    vm.map_data_section(section.clone(), base, 0, section.size, prot::WRITECOPY)
+        .unwrap();
+    let initial = vm.allocation_region(base).unwrap();
+    assert_eq!(
+        (initial.kind, initial.flags, initial.commit),
+        (0x0800_0000, 8, section.size)
+    );
+    assert_eq!(vm.query(base + 20480).unwrap().state, mem::RESERVE);
+    assert!(vm.space().u8(base + 20480).is_err());
+    vm.protect(base, 4096, prot::READONLY).unwrap();
+    assert_eq!(
+        vm.allocation_region(base).unwrap().commit,
+        section.size - 4096
+    );
+    vm.protect(base, 4096, prot::WRITECOPY).unwrap();
+    let value = vm.space().u8(base).unwrap();
+    vm.space().w8(base, value).unwrap();
+    vm.protect(base, 4096, prot::READONLY).unwrap();
+    assert_eq!(vm.allocation_region(base).unwrap().commit, section.size);
+    vm.release(base).unwrap();
+    vm.map_data_section(section.clone(), base, 0, section.size, prot::READONLY)
+        .unwrap();
+    assert_eq!(vm.allocation_region(base).unwrap().commit, 0);
+}

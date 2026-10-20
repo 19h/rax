@@ -1,0 +1,3 @@
+profile=arm64 pointer=8
+scheduler-create status=00000000 owner=00000000000000A4
+scheduler-bind status=C00000BB slot=0000000000000000

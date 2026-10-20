@@ -1,0 +1,51 @@
+{
+  "host": "windows",
+  "state": "verified",
+  "source-files": 25082,
+  "source-bytes": 1835096144,
+  "owning-source-inputs": 3823,
+  "library-gates": {
+    "macos": {
+      "passed": 8099,
+      "failed": 0,
+      "ignored": 2
+    },
+    "linux": {
+      "passed": 8093,
+      "failed": 0,
+      "ignored": 2
+    },
+    "windows": {
+      "passed": 7560,
+      "failed": 5,
+      "ignored": 2
+    }
+  },
+  "native": {
+    "profiles": [
+      "arm64",
+      "x64",
+      "x86",
+      "x86-laa"
+    ],
+    "successful-versions": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16
+    ],
+    "kernel-build": 29683
+  },
+  "full-process-goal-complete": false
+}

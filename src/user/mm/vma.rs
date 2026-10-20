@@ -10,7 +10,7 @@
 use std::collections::BTreeMap;
 use std::sync::Arc;
 
-use super::{Perms, backing::Backing};
+use super::{Perms, backing::Backing, private_copy::PrivateRanges};
 
 /// One mapped range.
 #[derive(Clone, Debug)]
@@ -66,6 +66,7 @@ impl Vma {
 #[derive(Clone, Debug, Default)]
 pub struct VmaMap {
     map: BTreeMap<u64, Vma>,
+    private_copy: PrivateRanges,
 }
 
 impl VmaMap {
@@ -137,6 +138,11 @@ impl VmaMap {
     /// Removes `[lo, hi)` from every VMA, splitting partially covered ones,
     /// and returns the removed pieces in ascending order.
     pub fn remove(&mut self, lo: u64, hi: u64) -> Vec<Vma> {
+        self.private_copy.remove(lo, hi);
+        self.remove_areas(lo, hi)
+    }
+
+    fn remove_areas(&mut self, lo: u64, hi: u64) -> Vec<Vma> {
         let hits: Vec<u64> = self.overlapping(lo, hi).map(|v| v.start).collect();
         let mut removed = Vec::with_capacity(hits.len());
         for key in hits {
@@ -164,13 +170,29 @@ impl VmaMap {
     /// Applies `f` to the parts of VMAs inside `[lo, hi)`, splitting VMAs at
     /// the range boundaries. Returns the number of VMAs updated.
     pub fn update(&mut self, lo: u64, hi: u64, mut f: impl FnMut(&mut Vma)) -> usize {
-        let pieces = self.remove(lo, hi);
+        let pieces = self.remove_areas(lo, hi);
         let n = pieces.len();
         for mut piece in pieces {
             f(&mut piece);
             self.map.insert(piece.start, piece);
         }
         n
+    }
+
+    pub(super) fn track_private_copy(&mut self, start: u64, end: u64) {
+        self.private_copy.enable(start, end);
+    }
+
+    pub(super) fn tracks_private_copy(&self, address: u64) -> bool {
+        self.private_copy.contains(address)
+    }
+
+    pub(super) fn private_copy_ranges(&self, start: u64, end: u64) -> Vec<(u64, u64)> {
+        self.private_copy.intersections(start, end)
+    }
+
+    pub(super) fn private_copy_bytes(&self, start: u64, end: u64) -> u64 {
+        self.private_copy.bytes(start, end)
     }
 
     /// Merges adjacent VMAs whose attributes and backing continue each other

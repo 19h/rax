@@ -12,6 +12,12 @@ mod working_set;
 #[path = "image_extension_tests.rs"]
 mod image_extension;
 
+#[path = "region_information_tests.rs"]
+mod region_information;
+
+#[path = "region_query_replay_tests.rs"]
+mod region_replay;
+
 fn arguments(p: &mut Proc, t: &mut Thread, args: &[u64]) {
     let sp = t.cpu.sp();
     t.cpu.set_pc(0x1234_0004);

@@ -1,0 +1,54 @@
+{
+  "controls": [
+    {
+      "name": "native-short-buffer-must-fail",
+      "rejected": true
+    },
+    {
+      "name": "native-handle-leak",
+      "rejected": true
+    },
+    {
+      "name": "replay-overbroad-mask",
+      "rejected": true
+    },
+    {
+      "name": "replay-missing-observation",
+      "rejected": true
+    },
+    {
+      "name": "kernel-scope-drift",
+      "rejected": true
+    },
+    {
+      "name": "source-identity",
+      "rejected": true
+    },
+    {
+      "name": "new-windows-failure",
+      "rejected": true
+    },
+    {
+      "name": "coherent-owning-feature-drift",
+      "rejected": true
+    },
+    {
+      "name": "ordinary-query-failure",
+      "rejected": true
+    },
+    {
+      "name": "capi-frontier-as-exit",
+      "rejected": true
+    },
+    {
+      "name": "missing-falsification-probe",
+      "rejected": true
+    },
+    {
+      "name": "false-full-goal-completion",
+      "rejected": true
+    }
+  ],
+  "all-rejected": true,
+  "scope": "Relevant log/receipt and enclosing hashes rebound; semantic predicates reject all12 coherent corruptions."
+}

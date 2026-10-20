@@ -1,0 +1,41 @@
+{
+  "state": "finished",
+  "utc": "2026-10-20T01:51:49.466299+00:00",
+  "host": "linux",
+  "round": 1,
+  "pid": 94768,
+  "steps": [
+    {
+      "name": "portable-proof",
+      "argv": [
+        "docker",
+        "run",
+        "--rm",
+        "--platform",
+        "linux/amd64",
+        "-v",
+        "/Users/int/.assist-region-20261020:/source:ro",
+        "-w",
+        "/source",
+        "assist-rax-validation-rustfmt:1.95-bullseye-20261015",
+        "python3",
+        "-B",
+        "/source/docs/specifications/windows/native-region-information/check_validation.py",
+        "--host",
+        "linux",
+        "--source",
+        "/source"
+      ],
+      "exit-code": 0,
+      "log": "region-epoch1-final-check-linux-round1.log",
+      "bytes": 748,
+      "sha256": "f759821a25be0e9bc7c392169dd4362dc6a510d5b9b9d29a21dd3076950b7caf"
+    }
+  ],
+  "exit-code": 0,
+  "envelope": {
+    "bytes": 73710,
+    "sha256": "db9d415b3c7553a5d980861367d40a9124e0743a29bad25d3f11d0451bbb7274"
+  },
+  "completed-utc": "2026-10-20T01:51:58.370164+00:00"
+}

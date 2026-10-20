@@ -1,0 +1,6 @@
+{
+  "state": "cancelled-setup",
+  "pid": 9832,
+  "steps": [],
+  "reason": "Legacy epoch3 labels remained in a newly adapted epoch1 controller; no child build or program had started."
+}

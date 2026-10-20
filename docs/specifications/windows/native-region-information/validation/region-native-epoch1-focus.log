@@ -1,0 +1,45 @@
+warning: "stdcall" is not a supported ABI for the current target
+  --> vendor\vm-memory\src\mmap\windows.rs:22:1
+   |
+22 | / extern "stdcall" {
+23 | |     pub fn VirtualAlloc(
+24 | |         lpAddress: *mut c_void,
+25 | |         dwSize: size_t,
+...  |
+49 | |     pub fn CloseHandle(hObject: RawHandle) -> u32; // BOOL
+50 | | }
+   | |_^
+   |
+   = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!
+   = note: for more information, see issue #137018 <https://github.com/rust-lang/rust/issues/137018>
+   = help: if you need `extern "stdcall"` on win32 and `extern "C"` everywhere else, use `extern "system"`
+   = note: `#[warn(unsupported_calling_conventions)]` (part of `#[warn(future_incompatible)]`) on by default
+
+warning: `vm-memory` (lib) generated 1 warning
+   Compiling rax v0.1.0 (C:\Windows\Temp\assist-native-rax-20261010\src-region-epoch1)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3m 23s
+     Running unittests src\lib.rs (target\normal\debug\deps\rax-b799307a7949aa6b.exe)
+
+running 19 tests
+test isa::arm::common::memory::mpu::tests::test_mpu_region_priority ... ok
+test isa::arm::common::memory::mpu::tests::test_mpu_region_v7m ... ok
+test isa::arm::common::memory::mpu::tests::test_mpu_region_v8m ... ok
+test isa::arm::common::memory::regions::tests::test_memory_region_contains ... ok
+test isa::arm::common::memory::regions::tests::test_memory_region_overlaps ... ok
+test isa::arm::decoder::aarch64::tests::test_loregion_ordered_ldst_decode ... ok
+test smir::lift::aarch64::tests::test_lift_loregion_ordered_forms ... ok
+test user::darwin::process::bounded_tests::embedded_shared_region_maps_supplied_cache_before_reading_slide_info ... ok
+test user::windows::loader::image_copies::tests::region_copy_charge_respects_initial_shared_image_and_explicit_protection_all_abis ... ok
+test user::windows::memory::data_section::tests::region_copy_charge_includes_reserved_section_pages_and_preserves_acquired_charge ... ok
+test user::windows::memory::region::tests::allocation_region_counts_committed_runs_and_pagefile_origin_without_population ... ok
+test user::windows::process::sched::tests::services_tests::allocate_ex_tests::region_query_numa_preference_belongs_to_reservation_and_clears_on_reuse ... ok
+test user::windows::process::sched::tests::services_tests::data_section_tests::native_data_section_replays_160_installed_geometry_status_and_region_controls ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::region_information::native_region_information_ex_private_allocation_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::region_information::native_region_information_private_allocation_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::region_information::region_failed_query_output_and_return_probes_acquire_the_native_copy_charge ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::region_information::region_guard_probes_charge_only_a_completed_wow_aliased_output_write ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::region_information::region_query_serializes_explicit_numa_zero_and_default_after_reuse_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::region_replay::region_queries_replay_1608_native_prefix_fault_guard_and_rights_observations ... ok
+
+test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 7548 filtered out; finished in 12.70s
+

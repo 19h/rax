@@ -39,8 +39,10 @@
 
 mod arena;
 mod backing;
+mod copy_tracking;
 mod mapped_file;
 pub mod pagetable;
+mod private_copy;
 mod shared;
 mod shared_words;
 mod vma;
@@ -70,7 +72,7 @@ use vm_memory::GuestMemoryMmap;
 
 use crate::error::{GuestMemoryFault, MemoryAccessKind, MemoryFaultKind};
 use crate::vm::memory::FlatTranslation;
-use pagetable::{PTE_FRAME, PTE_VALID, PageTable, make_pte};
+use pagetable::{PTE_COPY_STATE, PTE_FRAME, PTE_TRACK_PRIVATE, PTE_VALID, PageTable, make_pte};
 
 /// Guest page size in bytes.
 pub const PAGE_SIZE: u64 = 4096;
@@ -398,7 +400,10 @@ impl AddressSpace {
             .table
             .for_each_populated(start >> 12, end >> 12, |_, slot| {
                 let pte = slot.load(Ordering::Acquire);
-                slot.store(make_pte(pte & PTE_FRAME, perms), Ordering::Release);
+                slot.store(
+                    make_pte(pte & PTE_FRAME, perms) | (pte & PTE_COPY_STATE),
+                    Ordering::Release,
+                );
             });
         if lost_exec {
             self.log_code_change(start, len);
@@ -438,6 +443,7 @@ impl AddressSpace {
         }
         let replaced = vmas.remove(new, new_end);
         self.release_pages(new, new_end);
+        let tracked = vmas.private_copy_ranges(old, old_end);
         let pieces = vmas.remove(old, old_end);
         let had_exec = pieces.iter().any(|v| v.perms.contains(Perms::EXEC))
             || replaced.iter().any(|v| v.perms.contains(Perms::EXEC));
@@ -445,6 +451,9 @@ impl AddressSpace {
             piece.start = piece.start - old + new;
             piece.end = piece.end - old + new;
             vmas.insert(piece);
+        }
+        for (start, end) in tracked {
+            vmas.track_private_copy(start - old + new, end - old + new);
         }
         let table = &self.inner.table;
         let delta_vpn = (new >> 12).wrapping_sub(old >> 12);
@@ -712,12 +721,23 @@ impl AddressSpace {
             if pte & need == 0 {
                 return Err(fault(addr, access, MemoryFaultKind::Permission));
             }
-            if access == MemoryAccessKind::Write && pte & u64::from(Perms::EXEC.bits()) != 0 {
-                self.log_code_change(addr & !PAGE_MASK, PAGE_SIZE);
+            if access == MemoryAccessKind::Write
+                && pte & (u64::from(Perms::EXEC.bits()) | PTE_TRACK_PRIVATE) != 0
+            {
+                if pte & u64::from(Perms::EXEC.bits()) != 0 {
+                    self.log_code_change(addr & !PAGE_MASK, PAGE_SIZE);
+                }
+                if pte & PTE_TRACK_PRIVATE != 0 {
+                    self.acquire_private_copy(addr);
+                }
             }
             return Ok((pte & PTE_FRAME) | (addr & PAGE_MASK));
         }
-        self.populate(addr, access, false)
+        let physical = self.populate(addr, access, false)?;
+        if access == MemoryAccessKind::Write {
+            self.acquire_private_copy(addr);
+        }
+        Ok(physical)
     }
 
     /// Translates ignoring page permissions (loader and debugger access).
@@ -737,6 +757,9 @@ impl AddressSpace {
         if pte & PTE_VALID != 0 {
             if access == MemoryAccessKind::Write {
                 self.check_raw_write(addr, pte & PTE_FRAME)?;
+                if pte & PTE_TRACK_PRIVATE != 0 {
+                    self.acquire_private_copy(addr);
+                }
                 if pte & u64::from(Perms::EXEC.bits()) != 0 {
                     self.log_code_change(addr & !PAGE_MASK, PAGE_SIZE);
                 }
@@ -746,6 +769,7 @@ impl AddressSpace {
         let pa = self.populate(addr, access, true)?;
         if access == MemoryAccessKind::Write {
             self.check_raw_write(addr, pa & !PAGE_MASK)?;
+            self.acquire_private_copy(addr);
         }
         Ok(pa)
     }
@@ -783,6 +807,11 @@ impl AddressSpace {
             return Err(fault(addr, access, MemoryFaultKind::Permission));
         }
         let page = addr & !PAGE_MASK;
+        let copy_state = if vmas.tracks_private_copy(page) {
+            PTE_TRACK_PRIVATE
+        } else {
+            0
+        };
         let slot = self.inner.table.slot(addr >> 12);
         // Populated while this thread waited for the lock.
         let existing = slot.load(Ordering::Acquire);
@@ -799,7 +828,7 @@ impl AddressSpace {
                 .ref_extent(object, file_offset)
                 .map_err(|_| fault(addr, access, MemoryFaultKind::Other))?;
             let frame = base + (file_offset & (EXTENT - 1));
-            slot.store(make_pte(frame, vma.perms), Ordering::Release);
+            slot.store(make_pte(frame, vma.perms) | copy_state, Ordering::Release);
             if access == MemoryAccessKind::Write && vma.perms.contains(Perms::EXEC) {
                 self.log_code_change(page, PAGE_SIZE);
             }
@@ -818,7 +847,7 @@ impl AddressSpace {
                 }
             }
         }
-        slot.store(make_pte(frame, vma.perms), Ordering::Release);
+        slot.store(make_pte(frame, vma.perms) | copy_state, Ordering::Release);
         if access == MemoryAccessKind::Write && vma.perms.contains(Perms::EXEC) {
             self.log_code_change(page, PAGE_SIZE);
         }

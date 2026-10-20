@@ -1,0 +1,29 @@
+   Compiling vm-memory v0.17.1 (/work/vendor/rax/vendor/vm-memory)
+   Compiling linux-loader v0.13.2 (https://github.com/19h/linux-loader?rev=f745b555942c4e840a784bca61e6f3976d101960#f745b555)
+   Compiling rax v0.1.0 (/work/vendor/rax)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2m 18s
+     Running unittests src/lib.rs (target/linux/bno-isolation-prototype/debug/deps/rax-3e31f1d94bc1cdf9)
+
+running 19 tests
+test isa::arm::common::memory::mpu::tests::test_mpu_region_priority ... ok
+test isa::arm::common::memory::mpu::tests::test_mpu_region_v7m ... ok
+test isa::arm::common::memory::mpu::tests::test_mpu_region_v8m ... ok
+test isa::arm::common::memory::regions::tests::test_memory_region_contains ... ok
+test isa::arm::common::memory::regions::tests::test_memory_region_overlaps ... ok
+test isa::arm::decoder::aarch64::tests::test_loregion_ordered_ldst_decode ... ok
+test smir::lift::aarch64::tests::test_lift_loregion_ordered_forms ... ok
+test user::darwin::process::bounded_tests::embedded_shared_region_maps_supplied_cache_before_reading_slide_info ... ok
+test user::windows::loader::image_copies::tests::region_copy_charge_respects_initial_shared_image_and_explicit_protection_all_abis ... ok
+test user::windows::memory::data_section::tests::region_copy_charge_includes_reserved_section_pages_and_preserves_acquired_charge ... ok
+test user::windows::memory::region::tests::allocation_region_counts_committed_runs_and_pagefile_origin_without_population ... ok
+test user::windows::process::sched::tests::services_tests::allocate_ex_tests::region_query_numa_preference_belongs_to_reservation_and_clears_on_reuse ... ok
+test user::windows::process::sched::tests::services_tests::data_section_tests::native_data_section_replays_160_installed_geometry_status_and_region_controls ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::region_information::native_region_information_ex_private_allocation_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::region_information::native_region_information_private_allocation_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::region_information::region_failed_query_output_and_return_probes_acquire_the_native_copy_charge ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::region_information::region_guard_probes_charge_only_a_completed_wow_aliased_output_write ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::region_information::region_query_serializes_explicit_numa_zero_and_default_after_reuse_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::region_replay::region_queries_replay_1608_native_prefix_fault_guard_and_rights_observations ... ok
+
+test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 8076 filtered out; finished in 7.41s
+

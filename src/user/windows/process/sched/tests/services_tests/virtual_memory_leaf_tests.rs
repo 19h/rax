@@ -220,6 +220,91 @@ fn installed_ntdll_virtual_memory_leaves_query_guest_images_and_nls_all_selected
             )
             .unwrap()
             .0;
+        // Actual installed native/WoW64 leaves exercise variable class3/7
+        // prefixes against an independently known two-page private allocation.
+        for class in [3, 7] {
+            let minimum = match (arch, class) {
+                (WinArch::X86, 3) => 16,
+                (WinArch::X86, 7) => 20,
+                (_, 3) => 24,
+                _ => 32,
+            };
+            for length in [minimum, minimum + 1, 28, 32, 40, 48, 64] {
+                p.space.wr(base + 128, &[0xA5; 64]).unwrap();
+                p.space.wptr(base + 256, arch.ptr_size(), u64::MAX).unwrap();
+                let status = invoke(
+                    p,
+                    &mut t,
+                    module,
+                    "NtQueryVirtualMemory",
+                    &[
+                        arch.ptr(u64::MAX),
+                        base + PAGE_SIZE,
+                        class,
+                        base + 128,
+                        length,
+                        base + 256,
+                    ],
+                );
+                if length < minimum {
+                    assert_eq!(status, STATUS_INFO_LENGTH_MISMATCH);
+                    continue;
+                }
+                assert_eq!(status, STATUS_SUCCESS);
+                let width = arch.ptr_size();
+                let copied =
+                    (length / width * width).min(if arch == WinArch::X86 { 28 } else { 48 });
+                assert_eq!(read_ptr(p, base + 256), copied);
+                assert_eq!(read_ptr(p, base + 128), base);
+                assert_eq!(p.space.u32(base + 128 + width).unwrap(), prot::READWRITE);
+                assert_eq!(
+                    p.space.u32(base + 132 + width).unwrap(),
+                    if class == 3 { mem::PRIVATE } else { 1 }
+                );
+                assert_eq!(read_ptr(p, base + 136 + width), 2 * PAGE_SIZE);
+                if copied >= width * 3 + 8 {
+                    assert_eq!(read_ptr(p, base + 136 + width * 2), 2 * PAGE_SIZE);
+                }
+                assert_eq!(p.space.u8(base + 128 + copied).unwrap(), 0xA5);
+            }
+        }
+        p.space.wptr(base + 64, arch.ptr_size(), 0).unwrap();
+        p.space.wptr(base + 80, arch.ptr_size(), PAGE_SIZE).unwrap();
+        p.space.w64(base + 96, 2).unwrap();
+        p.space.w64(base + 104, 0).unwrap();
+        assert_eq!(
+            invoke(
+                p,
+                &mut t,
+                module,
+                "NtAllocateVirtualMemoryEx",
+                &[
+                    arch.ptr(u64::MAX),
+                    base + 64,
+                    base + 80,
+                    u64::from(mem::RESERVE | mem::COMMIT),
+                    u64::from(prot::READWRITE),
+                    base + 96,
+                    1,
+                ]
+            ),
+            STATUS_SUCCESS
+        );
+        let numa = read_ptr(p, base + 64);
+        for class in [3, 7] {
+            assert_eq!(
+                invoke(
+                    p,
+                    &mut t,
+                    module,
+                    "NtQueryVirtualMemory",
+                    &[arch.ptr(u64::MAX), numa, class, base + 128, 64, 0,]
+                ),
+                STATUS_SUCCESS
+            );
+            assert_eq!(read_ptr(p, base + 136 + arch.ptr_size() * 4), 0);
+        }
+        p.vm.release(numa).unwrap();
         assert_eq!(
             invoke(
                 p,

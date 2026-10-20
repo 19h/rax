@@ -5,8 +5,8 @@
 //! 4096-entry nodes. Interior nodes are created on demand with
 //! [`OnceLock`] and are never freed while the table lives, so readers need
 //! no lock: a lookup is two acquire loads of node pointers and one load of
-//! the entry. Entries are written only while the owning address space holds
-//! its mapping lock.
+//! the entry. Frame/permission changes hold the mapping lock. An enabled
+//! private-copy write-access flag can transition atomically during execution.
 //!
 //! Entry layout (`u64`):
 //!
@@ -16,6 +16,8 @@
 //! | 1 | writable |
 //! | 2 | executable |
 //! | 3 | valid |
+//! | 4 | awaiting a tracked write access |
+//! | 5 | acquired private-copy charge |
 //! | 12..63 | frame address in the arena |
 //!
 //! A zero entry means "not populated"; the address space then consults its
@@ -35,6 +37,9 @@ pub const VPN_BITS: u32 = 3 * FANOUT_BITS;
 
 /// Entry flag: the entry holds a frame.
 pub const PTE_VALID: u64 = 1 << 3;
+pub(super) const PTE_TRACK_PRIVATE: u64 = 1 << 4;
+pub(super) const PTE_PRIVATE: u64 = 1 << 5;
+pub(super) const PTE_COPY_STATE: u64 = PTE_TRACK_PRIVATE | PTE_PRIVATE;
 /// Entry field: permission bits.
 pub const PTE_PERMS: u64 = 0x7;
 /// Entry field: frame address.

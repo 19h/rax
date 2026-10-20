@@ -34,6 +34,8 @@ use crate::user::mm::{AddressSpace, Mapping, MmError, PAGE_SIZE, Perms};
 
 mod data_section;
 mod extended;
+mod region;
+pub use region::RegionInfo;
 mod scheduler;
 mod section;
 #[cfg(test)]
@@ -436,65 +438,6 @@ impl Allocation {
     }
 }
 
-/// `MEMORY_BASIC_INFORMATION` in host form.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct RegionInfo {
-    /// `BaseAddress`.
-    pub base: u64,
-    /// `AllocationBase` (0 for free memory).
-    pub allocation_base: u64,
-    /// `AllocationProtect` (0 for free memory).
-    pub allocation_protect: u32,
-    /// `RegionSize`.
-    pub size: u64,
-    /// `State`: `MEM_COMMIT`, `MEM_RESERVE`, or `MEM_FREE`.
-    pub state: u32,
-    /// `Protect` (0 unless committed).
-    pub protect: u32,
-    /// `Type` (0 for free memory).
-    pub kind: u32,
-}
-
-impl RegionInfo {
-    /// Size of `MEMORY_BASIC_INFORMATION32` or the native 64-bit structure.
-    pub fn encoded_size(ptr_size: u64) -> usize {
-        if ptr_size == 4 { 28 } else { 48 }
-    }
-
-    /// Serializes the Windows ABI, including zeroed 64-bit padding and
-    /// `PartitionId`. The 32-bit fields are narrowed to the guest width.
-    pub fn write(&self, mem: &impl Mem, addr: u64, ptr_size: u64) -> Result<usize, MemFault> {
-        let mut b = [0u8; 48];
-        if ptr_size == 4 {
-            for (i, value) in [
-                self.base as u32,
-                self.allocation_base as u32,
-                self.allocation_protect,
-                self.size as u32,
-                self.state,
-                self.protect,
-                self.kind,
-            ]
-            .into_iter()
-            .enumerate()
-            {
-                b[i * 4..i * 4 + 4].copy_from_slice(&value.to_le_bytes());
-            }
-        } else {
-            b[0..8].copy_from_slice(&self.base.to_le_bytes());
-            b[8..16].copy_from_slice(&self.allocation_base.to_le_bytes());
-            b[16..20].copy_from_slice(&self.allocation_protect.to_le_bytes());
-            b[24..32].copy_from_slice(&self.size.to_le_bytes());
-            b[32..36].copy_from_slice(&self.state.to_le_bytes());
-            b[36..40].copy_from_slice(&self.protect.to_le_bytes());
-            b[40..44].copy_from_slice(&self.kind.to_le_bytes());
-        }
-        let size = Self::encoded_size(ptr_size);
-        mem.wr(addr, &b[..size])?;
-        Ok(size)
-    }
-}
-
 /// Why a virtual-memory operation failed, as an `NTSTATUS`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum VmError {
@@ -591,7 +534,9 @@ pub fn page_range(start: u64, len: u64) -> Result<(u64, u64), VmError> {
 pub struct VirtualMemory {
     space: AddressSpace,
     allocs: BTreeMap<u64, Allocation>,
+    allocation_nodes: BTreeMap<u64, u32>,
     nls_views: BTreeSet<u64>,
+    pagefile_views: BTreeSet<u64>,
     section_views: BTreeMap<u64, section::SectionView>,
     data_views: BTreeMap<u64, data_section::DataView>,
     shared_views: shared_section::SharedViews,
@@ -623,7 +568,9 @@ impl VirtualMemory {
         VirtualMemory {
             space,
             allocs: BTreeMap::new(),
+            allocation_nodes: BTreeMap::new(),
             nls_views: BTreeSet::new(),
+            pagefile_views: BTreeSet::new(),
             section_views: BTreeMap::new(),
             data_views: BTreeMap::new(),
             shared_views: shared_section::SharedViews::default(),
@@ -1104,7 +1051,9 @@ impl VirtualMemory {
         });
         self.space.unmap(base, size).map_err(mm)?;
         self.allocs.remove(&base);
+        self.allocation_nodes.remove(&base);
         self.nls_views.remove(&base);
+        self.pagefile_views.remove(&base);
         self.section_views.remove(&base);
         self.data_views.remove(&base);
         self.forget_shared_view(base);
@@ -1115,6 +1064,33 @@ impl VirtualMemory {
     /// Changes the protection of committed pages `[start, start + len)`;
     /// returns the old protection of the first page.
     pub fn protect(&mut self, start: u64, len: u64, protect: u32) -> Result<u32, VmError> {
+        self.protect_inner(start, len, protect, true)
+    }
+
+    /// Install initial image permissions without turning a shared writable
+    /// section into a process-private copy-capable range.
+    pub(crate) fn protect_image_initial(
+        &mut self,
+        start: u64,
+        len: u64,
+        protect: u32,
+    ) -> Result<u32, VmError> {
+        if self
+            .allocation(start)
+            .is_none_or(|a| a.kind != AllocKind::Image)
+        {
+            return Err(VmError::InvalidParameter);
+        }
+        self.protect_inner(start, len, protect, false)
+    }
+
+    fn protect_inner(
+        &mut self,
+        start: u64,
+        len: u64,
+        protect: u32,
+        track_copies: bool,
+    ) -> Result<u32, VmError> {
         if !valid_protection(protect) {
             return Err(VmError::InvalidProtection);
         }
@@ -1150,6 +1126,8 @@ impl VirtualMemory {
         }
         Self::check_protection(a, protect)?;
         let base = a.base;
+        let acquire_copy_potential =
+            track_copies && a.kind == AllocKind::Image && perms_of(protect).contains(Perms::WRITE);
         let i0 = (first - base) / PAGE_SIZE;
         let i1 = (end - base) / PAGE_SIZE;
         if a.runs(i0, i1).iter().any(|(_, _, p)| !p.committed) {
@@ -1162,6 +1140,11 @@ impl VirtualMemory {
         self.space
             .protect(first, end - first, effective_perms(protect))
             .map_err(mm)?;
+        if acquire_copy_potential {
+            self.space
+                .track_private_copies(first, end - first)
+                .map_err(mm)?;
+        }
         self.allocs
             .get_mut(&base)
             .expect("validated allocation")
@@ -1227,54 +1210,6 @@ impl VirtualMemory {
             .expect("validated allocation")
             .set_state(i, i + 1, p);
         true
-    }
-
-    /// `VirtualQuery` of `addr`: the run of pages with identical state
-    /// starting at `addr`'s page, or the free range containing it.
-    pub fn query(&self, addr: u64) -> Option<RegionInfo> {
-        if addr >= self.high {
-            return None;
-        }
-        let page = addr & !(PAGE_SIZE - 1);
-        match self.allocation(page) {
-            Some(a) => {
-                let i = (page - a.base) / PAGE_SIZE;
-                let key = |p: &PageState| (p.committed, p.reported.unwrap_or(p.protect));
-                let k = key(&a.state(i));
-                let end = a
-                    .pages
-                    .range((std::ops::Bound::Excluded(i), std::ops::Bound::Unbounded))
-                    .find(|(_, p)| key(p) != k)
-                    .map(|(&index, _)| index)
-                    .unwrap_or(a.size / PAGE_SIZE);
-                Some(RegionInfo {
-                    base: page,
-                    allocation_base: a.base,
-                    allocation_protect: a.protect,
-                    size: (end - i) * PAGE_SIZE,
-                    state: if k.0 { mem::COMMIT } else { mem::RESERVE },
-                    protect: if k.0 { k.1 } else { 0 },
-                    kind: a.kind.value(),
-                })
-            }
-            None => {
-                let next = self
-                    .allocs
-                    .range(page..)
-                    .next()
-                    .map(|(&b, _)| b)
-                    .unwrap_or(self.high);
-                Some(RegionInfo {
-                    base: page,
-                    allocation_base: 0,
-                    allocation_protect: 0,
-                    size: next - page,
-                    state: mem::FREE,
-                    protect: prot::NOACCESS,
-                    kind: 0,
-                })
-            }
-        }
     }
 
     /// Writes `data` at `addr` regardless of page protection (a loader or

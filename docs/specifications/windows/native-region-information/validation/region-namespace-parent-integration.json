@@ -1,0 +1,110 @@
+{
+  "utc": "2026-10-20T00:43:20.002545+00:00",
+  "before": "157ef1e5c974de0148c41b6db5a0c32783bda36d",
+  "after": "dbcea8afa4292b4f5afa620963fe6f81e9301cae",
+  "dependency-paths": [
+    "src/user/windows/object_namespace.rs",
+    "src/user/windows/object_namespace/base_named_object_tests.rs",
+    "src/user/windows/native-runtime.md"
+  ],
+  "preserved-inputs": [
+    {
+      "path": "src/user/mm/copy_tracking.rs",
+      "bytes": 2887,
+      "sha256": "defcb81d4cc4ccfc99ab722fb5e81539cb178bcf5be1bf1b969f3b8260814eb8"
+    },
+    {
+      "path": "src/user/mm/copy_tracking/tests.rs",
+      "bytes": 3775,
+      "sha256": "3e22c801477c8c44055fa171310992b1da9cc40909bc91b750829966fc2b493b"
+    },
+    {
+      "path": "src/user/mm/mod.rs",
+      "bytes": 41926,
+      "sha256": "59aebd25b6b0d2067435773ee085a6c765d28cc6043c8ecbe86427db90a36f2c"
+    },
+    {
+      "path": "src/user/mm/pagetable.rs",
+      "bytes": 4718,
+      "sha256": "ddbbcaa848d479d0a75080429e8b346e06bbe7e383b8893ccc92fbf0cdc348af"
+    },
+    {
+      "path": "src/user/mm/private_copy.rs",
+      "bytes": 4258,
+      "sha256": "f5476297dbb11059959c39d0065c0393f32924bab3e085e7e1e6fd5da6018764"
+    },
+    {
+      "path": "src/user/mm/vma.rs",
+      "bytes": 9428,
+      "sha256": "376c5bb43f6c70cf3a394d2cd427fc104a784fe659072db67d77b4dee254015d"
+    },
+    {
+      "path": "src/user/windows/dll/native/virtual_memory.rs",
+      "bytes": 6903,
+      "sha256": "e34da5044d1603bdb9dc8f2e6cd1d6c52056f94491f73da42fc449beb6159b51"
+    },
+    {
+      "path": "src/user/windows/dll/native/virtual_memory/region.rs",
+      "bytes": 3087,
+      "sha256": "1d4d7a35898a6ba5b89e7d9898f79259a6192e0178b1354f04eb5542ac614dd9"
+    },
+    {
+      "path": "src/user/windows/memory.rs",
+      "bytes": 65972,
+      "sha256": "693aa6d6d1f6713b07bef8b4a0757a53670867084c3d1eac755a4c1357fdfb87"
+    },
+    {
+      "path": "src/user/windows/memory/data_section.rs",
+      "bytes": 3676,
+      "sha256": "5b59c15c1283d066d650fb438487cf5c16f0879ecde67a0fea1bc846ef3cf703"
+    },
+    {
+      "path": "src/user/windows/memory/region.rs",
+      "bytes": 6133,
+      "sha256": "7108f52ee9e2e8970368b30af817b440b8b09828625c040349c2cb52afb0ff3b"
+    },
+    {
+      "path": "src/user/windows/memory/region/tests.rs",
+      "bytes": 1626,
+      "sha256": "1121a674f40eaf6886e4ee2f410fe8e68021c9e7e37bb91113c97dea29fb7e79"
+    },
+    {
+      "path": "src/user/windows/memory/scheduler.rs",
+      "bytes": 2458,
+      "sha256": "ed2092697e408ac5fca95384dce4eb7b6bd6ae2aac20f4d8b37fd5502a2eb4cc"
+    },
+    {
+      "path": "src/user/windows/memory/shared_section.rs",
+      "bytes": 5903,
+      "sha256": "8f64e07915866390b7c7a34c8f25e85133188a316672e5d919795396ce021046"
+    },
+    {
+      "path": "src/user/windows/native-runtime.md",
+      "bytes": 195017,
+      "sha256": "2e1a304a6330f69bffbe2deeea59ee21fafd90e6329cab0c033db309d3a6ab0a"
+    },
+    {
+      "path": "src/user/windows/object_namespace.rs",
+      "bytes": 25600,
+      "sha256": "a2c8b2bf60359608f5711b23fdccc215432a48cfb8485f50de139868a0d069aa"
+    },
+    {
+      "path": "src/user/windows/object_namespace/base_named_object_tests.rs",
+      "bytes": 12635,
+      "sha256": "4a3d8dc2e9d3bbfc053b8edf07497635baf715e02aca2c00e2ccdc0b98298fb1"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/region_information_tests.rs",
+      "bytes": 1684,
+      "sha256": "a61c00e6978075520ca7460372390808c3a9672b6a18a89f7eb87677c99fe2d6"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/virtual_memory_tests.rs",
+      "bytes": 18112,
+      "sha256": "9693872cc0c3171a6f681537399cb3fee37d1e0a92e0932e1b4e0ce20a4ba383"
+    }
+  ],
+  "unchanged": true,
+  "initial-attempt": "An unstaged identical incoming dependency was rejected by Git without mutation. Exact3path staging allowed the identical published parent to be selected; final index is empty.",
+  "scope": "Linear integration of published namespace parent; all MRI edits preserved and namespace code/test are no longer in its diff."
+}

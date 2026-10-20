@@ -1,0 +1,33 @@
+from pathlib import Path
+import subprocess,hashlib,json
+root=Path('/work');out=Path('/validation');gen=Path('/generated');mono=Path('/monocypher');archive=None
+build=root/'build-native-attributes/linux-target/cpp';build.mkdir(parents=True,exist_ok=True)
+
+def identity(path):return {'path':str(path),'bytes':path.stat().st_size,'sha256':hashlib.sha256(path.read_bytes()).hexdigest()}
+metadata=json.loads((out/'linux-region-epoch1-pre-cpp-archive-identities.json').read_text())
+selected=next(row for row in metadata['archives'] if row['path'].endswith('.a'))
+archive=Path(selected['path'])
+before=identity(archive)
+assert before['sha256']==selected['sha256'] and before['bytes']==selected['bytes'],'selected carrier changed before C++ consumers'
+print('linked-archive-before '+json.dumps(before),flush=True)
+
+def run(args):
+ print('run',args[0],args[-1],flush=True);subprocess.run([str(a) for a in args],check=True)
+run(['gcc','-c','-O1',mono/'monocypher.c','-I'+str(mono),'-o',build/'monocypher.o'])
+includes=['-I'+str(root/'include'),'-I'+str(root/'vendor/rax/capi/include'),'-I'+str(root/'rust/assist-rs/include'),'-I'+str(gen),'-I'+str(mono),'-I/json']
+idle=['-std=c++20','-O1','-pthread','-DASSIST_STATIC_TEXT_HAS_CODEC=1','-DASSIST_RAX_PROCESS_FIXTURES="/work/vendor/rax/tests/fixtures/user/windows"']
+factory=root/'src/tools/builtin/emulation/sessions/process_tool.cpp';adapter=root/'src/emulation/rax/rax_process.cpp';loader=root/'src/emulation/rax/librax_loader.cpp'
+text=[root/'src/crypto/static_text.cpp',gen/'metadata.cpp',gen/'metadata_keys.cpp',build/'monocypher.o']
+for name,sources,rax in [
+ ('process_tool',[root/'test/process_tool_tests.cpp',factory,adapter,loader,*text],True),
+ ('process_tool_unavailable',[root/'test/process_tool_unavailable_tests.cpp',factory,*text],False),
+ ('rax_process',[root/'test/rax_process_tests.cpp',adapter],True),
+ ('rax_abi_drift',[root/'test/e14_rax_abi_drift_tests.cpp'],True),
+ ('rust_archive_link',[root/'test/rust_archive_link_tests.cpp'],True),
+]:
+ run(['g++',*idle,*includes,*( ['-DASSIST_HAS_RAX=1'] if rax else []),*sources,archive,'-ldl','-lm','-lrt','-lutil','-o',build/name])
+ run([build/name])
+
+after=identity(archive)
+assert after==before, "carrier changed during C++ consumers"
+print("linked-archive-after "+json.dumps(after),flush=True)

@@ -1,0 +1,35 @@
+{
+  "state": "finished",
+  "exit-code": 0,
+  "files": [
+    {
+      "role": "core",
+      "source": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\debug\\deps\\librax-934115059aa64c85.rlib",
+      "retained": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-region-epoch1\\target\\retained-owning-epoch1\\librax-934115059aa64c85.rlib",
+      "bytes": 508521318,
+      "sha256": "8bfc68221342cf53bb0cd40e3143b5a5435e0ce93960e6eea7cbd6a9bdfa0095"
+    },
+    {
+      "role": "carrier",
+      "source": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\debug\\assist_rs.lib",
+      "retained": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-region-epoch1\\target\\retained-owning-epoch1\\assist_rs.lib",
+      "bytes": 857827912,
+      "sha256": "32d3959244045dd845aec076c897711707d2ba068057745b501ff425e58b7a1d"
+    },
+    {
+      "role": "ordinary",
+      "source": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\region-ordinary-owner-epoch1.exe",
+      "retained": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-region-epoch1\\target\\retained-owning-epoch1\\region-ordinary-owner-epoch1.exe",
+      "bytes": 27068928,
+      "sha256": "02d87f80aaad8df07f1c48dff9e53b90abf89925e770a03ba8b687e930d4bf6c"
+    },
+    {
+      "role": "capi",
+      "source": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\cpp\\region-owning-capi-epoch1.exe",
+      "retained": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-region-epoch1\\target\\retained-owning-epoch1\\region-owning-capi-epoch1.exe",
+      "bytes": 32617984,
+      "sha256": "02480ce1f4b43f4e2cdcda5d79aaefeb4da28f5f74e36801fdd72934af678c3a"
+    }
+  ],
+  "scope": "Four actual observed owning artifacts copied independently; no hard links or regeneration."
+}

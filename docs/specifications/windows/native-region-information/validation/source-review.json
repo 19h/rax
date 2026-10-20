@@ -1,0 +1,102 @@
+{
+  "utc": "2026-10-20T01:51:10.931799+00:00",
+  "base": "dbcea8afa4292b4f5afa620963fe6f81e9301cae",
+  "owned-inputs": [
+    "docs/specifications/windows/native-region-information/modelled-query-cases.json",
+    "src/user/mm/copy_tracking.rs",
+    "src/user/mm/copy_tracking/tests.rs",
+    "src/user/mm/mod.rs",
+    "src/user/mm/pagetable.rs",
+    "src/user/mm/private_copy.rs",
+    "src/user/mm/vma.rs",
+    "src/user/windows/dll/native/allocate.rs",
+    "src/user/windows/dll/native/virtual_memory.rs",
+    "src/user/windows/dll/native/virtual_memory/region.rs",
+    "src/user/windows/loader/image_copies.rs",
+    "src/user/windows/loader/image_copies/tests.rs",
+    "src/user/windows/loader/mod.rs",
+    "src/user/windows/memory.rs",
+    "src/user/windows/memory/data_section.rs",
+    "src/user/windows/memory/data_section/tests.rs",
+    "src/user/windows/memory/extended.rs",
+    "src/user/windows/memory/region.rs",
+    "src/user/windows/memory/region/tests.rs",
+    "src/user/windows/memory/scheduler.rs",
+    "src/user/windows/memory/section.rs",
+    "src/user/windows/memory/shared_section.rs",
+    "src/user/windows/native-runtime.md",
+    "src/user/windows/process/sched/tests/services_tests/allocate_ex_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/region_information_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/region_query_replay_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/virtual_memory_leaf_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/virtual_memory_tests.rs"
+  ],
+  "frozen-inputs-verified": 25082,
+  "public-api": {
+    "RegionInfo-and-query-moved-byte-identically": true,
+    "original-public-path-reexported": true,
+    "Mapping-Vma-Allocation-public-fields-unchanged": true,
+    "cabi": "1.14.0",
+    "dependency-default-changes": false
+  },
+  "reviewed-mechanics": [
+    "Process query/limited rights, complete prefix layout and native/WoW ordering are shared ABI mechanics; caller preprobes WoW ReturnLength.",
+    "Acquisition follows permission validation on warm/cold translation and raw shared-readonly checks; successful write probes can charge before later errors.",
+    "PTE bits4/5 are disjoint from permission bits0..2, valid3, and frame12..63; updates preserve unrelated flags.",
+    "Mapping lock and stoppedguest mappingchange contract preserved; concurrent acquisition is atomic and idempotent.",
+    "VMA update preserves eligibility; map/unmap clears; remap snapshots eligibility before removal then shifts ranges and PTE state; discard drops resident charge.",
+    "Private commitment uses committed state runs; pagefile initialCOW reservedgap charge does not populateframes.",
+    "InitialPEbytes precede tracking; loader relocations follow; initialsharedRW sections differ from runtimeprotect with sameprotection.",
+    "NUMA metadata is inserted onlyafter successfulnewreservation and removed at release; existingcommit preservesit.",
+    "No hostkernel forwarding, publiclayout/default/dependency mutation, or platform conditionalimplementation split."
+  ],
+  "change-surface-map": {
+    "shared-address-space": "affected; opt-in interval/PTE tracking; full3host library suites and instruction/lifecycle tests",
+    "windows-personality": "affected; query, allocation, image/data/pagefile/scheduler map and release ownership",
+    "linux-darwin-personalities": "sharedmechanics compile/run; do not enable Windows privatecopy metadata; existing unfiltered suites preserved",
+    "CAPI-and-Assist-carrier": "actual rebuilt archives, feature[], source3823, structuralwalk, C++ link/runs on3hosts",
+    "plugin-ui-mesh-permissions-persistence-SDK-update": "no owning API/schema/layout/default changed; currentproducts not claimedvalidated by retainedABI184 boundary",
+    "packages": "no new runtimefile/library/schema; existingembeddedarchive consumers rebuilt; currentrootpackages remain unvalidated"
+  },
+  "findings": [
+    {
+      "impact": "high",
+      "evidence": "ordinary.json/capi.json",
+      "finding": "Installedwhoami stops at NtQueryAttributesFile0x3d after12successfulregionqueries.",
+      "blocks-this-semantic-group": false,
+      "blocks-whole-goal": true
+    },
+    {
+      "impact": "high",
+      "evidence": "GitLabpipeline71518/job424894 contextualerror; priorprivate trace retainedoutsidepublicproof",
+      "finding": "Currentnonzero-session BaseNamedObjects entry is SymbolicLink; actualtargetunknown. Separateverifiedaliaswork remains.",
+      "blocks-this-semantic-group": false,
+      "blocks-whole-goal": true
+    },
+    {
+      "impact": "medium",
+      "evidence": "gates-windows.json exact-existing-failures",
+      "finding": "FiveestablishedAArch64lowererfailures remain explicit; no additionalfailure accepted.",
+      "blocks-this-semantic-group": false
+    },
+    {
+      "impact": "medium",
+      "evidence": "kernel-profile.json/native/launchreceipts",
+      "finding": "Nativeoracle spansfourABIviews ofoneARM64kernel, not independentphysicalx64kernel.",
+      "blocks-this-semantic-group": false
+    },
+    {
+      "impact": "high",
+      "evidence": "summary.json/owningreceipts",
+      "finding": "RetainedAssistABI184 consumers do not establishcurrentrootABI270 GUI/plugin/packageexecution.",
+      "blocks-this-semantic-group": false,
+      "blocks-whole-goal": true
+    }
+  ],
+  "rejected-iterations": [
+    "nativev9 schedulerprecondition code3",
+    "focus2 missingMemtrait compileerror",
+    "sourcearchive missingtargetdirectory retriedwithoutsourcechange",
+    "observerepoch3labels cancelledbeforegueststart; correctedepoch1 completed"
+  ]
+}

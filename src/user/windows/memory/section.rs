@@ -107,6 +107,9 @@ impl VirtualMemory {
                 self.commit(base, allocation_size, prot::EXECUTE_WRITECOPY)?;
                 self.poke(image_base, &data[offset as usize..(offset + size) as usize])
                     .map_err(|_| VmError::NoMemory)?;
+                self.space
+                    .track_private_copies(base, allocation_size)
+                    .map_err(mm)?;
             } else {
                 for region in &image.regions {
                     let begin = region.offset.max(offset);
@@ -118,7 +121,18 @@ impl VirtualMemory {
                     self.commit(address, end - begin, prot::READWRITE)?;
                     self.poke(address, &data[begin as usize..end as usize])
                         .map_err(|_| VmError::NoMemory)?;
-                    self.protect(address, end - begin, region.protection)?;
+                    self.protect_image_initial(address, end - begin, region.protection)?;
+                    // Initial READWRITE/EXECUTE_READWRITE image runs are shared
+                    // PE sections. An explicit later protect can make the page
+                    // copy-capable, even when the requested protection matches.
+                    if !matches!(
+                        region.protection & 0xFF,
+                        prot::READWRITE | prot::EXECUTE_READWRITE
+                    ) {
+                        self.space
+                            .track_private_copies(address, end - begin)
+                            .map_err(mm)?;
+                    }
                 }
             }
             for extension in extensions.iter().flatten() {
@@ -129,7 +143,10 @@ impl VirtualMemory {
                 }
                 self.poke(address, &extension.bytes)
                     .map_err(|_| VmError::NoMemory)?;
-                self.protect(address, length, prot::EXECUTE_READ)?;
+                self.protect_image_initial(address, length, prot::EXECUTE_READ)?;
+                self.space
+                    .track_private_copies(address, length)
+                    .map_err(mm)?;
             }
             Ok(())
         })();

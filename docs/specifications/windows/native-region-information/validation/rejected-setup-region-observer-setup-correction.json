@@ -1,0 +1,16 @@
+{
+  "rows": [
+    {
+      "receipt": "region-native-ordinary-epoch3.json",
+      "pid": 7004,
+      "command-line": "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe -B C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-region-native-ordinary-epoch1.py",
+      "terminated-owned-controller-only": true
+    },
+    {
+      "receipt": "region-owning-capi-epoch3.json",
+      "pid": 9832,
+      "command-line": "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe -B C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-region-owning-capi-epoch1.py",
+      "terminated-owned-controller-only": true
+    }
+  ]
+}

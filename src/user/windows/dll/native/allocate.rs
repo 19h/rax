@@ -66,7 +66,7 @@ fn checked(c: &mut Ctx) -> ApiResult {
         c.read_ptr(size_ptr)?
     };
     let requirements = read_parameters(c, parameters, count)?;
-    let (requirements, invalid_node) = match requirements {
+    let requirements = match requirements {
         Ok(requirements) => requirements,
         Err(status) => return publish(c, base_ptr, size_ptr, base, size, status, wow),
     };
@@ -74,7 +74,7 @@ fn checked(c: &mut Ctx) -> ApiResult {
     if status != STATUS_SUCCESS {
         return publish(c, base_ptr, size_ptr, base, size, status, wow);
     }
-    if invalid_node {
+    if requirements.node.is_some_and(|node| node != 0) {
         return publish(
             c,
             base_ptr,
@@ -85,12 +85,13 @@ fn checked(c: &mut Ctx) -> ApiResult {
             wow,
         );
     }
-    match c.p.vm.allocate_extended(
+    match c.p.vm.allocate_extended_numa(
         (base != 0).then_some(base),
         size,
         flags,
         protection,
-        requirements,
+        requirements.address,
+        requirements.node.map(|_| 0),
     ) {
         Ok((base, size)) => publish(c, base_ptr, size_ptr, base, size, STATUS_SUCCESS, true),
         Err(error) => publish(c, base_ptr, size_ptr, base, size, error.status(), wow),
@@ -120,6 +121,12 @@ fn probe_read(c: &Ctx, address: u64, bytes: usize) -> Result<(), MemFault> {
             addr: fault.address,
             write: false,
         })
+}
+
+#[derive(Default)]
+struct AllocationParameters {
+    address: AddressRequirements,
+    node: Option<u64>,
 }
 
 #[derive(Clone, Copy, Default)]
@@ -166,11 +173,14 @@ fn read_parameters(
     c: &Ctx,
     parameters: u64,
     count: u32,
-) -> Result<Result<(AddressRequirements, bool), u32>, ApiErr> {
+) -> Result<Result<AllocationParameters, u32>, ApiErr> {
     let mut requirements = AddressRequirements::default();
     if count == 0 {
         return Ok(if parameters == 0 {
-            Ok((requirements, false))
+            Ok(AllocationParameters {
+                address: requirements,
+                node: None,
+            })
         } else {
             Err(STATUS_INVALID_PARAMETER)
         });
@@ -199,7 +209,7 @@ fn read_parameters(
         None
     };
     let mut seen = 0u8;
-    let mut invalid_node = false;
+    let mut node = None;
     for index in 0..count.min(7) {
         let at = parameters
             .checked_add(u64::from(index) * 16)
@@ -240,7 +250,7 @@ fn read_parameters(
             2 => {
                 // Native NUMA validation follows complete requirement capture
                 // and process-handle validation, including VM_OPERATION rights.
-                invalid_node = value != 0;
+                node = Some(value);
             } // Guest's single NUMA node.
             5 => {
                 if value != 0 {
@@ -255,7 +265,10 @@ fn read_parameters(
             }
         }
     }
-    Ok(Ok((requirements, invalid_node)))
+    Ok(Ok(AllocationParameters {
+        address: requirements,
+        node,
+    }))
 }
 
 fn process_status(c: &Ctx, handle: u64) -> Result<u32, ApiErr> {

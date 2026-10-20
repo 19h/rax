@@ -1,0 +1,8 @@
+{
+  "state": "cancelled-setup",
+  "pid": 7004,
+  "utc": "2026-10-20T01:27:16.630857+00:00",
+  "steps": [],
+  "outcomes": [],
+  "reason": "Legacy epoch3 labels remained in a newly adapted epoch1 controller; no child build or program had started."
+}

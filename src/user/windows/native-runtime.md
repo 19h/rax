@@ -2745,3 +2745,52 @@ host invariant remains unknown until the new diagnostic is captured there.
 The independent four-ABI case probe uses only query handles on fixed roots and
 closes its temporary private directory handles; it establishes canonical-name
 behavior on the development kernel without replacing the failing-host evidence.
+
+
+### Allocation-wide virtual-memory region queries
+
+NtQueryVirtualMemory classes3/7 now expose allocation base/protection, native
+legacy type or Ex flags, complete reservation size, process-private commitment,
+partition0 and preferred node. Native64 class3 accepts24bytes and class7 accepts32;
+WoW64 accepts16/20 respectively. Complete pointer-sized fields are copied up to
+48 native or28 WoW64 bytes; the tail is unchanged. Native64 retains full declared
+output probing before handle validation. WoW64 retains optional return-destination
+capture and publishes0 for kernel status failures. Other-process queries remain
+an explicit frontier. No guest argument is forwarded to the host kernel.
+
+Private commitment follows committed state runs. Read-only shared/pagefile views
+carry no private charge. Copy-capable image/data views combine current writable
+potential with acquired private page charge: an identical-value store counts,
+and a successful write probe can acquire charge even when a later syscall check
+fails. Guard faults acquire no charge before a write; the WoW64 shared-guard
+alias can consume the guard and then complete its output write. Initial shared
+writable PE sections have no private potential until explicit reprotection,
+including a same-protection request. Initial image permissions use a distinct
+internal path. Reserved pages of an initially copy-on-write pagefile view also
+reserve private charge without requiring guest frames.
+
+Private copy eligibility lives in an internal VMA interval set; pending/acquired
+state uses private PTE bits, outside frame/permission fields. Mapping replacement,
+unmap and release clear state; protect and remap preserve it; discard drops
+acquired frames while retaining eligibility. Permission checks and raw shared
+read-only checks precede acquisition. The ordinary warm untracked write keeps
+the existing single combined flag branch. x86/WoW64 and ARM64 instruction-level
+stores, cold/warm access, concurrent probes and mapping lifecycle are covered.
+
+Explicit NtAllocateVirtualMemoryEx node0 preference belongs to a newly created
+reservation. Commit into an existing reservation does not change its preference;
+decommit/recommit retain it and release/reuse clears it. Public Allocation,
+Mapping and Vma fields, C ABI1.14.0, defaults and dependencies remain unchanged.
+RegionInfo and basic page-run querying move to a focused sibling module while
+retaining their existing public path through re-export.
+
+The independent capture spans four ABI profiles on one Windows10.0.29683 ARM64
+kernel. It does not establish a separate x64 kernel. The compiled replay compares
+1608 captured prefix/status/guard/access/fixed-field observations; it masks
+allocation base/size/commit bytes because the guest fixture has different
+allocations. Independent private/image/shared/reserved/NUMA lifecycle checks own
+those quantities. Full source, native controls, selected targets and owning
+consumer validation are recorded with their exact execution boundaries; complete
+process support and current-root GUI/plugin/package proof remain separate.
+
+[Region-query contract and evidence](../../../docs/specifications/windows/native-region-information/README.md).

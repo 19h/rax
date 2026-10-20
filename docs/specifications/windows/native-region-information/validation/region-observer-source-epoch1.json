@@ -1,0 +1,6 @@
+{
+  "path": "region-ordinary-owner-epoch1.rs",
+  "bytes": 10179,
+  "sha256": "3ff312b9ddfec8d52607f995adb6e74e5bcabd589841d8cc030540860b7e9a66",
+  "scope": "ARM64 actual owning-core ordinary smoke/whoami, with continuation and allocation-region call/result observations."
+}

@@ -1,0 +1,55 @@
+{
+  "assumptions": [
+    {
+      "id": "MRI-A1",
+      "assumption": "Private commitment is allocation state plus copy potential/acquisition, including reserved pages in initial pagefile COW views.",
+      "basis": "Independent native probesv3-v8/v10-v12/v15 and current shared lifecycle regressions.",
+      "dependent-result": "VMA/PTE bookkeeping and allocation_region computation.",
+      "stress-test": "Identical stores, failed syscall probes, guard aliases, shared PE protections, reserved gaps, discard/remap/unmap/reuse.",
+      "falsification-probe": "A native capture or executed guest path changes bytes/charge without the corresponding checked state transition.",
+      "status": "retained",
+      "revisit-evidence": "Native15successfulversions, full19region/6copy focuses on three hosts, unfiltered library suites and actual loader execution agree for checked lifecycles; additional kernels remain unverified."
+    },
+    {
+      "id": "MRI-A2",
+      "assumption": "The modeled single NUMA node accepts0, and preference belongs to reservation creation.",
+      "basis": "Existing topology/allocate contract and nativev13/v14.",
+      "dependent-result": "Preserve explicit0/default0xFFFFFFFF through query serialization and reservation lifetime.",
+      "stress-test": "Explicit commit into default reservation, decommit/recommit, output publication failure, release/reuse.",
+      "falsification-probe": "Nativev14 or shared/installed-leaf results show a different preference lifetime.",
+      "status": "confirmed",
+      "revisit-evidence": "Nativev13/v14, guestreservation lifecycle, replayencoding and installedNtAllocateVirtualMemoryEx leaf pass."
+    },
+    {
+      "id": "MRI-A3",
+      "assumption": "The observed query profile is bounded to one build29683 ARM64 kernel across four ABI views.",
+      "basis": "Native kernel metadata, source/PE/runtime-module identities and raw captures.",
+      "dependent-result": "Interpret native controls without claiming a separate physical x64 kernel.",
+      "stress-test": "Native64 versus WoW64, x86 LAA, all0through65byte lengths, access and guard ordering.",
+      "falsification-probe": "Another kernel/profile produces incompatible observations; current x64 CI constructor remains separately blocked by session alias.",
+      "status": "confirmed",
+      "revisit-evidence": "Kernel profile/build29683/architecture12 plus stable sixDLL identities; no independent x64kernel claim."
+    },
+    {
+      "id": "MRI-A4",
+      "assumption": "Tracked writes reach AddressSpace translation after permission checks.",
+      "basis": "x86 flat translation and AArch64 UserArmMemory call paths; current instruction-level and raw/concurrent tests.",
+      "dependent-result": "Per-page acquired charge without content-difference heuristics.",
+      "stress-test": "Read before identical store, cold/warm/raw writes, readonly shared backing, concurrent probes and lifecycle invalidation.",
+      "falsification-probe": "A supported store bypasses acquisition or a rejected write acquires charge.",
+      "status": "retained",
+      "revisit-evidence": "Actualx86/x86compat/ARM64 instruction tests, warm/cold/raw/concurrent checks and all3 complete library binaries exercise acquisition; mappingchanges retain existing stopped-CPU contract."
+    },
+    {
+      "id": "MRI-A5",
+      "assumption": "The isolated retained Assist ABI184 consumer boundary can validate the rebuilt core/carrier independently of current-root ABI270 products.",
+      "basis": "3823-input owning manifest, declared linked targets and structural archive walks.",
+      "dependent-result": "Report exact rebuilt/linked scope without substituting it for GUI/plugin/package proof.",
+      "stress-test": "Archive identity before/after links, corefeatures[], native three-platform C++ consumers and actual program runs.",
+      "falsification-probe": "An archive comes from another source/configuration or current-root completeness is inferred from retained consumers.",
+      "status": "confirmed",
+      "revisit-evidence": "Before/after archive/member/source identities, 7macCTests/6linkcommands,5CppLinux/Windows, and actualcore/carrier program runs; currentrootABI270 remains a distinct product boundary."
+    }
+  ],
+  "validation-state": "source epoch1 complete three-host gates; exact known Windows failures retained; actual owning-core and CAPI frontier advanced"
+}

@@ -973,3 +973,65 @@ fn wow64_allocate_ex_large_address_aware_alignment_uses_guest_image_policy() {
         }
     }
 }
+
+#[test]
+fn region_query_numa_preference_belongs_to_reservation_and_clears_on_reuse() {
+    for arch in WinArch::ALL {
+        for explicit in [false, true] {
+            let (mut process, mut thread, scratch) = setup(arch);
+            let p = process.state_mut();
+            ptr(p, scratch, 0);
+            ptr(p, scratch + 16, 65536);
+            p.space.w64(scratch + 64, 2).unwrap();
+            p.space.w64(scratch + 72, 0).unwrap();
+            assert_eq!(
+                alloc(
+                    p,
+                    &mut thread,
+                    scratch,
+                    scratch + 16,
+                    mem::RESERVE,
+                    prot::READWRITE,
+                    if explicit { scratch + 64 } else { 0 },
+                    u32::from(explicit)
+                ),
+                STATUS_SUCCESS
+            );
+            let base = get(p, scratch);
+            let node = if explicit { 0 } else { u64::from(u32::MAX) };
+            assert_eq!(p.vm.allocation_region(base).unwrap().node, node);
+            ptr(p, scratch + 16, 4096);
+            assert_eq!(
+                alloc(
+                    p,
+                    &mut thread,
+                    scratch,
+                    scratch + 16,
+                    mem::COMMIT,
+                    prot::READWRITE,
+                    scratch + 64,
+                    1
+                ),
+                STATUS_SUCCESS
+            );
+            assert_eq!(p.vm.allocation_region(base).unwrap().node, node);
+            p.vm.decommit(base, PAGE_SIZE).unwrap();
+            p.vm.commit(base, PAGE_SIZE, prot::READWRITE).unwrap();
+            assert_eq!(p.vm.allocation_region(base).unwrap().node, node);
+            p.vm.release(base).unwrap();
+            p.vm.reserve(
+                Some(base),
+                65536,
+                prot::READWRITE,
+                AllocKind::Private,
+                false,
+                None,
+            )
+            .unwrap();
+            assert_eq!(
+                p.vm.allocation_region(base).unwrap().node,
+                u64::from(u32::MAX)
+            );
+        }
+    }
+}

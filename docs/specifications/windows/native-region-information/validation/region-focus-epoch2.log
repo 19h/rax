@@ -1,0 +1,84 @@
+   Compiling rax v0.1.0 (/Users/int/.assist-region-20261020)
+error[E0599]: no method named `u8` found for struct `user::mm::AddressSpace` in the current scope
+   --> src/user/windows/loader/image_copies/tests.rs:48:29
+    |
+ 48 |         let value = p.space.u8(page).unwrap();
+    |                             ^^
+    |
+   ::: src/user/mm/mod.rs:252:1
+    |
+252 | pub struct AddressSpace {
+    | ----------------------- method `u8` not found for this struct
+    |
+   ::: src/user/windows/memory.rs:70:8
+    |
+ 70 |     fn u8(&self, addr: u64) -> Result<u8, MemFault> {
+    |        -- the method is available for `user::mm::AddressSpace` here
+    |
+    = help: items from traits can only be used if the trait is in scope
+help: there is a method `w8` with a similar name, but with different arguments
+   --> src/user/windows/memory.rs:102:5
+    |
+102 |     fn w8(&self, addr: u64, v: u8) -> Result<(), MemFault> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: trait `Mem` which provides `u8` is implemented but not in scope; perhaps you want to import it
+    |
+  1 + use crate::user::windows::memory::Mem;
+    |
+
+error[E0599]: no method named `w8` found for struct `user::mm::AddressSpace` in the current scope
+   --> src/user/windows/loader/image_copies/tests.rs:49:17
+    |
+ 49 |         p.space.w8(page, value).unwrap();
+    |                 ^^
+    |
+   ::: src/user/mm/mod.rs:252:1
+    |
+252 | pub struct AddressSpace {
+    | ----------------------- method `w8` not found for this struct
+    |
+   ::: src/user/windows/memory.rs:102:8
+    |
+102 |     fn w8(&self, addr: u64, v: u8) -> Result<(), MemFault> {
+    |        -- the method is available for `user::mm::AddressSpace` here
+    |
+    = help: items from traits can only be used if the trait is in scope
+help: there is a method `u8` with a similar name, but with different arguments
+   --> src/user/windows/memory.rs:70:5
+    |
+ 70 |     fn u8(&self, addr: u64) -> Result<u8, MemFault> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: trait `Mem` which provides `w8` is implemented but not in scope; perhaps you want to import it
+    |
+  1 + use crate::user::windows::memory::Mem;
+    |
+
+error[E0599]: no method named `w8` found for struct `user::mm::AddressSpace` in the current scope
+   --> src/user/windows/loader/image_copies/tests.rs:59:17
+    |
+ 59 |         p.space.w8(page, value).unwrap();
+    |                 ^^
+    |
+   ::: src/user/mm/mod.rs:252:1
+    |
+252 | pub struct AddressSpace {
+    | ----------------------- method `w8` not found for this struct
+    |
+   ::: src/user/windows/memory.rs:102:8
+    |
+102 |     fn w8(&self, addr: u64, v: u8) -> Result<(), MemFault> {
+    |        -- the method is available for `user::mm::AddressSpace` here
+    |
+    = help: items from traits can only be used if the trait is in scope
+help: there is a method `u8` with a similar name, but with different arguments
+   --> src/user/windows/memory.rs:70:5
+    |
+ 70 |     fn u8(&self, addr: u64) -> Result<u8, MemFault> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: trait `Mem` which provides `w8` is implemented but not in scope; perhaps you want to import it
+    |
+  1 + use crate::user::windows::memory::Mem;
+    |
+
+For more information about this error, try `rustc --explain E0599`.
+error: could not compile `rax` (lib test) due to 3 previous errors

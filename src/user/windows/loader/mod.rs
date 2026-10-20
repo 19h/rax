@@ -35,6 +35,7 @@ pub mod apiset;
 pub(crate) mod apiset_schema;
 pub mod builtin;
 mod dynamic;
+mod image_copies;
 pub mod ldr;
 mod native_image;
 pub(crate) mod services;
@@ -373,6 +374,7 @@ fn map_pe(p: &mut Proc, pe: &PeImage, name: &str) -> Result<u64, LoadError> {
         p.vm.poke(base, &image).map_err(|_| {
             LoadError::new(STATUS_NO_MEMORY, format!("{name}: cannot write the image"))
         })?;
+        image_copies::enable(p, pe, base)?;
         Ok(base)
     })();
     if result.is_err() {
@@ -398,15 +400,7 @@ fn region_protect(r: &crate::user::image::pe::ImageProtection) -> u32 {
 
 /// Applies the section protections of `pe` mapped at `base`.
 fn protect_sections(p: &mut Proc, pe: &PeImage, base: u64) -> Result<(), LoadError> {
-    for r in pe.regions() {
-        p.vm.protect(
-            base + u64::from(r.rva),
-            u64::from(r.len),
-            region_protect(&r.protection),
-        )
-        .map_err(|e| LoadError::new(e.status(), "cannot apply image section protection"))?;
-    }
-    Ok(())
+    image_copies::protect(p, pe, base)
 }
 
 /// A pointer-bearing image field must not access another allocation or
@@ -753,6 +747,9 @@ fn load_builtin(p: &mut Proc, dll: &'static BuiltinDll) -> Result<usize, LoadErr
         p.vm.poke(base, &img.bytes).map_err(|_| {
             LoadError::new(STATUS_NO_MEMORY, format!("{}: cannot write", dll.display))
         })?;
+        p.vm.space()
+            .track_private_copies(base, size)
+            .map_err(|_| LoadError::new(STATUS_NO_MEMORY, "cannot track built-in image copies"))?;
         let text = base + u64::from(img.text_rva);
         p.vm.protect(base, 0x1000, prot::READONLY)
             .map_err(|e| LoadError::new(e.status(), "cannot protect built-in headers"))?;

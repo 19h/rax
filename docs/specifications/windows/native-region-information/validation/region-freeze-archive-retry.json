@@ -1,0 +1,5 @@
+{
+  "initial-stop": "The ignored MRI target directory did not yet exist; the source manifest was already written.",
+  "recovery": "Rehash every frozen input, create only that ignored task-owned directory, package exact changed paths and complete transfer metadata.",
+  "source-files-unchanged": true
+}

@@ -38,6 +38,29 @@ pub(super) fn validate_private(
 }
 
 impl VirtualMemory {
+    /// NUMA preference belongs to a newly created reservation. A commit into
+    /// an existing reservation neither sets nor clears its original preference.
+    pub(crate) fn allocate_extended_numa(
+        &mut self,
+        base: Option<u64>,
+        size: u64,
+        allocation_type: u32,
+        protect: u32,
+        requirements: AddressRequirements,
+        node: Option<u32>,
+    ) -> Result<(u64, u64), VmError> {
+        if node.is_some_and(|node| node != 0) {
+            return Err(VmError::InvalidParameter);
+        }
+        let new_reservation =
+            base.is_none_or(|base| base == 0) || allocation_type & mem::RESERVE != 0;
+        let result = self.allocate_extended(base, size, allocation_type, protect, requirements)?;
+        if new_reservation && let Some(node) = node {
+            self.allocation_nodes.insert(result.0, node);
+        }
+        Ok(result)
+    }
+
     /// Same private allocation state machine as allocate(), with constrained
     /// address selection for a null base. No host allocation/kernel forwarding.
     /// Validation tests the empty interval before occupied mappings, so an

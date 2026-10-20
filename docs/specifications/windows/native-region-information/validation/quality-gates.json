@@ -1,0 +1,14 @@
+{
+  "scope": "Completed regioninformation/privatecopy/NUMA semantic group only; broaderprocessgoal remainsactive.",
+  "gates": {
+    "QG1": "pass: Five assumptions have basis/dependents/stress/falsification and final status; bounded kernel/consumer profiles remain explicit.",
+    "QG2": "pass: Queryclass3/7 semantics, allocationcopy lifecycle, NUMA and source/consumer matrix have direct executed evidence.",
+    "QG3": "pass: Bytes/pages/layout widths, commands/configuration and independent source/runtime/PE hashes retained; replay reconstructed from rawrecords.",
+    "QG4": "pass: Guard/probe/capture ordering, sharedPE, reservedCOW, samevaluewrites, concurrent and mapping lifetime cases tested; remainingfrontiers labeled.",
+    "QG5": "pass: Nativeproducer source/PE/module hashes and one29683kernel primary observations; no fabricated x64kernel/currentproduct equivalence.",
+    "QG6": "pass: High/medium adjacent findings bounded and recorded; no unrelatedpolicy or dependency expansion.",
+    "QG7": "pass: Isolatedowned28source/test/model inputs; exactproofpath staging required; sharedcheckout concurrent state preserved.",
+    "QG8": "pass: Compiled0pass2fail baseline, focus19/copy6, complete3hostlibrary binaries,183CAPI and selectedintegration, owningconsumer paths and actualprogram results.",
+    "QG9": "pass: Explicitmodules/testregistration/publicreexport, source25082/1835096144bytes and owning3823 match frozen manifests; documents distinguishfullgoal fromthisgroup."
+  }
+}

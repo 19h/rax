@@ -63,6 +63,9 @@ impl VirtualMemory {
                 )
                 .map_err(|_| VmError::NoMemory)?;
                 self.protect(address, end - begin, ordinary_protection)?;
+                self.space
+                    .track_private_copies(address, end - begin)
+                    .map_err(mm)?;
                 // Map-time cache flags are accepted by the native section
                 // mapper, while NtProtectVirtualMemory rejects adding them.
                 self.allocs
@@ -88,6 +91,7 @@ impl VirtualMemory {
             let _ = self.release(allocation);
             return Err(error);
         }
+        self.pagefile_views.insert(allocation);
         self.data_views
             .insert(allocation, DataView { _section: section });
         Ok(())

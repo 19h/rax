@@ -21,6 +21,7 @@ impl VirtualMemory {
             let _ = self.release(base);
             return Err(error);
         }
+        self.pagefile_views.insert(base);
         Ok(SchedulerView { base, token })
     }
     fn owns_scheduler_view(&self, view: &SchedulerView) -> bool {

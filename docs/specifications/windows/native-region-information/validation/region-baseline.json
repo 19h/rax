@@ -1,0 +1,35 @@
+{
+  "state": "finished",
+  "pid": 33516,
+  "argv": [
+    "cargo",
+    "+1.95.0",
+    "test",
+    "--locked",
+    "--offline",
+    "--no-default-features",
+    "--lib",
+    "native_region_information",
+    "--",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "inputs-before": {
+    "src/user/windows/dll/native/virtual_memory.rs": "8005856f8357a59b6f804a00eb96afe25efbcbab4117d408be18ce6bba2d89ee",
+    "src/user/windows/process/sched/tests/services_tests/virtual_memory_tests.rs": "9693872cc0c3171a6f681537399cb3fee37d1e0a92e0932e1b4e0ce20a4ba383",
+    "src/user/windows/process/sched/tests/services_tests/region_information_tests.rs": "9f190ecd0a30e418aaea78595e9b60306f7a93db8878efb93ece14db0e44c4a3"
+  },
+  "child-pid": 33518,
+  "exit-code": 101,
+  "seconds": 84.01908299999195,
+  "log": "region-baseline.log",
+  "bytes": 2257,
+  "sha256": "87ce5c10d5569c3c0fdbbcc1a71f34de7b94d9f85bfba3a3531c46cc432c45a6",
+  "inputs-after": {
+    "src/user/windows/dll/native/virtual_memory.rs": "8005856f8357a59b6f804a00eb96afe25efbcbab4117d408be18ce6bba2d89ee",
+    "src/user/windows/process/sched/tests/services_tests/virtual_memory_tests.rs": "9693872cc0c3171a6f681537399cb3fee37d1e0a92e0932e1b4e0ce20a4ba383",
+    "src/user/windows/process/sched/tests/services_tests/region_information_tests.rs": "9f190ecd0a30e418aaea78595e9b60306f7a93db8878efb93ece14db0e44c4a3"
+  },
+  "inputs-unchanged": true,
+  "utc": "2026-10-20T00:28:24.635062+00:00"
+}

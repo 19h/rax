@@ -1,0 +1,37 @@
+program=C:\Windows\System32\whoami.exe prefix-turns=2100000 result=BudgetExhausted
+leaf name=NtContinue entry=0x7fff38a41470 svc-pc=0x7fff38a41470 service=0x43
+leaf name=NtQueryVirtualMemory entry=0x7fff38a41240 svc-pc=0x7fff38a41240 service=0x23
+region-call turn=2966197 tid=8 class=3 process=0xffffffffffffffff address=0x1d60000 output=0x1a5dc40 length=48 returned=0x0
+region-result turn=2966197 tid=8 class=3 status=0x0 bytes=Ok([0, 0, d6, 1, 0, 0, 0, 0, 80, 0, 0, 0, 0, 0, 0, 1, 0, 80, 15, 0, 0, 0, 0, 0, 0, 90, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ff, ff, ff, ff, 0, 0, 0, 0]) returned=None
+progress turn=3000000 result=BudgetExhausted
+region-call turn=3005658 tid=8 class=3 process=0xffffffffffffffff address=0x36f0000 output=0x1a5d390 length=48 returned=0x0
+region-result turn=3005658 tid=8 class=3 status=0x0 bytes=Ok([0, 0, 6f, 3, 0, 0, 0, 0, 80, 0, 0, 0, 0, 0, 0, 1, 0, e0, 14, 0, 0, 0, 0, 0, 0, 80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ff, ff, ff, ff, 0, 0, 0, 0]) returned=None
+region-call turn=3158504 tid=8 class=3 process=0xffffffffffffffff address=0x1ec0000 output=0x1a5d390 length=48 returned=0x0
+region-result turn=3158504 tid=8 class=3 status=0x0 bytes=Ok([0, 0, ec, 1, 0, 0, 0, 0, 80, 0, 0, 0, 0, 0, 0, 1, 0, 30, f, 0, 0, 0, 0, 0, 0, 60, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ff, ff, ff, ff, 0, 0, 0, 0]) returned=None
+region-call turn=3429460 tid=8 class=3 process=0xffffffffffffffff address=0x3840000 output=0x1a5d390 length=48 returned=0x0
+region-result turn=3429460 tid=8 class=3 status=0x0 bytes=Ok([0, 0, 84, 3, 0, 0, 0, 0, 80, 0, 0, 0, 0, 0, 0, 1, 0, 80, 21, 0, 0, 0, 0, 0, 0, 40, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ff, ff, ff, ff, 0, 0, 0, 0]) returned=None
+region-call turn=3640483 tid=8 class=3 process=0xffffffffffffffff address=0x3a60000 output=0x1a5dc40 length=48 returned=0x0
+region-result turn=3640483 tid=8 class=3 status=0x0 bytes=Ok([0, 0, a6, 3, 0, 0, 0, 0, 80, 0, 0, 0, 0, 0, 0, 1, 0, c0, 2a, 0, 0, 0, 0, 0, 0, 60, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ff, ff, ff, ff, 0, 0, 0, 0]) returned=None
+region-call turn=3678678 tid=8 class=3 process=0xffffffffffffffff address=0x3d10000 output=0x1a5d390 length=48 returned=0x0
+region-result turn=3678678 tid=8 class=3 status=0x0 bytes=Ok([0, 0, d1, 3, 0, 0, 0, 0, 80, 0, 0, 0, 0, 0, 0, 1, 0, 20, 6, 0, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ff, ff, ff, ff, 0, 0, 0, 0]) returned=None
+region-call turn=3916745 tid=8 class=3 process=0xffffffffffffffff address=0x3d80000 output=0x1a5d390 length=48 returned=0x0
+region-result turn=3916745 tid=8 class=3 status=0x0 bytes=Ok([0, 0, d8, 3, 0, 0, 0, 0, 80, 0, 0, 0, 0, 0, 0, 1, 0, 40, 7, 0, 0, 0, 0, 0, 0, 40, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ff, ff, ff, ff, 0, 0, 0, 0]) returned=None
+region-call turn=3958536 tid=8 class=3 process=0xffffffffffffffff address=0x3e00000 output=0x1a5cae0 length=48 returned=0x0
+region-result turn=3958536 tid=8 class=3 status=0x0 bytes=Ok([0, 0, e0, 3, 0, 0, 0, 0, 80, 0, 0, 0, 0, 0, 0, 1, 0, 90, 22, 0, 0, 0, 0, 0, 0, 50, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ff, ff, ff, ff, 0, 0, 0, 0]) returned=None
+progress turn=4000000 result=BudgetExhausted
+region-call turn=4223476 tid=8 class=3 process=0xffffffffffffffff address=0x4030000 output=0x1a5cae0 length=48 returned=0x0
+region-result turn=4223476 tid=8 class=3 status=0x0 bytes=Ok([0, 0, 3, 4, 0, 0, 0, 0, 80, 0, 0, 0, 0, 0, 0, 1, 0, 50, 1d, 0, 0, 0, 0, 0, 0, 90, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ff, ff, ff, ff, 0, 0, 0, 0]) returned=None
+region-call turn=4263140 tid=8 class=3 process=0xffffffffffffffff address=0x4210000 output=0x1a5c230 length=48 returned=0x0
+region-result turn=4263140 tid=8 class=3 status=0x0 bytes=Ok([0, 0, 21, 4, 0, 0, 0, 0, 80, 0, 0, 0, 0, 0, 0, 1, 0, c0, 14, 0, 0, 0, 0, 0, 0, 60, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ff, ff, ff, ff, 0, 0, 0, 0]) returned=None
+region-call turn=4596633 tid=8 class=3 process=0xffffffffffffffff address=0x4360000 output=0x1a5c230 length=48 returned=0x0
+region-result turn=4596633 tid=8 class=3 status=0x0 bytes=Ok([0, 0, 36, 4, 0, 0, 0, 0, 80, 0, 0, 0, 0, 0, 0, 1, 0, 0, 5, 0, 0, 0, 0, 0, 0, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ff, ff, ff, ff, 0, 0, 0, 0]) returned=None
+region-call turn=4880430 tid=8 class=3 process=0xffffffffffffffff address=0x43b0000 output=0x1a5dc40 length=48 returned=0x0
+region-result turn=4880430 tid=8 class=3 status=0x0 bytes=Ok([0, 0, 3b, 4, 0, 0, 0, 0, 80, 0, 0, 0, 0, 0, 0, 1, 0, c0, d, 0, 0, 0, 0, 0, 0, 30, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ff, ff, ff, ff, 0, 0, 0, 0]) returned=None
+progress turn=5000000 result=BudgetExhausted
+progress turn=6000000 result=BudgetExhausted
+progress turn=7000000 result=BudgetExhausted
+terminal turn=7618121 Complete(Internal("native NTDLL service NtQueryAttributesFile (0x3d) at 0x7fff38a41410 is not implemented"))
+final-thread tid=8 pc=0x7fff38a41414 sp=0x1a5e430 args=[1a5e490, 1a5e4c0, 3e, 1a5e480, 210b6be, 1a5e7e6, 5c003f003f005c, 5c003f003f005c] bytes=Ok([c0, 3, 5f, d6, 0, 0, 0, 0, 0, 0, 0, 0, c1, 7, 0, d4]) last-error=Ok(6)
+guest-console program=C:\Windows\System32\whoami.exe stream=stdout bytes=0 hex=
+guest-console program=C:\Windows\System32\whoami.exe stream=stderr bytes=0 hex=
+observation-finished program=C:\Windows\System32\whoami.exe turn-limit=10000000 reached-alert=0 reached-continue=0 reached-regions=12 terminal=true

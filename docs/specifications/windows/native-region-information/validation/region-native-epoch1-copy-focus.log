@@ -1,0 +1,31 @@
+warning: "stdcall" is not a supported ABI for the current target
+  --> vendor\vm-memory\src\mmap\windows.rs:22:1
+   |
+22 | / extern "stdcall" {
+23 | |     pub fn VirtualAlloc(
+24 | |         lpAddress: *mut c_void,
+25 | |         dwSize: size_t,
+...  |
+49 | |     pub fn CloseHandle(hObject: RawHandle) -> u32; // BOOL
+50 | | }
+   | |_^
+   |
+   = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!
+   = note: for more information, see issue #137018 <https://github.com/rust-lang/rust/issues/137018>
+   = help: if you need `extern "stdcall"` on win32 and `extern "C"` everywhere else, use `extern "system"`
+   = note: `#[warn(unsupported_calling_conventions)]` (part of `#[warn(future_incompatible)]`) on by default
+
+warning: `vm-memory` (lib) generated 1 warning
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.27s
+     Running unittests src\lib.rs (target\normal\debug\deps\rax-b799307a7949aa6b.exe)
+
+running 6 tests
+test user::mm::copy_tracking::tests::private_copy_charge_survives_remap_but_not_discard_unmap_or_reuse ... ok
+test user::mm::copy_tracking::tests::private_copy_charge_tracks_warm_cold_identical_and_failed_accesses ... ok
+test user::mm::copy_tracking::tests::private_copy_cpu_stores_after_cached_reads_acquire_charge_in_x86_and_aarch64 ... ok
+test user::mm::copy_tracking::tests::private_copy_raw_write_to_readonly_shared_backing_acquires_no_charge ... ok
+test user::mm::copy_tracking::tests::private_copy_write_probes_acquire_once_under_concurrent_translation ... ok
+test user::mm::private_copy::tests::private_ranges_preserve_gaps_and_both_sides_of_partial_removal ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 7561 filtered out; finished in 0.01s
+

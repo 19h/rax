@@ -1,0 +1,310 @@
+{
+  "state": "finished",
+  "pid": 59803,
+  "argv": [
+    "cargo",
+    "+1.95.0",
+    "test",
+    "--locked",
+    "--offline",
+    "--no-default-features",
+    "--lib",
+    "region_",
+    "--",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "inputs-before": [
+    {
+      "path": "docs/specifications/windows/native-region-information/modelled-query-cases.json",
+      "bytes": 743000,
+      "sha256": "024712b4106c01a033bde1257d7c3a5e3c7b1b9c0374be444c121cf72e184b1a"
+    },
+    {
+      "path": "src/user/mm/copy_tracking.rs",
+      "bytes": 2871,
+      "sha256": "51153198d963912c07c2602dd54ea2d7e3f477dcf4c34c781420763662e93a5c"
+    },
+    {
+      "path": "src/user/mm/copy_tracking/tests.rs",
+      "bytes": 7723,
+      "sha256": "d9c4330d24eb3d922e4afea37ea5ca031a7b746230beda0a726bbc160e21a1c0"
+    },
+    {
+      "path": "src/user/mm/mod.rs",
+      "bytes": 41926,
+      "sha256": "59aebd25b6b0d2067435773ee085a6c765d28cc6043c8ecbe86427db90a36f2c"
+    },
+    {
+      "path": "src/user/mm/pagetable.rs",
+      "bytes": 4718,
+      "sha256": "ddbbcaa848d479d0a75080429e8b346e06bbe7e383b8893ccc92fbf0cdc348af"
+    },
+    {
+      "path": "src/user/mm/private_copy.rs",
+      "bytes": 4258,
+      "sha256": "f5476297dbb11059959c39d0065c0393f32924bab3e085e7e1e6fd5da6018764"
+    },
+    {
+      "path": "src/user/mm/vma.rs",
+      "bytes": 9428,
+      "sha256": "376c5bb43f6c70cf3a394d2cd427fc104a784fe659072db67d77b4dee254015d"
+    },
+    {
+      "path": "src/user/windows/dll/native/allocate.rs",
+      "bytes": 9663,
+      "sha256": "99acd07b19229a8177592753a94a8eb647910736dccf759530d8802daaf39f4f"
+    },
+    {
+      "path": "src/user/windows/dll/native/virtual_memory.rs",
+      "bytes": 6903,
+      "sha256": "e34da5044d1603bdb9dc8f2e6cd1d6c52056f94491f73da42fc449beb6159b51"
+    },
+    {
+      "path": "src/user/windows/dll/native/virtual_memory/region.rs",
+      "bytes": 3079,
+      "sha256": "0db4f1f467c61b9af9e8e719669f2a939970e141f7f86523718d9af7a0d5703a"
+    },
+    {
+      "path": "src/user/windows/loader/image_copies.rs",
+      "bytes": 1619,
+      "sha256": "bcee902529e9a0f6a305a7b8449efd81e139f82fb6f7e8891ec086c51d817cae"
+    },
+    {
+      "path": "src/user/windows/loader/image_copies/tests.rs",
+      "bytes": 2874,
+      "sha256": "0f9c4e91f3c71e89504ab32e7230a4c496ff49c2be789eae893d01fb98da84c8"
+    },
+    {
+      "path": "src/user/windows/loader/mod.rs",
+      "bytes": 52166,
+      "sha256": "65b873a1c73fc7c7230a59d907b96314d10f9735dc6ab07d4622f68bebb435c3"
+    },
+    {
+      "path": "src/user/windows/memory.rs",
+      "bytes": 67146,
+      "sha256": "e7faf75caa3fe288f0a013cd7802fd4bf6eca21a0c5875878b1d04f70523f711"
+    },
+    {
+      "path": "src/user/windows/memory/data_section.rs",
+      "bytes": 3802,
+      "sha256": "b7f4b1ac351c20ff87fd408300ac7916aee57cff5fbb7e689d3f227e1cba5b73"
+    },
+    {
+      "path": "src/user/windows/memory/data_section/tests.rs",
+      "bytes": 5050,
+      "sha256": "8a992174eae213f85bb3a53c1f7c7ecb37deac28953b3bf10eb8ebe2b0c242e1"
+    },
+    {
+      "path": "src/user/windows/memory/extended.rs",
+      "bytes": 5242,
+      "sha256": "87b0fbc510270ffb97a81b8cbf24b2db6764670e256e342ea13fe0ad59af66d1"
+    },
+    {
+      "path": "src/user/windows/memory/region.rs",
+      "bytes": 6897,
+      "sha256": "f79350019f77a806e99aa6a45ab9252328f7273b05d78aac252231cd51b5a89c"
+    },
+    {
+      "path": "src/user/windows/memory/region/tests.rs",
+      "bytes": 1626,
+      "sha256": "1121a674f40eaf6886e4ee2f410fe8e68021c9e7e37bb91113c97dea29fb7e79"
+    },
+    {
+      "path": "src/user/windows/memory/scheduler.rs",
+      "bytes": 2458,
+      "sha256": "ed2092697e408ac5fca95384dce4eb7b6bd6ae2aac20f4d8b37fd5502a2eb4cc"
+    },
+    {
+      "path": "src/user/windows/memory/section.rs",
+      "bytes": 7886,
+      "sha256": "2fdb47eaf8a0f1e1e7d84f5e16e54b0eafdb04f2be336b1eca96e6fba25f7f3d"
+    },
+    {
+      "path": "src/user/windows/memory/shared_section.rs",
+      "bytes": 5903,
+      "sha256": "8f64e07915866390b7c7a34c8f25e85133188a316672e5d919795396ce021046"
+    },
+    {
+      "path": "src/user/windows/native-runtime.md",
+      "bytes": 198220,
+      "sha256": "264c88a1599b8d13edf4675b8121c759eb255b9bcdaf564a39ba73d01459bd46"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/allocate_ex_tests.rs",
+      "bytes": 36237,
+      "sha256": "1f711b62c67ee65fa6a158d5add31be672630212145c06c993349f8e94a501d6"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/region_information_tests.rs",
+      "bytes": 7125,
+      "sha256": "f1e0a7bcdaf3c4604090196064698c5b211c50aad2605ce854919f81d4590dc7"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/region_query_replay_tests.rs",
+      "bytes": 9048,
+      "sha256": "f08ca49a5f9f65feab90538b2b50f774a458572137e57df50f7003568b8b9acf"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/virtual_memory_leaf_tests.rs",
+      "bytes": 14560,
+      "sha256": "9ea267b51f4b66cdc49f1e9a035ecffbf742877f470bff61666ba4a313d503bf"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/virtual_memory_tests.rs",
+      "bytes": 18173,
+      "sha256": "363a3ca4bbceea2223f104f44fd2f5a0c004ea467892a876240d827fc4b56276"
+    }
+  ],
+  "exit-code": 0,
+  "seconds": 91.98639045798336,
+  "inputs-after": [
+    {
+      "path": "docs/specifications/windows/native-region-information/modelled-query-cases.json",
+      "bytes": 743000,
+      "sha256": "024712b4106c01a033bde1257d7c3a5e3c7b1b9c0374be444c121cf72e184b1a"
+    },
+    {
+      "path": "src/user/mm/copy_tracking.rs",
+      "bytes": 2871,
+      "sha256": "51153198d963912c07c2602dd54ea2d7e3f477dcf4c34c781420763662e93a5c"
+    },
+    {
+      "path": "src/user/mm/copy_tracking/tests.rs",
+      "bytes": 7723,
+      "sha256": "d9c4330d24eb3d922e4afea37ea5ca031a7b746230beda0a726bbc160e21a1c0"
+    },
+    {
+      "path": "src/user/mm/mod.rs",
+      "bytes": 41926,
+      "sha256": "59aebd25b6b0d2067435773ee085a6c765d28cc6043c8ecbe86427db90a36f2c"
+    },
+    {
+      "path": "src/user/mm/pagetable.rs",
+      "bytes": 4718,
+      "sha256": "ddbbcaa848d479d0a75080429e8b346e06bbe7e383b8893ccc92fbf0cdc348af"
+    },
+    {
+      "path": "src/user/mm/private_copy.rs",
+      "bytes": 4258,
+      "sha256": "f5476297dbb11059959c39d0065c0393f32924bab3e085e7e1e6fd5da6018764"
+    },
+    {
+      "path": "src/user/mm/vma.rs",
+      "bytes": 9428,
+      "sha256": "376c5bb43f6c70cf3a394d2cd427fc104a784fe659072db67d77b4dee254015d"
+    },
+    {
+      "path": "src/user/windows/dll/native/allocate.rs",
+      "bytes": 9663,
+      "sha256": "99acd07b19229a8177592753a94a8eb647910736dccf759530d8802daaf39f4f"
+    },
+    {
+      "path": "src/user/windows/dll/native/virtual_memory.rs",
+      "bytes": 6903,
+      "sha256": "e34da5044d1603bdb9dc8f2e6cd1d6c52056f94491f73da42fc449beb6159b51"
+    },
+    {
+      "path": "src/user/windows/dll/native/virtual_memory/region.rs",
+      "bytes": 3079,
+      "sha256": "0db4f1f467c61b9af9e8e719669f2a939970e141f7f86523718d9af7a0d5703a"
+    },
+    {
+      "path": "src/user/windows/loader/image_copies.rs",
+      "bytes": 1619,
+      "sha256": "bcee902529e9a0f6a305a7b8449efd81e139f82fb6f7e8891ec086c51d817cae"
+    },
+    {
+      "path": "src/user/windows/loader/image_copies/tests.rs",
+      "bytes": 2874,
+      "sha256": "0f9c4e91f3c71e89504ab32e7230a4c496ff49c2be789eae893d01fb98da84c8"
+    },
+    {
+      "path": "src/user/windows/loader/mod.rs",
+      "bytes": 52166,
+      "sha256": "65b873a1c73fc7c7230a59d907b96314d10f9735dc6ab07d4622f68bebb435c3"
+    },
+    {
+      "path": "src/user/windows/memory.rs",
+      "bytes": 67146,
+      "sha256": "e7faf75caa3fe288f0a013cd7802fd4bf6eca21a0c5875878b1d04f70523f711"
+    },
+    {
+      "path": "src/user/windows/memory/data_section.rs",
+      "bytes": 3802,
+      "sha256": "b7f4b1ac351c20ff87fd408300ac7916aee57cff5fbb7e689d3f227e1cba5b73"
+    },
+    {
+      "path": "src/user/windows/memory/data_section/tests.rs",
+      "bytes": 5050,
+      "sha256": "8a992174eae213f85bb3a53c1f7c7ecb37deac28953b3bf10eb8ebe2b0c242e1"
+    },
+    {
+      "path": "src/user/windows/memory/extended.rs",
+      "bytes": 5242,
+      "sha256": "87b0fbc510270ffb97a81b8cbf24b2db6764670e256e342ea13fe0ad59af66d1"
+    },
+    {
+      "path": "src/user/windows/memory/region.rs",
+      "bytes": 6897,
+      "sha256": "f79350019f77a806e99aa6a45ab9252328f7273b05d78aac252231cd51b5a89c"
+    },
+    {
+      "path": "src/user/windows/memory/region/tests.rs",
+      "bytes": 1626,
+      "sha256": "1121a674f40eaf6886e4ee2f410fe8e68021c9e7e37bb91113c97dea29fb7e79"
+    },
+    {
+      "path": "src/user/windows/memory/scheduler.rs",
+      "bytes": 2458,
+      "sha256": "ed2092697e408ac5fca95384dce4eb7b6bd6ae2aac20f4d8b37fd5502a2eb4cc"
+    },
+    {
+      "path": "src/user/windows/memory/section.rs",
+      "bytes": 7886,
+      "sha256": "2fdb47eaf8a0f1e1e7d84f5e16e54b0eafdb04f2be336b1eca96e6fba25f7f3d"
+    },
+    {
+      "path": "src/user/windows/memory/shared_section.rs",
+      "bytes": 5903,
+      "sha256": "8f64e07915866390b7c7a34c8f25e85133188a316672e5d919795396ce021046"
+    },
+    {
+      "path": "src/user/windows/native-runtime.md",
+      "bytes": 198220,
+      "sha256": "264c88a1599b8d13edf4675b8121c759eb255b9bcdaf564a39ba73d01459bd46"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/allocate_ex_tests.rs",
+      "bytes": 36237,
+      "sha256": "1f711b62c67ee65fa6a158d5add31be672630212145c06c993349f8e94a501d6"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/region_information_tests.rs",
+      "bytes": 7125,
+      "sha256": "f1e0a7bcdaf3c4604090196064698c5b211c50aad2605ce854919f81d4590dc7"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/region_query_replay_tests.rs",
+      "bytes": 9048,
+      "sha256": "f08ca49a5f9f65feab90538b2b50f774a458572137e57df50f7003568b8b9acf"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/virtual_memory_leaf_tests.rs",
+      "bytes": 14560,
+      "sha256": "9ea267b51f4b66cdc49f1e9a035ecffbf742877f470bff61666ba4a313d503bf"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/virtual_memory_tests.rs",
+      "bytes": 18173,
+      "sha256": "363a3ca4bbceea2223f104f44fd2f5a0c004ea467892a876240d827fc4b56276"
+    }
+  ],
+  "inputs-unchanged": true,
+  "log": "region-focus-epoch7.log",
+  "bytes": 2794,
+  "sha256": "51689258d6bd9ee01cb22631f33139f790a26a2f8eea9af01966a3242d0f82a0",
+  "results": [
+    "ok. 19 passed; 0 failed; 0 ignored; 0 measured; 8082 filtered out; finished in 4.87s"
+  ]
+}

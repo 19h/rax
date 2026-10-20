@@ -111,6 +111,7 @@ impl VirtualMemory {
                 token: token.clone(),
             },
         );
+        self.pagefile_views.insert(base);
         self.committed = charge;
         Ok(SharedViewOwner { base, size, token })
     }
