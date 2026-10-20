@@ -416,6 +416,13 @@ def audit(directory=HERE, source=ROOT):
         == frozen["total-bytes"] - 552 + 374
         == 1835033542
     )
+    original_cargo = next(
+        row for row in frozen["files"] if row["path"] == ".cargo/config.toml"
+    )
+    assert pair(original_cargo) == (
+        552,
+        "a198c84574684e95de13dbb1bdb7b6c918f90fdb490c649937f697fc9621f3cd",
+    )
     for row in frozen["files"]:
         path = source / row["path"]
         if os.name == "nt" and row["path"] == ".cargo/config.toml":

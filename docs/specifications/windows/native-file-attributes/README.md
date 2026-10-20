@@ -57,6 +57,13 @@ uses its separately bound 374-byte Cargo configuration in place of the original
 Final-source counts/identities belong to quality.json and its closed envelope. Retained Assist ABI184 consumers do not
 establish complete current-root GUI/plugin/package behavior.
 
+The first native Windows corruption-runner replay accepted a changed hash in
+the original Cargo ledger entry because the native override branch checked only
+its separate 374-byte configuration. The verifier now also pins the original
+552-byte entry before applying that override. The rejected trial and subsequent
+platform revalidation are retained in the audit-correction record. Product source
+and the compiled/query/owning results are unchanged by that verification fix.
+
 The prior alias stress runner cached scratch identities, so later rejections could
 precede semantic checks. Its 13 controls were revalidated with all scratch paths
 excluded from the cache and a passing restored corpus before each corruption.

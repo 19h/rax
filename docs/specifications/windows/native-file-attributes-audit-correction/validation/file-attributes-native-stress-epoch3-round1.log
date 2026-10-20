@@ -1,0 +1,17 @@
+Traceback (most recent call last):
+  File "C:\Windows\Temp\assist-native-rax-20261010\verify-file-attributes-epoch3\docs\specifications\windows\native-file-attributes\stress_validation.py", line 216, in <module>
+    main()
+    ~~~~^^
+  File "C:\Windows\Temp\assist-native-rax-20261010\verify-file-attributes-epoch3\docs\specifications\windows\native-file-attributes\stress_validation.py", line 146, in main
+    control(
+    ~~~~~~~^
+        "frozen-source-substituted",
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+        ),
+        ^^
+    )
+    ^
+  File "C:\Windows\Temp\assist-native-rax-20261010\verify-file-attributes-epoch3\docs\specifications\windows\native-file-attributes\stress_validation.py", line 103, in control
+    raise AssertionError("accepted semantic corruption: " + name)
+AssertionError: accepted semantic corruption: frozen-source-substituted

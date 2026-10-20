@@ -1,0 +1,25 @@
+{
+  "base": "ac3b2031184165b9f3c6b7568f7dedb2300d44b8",
+  "product-source-changed": false,
+  "abi-default-dependency-policy-changed": false,
+  "full-process-objective-complete": false,
+  "accepted-prototype-control": "frozen-source-substituted on Windows",
+  "corrected-original-cargo": {
+    "bytes": 552,
+    "sha256": "a198c84574684e95de13dbb1bdb7b6c918f90fdb490c649937f697fc9621f3cd"
+  },
+  "native-cargo": {
+    "bytes": 374,
+    "sha256": "9f80616d633d948feeba5b201bfa4fe98c8fd736f3f48469b6481279584d8f4c"
+  },
+  "corruption-rounds-per-host": 2,
+  "controls-per-round": 13,
+  "positive-restorations-per-round": 13,
+  "hosts": [
+    "macos",
+    "linux",
+    "windows"
+  ],
+  "portable-audit-rounds-per-host": 2,
+  "corrected-main-envelope-sha256": "211e256f7309c7b8acd1d628822780877bf125ed5ce5eff3dd92ffc531236a86"
+}

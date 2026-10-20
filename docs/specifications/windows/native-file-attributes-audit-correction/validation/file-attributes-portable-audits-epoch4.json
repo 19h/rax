@@ -1,0 +1,126 @@
+{
+  "state": "finished",
+  "envelope-sha256": "211e256f7309c7b8acd1d628822780877bf125ed5ce5eff3dd92ffc531236a86",
+  "steps": [
+    {
+      "host": "macos",
+      "round": 1,
+      "argv": [
+        "python3",
+        "-B",
+        "/Users/int/.assist-file-attributes-20261020/docs/specifications/windows/native-file-attributes/check_validation.py",
+        "--source-root",
+        "/Users/int/.assist-file-attributes-20261020"
+      ],
+      "exit-code": 0,
+      "seconds": 4.178005832975032,
+      "log": "file-attributes-proof-macos-corrected-round1.log",
+      "bytes": 229,
+      "sha256": "01b49a026bf5a212cb140d44cf28dd0ed42841216ef3ec3bf949530b48910a25"
+    },
+    {
+      "host": "linux",
+      "round": 1,
+      "argv": [
+        "docker",
+        "run",
+        "--rm",
+        "--platform",
+        "linux/amd64",
+        "-v",
+        "/Users/int/.assist-file-attributes-20261020:/work/vendor/rax:ro",
+        "assist-rax-validation-rustfmt:1.95-bullseye-20261015",
+        "python3",
+        "-B",
+        "/work/vendor/rax/docs/specifications/windows/native-file-attributes/check_validation.py",
+        "--source-root",
+        "/work/vendor/rax"
+      ],
+      "exit-code": 0,
+      "seconds": 8.04653879100806,
+      "log": "file-attributes-proof-linux-corrected-round1.log",
+      "bytes": 229,
+      "sha256": "01b49a026bf5a212cb140d44cf28dd0ed42841216ef3ec3bf949530b48910a25"
+    },
+    {
+      "host": "windows",
+      "round": 1,
+      "argv": [
+        "prlctl",
+        "exec",
+        "a5b14f9a-d292-4610-a04d-df4ca4337c9d",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\verify-file-attributes-epoch4\\docs\\specifications\\windows\\native-file-attributes\\check_validation.py",
+        "--source-root",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\verify-file-attributes-epoch4"
+      ],
+      "exit-code": 0,
+      "seconds": 24.83347787501407,
+      "log": "file-attributes-proof-windows-corrected-round1.log",
+      "bytes": 237,
+      "sha256": "21c4a8dbba8e9a672384ae2fafaefd83af0fb724aaeba813db8cbbe2776a9cd8"
+    },
+    {
+      "host": "macos",
+      "round": 2,
+      "argv": [
+        "python3",
+        "-B",
+        "/Users/int/.assist-file-attributes-20261020/docs/specifications/windows/native-file-attributes/check_validation.py",
+        "--source-root",
+        "/Users/int/.assist-file-attributes-20261020"
+      ],
+      "exit-code": 0,
+      "seconds": 3.9666465840127785,
+      "log": "file-attributes-proof-macos-corrected-round2.log",
+      "bytes": 229,
+      "sha256": "01b49a026bf5a212cb140d44cf28dd0ed42841216ef3ec3bf949530b48910a25"
+    },
+    {
+      "host": "linux",
+      "round": 2,
+      "argv": [
+        "docker",
+        "run",
+        "--rm",
+        "--platform",
+        "linux/amd64",
+        "-v",
+        "/Users/int/.assist-file-attributes-20261020:/work/vendor/rax:ro",
+        "assist-rax-validation-rustfmt:1.95-bullseye-20261015",
+        "python3",
+        "-B",
+        "/work/vendor/rax/docs/specifications/windows/native-file-attributes/check_validation.py",
+        "--source-root",
+        "/work/vendor/rax"
+      ],
+      "exit-code": 0,
+      "seconds": 7.616104832995916,
+      "log": "file-attributes-proof-linux-corrected-round2.log",
+      "bytes": 229,
+      "sha256": "01b49a026bf5a212cb140d44cf28dd0ed42841216ef3ec3bf949530b48910a25"
+    },
+    {
+      "host": "windows",
+      "round": 2,
+      "argv": [
+        "prlctl",
+        "exec",
+        "a5b14f9a-d292-4610-a04d-df4ca4337c9d",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\verify-file-attributes-epoch4\\docs\\specifications\\windows\\native-file-attributes\\check_validation.py",
+        "--source-root",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\verify-file-attributes-epoch4"
+      ],
+      "exit-code": 0,
+      "seconds": 26.14047149999533,
+      "log": "file-attributes-proof-windows-corrected-round2.log",
+      "bytes": 237,
+      "sha256": "21c4a8dbba8e9a672384ae2fafaefd83af0fb724aaeba813db8cbbe2776a9cd8"
+    }
+  ],
+  "exit-code": 0,
+  "utc": "2026-10-20T16:55:34.910423+00:00"
+}

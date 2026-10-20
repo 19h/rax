@@ -1,0 +1,23 @@
+{
+  "state": "finished",
+  "exit-code": 0,
+  "steps": [
+    {
+      "round": 1,
+      "exit-code": 0,
+      "seconds": 32.935460834007245,
+      "log": "file-attributes-macos-stress-epoch4-round1.log",
+      "bytes": 1267,
+      "sha256": "b60683ec6b205db4527baa3d0968487b38c115ebf9271f13ceb50d82705d818c"
+    },
+    {
+      "round": 2,
+      "exit-code": 0,
+      "seconds": 30.84560254198732,
+      "log": "file-attributes-macos-stress-epoch4-round2.log",
+      "bytes": 1267,
+      "sha256": "b60683ec6b205db4527baa3d0968487b38c115ebf9271f13ceb50d82705d818c"
+    }
+  ],
+  "utc": "2026-10-20T16:55:47.693179+00:00"
+}

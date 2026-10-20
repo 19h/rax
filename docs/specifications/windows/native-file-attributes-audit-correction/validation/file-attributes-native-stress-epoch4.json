@@ -1,0 +1,23 @@
+{
+  "state": "finished",
+  "exit-code": 0,
+  "steps": [
+    {
+      "round": 1,
+      "exit-code": 0,
+      "seconds": 195.52480504199048,
+      "log": "file-attributes-native-stress-epoch4-round1.log",
+      "bytes": 1326,
+      "sha256": "b8980cc1288a4850c6656d371e02a67442660392c45305254114d6de57135cd8"
+    },
+    {
+      "round": 2,
+      "exit-code": 0,
+      "seconds": 159.76400195798487,
+      "log": "file-attributes-native-stress-epoch4-round2.log",
+      "bytes": 1326,
+      "sha256": "b8980cc1288a4850c6656d371e02a67442660392c45305254114d6de57135cd8"
+    }
+  ],
+  "utc": "2026-10-20T17:00:39.362724+00:00"
+}

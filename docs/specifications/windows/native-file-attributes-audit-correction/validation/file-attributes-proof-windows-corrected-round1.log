@@ -1,0 +1,9 @@
+{
+  "state": "verified",
+  "source-files": 25097,
+  "owning-inputs": 3838,
+  "native-observations": 3408,
+  "full-process-objective-complete": false,
+  "frontier": "NtOpenFile (0x33)",
+  "native-retained-bytes-verified": true
+}

@@ -1,0 +1,17 @@
+{
+  "pipeline": 71768,
+  "commit": "5b9fd158d91d3fa4070598aef32690146d898d56",
+  "macos-job": 427178,
+  "macos-failure": "amtp_local_connection::tests::native_socket_sink_failure_and_move_retain_owner_and_timeout",
+  "source": "rust/assist-rs/src/amtp_local_connection/tests.rs:340",
+  "observed": "fcntl(F_GETFD) returned1 after free; expected-1",
+  "rust-counts": {
+    "passed": 1221,
+    "failed": 1,
+    "ignored": 18,
+    "filtered": 1102
+  },
+  "causal-result": "unknown",
+  "bounded-inference": "An fd-identifier reuse race is consistent with the returned FD_CLOEXEC bit and parallel tests; source does not set that flag for the adopted socket. No correction is claimed and no AMTP source was modified.",
+  "blocks": "Whole-root pipeline success; separate from the directly validated RAX query group."
+}

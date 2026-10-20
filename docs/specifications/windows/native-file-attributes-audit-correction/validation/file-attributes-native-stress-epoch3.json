@@ -1,0 +1,13 @@
+{
+  "state": "failed",
+  "steps": [
+    {
+      "round": 1,
+      "exit-code": 1,
+      "seconds": 91.77995991701027,
+      "log": "file-attributes-native-stress-epoch3-round1.log",
+      "bytes": 892,
+      "sha256": "6e99ed5796ae5a08e69b66d53edf544be9bc2f50ea1cdff4b6010d68109c0402"
+    }
+  ]
+}
