@@ -1,0 +1,274 @@
+[
+  {
+    "profile": "arm64",
+    "rows": [
+      {
+        "role": "fixed-root",
+        "name": "Sessions",
+        "type": "Directory"
+      },
+      {
+        "role": "fixed-root",
+        "name": "Windows",
+        "type": "Directory"
+      },
+      {
+        "role": "fixed-root",
+        "name": "KnownDllsChpe32",
+        "type": "Directory"
+      },
+      {
+        "role": "fixed-root",
+        "name": "KnownDlls32",
+        "type": "Directory"
+      },
+      {
+        "role": "fixed-root",
+        "name": "BaseNamedObjects",
+        "type": "Directory"
+      },
+      {
+        "role": "fixed-root",
+        "name": "KnownDlls",
+        "type": "Directory"
+      },
+      {
+        "role": "fixed-open",
+        "canonical": "\\KnownDlls"
+      },
+      {
+        "role": "fixed-open",
+        "canonical": "\\KnownDlls32"
+      },
+      {
+        "role": "fixed-open",
+        "canonical": "\\KnownDllsChpe32"
+      },
+      {
+        "role": "fixed-open",
+        "canonical": "\\Windows"
+      },
+      {
+        "role": "fixed-open",
+        "canonical": "\\BaseNamedObjects"
+      },
+      {
+        "role": "private-parent",
+        "name": "MiXeD",
+        "type": "Directory"
+      },
+      {
+        "role": "private-child",
+        "canonical": "\\BaseNamedObjects\\AssistNamespaceCase-8228-100676875\\MiXeD"
+      },
+      {
+        "role": "private-alias",
+        "canonical": "\\BaseNamedObjects\\AssistNamespaceCase-8228-100676875\\MiXeD"
+      }
+    ]
+  },
+  {
+    "profile": "x64",
+    "rows": [
+      {
+        "role": "fixed-root",
+        "name": "Sessions",
+        "type": "Directory"
+      },
+      {
+        "role": "fixed-root",
+        "name": "Windows",
+        "type": "Directory"
+      },
+      {
+        "role": "fixed-root",
+        "name": "KnownDllsChpe32",
+        "type": "Directory"
+      },
+      {
+        "role": "fixed-root",
+        "name": "KnownDlls32",
+        "type": "Directory"
+      },
+      {
+        "role": "fixed-root",
+        "name": "BaseNamedObjects",
+        "type": "Directory"
+      },
+      {
+        "role": "fixed-root",
+        "name": "KnownDlls",
+        "type": "Directory"
+      },
+      {
+        "role": "fixed-open",
+        "canonical": "\\KnownDlls"
+      },
+      {
+        "role": "fixed-open",
+        "canonical": "\\KnownDlls32"
+      },
+      {
+        "role": "fixed-open",
+        "canonical": "\\KnownDllsChpe32"
+      },
+      {
+        "role": "fixed-open",
+        "canonical": "\\Windows"
+      },
+      {
+        "role": "fixed-open",
+        "canonical": "\\BaseNamedObjects"
+      },
+      {
+        "role": "private-parent",
+        "name": "MiXeD",
+        "type": "Directory"
+      },
+      {
+        "role": "private-child",
+        "canonical": "\\BaseNamedObjects\\AssistNamespaceCase-10096-100677781\\MiXeD"
+      },
+      {
+        "role": "private-alias",
+        "canonical": "\\BaseNamedObjects\\AssistNamespaceCase-10096-100677781\\MiXeD"
+      }
+    ]
+  },
+  {
+    "profile": "x86",
+    "rows": [
+      {
+        "role": "fixed-root",
+        "name": "Sessions",
+        "type": "Directory"
+      },
+      {
+        "role": "fixed-root",
+        "name": "Windows",
+        "type": "Directory"
+      },
+      {
+        "role": "fixed-root",
+        "name": "KnownDllsChpe32",
+        "type": "Directory"
+      },
+      {
+        "role": "fixed-root",
+        "name": "KnownDlls32",
+        "type": "Directory"
+      },
+      {
+        "role": "fixed-root",
+        "name": "BaseNamedObjects",
+        "type": "Directory"
+      },
+      {
+        "role": "fixed-root",
+        "name": "KnownDlls",
+        "type": "Directory"
+      },
+      {
+        "role": "fixed-open",
+        "canonical": "\\KnownDlls"
+      },
+      {
+        "role": "fixed-open",
+        "canonical": "\\KnownDlls32"
+      },
+      {
+        "role": "fixed-open",
+        "canonical": "\\KnownDllsChpe32"
+      },
+      {
+        "role": "fixed-open",
+        "canonical": "\\Windows"
+      },
+      {
+        "role": "fixed-open",
+        "canonical": "\\BaseNamedObjects"
+      },
+      {
+        "role": "private-parent",
+        "name": "MiXeD",
+        "type": "Directory"
+      },
+      {
+        "role": "private-child",
+        "canonical": "\\BaseNamedObjects\\AssistNamespaceCase-5468-100678718\\MiXeD"
+      },
+      {
+        "role": "private-alias",
+        "canonical": "\\BaseNamedObjects\\AssistNamespaceCase-5468-100678718\\MiXeD"
+      }
+    ]
+  },
+  {
+    "profile": "x86-laa",
+    "rows": [
+      {
+        "role": "fixed-root",
+        "name": "Sessions",
+        "type": "Directory"
+      },
+      {
+        "role": "fixed-root",
+        "name": "Windows",
+        "type": "Directory"
+      },
+      {
+        "role": "fixed-root",
+        "name": "KnownDllsChpe32",
+        "type": "Directory"
+      },
+      {
+        "role": "fixed-root",
+        "name": "KnownDlls32",
+        "type": "Directory"
+      },
+      {
+        "role": "fixed-root",
+        "name": "BaseNamedObjects",
+        "type": "Directory"
+      },
+      {
+        "role": "fixed-root",
+        "name": "KnownDlls",
+        "type": "Directory"
+      },
+      {
+        "role": "fixed-open",
+        "canonical": "\\KnownDlls"
+      },
+      {
+        "role": "fixed-open",
+        "canonical": "\\KnownDlls32"
+      },
+      {
+        "role": "fixed-open",
+        "canonical": "\\KnownDllsChpe32"
+      },
+      {
+        "role": "fixed-open",
+        "canonical": "\\Windows"
+      },
+      {
+        "role": "fixed-open",
+        "canonical": "\\BaseNamedObjects"
+      },
+      {
+        "role": "private-parent",
+        "name": "MiXeD",
+        "type": "Directory"
+      },
+      {
+        "role": "private-child",
+        "canonical": "\\BaseNamedObjects\\AssistNamespaceCase-8008-100679593\\MiXeD"
+      },
+      {
+        "role": "private-alias",
+        "canonical": "\\BaseNamedObjects\\AssistNamespaceCase-8008-100679593\\MiXeD"
+      }
+    ]
+  }
+]

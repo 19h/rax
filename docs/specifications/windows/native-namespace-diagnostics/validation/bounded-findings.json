@@ -1,0 +1,23 @@
+[
+  {
+    "impact": "high",
+    "finding": "The invariant rejected on the x64 CI lane remains unknown; no capture validation is relaxed.",
+    "evidence": "private CI pipeline71516/job424884 trace retained in task cache, existing rejection and contextual diagnostic regression",
+    "blocks-this-group": false,
+    "blocks-full-goal": true
+  },
+  {
+    "impact": "high",
+    "finding": "Whoami remains at NtQueryVirtualMemory class3.",
+    "evidence": "Prior published NtContinue ordinary/C API receipts; separate region-query native probes",
+    "blocks-this-group": false,
+    "blocks-full-goal": true
+  },
+  {
+    "impact": "high",
+    "finding": "Retained Assist ABI184 consumers do not prove current-root ABI270 GUI/plugin/package behavior. Current CI also has a macOS disk failure.",
+    "evidence": "Owning-source/archive ledgers and private CI pipeline71516/job424883 trace retained in task cache",
+    "blocks-this-group": false,
+    "blocks-full-goal": true
+  }
+]

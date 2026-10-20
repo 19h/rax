@@ -1,0 +1,24 @@
+{
+  "state": "finished",
+  "pid": 89437,
+  "argv": [
+    "cargo",
+    "+1.95.0",
+    "test",
+    "--locked",
+    "--offline",
+    "--no-default-features",
+    "--lib",
+    "native_namespace_parent_identity_error",
+    "--",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "child-pid": 89438,
+  "exit-code": 0,
+  "seconds": 80.56244474998675,
+  "log": "namespace-diagnostic-focus.log",
+  "bytes": 507,
+  "sha256": "3aa0f085aeeedbeb912cb13b676b59bb1bd8eb26a09ee2b666b3afda5e4023ac",
+  "utc": "2026-10-20T00:03:23.717486+00:00"
+}

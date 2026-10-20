@@ -1,0 +1,34 @@
+{
+  "state": "finished",
+  "pid": 82926,
+  "argv": [
+    "cargo",
+    "+1.95.0",
+    "test",
+    "--locked",
+    "--offline",
+    "--no-default-features",
+    "--lib",
+    "native_namespace_parent_identity_error",
+    "--",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "inputs-before": {
+    "src/user/windows/object_namespace.rs": "01900dbc17468cd3daa9b8cd2ae2200ea6f8ea49d43120660f96874e3a6fc95b",
+    "src/user/windows/object_namespace/base_named_object_tests.rs": "61406d0a306c9e2147ecd9ca451fe30655545b0591d67b50a69dd83224e4d84b"
+  },
+  "steps": [],
+  "child-pid": 82945,
+  "exit-code": 101,
+  "seconds": 132.6052077919885,
+  "inputs-after": {
+    "src/user/windows/object_namespace.rs": "01900dbc17468cd3daa9b8cd2ae2200ea6f8ea49d43120660f96874e3a6fc95b",
+    "src/user/windows/object_namespace/base_named_object_tests.rs": "61406d0a306c9e2147ecd9ca451fe30655545b0591d67b50a69dd83224e4d84b"
+  },
+  "inputs-unchanged": true,
+  "log": "namespace-diagnostic-baseline.log",
+  "bytes": 1330,
+  "sha256": "5b4dc40d1ad66ade3d778c45fcd1a19222c1c51cf17b6e46fbc0ec650aeb6736",
+  "utc": "2026-10-20T00:00:42.396544+00:00"
+}

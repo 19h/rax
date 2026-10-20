@@ -1,0 +1,18 @@
+{
+  "utc": "2026-10-20T00:33:52.884366+00:00",
+  "base": "157ef1e5c974de0148c41b6db5a0c32783bda36d",
+  "owned-source-paths": [
+    "src/user/windows/object_namespace.rs",
+    "src/user/windows/object_namespace/base_named_object_tests.rs",
+    "src/user/windows/native-runtime.md"
+  ],
+  "source-frozen": true,
+  "review": [
+    "Validation predicate is byte-for-byte unchanged; only its error construction changes.",
+    "The selected paths are a closed set; captured object name/type buffers are already bounded by capture validation.",
+    "Debug formatting escapes control characters; no additional host path or runtime capture operation is introduced.",
+    "Both mismatch partitions assert all six fields. Existing attachment rejection remains intact.",
+    "No C ABI/public Rust type layout, dependency, default, engine path or successful namespace behavior changes.",
+    "Engineering documentation explicitly retains unknown failing-runner cause and incomplete full objective."
+  ]
+}

@@ -1,0 +1,584 @@
+{
+  "files": [
+    {
+      "path": ".gitattributes",
+      "bytes": 29,
+      "sha256": "730a35ae3d558080083c3103d9ac8100c3f6561678092abe341701dfa331eb1d"
+    },
+    {
+      "path": "README.md",
+      "bytes": 2283,
+      "sha256": "c07c3fb811e6de768e929ac76c6c75125429d7cca7d1e8b939e65e877302ced8"
+    },
+    {
+      "path": "check_validation.py",
+      "bytes": 11183,
+      "sha256": "6470c88839de35f1659d1ac5a4e176a8d555cc4a001b6c5b86039d21b85da785"
+    },
+    {
+      "path": "native-namespace-case-v1.cpp",
+      "bytes": 6853,
+      "sha256": "ab74f3a00760c6a4f87db5980dddc9dc8f8de1811a12633072fdbb4729ec7d7f"
+    },
+    {
+      "path": "validation/archives-linux-after.json",
+      "bytes": 727631,
+      "sha256": "403e24f6a7d8e3366da755c64bd816a2b4a8c77a22f81e5ad192249002e719ba"
+    },
+    {
+      "path": "validation/archives-linux-before.json",
+      "bytes": 727632,
+      "sha256": "c02bbec849cfae8a01fea00bfdd48864f0d0c8d3e39e6ba73d38672191a90da5"
+    },
+    {
+      "path": "validation/archives-macos-after.json",
+      "bytes": 728965,
+      "sha256": "5ddc6adc0ebec8fec7e2564aba272cf9c36bd16e0559759f6a88b810269d734c"
+    },
+    {
+      "path": "validation/archives-macos-before.json",
+      "bytes": 728973,
+      "sha256": "84716f9755596a45d3db00775db70dd934ca2770c0607498da3046adf13dc6b3"
+    },
+    {
+      "path": "validation/archives-windows-after.json",
+      "bytes": 747357,
+      "sha256": "573b18e2532d44b7a5c57bade342ea9f5228ad819ea184b67fde53a1734ec470"
+    },
+    {
+      "path": "validation/archives-windows-before.json",
+      "bytes": 747360,
+      "sha256": "fde812bc1a26835317bcdca74584d9d0b43ba69c6c0d134ba7c1dfa607d33b87"
+    },
+    {
+      "path": "validation/bounded-findings.json",
+      "bytes": 974,
+      "sha256": "5dc06ae06130eb0fd69f5b5fb013a0a5bc4c9c39deccac0a9db0a1f0a3b8a571"
+    },
+    {
+      "path": "validation/collect-namespace-archives-epoch1.py",
+      "bytes": 3343,
+      "sha256": "96ed1ae65bca782c8c7b2313140ac01b4440e8e2acf8470ab6024ac1771b00bb"
+    },
+    {
+      "path": "validation/collect-namespace-evidence.py",
+      "bytes": 5328,
+      "sha256": "2db53a0cf5e95c15745e78cf40056cc3fb10a8d657a08c9bde2a1f05c691bc1b"
+    },
+    {
+      "path": "validation/gates-linux.json",
+      "bytes": 8543,
+      "sha256": "9828a5279f0f513990a68c233959a8751057ef6a2a8bef68c310f94bc85b2dad"
+    },
+    {
+      "path": "validation/gates-macos.json",
+      "bytes": 2851,
+      "sha256": "0888b8886cbc815f620c8541442bab0691a42bd710c3a956ccad4c36ed9f6fc7"
+    },
+    {
+      "path": "validation/gates-windows.json",
+      "bytes": 5197,
+      "sha256": "324fc6eb78067108927e343cf8d821824aa39d69a339cd64ce18d6fdede0bc55"
+    },
+    {
+      "path": "validation/inspect-system-time-v2-pe.py",
+      "bytes": 693,
+      "sha256": "ea32c13e299784c3cc9c30e797fdf363d3ffd42a8c08cbed69cab64ef5198e06"
+    },
+    {
+      "path": "validation/linux-namespace-epoch1-owning-archive-before.log",
+      "bytes": 180,
+      "sha256": "3c442fcc3e5bd4c66d57038510268b426fca2b10f019fd537566c270cf4ce4e3"
+    },
+    {
+      "path": "validation/linux-namespace-epoch1-owning-archive-identities.log",
+      "bytes": 180,
+      "sha256": "3c442fcc3e5bd4c66d57038510268b426fca2b10f019fd537566c270cf4ce4e3"
+    },
+    {
+      "path": "validation/linux-namespace-epoch1-owning-artifacts.log",
+      "bytes": 174086,
+      "sha256": "d839c9203ffc6351c8681af7eea3bb1af770b792cf467982653ca475663a1301"
+    },
+    {
+      "path": "validation/linux-namespace-epoch1-owning-cpp.log",
+      "bytes": 2574,
+      "sha256": "c90711901345d8d999f98c3b4d863c0fb86cab38550731b54e6c168637aebbd4"
+    },
+    {
+      "path": "validation/linux-namespace-epoch1-owning-shipping.log",
+      "bytes": 174435,
+      "sha256": "d16556b9e28024448315d02e8fde2ba7efe1c4da1ff7263bd1cc6bf739dc3e85"
+    },
+    {
+      "path": "validation/macos-namespace-epoch1-linkage.json",
+      "bytes": 2107,
+      "sha256": "83197168d9ba470a0f9afc6766052c4b92e4298366a5ea821173f479fda67744"
+    },
+    {
+      "path": "validation/macos-namespace-epoch1-owning-archive-before.log",
+      "bytes": 180,
+      "sha256": "4b5dbd2065a60a9a5a43c597fb356d944a30f658ed35ad6371f09a6b13feaf2f"
+    },
+    {
+      "path": "validation/macos-namespace-epoch1-owning-archive-identities.log",
+      "bytes": 180,
+      "sha256": "4b5dbd2065a60a9a5a43c597fb356d944a30f658ed35ad6371f09a6b13feaf2f"
+    },
+    {
+      "path": "validation/macos-namespace-epoch1-owning-artifacts.log",
+      "bytes": 137257,
+      "sha256": "33dc631dccb5e21d4931af86a07740291541ddceb4dbb74bc36b34cea603d189"
+    },
+    {
+      "path": "validation/macos-namespace-epoch1-owning-build.log",
+      "bytes": 32919,
+      "sha256": "b97b3a4be21aa19df8895ccdcc7ef1ff5e959953305fecf48eeb0ad649a85124"
+    },
+    {
+      "path": "validation/macos-namespace-epoch1-owning-ctest.log",
+      "bytes": 1298,
+      "sha256": "a06affca7b58ca903afaf3b8263b1153f4c790fc893fb81dffe8b8583b4e5351"
+    },
+    {
+      "path": "validation/macos-namespace-epoch1-owning-prime-artifacts.log",
+      "bytes": 137970,
+      "sha256": "ac8c794ba22c1a389d5890fc245d41655a826339f1219b85296774ecc98d14a6"
+    },
+    {
+      "path": "validation/macos-namespace-epoch1-owning-protected-assist-cli.log",
+      "bytes": 42,
+      "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+    },
+    {
+      "path": "validation/macos-namespace-epoch1-owning-protected-assist-mcp.log",
+      "bytes": 42,
+      "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+    },
+    {
+      "path": "validation/namespace-diagnostic-baseline.json",
+      "bytes": 1122,
+      "sha256": "1efce1b77aecf92687a1f7ce706ede67be1caf5b8d2d11ca62c8410217588721"
+    },
+    {
+      "path": "validation/namespace-diagnostic-baseline.log",
+      "bytes": 1330,
+      "sha256": "5b4dc40d1ad66ade3d778c45fcd1a19222c1c51cf17b6e46fbc0ec650aeb6736"
+    },
+    {
+      "path": "validation/namespace-diagnostic-focus.json",
+      "bytes": 528,
+      "sha256": "c2ce4e67b1673b88bb919952202fc33b84e739004a66dc841160d3115ce51ad9"
+    },
+    {
+      "path": "validation/namespace-diagnostic-focus.log",
+      "bytes": 507,
+      "sha256": "3aa0f085aeeedbeb912cb13b676b59bb1bd8eb26a09ee2b666b3afda5e4023ac"
+    },
+    {
+      "path": "validation/namespace-epoch1-final-check-linux-round1.json",
+      "bytes": 1056,
+      "sha256": "9f64635fb39cd155945f6485ed535035d0043bed5257634194d394e76f00b96a"
+    },
+    {
+      "path": "validation/namespace-epoch1-final-check-linux-round1.log",
+      "bytes": 604,
+      "sha256": "e14f912f94791349b98c54e872025e550c2a6eeb2ef54c571c7fd6fc9df036ee"
+    },
+    {
+      "path": "validation/namespace-epoch1-final-check-macos-round1.json",
+      "bytes": 851,
+      "sha256": "63c9f747128b4c12f1f800d17f0d4a97b4a7adf482b8b421945cf8b6cd430d16"
+    },
+    {
+      "path": "validation/namespace-epoch1-final-check-macos-round1.log",
+      "bytes": 604,
+      "sha256": "2a9f9df53639d194075a0a55fb28c89dcafc814a2d2358f8dfcf195ded8b58bf"
+    },
+    {
+      "path": "validation/namespace-epoch1-final-check-windows-round1.json",
+      "bytes": 1427,
+      "sha256": "2037e916acfec4fd121021bfe5ea896364314c5589ce5494e3cbf960e7141b72"
+    },
+    {
+      "path": "validation/namespace-epoch1-final-check-windows-round1.log",
+      "bytes": 641,
+      "sha256": "8b13fcd2d6ee923c2bfbb1b39dc98d88397535c5f3146b48e8481c783392749d"
+    },
+    {
+      "path": "validation/namespace-kernel-profile.json",
+      "bytes": 309,
+      "sha256": "e80d6569f1c67ebb1de3319178b3d431fd3ebd50b321374ce187999fabbc4845"
+    },
+    {
+      "path": "validation/namespace-linux-epoch1-focus.log",
+      "bytes": 706,
+      "sha256": "eb0f1730e0a0316ac75de06d3a3592bf83afc63daa6ba9b9229163d7b6d30d68"
+    },
+    {
+      "path": "validation/namespace-linux-epoch1b-all-targets.log",
+      "bytes": 309,
+      "sha256": "df4f6ead1ea4d860c2d5244971b97b4a6fdb76bd5d8a1de35f280f0c1b4574a6"
+    },
+    {
+      "path": "validation/namespace-linux-epoch1b-capi.log",
+      "bytes": 14074,
+      "sha256": "40734a768726cc093024eae376bb471696ae947f273a1472fa16a93dbd38d7a2"
+    },
+    {
+      "path": "validation/namespace-linux-epoch1b-focus.log",
+      "bytes": 672,
+      "sha256": "176f8788a9546fef1e15fdb2bd9dd582f58a689f265b542b89d57c24c6f53748"
+    },
+    {
+      "path": "validation/namespace-linux-epoch1b-full.log",
+      "bytes": 848700,
+      "sha256": "66c2f2118476524ef60ab6786eb7b92a6145d5923136c7a349adeb587e30bfcd"
+    },
+    {
+      "path": "validation/namespace-linux-epoch1b-integration.log",
+      "bytes": 35862,
+      "sha256": "f2cbe2ff537e1471aadcd7bd697d8d83ae70cf3a5d6cfeb8b9300455ab8471f6"
+    },
+    {
+      "path": "validation/namespace-macos-epoch1-all-targets.log",
+      "bytes": 351,
+      "sha256": "b93e9f0c13f1d85aeee2ae42c2cb0605cc92d0a680e3bb0213cc7741c3648439"
+    },
+    {
+      "path": "validation/namespace-macos-epoch1-capi.log",
+      "bytes": 14133,
+      "sha256": "48e02dbbd1c8da94b6dbb735d8550d8f83db1f5f1161822ce9b89942c508e4af"
+    },
+    {
+      "path": "validation/namespace-macos-epoch1-full.log",
+      "bytes": 848648,
+      "sha256": "c49f018dee116cf7838b107f25fcf27c01309a0697ccc552a8983786f11753d9"
+    },
+    {
+      "path": "validation/namespace-macos-epoch1-integration.log",
+      "bytes": 35896,
+      "sha256": "b86b0ac963bf3611de24a241747aab801056a8cbd8e77b2eacbe900415e4423f"
+    },
+    {
+      "path": "validation/namespace-macos-owning-link.json",
+      "bytes": 286,
+      "sha256": "2772b2cc0f60abb052b725635088753bb8a25a9edbd2c10dd2455f10ebebb1d8"
+    },
+    {
+      "path": "validation/namespace-native-epoch1-all-targets.log",
+      "bytes": 1003,
+      "sha256": "795e626f13693bd039ddac2f2579e7e8fd001de00dd810bffa0672bf3e9c6912"
+    },
+    {
+      "path": "validation/namespace-native-epoch1-capi.log",
+      "bytes": 14979,
+      "sha256": "3ee02f3f0e8f11947a749ed8156faf42470f228eb7bf96ca267aad924fe91c95"
+    },
+    {
+      "path": "validation/namespace-native-epoch1-focus.log",
+      "bytes": 1347,
+      "sha256": "e47e2fd6d450976178d9861c33280b3d555366f7495034afc79cb85329427199"
+    },
+    {
+      "path": "validation/namespace-native-epoch1-full.log",
+      "bytes": 815016,
+      "sha256": "b18dcc2b621d28e483cb109ee2cbcc9ae3bc022b13a27710f7f9f28d10bb0747"
+    },
+    {
+      "path": "validation/namespace-native-epoch1-integration.log",
+      "bytes": 1770,
+      "sha256": "e716c7ed9d59c8ee4b5c77ea4de8f1c7d332806e624084bc49fd20b8366788e9"
+    },
+    {
+      "path": "validation/namespace-native-epoch1-toolchain.log",
+      "bytes": 36,
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5"
+    },
+    {
+      "path": "validation/namespace-native-owning-epoch1-archive-after.log",
+      "bytes": 182,
+      "sha256": "4f247c4d7dd7fa5b17cd9fa38628810496f2c212549af01ecfeb03358e70887e"
+    },
+    {
+      "path": "validation/namespace-native-owning-epoch1-archive-before.log",
+      "bytes": 182,
+      "sha256": "4f247c4d7dd7fa5b17cd9fa38628810496f2c212549af01ecfeb03358e70887e"
+    },
+    {
+      "path": "validation/namespace-native-owning-epoch1-artifacts-after.log",
+      "bytes": 132251,
+      "sha256": "6df7c60995cf8b351206b73469886a2b04a8fdb472fbf85dcee183cb21808512"
+    },
+    {
+      "path": "validation/namespace-native-owning-epoch1-artifacts-before.log",
+      "bytes": 132536,
+      "sha256": "03e2abf70461e933f5b54abed2e91588773f3dde3730cb01236f8dbc9a054659"
+    },
+    {
+      "path": "validation/namespace-native-owning-epoch1-cpp.log",
+      "bytes": 3705,
+      "sha256": "0f1243df814e5f2f36caa0574a7b01c1e22920058ba0682709cae2f5d72ac6ce"
+    },
+    {
+      "path": "validation/namespace-native-owning-epoch1-toolchain.log",
+      "bytes": 36,
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5"
+    },
+    {
+      "path": "validation/namespace-owned-cpp-build-epoch1.py",
+      "bytes": 2743,
+      "sha256": "81377a1fd7cc42d23509cc31dadc3c6b589afae8edacbbcf9dd25e0d12c1f4ba"
+    },
+    {
+      "path": "validation/namespace-ownership.json",
+      "bytes": 3461,
+      "sha256": "f78741cb1d559b32ff360d32f2a3cd1eb0b8f45b611dea17689c6cd8bc0f8900"
+    },
+    {
+      "path": "validation/namespace-owning-source-hashes-epoch1.json",
+      "bytes": 726064,
+      "sha256": "83b5aefdebf98aebee00757edd56149185afaed81536d85a116b75eb04a8f9dc"
+    },
+    {
+      "path": "validation/namespace-source-epoch1-archive.json",
+      "bytes": 619,
+      "sha256": "4a070475739f5cbc175b5096e0461d9a7ba97cfd5969073f0e4676cb0568387f"
+    },
+    {
+      "path": "validation/namespace-source-epoch1.json",
+      "bytes": 5834198,
+      "sha256": "101a328e39fad7f5e972b95f716a612d7b4b7586617e1e2c153afcc54c136395"
+    },
+    {
+      "path": "validation/native-case-capture-observations.json",
+      "bytes": 5943,
+      "sha256": "c24bc1775cb7543d87c5fd07b515e484c6c358223af18513b1bcfc93ee07b6a0"
+    },
+    {
+      "path": "validation/native-case-capture-source.json",
+      "bytes": 383,
+      "sha256": "03290fe217d64816184caccc1a4c835892ab87622095cb5b47b754853e96c574"
+    },
+    {
+      "path": "validation/native-namespace-case-v1-arm64-after.log",
+      "bytes": 276,
+      "sha256": "7751d1b79e5bfa981397563da28c5b4b9c6b96a09406e141d11d02744d79f52e"
+    },
+    {
+      "path": "validation/native-namespace-case-v1-arm64-before.log",
+      "bytes": 276,
+      "sha256": "7751d1b79e5bfa981397563da28c5b4b9c6b96a09406e141d11d02744d79f52e"
+    },
+    {
+      "path": "validation/native-namespace-case-v1-arm64-build.log",
+      "bytes": 30,
+      "sha256": "3ca58f3e11fa37bd88a68790b8b6899b547a7204bfe0b04e3d5779992bda24b6"
+    },
+    {
+      "path": "validation/native-namespace-case-v1-arm64.log",
+      "bytes": 2463,
+      "sha256": "12e5cc4800caa4573dcd24604126ccf8eab7bb2e589e876bd166ad807a25de50"
+    },
+    {
+      "path": "validation/native-namespace-case-v1-launch.json",
+      "bytes": 16985,
+      "sha256": "edc7c7d918f7500a233b088bcb0b3e2ab894963290a215441219a5664231ab55"
+    },
+    {
+      "path": "validation/native-namespace-case-v1-x64-after.log",
+      "bytes": 272,
+      "sha256": "a26e9b46cc31a66f1180419002c964ac5161276abe034ffdc5685eef41eec6b5"
+    },
+    {
+      "path": "validation/native-namespace-case-v1-x64-before.log",
+      "bytes": 272,
+      "sha256": "a26e9b46cc31a66f1180419002c964ac5161276abe034ffdc5685eef41eec6b5"
+    },
+    {
+      "path": "validation/native-namespace-case-v1-x64-build.log",
+      "bytes": 30,
+      "sha256": "3ca58f3e11fa37bd88a68790b8b6899b547a7204bfe0b04e3d5779992bda24b6"
+    },
+    {
+      "path": "validation/native-namespace-case-v1-x64.log",
+      "bytes": 2469,
+      "sha256": "6bec45b5fafd436326ce1305ec7330276e172f971f47926b9175ff35bbdb25b5"
+    },
+    {
+      "path": "validation/native-namespace-case-v1-x86-after.log",
+      "bytes": 271,
+      "sha256": "1189912fc975d0cf02443ad3ff9fb70fbfe47cdaa27797aa0fc1c067d8391916"
+    },
+    {
+      "path": "validation/native-namespace-case-v1-x86-before.log",
+      "bytes": 271,
+      "sha256": "1189912fc975d0cf02443ad3ff9fb70fbfe47cdaa27797aa0fc1c067d8391916"
+    },
+    {
+      "path": "validation/native-namespace-case-v1-x86-build.log",
+      "bytes": 30,
+      "sha256": "3ca58f3e11fa37bd88a68790b8b6899b547a7204bfe0b04e3d5779992bda24b6"
+    },
+    {
+      "path": "validation/native-namespace-case-v1-x86-laa-after.log",
+      "bytes": 278,
+      "sha256": "3061337d09685a7b0b16670cbded22fb6b5648798d8047fbd92731773ebc0051"
+    },
+    {
+      "path": "validation/native-namespace-case-v1-x86-laa-before.log",
+      "bytes": 278,
+      "sha256": "3061337d09685a7b0b16670cbded22fb6b5648798d8047fbd92731773ebc0051"
+    },
+    {
+      "path": "validation/native-namespace-case-v1-x86-laa-build.log",
+      "bytes": 30,
+      "sha256": "3ca58f3e11fa37bd88a68790b8b6899b547a7204bfe0b04e3d5779992bda24b6"
+    },
+    {
+      "path": "validation/native-namespace-case-v1-x86-laa.log",
+      "bytes": 2464,
+      "sha256": "92afde91fa0bbe54aea9fd9a1b27253ab8a991cc1d4a87cd62f72a624a6a0494"
+    },
+    {
+      "path": "validation/native-namespace-case-v1-x86.log",
+      "bytes": 2460,
+      "sha256": "f4a083a66f72f51fbd3a6a30d7e9db92ae56619c703cfb68a43f125fa5e3317d"
+    },
+    {
+      "path": "validation/native-process-probe.cpp",
+      "bytes": 2187,
+      "sha256": "f57571cc5961784ff841b84811bdff7626ccd582dda3a16a9be35c9aeedc5a31"
+    },
+    {
+      "path": "validation/native-shared-section-trace.rs",
+      "bytes": 11178,
+      "sha256": "514fdbc99de6f562002aa8a198deb79e7f5cd012db058aa1460a0e5730ae37c0"
+    },
+    {
+      "path": "validation/negative-controls.json",
+      "bytes": 910,
+      "sha256": "fdf569c8e1974e16ac2ecacef2e36c34d82feac59693caeace1f355f299e6b32"
+    },
+    {
+      "path": "validation/owning-linux-cpp-build-namespace-epoch1.py",
+      "bytes": 2305,
+      "sha256": "8a81897d8502eea8d29250f3003b318515c95be6b0425a61062d94115ce39cec"
+    },
+    {
+      "path": "validation/owning-linux.json",
+      "bytes": 9469,
+      "sha256": "adb4d53b9be06a5958182b99ef88215aa178ef7e443fb5970fb568dc26a404f2"
+    },
+    {
+      "path": "validation/owning-macos.json",
+      "bytes": 8308,
+      "sha256": "2ca9a03589fb37bff44f9e95c665d30449f238c0c7abf915134a6d0b94e867c3"
+    },
+    {
+      "path": "validation/owning-windows.json",
+      "bytes": 4941,
+      "sha256": "881b8f0d992080957803245261e0d64a4e6a7695fc447199269673c3a3993a39"
+    },
+    {
+      "path": "validation/package-namespace-verification-docs-epoch1.py",
+      "bytes": 1234,
+      "sha256": "2f77d8788f1ef0cf9d5de87d3d832080ce94f96a258cc393010949030804e0cb"
+    },
+    {
+      "path": "validation/quality-gates.json",
+      "bytes": 1159,
+      "sha256": "3a351d72b15ab8df54e607478f72123b5d7ee7ecd34838181b45f8820bf615e5"
+    },
+    {
+      "path": "validation/read-namespace-kernel-profile.py",
+      "bytes": 1215,
+      "sha256": "c2a19846db9141b6140eae2397ce31e9f4aaf812b7ef772e9d1314c9d7d929f1"
+    },
+    {
+      "path": "validation/rejected-checker-typo-namespace-proof-controller.json",
+      "bytes": 1614,
+      "sha256": "4c6146165da9fc3b31afc7add3826e28ddeef31ec839e00f21350f1c308e303c"
+    },
+    {
+      "path": "validation/rejected-checker-typo-namespace-proof-negative-controls.log",
+      "bytes": 722,
+      "sha256": "4fbbef0c956a9547964b4ddc7bbc5ab6145aed4202f17081fffaf606c294accf"
+    },
+    {
+      "path": "validation/rejected-linux-mount-focus.log",
+      "bytes": 706,
+      "sha256": "eb0f1730e0a0316ac75de06d3a3592bf83afc63daa6ba9b9229163d7b6d30d68"
+    },
+    {
+      "path": "validation/rejected-linux-mount-gates.json",
+      "bytes": 1781,
+      "sha256": "f6e8eac5c78fb535bbf4cf5c87e0e54be8b74c344b620e05fa53a4d1e54f1809"
+    },
+    {
+      "path": "validation/run-namespace-host-verification-epoch1.py",
+      "bytes": 1746,
+      "sha256": "dbbe3a5da9e89594f5648127a023839c71ec12fc4e4444a5146fcf758ca6eec2"
+    },
+    {
+      "path": "validation/run-namespace-native-epoch1.py",
+      "bytes": 5623,
+      "sha256": "e6dc4f85840785a57b303698715c1c62042fe42d355a158400738a7d6fcc8bf7"
+    },
+    {
+      "path": "validation/run-namespace-native-owning-epoch1.py",
+      "bytes": 4796,
+      "sha256": "6335b98b97990bc7a0deb64ef2fe8d653137b4fd417a5f2bc002a9608e3f35fd"
+    },
+    {
+      "path": "validation/run-namespace-native-verification-epoch1.py",
+      "bytes": 3582,
+      "sha256": "0a8b9b6fb0fd4fd912b9f73558a0b7b245c57ccc02dd1e547d8b58b309a8bcb3"
+    },
+    {
+      "path": "validation/run-namespace-owning-epoch1.py",
+      "bytes": 3250,
+      "sha256": "7ebd87a9854080bd89f01c4f1f67b62acd45f32ecce611a9943b0247c10e46f3"
+    },
+    {
+      "path": "validation/run-namespace-proof-b.py",
+      "bytes": 4764,
+      "sha256": "a100e45a0ab8b5f8caabce3fe8be5e12fa7fa17b51c41417acb9960ec4fbca27"
+    },
+    {
+      "path": "validation/run-namespace-proof.py",
+      "bytes": 4762,
+      "sha256": "c08d251ecb1f7d0e131550f4f9187dbab9ff28454c3027598f6241ec016eeff5"
+    },
+    {
+      "path": "validation/run-namespace-unix-epoch1.py",
+      "bytes": 5251,
+      "sha256": "3dcfcd47bdef1e35d809a19cb9a1256c2ea00262c3e718827ac6ee7f50bec8e4"
+    },
+    {
+      "path": "validation/run-namespace-unix-epoch1b.py",
+      "bytes": 5254,
+      "sha256": "1f1f053c2ce99f752e9453a8fdfce311b69ed1edff97847e6b88a86d9b7f5110"
+    },
+    {
+      "path": "validation/run-native-namespace-case-v1.py",
+      "bytes": 4297,
+      "sha256": "b2842b8453dfd53fa143186af2135ff2487ffe4893d97aa4b5338763b46567a9"
+    },
+    {
+      "path": "validation/source-review.json",
+      "bytes": 992,
+      "sha256": "d45570e564baa34c503a28ef77adea7e31e00b20d724e9b27e7ecb1e35fefe7d"
+    },
+    {
+      "path": "validation/stress-namespace-proof.py",
+      "bytes": 5426,
+      "sha256": "f7de8d425278691b2a513d85abf9c5caf1578318a0e86b600820cc39b652a569"
+    },
+    {
+      "path": "validation/summary.json",
+      "bytes": 1324,
+      "sha256": "4ad537ff25fc48d5b4942a4ead12ab092541ce1421932a85d0f4f78a69510002"
+    }
+  ]
+}

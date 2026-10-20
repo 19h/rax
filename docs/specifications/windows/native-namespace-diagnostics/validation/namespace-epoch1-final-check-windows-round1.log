@@ -1,0 +1,35 @@
+{
+  "host": "windows",
+  "state": "verified",
+  "source-files": 25071,
+  "source-bytes": 1834294123,
+  "owning-source-inputs": 3812,
+  "library-gates": {
+    "macos": {
+      "passed": 8083,
+      "failed": 0,
+      "ignored": 2
+    },
+    "linux": {
+      "passed": 8077,
+      "failed": 0,
+      "ignored": 2
+    },
+    "windows": {
+      "passed": 7544,
+      "failed": 5,
+      "ignored": 2
+    }
+  },
+  "native": {
+    "profiles": [
+      "arm64",
+      "x64",
+      "x86",
+      "x86-laa"
+    ],
+    "canonical-alias-checks": 4,
+    "kernel-build": 29683
+  },
+  "full-process-goal-complete": false
+}

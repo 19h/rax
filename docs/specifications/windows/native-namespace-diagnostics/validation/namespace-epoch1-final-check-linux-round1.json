@@ -1,0 +1,41 @@
+{
+  "state": "finished",
+  "utc": "2026-10-20T00:38:29.458851+00:00",
+  "host": "linux",
+  "round": 1,
+  "pid": 45085,
+  "steps": [
+    {
+      "name": "portable-proof",
+      "argv": [
+        "docker",
+        "run",
+        "--rm",
+        "--platform",
+        "linux/amd64",
+        "-v",
+        "/Users/int/.assist-namespace-20261020:/source:ro",
+        "-w",
+        "/source",
+        "assist-rax-validation-rustfmt:1.95-bullseye-20261015",
+        "python3",
+        "-B",
+        "/source/docs/specifications/windows/native-namespace-diagnostics/check_validation.py",
+        "--host",
+        "linux",
+        "--source",
+        "/source"
+      ],
+      "exit-code": 0,
+      "log": "namespace-epoch1-final-check-linux-round1.log",
+      "bytes": 604,
+      "sha256": "e14f912f94791349b98c54e872025e550c2a6eeb2ef54c571c7fd6fc9df036ee"
+    }
+  ],
+  "exit-code": 0,
+  "envelope": {
+    "bytes": 19773,
+    "sha256": "e524eccfe50e4c6e5abdf06c24cde945605b469a8d34ce84e5c37b9ba8f466c3"
+  },
+  "completed-utc": "2026-10-20T00:38:38.258681+00:00"
+}

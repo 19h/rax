@@ -371,7 +371,19 @@ impl Namespace {
                 || entry.captured.name != name
                 || entry.child.is_some()
             {
-                return Err(invalid("selected NT directory parent type/name changed"));
+                return Err(invalid(&format!(
+                    concat!(
+                        "selected NT directory parent type/name changed: ",
+                        "selected_path={:?} parent_path={:?} selected_name={:?} ",
+                        "captured_name={:?} captured_type={:?} existing_child={}"
+                    ),
+                    String::from_utf16_lossy(&path),
+                    String::from_utf16_lossy(&parent_path),
+                    String::from_utf16_lossy(name),
+                    String::from_utf16_lossy(&entry.captured.name),
+                    String::from_utf16_lossy(&entry.captured.kind),
+                    entry.child.is_some(),
+                )));
             }
             entry.child = Some(Arc::new(child));
         }

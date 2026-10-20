@@ -1,0 +1,16 @@
+{
+  "archive": "namespace-source-epoch1-overrides.tar.gz",
+  "bytes": 85159,
+  "sha256": "15eb7714c187c2c44d8e20686e775ab80e10156448eb7195b3b229656e1aade8",
+  "parent-manifest": "continue-source-epoch3.json",
+  "parent-manifest-sha256": "d1cb750a12118c1d062e0a6f7500491e63e5ca3cfa606f3e50591e162b5fe3ee",
+  "source-files": 25071,
+  "source-bytes": 1834294123,
+  "separate-overrides": [
+    "docs/architecture/ebpf/verification-2026-10-16.md",
+    "src/user/windows/native-runtime.md",
+    "src/user/windows/object_namespace.rs",
+    "src/user/windows/object_namespace/base_named_object_tests.rs"
+  ],
+  "deleted": []
+}

@@ -1,0 +1,51 @@
+{
+  "utc": "2026-10-20T00:37:31.586618+00:00",
+  "library-gates": {
+    "macos": {
+      "passed": 8083,
+      "failed": 0,
+      "ignored": 2
+    },
+    "linux": {
+      "passed": 8077,
+      "failed": 0,
+      "ignored": 2
+    },
+    "windows": {
+      "passed": 7544,
+      "failed": 5,
+      "ignored": 2
+    }
+  },
+  "source-files": 25071,
+  "source-bytes": 1834294123,
+  "owning-source-inputs": 3812,
+  "retained-assist-abi": 184,
+  "namespace-cause-on-x64-runner": "unknown",
+  "full-process-goal-complete": false,
+  "whole-current-root-products-validated": false,
+  "scope": "Contextual rejection diagnostic with unchanged validation, bounded four-ABI canonical-name probe, complete declared3host gates and retained consumer boundary.",
+  "portable-proof-round1": {
+    "macos": {
+      "exit-code": 0,
+      "envelope": {
+        "bytes": 19773,
+        "sha256": "e524eccfe50e4c6e5abdf06c24cde945605b469a8d34ce84e5c37b9ba8f466c3"
+      }
+    },
+    "linux": {
+      "exit-code": 0,
+      "envelope": {
+        "bytes": 19773,
+        "sha256": "e524eccfe50e4c6e5abdf06c24cde945605b469a8d34ce84e5c37b9ba8f466c3"
+      }
+    },
+    "windows": {
+      "exit-code": 0,
+      "envelope": {
+        "bytes": 19773,
+        "sha256": "e524eccfe50e4c6e5abdf06c24cde945605b469a8d34ce84e5c37b9ba8f466c3"
+      }
+    }
+  }
+}

@@ -2727,3 +2727,21 @@ defaults are unchanged. No guest call invokes a host alert or continuation
 operation. Native three-argument APC queue and alert producers remain separate
 unsupported frontiers.
 [Native captured-context observations and validation](../../../docs/specifications/windows/native-continue/README.md).
+
+
+### Selected native directory identity diagnostics
+
+A rejected selected directory now reports its selected path, parent path,
+expected/captured name, captured type and existing-child flag. UTF-16 values
+use escaped diagnostic rendering. The fixed-root/type/name/attachment checks,
+permissions, capture operations and guest namespace policy remain unchanged.
+This identifies which invariant failed during native runtime selection; it does
+not reinterpret a captured symbolic link or case mismatch as a directory.
+The added work is confined to the error path and is linear in the bounded
+rendered UTF-16 extent. Public C ABI 1.14.0 and defaults are unchanged.
+
+Native x64 CI previously failed this check before guest execution. The exact
+host invariant remains unknown until the new diagnostic is captured there.
+The independent four-ABI case probe uses only query handles on fixed roots and
+closes its temporary private directory handles; it establishes canonical-name
+behavior on the development kernel without replacing the failing-host evidence.

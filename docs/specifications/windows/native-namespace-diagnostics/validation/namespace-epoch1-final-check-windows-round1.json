@@ -1,0 +1,36 @@
+{
+  "state": "finished",
+  "pid": 4652,
+  "utc": "2026-10-20T00:38:29.784502+00:00",
+  "round": 1,
+  "steps": [
+    {
+      "name": "portable-proof",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\verify-namespace-epoch1\\docs\\specifications\\windows\\native-namespace-diagnostics\\check_validation.py",
+        "--host",
+        "windows",
+        "--source",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\verify-namespace-epoch1"
+      ],
+      "exit-code": 0,
+      "log": "namespace-epoch1-final-check-windows-round1.log",
+      "bytes": 641,
+      "sha256": "8b13fcd2d6ee923c2bfbb1b39dc98d88397535c5f3146b48e8481c783392749d"
+    }
+  ],
+  "child-pid": 9864,
+  "exit-code": 0,
+  "verification-root": "C:\\Windows\\Temp\\assist-native-rax-20261010\\verify-namespace-epoch1",
+  "source-root": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-namespace-epoch1",
+  "source-inputs": 25071,
+  "document-inputs": 111,
+  "envelope": {
+    "bytes": 19773,
+    "sha256": "e524eccfe50e4c6e5abdf06c24cde945605b469a8d34ce84e5c37b9ba8f466c3"
+  },
+  "qualification": "Separate verification source; native product source remains unchanged. Only this task-owned verification documentation is replaced between rounds.",
+  "completed-utc": "2026-10-20T00:39:08.984026+00:00"
+}

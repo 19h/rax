@@ -1,0 +1,11 @@
+Traceback (most recent call last):
+  File "/Users/int/Library/Caches/assist-process-emulation/native-namespace-20261020/stress-namespace-proof.py", line 119, in <module>
+    run()
+    ~~~^^
+  File "/Users/int/Library/Caches/assist-process-emulation/native-namespace-20261020/stress-namespace-proof.py", line 49, in run
+    checker.check('macos', ROOT)
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/Users/int/.assist-namespace-20261020/docs/specifications/windows/native-namespace-diagnostics/check_validation.py", line 174, in check
+    assert row['exit-code'] == 101 and set(gates['exact-existing-failures']) == FAILURES
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

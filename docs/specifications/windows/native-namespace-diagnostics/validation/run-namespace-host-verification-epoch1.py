@@ -1,0 +1,8 @@
+from pathlib import Path
+import datetime,hashlib,json,os,subprocess,sys
+P=Path(__file__).parent;R=Path('/Users/int/.assist-namespace-20261020');HOST=sys.argv[1];ROUND=int(sys.argv[2]);assert HOST in ['macos','linux']and ROUND in [1,2];record=P/('namespace-epoch1-final-check-'+HOST+'-round'+str(ROUND)+'.json');assert not record.exists();D=R/'docs/specifications/windows/native-namespace-diagnostics'
+if HOST=='macos':command=['python3','-B',str(D/'check_validation.py'),'--host',HOST,'--source',str(R)]
+else:command=['docker','run','--rm','--platform','linux/amd64','-v',str(R)+':/source:ro','-w','/source','assist-rax-validation-rustfmt:1.95-bullseye-20261015','python3','-B','/source/docs/specifications/windows/native-namespace-diagnostics/check_validation.py','--host',HOST,'--source','/source']
+state={'state':'checking','utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),'host':HOST,'round':ROUND,'pid':os.getpid(),'steps':[]};record.write_text(json.dumps(state,indent=2)+'\n');log=P/('namespace-epoch1-final-check-'+HOST+'-round'+str(ROUND)+'.log')
+with log.open('wb')as out:code=subprocess.run(command,stdout=out,stderr=subprocess.STDOUT).returncode
+raw=log.read_bytes();state['steps'].append({'name':'portable-proof','argv':command,'exit-code':code,'log':log.name,'bytes':len(raw),'sha256':hashlib.sha256(raw).hexdigest()});state.update({'state':'finished'if code==0 else'failed','exit-code':code,'envelope':{'bytes':(D/'evidence-manifest.json').stat().st_size,'sha256':hashlib.sha256((D/'evidence-manifest.json').read_bytes()).hexdigest()},'completed-utc':datetime.datetime.now(datetime.timezone.utc).isoformat()});record.write_text(json.dumps(state,indent=2)+'\n');print(HOST,ROUND,code,flush=True);raise SystemExit(code)

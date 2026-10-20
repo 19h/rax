@@ -1,0 +1,31 @@
+{
+  "state": "finished",
+  "utc": "2026-10-20T00:38:29.458857+00:00",
+  "host": "macos",
+  "round": 1,
+  "pid": 45084,
+  "steps": [
+    {
+      "name": "portable-proof",
+      "argv": [
+        "python3",
+        "-B",
+        "/Users/int/.assist-namespace-20261020/docs/specifications/windows/native-namespace-diagnostics/check_validation.py",
+        "--host",
+        "macos",
+        "--source",
+        "/Users/int/.assist-namespace-20261020"
+      ],
+      "exit-code": 0,
+      "log": "namespace-epoch1-final-check-macos-round1.log",
+      "bytes": 604,
+      "sha256": "2a9f9df53639d194075a0a55fb28c89dcafc814a2d2358f8dfcf195ded8b58bf"
+    }
+  ],
+  "exit-code": 0,
+  "envelope": {
+    "bytes": 19773,
+    "sha256": "e524eccfe50e4c6e5abdf06c24cde945605b469a8d34ce84e5c37b9ba8f466c3"
+  },
+  "completed-utc": "2026-10-20T00:38:33.366951+00:00"
+}

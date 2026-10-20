@@ -1,0 +1,57 @@
+{
+  "utc": "2026-10-19T23:56:10.544643+00:00",
+  "base": "157ef1e5c974de0148c41b6db5a0c32783bda36d",
+  "worktree": "/Users/int/.assist-namespace-20261020",
+  "owned-source-paths": [
+    "src/user/windows/object_namespace.rs",
+    "src/user/windows/object_namespace/base_named_object_tests.rs",
+    "src/user/windows/native-runtime.md"
+  ],
+  "evidence-prefix": "docs/specifications/windows/native-namespace-diagnostics/",
+  "acceptance": [
+    "Retain exact validation rejection; enrich selected directory parent error with fixed selected path and each failing invariant",
+    "Capture failing-before/passing-after test of required diagnostics",
+    "Compile/run complete affected library and selected3host consumers; no ABI/default/dependency or native capture policy changes",
+    "Publish exact paths via red and paired root pin; preserve all concurrent work"
+  ],
+  "assumptions": [
+    {
+      "id": "NS-A1",
+      "assumption": "CI failure originates at the unique selected NT parent kind/name/attachment check.",
+      "basis": "Exact diagnostic in71509/424840 and71512/424872; unique source string in object_namespace.rs.",
+      "dependent-result": "Place bounded diagnostic at that rejection.",
+      "stress-test": "Type mismatch and name-case mismatch identify their captured values and report existing_child=false. The attachment predicate remains unchanged; unique closed selected paths prevent an accepted input from attaching twice.",
+      "falsification-probe": "Another emitted source uses the same diagnostic or CI reports different failure.",
+      "status": "confirmed"
+    },
+    {
+      "id": "NS-A2",
+      "assumption": "Native canonical alias behavior is bounded to the observed kernel and four ABI profiles; it does not identify the CI failure by itself.",
+      "basis": "All4 native private-directory alias captures and fresh RtlGetVersion/GetNativeSystemInfo metadata.",
+      "dependent-result": "Interpret the case-capture probe without treating it as a failing-runner reproduction.",
+      "stress-test": "Each alias uses mixed case and OBJ_CASE_INSENSITIVE; canonical child and alias names agree; handle count returns to baseline.",
+      "falsification-probe": "A profile differs, handle count changes, native source/PE/module identities drift, or x64 runner rejects a different invariant.",
+      "status": "confirmed"
+    }
+  ],
+  "change-surfaces": {
+    "native-runtime-selection": "affected error reporting only; retain validation/capture mechanics",
+    "shared-process-model": "selected namespace construction error text affected across3hosts",
+    "direct-decode-execute-cpu-state-smir-opt-lower-jit-backend": "unaffected; reject occurs before guest execution and no engine/state paths change",
+    "C-ABI": "layout and status unchanged; existing host-I/O diagnostic string carries added bounded fields",
+    "tests-docs": "regression cases and engineering record; real x64 CI still needed to establish cause"
+  },
+  "bounded-findings": [
+    {
+      "impact": "high",
+      "item": "Native x64 CI namespace selection fails before guest execution; exact rejected invariant unknown until diagnostic is captured.",
+      "evidence": "pipelines71509/71512 process tool tests after178checks",
+      "blocks-full-goal": true
+    },
+    {
+      "impact": "high",
+      "item": "Whoami class3 remains a separate implementation frontier with independent region-query probesv1-v5.",
+      "blocks-full-goal": true
+    }
+  ]
+}

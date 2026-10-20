@@ -1,0 +1,14 @@
+{
+  "scope": "Contextual diagnostics only; the failing CI invariant remains unknown and full process support remains incomplete.",
+  "gates": {
+    "QG1": "pass: no normative judgment required",
+    "QG2": "pass: NS-A1 and NS-A2 include basis, stress and falsification probes",
+    "QG3": "pass: failing regression, unchanged rejection, complete affected library and selected consumers; publication audited separately",
+    "QG4": "pass: 25071 files / 1834294123 bytes, 3812 owning sources; four pointer/PE profiles; no arithmetic contract changes",
+    "QG5": "pass: native case capture is distinguished from failing CI; five existing Windows lowerer failures remain explicit",
+    "QG6": "pass: current source, exact raw producer logs, kernel metadata, PE and runtime identities are bound",
+    "QG7": "pass: bounded findings distinguish CI namespace, class3 and retained ABI184 boundaries",
+    "QG8": "pass: native four-ABI capture and full macOS/Linux/Windows library, C API, integration, all-target and linked consumer selections",
+    "QG9": "pass: no decoder/CPU/SMIR/optimizer/lowerer/JIT behavior, C ABI layout, default or dependency changes"
+  }
+}

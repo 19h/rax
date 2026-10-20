@@ -359,3 +359,30 @@ fn native_base_named_object_partial_ancestors_keep_selected_identity() {
         );
     }
 }
+
+#[test]
+fn native_namespace_parent_identity_error_reports_type_and_name_mismatches() {
+    for (captured_name, captured_type) in [
+        ("BaseNamedObjects", "SymbolicLink"),
+        ("BASENAMEDOBJECTS", "Directory"),
+    ] {
+        let mut selected = captures(0);
+        let parent_entry = &mut selected[0].entries[0];
+        parent_entry.name = units(captured_name);
+        parent_entry.kind = units(captured_type);
+        let error = Namespace::selected(table(), selected)
+            .unwrap_err()
+            .to_string();
+        assert!(error.starts_with("selected NT directory parent type/name changed"));
+        for required in [
+            format!("selected_path={:?}", "\\BaseNamedObjects"),
+            format!("parent_path={:?}", "\\"),
+            format!("selected_name={:?}", "BaseNamedObjects"),
+            format!("captured_name={captured_name:?}"),
+            format!("captured_type={captured_type:?}"),
+            "existing_child=false".to_owned(),
+        ] {
+            assert!(error.contains(&required), "missing {required} in {error}");
+        }
+    }
+}

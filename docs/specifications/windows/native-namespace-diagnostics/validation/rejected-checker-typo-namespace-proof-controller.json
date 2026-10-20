@@ -1,0 +1,15 @@
+{
+  "state": "failed",
+  "pid": 40215,
+  "steps": [
+    {
+      "name": "negative-controls",
+      "exit-code": 1,
+      "log": "namespace-proof-negative-controls.log"
+    }
+  ],
+  "utc": "2026-10-20T00:37:39.302066+00:00",
+  "step": "negative-controls",
+  "exit-code": 1,
+  "error": "Traceback (most recent call last):\n  File \"/Users/int/Library/Caches/assist-process-emulation/native-namespace-20261020/run-namespace-proof.py\", line 64, in <module>\n    run('negative-controls', [sys.executable, '-B', str(CACHE / 'stress-namespace-proof.py')])\n    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/int/Library/Caches/assist-process-emulation/native-namespace-20261020/run-namespace-proof.py\", line 53, in run\n    assert code == 0, log.read_text(errors='replace')\n           ^^^^^^^^^\nAssertionError: Traceback (most recent call last):\n  File \"/Users/int/Library/Caches/assist-process-emulation/native-namespace-20261020/stress-namespace-proof.py\", line 119, in <module>\n    run()\n    ~~~^^\n  File \"/Users/int/Library/Caches/assist-process-emulation/native-namespace-20261020/stress-namespace-proof.py\", line 49, in run\n    checker.check('macos', ROOT)\n    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^\n  File \"/Users/int/.assist-namespace-20261020/docs/specifications/windows/native-namespace-diagnostics/check_validation.py\", line 174, in check\n    assert row['exit-code'] == 101 and set(gates['exact-existing-failures']) == FAILURES\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n\n"
+}
