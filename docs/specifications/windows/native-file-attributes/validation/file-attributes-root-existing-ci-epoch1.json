@@ -1,0 +1,17 @@
+{
+  "pipeline": 71722,
+  "commit": "f8718a629c6cac2765c4283200e42cb24f632d7a",
+  "state": "failed",
+  "package-jobs-passed": 6,
+  "native-test-jobs": {
+    "linux": "success",
+    "macos": "success",
+    "windows": "failed"
+  },
+  "windows-job": 426683,
+  "windows-ctests": 863,
+  "windows-failed": 1,
+  "failure": "assist_e26_y07_webxr_websocket_tests: test/e26_y07_webxr_websocket_tests.cpp:540: close && close->opcode == 0x8; TOTAL101checks/1failure",
+  "rax-process-selection": "assist_rax_process_tests, assist_process_tool_tests, assist_rax_user_execution_tests and assist_capability_honesty_fixture_tests passed",
+  "scope": "Existing concurrent root snapshot before the new file-attribute pin. Full private trace remains outside public evidence."
+}

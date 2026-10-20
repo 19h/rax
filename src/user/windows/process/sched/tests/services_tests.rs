@@ -1,6 +1,9 @@
 use super::*;
 use crate::user::windows::loader::services::tests::table;
 
+#[path = "services_tests/file_attributes_tests.rs"]
+mod file_attributes_tests;
+
 #[path = "services_tests/semaphore_replay_tests.rs"]
 mod semaphore_replay_tests;
 

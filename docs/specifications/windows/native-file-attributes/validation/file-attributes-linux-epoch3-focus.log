@@ -1,0 +1,22 @@
+   Compiling rax v0.1.0 (/work/vendor/rax)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3m 13s
+     Running unittests src/lib.rs (target/linux/bno-isolation-prototype/debug/deps/rax-3e31f1d94bc1cdf9)
+
+running 14 tests
+test user::windows::process::sched::tests::services_tests::file_attributes_tests::native_file_attributes_output_validation_precedes_native_input ... ok
+test user::windows::process::sched::tests::services_tests::file_attributes_tests::native_file_attributes_rejects_host_access_when_disabled ... ok
+test user::windows::process::sched::tests::services_tests::file_attributes_tests::native_file_attributes_returns_mapped_metadata_and_preserves_padding ... ok
+test user::windows::process::sched::tests::services_tests::file_attributes_tests::paired::native_file_attributes_pairwise_capture_matches_independent_native_oracle ... ok
+test user::windows::process::sched::tests::services_tests::file_attributes_tests::semantics::native_file_attributes_captured_names_and_security_headers_precede_wow_output_probe ... ok
+test user::windows::process::sched::tests::services_tests::file_attributes_tests::semantics::native_file_attributes_empty_name_queries_retained_file_after_path_replacement ... ok
+test user::windows::process::sched::tests::services_tests::file_attributes_tests::semantics::native_file_attributes_mapped_root_alias_is_not_a_guest_reparse_component ... ok
+test user::windows::process::sched::tests::services_tests::file_attributes_tests::semantics::native_file_attributes_preserves_nt_spelling_and_distinguishes_absence ... ok
+test user::windows::process::sched::tests::services_tests::file_attributes_tests::semantics::native_file_attributes_root_handles_retain_identity_and_native_name_rules ... ok
+test user::windows::process::sched::tests::services_tests::file_attributes_tests::semantics::native_file_attributes_selected_runtime_does_not_grant_general_host_access ... ok
+test user::windows::process::sched::tests::services_tests::file_attributes_tests::validation::native_file_attributes_flags_security_and_qos_match_captured_statuses ... ok
+test user::windows::process::sched::tests::services_tests::file_attributes_tests::validation::native_file_attributes_output_aliases_preserve_captured_inputs_and_tail ... ok
+test user::windows::process::sched::tests::services_tests::file_attributes_tests::validation::native_file_attributes_output_boundaries_match_native_and_wow_records ... ok
+test user::windows::process::sched::tests::services_tests::file_attributes_tests::validation::native_file_attributes_wow_outputs_accept_every_byte_alignment ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 8098 filtered out; finished in 8.05s
+

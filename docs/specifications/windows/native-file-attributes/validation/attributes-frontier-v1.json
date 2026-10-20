@@ -1,0 +1,163 @@
+{
+  "state": "finished",
+  "pid": 9560,
+  "steps": [
+    {
+      "name": "build",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\rustc.exe",
+        "--edition=2024",
+        "--crate-name",
+        "attributes_frontier_v1",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\attributes-frontier-v1.rs",
+        "-C",
+        "target-feature=+crt-static",
+        "--extern",
+        "rax=C:\\Windows\\Temp\\assist-native-rax-20261010\\src-region-epoch1\\target\\retained-owning-epoch1\\librax-934115059aa64c85.rlib",
+        "-L",
+        "dependency=C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\debug\\deps",
+        "-o",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\attributes-frontier-v1\\attributes-frontier-v1.exe"
+      ],
+      "exit-code": 0,
+      "seconds": 2.4131128330045613,
+      "log": "attributes-frontier-v1-build.log",
+      "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\attributes-frontier-v1-build.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "guest",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\attributes-frontier-v1\\attributes-frontier-v1.exe",
+        "C:\\Windows\\System32\\whoami.exe"
+      ],
+      "exit-code": 0,
+      "seconds": 6.215601874995627,
+      "log": "attributes-frontier-v1-guest.log",
+      "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\attributes-frontier-v1-guest.log",
+      "bytes": 917,
+      "sha256": "e3c5617427cf534d11a200f144785da686cb7cbcde9805a47ee9d89ddd7aa57f"
+    }
+  ],
+  "utc": "2026-10-20T02:03:32.206584+00:00",
+  "inputs-before": [
+    {
+      "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\attributes-frontier-v1.rs",
+      "bytes": 2788,
+      "sha256": "b7067c67b999c6be8c138307f5d65518ca38d9e99d1d6f2066a7e7463248cdf4"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-region-epoch1\\target\\retained-owning-epoch1\\librax-934115059aa64c85.rlib",
+      "bytes": 508521318,
+      "sha256": "8bfc68221342cf53bb0cd40e3143b5a5435e0ce93960e6eea7cbd6a9bdfa0095"
+    },
+    {
+      "path": "C:\\Windows\\System32\\whoami.exe",
+      "bytes": 84480,
+      "sha256": "48fde190b002a5a4c4b8b19db014377263ba94220f23a4f0a117fec082d46bf6"
+    },
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e"
+    },
+    {
+      "path": "C:\\Windows\\System32\\KernelBase.dll",
+      "bytes": 7213728,
+      "sha256": "6b2fa508ac4f9bce5d7351676485d1dc5b5236cd9656034e2fec1eaba3b82bc9"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\KernelBase.dll",
+      "bytes": 3073488,
+      "sha256": "e9c414d7c6bd2c6fde608f31b2f31da3c2014c801b3764a30ee42abd1e9c2d58"
+    },
+    {
+      "path": "C:\\Windows\\System32\\kernel32.dll",
+      "bytes": 1500304,
+      "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\kernel32.dll",
+      "bytes": 696392,
+      "sha256": "9c9a0c54a79ea712bb533fcc79ba9935ed9f9d3f777fd65cf62d9cec6699b9df"
+    }
+  ],
+  "step": "guest",
+  "child-pid": 5800,
+  "executable-before": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\attributes-frontier-v1\\attributes-frontier-v1.exe",
+    "bytes": 27035136,
+    "sha256": "8b758aa4f583109f5d4b76d3612edb5d81942901da7d8a0684c1bedc775bc30b"
+  },
+  "native-before": {
+    "exit-code": 0,
+    "stdout-hex": "6e7420617574686f726974795c73797374656d0d0a",
+    "stderr-hex": ""
+  },
+  "native-after": {
+    "exit-code": 0,
+    "stdout-hex": "6e7420617574686f726974795c73797374656d0d0a",
+    "stderr-hex": ""
+  },
+  "executable-after": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\attributes-frontier-v1\\attributes-frontier-v1.exe",
+    "bytes": 27035136,
+    "sha256": "8b758aa4f583109f5d4b76d3612edb5d81942901da7d8a0684c1bedc775bc30b"
+  },
+  "inputs-after": [
+    {
+      "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\attributes-frontier-v1.rs",
+      "bytes": 2788,
+      "sha256": "b7067c67b999c6be8c138307f5d65518ca38d9e99d1d6f2066a7e7463248cdf4"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-region-epoch1\\target\\retained-owning-epoch1\\librax-934115059aa64c85.rlib",
+      "bytes": 508521318,
+      "sha256": "8bfc68221342cf53bb0cd40e3143b5a5435e0ce93960e6eea7cbd6a9bdfa0095"
+    },
+    {
+      "path": "C:\\Windows\\System32\\whoami.exe",
+      "bytes": 84480,
+      "sha256": "48fde190b002a5a4c4b8b19db014377263ba94220f23a4f0a117fec082d46bf6"
+    },
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e"
+    },
+    {
+      "path": "C:\\Windows\\System32\\KernelBase.dll",
+      "bytes": 7213728,
+      "sha256": "6b2fa508ac4f9bce5d7351676485d1dc5b5236cd9656034e2fec1eaba3b82bc9"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\KernelBase.dll",
+      "bytes": 3073488,
+      "sha256": "e9c414d7c6bd2c6fde608f31b2f31da3c2014c801b3764a30ee42abd1e9c2d58"
+    },
+    {
+      "path": "C:\\Windows\\System32\\kernel32.dll",
+      "bytes": 1500304,
+      "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\kernel32.dll",
+      "bytes": 696392,
+      "sha256": "9c9a0c54a79ea712bb533fcc79ba9935ed9f9d3f777fd65cf62d9cec6699b9df"
+    }
+  ],
+  "exit-code": 0,
+  "scope": "Exact existingC:\\app\\probe.exe embeddedimage configuration and native-runtime libraries; bounded4096instruction observation against retainedMRIowningcore; inputdiscovery only, not newserviceimplementation.",
+  "completed-utc": "2026-10-20T02:03:46.001927+00:00"
+}

@@ -1,0 +1,6 @@
+{
+  "utc": "2026-10-20T16:08:07.244680+00:00",
+  "path": "/Users/int/.assist-session-alias-20261020/target/debug",
+  "reason": "Completed alias focus cache: no absolute references in private alias JSON/Python/Markdown receipts; no Cargo/rustc cwd or live process under alias worktree. Native retained artifacts are separate and preserved.",
+  "state": "removed"
+}

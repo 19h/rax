@@ -1,0 +1,2693 @@
+{
+  "state": "finished",
+  "inputs-before": [
+    {
+      "path": "docs/development/evidence-projection/manifest.json",
+      "bytes": 128379,
+      "sha256": "dfb4ec6f41c83ea11e72241dfe8ae96afee98f58473e203d7b838605fe0d9c2d"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/assumptions.json",
+      "bytes": 5787,
+      "sha256": "4e98d2d302d7a79ad650d3e8712491ae45615434c2bff1131e06f9fda39f0067"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/baseline-source/src/user/windows/process/sched/tests/services_tests.rs",
+      "bytes": 49825,
+      "sha256": "67a7c116f53d1a11112521eefd4ff1b0b2229cff298e59d8040cf97467d423dc"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/baseline-source/src/user/windows/process/sched/tests/services_tests/file_attributes_tests.rs",
+      "bytes": 7654,
+      "sha256": "8f9466d6a63e1d94d9d794430c05febad9fd8be580d0c6d22cba08bd6151a485"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/check_validation.py",
+      "bytes": 17765,
+      "sha256": "66a826d048f408b8ff4e0ad04818137f2230e17dda88f38207ad59b41e335703"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/quality.json",
+      "bytes": 2531,
+      "sha256": "f33ff85f870f6f337d029353815fce35e58e98e63086a631687b1c780401feca"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation-envelope.json",
+      "bytes": 83509,
+      "sha256": "d0dafa7392ce338b7d18c761c8671ceeafa61aa0961f1260eaaaf56d243b18de"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/attributes-frontier-v1-boundary-review.json",
+      "bytes": 652,
+      "sha256": "9203cd231b1ad5b6635f60e5a3064c87d4be9dc55d98bcf1737ee56e995347b8"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/attributes-frontier-v1-source.json",
+      "bytes": 139,
+      "sha256": "bf3d4bf5ec0f08e7f7b1d192f5ce9cbcbb08eda5ae5eaa8613d8404e5f5f863a"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/attributes-frontier-v1.rs",
+      "bytes": 2788,
+      "sha256": "b7067c67b999c6be8c138307f5d65518ca38d9e99d1d6f2066a7e7463248cdf4"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/check-file-attributes-windows-xwin-epoch2.py",
+      "bytes": 2156,
+      "sha256": "8750a0dc5aecdb66ee82364feace36b5e85652850e0bfc105d6813ccd311203f"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/check-file-attributes-windows-xwin.py",
+      "bytes": 2143,
+      "sha256": "5fd08c70a09e9f4682131e170e775648fe06364c14f6a4ed7146e1e752e33640"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/collect-file-attributes-archives-epoch1.py",
+      "bytes": 3349,
+      "sha256": "800bd9cdf465f2a830823afbf6f9e6c7626b499ac37468bc0a14993e1c59a9a6"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-baseline-epoch1.json",
+      "bytes": 1211,
+      "sha256": "947f12996221b87c04d3138f30df95283fa5a60d0439cee601d57280ae194359"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-baseline-epoch1.log",
+      "bytes": 2146,
+      "sha256": "d4e695f95f9f1a8f6bbbfc722d8542bc4a1bfbbedc06286d307ea0298bcc9647"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-baseline-epoch2.json",
+      "bytes": 1288,
+      "sha256": "42517dceba2e90eb53cc83b419f0d60543df52abf3a2e0b2d7e02607bc505a5f"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-baseline-epoch2.log",
+      "bytes": 2680,
+      "sha256": "a747a681d264054d3594d4376f6030c3d5deec400d400941ae4bce5aecfa347a"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-build-reuse-epoch1.json",
+      "bytes": 442,
+      "sha256": "f5f8a0968444e77b42525387de7e904abf292461c0fd42ee7674a0239688f420"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-focus-epoch1.json",
+      "bytes": 3825,
+      "sha256": "5d731e819e6561db595c4f49a1c38186b7a3c1e4e9d83393a60e026ebfc8767a"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-focus-epoch1.log",
+      "bytes": 791,
+      "sha256": "6307a8b2fcf1f83cc5ba3f6a3cf84596041640f4a22b4837fbb91fc2f3aba5a4"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-focus-epoch2.json",
+      "bytes": 4593,
+      "sha256": "3ad1221487d141663d7fab1b9b41e635ef56846deedf6a0a10ee324fc04878aa"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-focus-epoch2.log",
+      "bytes": 1495,
+      "sha256": "f3289d8c0e00b47edd793cc6cfe6fb79ee26875bf197cf2b5d4ad6e7eb2b9e39"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-focus-epoch3.json",
+      "bytes": 5479,
+      "sha256": "dec5563f1966854607b73daca297ab0544dc227eb5ffd047edfb88391d0db167"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-focus-epoch3.log",
+      "bytes": 2012,
+      "sha256": "37a69208073935daabafab12d9a9eda613e22f3fb0a0805f4ae08ee97cd5f60b"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-linear-parent-epoch1.json",
+      "bytes": 212,
+      "sha256": "9a9f4e8a32e07bd6dc74d012d3c747093225a3985089b460a96317b68711da19"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-linux-epoch1-all-targets.log",
+      "bytes": 116,
+      "sha256": "c6cf8b8a25c826b51bcc6c46c8bfd0d35c411abd3aef7488f88038f49200174f"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-linux-epoch1-capi.log",
+      "bytes": 14074,
+      "sha256": "b2d4f4119e79f09148021d92a174124f9c1e8ce0917532c27de607747b0c1960"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-linux-epoch1-focus.log",
+      "bytes": 2561,
+      "sha256": "ad27f408f8798af9f122bd75797a1641f1d9237b1f290da39a96407a48880e7c"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-linux-epoch1-full.log",
+      "bytes": 853451,
+      "sha256": "388ff950fb8f89e2aa502fa61a6e7ddbbf9de1e658e426c1b0e48b6fe3d8a530"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-linux-epoch1-gates.json",
+      "bytes": 8571,
+      "sha256": "3d1c5e26070daa35b18bcfa44377c47410745e09eb123d01c9ce6821101e495a"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-linux-epoch1-integration.log",
+      "bytes": 35862,
+      "sha256": "6d36b794796fbac1d1cd130990d3ba446b89e24345f7037254ef9cd5ec5e5c0c"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-macos-epoch1-all-targets.log",
+      "bytes": 363,
+      "sha256": "ed4bf7762ad98bae5cd041cbb952fe014c44241f32b1aa882cd03507b704a649"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-macos-epoch1-capi.log",
+      "bytes": 14108,
+      "sha256": "c89ac3af9324031806bb0bb04d441753e563617b1635857d39955f673934db77"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-macos-epoch1-focus.log",
+      "bytes": 2365,
+      "sha256": "3214d5af819f77dd4d9aa5754f5ba6c7d6e9873e95b9d1746342c2983fafea4f"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-macos-epoch1-full.log",
+      "bytes": 853362,
+      "sha256": "1ea9f603bee0aee4c20d74cf91c0a22a31a6f644b3a85f7db11c0d568fa1ec78"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-macos-epoch1-gates.json",
+      "bytes": 3478,
+      "sha256": "b06232c38c2899c232154a189717de04a59f40d88bf04134c4d6345efc23d9f9"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-macos-epoch1-integration.log",
+      "bytes": 35828,
+      "sha256": "013082c0a47933b67553da3cf1d41d7d156213e7431500d7406b20c98ba858a3"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-macos-owning-link.json",
+      "bytes": 366,
+      "sha256": "8389c038e55b9c499112b805a2323813e3ade4789ec95b9e79becde15af6c88f"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-native-epoch1-all-targets.log",
+      "bytes": 1009,
+      "sha256": "3012321ee216004aa64848f4e5700b6ae8facd24c0fe63830f4bd97eb6e9d7a1"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-native-epoch1-capi.log",
+      "bytes": 14991,
+      "sha256": "c0a884529a1fcf032e2c16b3e53a7f97292ba2fb4d3ae0e93ab25ecf66d17481"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-native-epoch1-focus.log",
+      "bytes": 3239,
+      "sha256": "62e07fb2b15098c492d93f5dd104d5b0ad4df15fd738793e4401cb4078c1b583"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-native-epoch1-full.log",
+      "bytes": 819929,
+      "sha256": "ce34d1a8282ae2ab9e6adc70ba5625a27095cfb4ec8539d6f91a13b5d42458c0"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-native-epoch1-gates.json",
+      "bytes": 5250,
+      "sha256": "e582002b403785f699fe91f77cffdd5f62160a992266b292cc532e932403ee4d"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-native-epoch1-integration.log",
+      "bytes": 1776,
+      "sha256": "1215f5bc57cdc1e852f50325c1ca4d83301e9d8c83320e5c693fb36e1edd7217"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-native-epoch1-toolchain.log",
+      "bytes": 36,
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-native-ordinary-epoch1-build.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-native-ordinary-epoch1-smoke.log",
+      "bytes": 171,
+      "sha256": "8298c5ab0c4a095cf4de33175ac41d2b1a71ed7a424ca138a67dadf248785620"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-native-ordinary-epoch1-whoami.log",
+      "bytes": 163,
+      "sha256": "761dc90467b30dc453876e0aba46d94b7329bdc00f67bc22fe7deef0712ffdb3"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-native-ordinary-epoch1.json",
+      "bytes": 8408,
+      "sha256": "66e2f8994f432854a68a08d82e0a15066d13fae36f3fc3ddc2e391651d721aac"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-native-owning-epoch1-archive-after.log",
+      "bytes": 182,
+      "sha256": "56597405d4ba4fefa3affa8821f92d3047eaa7880e812de7566c2084636bf9e8"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-native-owning-epoch1-archive-before.log",
+      "bytes": 182,
+      "sha256": "56597405d4ba4fefa3affa8821f92d3047eaa7880e812de7566c2084636bf9e8"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-native-owning-epoch1-artifacts-after.log",
+      "bytes": 129699,
+      "sha256": "968ce1d9b864629be6315ebbc730e5146847a9c49fa77b2c7b55fc079a1eea4e"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-native-owning-epoch1-artifacts-before.log",
+      "bytes": 129984,
+      "sha256": "c0e557df25c1d2191bda970249c4b8021a7038adbe78d1d603da736a34229e02"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-native-owning-epoch1-cpp.log",
+      "bytes": 3705,
+      "sha256": "1d331a97eccd0f1d475a9a4e926a93a6c1387eabf9497719e879c133f8659be0"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-native-owning-epoch1-toolchain.log",
+      "bytes": 36,
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-native-owning-epoch1.json",
+      "bytes": 5058,
+      "sha256": "915a52789f58d4f7d48a905f71412f25f4111742205b90e814200b23e5cd36fa"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-observer-source-epoch1.json",
+      "bytes": 292,
+      "sha256": "8fc3e78b380ee846ca3c1564a71c8e3f6c45774ee545f91e93b7e62f15d7a6b3"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-ordinary-owner-epoch1.rs",
+      "bytes": 1044,
+      "sha256": "5c1aaf75ce1b18a7e251612e4778ec339989e9c91e110cba109c68238c67b01c"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-owned-cpp-build-epoch1.py",
+      "bytes": 2755,
+      "sha256": "4a854897c7035ab408de35d58758e77b3be6e3b2953520611387576a307c8ade"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-owned-paths-epoch1.json",
+      "bytes": 549,
+      "sha256": "b17d379369dcb9cb016ebd004cf78579a78fa54becd37b693225c5929dea88d4"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-owned-paths-epoch2.json",
+      "bytes": 673,
+      "sha256": "c44602585ee309435fb561f1bfd76bc89d201cf0585913ec710b3efb1535e427"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-owned-paths-epoch3.json",
+      "bytes": 765,
+      "sha256": "0e120d3daba53b98ad6aa3e6203f2e011a7f56d6b0efe03afae67eaec64c505b"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-owned-paths-epoch4.json",
+      "bytes": 858,
+      "sha256": "daf987b7a09004f1805aa9364c93d9a1601357b69a6281f4200a6738e13e974e"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-owned-source-epoch1.json",
+      "bytes": 898,
+      "sha256": "4fc634cbf14179a1077db0908f13247074f250d54e9610dd4cabc0dfa8d97a6f"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-ownership.json",
+      "bytes": 5787,
+      "sha256": "4e98d2d302d7a79ad650d3e8712491ae45615434c2bff1131e06f9fda39f0067"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-owning-capi-epoch1-build.log",
+      "bytes": 70,
+      "sha256": "967c72b87d4233a74e449da09b1f8faf02e4c3564c4d2745f610e79f87c1abbd"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-owning-capi-epoch1-ordinary.log",
+      "bytes": 1155,
+      "sha256": "d534b6baab4f99fdb7dfe92ebb1b850f10c7571d21b91937274c4946556387c6"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-owning-capi-epoch1.json",
+      "bytes": 10826,
+      "sha256": "68ba339d674d2864edb5f6b29b93070ce2f76284774f3622b6580db1bc504624"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-owning-capi-source.json",
+      "bytes": 283,
+      "sha256": "6714a5ee84b16abea62fa53024778116237bf5e38d9839cabb4f704957f5a88f"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-owning-capi.cpp",
+      "bytes": 3573,
+      "sha256": "706cb2a46c143a557f3c565792d954c40e596ddbd767a2138a9d2303e94261e3"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-owning-controller-retry.json",
+      "bytes": 431,
+      "sha256": "9f817730e68954b78c2840a05461ab648493e07d9e61a2901f76743b0f4e56bc"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-owning-source-hashes-epoch1.json",
+      "bytes": 730760,
+      "sha256": "39cb50825b4c8d27fc419ca2128a12f2f3f1b231c8ce47bdb2b1ba988799f591"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-retained-owning-epoch1.json",
+      "bytes": 1971,
+      "sha256": "6cfbeb84cb82717b121c8272f16b5d950090b6fad77e28b6b2aadb9bdf7100ce"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-source-epoch1-archive.json",
+      "bytes": 32637,
+      "sha256": "81f14b8d91eda74db4fd325b82f4b0fd43b662406aba3a06ad9db50bbacfb295"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-source-epoch1.json",
+      "bytes": 5839483,
+      "sha256": "1a029366a486e6071aaefb8bba63df69e07eddca46b7f09dce51673be7426c9e"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-windows-cross-xwin-epoch1-aarch64.log",
+      "bytes": 1203,
+      "sha256": "ea7f3ad7f76152f1b43febd0d19eeb6763aa3235cdb4c711e90da81ceafeefaa"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-windows-cross-xwin-epoch1-x86_64.log",
+      "bytes": 1203,
+      "sha256": "96e636d62a46ec0d7ebfd9c1916bd3072bbae650547b0eee4d8cfdc0607a90c1"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-windows-cross-xwin-epoch1.json",
+      "bytes": 6004,
+      "sha256": "c7367bd2b41815d61066d17bf18a35c6516bd85295d49974f7fba5e4629f0657"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-windows-cross-xwin-epoch2-aarch64.log",
+      "bytes": 983,
+      "sha256": "eeb5c459acff4c14df140372a001d7cdd25ff6f1f1b82ffc77feabe73b838385"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-windows-cross-xwin-epoch2-x86_64.log",
+      "bytes": 983,
+      "sha256": "c66f9d26d2926b133b8879aba18f93884a5687055ea5e01a6053e3f7c9d0bf8b"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-windows-cross-xwin-epoch2.json",
+      "bytes": 6801,
+      "sha256": "55ba8850b46d9694d953d84c4f8cfa867f1a7d8958818c985ff7537a139cae79"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/linux-file-attributes-epoch1-final-owning-archive-identities.json",
+      "bytes": 732270,
+      "sha256": "972d3c4cc581920958d8dc5cc5ee4a4647d0c4f1ad7016f16bde5904c511871e"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/linux-file-attributes-epoch1-owning-archive-before.log",
+      "bytes": 119,
+      "sha256": "6c80e7fa0c79811f3da1c490a05bf411cfdc857baae895ac19c26b6b95284ea0"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/linux-file-attributes-epoch1-owning-commands.json",
+      "bytes": 7692,
+      "sha256": "892dd76340d220908d43db4185f5882378e8ba6b59cca2c434f3ee60123cd97b"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/linux-file-attributes-epoch1-owning-gates.json",
+      "bytes": 4733,
+      "sha256": "ed66b437d1ebe14a3d8574c16a6b2ba6a72f244267ae8f5ab32c922703df0f11"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/linux-file-attributes-epoch1-owning-shipping.log",
+      "bytes": 174435,
+      "sha256": "491c4e59991ea87c61929e9fd56021586605dacfe6c34766d294cdc3054a8b81"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/linux-file-attributes-epoch1-pre-cpp-archive-identities.json",
+      "bytes": 732269,
+      "sha256": "19f96ef3f2fe5ea0dca147d6968bbec141c1d79c3c1562878185223972db891b"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/linux-file-attributes-epoch2-owning-archive-before.log",
+      "bytes": 180,
+      "sha256": "5c1db6e65ce718f1ddbbca4987c53bfb165f1a7dabe25cd91dff767592d6b1e3"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/linux-file-attributes-epoch2-owning-archive-identities.log",
+      "bytes": 180,
+      "sha256": "5c1db6e65ce718f1ddbbca4987c53bfb165f1a7dabe25cd91dff767592d6b1e3"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/linux-file-attributes-epoch2-owning-artifacts.log",
+      "bytes": 174086,
+      "sha256": "1484fd247a4552a8948fb1e6676633599e613d5ec79dc4d908ed6eda1230b8bc"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/linux-file-attributes-epoch2-owning-commands.json",
+      "bytes": 7697,
+      "sha256": "4655cd3c7c2e4da6d27412c1696f40d9a95a83d98eff83fcf454d361d41bdbfe"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/linux-file-attributes-epoch2-owning-cpp.log",
+      "bytes": 2574,
+      "sha256": "7e1a3e2dc640851657a9123cd1358088c929a0c992714f534aee6fc86e4da37d"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/linux-file-attributes-epoch2-owning-gates.json",
+      "bytes": 9661,
+      "sha256": "273d05de1960970c945721847f4fb5a323fd5a22cc42f57a473e923dda50faac"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/linux-file-attributes-epoch2-owning-shipping.log",
+      "bytes": 174086,
+      "sha256": "72b510fb9c0e07d4f37a4ea7326aa113462a2a84c514257fafc98783c78e0419"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/macos-file-attributes-epoch1-c-final-owning-archive-identities.json",
+      "bytes": 733611,
+      "sha256": "21d097ebda726cae7dc3947e37c721599fa7e735e5d6021e6816fdc8c08e2091"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/macos-file-attributes-epoch1-c-pre-cpp-archive-identities.json",
+      "bytes": 733617,
+      "sha256": "1750ad6046942c098b94b3e94dab90de2ad7a50151d88191006be66c79d8275c"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/macos-file-attributes-epoch1-linkage.json",
+      "bytes": 2107,
+      "sha256": "83197168d9ba470a0f9afc6766052c4b92e4298366a5ea821173f479fda67744"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/macos-file-attributes-epoch1-owning-archive-before.log",
+      "bytes": 307,
+      "sha256": "20a9acac02cb434ca2ae9e99cca21b38b77efcdcfb5bbdc97862d0231f8e888e"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/macos-file-attributes-epoch1-owning-commands.json",
+      "bytes": 5932,
+      "sha256": "7834fb3ba6b73589b94b2c709c78ea17f7db3e81c8410809e08d8196b306f71f"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/macos-file-attributes-epoch1-owning-gates.json",
+      "bytes": 3557,
+      "sha256": "dd4109fd6689763d3583c8dffb2e6f8bd7086d360f342f2c68d193696ca6566c"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/macos-file-attributes-epoch1-owning-prime-artifacts.log",
+      "bytes": 137970,
+      "sha256": "d9fd18a5ce0579fd9f92fd54acd0efafbfb947110add977dca3a3c1c9aeb42de"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/macos-file-attributes-epoch2-owning-archive-before.log",
+      "bytes": 180,
+      "sha256": "d5117565b69825c8210662f181b6e4725d0cb70f69252dfaafac78702131a7b3"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/macos-file-attributes-epoch2-owning-archive-identities.log",
+      "bytes": 180,
+      "sha256": "d5117565b69825c8210662f181b6e4725d0cb70f69252dfaafac78702131a7b3"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/macos-file-attributes-epoch2-owning-artifacts.log",
+      "bytes": 137205,
+      "sha256": "94e2b70b99cea3cc307d6a34c40ecb96abce9ebf9260e5b48067ba2bbc10a933"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/macos-file-attributes-epoch2-owning-build.log",
+      "bytes": 32919,
+      "sha256": "fd4397f04a7ef7a340c88b1903a29424937657332c8213c9e3bd0d9913e5b974"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/macos-file-attributes-epoch2-owning-commands.json",
+      "bytes": 5940,
+      "sha256": "be3eba4ea40047248771f6e3a19bda1afa24febc1f5b54ed1a0c9074c9d1e9ef"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/macos-file-attributes-epoch2-owning-ctest.log",
+      "bytes": 1298,
+      "sha256": "c90a07032adca126d42177ef02093455524a46786d8eb82d7d8490d2159e5d48"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/macos-file-attributes-epoch2-owning-gates.json",
+      "bytes": 8473,
+      "sha256": "d18207035b78a11e54faa792cfe3d3c972bcb1bff02e554e7ff44f40ca47b85f"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/macos-file-attributes-epoch2-owning-prime-artifacts.log",
+      "bytes": 137205,
+      "sha256": "931061edd5f49d388341e1545888820a7cf2978ca90d13df3ddc502901fcb261"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/macos-file-attributes-epoch2-owning-protected-assist-cli.log",
+      "bytes": 42,
+      "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/macos-file-attributes-epoch2-owning-protected-assist-mcp.log",
+      "bytes": 42,
+      "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v1-arm64-after.log",
+      "bytes": 277,
+      "sha256": "e11026d325a5ada58d34aa09b18327ed6cde66d92f98f00c9825c329e47854ba"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v1-arm64-before.log",
+      "bytes": 277,
+      "sha256": "e11026d325a5ada58d34aa09b18327ed6cde66d92f98f00c9825c329e47854ba"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v1-arm64-build.log",
+      "bytes": 31,
+      "sha256": "19140e32412122fadae5bc78de48137c3deb73abdf5c77d0d343113a8422a04d"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v1-arm64.log",
+      "bytes": 7804,
+      "sha256": "b4c013063b1f4258f87658911d901cab15217218535b43f1f5c12f75225f2505"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v1-launch.json",
+      "bytes": 5869,
+      "sha256": "3f7d84434f0dff483bb8674f7c2a38b9efb591bc91f74c9bebb6495c10f47555"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v1-source.json",
+      "bytes": 143,
+      "sha256": "1b80dced221b2f729b22f47d827f76ce6a36cae671c868bf33319d3fff238dee"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v1.cpp",
+      "bytes": 9175,
+      "sha256": "cff6140a753ee79cd740ddca1c3e6d50f38cfa31a2d85285cb52ccba5bf49ddf"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v2-arm64-after.log",
+      "bytes": 277,
+      "sha256": "61a20f04ebebd7513992ce9bb7d6820e31beedf40869edf3afa0a78a9fb021fe"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v2-arm64-before.log",
+      "bytes": 277,
+      "sha256": "61a20f04ebebd7513992ce9bb7d6820e31beedf40869edf3afa0a78a9fb021fe"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v2-arm64-build.log",
+      "bytes": 31,
+      "sha256": "2ea60992de2a328e10ca3cfcb6acf93689b7d70ed0ddfd84baff4eed1e8f134a"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v2-arm64.log",
+      "bytes": 18166,
+      "sha256": "170481ba4fa97d2770809d4fd6d7fb16424979d75426ac9cef12d84f63a6c709"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v2-launch.json",
+      "bytes": 16994,
+      "sha256": "36b20ef4d6ffda17d67975af4be89b01e94374e1061b020dc606795fb582437d"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v2-source.json",
+      "bytes": 298,
+      "sha256": "224b02647c8aed878e98534959dc54899698c09292bf9456ac7b519d707f0827"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v2-x64-after.log",
+      "bytes": 273,
+      "sha256": "60b86523d4b6d774ea0aa8d9fe2173748beb6901b6dcb6f5130541c9125a74f8"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v2-x64-before.log",
+      "bytes": 273,
+      "sha256": "60b86523d4b6d774ea0aa8d9fe2173748beb6901b6dcb6f5130541c9125a74f8"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v2-x64-build.log",
+      "bytes": 31,
+      "sha256": "2ea60992de2a328e10ca3cfcb6acf93689b7d70ed0ddfd84baff4eed1e8f134a"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v2-x64.log",
+      "bytes": 18164,
+      "sha256": "0b69d4b0442172180bdf524341497c5e8c2fd5a54c5c1c50967c123f62e966f7"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v2-x86-after.log",
+      "bytes": 272,
+      "sha256": "ba02c5bf3894902edff4f7a858603153229438544449ec977d6bd4a59459e5ae"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v2-x86-before.log",
+      "bytes": 272,
+      "sha256": "ba02c5bf3894902edff4f7a858603153229438544449ec977d6bd4a59459e5ae"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v2-x86-build.log",
+      "bytes": 31,
+      "sha256": "2ea60992de2a328e10ca3cfcb6acf93689b7d70ed0ddfd84baff4eed1e8f134a"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v2-x86-laa-after.log",
+      "bytes": 279,
+      "sha256": "9a9eb5b90136d56534d45d91a2a82726886f113bc47f0d55ff8dd73d8ab0972c"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v2-x86-laa-before.log",
+      "bytes": 279,
+      "sha256": "9a9eb5b90136d56534d45d91a2a82726886f113bc47f0d55ff8dd73d8ab0972c"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v2-x86-laa-build.log",
+      "bytes": 31,
+      "sha256": "2ea60992de2a328e10ca3cfcb6acf93689b7d70ed0ddfd84baff4eed1e8f134a"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v2-x86-laa.log",
+      "bytes": 18167,
+      "sha256": "3a49a6256747c29bc1cbb359ccc942995b05120321367275d5609a9bcb0f86c6"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v2-x86.log",
+      "bytes": 18163,
+      "sha256": "909afb2d7f093ff4d807fd81249660648c16806b4e9ac5258556f2629e224a27"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v2.cpp",
+      "bytes": 9175,
+      "sha256": "ffa77db88376c04aa1595c2342cb7a2f05f4c7ed244969e06194610cb2e3fbaa"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v3-arm64-after.log",
+      "bytes": 277,
+      "sha256": "c452e80218ab835484675bc3dc38e96ace14f8255671e80778c098bf18747b41"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v3-arm64-before.log",
+      "bytes": 277,
+      "sha256": "c452e80218ab835484675bc3dc38e96ace14f8255671e80778c098bf18747b41"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v3-arm64-build.log",
+      "bytes": 31,
+      "sha256": "161393b060fa5ca5f22f0dab58ec06899046ae75dde033d4f0ef09ee5e284e20"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v3-arm64.log",
+      "bytes": 20316,
+      "sha256": "d3736f7095303c1290b286a01018cdf1464335093aeea049a599cf4e29b620e0"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v3-launch.json",
+      "bytes": 16993,
+      "sha256": "2708759b63319da3fffccfbb7a16135ff3247c942306807820f167643efbb1ef"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v3-source.json",
+      "bytes": 280,
+      "sha256": "176d4f6de506be75838491d79f3208de5af050528ed58669d8016097dff33de7"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v3-x64-after.log",
+      "bytes": 273,
+      "sha256": "521311a4b4864f209f6ca0acd2ce2ce531c1e8ad51d2bcab08fe4574d400e67a"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v3-x64-before.log",
+      "bytes": 273,
+      "sha256": "521311a4b4864f209f6ca0acd2ce2ce531c1e8ad51d2bcab08fe4574d400e67a"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v3-x64-build.log",
+      "bytes": 31,
+      "sha256": "161393b060fa5ca5f22f0dab58ec06899046ae75dde033d4f0ef09ee5e284e20"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v3-x64.log",
+      "bytes": 20314,
+      "sha256": "e16a8a71dce57223212c0107c3cac3648051ad975eb60892970fd733c33345b9"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v3-x86-after.log",
+      "bytes": 272,
+      "sha256": "6aa24a280cde4d554de5c51d6ba455b012f90b1ae62f5649b27cafead90d8983"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v3-x86-before.log",
+      "bytes": 272,
+      "sha256": "6aa24a280cde4d554de5c51d6ba455b012f90b1ae62f5649b27cafead90d8983"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v3-x86-build.log",
+      "bytes": 31,
+      "sha256": "161393b060fa5ca5f22f0dab58ec06899046ae75dde033d4f0ef09ee5e284e20"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v3-x86-laa-after.log",
+      "bytes": 279,
+      "sha256": "340aff1d31fcf35b2f1e7a47f230ac51a055383069dbb176f015771635fedcbd"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v3-x86-laa-before.log",
+      "bytes": 279,
+      "sha256": "340aff1d31fcf35b2f1e7a47f230ac51a055383069dbb176f015771635fedcbd"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v3-x86-laa-build.log",
+      "bytes": 31,
+      "sha256": "161393b060fa5ca5f22f0dab58ec06899046ae75dde033d4f0ef09ee5e284e20"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v3-x86-laa.log",
+      "bytes": 20317,
+      "sha256": "3920851fcf43785d5c6c09f1249b90ba14759bbfaafd466045755951d848019c"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v3-x86.log",
+      "bytes": 20313,
+      "sha256": "f5665731ef4a2990dfb8e62613d2d4aa3ddacd9dbbf654e802cfb11ba4363d9f"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v3.cpp",
+      "bytes": 9751,
+      "sha256": "121f45dd3ce5561bbc6c8ee558c7f41ae315180d2dfbd9046ef95f1cf7f35016"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v4-arm64-after.log",
+      "bytes": 277,
+      "sha256": "9ec5615203bb68638bec7c72d756bfa94a972b3f8e403e7194857c674ad57902"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v4-arm64-before.log",
+      "bytes": 277,
+      "sha256": "9ec5615203bb68638bec7c72d756bfa94a972b3f8e403e7194857c674ad57902"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v4-arm64-build.log",
+      "bytes": 31,
+      "sha256": "2178d5606f92ba680d882b8486f9f59bfc76b4ef33539bf686decc839636b547"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v4-arm64.log",
+      "bytes": 40526,
+      "sha256": "5788de8937fb60802cbaa2608eeaf9b8811f5cdd1d011fc02e8ad7b2f44edba4"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v4-launch.json",
+      "bytes": 16996,
+      "sha256": "72d843d1b1f01c9960945979d3a6c126967817fa3c40ba53fb7e6b29daa2984b"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v4-source.json",
+      "bytes": 306,
+      "sha256": "890de4453a5c4ed16689bcb4c0af7350ce2d4cb3605abffef3d691613940982b"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v4-x64-after.log",
+      "bytes": 273,
+      "sha256": "2c4713901aef6914b19fc9e9b633722d95150079ad528aa892a5c07ef1415ee2"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v4-x64-before.log",
+      "bytes": 273,
+      "sha256": "2c4713901aef6914b19fc9e9b633722d95150079ad528aa892a5c07ef1415ee2"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v4-x64-build.log",
+      "bytes": 31,
+      "sha256": "2178d5606f92ba680d882b8486f9f59bfc76b4ef33539bf686decc839636b547"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v4-x64.log",
+      "bytes": 40524,
+      "sha256": "272b6c3d7f05909c8f3341aa16d369082bc4a1ce26393f2879afc3310224976c"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v4-x86-after.log",
+      "bytes": 272,
+      "sha256": "6ea7320e4406cbaf378565fda9d1b93abc8df286fc1d0ab1e183e17104f9e316"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v4-x86-before.log",
+      "bytes": 272,
+      "sha256": "6ea7320e4406cbaf378565fda9d1b93abc8df286fc1d0ab1e183e17104f9e316"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v4-x86-build.log",
+      "bytes": 31,
+      "sha256": "2178d5606f92ba680d882b8486f9f59bfc76b4ef33539bf686decc839636b547"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v4-x86-laa-after.log",
+      "bytes": 279,
+      "sha256": "4882630a6076c23f3558d1ac21e9d69a95c47546cf14b63991b04b16c919ded0"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v4-x86-laa-before.log",
+      "bytes": 279,
+      "sha256": "4882630a6076c23f3558d1ac21e9d69a95c47546cf14b63991b04b16c919ded0"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v4-x86-laa-build.log",
+      "bytes": 31,
+      "sha256": "2178d5606f92ba680d882b8486f9f59bfc76b4ef33539bf686decc839636b547"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v4-x86-laa.log",
+      "bytes": 40527,
+      "sha256": "92c0610f6f0b42acb35afba6ac4c0036760ec792be01f2d63b43c82713bb565b"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v4-x86.log",
+      "bytes": 40523,
+      "sha256": "77fbacbdce8af2275f23fa4b567ab1f67300abfc248aa10ea09e32fa0830a655"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v4.cpp",
+      "bytes": 11743,
+      "sha256": "5ce502585cf93bb079c1e51026c11b9f925523c1bae244ae3a03ca4cf282f817"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v5-arm64-build.log",
+      "bytes": 311,
+      "sha256": "4240a47fa73aeed481e510d3d432bd3a512b3596bc82d5cbe9806dafcf2a06f0"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v5-launch.json",
+      "bytes": 3635,
+      "sha256": "b0390834077d2938028a3a92a57dc0052dbf27ab6df56605fe0b65c31cdea253"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v5.cpp",
+      "bytes": 16862,
+      "sha256": "12f59a5fd3117bd8c936fc9f9becfbf610e4023c4c6cd4e3e39e6fe56f009654"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v6-arm64-after.log",
+      "bytes": 277,
+      "sha256": "b4ed6f2195b699ac186d064ea1e166a6343b97e2179d6e17145ffe7a042696ed"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v6-arm64-before.log",
+      "bytes": 277,
+      "sha256": "b4ed6f2195b699ac186d064ea1e166a6343b97e2179d6e17145ffe7a042696ed"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v6-arm64-build.log",
+      "bytes": 31,
+      "sha256": "49c1018d72735b67b72aeaeb35190e227cd7e8c6b0df560ebeb6968bed967b8b"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v6-arm64.log",
+      "bytes": 61684,
+      "sha256": "05a15bdfcf1b6f5cf3f2f1719ed02721b1965d0c4cd3847e86de3114e100349b"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v6-launch.json",
+      "bytes": 17096,
+      "sha256": "c5057532241cb3c0f4d4fb87149019a2d80f9a1927dfb471d4e125942c568835"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v6-x64-after.log",
+      "bytes": 273,
+      "sha256": "184b4c1540de59df2db4e50978001201fdfa0d0ed190c4081c34595e961aee83"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v6-x64-before.log",
+      "bytes": 273,
+      "sha256": "184b4c1540de59df2db4e50978001201fdfa0d0ed190c4081c34595e961aee83"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v6-x64-build.log",
+      "bytes": 31,
+      "sha256": "49c1018d72735b67b72aeaeb35190e227cd7e8c6b0df560ebeb6968bed967b8b"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v6-x64.log",
+      "bytes": 61682,
+      "sha256": "cbfa6d031db62e995b80c1da63724a1dc0971883612eacda77266fe84ec4f4d3"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v6-x86-after.log",
+      "bytes": 272,
+      "sha256": "08bfb0fcdaf96241627ca3f44ca57448a2d8b6ac7a657fef5ee6336cf77c649f"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v6-x86-before.log",
+      "bytes": 272,
+      "sha256": "08bfb0fcdaf96241627ca3f44ca57448a2d8b6ac7a657fef5ee6336cf77c649f"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v6-x86-build.log",
+      "bytes": 31,
+      "sha256": "49c1018d72735b67b72aeaeb35190e227cd7e8c6b0df560ebeb6968bed967b8b"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v6-x86-laa-after.log",
+      "bytes": 279,
+      "sha256": "7870e819fb4e553f7b9a2a517f1d7ed5c49e0677c1a39a7d1fd23d22d1ff2cf8"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v6-x86-laa-before.log",
+      "bytes": 279,
+      "sha256": "7870e819fb4e553f7b9a2a517f1d7ed5c49e0677c1a39a7d1fd23d22d1ff2cf8"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v6-x86-laa-build.log",
+      "bytes": 31,
+      "sha256": "49c1018d72735b67b72aeaeb35190e227cd7e8c6b0df560ebeb6968bed967b8b"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v6-x86-laa.log",
+      "bytes": 61685,
+      "sha256": "5b8108be1c5d25814750b7590173f909d2180ef5461928bafc218af90a253f5f"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v6-x86.log",
+      "bytes": 61681,
+      "sha256": "64d233b4c57e2311a646c09f4551b3a5fbe8e0170094f0ef6be9d67bbb510c10"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v6.cpp",
+      "bytes": 16862,
+      "sha256": "12f59a5fd3117bd8c936fc9f9becfbf610e4023c4c6cd4e3e39e6fe56f009654"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v7-arm64-after.log",
+      "bytes": 277,
+      "sha256": "9aff56824d29ba9db79188df10727d8c27a22e1b8512c2943618b02da199c8fc"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v7-arm64-before.log",
+      "bytes": 277,
+      "sha256": "9aff56824d29ba9db79188df10727d8c27a22e1b8512c2943618b02da199c8fc"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v7-arm64-build.log",
+      "bytes": 31,
+      "sha256": "cff4d49f27a33863ea4609ecbe5520828373e74bce7d0c0da89aa42c99e67cca"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v7-arm64.log",
+      "bytes": 69892,
+      "sha256": "79b7fe8de946cfe7069f77e90592618c595db72d80ad9eb5f4e7cc103751b32c"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v7-launch.json",
+      "bytes": 17095,
+      "sha256": "5b1c86be42c028dbf0f5c7a1399211e35e0f38d889fba0374a05fe7846e98a31"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v7-x64-after.log",
+      "bytes": 273,
+      "sha256": "5516d9f0e416b1e940fe2d362b5eb315f2834c8875f6c75ee07d350bc49b2a9d"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v7-x64-before.log",
+      "bytes": 273,
+      "sha256": "5516d9f0e416b1e940fe2d362b5eb315f2834c8875f6c75ee07d350bc49b2a9d"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v7-x64-build.log",
+      "bytes": 31,
+      "sha256": "cff4d49f27a33863ea4609ecbe5520828373e74bce7d0c0da89aa42c99e67cca"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v7-x64.log",
+      "bytes": 69890,
+      "sha256": "7371df1bce37b8bb6ed77248e27e18f1fecb16d188defd756a436d3fa9770929"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v7-x86-after.log",
+      "bytes": 272,
+      "sha256": "2d759758bdfc100f03adaa2a95845b2da4aaa8c8816f41ce18bfdf4bd7fd83e8"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v7-x86-before.log",
+      "bytes": 272,
+      "sha256": "2d759758bdfc100f03adaa2a95845b2da4aaa8c8816f41ce18bfdf4bd7fd83e8"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v7-x86-build.log",
+      "bytes": 31,
+      "sha256": "cff4d49f27a33863ea4609ecbe5520828373e74bce7d0c0da89aa42c99e67cca"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v7-x86-laa-after.log",
+      "bytes": 279,
+      "sha256": "0188d3edd9f4dac0c243e654beeeafc4d5da06afa3dbaa343b171236850f152f"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v7-x86-laa-before.log",
+      "bytes": 279,
+      "sha256": "0188d3edd9f4dac0c243e654beeeafc4d5da06afa3dbaa343b171236850f152f"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v7-x86-laa-build.log",
+      "bytes": 31,
+      "sha256": "cff4d49f27a33863ea4609ecbe5520828373e74bce7d0c0da89aa42c99e67cca"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v7-x86-laa.log",
+      "bytes": 69893,
+      "sha256": "a6492f310039985226bb7d3fc02766f477da1bc8f32b520b3fc212a5f2add6b6"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v7-x86.log",
+      "bytes": 69889,
+      "sha256": "56111ba754c306fd5309a4fff4eb7673f0eb1eb36820e6ab7d4a983e63e4d22e"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v7.cpp",
+      "bytes": 19697,
+      "sha256": "4cbeb8509c6a62e3243638186a194984240b6889c06500d41a4b544c09385ccc"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v8-arm64-after.log",
+      "bytes": 277,
+      "sha256": "48852093cea54978d644526b8b7960e85a0d06c571c8509482e86ca012a6b01b"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v8-arm64-before.log",
+      "bytes": 277,
+      "sha256": "48852093cea54978d644526b8b7960e85a0d06c571c8509482e86ca012a6b01b"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v8-arm64-build.log",
+      "bytes": 31,
+      "sha256": "e558857060c9da01436ffaa3774a90bdbcd7a864d010bb1c4538b4c5b84e4917"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v8-arm64.log",
+      "bytes": 75076,
+      "sha256": "cc02f34406c2ca4b3f348604dff58ce12449e45130c280cdd6d079e391cb26dd"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v8-launch.json",
+      "bytes": 17096,
+      "sha256": "f4bd0d575c6a20c1d0d5d453e40bc252d5eab490733e93fe7a430115565a30f2"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v8-x64-after.log",
+      "bytes": 273,
+      "sha256": "205d7a778752db7387006871bd8a2d123b84b55c2c9d8eaddcc95380c93dbb7e"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v8-x64-before.log",
+      "bytes": 273,
+      "sha256": "205d7a778752db7387006871bd8a2d123b84b55c2c9d8eaddcc95380c93dbb7e"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v8-x64-build.log",
+      "bytes": 31,
+      "sha256": "e558857060c9da01436ffaa3774a90bdbcd7a864d010bb1c4538b4c5b84e4917"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v8-x64.log",
+      "bytes": 75074,
+      "sha256": "2ea25c501ed2b45f1c67f100d0220d9c7a58d0a8da7f8a45150b4045c3a6ad0b"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v8-x86-after.log",
+      "bytes": 272,
+      "sha256": "1e8da873fb1fd85570b3c0b2a949b832cd375ca4154d3fa41f32cb113200c8f6"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v8-x86-before.log",
+      "bytes": 272,
+      "sha256": "1e8da873fb1fd85570b3c0b2a949b832cd375ca4154d3fa41f32cb113200c8f6"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v8-x86-build.log",
+      "bytes": 31,
+      "sha256": "e558857060c9da01436ffaa3774a90bdbcd7a864d010bb1c4538b4c5b84e4917"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v8-x86-laa-after.log",
+      "bytes": 279,
+      "sha256": "552bb189da785b15f731040a5d669762618b68a62b1c2760a4b09ab27d91d0dd"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v8-x86-laa-before.log",
+      "bytes": 279,
+      "sha256": "552bb189da785b15f731040a5d669762618b68a62b1c2760a4b09ab27d91d0dd"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v8-x86-laa-build.log",
+      "bytes": 31,
+      "sha256": "e558857060c9da01436ffaa3774a90bdbcd7a864d010bb1c4538b4c5b84e4917"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v8-x86-laa.log",
+      "bytes": 75077,
+      "sha256": "aad79fb3c9f9a9b54a194e0d343937679f669f760e4b2ea00e53d211b63df0ec"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v8-x86.log",
+      "bytes": 75073,
+      "sha256": "61d014ba15bcaa6c511532388a2911b8a6823116f0c74d46b1ea0785b735ea71"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v8.cpp",
+      "bytes": 22017,
+      "sha256": "0b674015ff2e5b0c3769c3a0967df535e4ff2fba6914d4ca9793fe1a1febc678"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/owning-linux-cpp-build-file-attributes-epoch1.py",
+      "bytes": 2311,
+      "sha256": "2a5d3b6ddb9badfeb494dc045fb045607c2e565adc86a34b52044abff373ecae"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/retain-file-attributes-artifacts-epoch1.py",
+      "bytes": 1934,
+      "sha256": "3c2124eb29dd0199b924e5e3a206c6c264e61f0c87c13e6998e98d0d4208597a"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/run-attributes-frontier-v1.py",
+      "bytes": 4063,
+      "sha256": "e93c5eea61de43dd03e1956228ee0aca57f832a3c5dab28888d8187655a94396"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/run-file-attributes-native-epoch1.py",
+      "bytes": 5917,
+      "sha256": "b17b6f40a173ca8d7566663efe1ffc6c10da4bc390e82ba442376ee985eba24c"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/run-file-attributes-native-ordinary-epoch1.py",
+      "bytes": 5308,
+      "sha256": "b6607057e05756706bed4168e8bb52dd947b269b659cbe2241b71916aa433b57"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/run-file-attributes-native-owning-epoch1.py",
+      "bytes": 4876,
+      "sha256": "a394feb44005ce42da883276154415a18b2b8cba705d91b9e59b1c0f7e6f5ef2"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/run-file-attributes-owning-capi-epoch1.py",
+      "bytes": 6181,
+      "sha256": "4a02b2cb513c0a8e87f60af416eb3599c2367f8c802f0dac851e3b73eaeafbb3"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/run-file-attributes-owning-epoch1.py",
+      "bytes": 3193,
+      "sha256": "60fcb9df9e35a969315c10cb99b6654fb07aa991f11c5740be8317c2644fbbad"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/run-file-attributes-owning-epoch2.py",
+      "bytes": 3193,
+      "sha256": "989b5c118ce3d45d34b111c78d2986d21c7de419192978100927fa172606c6a4"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/run-file-attributes-unix-epoch1.py",
+      "bytes": 3602,
+      "sha256": "888a4111683ef0014b1c88a0b15b1849c83b66bfbd6bacbc6906bc06e816e7ba"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/run-native-file-attributes-v1.py",
+      "bytes": 4251,
+      "sha256": "42b2c3dd4a593b6681aefec8cf0aa217affb71f5f5829e67192817f9a034b8f5"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/run-native-file-attributes-v2.py",
+      "bytes": 4251,
+      "sha256": "048c2a4523d1ee98ba9911d8e15ee041580a9adeab9f1a1503e76dfce2035864"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/run-native-file-attributes-v3.py",
+      "bytes": 4251,
+      "sha256": "465cee48f115aeae92ff5f5307dc0f1195914c1595d6700378f6377d49827124"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/run-native-file-attributes-v4.py",
+      "bytes": 4251,
+      "sha256": "2cc613549a757ccc53cb0e35f857839de60e1d1717b0fd959d2af03b80e4aeef"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/run-native-file-attributes-v5.py",
+      "bytes": 4251,
+      "sha256": "bdf418c479e2e2216511dda181487ff1dbf594fe90a0bcd5f6d7af703c76e4bd"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/run-native-file-attributes-v6.py",
+      "bytes": 4266,
+      "sha256": "b13508cfa59e786136d45769829e5efbac1dbc40aef08d3e18d7a44d163e088d"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/run-native-file-attributes-v7.py",
+      "bytes": 4266,
+      "sha256": "4cdbe07560ba9ffcbb82220233b7677e72120e21cdff3ec4a81a2eb7567d0da7"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/run-native-file-attributes-v8.py",
+      "bytes": 4266,
+      "sha256": "67e2ed7ed013d9e5350b9168cb6fee648eab48eabdd1b479efb2bad3baa5776d"
+    },
+    {
+      "path": "src/user/windows/dll/native.rs",
+      "bytes": 21641,
+      "sha256": "606a54730249e62f8944ec6b58e04e8695d827cafadd668d2e2843818b9bdc90"
+    },
+    {
+      "path": "src/user/windows/dll/native/file_attributes.rs",
+      "bytes": 2196,
+      "sha256": "c716134b9a4d5cedfdc1b1296e152cffbec76995b06539f76cf552bbff0a687e"
+    },
+    {
+      "path": "src/user/windows/dll/native/file_attributes/attributes.rs",
+      "bytes": 6751,
+      "sha256": "3cda7c77ad6c5a5f175373a66fc1cc58eabfb096bf772763031715ab0f667ce9"
+    },
+    {
+      "path": "src/user/windows/dll/native/file_attributes/metadata.rs",
+      "bytes": 3216,
+      "sha256": "b5ef2c78a36cb06dafac8dd3d87504b02a39fa83c9d1b56795ed6fee5280d198"
+    },
+    {
+      "path": "src/user/windows/dll/native/file_attributes/metadata/unix.rs",
+      "bytes": 3224,
+      "sha256": "26e516eba4d1aadb0fb375c5e8214b5ead7d1116b8066ac842a34082078dd66d"
+    },
+    {
+      "path": "src/user/windows/dll/native/file_attributes/metadata/windows.rs",
+      "bytes": 3996,
+      "sha256": "fa88f91ad940421cb6485c89951adb641b07b2495b3f595194b118b75140e2f7"
+    },
+    {
+      "path": "src/user/windows/dll/native/file_attributes/path.rs",
+      "bytes": 9782,
+      "sha256": "bcca4eff109b4fc21a2b839958495ee084a76258b86ee9ec084e341f9038fb96"
+    },
+    {
+      "path": "src/user/windows/native-runtime.md",
+      "bytes": 203915,
+      "sha256": "aa3fa83797d1df92f57005d90ef7bfdb8d176a8e7e90bf6cfc5d9eac8bb4e892"
+    },
+    {
+      "path": "src/user/windows/native.rs",
+      "bytes": 16872,
+      "sha256": "a7aa0b17006a5a9140eeb4f5131a5de2ccc3f2837c9d9181978b5108a65814a9"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests.rs",
+      "bytes": 49825,
+      "sha256": "67a7c116f53d1a11112521eefd4ff1b0b2229cff298e59d8040cf97467d423dc"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/file_attributes_tests.rs",
+      "bytes": 7861,
+      "sha256": "f2750f0254918dea7d91d0e3d3585af6552a6b2e06aa5f1093c939f1d14be28a"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/file_attributes_tests/installed.rs",
+      "bytes": 7384,
+      "sha256": "741c33fd174740a85d5e922913180e3a094a1f938d728b51429f0a77f900138c"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/file_attributes_tests/semantics.rs",
+      "bytes": 13677,
+      "sha256": "58c503a4fb02fb06cdc89e51ec97099413ef1089daf60ed5fc77d7f9b664ac05"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/file_attributes_tests/validation.rs",
+      "bytes": 9707,
+      "sha256": "d4bdfc4e4eab8984fee41c255e1ae5b9ba8f0ff6b4fb65f53ce0101964f930aa"
+    }
+  ],
+  "steps": [
+    {
+      "arch": "aarch64",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "xwin",
+        "check",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--all-targets",
+        "--target",
+        "aarch64-pc-windows-msvc"
+      ],
+      "exit-code": 0,
+      "seconds": 69.94584908301476,
+      "log": "file-attributes-windows-cross-xwin-epoch3-aarch64.log",
+      "bytes": 983,
+      "sha256": "19184bc89a9d1d985ada3cec3167fafddd5c9317d17253555218521ee484a425"
+    },
+    {
+      "arch": "x86_64",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "xwin",
+        "check",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--all-targets",
+        "--target",
+        "x86_64-pc-windows-msvc"
+      ],
+      "exit-code": 0,
+      "seconds": 59.410396500024945,
+      "log": "file-attributes-windows-cross-xwin-epoch3-x86_64.log",
+      "bytes": 983,
+      "sha256": "0426b8e439018517bfdada2243e971c5f4cee57c41bdcb4b3118269ecd179b06"
+    }
+  ],
+  "utc": "2026-10-20T15:15:00.799595+00:00",
+  "inputs-after": [
+    {
+      "path": "docs/development/evidence-projection/manifest.json",
+      "bytes": 128379,
+      "sha256": "dfb4ec6f41c83ea11e72241dfe8ae96afee98f58473e203d7b838605fe0d9c2d"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/assumptions.json",
+      "bytes": 5787,
+      "sha256": "4e98d2d302d7a79ad650d3e8712491ae45615434c2bff1131e06f9fda39f0067"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/baseline-source/src/user/windows/process/sched/tests/services_tests.rs",
+      "bytes": 49825,
+      "sha256": "67a7c116f53d1a11112521eefd4ff1b0b2229cff298e59d8040cf97467d423dc"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/baseline-source/src/user/windows/process/sched/tests/services_tests/file_attributes_tests.rs",
+      "bytes": 7654,
+      "sha256": "8f9466d6a63e1d94d9d794430c05febad9fd8be580d0c6d22cba08bd6151a485"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/check_validation.py",
+      "bytes": 18308,
+      "sha256": "eee9d8159ccfa52736fa1bf10dc42922e295884bc3aaa55ed5291bd4809f782d"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/quality.json",
+      "bytes": 2779,
+      "sha256": "d890a18bb02ba700e81bcac1869beaa4bf4ce8365c76ce23aff085596354ec1c"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation-envelope.json",
+      "bytes": 83509,
+      "sha256": "d0dafa7392ce338b7d18c761c8671ceeafa61aa0961f1260eaaaf56d243b18de"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/attributes-frontier-v1-boundary-review.json",
+      "bytes": 652,
+      "sha256": "9203cd231b1ad5b6635f60e5a3064c87d4be9dc55d98bcf1737ee56e995347b8"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/attributes-frontier-v1-source.json",
+      "bytes": 139,
+      "sha256": "bf3d4bf5ec0f08e7f7b1d192f5ce9cbcbb08eda5ae5eaa8613d8404e5f5f863a"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/attributes-frontier-v1.rs",
+      "bytes": 2788,
+      "sha256": "b7067c67b999c6be8c138307f5d65518ca38d9e99d1d6f2066a7e7463248cdf4"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/check-file-attributes-windows-xwin-epoch2.py",
+      "bytes": 2156,
+      "sha256": "8750a0dc5aecdb66ee82364feace36b5e85652850e0bfc105d6813ccd311203f"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/check-file-attributes-windows-xwin.py",
+      "bytes": 2143,
+      "sha256": "5fd08c70a09e9f4682131e170e775648fe06364c14f6a4ed7146e1e752e33640"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/collect-file-attributes-archives-epoch1.py",
+      "bytes": 3349,
+      "sha256": "800bd9cdf465f2a830823afbf6f9e6c7626b499ac37468bc0a14993e1c59a9a6"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-baseline-epoch1.json",
+      "bytes": 1211,
+      "sha256": "947f12996221b87c04d3138f30df95283fa5a60d0439cee601d57280ae194359"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-baseline-epoch1.log",
+      "bytes": 2146,
+      "sha256": "d4e695f95f9f1a8f6bbbfc722d8542bc4a1bfbbedc06286d307ea0298bcc9647"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-baseline-epoch2.json",
+      "bytes": 1288,
+      "sha256": "42517dceba2e90eb53cc83b419f0d60543df52abf3a2e0b2d7e02607bc505a5f"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-baseline-epoch2.log",
+      "bytes": 2680,
+      "sha256": "a747a681d264054d3594d4376f6030c3d5deec400d400941ae4bce5aecfa347a"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-build-reuse-epoch1.json",
+      "bytes": 442,
+      "sha256": "f5f8a0968444e77b42525387de7e904abf292461c0fd42ee7674a0239688f420"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-focus-epoch1.json",
+      "bytes": 3825,
+      "sha256": "5d731e819e6561db595c4f49a1c38186b7a3c1e4e9d83393a60e026ebfc8767a"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-focus-epoch1.log",
+      "bytes": 791,
+      "sha256": "6307a8b2fcf1f83cc5ba3f6a3cf84596041640f4a22b4837fbb91fc2f3aba5a4"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-focus-epoch2.json",
+      "bytes": 4593,
+      "sha256": "3ad1221487d141663d7fab1b9b41e635ef56846deedf6a0a10ee324fc04878aa"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-focus-epoch2.log",
+      "bytes": 1495,
+      "sha256": "f3289d8c0e00b47edd793cc6cfe6fb79ee26875bf197cf2b5d4ad6e7eb2b9e39"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-focus-epoch3.json",
+      "bytes": 5479,
+      "sha256": "dec5563f1966854607b73daca297ab0544dc227eb5ffd047edfb88391d0db167"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-focus-epoch3.log",
+      "bytes": 2012,
+      "sha256": "37a69208073935daabafab12d9a9eda613e22f3fb0a0805f4ae08ee97cd5f60b"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-linear-parent-epoch1.json",
+      "bytes": 212,
+      "sha256": "9a9f4e8a32e07bd6dc74d012d3c747093225a3985089b460a96317b68711da19"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-linux-epoch1-all-targets.log",
+      "bytes": 116,
+      "sha256": "c6cf8b8a25c826b51bcc6c46c8bfd0d35c411abd3aef7488f88038f49200174f"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-linux-epoch1-capi.log",
+      "bytes": 14074,
+      "sha256": "b2d4f4119e79f09148021d92a174124f9c1e8ce0917532c27de607747b0c1960"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-linux-epoch1-focus.log",
+      "bytes": 2561,
+      "sha256": "ad27f408f8798af9f122bd75797a1641f1d9237b1f290da39a96407a48880e7c"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-linux-epoch1-full.log",
+      "bytes": 853451,
+      "sha256": "388ff950fb8f89e2aa502fa61a6e7ddbbf9de1e658e426c1b0e48b6fe3d8a530"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-linux-epoch1-gates.json",
+      "bytes": 8571,
+      "sha256": "3d1c5e26070daa35b18bcfa44377c47410745e09eb123d01c9ce6821101e495a"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-linux-epoch1-integration.log",
+      "bytes": 35862,
+      "sha256": "6d36b794796fbac1d1cd130990d3ba446b89e24345f7037254ef9cd5ec5e5c0c"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-macos-epoch1-all-targets.log",
+      "bytes": 363,
+      "sha256": "ed4bf7762ad98bae5cd041cbb952fe014c44241f32b1aa882cd03507b704a649"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-macos-epoch1-capi.log",
+      "bytes": 14108,
+      "sha256": "c89ac3af9324031806bb0bb04d441753e563617b1635857d39955f673934db77"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-macos-epoch1-focus.log",
+      "bytes": 2365,
+      "sha256": "3214d5af819f77dd4d9aa5754f5ba6c7d6e9873e95b9d1746342c2983fafea4f"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-macos-epoch1-full.log",
+      "bytes": 853362,
+      "sha256": "1ea9f603bee0aee4c20d74cf91c0a22a31a6f644b3a85f7db11c0d568fa1ec78"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-macos-epoch1-gates.json",
+      "bytes": 3478,
+      "sha256": "b06232c38c2899c232154a189717de04a59f40d88bf04134c4d6345efc23d9f9"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-macos-epoch1-integration.log",
+      "bytes": 35828,
+      "sha256": "013082c0a47933b67553da3cf1d41d7d156213e7431500d7406b20c98ba858a3"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-macos-owning-link.json",
+      "bytes": 366,
+      "sha256": "8389c038e55b9c499112b805a2323813e3ade4789ec95b9e79becde15af6c88f"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-native-epoch1-all-targets.log",
+      "bytes": 1009,
+      "sha256": "3012321ee216004aa64848f4e5700b6ae8facd24c0fe63830f4bd97eb6e9d7a1"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-native-epoch1-capi.log",
+      "bytes": 14991,
+      "sha256": "c0a884529a1fcf032e2c16b3e53a7f97292ba2fb4d3ae0e93ab25ecf66d17481"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-native-epoch1-focus.log",
+      "bytes": 3239,
+      "sha256": "62e07fb2b15098c492d93f5dd104d5b0ad4df15fd738793e4401cb4078c1b583"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-native-epoch1-full.log",
+      "bytes": 819929,
+      "sha256": "ce34d1a8282ae2ab9e6adc70ba5625a27095cfb4ec8539d6f91a13b5d42458c0"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-native-epoch1-gates.json",
+      "bytes": 5250,
+      "sha256": "e582002b403785f699fe91f77cffdd5f62160a992266b292cc532e932403ee4d"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-native-epoch1-integration.log",
+      "bytes": 1776,
+      "sha256": "1215f5bc57cdc1e852f50325c1ca4d83301e9d8c83320e5c693fb36e1edd7217"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-native-epoch1-toolchain.log",
+      "bytes": 36,
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-native-ordinary-epoch1-build.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-native-ordinary-epoch1-smoke.log",
+      "bytes": 171,
+      "sha256": "8298c5ab0c4a095cf4de33175ac41d2b1a71ed7a424ca138a67dadf248785620"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-native-ordinary-epoch1-whoami.log",
+      "bytes": 163,
+      "sha256": "761dc90467b30dc453876e0aba46d94b7329bdc00f67bc22fe7deef0712ffdb3"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-native-ordinary-epoch1.json",
+      "bytes": 8408,
+      "sha256": "66e2f8994f432854a68a08d82e0a15066d13fae36f3fc3ddc2e391651d721aac"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-native-owning-epoch1-archive-after.log",
+      "bytes": 182,
+      "sha256": "56597405d4ba4fefa3affa8821f92d3047eaa7880e812de7566c2084636bf9e8"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-native-owning-epoch1-archive-before.log",
+      "bytes": 182,
+      "sha256": "56597405d4ba4fefa3affa8821f92d3047eaa7880e812de7566c2084636bf9e8"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-native-owning-epoch1-artifacts-after.log",
+      "bytes": 129699,
+      "sha256": "968ce1d9b864629be6315ebbc730e5146847a9c49fa77b2c7b55fc079a1eea4e"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-native-owning-epoch1-artifacts-before.log",
+      "bytes": 129984,
+      "sha256": "c0e557df25c1d2191bda970249c4b8021a7038adbe78d1d603da736a34229e02"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-native-owning-epoch1-cpp.log",
+      "bytes": 3705,
+      "sha256": "1d331a97eccd0f1d475a9a4e926a93a6c1387eabf9497719e879c133f8659be0"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-native-owning-epoch1-toolchain.log",
+      "bytes": 36,
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-native-owning-epoch1.json",
+      "bytes": 5058,
+      "sha256": "915a52789f58d4f7d48a905f71412f25f4111742205b90e814200b23e5cd36fa"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-observer-source-epoch1.json",
+      "bytes": 292,
+      "sha256": "8fc3e78b380ee846ca3c1564a71c8e3f6c45774ee545f91e93b7e62f15d7a6b3"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-ordinary-owner-epoch1.rs",
+      "bytes": 1044,
+      "sha256": "5c1aaf75ce1b18a7e251612e4778ec339989e9c91e110cba109c68238c67b01c"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-owned-cpp-build-epoch1.py",
+      "bytes": 2755,
+      "sha256": "4a854897c7035ab408de35d58758e77b3be6e3b2953520611387576a307c8ade"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-owned-paths-epoch1.json",
+      "bytes": 549,
+      "sha256": "b17d379369dcb9cb016ebd004cf78579a78fa54becd37b693225c5929dea88d4"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-owned-paths-epoch2.json",
+      "bytes": 673,
+      "sha256": "c44602585ee309435fb561f1bfd76bc89d201cf0585913ec710b3efb1535e427"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-owned-paths-epoch3.json",
+      "bytes": 765,
+      "sha256": "0e120d3daba53b98ad6aa3e6203f2e011a7f56d6b0efe03afae67eaec64c505b"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-owned-paths-epoch4.json",
+      "bytes": 858,
+      "sha256": "daf987b7a09004f1805aa9364c93d9a1601357b69a6281f4200a6738e13e974e"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-owned-source-epoch1.json",
+      "bytes": 898,
+      "sha256": "4fc634cbf14179a1077db0908f13247074f250d54e9610dd4cabc0dfa8d97a6f"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-ownership.json",
+      "bytes": 5787,
+      "sha256": "4e98d2d302d7a79ad650d3e8712491ae45615434c2bff1131e06f9fda39f0067"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-owning-capi-epoch1-build.log",
+      "bytes": 70,
+      "sha256": "967c72b87d4233a74e449da09b1f8faf02e4c3564c4d2745f610e79f87c1abbd"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-owning-capi-epoch1-ordinary.log",
+      "bytes": 1155,
+      "sha256": "d534b6baab4f99fdb7dfe92ebb1b850f10c7571d21b91937274c4946556387c6"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-owning-capi-epoch1.json",
+      "bytes": 10826,
+      "sha256": "68ba339d674d2864edb5f6b29b93070ce2f76284774f3622b6580db1bc504624"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-owning-capi-source.json",
+      "bytes": 283,
+      "sha256": "6714a5ee84b16abea62fa53024778116237bf5e38d9839cabb4f704957f5a88f"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-owning-capi.cpp",
+      "bytes": 3573,
+      "sha256": "706cb2a46c143a557f3c565792d954c40e596ddbd767a2138a9d2303e94261e3"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-owning-controller-retry.json",
+      "bytes": 431,
+      "sha256": "9f817730e68954b78c2840a05461ab648493e07d9e61a2901f76743b0f4e56bc"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-owning-source-hashes-epoch1.json",
+      "bytes": 730760,
+      "sha256": "39cb50825b4c8d27fc419ca2128a12f2f3f1b231c8ce47bdb2b1ba988799f591"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-retained-owning-epoch1.json",
+      "bytes": 1971,
+      "sha256": "6cfbeb84cb82717b121c8272f16b5d950090b6fad77e28b6b2aadb9bdf7100ce"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-source-epoch1-archive.json",
+      "bytes": 32637,
+      "sha256": "81f14b8d91eda74db4fd325b82f4b0fd43b662406aba3a06ad9db50bbacfb295"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-source-epoch1.json",
+      "bytes": 5839483,
+      "sha256": "1a029366a486e6071aaefb8bba63df69e07eddca46b7f09dce51673be7426c9e"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-windows-cross-xwin-epoch1-aarch64.log",
+      "bytes": 1203,
+      "sha256": "ea7f3ad7f76152f1b43febd0d19eeb6763aa3235cdb4c711e90da81ceafeefaa"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-windows-cross-xwin-epoch1-x86_64.log",
+      "bytes": 1203,
+      "sha256": "96e636d62a46ec0d7ebfd9c1916bd3072bbae650547b0eee4d8cfdc0607a90c1"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-windows-cross-xwin-epoch1.json",
+      "bytes": 6004,
+      "sha256": "c7367bd2b41815d61066d17bf18a35c6516bd85295d49974f7fba5e4629f0657"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-windows-cross-xwin-epoch2-aarch64.log",
+      "bytes": 983,
+      "sha256": "eeb5c459acff4c14df140372a001d7cdd25ff6f1f1b82ffc77feabe73b838385"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-windows-cross-xwin-epoch2-x86_64.log",
+      "bytes": 983,
+      "sha256": "c66f9d26d2926b133b8879aba18f93884a5687055ea5e01a6053e3f7c9d0bf8b"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-windows-cross-xwin-epoch2.json",
+      "bytes": 6801,
+      "sha256": "55ba8850b46d9694d953d84c4f8cfa867f1a7d8958818c985ff7537a139cae79"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/linux-file-attributes-epoch1-final-owning-archive-identities.json",
+      "bytes": 732270,
+      "sha256": "972d3c4cc581920958d8dc5cc5ee4a4647d0c4f1ad7016f16bde5904c511871e"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/linux-file-attributes-epoch1-owning-archive-before.log",
+      "bytes": 119,
+      "sha256": "6c80e7fa0c79811f3da1c490a05bf411cfdc857baae895ac19c26b6b95284ea0"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/linux-file-attributes-epoch1-owning-commands.json",
+      "bytes": 7692,
+      "sha256": "892dd76340d220908d43db4185f5882378e8ba6b59cca2c434f3ee60123cd97b"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/linux-file-attributes-epoch1-owning-gates.json",
+      "bytes": 4733,
+      "sha256": "ed66b437d1ebe14a3d8574c16a6b2ba6a72f244267ae8f5ab32c922703df0f11"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/linux-file-attributes-epoch1-owning-shipping.log",
+      "bytes": 174435,
+      "sha256": "491c4e59991ea87c61929e9fd56021586605dacfe6c34766d294cdc3054a8b81"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/linux-file-attributes-epoch1-pre-cpp-archive-identities.json",
+      "bytes": 732269,
+      "sha256": "19f96ef3f2fe5ea0dca147d6968bbec141c1d79c3c1562878185223972db891b"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/linux-file-attributes-epoch2-owning-archive-before.log",
+      "bytes": 180,
+      "sha256": "5c1db6e65ce718f1ddbbca4987c53bfb165f1a7dabe25cd91dff767592d6b1e3"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/linux-file-attributes-epoch2-owning-archive-identities.log",
+      "bytes": 180,
+      "sha256": "5c1db6e65ce718f1ddbbca4987c53bfb165f1a7dabe25cd91dff767592d6b1e3"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/linux-file-attributes-epoch2-owning-artifacts.log",
+      "bytes": 174086,
+      "sha256": "1484fd247a4552a8948fb1e6676633599e613d5ec79dc4d908ed6eda1230b8bc"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/linux-file-attributes-epoch2-owning-commands.json",
+      "bytes": 7697,
+      "sha256": "4655cd3c7c2e4da6d27412c1696f40d9a95a83d98eff83fcf454d361d41bdbfe"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/linux-file-attributes-epoch2-owning-cpp.log",
+      "bytes": 2574,
+      "sha256": "7e1a3e2dc640851657a9123cd1358088c929a0c992714f534aee6fc86e4da37d"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/linux-file-attributes-epoch2-owning-gates.json",
+      "bytes": 9661,
+      "sha256": "273d05de1960970c945721847f4fb5a323fd5a22cc42f57a473e923dda50faac"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/linux-file-attributes-epoch2-owning-shipping.log",
+      "bytes": 174086,
+      "sha256": "72b510fb9c0e07d4f37a4ea7326aa113462a2a84c514257fafc98783c78e0419"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/macos-file-attributes-epoch1-c-final-owning-archive-identities.json",
+      "bytes": 733611,
+      "sha256": "21d097ebda726cae7dc3947e37c721599fa7e735e5d6021e6816fdc8c08e2091"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/macos-file-attributes-epoch1-c-pre-cpp-archive-identities.json",
+      "bytes": 733617,
+      "sha256": "1750ad6046942c098b94b3e94dab90de2ad7a50151d88191006be66c79d8275c"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/macos-file-attributes-epoch1-linkage.json",
+      "bytes": 2107,
+      "sha256": "83197168d9ba470a0f9afc6766052c4b92e4298366a5ea821173f479fda67744"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/macos-file-attributes-epoch1-owning-archive-before.log",
+      "bytes": 307,
+      "sha256": "20a9acac02cb434ca2ae9e99cca21b38b77efcdcfb5bbdc97862d0231f8e888e"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/macos-file-attributes-epoch1-owning-commands.json",
+      "bytes": 5932,
+      "sha256": "7834fb3ba6b73589b94b2c709c78ea17f7db3e81c8410809e08d8196b306f71f"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/macos-file-attributes-epoch1-owning-gates.json",
+      "bytes": 3557,
+      "sha256": "dd4109fd6689763d3583c8dffb2e6f8bd7086d360f342f2c68d193696ca6566c"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/macos-file-attributes-epoch1-owning-prime-artifacts.log",
+      "bytes": 137970,
+      "sha256": "d9fd18a5ce0579fd9f92fd54acd0efafbfb947110add977dca3a3c1c9aeb42de"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/macos-file-attributes-epoch2-owning-archive-before.log",
+      "bytes": 180,
+      "sha256": "d5117565b69825c8210662f181b6e4725d0cb70f69252dfaafac78702131a7b3"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/macos-file-attributes-epoch2-owning-archive-identities.log",
+      "bytes": 180,
+      "sha256": "d5117565b69825c8210662f181b6e4725d0cb70f69252dfaafac78702131a7b3"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/macos-file-attributes-epoch2-owning-artifacts.log",
+      "bytes": 137205,
+      "sha256": "94e2b70b99cea3cc307d6a34c40ecb96abce9ebf9260e5b48067ba2bbc10a933"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/macos-file-attributes-epoch2-owning-build.log",
+      "bytes": 32919,
+      "sha256": "fd4397f04a7ef7a340c88b1903a29424937657332c8213c9e3bd0d9913e5b974"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/macos-file-attributes-epoch2-owning-commands.json",
+      "bytes": 5940,
+      "sha256": "be3eba4ea40047248771f6e3a19bda1afa24febc1f5b54ed1a0c9074c9d1e9ef"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/macos-file-attributes-epoch2-owning-ctest.log",
+      "bytes": 1298,
+      "sha256": "c90a07032adca126d42177ef02093455524a46786d8eb82d7d8490d2159e5d48"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/macos-file-attributes-epoch2-owning-gates.json",
+      "bytes": 8473,
+      "sha256": "d18207035b78a11e54faa792cfe3d3c972bcb1bff02e554e7ff44f40ca47b85f"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/macos-file-attributes-epoch2-owning-prime-artifacts.log",
+      "bytes": 137205,
+      "sha256": "931061edd5f49d388341e1545888820a7cf2978ca90d13df3ddc502901fcb261"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/macos-file-attributes-epoch2-owning-protected-assist-cli.log",
+      "bytes": 42,
+      "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/macos-file-attributes-epoch2-owning-protected-assist-mcp.log",
+      "bytes": 42,
+      "sha256": "97a58761b497bc29155d66ff818cd3f068d1146aa9cf617a1d9faac399a9bcd7"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v1-arm64-after.log",
+      "bytes": 277,
+      "sha256": "e11026d325a5ada58d34aa09b18327ed6cde66d92f98f00c9825c329e47854ba"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v1-arm64-before.log",
+      "bytes": 277,
+      "sha256": "e11026d325a5ada58d34aa09b18327ed6cde66d92f98f00c9825c329e47854ba"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v1-arm64-build.log",
+      "bytes": 31,
+      "sha256": "19140e32412122fadae5bc78de48137c3deb73abdf5c77d0d343113a8422a04d"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v1-arm64.log",
+      "bytes": 7804,
+      "sha256": "b4c013063b1f4258f87658911d901cab15217218535b43f1f5c12f75225f2505"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v1-launch.json",
+      "bytes": 5869,
+      "sha256": "3f7d84434f0dff483bb8674f7c2a38b9efb591bc91f74c9bebb6495c10f47555"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v1-source.json",
+      "bytes": 143,
+      "sha256": "1b80dced221b2f729b22f47d827f76ce6a36cae671c868bf33319d3fff238dee"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v1.cpp",
+      "bytes": 9175,
+      "sha256": "cff6140a753ee79cd740ddca1c3e6d50f38cfa31a2d85285cb52ccba5bf49ddf"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v2-arm64-after.log",
+      "bytes": 277,
+      "sha256": "61a20f04ebebd7513992ce9bb7d6820e31beedf40869edf3afa0a78a9fb021fe"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v2-arm64-before.log",
+      "bytes": 277,
+      "sha256": "61a20f04ebebd7513992ce9bb7d6820e31beedf40869edf3afa0a78a9fb021fe"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v2-arm64-build.log",
+      "bytes": 31,
+      "sha256": "2ea60992de2a328e10ca3cfcb6acf93689b7d70ed0ddfd84baff4eed1e8f134a"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v2-arm64.log",
+      "bytes": 18166,
+      "sha256": "170481ba4fa97d2770809d4fd6d7fb16424979d75426ac9cef12d84f63a6c709"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v2-launch.json",
+      "bytes": 16994,
+      "sha256": "36b20ef4d6ffda17d67975af4be89b01e94374e1061b020dc606795fb582437d"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v2-source.json",
+      "bytes": 298,
+      "sha256": "224b02647c8aed878e98534959dc54899698c09292bf9456ac7b519d707f0827"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v2-x64-after.log",
+      "bytes": 273,
+      "sha256": "60b86523d4b6d774ea0aa8d9fe2173748beb6901b6dcb6f5130541c9125a74f8"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v2-x64-before.log",
+      "bytes": 273,
+      "sha256": "60b86523d4b6d774ea0aa8d9fe2173748beb6901b6dcb6f5130541c9125a74f8"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v2-x64-build.log",
+      "bytes": 31,
+      "sha256": "2ea60992de2a328e10ca3cfcb6acf93689b7d70ed0ddfd84baff4eed1e8f134a"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v2-x64.log",
+      "bytes": 18164,
+      "sha256": "0b69d4b0442172180bdf524341497c5e8c2fd5a54c5c1c50967c123f62e966f7"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v2-x86-after.log",
+      "bytes": 272,
+      "sha256": "ba02c5bf3894902edff4f7a858603153229438544449ec977d6bd4a59459e5ae"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v2-x86-before.log",
+      "bytes": 272,
+      "sha256": "ba02c5bf3894902edff4f7a858603153229438544449ec977d6bd4a59459e5ae"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v2-x86-build.log",
+      "bytes": 31,
+      "sha256": "2ea60992de2a328e10ca3cfcb6acf93689b7d70ed0ddfd84baff4eed1e8f134a"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v2-x86-laa-after.log",
+      "bytes": 279,
+      "sha256": "9a9eb5b90136d56534d45d91a2a82726886f113bc47f0d55ff8dd73d8ab0972c"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v2-x86-laa-before.log",
+      "bytes": 279,
+      "sha256": "9a9eb5b90136d56534d45d91a2a82726886f113bc47f0d55ff8dd73d8ab0972c"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v2-x86-laa-build.log",
+      "bytes": 31,
+      "sha256": "2ea60992de2a328e10ca3cfcb6acf93689b7d70ed0ddfd84baff4eed1e8f134a"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v2-x86-laa.log",
+      "bytes": 18167,
+      "sha256": "3a49a6256747c29bc1cbb359ccc942995b05120321367275d5609a9bcb0f86c6"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v2-x86.log",
+      "bytes": 18163,
+      "sha256": "909afb2d7f093ff4d807fd81249660648c16806b4e9ac5258556f2629e224a27"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v2.cpp",
+      "bytes": 9175,
+      "sha256": "ffa77db88376c04aa1595c2342cb7a2f05f4c7ed244969e06194610cb2e3fbaa"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v3-arm64-after.log",
+      "bytes": 277,
+      "sha256": "c452e80218ab835484675bc3dc38e96ace14f8255671e80778c098bf18747b41"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v3-arm64-before.log",
+      "bytes": 277,
+      "sha256": "c452e80218ab835484675bc3dc38e96ace14f8255671e80778c098bf18747b41"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v3-arm64-build.log",
+      "bytes": 31,
+      "sha256": "161393b060fa5ca5f22f0dab58ec06899046ae75dde033d4f0ef09ee5e284e20"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v3-arm64.log",
+      "bytes": 20316,
+      "sha256": "d3736f7095303c1290b286a01018cdf1464335093aeea049a599cf4e29b620e0"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v3-launch.json",
+      "bytes": 16993,
+      "sha256": "2708759b63319da3fffccfbb7a16135ff3247c942306807820f167643efbb1ef"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v3-source.json",
+      "bytes": 280,
+      "sha256": "176d4f6de506be75838491d79f3208de5af050528ed58669d8016097dff33de7"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v3-x64-after.log",
+      "bytes": 273,
+      "sha256": "521311a4b4864f209f6ca0acd2ce2ce531c1e8ad51d2bcab08fe4574d400e67a"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v3-x64-before.log",
+      "bytes": 273,
+      "sha256": "521311a4b4864f209f6ca0acd2ce2ce531c1e8ad51d2bcab08fe4574d400e67a"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v3-x64-build.log",
+      "bytes": 31,
+      "sha256": "161393b060fa5ca5f22f0dab58ec06899046ae75dde033d4f0ef09ee5e284e20"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v3-x64.log",
+      "bytes": 20314,
+      "sha256": "e16a8a71dce57223212c0107c3cac3648051ad975eb60892970fd733c33345b9"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v3-x86-after.log",
+      "bytes": 272,
+      "sha256": "6aa24a280cde4d554de5c51d6ba455b012f90b1ae62f5649b27cafead90d8983"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v3-x86-before.log",
+      "bytes": 272,
+      "sha256": "6aa24a280cde4d554de5c51d6ba455b012f90b1ae62f5649b27cafead90d8983"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v3-x86-build.log",
+      "bytes": 31,
+      "sha256": "161393b060fa5ca5f22f0dab58ec06899046ae75dde033d4f0ef09ee5e284e20"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v3-x86-laa-after.log",
+      "bytes": 279,
+      "sha256": "340aff1d31fcf35b2f1e7a47f230ac51a055383069dbb176f015771635fedcbd"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v3-x86-laa-before.log",
+      "bytes": 279,
+      "sha256": "340aff1d31fcf35b2f1e7a47f230ac51a055383069dbb176f015771635fedcbd"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v3-x86-laa-build.log",
+      "bytes": 31,
+      "sha256": "161393b060fa5ca5f22f0dab58ec06899046ae75dde033d4f0ef09ee5e284e20"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v3-x86-laa.log",
+      "bytes": 20317,
+      "sha256": "3920851fcf43785d5c6c09f1249b90ba14759bbfaafd466045755951d848019c"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v3-x86.log",
+      "bytes": 20313,
+      "sha256": "f5665731ef4a2990dfb8e62613d2d4aa3ddacd9dbbf654e802cfb11ba4363d9f"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v3.cpp",
+      "bytes": 9751,
+      "sha256": "121f45dd3ce5561bbc6c8ee558c7f41ae315180d2dfbd9046ef95f1cf7f35016"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v4-arm64-after.log",
+      "bytes": 277,
+      "sha256": "9ec5615203bb68638bec7c72d756bfa94a972b3f8e403e7194857c674ad57902"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v4-arm64-before.log",
+      "bytes": 277,
+      "sha256": "9ec5615203bb68638bec7c72d756bfa94a972b3f8e403e7194857c674ad57902"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v4-arm64-build.log",
+      "bytes": 31,
+      "sha256": "2178d5606f92ba680d882b8486f9f59bfc76b4ef33539bf686decc839636b547"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v4-arm64.log",
+      "bytes": 40526,
+      "sha256": "5788de8937fb60802cbaa2608eeaf9b8811f5cdd1d011fc02e8ad7b2f44edba4"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v4-launch.json",
+      "bytes": 16996,
+      "sha256": "72d843d1b1f01c9960945979d3a6c126967817fa3c40ba53fb7e6b29daa2984b"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v4-source.json",
+      "bytes": 306,
+      "sha256": "890de4453a5c4ed16689bcb4c0af7350ce2d4cb3605abffef3d691613940982b"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v4-x64-after.log",
+      "bytes": 273,
+      "sha256": "2c4713901aef6914b19fc9e9b633722d95150079ad528aa892a5c07ef1415ee2"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v4-x64-before.log",
+      "bytes": 273,
+      "sha256": "2c4713901aef6914b19fc9e9b633722d95150079ad528aa892a5c07ef1415ee2"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v4-x64-build.log",
+      "bytes": 31,
+      "sha256": "2178d5606f92ba680d882b8486f9f59bfc76b4ef33539bf686decc839636b547"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v4-x64.log",
+      "bytes": 40524,
+      "sha256": "272b6c3d7f05909c8f3341aa16d369082bc4a1ce26393f2879afc3310224976c"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v4-x86-after.log",
+      "bytes": 272,
+      "sha256": "6ea7320e4406cbaf378565fda9d1b93abc8df286fc1d0ab1e183e17104f9e316"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v4-x86-before.log",
+      "bytes": 272,
+      "sha256": "6ea7320e4406cbaf378565fda9d1b93abc8df286fc1d0ab1e183e17104f9e316"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v4-x86-build.log",
+      "bytes": 31,
+      "sha256": "2178d5606f92ba680d882b8486f9f59bfc76b4ef33539bf686decc839636b547"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v4-x86-laa-after.log",
+      "bytes": 279,
+      "sha256": "4882630a6076c23f3558d1ac21e9d69a95c47546cf14b63991b04b16c919ded0"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v4-x86-laa-before.log",
+      "bytes": 279,
+      "sha256": "4882630a6076c23f3558d1ac21e9d69a95c47546cf14b63991b04b16c919ded0"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v4-x86-laa-build.log",
+      "bytes": 31,
+      "sha256": "2178d5606f92ba680d882b8486f9f59bfc76b4ef33539bf686decc839636b547"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v4-x86-laa.log",
+      "bytes": 40527,
+      "sha256": "92c0610f6f0b42acb35afba6ac4c0036760ec792be01f2d63b43c82713bb565b"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v4-x86.log",
+      "bytes": 40523,
+      "sha256": "77fbacbdce8af2275f23fa4b567ab1f67300abfc248aa10ea09e32fa0830a655"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v4.cpp",
+      "bytes": 11743,
+      "sha256": "5ce502585cf93bb079c1e51026c11b9f925523c1bae244ae3a03ca4cf282f817"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v5-arm64-build.log",
+      "bytes": 311,
+      "sha256": "4240a47fa73aeed481e510d3d432bd3a512b3596bc82d5cbe9806dafcf2a06f0"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v5-launch.json",
+      "bytes": 3635,
+      "sha256": "b0390834077d2938028a3a92a57dc0052dbf27ab6df56605fe0b65c31cdea253"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v5.cpp",
+      "bytes": 16862,
+      "sha256": "12f59a5fd3117bd8c936fc9f9becfbf610e4023c4c6cd4e3e39e6fe56f009654"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v6-arm64-after.log",
+      "bytes": 277,
+      "sha256": "b4ed6f2195b699ac186d064ea1e166a6343b97e2179d6e17145ffe7a042696ed"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v6-arm64-before.log",
+      "bytes": 277,
+      "sha256": "b4ed6f2195b699ac186d064ea1e166a6343b97e2179d6e17145ffe7a042696ed"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v6-arm64-build.log",
+      "bytes": 31,
+      "sha256": "49c1018d72735b67b72aeaeb35190e227cd7e8c6b0df560ebeb6968bed967b8b"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v6-arm64.log",
+      "bytes": 61684,
+      "sha256": "05a15bdfcf1b6f5cf3f2f1719ed02721b1965d0c4cd3847e86de3114e100349b"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v6-launch.json",
+      "bytes": 17096,
+      "sha256": "c5057532241cb3c0f4d4fb87149019a2d80f9a1927dfb471d4e125942c568835"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v6-x64-after.log",
+      "bytes": 273,
+      "sha256": "184b4c1540de59df2db4e50978001201fdfa0d0ed190c4081c34595e961aee83"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v6-x64-before.log",
+      "bytes": 273,
+      "sha256": "184b4c1540de59df2db4e50978001201fdfa0d0ed190c4081c34595e961aee83"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v6-x64-build.log",
+      "bytes": 31,
+      "sha256": "49c1018d72735b67b72aeaeb35190e227cd7e8c6b0df560ebeb6968bed967b8b"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v6-x64.log",
+      "bytes": 61682,
+      "sha256": "cbfa6d031db62e995b80c1da63724a1dc0971883612eacda77266fe84ec4f4d3"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v6-x86-after.log",
+      "bytes": 272,
+      "sha256": "08bfb0fcdaf96241627ca3f44ca57448a2d8b6ac7a657fef5ee6336cf77c649f"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v6-x86-before.log",
+      "bytes": 272,
+      "sha256": "08bfb0fcdaf96241627ca3f44ca57448a2d8b6ac7a657fef5ee6336cf77c649f"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v6-x86-build.log",
+      "bytes": 31,
+      "sha256": "49c1018d72735b67b72aeaeb35190e227cd7e8c6b0df560ebeb6968bed967b8b"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v6-x86-laa-after.log",
+      "bytes": 279,
+      "sha256": "7870e819fb4e553f7b9a2a517f1d7ed5c49e0677c1a39a7d1fd23d22d1ff2cf8"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v6-x86-laa-before.log",
+      "bytes": 279,
+      "sha256": "7870e819fb4e553f7b9a2a517f1d7ed5c49e0677c1a39a7d1fd23d22d1ff2cf8"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v6-x86-laa-build.log",
+      "bytes": 31,
+      "sha256": "49c1018d72735b67b72aeaeb35190e227cd7e8c6b0df560ebeb6968bed967b8b"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v6-x86-laa.log",
+      "bytes": 61685,
+      "sha256": "5b8108be1c5d25814750b7590173f909d2180ef5461928bafc218af90a253f5f"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v6-x86.log",
+      "bytes": 61681,
+      "sha256": "64d233b4c57e2311a646c09f4551b3a5fbe8e0170094f0ef6be9d67bbb510c10"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v6.cpp",
+      "bytes": 16862,
+      "sha256": "12f59a5fd3117bd8c936fc9f9becfbf610e4023c4c6cd4e3e39e6fe56f009654"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v7-arm64-after.log",
+      "bytes": 277,
+      "sha256": "9aff56824d29ba9db79188df10727d8c27a22e1b8512c2943618b02da199c8fc"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v7-arm64-before.log",
+      "bytes": 277,
+      "sha256": "9aff56824d29ba9db79188df10727d8c27a22e1b8512c2943618b02da199c8fc"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v7-arm64-build.log",
+      "bytes": 31,
+      "sha256": "cff4d49f27a33863ea4609ecbe5520828373e74bce7d0c0da89aa42c99e67cca"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v7-arm64.log",
+      "bytes": 69892,
+      "sha256": "79b7fe8de946cfe7069f77e90592618c595db72d80ad9eb5f4e7cc103751b32c"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v7-launch.json",
+      "bytes": 17095,
+      "sha256": "5b1c86be42c028dbf0f5c7a1399211e35e0f38d889fba0374a05fe7846e98a31"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v7-x64-after.log",
+      "bytes": 273,
+      "sha256": "5516d9f0e416b1e940fe2d362b5eb315f2834c8875f6c75ee07d350bc49b2a9d"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v7-x64-before.log",
+      "bytes": 273,
+      "sha256": "5516d9f0e416b1e940fe2d362b5eb315f2834c8875f6c75ee07d350bc49b2a9d"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v7-x64-build.log",
+      "bytes": 31,
+      "sha256": "cff4d49f27a33863ea4609ecbe5520828373e74bce7d0c0da89aa42c99e67cca"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v7-x64.log",
+      "bytes": 69890,
+      "sha256": "7371df1bce37b8bb6ed77248e27e18f1fecb16d188defd756a436d3fa9770929"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v7-x86-after.log",
+      "bytes": 272,
+      "sha256": "2d759758bdfc100f03adaa2a95845b2da4aaa8c8816f41ce18bfdf4bd7fd83e8"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v7-x86-before.log",
+      "bytes": 272,
+      "sha256": "2d759758bdfc100f03adaa2a95845b2da4aaa8c8816f41ce18bfdf4bd7fd83e8"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v7-x86-build.log",
+      "bytes": 31,
+      "sha256": "cff4d49f27a33863ea4609ecbe5520828373e74bce7d0c0da89aa42c99e67cca"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v7-x86-laa-after.log",
+      "bytes": 279,
+      "sha256": "0188d3edd9f4dac0c243e654beeeafc4d5da06afa3dbaa343b171236850f152f"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v7-x86-laa-before.log",
+      "bytes": 279,
+      "sha256": "0188d3edd9f4dac0c243e654beeeafc4d5da06afa3dbaa343b171236850f152f"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v7-x86-laa-build.log",
+      "bytes": 31,
+      "sha256": "cff4d49f27a33863ea4609ecbe5520828373e74bce7d0c0da89aa42c99e67cca"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v7-x86-laa.log",
+      "bytes": 69893,
+      "sha256": "a6492f310039985226bb7d3fc02766f477da1bc8f32b520b3fc212a5f2add6b6"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v7-x86.log",
+      "bytes": 69889,
+      "sha256": "56111ba754c306fd5309a4fff4eb7673f0eb1eb36820e6ab7d4a983e63e4d22e"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v7.cpp",
+      "bytes": 19697,
+      "sha256": "4cbeb8509c6a62e3243638186a194984240b6889c06500d41a4b544c09385ccc"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v8-arm64-after.log",
+      "bytes": 277,
+      "sha256": "48852093cea54978d644526b8b7960e85a0d06c571c8509482e86ca012a6b01b"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v8-arm64-before.log",
+      "bytes": 277,
+      "sha256": "48852093cea54978d644526b8b7960e85a0d06c571c8509482e86ca012a6b01b"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v8-arm64-build.log",
+      "bytes": 31,
+      "sha256": "e558857060c9da01436ffaa3774a90bdbcd7a864d010bb1c4538b4c5b84e4917"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v8-arm64.log",
+      "bytes": 75076,
+      "sha256": "cc02f34406c2ca4b3f348604dff58ce12449e45130c280cdd6d079e391cb26dd"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v8-launch.json",
+      "bytes": 17096,
+      "sha256": "f4bd0d575c6a20c1d0d5d453e40bc252d5eab490733e93fe7a430115565a30f2"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v8-x64-after.log",
+      "bytes": 273,
+      "sha256": "205d7a778752db7387006871bd8a2d123b84b55c2c9d8eaddcc95380c93dbb7e"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v8-x64-before.log",
+      "bytes": 273,
+      "sha256": "205d7a778752db7387006871bd8a2d123b84b55c2c9d8eaddcc95380c93dbb7e"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v8-x64-build.log",
+      "bytes": 31,
+      "sha256": "e558857060c9da01436ffaa3774a90bdbcd7a864d010bb1c4538b4c5b84e4917"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v8-x64.log",
+      "bytes": 75074,
+      "sha256": "2ea25c501ed2b45f1c67f100d0220d9c7a58d0a8da7f8a45150b4045c3a6ad0b"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v8-x86-after.log",
+      "bytes": 272,
+      "sha256": "1e8da873fb1fd85570b3c0b2a949b832cd375ca4154d3fa41f32cb113200c8f6"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v8-x86-before.log",
+      "bytes": 272,
+      "sha256": "1e8da873fb1fd85570b3c0b2a949b832cd375ca4154d3fa41f32cb113200c8f6"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v8-x86-build.log",
+      "bytes": 31,
+      "sha256": "e558857060c9da01436ffaa3774a90bdbcd7a864d010bb1c4538b4c5b84e4917"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v8-x86-laa-after.log",
+      "bytes": 279,
+      "sha256": "552bb189da785b15f731040a5d669762618b68a62b1c2760a4b09ab27d91d0dd"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v8-x86-laa-before.log",
+      "bytes": 279,
+      "sha256": "552bb189da785b15f731040a5d669762618b68a62b1c2760a4b09ab27d91d0dd"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v8-x86-laa-build.log",
+      "bytes": 31,
+      "sha256": "e558857060c9da01436ffaa3774a90bdbcd7a864d010bb1c4538b4c5b84e4917"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v8-x86-laa.log",
+      "bytes": 75077,
+      "sha256": "aad79fb3c9f9a9b54a194e0d343937679f669f760e4b2ea00e53d211b63df0ec"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v8-x86.log",
+      "bytes": 75073,
+      "sha256": "61d014ba15bcaa6c511532388a2911b8a6823116f0c74d46b1ea0785b735ea71"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/native-file-attributes-v8.cpp",
+      "bytes": 22017,
+      "sha256": "0b674015ff2e5b0c3769c3a0967df535e4ff2fba6914d4ca9793fe1a1febc678"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/owning-linux-cpp-build-file-attributes-epoch1.py",
+      "bytes": 2311,
+      "sha256": "2a5d3b6ddb9badfeb494dc045fb045607c2e565adc86a34b52044abff373ecae"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/retain-file-attributes-artifacts-epoch1.py",
+      "bytes": 1934,
+      "sha256": "3c2124eb29dd0199b924e5e3a206c6c264e61f0c87c13e6998e98d0d4208597a"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/run-attributes-frontier-v1.py",
+      "bytes": 4063,
+      "sha256": "e93c5eea61de43dd03e1956228ee0aca57f832a3c5dab28888d8187655a94396"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/run-file-attributes-native-epoch1.py",
+      "bytes": 5917,
+      "sha256": "b17b6f40a173ca8d7566663efe1ffc6c10da4bc390e82ba442376ee985eba24c"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/run-file-attributes-native-ordinary-epoch1.py",
+      "bytes": 5308,
+      "sha256": "b6607057e05756706bed4168e8bb52dd947b269b659cbe2241b71916aa433b57"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/run-file-attributes-native-owning-epoch1.py",
+      "bytes": 4876,
+      "sha256": "a394feb44005ce42da883276154415a18b2b8cba705d91b9e59b1c0f7e6f5ef2"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/run-file-attributes-owning-capi-epoch1.py",
+      "bytes": 6181,
+      "sha256": "4a02b2cb513c0a8e87f60af416eb3599c2367f8c802f0dac851e3b73eaeafbb3"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/run-file-attributes-owning-epoch1.py",
+      "bytes": 3193,
+      "sha256": "60fcb9df9e35a969315c10cb99b6654fb07aa991f11c5740be8317c2644fbbad"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/run-file-attributes-owning-epoch2.py",
+      "bytes": 3193,
+      "sha256": "989b5c118ce3d45d34b111c78d2986d21c7de419192978100927fa172606c6a4"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/run-file-attributes-unix-epoch1.py",
+      "bytes": 3602,
+      "sha256": "888a4111683ef0014b1c88a0b15b1849c83b66bfbd6bacbc6906bc06e816e7ba"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/run-native-file-attributes-v1.py",
+      "bytes": 4251,
+      "sha256": "42b2c3dd4a593b6681aefec8cf0aa217affb71f5f5829e67192817f9a034b8f5"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/run-native-file-attributes-v2.py",
+      "bytes": 4251,
+      "sha256": "048c2a4523d1ee98ba9911d8e15ee041580a9adeab9f1a1503e76dfce2035864"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/run-native-file-attributes-v3.py",
+      "bytes": 4251,
+      "sha256": "465cee48f115aeae92ff5f5307dc0f1195914c1595d6700378f6377d49827124"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/run-native-file-attributes-v4.py",
+      "bytes": 4251,
+      "sha256": "2cc613549a757ccc53cb0e35f857839de60e1d1717b0fd959d2af03b80e4aeef"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/run-native-file-attributes-v5.py",
+      "bytes": 4251,
+      "sha256": "bdf418c479e2e2216511dda181487ff1dbf594fe90a0bcd5f6d7af703c76e4bd"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/run-native-file-attributes-v6.py",
+      "bytes": 4266,
+      "sha256": "b13508cfa59e786136d45769829e5efbac1dbc40aef08d3e18d7a44d163e088d"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/run-native-file-attributes-v7.py",
+      "bytes": 4266,
+      "sha256": "4cdbe07560ba9ffcbb82220233b7677e72120e21cdff3ec4a81a2eb7567d0da7"
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/run-native-file-attributes-v8.py",
+      "bytes": 4266,
+      "sha256": "67e2ed7ed013d9e5350b9168cb6fee648eab48eabdd1b479efb2bad3baa5776d"
+    },
+    {
+      "path": "src/user/windows/dll/native.rs",
+      "bytes": 21641,
+      "sha256": "606a54730249e62f8944ec6b58e04e8695d827cafadd668d2e2843818b9bdc90"
+    },
+    {
+      "path": "src/user/windows/dll/native/file_attributes.rs",
+      "bytes": 2196,
+      "sha256": "c716134b9a4d5cedfdc1b1296e152cffbec76995b06539f76cf552bbff0a687e"
+    },
+    {
+      "path": "src/user/windows/dll/native/file_attributes/attributes.rs",
+      "bytes": 6751,
+      "sha256": "3cda7c77ad6c5a5f175373a66fc1cc58eabfb096bf772763031715ab0f667ce9"
+    },
+    {
+      "path": "src/user/windows/dll/native/file_attributes/metadata.rs",
+      "bytes": 3216,
+      "sha256": "b5ef2c78a36cb06dafac8dd3d87504b02a39fa83c9d1b56795ed6fee5280d198"
+    },
+    {
+      "path": "src/user/windows/dll/native/file_attributes/metadata/unix.rs",
+      "bytes": 3224,
+      "sha256": "26e516eba4d1aadb0fb375c5e8214b5ead7d1116b8066ac842a34082078dd66d"
+    },
+    {
+      "path": "src/user/windows/dll/native/file_attributes/metadata/windows.rs",
+      "bytes": 3996,
+      "sha256": "fa88f91ad940421cb6485c89951adb641b07b2495b3f595194b118b75140e2f7"
+    },
+    {
+      "path": "src/user/windows/dll/native/file_attributes/path.rs",
+      "bytes": 9782,
+      "sha256": "bcca4eff109b4fc21a2b839958495ee084a76258b86ee9ec084e341f9038fb96"
+    },
+    {
+      "path": "src/user/windows/native-runtime.md",
+      "bytes": 203915,
+      "sha256": "aa3fa83797d1df92f57005d90ef7bfdb8d176a8e7e90bf6cfc5d9eac8bb4e892"
+    },
+    {
+      "path": "src/user/windows/native.rs",
+      "bytes": 16872,
+      "sha256": "a7aa0b17006a5a9140eeb4f5131a5de2ccc3f2837c9d9181978b5108a65814a9"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests.rs",
+      "bytes": 49825,
+      "sha256": "67a7c116f53d1a11112521eefd4ff1b0b2229cff298e59d8040cf97467d423dc"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/file_attributes_tests.rs",
+      "bytes": 7861,
+      "sha256": "f2750f0254918dea7d91d0e3d3585af6552a6b2e06aa5f1093c939f1d14be28a"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/file_attributes_tests/installed.rs",
+      "bytes": 7384,
+      "sha256": "741c33fd174740a85d5e922913180e3a094a1f938d728b51429f0a77f900138c"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/file_attributes_tests/semantics.rs",
+      "bytes": 13677,
+      "sha256": "58c503a4fb02fb06cdc89e51ec97099413ef1089daf60ed5fc77d7f9b664ac05"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/file_attributes_tests/validation.rs",
+      "bytes": 9707,
+      "sha256": "d4bdfc4e4eab8984fee41c255e1ae5b9ba8f0ff6b4fb65f53ce0101964f930aa"
+    }
+  ],
+  "inputs-unchanged": false,
+  "exit-code": 0,
+  "scope": "macOS-hosted Windows MSVC all-target type/build check, including Windows-only installed NT file metadata leaf regression. No native kernel execution is claimed."
+}

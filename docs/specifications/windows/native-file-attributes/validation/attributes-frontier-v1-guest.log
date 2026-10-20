@@ -1,0 +1,6 @@
+terminal slice=0 result=Complete(Internal("native NTDLL service NtQueryAttributesFile (0x3d) at 0x7fff38a41410 is not implemented"))
+thread tid=8 pc=0x7fff38a41414 args=[1a5e490, 1a5e4c0, 3e, 1a5e480, 210b6be, 1a5e7e6, 5c003f003f005c, 5c003f003f005c]
+attributes pointer=0x1a5e490 length=Ok(48) root=Ok(0) name=Ok(1a5e790) flags=Ok(840) bytes=Ok([30, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 90, e7, a5, 1, 0, 0, 0, 0, 40, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+unicode length=70 maximum=256 buffer=0x1a5e7a0
+object-name units=[5c, 3f, 3f, 5c, 43, 3a, 5c, 57, 49, 4e, 44, 4f, 57, 53, 5c, 53, 59, 53, 54, 45, 4d, 33, 32, 5c, 56, 45, 52, 53, 49, 4f, 4e, 2e, 64, 6c, 6c] text="\\??\\C:\\WINDOWS\\SYSTEM32\\VERSION.dll"
+file-basic-output pointer=0x1a5e4c0 bytes=Ok([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])

@@ -1,0 +1,6 @@
+{
+  "path": "native-file-attributes-v2.cpp",
+  "bytes": 9175,
+  "sha256": "ffa77db88376c04aa1595c2342cb7a2f05f4c7ed244969e06194610cb2e3fbaa",
+  "change": "Limit the captured output window to64readablebytes when the outputfaultcase abuts a no-accesspage. Retain rejectedv1 rawcapture separately."
+}

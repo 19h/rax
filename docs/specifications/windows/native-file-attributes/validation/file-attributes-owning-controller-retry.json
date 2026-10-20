@@ -1,0 +1,8 @@
+{
+  "rejected": [
+    "macos-file-attributes-epoch1-owning-gates.json",
+    "linux-file-attributes-epoch1-owning-gates.json"
+  ],
+  "reason": "Mechanical label replacement used nonexistent native-file-attributes cache directory; collector never opened; Rust prime/shipping succeeded.",
+  "retry": "epoch2 absolute command paths corrected, reruns every command with immutable source epoch1. Native Windows controller unaffected."
+}

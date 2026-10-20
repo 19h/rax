@@ -1,0 +1,3 @@
+native-file-attributes-v5.cpp
+native-file-attributes-v5.obj : error LNK2019: unresolved external symbol __imp_InitializeSecurityDescriptor referenced in function main
+C:\Windows\Temp\assist-native-rax-20261010\probe-src-file-attributes-v5\target\arm64\probe.exe : fatal error LNK1120: 1 unresolved externals

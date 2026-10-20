@@ -1,0 +1,11 @@
+[
+  "src/user/windows/dll/native.rs",
+  "src/user/windows/dll/native/file_attributes.rs",
+  "src/user/windows/dll/native/file_attributes/attributes.rs",
+  "src/user/windows/dll/native/file_attributes/path.rs",
+  "src/user/windows/dll/native/file_attributes/metadata.rs",
+  "src/user/windows/dll/native/file_attributes/metadata/unix.rs",
+  "src/user/windows/dll/native/file_attributes/metadata/windows.rs",
+  "src/user/windows/process/sched/tests/services_tests.rs",
+  "src/user/windows/process/sched/tests/services_tests/file_attributes_tests.rs"
+]

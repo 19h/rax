@@ -1,0 +1,432 @@
+{
+  "state": "finished",
+  "pid": 544,
+  "utc": "2026-10-20T13:48:41.299439+00:00",
+  "scope": "Independent native basic/full file-attribute capture and fault-order oracle for private fixtures and query-only installedVERSION.dll across four ABI profiles. All outputs remain under this probe source workspace.",
+  "steps": [
+    {
+      "name": "arm64-build",
+      "argv": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\arm64\\cl.exe",
+        "/nologo",
+        "/std:c++20",
+        "/EHsc",
+        "/MT",
+        "/GS",
+        "/Od",
+        "/we4473",
+        "/we4474",
+        "/we4477",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-file-attributes-v7\\native-file-attributes-v7.cpp",
+        "/link",
+        "advapi32.lib",
+        "/SUBSYSTEM:CONSOLE,10.0",
+        "/OUT:C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-file-attributes-v7\\target\\arm64\\probe.exe"
+      ],
+      "exit-code": 0,
+      "log": "native-file-attributes-v7-arm64-build.log",
+      "sha256": "cff4d49f27a33863ea4609ecbe5520828373e74bce7d0c0da89aa42c99e67cca",
+      "bytes": 31
+    },
+    {
+      "name": "arm64-before",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\inspect-system-time-v2-pe.py",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-file-attributes-v7\\target\\arm64\\probe.exe",
+        "arm64"
+      ],
+      "exit-code": 0,
+      "log": "native-file-attributes-v7-arm64-before.log",
+      "sha256": "9aff56824d29ba9db79188df10727d8c27a22e1b8512c2943618b02da199c8fc",
+      "bytes": 277
+    },
+    {
+      "name": "arm64",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-file-attributes-v7\\target\\arm64\\probe.exe",
+        "arm64"
+      ],
+      "exit-code": 0,
+      "log": "native-file-attributes-v7-arm64.log",
+      "sha256": "79b7fe8de946cfe7069f77e90592618c595db72d80ad9eb5f4e7cc103751b32c",
+      "bytes": 69892
+    },
+    {
+      "name": "arm64-after",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\inspect-system-time-v2-pe.py",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-file-attributes-v7\\target\\arm64\\probe.exe",
+        "arm64"
+      ],
+      "exit-code": 0,
+      "log": "native-file-attributes-v7-arm64-after.log",
+      "sha256": "9aff56824d29ba9db79188df10727d8c27a22e1b8512c2943618b02da199c8fc",
+      "bytes": 277
+    },
+    {
+      "name": "x64-build",
+      "argv": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\x64\\cl.exe",
+        "/nologo",
+        "/std:c++20",
+        "/EHsc",
+        "/MT",
+        "/GS",
+        "/Od",
+        "/we4473",
+        "/we4474",
+        "/we4477",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-file-attributes-v7\\native-file-attributes-v7.cpp",
+        "/link",
+        "advapi32.lib",
+        "/SUBSYSTEM:CONSOLE,10.0",
+        "/OUT:C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-file-attributes-v7\\target\\x64\\probe.exe"
+      ],
+      "exit-code": 0,
+      "log": "native-file-attributes-v7-x64-build.log",
+      "sha256": "cff4d49f27a33863ea4609ecbe5520828373e74bce7d0c0da89aa42c99e67cca",
+      "bytes": 31
+    },
+    {
+      "name": "x64-before",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\inspect-system-time-v2-pe.py",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-file-attributes-v7\\target\\x64\\probe.exe",
+        "x64"
+      ],
+      "exit-code": 0,
+      "log": "native-file-attributes-v7-x64-before.log",
+      "sha256": "5516d9f0e416b1e940fe2d362b5eb315f2834c8875f6c75ee07d350bc49b2a9d",
+      "bytes": 273
+    },
+    {
+      "name": "x64",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-file-attributes-v7\\target\\x64\\probe.exe",
+        "x64"
+      ],
+      "exit-code": 0,
+      "log": "native-file-attributes-v7-x64.log",
+      "sha256": "7371df1bce37b8bb6ed77248e27e18f1fecb16d188defd756a436d3fa9770929",
+      "bytes": 69890
+    },
+    {
+      "name": "x64-after",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\inspect-system-time-v2-pe.py",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-file-attributes-v7\\target\\x64\\probe.exe",
+        "x64"
+      ],
+      "exit-code": 0,
+      "log": "native-file-attributes-v7-x64-after.log",
+      "sha256": "5516d9f0e416b1e940fe2d362b5eb315f2834c8875f6c75ee07d350bc49b2a9d",
+      "bytes": 273
+    },
+    {
+      "name": "x86-build",
+      "argv": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\x86\\cl.exe",
+        "/nologo",
+        "/std:c++20",
+        "/EHsc",
+        "/MT",
+        "/GS",
+        "/Od",
+        "/we4473",
+        "/we4474",
+        "/we4477",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-file-attributes-v7\\native-file-attributes-v7.cpp",
+        "/link",
+        "advapi32.lib",
+        "/SUBSYSTEM:CONSOLE,10.0",
+        "/OUT:C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-file-attributes-v7\\target\\x86\\probe.exe"
+      ],
+      "exit-code": 0,
+      "log": "native-file-attributes-v7-x86-build.log",
+      "sha256": "cff4d49f27a33863ea4609ecbe5520828373e74bce7d0c0da89aa42c99e67cca",
+      "bytes": 31
+    },
+    {
+      "name": "x86-before",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\inspect-system-time-v2-pe.py",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-file-attributes-v7\\target\\x86\\probe.exe",
+        "x86"
+      ],
+      "exit-code": 0,
+      "log": "native-file-attributes-v7-x86-before.log",
+      "sha256": "2d759758bdfc100f03adaa2a95845b2da4aaa8c8816f41ce18bfdf4bd7fd83e8",
+      "bytes": 272
+    },
+    {
+      "name": "x86",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-file-attributes-v7\\target\\x86\\probe.exe",
+        "x86"
+      ],
+      "exit-code": 0,
+      "log": "native-file-attributes-v7-x86.log",
+      "sha256": "56111ba754c306fd5309a4fff4eb7673f0eb1eb36820e6ab7d4a983e63e4d22e",
+      "bytes": 69889
+    },
+    {
+      "name": "x86-after",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\inspect-system-time-v2-pe.py",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-file-attributes-v7\\target\\x86\\probe.exe",
+        "x86"
+      ],
+      "exit-code": 0,
+      "log": "native-file-attributes-v7-x86-after.log",
+      "sha256": "2d759758bdfc100f03adaa2a95845b2da4aaa8c8816f41ce18bfdf4bd7fd83e8",
+      "bytes": 272
+    },
+    {
+      "name": "x86-laa-build",
+      "argv": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\x86\\cl.exe",
+        "/nologo",
+        "/std:c++20",
+        "/EHsc",
+        "/MT",
+        "/GS",
+        "/Od",
+        "/we4473",
+        "/we4474",
+        "/we4477",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-file-attributes-v7\\native-file-attributes-v7.cpp",
+        "/link",
+        "advapi32.lib",
+        "/SUBSYSTEM:CONSOLE,10.0",
+        "/OUT:C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-file-attributes-v7\\target\\x86-laa\\probe.exe",
+        "/LARGEADDRESSAWARE"
+      ],
+      "exit-code": 0,
+      "log": "native-file-attributes-v7-x86-laa-build.log",
+      "sha256": "cff4d49f27a33863ea4609ecbe5520828373e74bce7d0c0da89aa42c99e67cca",
+      "bytes": 31
+    },
+    {
+      "name": "x86-laa-before",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\inspect-system-time-v2-pe.py",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-file-attributes-v7\\target\\x86-laa\\probe.exe",
+        "x86-laa"
+      ],
+      "exit-code": 0,
+      "log": "native-file-attributes-v7-x86-laa-before.log",
+      "sha256": "0188d3edd9f4dac0c243e654beeeafc4d5da06afa3dbaa343b171236850f152f",
+      "bytes": 279
+    },
+    {
+      "name": "x86-laa",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-file-attributes-v7\\target\\x86-laa\\probe.exe",
+        "x86-laa"
+      ],
+      "exit-code": 0,
+      "log": "native-file-attributes-v7-x86-laa.log",
+      "sha256": "a6492f310039985226bb7d3fc02766f477da1bc8f32b520b3fc212a5f2add6b6",
+      "bytes": 69893
+    },
+    {
+      "name": "x86-laa-after",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\inspect-system-time-v2-pe.py",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-file-attributes-v7\\target\\x86-laa\\probe.exe",
+        "x86-laa"
+      ],
+      "exit-code": 0,
+      "log": "native-file-attributes-v7-x86-laa-after.log",
+      "sha256": "0188d3edd9f4dac0c243e654beeeafc4d5da06afa3dbaa343b171236850f152f",
+      "bytes": 279
+    }
+  ],
+  "outcomes": [
+    {
+      "profile": "arm64",
+      "exit-code": 0,
+      "log": "native-file-attributes-v7-arm64.log",
+      "executable-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-file-attributes-v7\\target\\arm64\\probe.exe",
+        "bytes": 168960,
+        "sha256": "0a0254cac4fdac8c3d55a945a1383e6b2fb1ff7c5a9f1597a2a5a8a1399636f7"
+      },
+      "executable-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-file-attributes-v7\\target\\arm64\\probe.exe",
+        "bytes": 168960,
+        "sha256": "0a0254cac4fdac8c3d55a945a1383e6b2fb1ff7c5a9f1597a2a5a8a1399636f7"
+      }
+    },
+    {
+      "profile": "x64",
+      "exit-code": 0,
+      "log": "native-file-attributes-v7-x64.log",
+      "executable-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-file-attributes-v7\\target\\x64\\probe.exe",
+        "bytes": 180224,
+        "sha256": "e44e214c9f905e51e29fcefdd44a644f53296ea18e1cce1ffc03875abe66a17c"
+      },
+      "executable-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-file-attributes-v7\\target\\x64\\probe.exe",
+        "bytes": 180224,
+        "sha256": "e44e214c9f905e51e29fcefdd44a644f53296ea18e1cce1ffc03875abe66a17c"
+      }
+    },
+    {
+      "profile": "x86",
+      "exit-code": 0,
+      "log": "native-file-attributes-v7-x86.log",
+      "executable-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-file-attributes-v7\\target\\x86\\probe.exe",
+        "bytes": 139776,
+        "sha256": "53d215c3f72e9e6caa4fa0d5539df38f72b0cb77046388ad6fab521ac311c807"
+      },
+      "executable-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-file-attributes-v7\\target\\x86\\probe.exe",
+        "bytes": 139776,
+        "sha256": "53d215c3f72e9e6caa4fa0d5539df38f72b0cb77046388ad6fab521ac311c807"
+      }
+    },
+    {
+      "profile": "x86-laa",
+      "exit-code": 0,
+      "log": "native-file-attributes-v7-x86-laa.log",
+      "executable-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-file-attributes-v7\\target\\x86-laa\\probe.exe",
+        "bytes": 139776,
+        "sha256": "0d9d41305db99d954852e109cd7a5768fe98419c85fbf5b5ff3c57274ff0f142"
+      },
+      "executable-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-file-attributes-v7\\target\\x86-laa\\probe.exe",
+        "bytes": 139776,
+        "sha256": "0d9d41305db99d954852e109cd7a5768fe98419c85fbf5b5ff3c57274ff0f142"
+      }
+    }
+  ],
+  "source-before": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-file-attributes-v7\\native-file-attributes-v7.cpp",
+    "bytes": 19697,
+    "sha256": "4cbeb8509c6a62e3243638186a194984240b6889c06500d41a4b544c09385ccc"
+  },
+  "compiler-environment": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\mutant-native-compiler-env-epoch4.json",
+    "bytes": 4122,
+    "sha256": "e6ca43bcdcbd3067b5de05d051259d4d3abf0bfa5283a98daac14fd508a05fad"
+  },
+  "runtime-modules-before": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e"
+    },
+    {
+      "path": "C:\\Windows\\System32\\KernelBase.dll",
+      "bytes": 7213728,
+      "sha256": "6b2fa508ac4f9bce5d7351676485d1dc5b5236cd9656034e2fec1eaba3b82bc9"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\KernelBase.dll",
+      "bytes": 3073488,
+      "sha256": "e9c414d7c6bd2c6fde608f31b2f31da3c2014c801b3764a30ee42abd1e9c2d58"
+    },
+    {
+      "path": "C:\\Windows\\System32\\kernel32.dll",
+      "bytes": 1500304,
+      "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\kernel32.dll",
+      "bytes": 696392,
+      "sha256": "9c9a0c54a79ea712bb533fcc79ba9935ed9f9d3f777fd65cf62d9cec6699b9df"
+    }
+  ],
+  "selected-compilers": [
+    {
+      "profile": "arm64",
+      "path": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\arm64\\cl.exe",
+      "bytes": 787728,
+      "sha256": "5cba83692d533f6b3a6ac07c6b2cdce708e0445ed1ee36b5cb2d49a244a4c835"
+    },
+    {
+      "profile": "x64",
+      "path": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\x64\\cl.exe",
+      "bytes": 762720,
+      "sha256": "d7a46c9d0d970fbeb4e803f1f0e9fec4217f8c833e6bb6a015e5b87299024466"
+    },
+    {
+      "profile": "x86",
+      "path": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\x86\\cl.exe",
+      "bytes": 761104,
+      "sha256": "cfed9e6fa19f430235f7fb75dbcd3200b7c1fa036462e3a73d76b5ea8e35c7ad"
+    },
+    {
+      "profile": "x86-laa",
+      "path": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\x86\\cl.exe",
+      "bytes": 761104,
+      "sha256": "cfed9e6fa19f430235f7fb75dbcd3200b7c1fa036462e3a73d76b5ea8e35c7ad"
+    }
+  ],
+  "step": "x86-laa-after",
+  "child": 4500,
+  "runtime-modules-after": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e"
+    },
+    {
+      "path": "C:\\Windows\\System32\\KernelBase.dll",
+      "bytes": 7213728,
+      "sha256": "6b2fa508ac4f9bce5d7351676485d1dc5b5236cd9656034e2fec1eaba3b82bc9"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\KernelBase.dll",
+      "bytes": 3073488,
+      "sha256": "e9c414d7c6bd2c6fde608f31b2f31da3c2014c801b3764a30ee42abd1e9c2d58"
+    },
+    {
+      "path": "C:\\Windows\\System32\\kernel32.dll",
+      "bytes": 1500304,
+      "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\kernel32.dll",
+      "bytes": 696392,
+      "sha256": "9c9a0c54a79ea712bb533fcc79ba9935ed9f9d3f777fd65cf62d9cec6699b9df"
+    }
+  ],
+  "source-after": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-file-attributes-v7\\native-file-attributes-v7.cpp",
+    "bytes": 19697,
+    "sha256": "4cbeb8509c6a62e3243638186a194984240b6889c06500d41a4b544c09385ccc"
+  },
+  "exit-code": 0,
+  "completed-utc": "2026-10-20T13:49:00.888720+00:00"
+}

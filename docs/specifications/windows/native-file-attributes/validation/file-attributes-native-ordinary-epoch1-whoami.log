@@ -1,0 +1,1 @@
+program=C:\Windows\System32\whoami.exe terminal-call=2182 result=Complete(Internal("native NTDLL service NtOpenFile (0x33) at 0x7fff38a41370 is not implemented"))

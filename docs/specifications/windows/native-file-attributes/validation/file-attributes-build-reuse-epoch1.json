@@ -1,0 +1,8 @@
+{
+  "old": "/Users/int/.assist-continue-20261019/target",
+  "new": "/Users/int/.assist-file-attributes-20261020/target",
+  "ownership": "Prior continuation/region/alias task target, all controllers terminal; no live Cargo/rustc cwd",
+  "size-observed": "18 GiB by du -sh",
+  "reuse": "Compiled failing file-attribute regressions, then corrected Rust library/C API and process integration gates",
+  "utc": "2026-10-20T13:44:25.614771+00:00"
+}

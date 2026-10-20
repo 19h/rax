@@ -1,0 +1,70 @@
+{
+  "state": "failed",
+  "host": "macos",
+  "pid": 86380,
+  "source-inputs": 3836,
+  "scope": "Retained Assist ABI184 linked consumers; no whole current root GUI/plugin/package claim.",
+  "steps": [
+    {
+      "gate": "prime-artifacts",
+      "cwd": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/rust/assist-rs",
+      "command": [
+        "cmake",
+        "-E",
+        "env",
+        "CARGO_TARGET_DIR=/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes/assist-rs-target",
+        "CARGO_PROFILE_RELEASE_STRIP=false",
+        "MACOSX_DEPLOYMENT_TARGET=10.15",
+        "ASSIST_RESOURCE_PYTHON=/opt/homebrew/Frameworks/Python.framework/Versions/3.15/bin/python3.15",
+        "CARGO_BUILD_JOBS=2",
+        "RUSTUP_TOOLCHAIN=1.95.0",
+        "/Users/int/.cargo/bin/cargo",
+        "build",
+        "--locked",
+        "--offline",
+        "--manifest-path",
+        "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/rust/assist-rs/Cargo.toml",
+        "--package",
+        "assist-rs",
+        "--target",
+        "aarch64-apple-darwin",
+        "--features",
+        "rax",
+        "--message-format=json"
+      ],
+      "exit-code": 0,
+      "seconds": 74.62629420898156,
+      "log": "macos-file-attributes-epoch1-owning-prime-artifacts.log",
+      "bytes": 137970,
+      "sha256": "d9fd18a5ce0579fd9f92fd54acd0efafbfb947110add977dca3a3c1c9aeb42de"
+    },
+    {
+      "gate": "archive-before",
+      "command": [
+        "python3",
+        "-B",
+        "/Users/int/Library/Caches/assist-process-emulation/native-file-attributes-20261020/collect-file-attributes-archives-epoch1.py",
+        "--host",
+        "macos",
+        "--source",
+        "/Users/int/.assist-file-attributes-20261020",
+        "--manifest",
+        "/Users/int/Library/Caches/assist-process-emulation/native-file-attributes-20261020/file-attributes-owning-source-hashes-epoch1.json",
+        "--messages",
+        "/Users/int/Library/Caches/assist-process-emulation/native-file-attributes-20261020/macos-file-attributes-epoch1-owning-prime-artifacts.log",
+        "--output",
+        "/Users/int/Library/Caches/assist-process-emulation/native-file-attributes-20261020/macos-file-attributes-epoch1-c-pre-cpp-archive-identities.json"
+      ],
+      "exit-code": 2,
+      "seconds": 0.3081422079994809,
+      "log": "macos-file-attributes-epoch1-owning-archive-before.log",
+      "bytes": 307,
+      "sha256": "20a9acac02cb434ca2ae9e99cca21b38b77efcdcfb5bbdc97862d0231f8e888e"
+    }
+  ],
+  "current-step": "archive-before",
+  "child-pid": 88591,
+  "exit-code": 1,
+  "error": "Traceback (most recent call last):\n  File \"/Users/int/Library/Caches/assist-process-emulation/native-query-attributes-20261020/run-file-attributes-owning-epoch1.py\", line 17, in <module>\n    verify();raw=log.read_bytes();state['steps'].append({**row,'exit-code':code,'seconds':time.monotonic()-started,'log':log.name,'bytes':len(raw),'sha256':hashlib.sha256(raw).hexdigest()});save();print(HOST,row['gate'],code,flush=True);assert code==0,row['gate']\n                                                                                                                                                                                                                                                    ^^^^^^^\nAssertionError: archive-before\n",
+  "completed-utc": "2026-10-20T14:30:43.049274+00:00"
+}

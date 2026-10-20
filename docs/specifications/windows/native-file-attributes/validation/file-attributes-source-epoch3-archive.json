@@ -1,0 +1,17 @@
+{
+  "archive": "file-attributes-source-epoch3-overrides.tar.gz",
+  "bytes": 74036,
+  "sha256": "90fb0e0b30737e6106976cb6d8db08f60ae7d83b6c416e0fed38421490ef8529",
+  "parent-manifest": "file-attributes-source-epoch2.json",
+  "parent-manifest-sha256": "688ca5bc96a6e6a6c5323ca6c40957c23badc71765a233a7d2919b854dc1581c",
+  "source-files": 25097,
+  "source-bytes": 1835033720,
+  "separate-overrides": [
+    "src/user/windows/dll/native/file_attributes/attributes.rs",
+    "src/user/windows/native-runtime.md",
+    "src/user/windows/process/sched/tests/services_tests/file_attributes_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/file_attributes_tests/paired-v10.json",
+    "src/user/windows/process/sched/tests/services_tests/file_attributes_tests/paired.rs"
+  ],
+  "deleted": []
+}

@@ -10,6 +10,7 @@ mod allocate;
 mod apphelp;
 mod directory;
 mod events;
+mod file_attributes;
 mod hotpatch;
 mod io_completion;
 mod mutant;
@@ -45,6 +46,18 @@ mod wnf_query;
 mod worker_factory;
 
 pub(super) static EXPORTS: &[Export] = &[
+    Export::func(
+        "NtQueryAttributesFile",
+        Stdcall,
+        &[Ptr, Ptr],
+        file_attributes::basic,
+    ),
+    Export::func(
+        "NtQueryFullAttributesFile",
+        Stdcall,
+        &[Ptr, Ptr],
+        file_attributes::full,
+    ),
     Export::func(
         "NtCreateMutant",
         Stdcall,

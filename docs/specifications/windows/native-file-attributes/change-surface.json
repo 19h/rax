@@ -1,0 +1,85 @@
+{
+  "base": "5d14992603dbb8ccad01f508929d643dba61fa03",
+  "planes": [
+    {
+      "plane": "Plugin lifecycle",
+      "state": "unaffected",
+      "evidence": "Only RAX NT export dispatch, metadata adapters, tests and engineering evidence change; no Assist lifecycle source or configuration is edited."
+    },
+    {
+      "plane": "UI state",
+      "state": "unaffected",
+      "evidence": "No Qt or UI source, ownership or copy changes; the Rust handlers contain no IDA/Qt calls."
+    },
+    {
+      "plane": "Conversation/lane",
+      "state": "unaffected",
+      "evidence": "No transcript, replay, cancellation or lane schema/source changes."
+    },
+    {
+      "plane": "Agent backend",
+      "state": "unaffected",
+      "evidence": "Native and ACP request/orchestration code remains unchanged; both continue to use the existing emulation tool and RaxProcess adapter."
+    },
+    {
+      "plane": "Prompt/context",
+      "state": "unaffected",
+      "evidence": "No prompt, embedding, masking, anonymization or context source is edited."
+    },
+    {
+      "plane": "Tool schema",
+      "state": "unaffected",
+      "evidence": "No tool JSON schema, manifest or discovery contract changes; existing emulation tool consumers are linked and exercised."
+    },
+    {
+      "plane": "Permission/mutation",
+      "state": "affected",
+      "evidence": "RAX path resolution preserves host_filesystem denial while allowing confined selected-library metadata; dedicated disabled-host, containment and architecture-view tests cover the boundary. No IDB permission schema changes."
+    },
+    {
+      "plane": "Main-thread dispatch",
+      "state": "unaffected",
+      "evidence": "The changed Rust handlers access guest memory and host filesystem metadata, with no IDA/Hex-Rays/Qt operations; assist::ida_ui code is unchanged."
+    },
+    {
+      "plane": "Mesh/MCP",
+      "state": "unaffected",
+      "evidence": "No identity, transport, routing, database selection or MCP protocol changes; retained assist_mcp links the final carrier on macOS."
+    },
+    {
+      "plane": "Transport/crypto",
+      "state": "unaffected",
+      "evidence": "No local endpoint, framing, cryptographic primitive or credential implementation is edited."
+    },
+    {
+      "plane": "Persistence",
+      "state": "unaffected",
+      "evidence": "No settings/history/knowledge schema or migration changes; temporary native fixtures isolate validation state."
+    },
+    {
+      "plane": "SDK/ABI",
+      "state": "unaffected",
+      "evidence": "Public capi/include/rax.h and Assist ABI headers are unchanged from the base. All three hosts execute 183 C API tests and retain core features[]."
+    },
+    {
+      "plane": "Optional engines",
+      "state": "affected",
+      "evidence": "RAX Windows native service availability expands by two implemented exports; installed native and WoW64 leaves run through live service decoding. Z3/Frida/debugger code and defaults are unchanged."
+    },
+    {
+      "plane": "Update/release",
+      "state": "unaffected",
+      "evidence": "No release grammar, update/TUF code, package layout or publication tooling is edited; paired repository pin and ABI anchor are engineering records."
+    },
+    {
+      "plane": "Targets/platforms",
+      "state": "affected",
+      "evidence": "Shared capture/path/output semantics compile on Windows/macOS/Linux. Windows uses locally marshalled NT metadata calls; Unix uses native birth/access/write/change and allocated-block metadata. Full Rust/C API/integration/all-target gates run on each host, with cached ARM64/x64 Windows cross checks and retained Assist carrier/C++ consumer builds. Whole current-root GUI/plugin/package validation is separate. Windows ntdll linkage is already explicit in current-root cmake/RustStaticLib.cmake:301 and existing RAX native adapters; no new runtime library or package member is required."
+    },
+    {
+      "plane": "Tests/docs",
+      "state": "affected",
+      "evidence": "Compiled absent-service, alignment and capture-order red regressions; independent four-view native oracle; shared semantics and Windows installed-leaf tests; frozen source/owning archive/evidence audits; engineering records only."
+    }
+  ]
+}

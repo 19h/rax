@@ -1,0 +1,151 @@
+{
+  "state": "finished",
+  "pid": 7776,
+  "utc": "2026-10-20T15:11:18.431016+00:00",
+  "steps": [
+    {
+      "name": "toolchain",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "--version"
+      ],
+      "exit-code": 0,
+      "seconds": 0.03180412499932572,
+      "log": "file-attributes-native-epoch2-toolchain.log",
+      "bytes": 36,
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5",
+      "results": []
+    },
+    {
+      "name": "focus",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "native_file_attributes_",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 190.9997252500034,
+      "log": "file-attributes-native-epoch2-focus.log",
+      "bytes": 3403,
+      "sha256": "6353e174e3d2b35855474ec42655eea6bbd7ee4edda60641c45b316ec9867015",
+      "results": [
+        "ok. 13 passed; 0 failed; 0 ignored; 0 measured; 7571 filtered out; finished in 4.89s"
+      ]
+    },
+    {
+      "name": "full",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 101,
+      "seconds": 879.3529402080167,
+      "log": "file-attributes-native-epoch2-full.log",
+      "bytes": 820093,
+      "sha256": "4ca6043173b5cb269182400c97819f145aa08579b83b912bfecba4d5673ff3ee",
+      "results": [
+        "FAILED. 7577 passed; 5 failed; 2 ignored; 0 measured; 0 filtered out; finished in 878.79s"
+      ]
+    },
+    {
+      "name": "capi",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "-p",
+        "rax-capi",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 95.73522279100143,
+      "log": "file-attributes-native-epoch2-capi.log",
+      "bytes": 14991,
+      "sha256": "05ffff4a9e5015274185c5ac5e9da0d369f2f13ec947feba6e3c14c48625ac3e",
+      "results": [
+        "ok. 183 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 12.25s",
+        "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    {
+      "name": "integration",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--test",
+        "user_windows",
+        "--test",
+        "user_windows_memory",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 4.853877415996976,
+      "log": "file-attributes-native-epoch2-integration.log",
+      "bytes": 1776,
+      "sha256": "421d6c5671b26d97cde5427a4c2f368541c37c77f6061b1745306ace3cd926be",
+      "results": [
+        "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+        "ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    {
+      "name": "all-targets",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "check",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--all-targets"
+      ],
+      "exit-code": 0,
+      "seconds": 116.50565204201848,
+      "log": "file-attributes-native-epoch2-all-targets.log",
+      "bytes": 1009,
+      "sha256": "ef267dbadc0f233fde71e6f77f95e85945ee64e21e82beb8ea6fde0450628691",
+      "results": []
+    }
+  ],
+  "verified-source-inputs": 25095,
+  "verified-source-bytes": 1834984786,
+  "current-step": "all-targets",
+  "child-pid": 3248,
+  "exact-existing-failures": [
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_imm_index_at_width_with_flags_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_all_ones_with_flags_as_movn_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_with_flags_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_with_flags_and_low_byte_index_guards",
+    "smir::lower::aarch64::tests::vector::lowers_vector_fp16_arithmetic_runtime"
+  ],
+  "exit-code": 0,
+  "post-source-inputs": 25095,
+  "native-cargo-configuration": {
+    "bytes": 374,
+    "sha256": "9f80616d633d948feeba5b201bfa4fe98c8fd736f3f48469b6481279584d8f4c"
+  },
+  "scope": "Frozen file-attribute source and actual installed native/WoW64 NT leaf execution, complete native Rust/C API/integration/build gates; exactly five established lowerer failures remain explicit. Native Cargo configuration is bound separately.",
+  "completed-utc": "2026-10-20T15:33:43.735076+00:00"
+}

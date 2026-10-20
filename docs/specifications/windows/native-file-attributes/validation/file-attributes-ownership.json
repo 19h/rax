@@ -1,0 +1,88 @@
+{
+  "base": "5d14992603dbb8ccad01f508929d643dba61fa03",
+  "worktree": "/Users/int/.assist-file-attributes-20261020",
+  "source-edits": [
+    "src/user/windows/dll/native.rs",
+    "src/user/windows/dll/native/file_attributes.rs",
+    "src/user/windows/dll/native/file_attributes/attributes.rs",
+    "src/user/windows/dll/native/file_attributes/path.rs",
+    "src/user/windows/dll/native/file_attributes/metadata.rs",
+    "src/user/windows/dll/native/file_attributes/metadata/unix.rs",
+    "src/user/windows/dll/native/file_attributes/metadata/windows.rs",
+    "src/user/windows/process/sched/tests/services_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/file_attributes_tests.rs",
+    "src/user/windows/native.rs",
+    "src/user/windows/process/sched/tests/services_tests/file_attributes_tests/semantics.rs",
+    "src/user/windows/process/sched/tests/services_tests/file_attributes_tests/installed.rs",
+    "src/user/windows/process/sched/tests/services_tests/file_attributes_tests/validation.rs",
+    "src/user/windows/native-runtime.md"
+  ],
+  "candidate-scope": [
+    "Native NtQueryAttributesFile/NtQueryFullAttributesFile capture, mapped-file metadata and selected-runtime read-only paths",
+    "Native64/WoW64 serialization/probe ordering and shared host filesystem adapters",
+    "Strict host_filesystem and selected-native-library boundary, guest handle/root/name semantics"
+  ],
+  "publication-dependency": "SSA root reconciliation finished: concurrent e732eb67 pin/anchor and own5395ba11 engineering record verified on both remotes.",
+  "assumptions": [
+    {
+      "id": "FA-A1",
+      "assumption": "Native-library selection permits read-only metadata within its selected runtime scope without enabling arbitrary host filesystem access.",
+      "basis": "WindowsConfig.embedded disableshost_filesystem; NativeRuntime.dll confinesselectedbasename/canonicaldirectory; actualwhoamiqueryrequestsselectedSystem32VERSION.dll.",
+      "dependent-result": "Resolver must preserveexistinggeneralfilesystemdenial while allowingselectedruntimequery.",
+      "stress-test": "ValidselectedDLL, absentbasename, traversal/outside-root/linkescape, hostfilesystemdisabled, wrongarchitecture/system-directoryview.",
+      "falsification-probe": "Any unselected path succeeds solely because native_libraries=true, or nativequeryrequireswiderexistingcontract.",
+      "status": "retained"
+    },
+    {
+      "id": "FA-A2",
+      "assumption": "The captured file-attribute profile is one29683ARM64kernel acrossfourABIviews.",
+      "basis": "Boundsource/PE/sixDLL captures v2/v3 and previouskernelmetadata.",
+      "dependent-result": "Useobservedprobe/serializationfields without claimingindependentx64kernel coverage.",
+      "stress-test": "Native64/WoW64alignment, guardandmalformedattributespriority, basic36/40/full56bytes.",
+      "falsification-probe": "Anotherkernel/nativeleaf contradictscapture profile.",
+      "status": "confirmed"
+    },
+    {
+      "id": "FA-A3",
+      "assumption": "Mapped and selected runtime roots are admitted namespace boundaries; host aliases used to choose them are outside guest OBJ_DONT_REPARSE traversal.",
+      "basis": "DriveMap roots are host mapping configuration; native C drive object aliases are traversed even with the measured accepted OBJ_DONT_REPARSE flag.",
+      "dependent-result": "Canonical root selection and preserved guest leaf spelling.",
+      "stress-test": "Mapped-root alias remains usable; an in-guest leaf alias fails DONT_REPARSE; outside runtime aliases fail containment.",
+      "falsification-probe": "Focused root/leaf alias test accepts leaf or rejects implicit root.",
+      "status": "confirmed for native/shared selections"
+    },
+    {
+      "id": "FA-A4",
+      "assumption": "Metadata-only legacy HLE objects without a retained host File keep the existing path identity limit. This group guarantees replacement survival for retained files.",
+      "basis": "Existing files/open.rs intentionally leaves metadata-only host=None; files/tests.rs separately expects explicit unsupported on detected replaced metadata-only paths. Windows identity fallback is canonical pathname.",
+      "dependent-result": "No full host-file identity or universal NtQueryAttributes lifetime claim. Native file-open frontiers must retain real handles when implemented.",
+      "stress-test": "Empty-name query through a retained file after rename/replacement, metadata-only detected replacement, actual installed leaves.",
+      "falsification-probe": "A retained-file query observes replacement bytes, or broader lifetime correctness is claimed for an unpinned object.",
+      "status": "retained limitation; no full-process completion claim"
+    }
+  ],
+  "previous-baseline": "6f2148297acc1e8106600306cc092b08207b80d2",
+  "source-freeze": "file-attributes-source-epoch1.json",
+  "bounded-items": [
+    {
+      "impact": "high",
+      "item": "NtOpenFile0x33 is the independently observed next ordinary whoami frontier.",
+      "blocks": "Full Windows objective; not this completed query path."
+    },
+    {
+      "impact": "high",
+      "item": "Legacy metadata-only pathname identity does not establish stable open-object identity under external replacement.",
+      "blocks": "Broader filesystem lifetime claim; current retained-file guarantee is narrower."
+    },
+    {
+      "impact": "medium",
+      "item": "One ARM64 Windows kernel supplies four ABI observations; no independent physical x64 kernel result.",
+      "blocks": "Wider kernel-equivalence claim."
+    },
+    {
+      "impact": "medium",
+      "item": "A host filesystem without birth timestamps reports explicit unsupported metadata.",
+      "blocks": "Such filesystem configuration; tested macOS/Linux hosts expose birth timestamps."
+    }
+  ]
+}

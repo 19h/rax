@@ -1,0 +1,6 @@
+{
+  "path": "native-file-attributes-v4.cpp",
+  "bytes": 11743,
+  "sha256": "5ce502585cf93bb079c1e51026c11b9f925523c1bae244ae3a03ca4cf282f817",
+  "scope": "Extend successfulv3 to security/QoS capture, maximumlength/buffer alignment, countedempty/root precedence, case and all32objectattribute flag bits."
+}

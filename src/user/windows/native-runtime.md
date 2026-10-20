@@ -2833,3 +2833,57 @@ until that lane executes it. Other alias profiles fail closed with captured
 target/comparison context. Native probes use one build29683 ARM64 kernel across
 four ABI views. Retained Assist ABI184 consumers and current-root ABI272 products
 remain separate; the larger same-host Linux/macOS/Windows objective is active.
+
+
+### Read-only NT file metadata queries
+
+`NtQueryAttributesFile` and `NtQueryFullAttributesFile` use guest-captured
+OBJECT_ATTRIBUTES and counted names, then query authorized mapped host files or
+selected installed DLLs. Native 64-bit basic output is 40 bytes; WoW64 basic
+output is 36 bytes and preserves its four-byte ABI padding. Full output is
+56 bytes in each view. Native output alignment is eight bytes; WoW64 alignment
+does not constrain the copied destination. Fixed output spans are probed before
+publication. WoW64 copies name, security and QoS headers, then reachable even-length
+name bytes, before probing output; native callers probe output first. Native
+security validation precedes QoS semantics and name-header capture. QoS tracking
+mode validation precedes impersonation-level validation in both views. Times retain
+100 ns FILETIME units since 1601-01-01; sizes are bytes.
+
+NT DOS-drive paths preserve trailing dots/spaces and do not apply Win32 dot,
+parent or repeated-separator normalization. Relative names require an owned
+file/directory handle. An empty name uses a retained host File where available,
+including after pathname replacement. Metadata-only handles keep the existing
+path-identity limitation and explicitly reject detected replacement. Native
+object-manager device/UNC names, alternate data streams, NUL device metadata,
+and unrepresentable host pathnames remain explicit unsupported frontiers.
+
+`host_filesystem=false` still denies arbitrary mapped files. Native-library
+selection permits only read-only DLL metadata under the independently selected
+runtime directory, preserving the existing canonical-containment check. WoW64
+System32 requests use the selected 32-bit runtime view. No general host scope is
+implied. The original selected basename spelling survives canonical validation
+so OBJ_DONT_REPARSE can reject a filesystem link. Mapped/selected roots are
+admitted namespace boundaries; host aliases used to choose them are outside the
+guest query's component traversal. Concurrent external host renames/reparse
+replacement do not acquire a new atomic-namespace guarantee here.
+
+The Windows adapter marshals fresh host-owned NT arguments or uses a retained
+host File handle. Guest pointers, handles, security descriptors, QoS and unchecked
+flags never cross that boundary. Actual NTFS allocation sizes and all four time
+fields are retained. Unix adapters use actual birth/access/write/change metadata
+and `st_blocks * 512` bytes; directories expose no file-data size. Missing birth
+time is explicit unsupported metadata, rather than an invented timestamp.
+Uncaptured case folding is ASCII only; installed profiles use their captured
+UTF-16 upcase table. Ambiguous fallback matches fail explicitly.
+
+Native producer v10 contains 426 roles for each of two services over ARM64, x64,
+x86 and x86-LAA on one Windows 29683 ARM64 kernel: 3,408 observations. Of these,
+1,848 observations cover 231 controlled fault pairs per service/profile. The
+compiled pairwise regression compares 1,386 emulated calls across three guest
+architectures against that independently captured status/output-protection oracle. This is
+not independent physical x64-kernel coverage. Earlier rejected harness builds
+and the corrected supplemental root-handle range remain separate evidence.
+Compiled regressions establish the absent-service baseline. Complete native
+platform, linked-owner and ordinary-program results belong to this group's
+validation ledger; implementing these queries does not establish full Windows
+process support or completion of the wider Linux/macOS/Windows objective.

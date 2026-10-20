@@ -1,0 +1,38 @@
+   Compiling vm-memory v0.17.1 (/Users/int/.assist-file-attributes-20261020/vendor/vm-memory)
+   Compiling linux-loader v0.13.2 (https://github.com/19h/linux-loader?rev=f745b555942c4e840a784bca61e6f3976d101960#f745b555)
+   Compiling rax v0.1.0 (/Users/int/.assist-file-attributes-20261020)
+error[E0594]: cannot assign to data in an `Arc`
+  --> src/user/windows/process/sched/tests/services_tests/file_attributes_tests.rs:54:9
+   |
+54 |         p.cfg.host_filesystem = true;
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot assign
+   |
+   = help: trait `DerefMut` is required to modify through a dereference, but it is not implemented for `std::sync::Arc<windows::process::WindowsConfig>`
+
+error[E0594]: cannot assign to data in an `Arc`
+  --> src/user/windows/process/sched/tests/services_tests/file_attributes_tests.rs:55:9
+   |
+55 |         p.cfg.drives = crate::user::windows::fs::DriveMap::empty();
+   |         ^^^^^^^^^^^^ cannot assign
+   |
+   = help: trait `DerefMut` is required to modify through a dereference, but it is not implemented for `std::sync::Arc<windows::process::WindowsConfig>`
+
+error[E0596]: cannot borrow data in an `Arc` as mutable
+  --> src/user/windows/process/sched/tests/services_tests/file_attributes_tests.rs:56:9
+   |
+56 |         p.cfg.drives.set('C', &directory.0);
+   |         ^^^^^^^^^^^^ cannot borrow as mutable
+   |
+   = help: trait `DerefMut` is required to modify through a dereference, but it is not implemented for `std::sync::Arc<windows::process::WindowsConfig>`
+
+error[E0594]: cannot assign to data in an `Arc`
+   --> src/user/windows/process/sched/tests/services_tests/file_attributes_tests.rs:204:9
+    |
+204 |         h.process.state_mut().cfg.host_filesystem = false;
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot assign
+    |
+    = help: trait `DerefMut` is required to modify through a dereference, but it is not implemented for `std::sync::Arc<windows::process::WindowsConfig>`
+
+Some errors have detailed explanations: E0594, E0596.
+For more information about an error, try `rustc --explain E0594`.
+error: could not compile `rax` (lib test) due to 4 previous errors

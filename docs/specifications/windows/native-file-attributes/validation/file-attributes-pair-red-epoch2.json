@@ -1,0 +1,53 @@
+{
+  "state": "finished",
+  "source-epoch": 2,
+  "source-before": [
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/file_attributes_tests.rs",
+      "bytes": 7918,
+      "sha256": "747595ea3ad4783cf51aa1edeff338ec6168a0850dd616f01d797639071af32c"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/file_attributes_tests/paired.rs",
+      "bytes": 5344,
+      "sha256": "f96617c5981a68d90fc5324f57489039b379a22f174ac2745e3e71cfacf10e13"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/file_attributes_tests/paired-v10.json",
+      "bytes": 41410,
+      "sha256": "6e7ec08cbfb542d40e18d7aceb226d55c1f03c1af74b6f74f47457087f8bc9e7"
+    }
+  ],
+  "argv": [
+    "cargo",
+    "+1.95.0",
+    "test",
+    "--locked",
+    "--offline",
+    "--no-default-features",
+    "--lib",
+    "native_file_attributes_pairwise_capture_matches_independent_native_oracle",
+    "--",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "exit-code": 101,
+  "source-after": [
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/file_attributes_tests.rs",
+      "bytes": 7918,
+      "sha256": "747595ea3ad4783cf51aa1edeff338ec6168a0850dd616f01d797639071af32c"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/file_attributes_tests/paired.rs",
+      "bytes": 5344,
+      "sha256": "f96617c5981a68d90fc5324f57489039b379a22f174ac2745e3e71cfacf10e13"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/file_attributes_tests/paired-v10.json",
+      "bytes": 41410,
+      "sha256": "6e7ec08cbfb542d40e18d7aceb226d55c1f03c1af74b6f74f47457087f8bc9e7"
+    }
+  ],
+  "utc": "2026-10-20T15:55:12.999228+00:00"
+}

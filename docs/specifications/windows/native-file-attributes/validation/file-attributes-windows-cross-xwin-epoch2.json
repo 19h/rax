@@ -1,0 +1,193 @@
+{
+  "state": "finished",
+  "inputs-before": [
+    {
+      "path": "src/user/windows/dll/native.rs",
+      "bytes": 21641,
+      "sha256": "606a54730249e62f8944ec6b58e04e8695d827cafadd668d2e2843818b9bdc90"
+    },
+    {
+      "path": "src/user/windows/dll/native/file_attributes.rs",
+      "bytes": 2210,
+      "sha256": "ba1cf59088168a6326d01b7c2e60c1fa1b11a24b3a01149586ecb38b36b728f3"
+    },
+    {
+      "path": "src/user/windows/dll/native/file_attributes/attributes.rs",
+      "bytes": 6751,
+      "sha256": "3cda7c77ad6c5a5f175373a66fc1cc58eabfb096bf772763031715ab0f667ce9"
+    },
+    {
+      "path": "src/user/windows/dll/native/file_attributes/metadata.rs",
+      "bytes": 3216,
+      "sha256": "b5ef2c78a36cb06dafac8dd3d87504b02a39fa83c9d1b56795ed6fee5280d198"
+    },
+    {
+      "path": "src/user/windows/dll/native/file_attributes/metadata/unix.rs",
+      "bytes": 3224,
+      "sha256": "26e516eba4d1aadb0fb375c5e8214b5ead7d1116b8066ac842a34082078dd66d"
+    },
+    {
+      "path": "src/user/windows/dll/native/file_attributes/metadata/windows.rs",
+      "bytes": 3996,
+      "sha256": "fa88f91ad940421cb6485c89951adb641b07b2495b3f595194b118b75140e2f7"
+    },
+    {
+      "path": "src/user/windows/dll/native/file_attributes/path.rs",
+      "bytes": 9782,
+      "sha256": "bcca4eff109b4fc21a2b839958495ee084a76258b86ee9ec084e341f9038fb96"
+    },
+    {
+      "path": "src/user/windows/native-runtime.md",
+      "bytes": 203887,
+      "sha256": "6ededf3a2b731671ed33216630abc0057ffd5a27cc2cf325ca20e9054173e1a8"
+    },
+    {
+      "path": "src/user/windows/native.rs",
+      "bytes": 16872,
+      "sha256": "a7aa0b17006a5a9140eeb4f5131a5de2ccc3f2837c9d9181978b5108a65814a9"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests.rs",
+      "bytes": 49825,
+      "sha256": "67a7c116f53d1a11112521eefd4ff1b0b2229cff298e59d8040cf97467d423dc"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/file_attributes_tests.rs",
+      "bytes": 7861,
+      "sha256": "f2750f0254918dea7d91d0e3d3585af6552a6b2e06aa5f1093c939f1d14be28a"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/file_attributes_tests/installed.rs",
+      "bytes": 7384,
+      "sha256": "741c33fd174740a85d5e922913180e3a094a1f938d728b51429f0a77f900138c"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/file_attributes_tests/semantics.rs",
+      "bytes": 13677,
+      "sha256": "58c503a4fb02fb06cdc89e51ec97099413ef1089daf60ed5fc77d7f9b664ac05"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/file_attributes_tests/validation.rs",
+      "bytes": 9053,
+      "sha256": "68152be6ffdea1c253582cb10c40c4b542f09d54ebd3f4392498ef8b2cbf63ea"
+    }
+  ],
+  "steps": [
+    {
+      "arch": "aarch64",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "xwin",
+        "check",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--all-targets",
+        "--target",
+        "aarch64-pc-windows-msvc"
+      ],
+      "exit-code": 0,
+      "seconds": 49.48538104101317,
+      "log": "file-attributes-windows-cross-xwin-epoch2-aarch64.log",
+      "bytes": 983,
+      "sha256": "eeb5c459acff4c14df140372a001d7cdd25ff6f1f1b82ffc77feabe73b838385"
+    },
+    {
+      "arch": "x86_64",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "xwin",
+        "check",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--all-targets",
+        "--target",
+        "x86_64-pc-windows-msvc"
+      ],
+      "exit-code": 0,
+      "seconds": 49.65946158298175,
+      "log": "file-attributes-windows-cross-xwin-epoch2-x86_64.log",
+      "bytes": 983,
+      "sha256": "c66f9d26d2926b133b8879aba18f93884a5687055ea5e01a6053e3f7c9d0bf8b"
+    }
+  ],
+  "utc": "2026-10-20T14:40:54.130233+00:00",
+  "inputs-after": [
+    {
+      "path": "src/user/windows/dll/native.rs",
+      "bytes": 21641,
+      "sha256": "606a54730249e62f8944ec6b58e04e8695d827cafadd668d2e2843818b9bdc90"
+    },
+    {
+      "path": "src/user/windows/dll/native/file_attributes.rs",
+      "bytes": 2210,
+      "sha256": "ba1cf59088168a6326d01b7c2e60c1fa1b11a24b3a01149586ecb38b36b728f3"
+    },
+    {
+      "path": "src/user/windows/dll/native/file_attributes/attributes.rs",
+      "bytes": 6751,
+      "sha256": "3cda7c77ad6c5a5f175373a66fc1cc58eabfb096bf772763031715ab0f667ce9"
+    },
+    {
+      "path": "src/user/windows/dll/native/file_attributes/metadata.rs",
+      "bytes": 3216,
+      "sha256": "b5ef2c78a36cb06dafac8dd3d87504b02a39fa83c9d1b56795ed6fee5280d198"
+    },
+    {
+      "path": "src/user/windows/dll/native/file_attributes/metadata/unix.rs",
+      "bytes": 3224,
+      "sha256": "26e516eba4d1aadb0fb375c5e8214b5ead7d1116b8066ac842a34082078dd66d"
+    },
+    {
+      "path": "src/user/windows/dll/native/file_attributes/metadata/windows.rs",
+      "bytes": 3996,
+      "sha256": "fa88f91ad940421cb6485c89951adb641b07b2495b3f595194b118b75140e2f7"
+    },
+    {
+      "path": "src/user/windows/dll/native/file_attributes/path.rs",
+      "bytes": 9782,
+      "sha256": "bcca4eff109b4fc21a2b839958495ee084a76258b86ee9ec084e341f9038fb96"
+    },
+    {
+      "path": "src/user/windows/native-runtime.md",
+      "bytes": 203887,
+      "sha256": "6ededf3a2b731671ed33216630abc0057ffd5a27cc2cf325ca20e9054173e1a8"
+    },
+    {
+      "path": "src/user/windows/native.rs",
+      "bytes": 16872,
+      "sha256": "a7aa0b17006a5a9140eeb4f5131a5de2ccc3f2837c9d9181978b5108a65814a9"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests.rs",
+      "bytes": 49825,
+      "sha256": "67a7c116f53d1a11112521eefd4ff1b0b2229cff298e59d8040cf97467d423dc"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/file_attributes_tests.rs",
+      "bytes": 7861,
+      "sha256": "f2750f0254918dea7d91d0e3d3585af6552a6b2e06aa5f1093c939f1d14be28a"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/file_attributes_tests/installed.rs",
+      "bytes": 7384,
+      "sha256": "741c33fd174740a85d5e922913180e3a094a1f938d728b51429f0a77f900138c"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/file_attributes_tests/semantics.rs",
+      "bytes": 13677,
+      "sha256": "58c503a4fb02fb06cdc89e51ec97099413ef1089daf60ed5fc77d7f9b664ac05"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/file_attributes_tests/validation.rs",
+      "bytes": 9053,
+      "sha256": "68152be6ffdea1c253582cb10c40c4b542f09d54ebd3f4392498ef8b2cbf63ea"
+    }
+  ],
+  "inputs-unchanged": true,
+  "exit-code": 0,
+  "scope": "macOS-hosted Windows MSVC all-target type/build check, including Windows-only installed NT file metadata leaf regression. No native kernel execution is claimed."
+}

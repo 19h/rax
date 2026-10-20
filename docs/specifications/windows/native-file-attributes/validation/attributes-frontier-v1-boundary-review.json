@@ -1,0 +1,11 @@
+{
+  "producer": "attributes-frontier-v1.rs",
+  "configuration": "Unchanged C:\\app\\probe.exe embedding plus native installedDLLs",
+  "correction": "The completed driver scope wording4096instruction observation describes instruction-per-scheduler-slice, not entire run_slice budget. Each run_slice4096 can execute4096scheduler slices of up to4096instructions, at most16777216instructions; terminal occurred in first such call. No exact instructioncount is inferred.",
+  "observed-object-name": "\\??\\C:\\WINDOWS\\SYSTEM32\\VERSION.dll",
+  "object-attributes-length": 48,
+  "root": 0,
+  "attributes": 2112,
+  "output-bytes": 40,
+  "stable-inputs": 9
+}

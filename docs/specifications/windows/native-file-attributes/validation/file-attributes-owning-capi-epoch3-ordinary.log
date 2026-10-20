@@ -1,0 +1,8 @@
+api-open program=C:\Windows\Temp\assist-native-rax-20261010\src-file-attributes-epoch3\tests\fixtures\user\windows\bin\arm64\smoke.exe modules=4
+api-progress program=C:\Windows\Temp\assist-native-rax-20261010\src-file-attributes-epoch3\tests\fixtures\user\windows\bin\arm64\smoke.exe attempt=0 reason=4 turns=975 elapsed-us=5368423
+api-result {"diagnostic":"exited with status 0 (0x0)","elapsed-us":5368423,"exit-code":0,"native-runtime":true,"program":"C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-attributes-epoch3\\tests\\fixtures\\user\\windows\\bin\\arm64\\smoke.exe","reason":4,"slice-instructions":4096,"stderr-hex":"","stdout-hex":"","turns-started":975}
+api-open program=C:\Windows\System32\whoami.exe modules=21
+api-progress program=C:\Windows\System32\whoami.exe attempt=0 reason=6 turns=1680 elapsed-us=15118216
+api-progress program=C:\Windows\System32\whoami.exe attempt=1 reason=6 turns=1849 elapsed-us=30322994
+api-progress program=C:\Windows\System32\whoami.exe attempt=2 reason=5 turns=2183 elapsed-us=34006269
+api-result {"diagnostic":"emulator failure: native NTDLL service NtOpenFile (0x33) at 0x7fff38a41370 is not implemented","elapsed-us":34006269,"exit-code":0,"native-runtime":true,"program":"C:\\Windows\\System32\\whoami.exe","reason":5,"slice-instructions":4096,"stderr-hex":"","stdout-hex":"","turns-started":2183}

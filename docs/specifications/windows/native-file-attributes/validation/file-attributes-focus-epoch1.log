@@ -1,0 +1,11 @@
+   Compiling rax v0.1.0 (/Users/int/.assist-file-attributes-20261020)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 20s
+     Running unittests src/lib.rs (target/debug/deps/rax-dd79f0cd9ae9bb68)
+
+running 3 tests
+test user::windows::process::sched::tests::services_tests::file_attributes_tests::native_file_attributes_output_validation_precedes_native_input ... ok
+test user::windows::process::sched::tests::services_tests::file_attributes_tests::native_file_attributes_rejects_host_access_when_disabled ... ok
+test user::windows::process::sched::tests::services_tests::file_attributes_tests::native_file_attributes_returns_mapped_metadata_and_preserves_padding ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 8104 filtered out; finished in 0.06s
+

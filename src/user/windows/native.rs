@@ -129,20 +129,27 @@ impl NativeRuntime {
     }
 
     pub(crate) fn dll(&self, name: &str) -> io::Result<Option<PathBuf>> {
+        Ok(self.dll_paths(name)?.map(|(_, canonical)| canonical))
+    }
+
+    /// The original basename spelling and its confined canonical target.
+    /// Metadata queries retain the spelling so OBJ_DONT_REPARSE still sees a
+    /// filesystem link. Image loading continues to use the canonical target.
+    pub(crate) fn dll_paths(&self, name: &str) -> io::Result<Option<(PathBuf, PathBuf)>> {
         if name.is_empty() || name.contains(['\\', '/', ':', '\0']) || name == "." || name == ".." {
             return Err(invalid("native DLL selection requires a basename"));
         }
         let Some(path) = super::fs::find_case_insensitive(&self.directory, name) else {
             return Ok(None);
         };
-        let path = path.canonicalize()?;
-        if !path.starts_with(&self.directory) {
+        let canonical = path.canonicalize()?;
+        if !canonical.starts_with(&self.directory) {
             return Err(io::Error::new(
                 io::ErrorKind::PermissionDenied,
                 "installed DLL escapes its selected directory",
             ));
         }
-        Ok(Some(path))
+        Ok(Some((path, canonical)))
     }
 }
 

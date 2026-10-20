@@ -1,0 +1,35 @@
+{
+  "state": "finished",
+  "exit-code": 0,
+  "files": [
+    {
+      "role": "core",
+      "source": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\debug\\deps\\librax-934115059aa64c85.rlib",
+      "retained": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-attributes-epoch1\\target\\retained-owning-epoch1\\librax-934115059aa64c85.rlib",
+      "bytes": 511171512,
+      "sha256": "9aa6620702d5822d5d6aaf748126a99c3d5a9a07d5e6fd81123872a97eee1cb4"
+    },
+    {
+      "role": "carrier",
+      "source": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\debug\\assist_rs.lib",
+      "retained": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-attributes-epoch1\\target\\retained-owning-epoch1\\assist_rs.lib",
+      "bytes": 860706968,
+      "sha256": "91b97730dd36d1f2dcf95dca3d9444a8fbeac706d7206d41753719c128551826"
+    },
+    {
+      "role": "ordinary",
+      "source": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\file-attributes-ordinary-owner-epoch1.exe",
+      "retained": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-attributes-epoch1\\target\\retained-owning-epoch1\\file-attributes-ordinary-owner-epoch1.exe",
+      "bytes": 27130368,
+      "sha256": "7489e4dcf43f1f0a888c9f8a2557f457afe556efc42a3be8e50b496a1bceac9d"
+    },
+    {
+      "role": "capi",
+      "source": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\cpp\\file-attributes-owning-capi-epoch1.exe",
+      "retained": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-attributes-epoch1\\target\\retained-owning-epoch1\\file-attributes-owning-capi-epoch1.exe",
+      "bytes": 32709632,
+      "sha256": "35d376721648bf0fb65759161ef877f9f228c3ad92c6eb102700ecfb462ae1b7"
+    }
+  ],
+  "scope": "Four actual observed owning artifacts copied independently; no hard links or regeneration."
+}

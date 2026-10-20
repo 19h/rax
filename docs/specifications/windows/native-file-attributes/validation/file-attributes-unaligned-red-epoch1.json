@@ -1,0 +1,25 @@
+{
+  "state": "finished",
+  "base-source": "file-attributes-source-epoch1.json",
+  "reason": "Native v8 WoW roles25/26 accept unaligned output; prototype imposed DWORD alignment.",
+  "test-source": {
+    "path": "src/user/windows/process/sched/tests/services_tests/file_attributes_tests/validation.rs",
+    "bytes": 9707,
+    "sha256": "d4bdfc4e4eab8984fee41c255e1ae5b9ba8f0ff6b4fb65f53ce0101964f930aa"
+  },
+  "argv": [
+    "cargo",
+    "+1.95.0",
+    "test",
+    "--locked",
+    "--offline",
+    "--no-default-features",
+    "--lib",
+    "native_file_attributes_wow_outputs_accept_every_byte_alignment",
+    "--",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "exit-code": 101,
+  "utc": "2026-10-20T15:07:29.349334+00:00"
+}

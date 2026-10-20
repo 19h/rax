@@ -1,0 +1,39 @@
+warning: "stdcall" is not a supported ABI for the current target
+  --> vendor\vm-memory\src\mmap\windows.rs:22:1
+   |
+22 | / extern "stdcall" {
+23 | |     pub fn VirtualAlloc(
+24 | |         lpAddress: *mut c_void,
+25 | |         dwSize: size_t,
+...  |
+49 | |     pub fn CloseHandle(hObject: RawHandle) -> u32; // BOOL
+50 | | }
+   | |_^
+   |
+   = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!
+   = note: for more information, see issue #137018 <https://github.com/rust-lang/rust/issues/137018>
+   = help: if you need `extern "stdcall"` on win32 and `extern "C"` everywhere else, use `extern "system"`
+   = note: `#[warn(unsupported_calling_conventions)]` (part of `#[warn(future_incompatible)]`) on by default
+
+warning: `vm-memory` (lib) generated 1 warning
+   Compiling rax v0.1.0 (C:\Windows\Temp\assist-native-rax-20261010\src-file-attributes-epoch2)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3m 05s
+     Running unittests src\lib.rs (target\normal\debug\deps\rax-b799307a7949aa6b.exe)
+
+running 13 tests
+test user::windows::process::sched::tests::services_tests::file_attributes_tests::installed::native_file_attributes_installed_leaves_match_native_metadata_and_ret8 ... ok
+test user::windows::process::sched::tests::services_tests::file_attributes_tests::native_file_attributes_output_validation_precedes_native_input ... ok
+test user::windows::process::sched::tests::services_tests::file_attributes_tests::native_file_attributes_rejects_host_access_when_disabled ... ok
+test user::windows::process::sched::tests::services_tests::file_attributes_tests::native_file_attributes_returns_mapped_metadata_and_preserves_padding ... ok
+test user::windows::process::sched::tests::services_tests::file_attributes_tests::semantics::native_file_attributes_captured_names_and_security_headers_precede_wow_output_probe ... ok
+test user::windows::process::sched::tests::services_tests::file_attributes_tests::semantics::native_file_attributes_empty_name_queries_retained_file_after_path_replacement ... ok
+test user::windows::process::sched::tests::services_tests::file_attributes_tests::semantics::native_file_attributes_preserves_nt_spelling_and_distinguishes_absence ... ok
+test user::windows::process::sched::tests::services_tests::file_attributes_tests::semantics::native_file_attributes_root_handles_retain_identity_and_native_name_rules ... ok
+test user::windows::process::sched::tests::services_tests::file_attributes_tests::semantics::native_file_attributes_selected_runtime_does_not_grant_general_host_access ... ok
+test user::windows::process::sched::tests::services_tests::file_attributes_tests::validation::native_file_attributes_flags_security_and_qos_match_captured_statuses ... ok
+test user::windows::process::sched::tests::services_tests::file_attributes_tests::validation::native_file_attributes_output_aliases_preserve_captured_inputs_and_tail ... ok
+test user::windows::process::sched::tests::services_tests::file_attributes_tests::validation::native_file_attributes_output_boundaries_match_native_and_wow_records ... ok
+test user::windows::process::sched::tests::services_tests::file_attributes_tests::validation::native_file_attributes_wow_outputs_accept_every_byte_alignment ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 7571 filtered out; finished in 4.89s
+

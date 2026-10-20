@@ -1,7 +1,7 @@
 {
   "base": "6f2148297acc1e8106600306cc092b08207b80d2",
   "identity-contract": "original-checkpoint-with-explicit-public-projections",
-  "projected-streams": 149,
+  "projected-streams": 155,
   "files": [
     {
       "path": "docs/specifications/windows/native-access-check/validation/windows/assist-native-access-check-final-shipping.log",
@@ -477,6 +477,44 @@
         }
       ],
       "preserved-semantics": "Complete private compiler-message records omitted; all compiler-artifact and remaining records retain exact bytes/order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-native-owning-epoch1-artifacts-after.log",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 132251,
+        "sha256": "f4cd13ec4f3576e52c9f08d6f660560dcc17106746ce152b20315b6ebbcee9e3"
+      },
+      "published": {
+        "bytes": 129699,
+        "sha256": "968ce1d9b864629be6315ebbc730e5146847a9c49fa77b2c7b55fc079a1eea4e"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted before first publication; all compiler-artifact and remaining records retain exact bytes/order. Complete original remains private only."
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-native-owning-epoch1-artifacts-before.log",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 132536,
+        "sha256": "b1b17f3636cf501237845eb2c8bb1ac1b61b0bceb855663ee9967cf7dcb1b860"
+      },
+      "published": {
+        "bytes": 129984,
+        "sha256": "c0e557df25c1d2191bda970249c4b8021a7038adbe78d1d603da736a34229e02"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted before first publication; all compiler-artifact and remaining records retain exact bytes/order. Complete original remains private only."
     },
     {
       "path": "docs/specifications/windows/native-filesystem-registry/validation/filesystem-native-owning-epoch1-artifacts-after.log",
@@ -2859,6 +2897,82 @@
         }
       ],
       "preserved-semantics": "Complete private compiler-message records omitted; all compiler-artifact and remaining records retain exact bytes/order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-native-owning-epoch2-artifacts-after.log",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 132251,
+        "sha256": "9c79cf4ee9a54a78c53eed83c0186fc651edfe327d5493f1a14807cfc59e461f"
+      },
+      "published": {
+        "bytes": 129699,
+        "sha256": "eb986bec0c9fe1b1726cc951cf6e292dfcb83db9c6e07fda9fa06b5a404288cb"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted before first publication; compiler-artifact and remaining records retain exact bytes/order. Originals remain private."
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-native-owning-epoch2-artifacts-before.log",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 132536,
+        "sha256": "809993a77295dbaa9112d78aba4070fc9f84f655f1e993c3ec76344f7454632e"
+      },
+      "published": {
+        "bytes": 129984,
+        "sha256": "d60f419566be3476d6927e557eb0424fabefe926698ffe100aaf4631da04830c"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted before first publication; compiler-artifact and remaining records retain exact bytes/order. Originals remain private."
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-native-owning-epoch3-artifacts-after.log",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 132251,
+        "sha256": "eba29c666fb277b423943a5c228ae817cd7241e24ee1a08a1089f7899ca5be70"
+      },
+      "published": {
+        "bytes": 129699,
+        "sha256": "529ff97ecbb9847a8da0cb00a27a3cbf191f3845f889363a2994f1deb712b73e"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted before first publication; compiler-artifact and remaining records retain exact bytes/order. Originals remain private."
+    },
+    {
+      "path": "docs/specifications/windows/native-file-attributes/validation/file-attributes-native-owning-epoch3-artifacts-before.log",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 132536,
+        "sha256": "3e2536eb667b3eb24b06d04696ad8f027f6c66a5eb1d974ef1f4ed9203a0970d"
+      },
+      "published": {
+        "bytes": 129984,
+        "sha256": "a3d41d2953e1c1dda364d4cdd9f698e4eca78fabfb60411032a19301c40ba9c3"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted before first publication; compiler-artifact and remaining records retain exact bytes/order. Originals remain private."
     }
   ],
   "scope": "Versioned public diagnostic projections. Historical147 originalstreams remainprivate and in priorGit history. Newlycapturedstreams are filteredbeforefirstpublication; their completeoriginals remainprivateonly. Runtime/test/native/archive results are unchanged."

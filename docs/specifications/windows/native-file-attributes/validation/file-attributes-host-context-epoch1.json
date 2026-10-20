@@ -1,0 +1,18 @@
+{
+  "state": "finished",
+  "exit-code": 0,
+  "utc": "2026-10-20T15:07:17.140773+00:00",
+  "kernel": {
+    "major": 10,
+    "minor": 0,
+    "build": 29683
+  },
+  "native-python-machine": "ARM64",
+  "pointer-bytes": 8,
+  "source": {
+    "path": "file-attributes-host-context-epoch1.py",
+    "bytes": 1424,
+    "sha256": "8bdb58b41a1fc1a6839496cbe05c4bb9d9294ce9645c35874f2268d33ec4887f"
+  },
+  "scope": "Read-only live kernel context. Four producer ABI views share this one ARM64 kernel; no independent x64 kernel is claimed."
+}

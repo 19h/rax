@@ -1,0 +1,10 @@
+{
+  "scope": "All epoch1 broad/linked/ordinary results remain real prototype measurements; they are not final-source publication proof.",
+  "reason": "Native v8 WoW cases25/26/27 succeed at unaligned outputs; prototype imposed four-byte alignment. Compiled unaligned red fails0pass/1fail.",
+  "source-epoch2-changes": [
+    "src/user/windows/dll/native/file_attributes.rs",
+    "src/user/windows/native-runtime.md",
+    "src/user/windows/process/sched/tests/services_tests/file_attributes_tests/validation.rs"
+  ],
+  "full-process-objective-complete": false
+}

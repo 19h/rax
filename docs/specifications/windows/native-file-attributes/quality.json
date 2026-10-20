@@ -1,0 +1,87 @@
+{
+  "scope": "Read-only native file metadata queries; no complete userland claim",
+  "full-process-objective-complete": false,
+  "native-kernel": "Windows10.0.29683 ARM64; four ABI observations, not independent physical x64 kernel coverage",
+  "root-scope": "Retained Assist ABI184 archives/consumers; root snapshot8b7067b8 used ABI273 and its separate CI evidence. No complete current-root product/package claim.",
+  "known-limitations": [
+    "legacy metadata-only HLE handles without a retained host File keep their existing pathname identity limit",
+    "unselected host paths remain denied when host_filesystem is false",
+    "NT device/UNC/stream names and unrepresentable host metadata remain explicit frontiers"
+  ],
+  "observed-frontier": "NtOpenFile (0x33)",
+  "focused-cases": {
+    "macos": 14,
+    "linux": 14,
+    "windows": 14
+  },
+  "full-library": {
+    "macos": {
+      "passed": 8116,
+      "failed": 0,
+      "ignored": 2
+    },
+    "linux": {
+      "passed": 8110,
+      "failed": 0,
+      "ignored": 2
+    },
+    "windows": {
+      "passed": 7578,
+      "failed": 5,
+      "ignored": 2
+    }
+  },
+  "capi-each": 183,
+  "integration": {
+    "macos": 544,
+    "linux": 544,
+    "windows": 4
+  },
+  "source-files": 25097,
+  "source-bytes": 1835033720,
+  "owning-inputs": 3838,
+  "native-observations-latest": 3408,
+  "native-profiles": [
+    "arm64",
+    "x64",
+    "x86",
+    "x86-laa"
+  ],
+  "compiled-red": {
+    "passed": 0,
+    "failed": 3,
+    "receipt": "file-attributes-baseline-epoch2.json"
+  },
+  "windows-known-failures": [
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_imm_index_at_width_with_flags_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_all_ones_with_flags_as_movn_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_with_flags_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_with_flags_and_low_byte_index_guards",
+    "smir::lower::aarch64::tests::vector::lowers_vector_fp16_arithmetic_runtime"
+  ],
+  "rejected-iterations": [
+    "baseline epoch1 compiler failure before tests",
+    "producer1 crosses its own NOACCESS observation window",
+    "producer5 lacks advapi32 import library and never runs",
+    "producer7 supplemental roles144..162 have widened root-handle context; producer8 corrects it",
+    "macOS/Linux linked-controller epoch1 wrong cache path; successful epoch2 replaces that automation result",
+    "Source epoch1 broad/linked/ordinary results are prototype measurements only; native-v8 matrix review exposed the WoW64 four-byte alignment error. Compiled red0pass/1fail and corrected epoch2 supersede publication proof.",
+    "Source epoch2 broad and linked gates are prototype measurements: compiled independent fault-pair regression failed, then final source epoch3 corrected header/character/security/QoS ordering."
+  ],
+  "whole-current-root-products-validated": false,
+  "independent-physical-x64-kernel": false,
+  "source-epoch": 3,
+  "native-observations-v8": 1392,
+  "paired-native-observations": 1848,
+  "compiled-pair-calls-per-host": 1386,
+  "public-projections": {
+    "streams": 155,
+    "bindings": 157
+  },
+  "windows-source-bytes": 1835033542,
+  "windows-cargo-configuration": {
+    "original-bytes": 552,
+    "native-bytes": 374,
+    "native-sha256": "9f80616d633d948feeba5b201bfa4fe98c8fd736f3f48469b6481279584d8f4c"
+  }
+}
