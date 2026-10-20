@@ -21,13 +21,5 @@ warning: "stdcall" is not a supported ABI for the current target
    Compiling linux-loader v0.13.2 (https://github.com/19h/linux-loader?rev=f745b555942c4e840a784bca61e6f3976d101960#f745b555)
    Compiling rax v0.1.0 (C:\Windows\Temp\assist-native-rax-20261010\assist\vendor\rax)
 warning: `vm-memory` (lib) generated 1 warning
-warning: unused import: `self`
-  --> src\claude_process\windows.rs:13:14
-   |
-13 |     thread::{self, JoinHandle},
-   |              ^^^^
-   |
-   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
-
 warning: `assist-rs` (lib) generated 1 warning (run `cargo fix --lib -p assist-rs` to apply 1 suggestion)
     Finished `dev` profile [unoptimized + debuginfo] target(s) in 1m 43s

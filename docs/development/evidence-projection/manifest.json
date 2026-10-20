@@ -1,0 +1,2827 @@
+{
+  "base": "6f2148297acc1e8106600306cc092b08207b80d2",
+  "identity-contract": "original-checkpoint-with-explicit-public-projections",
+  "projected-streams": 147,
+  "files": [
+    {
+      "path": "docs/specifications/windows/native-access-check/validation/windows/assist-native-access-check-final-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 1584,
+        "sha256": "03b72e160f0c85cde7dd8c93c2e09a772820b5068e0cd414075e1677ddc24e65"
+      },
+      "published": {
+        "bytes": 1361,
+        "sha256": "26aba10a63af298d1e229595a6a521ca7b1692ddaa7f33d89d829028fc1cd065"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-access-check/validation/windows/native-access-check-final-after-artifacts.jsonl",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 130191,
+        "sha256": "ea4071e303e362841262465fbb4c7b6af8a83337601bb9ad8fcbad1d67119949"
+      },
+      "published": {
+        "bytes": 127639,
+        "sha256": "988ccbbb001ebd759de5d73e80cbde5be35a15855cc0a03cb5510e37959749e2"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted; all compiler-artifact and remaining records retain exact bytes/order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-allocate-ex/assist-native-allocate-ex-numa-final-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 1584,
+        "sha256": "28925099e8d28d79654a27aa98d9a5eef47b0959aa766d061cd427d6548a8aea"
+      },
+      "published": {
+        "bytes": 1361,
+        "sha256": "25dbdab9e737412bd08fa339f871ca0419f708e0eabba969ad66b38e66fcec79"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-allocate-ex/native-allocate-ex-numa-final-artifacts.jsonl",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 124511,
+        "sha256": "939e56d84a8936e8013ed45cea4ae3fd3656efc84194b81dbf0bc369d5649b5b"
+      },
+      "published": {
+        "bytes": 121959,
+        "sha256": "fcabc231440b751ce279800b56db0adb9904cc28bfe4e1a27e583cf94f5a7b4f"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted; all compiler-artifact and remaining records retain exact bytes/order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-apphelp-cache/assist-native-apphelp-owned-final-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 1637,
+        "sha256": "02c0f43b1aed2cbead0dcf89f93fe5853100e5142b87f9f7009167b2783a735c"
+      },
+      "published": {
+        "bytes": 1414,
+        "sha256": "edd980582f0148ab4e531b9244efeef77c4862ed2ad1f9be9787bddb8dc70cec"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-base-named-objects/validation/assist-native-base-final-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 1585,
+        "sha256": "ea1a2387e134b148a5bf8b07978374dbbcd116c3881e2199e4fc87e68e52e1c1"
+      },
+      "published": {
+        "bytes": 1362,
+        "sha256": "54c4dc1c97e08b6719f2efc8e18b7e85a7db569ab701643096eaaeeee5e46b17"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-base-named-objects/validation/native-base-final-after-artifacts.jsonl",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 130191,
+        "sha256": "b04f45d19e6a6ac6cdad7a02100967d5f5890373ef6af6333f0cde7514edf6cd"
+      },
+      "published": {
+        "bytes": 127639,
+        "sha256": "d28c2eb745ceece3aa4f816d58413fe4f7b0bb5f2d8ac20c16cecfc2fefb01c6"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted; all compiler-artifact and remaining records retain exact bytes/order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-bootstrap/assist-native-bootstrap-owned-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 1585,
+        "sha256": "58521185ba90adbc0852df83c5911cff74e0395a0d3caaf7c4576a33077c5745"
+      },
+      "published": {
+        "bytes": 1362,
+        "sha256": "843ba51fe60488730aa65b5e186e5b0b7ec6d334b45a0e969b92bc174d418467"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-bootstrap/native-bootstrap-after-artifacts.jsonl",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 124511,
+        "sha256": "473a003f94d96c50f4e651c5b3c50bcb3032552f7808cab13b030fb70b03ecf5"
+      },
+      "published": {
+        "bytes": 121959,
+        "sha256": "6e29dc4c81faa22516fb8e0dc397ae7972e91bc8de3e1684ba5b25b0850c58ef"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted; all compiler-artifact and remaining records retain exact bytes/order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-console-owner/validation/windows/assist-native-console-owner-epoch2-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 1586,
+        "sha256": "a1e68f2d2b804d2a50897fe005523f3a9890ffd171109ed7d919cc7a237ad67e"
+      },
+      "published": {
+        "bytes": 1363,
+        "sha256": "564482826aa6e5369eac10df863a2a83a8ea6d4df0790cab9a6038c011d1cf6f"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-continue/validation/continue-native-owning-epoch1-artifacts-after.log",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 132251,
+        "sha256": "c2cb0044dd23adac30de25498640949394ca39a816955011f14c46f88a9354b3"
+      },
+      "published": {
+        "bytes": 129699,
+        "sha256": "8f0e46e5f2b8942918b6677b526ffbf51521a56079366a31f192e9727e362930"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "All compiler-artifact records and non-private output bytes retain their order and exact contents. Original streams remain in the private cache and prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-continue/validation/continue-native-owning-epoch1-artifacts-before.log",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 132536,
+        "sha256": "6a17f600178996860449260d3a77a58657f7fc07271cde909994d42634329de4"
+      },
+      "published": {
+        "bytes": 129984,
+        "sha256": "606eb6c21c81e3e04224ef01b5c96b64d78d8868929727a512451390b3c68fd4"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "All compiler-artifact records and non-private output bytes retain their order and exact contents. Original streams remain in the private cache and prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-continue/validation/epoch3/continue-native-owning-epoch3-artifacts-after.log",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 132251,
+        "sha256": "d30874116fc14f91982367a18562c43d19c80689d574bd71b458bc7c5abf3873"
+      },
+      "published": {
+        "bytes": 129699,
+        "sha256": "fabdd333bf71429613354c7fbff6df2da96c9b9af5769e40f0f345274311f43a"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "All compiler-artifact records and non-private output bytes retain their order and exact contents. Original streams remain in the private cache and prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-continue/validation/epoch3/continue-native-owning-epoch3-artifacts-before.log",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 132536,
+        "sha256": "275b8017ec06d8403285b8ba08de6255210d9255df007ad81c2487a27d313544"
+      },
+      "published": {
+        "bytes": 129984,
+        "sha256": "2e310169724abe5a5af755bdee8b5eec2b64348e9a56126da8cfdb2f12dd8383"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "All compiler-artifact records and non-private output bytes retain their order and exact contents. Original streams remain in the private cache and prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-cookie-owner/validation/windows/assist-native-cookie-owner-final-restored-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 1584,
+        "sha256": "9788c491ae78db63ccbf5cc2cbfd7c50646268ecd55b3ddbcef8e89f8d252e36"
+      },
+      "published": {
+        "bytes": 1361,
+        "sha256": "3596b97cc875fe1dee85ac71cf128ed3451f7bde73411f6b0e9c1bce7c53f907"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-cookie-owner/validation/windows/native-cookie-owner-final-restored-after-artifacts.jsonl",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 130191,
+        "sha256": "5c07da6d79937d621cb7aaaf52635c3f17746639a634532c16777b9477170f81"
+      },
+      "published": {
+        "bytes": 127639,
+        "sha256": "c0e5a38648c90a7d4a3fa0b4f3dc0dd775df653c900bc756922992cc8914cd69"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted; all compiler-artifact and remaining records retain exact bytes/order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-csr-connect-model/validation/windows/assist-native-csr-model-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 1584,
+        "sha256": "5374d751a5f2712ae3a63a321d600067572cc656dc3657b9cfb568349c9b7ab8"
+      },
+      "published": {
+        "bytes": 1361,
+        "sha256": "c0bea2030daab0c9c8508283298fffbd865074ce44711df6652e602691570931"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-dynamic-function-table/validation/assist-native-dynamic-final-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 1584,
+        "sha256": "180892e95648a07d2334c8417500e247665ccf722c762178d9b6e66d4462dc5d"
+      },
+      "published": {
+        "bytes": 1361,
+        "sha256": "6bd0479e6a4386ddde527e3adbd5e11350138551fcdee53f7aa28991160dee81"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-dynamic-function-table/validation/native-dynamic-final-after-artifacts.jsonl",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 130191,
+        "sha256": "4aa77f5c4c7061d3bdc1e8cf0f531c280746b9e1422a3543e0fd553d2664d3df"
+      },
+      "published": {
+        "bytes": 127639,
+        "sha256": "78311f0d56b0d634cfdd8db1a9fc1197b16d4e5505def7cd33bc1189d0c43813"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted; all compiler-artifact and remaining records retain exact bytes/order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-etw-notification/assist-native-etw-notification-owned-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 1636,
+        "sha256": "bd605fe471e5695b2c9a634e88d6518474bccdce624de036b00df060aa0bb8ca"
+      },
+      "published": {
+        "bytes": 1413,
+        "sha256": "64e4d42c943d4498a4e5de4c9312cdb0cebe9575fc6d2a102208074c2d754cbd"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-etw-notification/native-etw-notification-after-artifacts.jsonl",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 130191,
+        "sha256": "f158b02f1f71cf965520d17af9375354d5ed3f6a2756766f9addc5da6d97440e"
+      },
+      "published": {
+        "bytes": 127639,
+        "sha256": "fc503b4e3b8a1eb4cd9228c02b885f9c538906370d079057d23493856727ba4d"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted; all compiler-artifact and remaining records retain exact bytes/order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-etw-provider-traits/assist-native-etw-provider-traits-owned-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 1636,
+        "sha256": "b27a3d8be84963899c65a92897bcb99e0ea09d70cfe09ba2010a91a942cf26b8"
+      },
+      "published": {
+        "bytes": 1413,
+        "sha256": "561c2b97059d92f7f9d9af5dfa313a9ae55960b269bea578eccf73c92aaeaf97"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-etw-provider-traits/native-etw-provider-traits-after-artifacts.jsonl",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 130191,
+        "sha256": "0ae467ec5962f17e5de602895d87c9e5a60e18489145b685609d197e9180f80a"
+      },
+      "published": {
+        "bytes": 127639,
+        "sha256": "84b1f14d3e25208f28095c07e98b7cfddb9036b8a33890f5ec153ebcd4e3b0dc"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted; all compiler-artifact and remaining records retain exact bytes/order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-etw-register-guids/assist-native-etw-register-guids-owned-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 1584,
+        "sha256": "cc913ffa2b4fedb830ec74688299e3cb8dce7beff2ed1f5b9dc4aec7f50c4dc2"
+      },
+      "published": {
+        "bytes": 1361,
+        "sha256": "702f02508458448e2e66562038768bb6104dc3bdd87c1f0b3168f1adf173dddb"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-etw-register-guids/native-etw-register-guids-after-artifacts.jsonl",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 130191,
+        "sha256": "66fa23d4ac14d9c576d7825e7c4c2c9e204e9e12aa2a04635db8f6a21636cbb8"
+      },
+      "published": {
+        "bytes": 127639,
+        "sha256": "233acefbb94271e9c42b1371ca489c21aa2152a6a1e3d69c86d30e1ccb3f2ed6"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted; all compiler-artifact and remaining records retain exact bytes/order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-filesystem-registry/validation/filesystem-native-owning-epoch1-artifacts-after.log",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 127707,
+        "sha256": "f6e476126fb13b59635b47c4274433008a42902ae90ff8f814d2b26e95b34f5a"
+      },
+      "published": {
+        "bytes": 125155,
+        "sha256": "284a86081583f5862e449199db13fccf4b4b8c4eb583d41ab253ade5d89bb65a"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "All compiler-artifact records and non-private output bytes retain their order and exact contents. Original streams remain in the private cache and prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-filesystem-registry/validation/filesystem-native-owning-epoch1-artifacts-before.log",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 130767,
+        "sha256": "3ecffa877702ec4272b9db6742f5a49fdedfc9fef198af3fb52fd0c848070f47"
+      },
+      "published": {
+        "bytes": 128215,
+        "sha256": "4f92db91592f4f3379c9204505957ec382cdac3d52cf3c8382f6c99fc708e9b1"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "All compiler-artifact records and non-private output bytes retain their order and exact contents. Original streams remain in the private cache and prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-hypervisor-page/assist-native-hypervisor-owned-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 1584,
+        "sha256": "1693cf0cc04bd26007ac0af1c925cb210f91ede42a3484b524d0c3a18b5f740b"
+      },
+      "published": {
+        "bytes": 1361,
+        "sha256": "b7675efccca8f32c5607f17f77c6f5365e90c8616f74118e6519daa4ddfdba39"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-hypervisor-page/native-hypervisor-after-artifacts.jsonl",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 124511,
+        "sha256": "6d8b0eccfd6f0e557b21b1ce1b699795239dcbea7cf3a4112a6efdbcb069d450"
+      },
+      "published": {
+        "bytes": 121959,
+        "sha256": "af19c551d6e6167e1b14d287d980ea684d401638ddf8da20b5fc96826f5231bd"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted; all compiler-artifact and remaining records retain exact bytes/order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-hypervisor-page/native-hypervisor-before-artifacts.jsonl",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 124511,
+        "sha256": "96eeecfdbf715516baa67ee7ea6bce8e6343e393de05c6a187a71e8e68e470f6"
+      },
+      "published": {
+        "bytes": 121959,
+        "sha256": "ac7ccc7e6152dc6c02468a2a2440982b34dc1b7e87e3f27143952eeb08010806"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted; all compiler-artifact and remaining records retain exact bytes/order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-ifeo-registry/native-ifeo-final-windows-source-transfer.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 15786,
+        "sha256": "239544a2468264fcf9072d87110bd7d6b7b5399e458c90df833c478b13cf9f7f"
+      },
+      "published": {
+        "bytes": 15555,
+        "sha256": "1348c8c2b457a09f24d6cc16a18df5789567d44f5a4623af5d0e2fe143ddd99d"
+      },
+      "withheld-records": [
+        {
+          "bytes": 231,
+          "sha256": "3713215821935f045e7f1bc4682b62a8b5391ec6b9f6a1a372e040917376dcf0"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-image-extension-owner/validation/assist-native-image-extension-final-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 1584,
+        "sha256": "78f5839da0ac177f278ca2bfecb8cec238ffa98b6448b56142f06e27090c4394"
+      },
+      "published": {
+        "bytes": 1361,
+        "sha256": "c3c2426f19ee8432a15daf59282cf65071710625123e5dbcd780d6803c13a6ec"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-image-extension-owner/validation/collected-native-image-extension-final-after-artifacts.jsonl",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 130191,
+        "sha256": "9fb7c972ac2c0624c01f2ad5db914b43853e3a6c9eaa39e9a18d307b587cc4d5"
+      },
+      "published": {
+        "bytes": 127639,
+        "sha256": "2f8a95902f5a94bd40d1f6f59847c63a5dd06bc32b6212c63196f791dd90ef73"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted; all compiler-artifact and remaining records retain exact bytes/order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-image-extension/assist-native-image-extension-owned-final-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 1585,
+        "sha256": "a7305e3833792b0761d80c45339a2c4da9f5d5952df2f99f8413c04b080de85b"
+      },
+      "published": {
+        "bytes": 1362,
+        "sha256": "58ca278e78d1e274c4747f67c7d6a9d6b89d5e7dfe17cf5ce720339f786dbf19"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-image-extension/native-image-extension-final-after-artifacts.jsonl",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 130191,
+        "sha256": "e4310711f60fe9e9fccb0a2ae057991ceb378bd4ef4d93ea424fec96b4087121"
+      },
+      "published": {
+        "bytes": 127639,
+        "sha256": "56527e4a7225e9b4adcaf96cef76c910105820d546f97a01afae96f0be97ddf9"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted; all compiler-artifact and remaining records retain exact bytes/order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-io-completion-create/assist-native-io-completion-owned-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 5158,
+        "sha256": "8696b3be6a7b5934d966eece1805fad9300f8cb38b8c3d9faf0edf837f83c587"
+      },
+      "published": {
+        "bytes": 4935,
+        "sha256": "23747b5bf7a8ba65ab1cdc22bd4cbbf74f740c120e946e3d4898a799869fd1ad"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-io-completion-create/native-io-completion-after-artifacts.jsonl",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 130191,
+        "sha256": "b0e40f19b31099ac6acc41f098a950226d78a28d6ef2bd4f33056fed755808b1"
+      },
+      "published": {
+        "bytes": 127639,
+        "sha256": "29b7ddda43ebc758948d3e8eef0045d55af0d73b78a06507bd6d6123c50fd302"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted; all compiler-artifact and remaining records retain exact bytes/order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/validation/loader-native-owning-epoch3-artifacts-after.log",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 127707,
+        "sha256": "d8412c14b796a9ca952a8d8bc7db77495147b4c0b9f3322101aa47a4361428b2"
+      },
+      "published": {
+        "bytes": 125155,
+        "sha256": "af534afac150736ce59f0fa23bdc2c9c6995f22691c82e39cc830c410c58dccf"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "All compiler-artifact records and non-private output bytes retain their order and exact contents. Original streams remain in the private cache and prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-loader-registry/validation/loader-native-owning-epoch3-artifacts-before.log",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 130767,
+        "sha256": "39fd431944b55ee9f5f5bf4673a9e0cf38c2c5d9c0d4040599116cef6185e5f6"
+      },
+      "published": {
+        "bytes": 128215,
+        "sha256": "0ec37f6a0c4ed96e6a4836f7ef35a52807d04c4bfdbfafc930587e96a93d5224"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "All compiler-artifact records and non-private output bytes retain their order and exact contents. Original streams remain in the private cache and prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-mutant/validation/assist-native-mutant-final-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 1584,
+        "sha256": "35e8142bfcb3df9a4ab729fb631f6bd99709ea3951581185b1557f17d185cf79"
+      },
+      "published": {
+        "bytes": 1361,
+        "sha256": "e0ae79ba2ca932d2e341d9ce3d16a18efe295d165e1f9e0a0963414bbc64af81"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-mutant/validation/native-mutant-final-after-artifacts.jsonl",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 130191,
+        "sha256": "76f53b96efdc13b01e2f99357e094d8f39cd774660efb29d34f9d10d8a26e65c"
+      },
+      "published": {
+        "bytes": 127639,
+        "sha256": "78a48e52c2bae61e998f848b0d43457d33a8e95da3235773a0da80cdfc4f9d08"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted; all compiler-artifact and remaining records retain exact bytes/order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-namespace-diagnostics/check_validation.py",
+      "kind": "projection-aware-checker",
+      "original": {
+        "bytes": 11183,
+        "sha256": "6470c88839de35f1659d1ac5a4e176a8d555cc4a001b6c5b86039d21b85da785"
+      },
+      "published": {
+        "bytes": 11446,
+        "sha256": "c9f6bee3e3435f941fe82e10ef77a40693f25b92cb087c8fd85e81fb12cf5ad6"
+      },
+      "preserved-semantics": "Source/receipt/test/native checks unchanged; declared exact public projections resolve to original recorded identities. New adapter/table live outside historical proof envelopes."
+    },
+    {
+      "path": "docs/specifications/windows/native-namespace-diagnostics/validation/namespace-native-owning-epoch1-artifacts-after.log",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 132251,
+        "sha256": "6df7c60995cf8b351206b73469886a2b04a8fdb472fbf85dcee183cb21808512"
+      },
+      "published": {
+        "bytes": 129699,
+        "sha256": "f4b01926f8e67a33691c8cbdda54f2489f26c8edbbf0ba8b3b3ee927797a917d"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "All compiler-artifact records and non-private output bytes retain their order and exact contents. Original streams remain in the private cache and prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-namespace-diagnostics/validation/namespace-native-owning-epoch1-artifacts-before.log",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 132536,
+        "sha256": "03e2abf70461e933f5b54abed2e91588773f3dde3730cb01236f8dbc9a054659"
+      },
+      "published": {
+        "bytes": 129984,
+        "sha256": "239889de4162c9d4a9ced0b79db90eb639f87ec6dda85a8698b18095f7ba003e"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "All compiler-artifact records and non-private output bytes retain their order and exact contents. Original streams remain in the private cache and prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-nls-initialize/validation/windows/assist-native-nls-initialize-epoch4-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 1584,
+        "sha256": "bb786ea5febe737acc3980fa3ee18cebc43fd26612b0997783c5f6a8d08dbf9f"
+      },
+      "published": {
+        "bytes": 1361,
+        "sha256": "927b3d08cef5bb385fb584e5abafd11c1f470bb40d3605222200a0b5138bfe38"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-numa-map/assist-native-numa-owned-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 1584,
+        "sha256": "a3c687d44934de2bdd8429aebd177b5dbf7259465c706348f77c55b6ad0b54f6"
+      },
+      "published": {
+        "bytes": 1361,
+        "sha256": "44eaa9bf0b4aeb9b36ab0220a92ff8f30177d449b947a8ac05d21bb0158b4fe1"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-numa-map/native-numa-after-artifacts.jsonl",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 124511,
+        "sha256": "b9b8476524bfa91bbe548e05bf20ae5fad8fe9e3ccc1f579e129de22fab365fd"
+      },
+      "published": {
+        "bytes": 121959,
+        "sha256": "f22125b28da882047a922e93c8066a4055c26c4d47026016b9ce7dc6aa537e47"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted; all compiler-artifact and remaining records retain exact bytes/order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-numa-map/native-numa-before-artifacts.jsonl",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 124511,
+        "sha256": "6d8b0eccfd6f0e557b21b1ce1b699795239dcbea7cf3a4112a6efdbcb069d450"
+      },
+      "published": {
+        "bytes": 121959,
+        "sha256": "af19c551d6e6167e1b14d287d980ea684d401638ddf8da20b5fc96826f5231bd"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted; all compiler-artifact and remaining records retain exact bytes/order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-numa-node/assist-native-numa-node-owned-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 1584,
+        "sha256": "a07b7677fa3e33c40dffddd10a58ce5c7640a670f3ed8f129c03e10389c9be0c"
+      },
+      "published": {
+        "bytes": 1361,
+        "sha256": "6e904b43b6dd33f5f8a64d706a82b6455db14297611110417650abd65e71d0ef"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-numa-node/native-numa-node-after-artifacts.jsonl",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 124511,
+        "sha256": "86718b4c8f7e6041240438cebf4fec917ee77d8c1b345db3705428098801a6b5"
+      },
+      "published": {
+        "bytes": 121959,
+        "sha256": "e4e06cc45a24919a9f1a09ee309099345d896c8af7a55f346bdbde9907edf0e2"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted; all compiler-artifact and remaining records retain exact bytes/order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-object-directory-open/assist-native-object-directory-open-owned-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 1584,
+        "sha256": "f48c27b2d7deee5601378efe9574ac2844bd3294c5aea2b1c14a6334c6117a3b"
+      },
+      "published": {
+        "bytes": 1361,
+        "sha256": "e36594e55f17c345acee81601fe92d377064db9ef40c3f1b4ba824a7cb6a9764"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-object-directory-open/native-object-directory-open-after-artifacts.jsonl",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 130191,
+        "sha256": "b74cbe1e2b5c0455604ee60732273c3d3f5b37b8c92d38d7017174b2b3bd9c54"
+      },
+      "published": {
+        "bytes": 127639,
+        "sha256": "e15e9a1e701ff1af83d4eb1d7cce66ab1cc83bda2679f86c64d0d30c21a4ccb3"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted; all compiler-artifact and remaining records retain exact bytes/order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-object-reparse/validation/assist-native-links-final-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 1584,
+        "sha256": "7b6196c325f8a9697c58b2a9151287800b29ab0f51b45f8fea3bf024712edc59"
+      },
+      "published": {
+        "bytes": 1361,
+        "sha256": "58d4a021f70528825e207a366cfebb57e7c85702e644d97fe48ccb64069bcac5"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-object-reparse/validation/native-links-final-after-artifacts.jsonl",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 130191,
+        "sha256": "b5fbb6592f61917ec9614d144d52bd975b75d93a1cad79346fd4063d362b7e68"
+      },
+      "published": {
+        "bytes": 127639,
+        "sha256": "5845660dc78faacb56e85aaf4b408b54dfe719f2b66b24e21096cf2c7f17c264"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted; all compiler-artifact and remaining records retain exact bytes/order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-performance-counter/assist-native-performance-counter-owned-final-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 1584,
+        "sha256": "424e35f3ea6528425d8ab5af1dd032e7aa3308f3e7d6dafdf1dabe74fc0bfbf9"
+      },
+      "published": {
+        "bytes": 1361,
+        "sha256": "88ff5dc87b04af8e2968395722541f91957e33171f00791b136e5863af1c368c"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-process-parameters/assist-native-parameters-final-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 1641,
+        "sha256": "d8a5fc8d0da56490ce96632dc3fbac21c1338f99d7878a724634ee859cab96e4"
+      },
+      "published": {
+        "bytes": 1418,
+        "sha256": "115cdee65bd20986a0aa5c571d1f4ec9dc51932fd4c3f64b62eb21ce0021fbd2"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-process-parameters/assist-native-parameters-recovered-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 1584,
+        "sha256": "8fc898932360c5bd6f2897a326cba04592a8683f285f4068c19645f7c7eab9a5"
+      },
+      "published": {
+        "bytes": 1361,
+        "sha256": "fce66b5bc8fb070544ad7717dc99bb348e1c984eee05dc165e77cc87df80e4cd"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-process-parameters/assist-native-parameters-repaired-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 42474,
+        "sha256": "0486fe29e201a2cdf406bb2ac680bf56130c85d5ee98e2c986e143776245a876"
+      },
+      "published": {
+        "bytes": 42251,
+        "sha256": "6bb35ba20d81a9738657784536d80620e43e4ba7cbe7f5ee9d513ae902a62dc8"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-process-parameters/native-open-partition-trace-artifacts.jsonl",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 124511,
+        "sha256": "4c11cf64cca2e4db72e45b0cdc0acd089093502213e409e8d996b894d6bd18bc"
+      },
+      "published": {
+        "bytes": 121959,
+        "sha256": "df2ad257d7726938c6f9842a6dabf03483656e51fdb10d6f24e52b22d8d76e81"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted; all compiler-artifact and remaining records retain exact bytes/order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-process-parameters/native-parameters-recovered-artifacts.jsonl",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 124511,
+        "sha256": "30854dfcd75a67d664343efd4206e9d052f3696beaa46760468c777bc6ff672a"
+      },
+      "published": {
+        "bytes": 121959,
+        "sha256": "5caf95c6611e8443b84408003eaef5e1cf3aa68a1c7fa54dc9baa3939c72ed6b"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted; all compiler-artifact and remaining records retain exact bytes/order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-process-parameters/native-partition-descriptor-watch-artifacts.jsonl",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 124511,
+        "sha256": "a4a38459d25378089ac0207e29e0fdea12922dc656f8fbdb090e21f68e5a8442"
+      },
+      "published": {
+        "bytes": 121959,
+        "sha256": "364289c5bbc7c0ebf75e2319f62f0de440003b50b4abc56b8509883c224894db"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted; all compiler-artifact and remaining records retain exact bytes/order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-process-tls/assist-native-process-tls-owned-final-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 1584,
+        "sha256": "19412549be75baf382acf8ee9c3d88d3630d45ea5a9d706dabd50fd23358fe1d"
+      },
+      "published": {
+        "bytes": 1361,
+        "sha256": "0567bef5c2fde41c5d45ddf79185b5f1b4a8f9a79749d6e61d26b5db7f950c6b"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-process-tls/native-process-tls-final-after-artifacts.jsonl",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 130191,
+        "sha256": "ba28c17efa5e711298b5e996fca2be91438a98df1850c58d396a20850987fb96"
+      },
+      "published": {
+        "bytes": 127639,
+        "sha256": "2f4fe49340bf492de15816430200b28b307e5405250c4db42ee9d7c8da3aecfd"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted; all compiler-artifact and remaining records retain exact bytes/order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-process-token-open/validation/assist-native-token-final-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 1584,
+        "sha256": "60b2355da5871ee429e36f80581b753612bcf72d55f3aacb0ae63085a45a9dd4"
+      },
+      "published": {
+        "bytes": 1361,
+        "sha256": "3e594aaf526f68fe8ad5602908c1ddcc8a681850fb8df3860fa054acdac56b64"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-process-token-open/validation/native-token-final-after-artifacts.jsonl",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 130191,
+        "sha256": "fdeb232214d1f47c0a8ecb019027aef1993e78bd45bd98d0b5bc4b99ccd6879c"
+      },
+      "published": {
+        "bytes": 127639,
+        "sha256": "adaaf8d73221cd498046fc5f2e9c6640011b1b2b86a7f6f63fc98151abf61937"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted; all compiler-artifact and remaining records retain exact bytes/order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-processor-groups/assist-native-topology-reviewed-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 1584,
+        "sha256": "65465a72398e90c403908834eff3b17e0a1ae9aa14cd3c07d7a289688f98db27"
+      },
+      "published": {
+        "bytes": 1361,
+        "sha256": "0692e4346815f162a0e2d21c19da8bc85e5f1d8051f859e11618262e760805a5"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-processor-groups/native-topology-after-artifacts.jsonl",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 124511,
+        "sha256": "96eeecfdbf715516baa67ee7ea6bce8e6343e393de05c6a187a71e8e68e470f6"
+      },
+      "published": {
+        "bytes": 121959,
+        "sha256": "ac7ccc7e6152dc6c02468a2a2440982b34dc1b7e87e3f27143952eeb08010806"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted; all compiler-artifact and remaining records retain exact bytes/order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-processor-groups/native-topology-before-artifacts.jsonl",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 124511,
+        "sha256": "92618a31bf3de041a0252a640243535ecc3e4a1205ae805730f55a803e00f949"
+      },
+      "published": {
+        "bytes": 121959,
+        "sha256": "3f8859151883d3ea9707f3808b567ea7dda1d0a2c2d3fbbceea1782fab984e75"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted; all compiler-artifact and remaining records retain exact bytes/order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-region-information/check_validation.py",
+      "kind": "projection-aware-checker",
+      "original": {
+        "bytes": 17178,
+        "sha256": "3542399b7fa773c3b68c35fbdcf717fd6d87a23d5648876395b9409a01f88b01"
+      },
+      "published": {
+        "bytes": 17441,
+        "sha256": "0d096d6cf4b7a2fc11be9fc8ee4ea8ecaf9fe545376bb5a64a06030ad0b8ee6a"
+      },
+      "preserved-semantics": "Source/receipt/test/native checks unchanged; declared exact public projections resolve to original recorded identities. New adapter/table live outside historical proof envelopes."
+    },
+    {
+      "path": "docs/specifications/windows/native-region-information/validation/region-native-owning-epoch1-artifacts-after.log",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 132251,
+        "sha256": "360217d692d7a723904656666d6550d0e203f158c4f8a06cfbf2e696bce20d21"
+      },
+      "published": {
+        "bytes": 129699,
+        "sha256": "4ecdb89ecfc6ce92720425c5e5c16c647bf7ad77b6577a538bea9811bcdb08b9"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "All compiler-artifact records and non-private output bytes retain their order and exact contents. Original streams remain in the private cache and prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-region-information/validation/region-native-owning-epoch1-artifacts-before.log",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 132536,
+        "sha256": "e6b3f620a8d2c68555857bb375f1bc425ad2f8855089c5e8a77e7c473071a975"
+      },
+      "published": {
+        "bytes": 129984,
+        "sha256": "4908f109d67b603b3bb121c084a707ad4b6d51ef88246d6a5aebdbe877a12405"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "All compiler-artifact records and non-private output bytes retain their order and exact contents. Original streams remain in the private cache and prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-scheduler-shared-data/assist-native-scheduler-shared-owned-final-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 1584,
+        "sha256": "73111c3589ce299ea8f496257f2d6625a71f119e66cb8367f9dbd4f1a58beaf6"
+      },
+      "published": {
+        "bytes": 1361,
+        "sha256": "45abe6c45a2e63bacabcedab27146b0feab7a890779b133ebbf66af2318a7d27"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-scheduler-shared-data/native-scheduler-shared-final-after-artifacts.jsonl",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 130191,
+        "sha256": "947d10f1cef277799e52380ff1c373cca1e6803976eb4e1927931d371b62fa1c"
+      },
+      "published": {
+        "bytes": 127639,
+        "sha256": "eae47b5132c44523f1041abe1864750fa7d8fa0bfe48f675b79d7c6d9f6ee511"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted; all compiler-artifact and remaining records retain exact bytes/order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-scheduler-thread-slot/assist-native-scheduler-slot-owned-final-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 1584,
+        "sha256": "e9d5d945c0b60f3275509ee318596c1ccca131d110c829787d3c151195137535"
+      },
+      "published": {
+        "bytes": 1361,
+        "sha256": "ee4c1faca426b5fe476871b2e4da9863cb8f2513101ef124157954de071c5169"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-scheduler-thread-slot/native-scheduler-slot-final-after-artifacts.jsonl",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 130191,
+        "sha256": "28da358ab1bff1808d7be6545f5727c9ad02305054b0868293c9689c8421af11"
+      },
+      "published": {
+        "bytes": 127639,
+        "sha256": "f9fa31427977b70e79d73426d2fe731c3f99ac7cbbcb35cec6d4f32f9b755e25"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted; all compiler-artifact and remaining records retain exact bytes/order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-section-create/validation/assist-native-section-create-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 1585,
+        "sha256": "9d30cdaf870c82c5bedb933f05089f63ded6f964163b5cb5ae68f000ff0b756d"
+      },
+      "published": {
+        "bytes": 1362,
+        "sha256": "0b2f11255b66c0d3393550f58664647f80406ac6e28a6cbbfdbf8781c165a3d0"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-section-create/validation/native-section-create-after-artifacts.jsonl",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 130191,
+        "sha256": "0dd2c2b32fa6007c51fb09ebb8dcf4cffdd7353714d4f54414edd1cd22979107"
+      },
+      "published": {
+        "bytes": 127639,
+        "sha256": "41f1533468ae2a95b9bcc1a9395f53b6a164f0eea75354e9f32110a1b6308009"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted; all compiler-artifact and remaining records retain exact bytes/order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-section-map/assist-native-section-map-map-owned-final-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 1302,
+        "sha256": "5391c742ea177026ae8266a06fede4815225802fb8ee5c6c8b920e63fb20da55"
+      },
+      "published": {
+        "bytes": 1079,
+        "sha256": "74a1baf8ad8cdd59da012913bc41d6da3674bc7258a6704aa64640b58454d001"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-section-map/native-section-map-final-after-artifacts.jsonl",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 130191,
+        "sha256": "00ccc451da8fef119ecbb02171daf58fc23af12a0c26a8359d541de97c38dfd3"
+      },
+      "published": {
+        "bytes": 127639,
+        "sha256": "83ee6362d244cc01157b7564703aa01ebdbb80f6a4a465783f313e0c982ed77d"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted; all compiler-artifact and remaining records retain exact bytes/order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-section-map/upstream-integration/assist-native-section-map-map-owned-final-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 1584,
+        "sha256": "d0fda054dcaa804c148141b71e06b3aa0b8510b559388a8e230f32116c76c4f0"
+      },
+      "published": {
+        "bytes": 1361,
+        "sha256": "3c23012f64be2975a6cfb38e817f43b4bfdc4132ed9f2fc40e97267d92b8fbb9"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-section-open/assist-native-section-owned-final-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 1585,
+        "sha256": "a68735624e951f3757e7803a7333bbb990f7e808e9633d01d45140f54e1d7c91"
+      },
+      "published": {
+        "bytes": 1362,
+        "sha256": "38a072a0e1a3708768023c086ec6a2851adbd65bc52a4be41ea9c5520a591e0a"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-section-open/native-section-final-after-artifacts.jsonl",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 130191,
+        "sha256": "e7e53f00d61d1bc5af8a6dd45e2dcefda03c9f8b2a45feafad290f1c460e5513"
+      },
+      "published": {
+        "bytes": 127639,
+        "sha256": "37aa546c1b86551fa87790728ea10bbaf0d6d89f73d375682c12fff4e214b8e0"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted; all compiler-artifact and remaining records retain exact bytes/order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-secure-connect-capture/validation/windows/assist-native-secure-capture-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 1585,
+        "sha256": "eb7f9e5349cb73023451e3fc38ef2fe36ca8626c44a5cf35bcc9f5918aa662b5"
+      },
+      "published": {
+        "bytes": 1362,
+        "sha256": "32ac75c6330f55eeb381774f77f3b10b0a5ec4c3562146e969036618159467d3"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/validation/semaphore-native-owning-epoch1-artifacts-after.log",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 127707,
+        "sha256": "13ac31d89c2df76a24958e68e33b7314c405921af1414b46c9dff43f1418be6f"
+      },
+      "published": {
+        "bytes": 125155,
+        "sha256": "6f9b781878d3c108e95dca8c0a7189942d4d5200e2ac61164acc30ac4453a094"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "All compiler-artifact records and non-private output bytes retain their order and exact contents. Original streams remain in the private cache and prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/validation/semaphore-native-owning-epoch1-artifacts-before.log",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 127992,
+        "sha256": "e59b72d922ef86c2aae4020d1beeff3ac6e427d9fc507ba0829125e580c48a64"
+      },
+      "published": {
+        "bytes": 125440,
+        "sha256": "35a1a59a9b12441b1db5b315e2f569b563c20ab3d5025f444d325c86125dc7eb"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "All compiler-artifact records and non-private output bytes retain their order and exact contents. Original streams remain in the private cache and prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/validation/semaphore-native-owning-epoch2-artifacts-after.log",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 127707,
+        "sha256": "a44cbb4238621f6d2f345413b4cc10539821a6e9d518e124412542046891de50"
+      },
+      "published": {
+        "bytes": 125155,
+        "sha256": "fcb5c558ecc39300bebe99ce02608c87f34d437d7ba13d4f458cb1fe7b978751"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "All compiler-artifact records and non-private output bytes retain their order and exact contents. Original streams remain in the private cache and prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-semaphore/validation/semaphore-native-owning-epoch2-artifacts-before.log",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 127904,
+        "sha256": "c2f8ce9d703d41d1059a81f0de62845fd699cd45c8d276c82285a8b5a232d432"
+      },
+      "published": {
+        "bytes": 125352,
+        "sha256": "ea5ecf6b09a4d1ab518388f5a4fabb9675d5ba1d6fa46bacf3c0ae577f406924"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "All compiler-artifact records and non-private output bytes retain their order and exact contents. Original streams remain in the private cache and prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-shared-section/integration/assist-native-shared-section-integration-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 1585,
+        "sha256": "675d6e6a11b443753fcc7776c293d3c11964c58735f9c4636c9fcf75e9696e4a"
+      },
+      "published": {
+        "bytes": 1362,
+        "sha256": "8450e626be7ad9b0fab2793ba4ee14d211d57ba5565ef3ff94a0bde768746c85"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-single-wait/validation/assist-native-wait-final-b-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 1302,
+        "sha256": "bb4db6bb529d247bb471372578a57e70c63d66ff6a96f74503d7197cb13dd2ca"
+      },
+      "published": {
+        "bytes": 1079,
+        "sha256": "c6eb4483b35f218ca7d44ba2e234532641ea35179ec63458faf9240cc51212a7"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-single-wait/validation/assist-native-wait-final-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 5001,
+        "sha256": "00beed1c7dc263072a5d29df8eb3d9220fef97ae09dd25a7dadd329a02563f82"
+      },
+      "published": {
+        "bytes": 4778,
+        "sha256": "26fe61dae755ef526c5b5c93bde343eb4da19fb90b9b2bbcd1da7ffb8d2f9b73"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-single-wait/validation/native-wait-final-after-artifacts.jsonl",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 127635,
+        "sha256": "6b9af9979c61cc7a7d84411edb2610de5abf24e0b148a95149dd130197b6b99e"
+      },
+      "published": {
+        "bytes": 125083,
+        "sha256": "7b0374d977b3e7e10fdd9e47d71fb2b69cdd4e2e7c71b8cfc1e88ce0cca2f6aa"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted; all compiler-artifact and remaining records retain exact bytes/order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-single-wait/validation/native-wait-final-b-after-artifacts.jsonl",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 127635,
+        "sha256": "1d6e6fbf0a7878129353ab0f8452fafd6efb86790abbf6553a9888848fdfcc85"
+      },
+      "published": {
+        "bytes": 125083,
+        "sha256": "fbef9779d1d9cab143151f7410182e737a08758f7908469ef897c04cdd9a9e6b"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted; all compiler-artifact and remaining records retain exact bytes/order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-single-wait/validation/wait-native-owning-epoch4-artifacts-after.log",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 127707,
+        "sha256": "88f72c96c7861c2926bab9b58881f493d5ea27a16791c1db752cba37b8ea2967"
+      },
+      "published": {
+        "bytes": 125155,
+        "sha256": "2668ba5cfbc69553848ff22b0c43fc7cbe8fb3b65774bb3ddf3c647fe134f266"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "All compiler-artifact records and non-private output bytes retain their order and exact contents. Original streams remain in the private cache and prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-single-wait/validation/wait-native-owning-epoch4-artifacts-before.log",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 127992,
+        "sha256": "4a62b38612df332fb9d3afc0ff46d5ee840bcd4e4f47228b8e415b87bb127231"
+      },
+      "published": {
+        "bytes": 125440,
+        "sha256": "8b01500b3041c480706306bd63a83911ef366f98357f72dfd68c524c94ac4619"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "All compiler-artifact records and non-private output bytes retain their order and exact contents. Original streams remain in the private cache and prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-state-separation-registry/validation/registry-native-owning-epoch1-artifacts-after.log",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 127707,
+        "sha256": "1229055de9a6be2f6613e29033b3e3a6d7800cacab6adfa8b39c7ce2524aff83"
+      },
+      "published": {
+        "bytes": 125155,
+        "sha256": "a7a0ea62575ef314c670d5d46bb4c54423ff3b53e0d02d3dd441e71f14ed424d"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "All compiler-artifact records and non-private output bytes retain their order and exact contents. Original streams remain in the private cache and prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-state-separation-registry/validation/registry-native-owning-epoch1-artifacts-before.log",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 127992,
+        "sha256": "25364e1cbc9bad50355c7bc439816f28148c57f0176111c909c591fc1d5204e8"
+      },
+      "published": {
+        "bytes": 125440,
+        "sha256": "1d638bb8868b022b383fbfd421824be0a7cee3aa04d6545dc423738baedca7ba"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "All compiler-artifact records and non-private output bytes retain their order and exact contents. Original streams remain in the private cache and prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-symbolic-link-open/assist-native-symbolic-link-open-owned-final-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 1636,
+        "sha256": "85464fa6a51aa3c94fa0e1e715752dd290ee73983e7aea1372c7c24c2eaa5d31"
+      },
+      "published": {
+        "bytes": 1413,
+        "sha256": "517e5a2a0c25b415045372a2a78f4de6cb6491ee513bf3c1e7475ce933b6087d"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-symbolic-link-open/native-symbolic-link-open-final-after-artifacts.jsonl",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 130191,
+        "sha256": "f3a5752e68568ce3d18ec3e79b38741e634cbfea03570b3cb024d9bc85b0f24d"
+      },
+      "published": {
+        "bytes": 127639,
+        "sha256": "a9ceb4c523fddb6ee835eaa1a0cb1f9ca963ada0bd857ebbf63b3d367444a1ce"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted; all compiler-artifact and remaining records retain exact bytes/order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-system-time/validation/assist-native-system-time-final-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 1821,
+        "sha256": "78e11fb24362e2ecb24554e312d7d3b0c98ffcd3d86feac58ec81dc2890d0441"
+      },
+      "published": {
+        "bytes": 1598,
+        "sha256": "e60c0bb70a8b2625f44f1d7bc8381ac55fc6e279331b43a65974ce60a928fa3f"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-system-time/validation/native-system-time-final-after-artifacts.jsonl",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 130191,
+        "sha256": "34b6784e7ffaede74c5f9f79422d1ccfd07f9df6073cda09032c05f4f01e8ede"
+      },
+      "published": {
+        "bytes": 127639,
+        "sha256": "7482982130c70c6456475977610c93de48d1a186d23259369141d5b0151a19cc"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted; all compiler-artifact and remaining records retain exact bytes/order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-test-alert/validation/alert-native-owning-epoch3-b-artifacts-before.log",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 132536,
+        "sha256": "0fb907efe581666fe1bdad9d0c8d17b42c1d58ee0e7e86ba507c8aed7afb45b1"
+      },
+      "published": {
+        "bytes": 129984,
+        "sha256": "34a49a70018f40ad20636e44f90a8b6e9a6998c0770e6e9e688cf451a6b43c20"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "All compiler-artifact records and non-private output bytes retain their order and exact contents. Original streams remain in the private cache and prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-test-alert/validation/alert-native-owning-epoch3-c-artifacts-after.log",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 132251,
+        "sha256": "4b597b3d816920602a2b201052b0e9cecb20b2978b107ff46c058365d8ec25e3"
+      },
+      "published": {
+        "bytes": 129699,
+        "sha256": "a8e2572a21ad84f5934edaf594457a239d06a2a80b1daecdac94a974f807c017"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "All compiler-artifact records and non-private output bytes retain their order and exact contents. Original streams remain in the private cache and prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-test-alert/validation/integration-epoch4/alert-native-owning-epoch4-artifacts-after.log",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 132251,
+        "sha256": "004d14e4ead780a9d5c6c20d5326206573c7f71bdb19a0bf4da55192107a44e1"
+      },
+      "published": {
+        "bytes": 129699,
+        "sha256": "cf911feaecf39f87238ffcc84816b01d73c578188dea77a6705f7d6e3e3d8efd"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "All compiler-artifact records and non-private output bytes retain their order and exact contents. Original streams remain in the private cache and prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-test-alert/validation/integration-epoch4/alert-native-owning-epoch4-artifacts-before.log",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 132536,
+        "sha256": "7ee2ee306b59ed318d7b8c4eb7213d80dcd906376b5f34d62adf39142ce72974"
+      },
+      "published": {
+        "bytes": 129984,
+        "sha256": "775cb3f8e7ebd28c75a574c973b6b6dbf8d204f3c9dd332bd7bc7ccf0984c0ba"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "All compiler-artifact records and non-private output bytes retain their order and exact contents. Original streams remain in the private cache and prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-thread-token-open/assist-native-thread-token-owned-final-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 1585,
+        "sha256": "e31da92a5eefc7eb3f4514eda4a67220bd46441985f161ec28a5b13a9e5ebcea"
+      },
+      "published": {
+        "bytes": 1362,
+        "sha256": "f6210e62d11bca10b522124c8283db3f3939f4893c3fc14b3589561b28eab4c9"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-thread-token-open/native-thread-token-final-after-artifacts.jsonl",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 130191,
+        "sha256": "6639d5ef9cb0dc36a0f27b58661d9a4756675e7ff7b45037289de3ff13233838"
+      },
+      "published": {
+        "bytes": 127639,
+        "sha256": "0b6b3847e564e9f24df1537c31c4f510c9e06c4a13d5181da7c84fc49f887738"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted; all compiler-artifact and remaining records retain exact bytes/order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/validation/timer2-native-owning-epoch1-artifacts-after.log",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 127707,
+        "sha256": "86413bfb66b2468ff0d8ab1cdb648b89142b81f9da5f51d5f01e00e7b99f58ed"
+      },
+      "published": {
+        "bytes": 125155,
+        "sha256": "1807415588dc8f8aa0a5ee0f4bd67849af8c7acab0eb140ea5e4ad6dbb40bf79"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "All compiler-artifact records and non-private output bytes retain their order and exact contents. Original streams remain in the private cache and prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-arm/validation/timer2-native-owning-epoch1-artifacts-before.log",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 127992,
+        "sha256": "5295c3ab5542844c4b4f5722ee546b064b144880d72991d9e13bb0da1c57bccf"
+      },
+      "published": {
+        "bytes": 125440,
+        "sha256": "df2bf64fdecf9f3261451a291455ceb3d29b735f822181f0f74ddc03530e98a6"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "All compiler-artifact records and non-private output bytes retain their order and exact contents. Original streams remain in the private cache and prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-create/assist-native-timer2-owned-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 1821,
+        "sha256": "ec50492bca4acacf0ccb8c52d21b53cae76c760fd2f22d5bdf9ac1a79be6e7a2"
+      },
+      "published": {
+        "bytes": 1598,
+        "sha256": "d9d369d7b3a4488e73a7130d32cb4f64cd691fd284943f0836b265d545308877"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-timer2-create/native-timer2-after-artifacts.jsonl",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 130191,
+        "sha256": "7c93bddc292c85ac548fc440c81fedaf2626a987b5d98beff99e1d53304e7371"
+      },
+      "published": {
+        "bytes": 127639,
+        "sha256": "e063a86bf479e88a348128fb762d76c27cc17889b0893d900a57f76459d4b14a"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted; all compiler-artifact and remaining records retain exact bytes/order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-bno-isolation/validation/assist-native-bno-final-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 1821,
+        "sha256": "223a698da68a31b731e5efc6b04949e979ab2105b54aadfaeba085184fa8b290"
+      },
+      "published": {
+        "bytes": 1598,
+        "sha256": "6fec208cd55c2b5a34b4d5107f8ca8c0729399e1891ef6d743747cfdcfc30a06"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-bno-isolation/validation/native-bno-final-after-artifacts.jsonl",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 130191,
+        "sha256": "3b69a1eda3f6bc0648cca7d4d45d078680b66d4f0b5ca2fbd9060e9eb843f204"
+      },
+      "published": {
+        "bytes": 127639,
+        "sha256": "fdd91d6edbe3f4159d0436c17f0cba84f10fd9ab40369f62c4ba872b51957fd4"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted; all compiler-artifact and remaining records retain exact bytes/order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-query/validation/windows/assist-native-token-query-epoch2-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 1584,
+        "sha256": "e5d1282fe1cfd3d9ef787ab5ad4612bbda95e883163aad19ebe5f2cdd67b7a31"
+      },
+      "published": {
+        "bytes": 1361,
+        "sha256": "3476db6c9534cd7b69f71a4c0900479d3f74dbe3bb3826a27b7e8cc0d7ea1936"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-query/validation/windows/native-token-query-epoch2-after-artifacts.jsonl",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 130191,
+        "sha256": "0da83ac20b409410f8ce413514145485f3cff8e3a9f381c17ccf866e41d86a22"
+      },
+      "published": {
+        "bytes": 127639,
+        "sha256": "d1c68bb332e1491e0d514f8ce9a3d3fd7f116804930c3783bd848dd68ea275dd"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted; all compiler-artifact and remaining records retain exact bytes/order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-scalars/validation/assist-native-scalar-final-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 1584,
+        "sha256": "3fc6f18ff227ffce36404c51b342e56591accd1723a01f0539a8c57e2f446643"
+      },
+      "published": {
+        "bytes": 1361,
+        "sha256": "d1995ccc5563e22eaaaf9058191e42121481a1bedab814c2ecbb472168bd2a16"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-scalars/validation/native-scalar-final-after-artifacts.jsonl",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 130191,
+        "sha256": "2caa288bb854c4e08483fa8af8a97f50090e907250651b9459feace746580e32"
+      },
+      "published": {
+        "bytes": 127639,
+        "sha256": "9f1b2de24316ea1f703d46fd7f6d31286e0057d45fd982da9a2d281752090be5"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted; all compiler-artifact and remaining records retain exact bytes/order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-native-owning-epoch2-c-artifacts-before.log",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 132448,
+        "sha256": "7f05ccb50cb2576e0a87431bffc7c2867c613138298a54b505e0243452e869b7"
+      },
+      "published": {
+        "bytes": 129896,
+        "sha256": "ad8fbfab99964eefda9fd9ed83dd7fc0d1195f43dbc757affc4b3e682c2bafa0"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "All compiler-artifact records and non-private output bytes retain their order and exact contents. Original streams remain in the private cache and prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-native-owning-epoch2-d-artifacts-after.log",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 132251,
+        "sha256": "099f0186facc6f739c9804aa53f87aa0a81807fe8a83d7e2c22c6423ae08aa02"
+      },
+      "published": {
+        "bytes": 129699,
+        "sha256": "136b98788e2a8c7058a33c4360842f711ae7c1df37fb49c5ea47559c402a6560"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "All compiler-artifact records and non-private output bytes retain their order and exact contents. Original streams remain in the private cache and prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-security-attributes/validation/attributes-native-owning-epoch2-d-artifacts-before.log",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 132251,
+        "sha256": "715fbc185a58f4a6105ac06c1eb1c9486b9ef05caf9d7c1a83808ba488725e96"
+      },
+      "published": {
+        "bytes": 129699,
+        "sha256": "b596f36f4bac04b40e941eb70970dc30e341dcc690f3b966b08c3555c802a058"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "All compiler-artifact records and non-private output bytes retain their order and exact contents. Original streams remain in the private cache and prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-session-id/validation/assist-native-session-final-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 1584,
+        "sha256": "0678c8d717327c206d24e3cfb0660481c79dc61760b8644a6d92eda28badd7c1"
+      },
+      "published": {
+        "bytes": 1361,
+        "sha256": "c50240fc2667d5b1722c5f45b0e695c77835070c02191f16d03dad14b14243e5"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-session-id/validation/native-session-final-after-artifacts.jsonl",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 130191,
+        "sha256": "f9fd6c45afa4a2ec18542d2f3542642a02e8437d4c102c955ce409b43c4f2a52"
+      },
+      "published": {
+        "bytes": 127639,
+        "sha256": "7a72370d9c58e854bb63300ecf01b4e3261258c35e36ed438f72de9911af04ba"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted; all compiler-artifact and remaining records retain exact bytes/order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-user/validation/user-native-owning-epoch1-artifacts-after.log",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 127707,
+        "sha256": "11e742294f069989399ae845c29fd88172e38c85eea09c29561e987c37045702"
+      },
+      "published": {
+        "bytes": 125155,
+        "sha256": "a78b4103269fdc26f43251e79758691803be81f530cf23922620b60aed1fb5c2"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "All compiler-artifact records and non-private output bytes retain their order and exact contents. Original streams remain in the private cache and prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-token-user/validation/user-native-owning-epoch1-artifacts-before.log",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 130767,
+        "sha256": "cdccbd0dbd850266c0316616c089c9d3ba88abcb742f0c6f9f78b8e9692171a2"
+      },
+      "published": {
+        "bytes": 128215,
+        "sha256": "1c1522e66db842febad5a48299f134a411ea43f15c130421381afd07a88779c5"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "All compiler-artifact records and non-private output bytes retain their order and exact contents. Original streams remain in the private cache and prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/validation/policy-native-owning-epoch1-artifacts-after.log",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 127707,
+        "sha256": "2ad54f7ddf116ceb1b44a65f889e165d4bdb8dfbc0c7982ae68ff05ce9ddbaf6"
+      },
+      "published": {
+        "bytes": 125155,
+        "sha256": "7cbadd23cb558424395f346358497200fb94282e7e8a4cf5c987cf3187a42568"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "All compiler-artifact records and non-private output bytes retain their order and exact contents. Original streams remain in the private cache and prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-user-policy/validation/policy-native-owning-epoch1-artifacts-before.log",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 130767,
+        "sha256": "00cb851e794f862bd1688bd547030ab3400ff89e6f3f1808794b30e39f263266"
+      },
+      "published": {
+        "bytes": 128215,
+        "sha256": "bf7fa5cd3f4e4a4d0a98ff814f1357e2dffbe945e6ad14e6c18fb4b70df04bdb"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "All compiler-artifact records and non-private output bytes retain their order and exact contents. Original streams remain in the private cache and prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-wait-packet-associate/assist-native-wait-packet-associate-owned-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 1584,
+        "sha256": "64db6f222ffd7a6cc67eebd03cbbfc453ba5672c6b4cfb417831e3ac0a89daf5"
+      },
+      "published": {
+        "bytes": 1361,
+        "sha256": "64c8d0e0a8af468c89e44ff0fcbfd9803f03ec383331986106d6173452f09722"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-wait-packet-associate/native-wait-packet-associate-after-artifacts.jsonl",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 130191,
+        "sha256": "ab6c90edf2ad7ff5fa7e23d7bee69afc61f22d54a8047d8ff170d66c62bab26b"
+      },
+      "published": {
+        "bytes": 127639,
+        "sha256": "9b3677cd21d6d969d00f557decc80555267531f36cc48735bc7dab68d0c59207"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted; all compiler-artifact and remaining records retain exact bytes/order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-wait-packet-create/assist-native-wait-packet-owned-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 1584,
+        "sha256": "2360579ca1ba82762ecd705bd1226452a608d8578abf99d56c07970dca3aaadf"
+      },
+      "published": {
+        "bytes": 1361,
+        "sha256": "ee02eaabe1e0c0c8d94a786e1f6a1d8ae69a596a9b838e1227bc30c10cd860ae"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-wait-packet-create/native-wait-packet-after-artifacts.jsonl",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 130191,
+        "sha256": "5ff74c2ebdaae3d1f00706cf86b915c930edf868249c74627423dde0f0303987"
+      },
+      "published": {
+        "bytes": 127639,
+        "sha256": "b366bfb28ea33a604c285e260a7b426fc88211b6f07cd38bfb7cc0bceae6507a"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted; all compiler-artifact and remaining records retain exact bytes/order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-wnf-process-event/assist-native-wnf-process-event-owned-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 1584,
+        "sha256": "6043a22aeb96d035a0a1e85c0f8da476f993e990d8906c5b1e0e2c8a6f052bd3"
+      },
+      "published": {
+        "bytes": 1361,
+        "sha256": "87f5178fabd52f8f2b599e69faea2d90d6730130a23015c6dd412962ff03b345"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-wnf-process-event/native-wnf-process-event-after-artifacts.jsonl",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 130191,
+        "sha256": "0924680ffd21d2ba40c25577b810cab91186e4d823fc8b27039f063aac924e1c"
+      },
+      "published": {
+        "bytes": 127639,
+        "sha256": "4546456f6c4faf964a19ea6cf9b71f2f7014f18b65f5fc3eacebc4ee86f80e49"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted; all compiler-artifact and remaining records retain exact bytes/order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-wnf-query/validation/windows/assist-native-wnf-query-final4-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 1584,
+        "sha256": "625a86ae6551b02720556389a448fc880c1cf773a3f88bcde92bf430c088721f"
+      },
+      "published": {
+        "bytes": 1361,
+        "sha256": "dd0e583d5e254af2fa5eebd564dbee438f9d1fbf451dc114b5061d8b75cc04d4"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-wnf-query/validation/windows/native-wnf-query-final4-after-artifacts.jsonl",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 130191,
+        "sha256": "320d5d3da9e71ccd813fb43702f0acad1a6767d3950575b82c6ffe6365f7d57e"
+      },
+      "published": {
+        "bytes": 127639,
+        "sha256": "00efb212ac9da077af0928d7290e8781110cafc5e3ce10e1567a2a99d078f01a"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted; all compiler-artifact and remaining records retain exact bytes/order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-wnf-subscribe/assist-native-wnf-subscribe-owned-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 1584,
+        "sha256": "b077b2981e7904952396b311bf44236ea4be98a5e2f2627188fe2f758d3e8853"
+      },
+      "published": {
+        "bytes": 1361,
+        "sha256": "4773adca2de449a5ec4c2df6cbda3bcef1e1539708d5251900a194589063a692"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-wnf-subscribe/native-wnf-subscribe-after-artifacts.jsonl",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 130191,
+        "sha256": "40dee55a7adc66b793ad97f63a42835ef6fadbc49eca6576c4caf98be30e4761"
+      },
+      "published": {
+        "bytes": 127639,
+        "sha256": "62f0685caf6a657b9ebdcf5cf6deef56df3588cfadad036331e15285c5ae2cec"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted; all compiler-artifact and remaining records retain exact bytes/order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-wnf-system-subscribe/validation/windows/assist-native-wnf-system-final-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 1584,
+        "sha256": "412dbd84c80c2c9958a7c584114e06773d1e9fe2f73f1547bbd5aad8700a7dab"
+      },
+      "published": {
+        "bytes": 1361,
+        "sha256": "80bab2b9b0358e23f1fba7679597fe0e254530ed7a4d643da07a7676ed09b390"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-wnf-system-subscribe/validation/windows/native-wnf-system-final-after-artifacts.jsonl",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 130191,
+        "sha256": "35489b479b08dcf6dff80550d5da3f0c47d4fe3e03c0fc743fede122decc472c"
+      },
+      "published": {
+        "bytes": 127639,
+        "sha256": "c3eda6db0339269c10ccde9a6bb2324a6803c61ecb539fe589b78824ab4604b8"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted; all compiler-artifact and remaining records retain exact bytes/order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-binding/assist-native-worker-factory-binding-owned-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 1584,
+        "sha256": "575eec3cd8ce1445507250dc0b504541a676ddaf5cb46c1b95dd98b8e22a7778"
+      },
+      "published": {
+        "bytes": 1361,
+        "sha256": "98a3fad204ce9269752b384ef0d6f82db184f975802f747874aa7d31e6a65e2a"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-binding/native-worker-factory-binding-after-artifacts.jsonl",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 130191,
+        "sha256": "711af8c7273f55832a93396d4f25dc3c3157364afef77cadc68b3d15b63224e5"
+      },
+      "published": {
+        "bytes": 127639,
+        "sha256": "e841971e39257b8b3a581d1d02af845d38305966368d98ff39fa23e2b90d3261"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted; all compiler-artifact and remaining records retain exact bytes/order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-create/assist-native-worker-factory-owned-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 1688,
+        "sha256": "c981cd9ad050e2359cc73cd558be0644de129971b282d9c46dcc29fd4cad1e9e"
+      },
+      "published": {
+        "bytes": 1465,
+        "sha256": "b85b5cf8764ec7c70b9394c8e51b8fecd720e8351cb7e5818564864b0511a859"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-create/native-worker-factory-after-artifacts.jsonl",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 130191,
+        "sha256": "6102e7b1064ea7b876c3627c2494f10a706fd9094a402560cc69d89fefbc5d55"
+      },
+      "published": {
+        "bytes": 127639,
+        "sha256": "e7d87f0a9f8d3217620b57fffeed8c3ec53f53b562c537430470fff2a1cf5139"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted; all compiler-artifact and remaining records retain exact bytes/order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/validation/flags-native-owning-epoch1-artifacts-after.log",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 127707,
+        "sha256": "f19ffd4933d684d920f48f74e82daab58ed16fac5aa417b0731872f5449e1f41"
+      },
+      "published": {
+        "bytes": 125155,
+        "sha256": "d2f11e88bc459b92fae2ff3627d1912a49882cc61444605956eff65e9addf3b8"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "All compiler-artifact records and non-private output bytes retain their order and exact contents. Original streams remain in the private cache and prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-flags/validation/flags-native-owning-epoch1-artifacts-before.log",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 130767,
+        "sha256": "79799be3fb507492a7b8e17b45246202188492deb838854bc4d117653601542d"
+      },
+      "published": {
+        "bytes": 128215,
+        "sha256": "f4da01f955645b4bc834e938b8a2b38be4ad64c9c12e6ebc30ae2d264428185e"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "All compiler-artifact records and non-private output bytes retain their order and exact contents. Original streams remain in the private cache and prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/validation/idle-native-owning-epoch2-artifacts-after.log",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 127707,
+        "sha256": "5624f3d3b9887dc632dc8058c67da206c138e734c0b133ce0b4516e20f439033"
+      },
+      "published": {
+        "bytes": 125155,
+        "sha256": "e2300225f68a642faf9ff702920bdc97cac6b716a759f519d7a7e8791be17897"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "All compiler-artifact records and non-private output bytes retain their order and exact contents. Original streams remain in the private cache and prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-idle-timeout/validation/idle-native-owning-epoch2-artifacts-before.log",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 130767,
+        "sha256": "07d2925b9d91da6706f6be16a8eb56786e1c6f6769428edcad98cf3f0c549492"
+      },
+      "published": {
+        "bytes": 128215,
+        "sha256": "f128ea38d173bbff28a84c5f208af4a9fa44eeb7de8a413e586bdd9b9643862e"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "All compiler-artifact records and non-private output bytes retain their order and exact contents. Original streams remain in the private cache and prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-set-maximum/assist-native-worker-factory-set-maximum-owned-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 1584,
+        "sha256": "8b66dff3b70788a1ff087f7705dc228f28b4884259b82c4aa9be2c6c2b3bc8ec"
+      },
+      "published": {
+        "bytes": 1361,
+        "sha256": "23808d732709460078c9c7ccf0dc8839186c2aa4a4db9ea37050fad29b308b4c"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-set-maximum/native-worker-factory-set-maximum-after-artifacts.jsonl",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 130191,
+        "sha256": "bb7ea1192f305a1e15dbc4a6e269c5c72842b17175c5fd8bbd03713eb2130508"
+      },
+      "published": {
+        "bytes": 127639,
+        "sha256": "20f540c1e3ff7da6af250e3baa47cc9e2ac0431fe9ca9516b8c673074c04d3a5"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted; all compiler-artifact and remaining records retain exact bytes/order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-soft-maximum/assist-native-worker-factory-soft-maximum-owned-shipping.log",
+      "kind": "compiler-diagnostic-text-projection",
+      "original": {
+        "bytes": 1584,
+        "sha256": "58b0a9ba74e886695aa7b1c76ff241f66d57f8f44ca36f11abdc64fc27b77c8b"
+      },
+      "published": {
+        "bytes": 1361,
+        "sha256": "778a67fb9c72890e16ec5623f752d78a71db0adc0b915f8a82f177398c47c411"
+      },
+      "withheld-records": [
+        {
+          "bytes": 223,
+          "sha256": "928e20d269d36912937c07dee57c0a50150742eac244449883e47c989e5e6ef4"
+        }
+      ],
+      "preserved-semantics": "Only complete private Rust warning blocks are omitted; all remaining compiler/process/test lines retain their exact bytes and order. Originals remain private and in prior Git history."
+    },
+    {
+      "path": "docs/specifications/windows/native-worker-factory-soft-maximum/native-worker-factory-soft-maximum-after-artifacts.jsonl",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 130191,
+        "sha256": "ff6e7d30fd891a26bfd533f91226abddf9873f087dea67a95a13fd46b02d81f2"
+      },
+      "published": {
+        "bytes": 127639,
+        "sha256": "9da9f177c7b13ed29dad2ae361667227a31b1afb4638882bc243c986f9aa7017"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private compiler-message records omitted; all compiler-artifact and remaining records retain exact bytes/order. Originals remain private and in prior Git history."
+    }
+  ],
+  "scope": "Distribution-only correction. Private diagnostic records are absent from current published logs. Complete original logs remain private and in prior Git history. Product Rust/C/C++ sources, test outcomes, native observations, archive hashes and ABI are unchanged."
+}

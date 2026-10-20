@@ -6,6 +6,7 @@ The package records an incomplete process-emulation goal, not a release claim.
 from pathlib import Path
 import argparse
 import hashlib
+import importlib.util
 import json
 import os
 import re
@@ -27,21 +28,23 @@ FAILURES = {
 }
 
 
+_projection_path = SOURCE / 'tools/evidence/public_projection.py'
+_projection_spec = importlib.util.spec_from_file_location('public_evidence_projection', _projection_path)
+PROJECTION = importlib.util.module_from_spec(_projection_spec)
+_projection_spec.loader.exec_module(PROJECTION)
+
+
 def load(path):
     return json.loads(path.read_text(encoding='utf-8-sig'))
 
 
 def identity(path):
+    # Historical source/receipt identities remain exact. Public diagnostic
+    # projections are separately bound to their original checkpoints.
     if path.is_symlink():
         raw = os.readlink(path).encode()
         return len(raw), hashlib.sha256(raw).hexdigest()
-    digest = hashlib.sha256()
-    size = 0
-    with path.open('rb') as stream:
-        for raw in iter(lambda: stream.read(1 << 20), b''):
-            digest.update(raw)
-            size += len(raw)
-    return size, digest.hexdigest()
+    return PROJECTION.recorded_identity(path)
 
 
 def bound(row, path):
