@@ -1,0 +1,8 @@
+{
+  "rejected-receipts": [
+    "session-alias-native-ordinary-epoch1.json",
+    "session-alias-owning-capi-epoch1.json"
+  ],
+  "cause": "Rustcrate_namecontainedhyphenfrommechanicalprefixadaptation. Compilerrejectedbeforeguestexecution; dependentCAPIobserverstoppedwithoutsteps.",
+  "correction": "Validunderscorecratenameandnewuniqueepoch2observerreceipts; frozenproductsource7pathsandowningepoch1remainunchanged."
+}

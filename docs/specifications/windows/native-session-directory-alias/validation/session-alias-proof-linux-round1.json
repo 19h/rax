@@ -1,0 +1,40 @@
+{
+  "state": "finished",
+  "pid": 15726,
+  "host": "linux",
+  "round": 1,
+  "exit-code": 0,
+  "steps": [
+    {
+      "name": "portable-proof",
+      "argv": [
+        "docker",
+        "run",
+        "--rm",
+        "--platform",
+        "linux/amd64",
+        "-v",
+        "/Users/int/.assist-session-alias-20261020:/source:ro",
+        "-w",
+        "/source",
+        "assist-rax-validation-rustfmt:1.95-bullseye-20261015",
+        "python3",
+        "-B",
+        "/source/docs/specifications/windows/native-session-directory-alias/check_validation.py",
+        "--host",
+        "linux",
+        "--source",
+        "/source"
+      ],
+      "exit-code": 0,
+      "log": "session-alias-proof-linux-round1.log",
+      "bytes": 604,
+      "sha256": "78ab45b691a0ee2141cabcfc93f5978e537d5b47e407745044e7ce3f0584bc3c"
+    }
+  ],
+  "envelope": {
+    "bytes": 24947,
+    "sha256": "f1ab7643936a852e11aafae0d0b670bd3fed10793b21d84cce02c4f1a4821721"
+  },
+  "utc": "2026-10-20T02:54:45.379324+00:00"
+}

@@ -1,0 +1,6 @@
+{
+  "path": "session-alias-ordinary-owner-epoch1.rs",
+  "bytes": 1044,
+  "sha256": "5c1aaf75ce1b18a7e251612e4778ec339989e9c91e110cba109c68238c67b01c",
+  "scope": "Each run_slice1 executes one scheduler slice of at most4096instructions;10000calls total bound40960000instructions. Rebuilt owning core smoke/unchangedqueryattrsfrontier check, not instruction-count measurement."
+}

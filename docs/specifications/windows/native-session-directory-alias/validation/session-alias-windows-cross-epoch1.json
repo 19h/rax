@@ -1,0 +1,91 @@
+{
+  "state": "failed",
+  "inputs-before": [
+    {
+      "path": "src/user/windows/object_namespace.rs",
+      "bytes": 27553,
+      "sha256": "a0e4f0deaad46c66fc2abb1814f4db34343fe3934aeaf6811e28ea8b31028bb8"
+    },
+    {
+      "path": "src/user/windows/object_namespace/base_named_object_tests.rs",
+      "bytes": 19825,
+      "sha256": "95a046a578c17f8c75f4c0088783dc5c2c2c2a23f79b8aa696558e34dec6aa10"
+    },
+    {
+      "path": "src/user/windows/object_namespace/directory_alias.rs",
+      "bytes": 4368,
+      "sha256": "78a45cf29b610b126c5eddd9cede7b103f66253fae977d79f50dac2a4b2d184a"
+    },
+    {
+      "path": "src/user/windows/object_namespace/installed.rs",
+      "bytes": 17506,
+      "sha256": "64cd6ffb1ec1df8ea0d1d383120a65d272aba8272769e72df6df3e16b5327637"
+    },
+    {
+      "path": "src/user/windows/object_namespace/installed/directory_alias.rs",
+      "bytes": 5090,
+      "sha256": "401ae92aaef928cc3ce984d6f0f2e2e72f1bc7617f731facd56e68a43d19b16d"
+    },
+    {
+      "path": "src/user/windows/object_namespace/installed/directory_alias/tests.rs",
+      "bytes": 4563,
+      "sha256": "102fbfa1f1f4679b818686d62ee397b76fcab5663185168965672b607087bb96"
+    }
+  ],
+  "steps": [
+    {
+      "arch": "aarch64",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "check",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--all-targets",
+        "--target",
+        "aarch64-pc-windows-msvc"
+      ],
+      "exit-code": 101,
+      "seconds": 11.065768125001341,
+      "log": "session-alias-windows-cross-epoch1-aarch64.log",
+      "bytes": 122436,
+      "sha256": "d2d452b44672477f5aadafdb9fa0298dcf219cf26083e2c347a510ed0b00af38"
+    }
+  ],
+  "utc": "2026-10-20T02:01:49.520707+00:00",
+  "inputs-after": [
+    {
+      "path": "src/user/windows/object_namespace.rs",
+      "bytes": 27553,
+      "sha256": "a0e4f0deaad46c66fc2abb1814f4db34343fe3934aeaf6811e28ea8b31028bb8"
+    },
+    {
+      "path": "src/user/windows/object_namespace/base_named_object_tests.rs",
+      "bytes": 19825,
+      "sha256": "95a046a578c17f8c75f4c0088783dc5c2c2c2a23f79b8aa696558e34dec6aa10"
+    },
+    {
+      "path": "src/user/windows/object_namespace/directory_alias.rs",
+      "bytes": 4368,
+      "sha256": "78a45cf29b610b126c5eddd9cede7b103f66253fae977d79f50dac2a4b2d184a"
+    },
+    {
+      "path": "src/user/windows/object_namespace/installed.rs",
+      "bytes": 17506,
+      "sha256": "64cd6ffb1ec1df8ea0d1d383120a65d272aba8272769e72df6df3e16b5327637"
+    },
+    {
+      "path": "src/user/windows/object_namespace/installed/directory_alias.rs",
+      "bytes": 5090,
+      "sha256": "401ae92aaef928cc3ce984d6f0f2e2e72f1bc7617f731facd56e68a43d19b16d"
+    },
+    {
+      "path": "src/user/windows/object_namespace/installed/directory_alias/tests.rs",
+      "bytes": 4563,
+      "sha256": "102fbfa1f1f4679b818686d62ee397b76fcab5663185168965672b607087bb96"
+    }
+  ],
+  "inputs-unchanged": true,
+  "exit-code": 101
+}

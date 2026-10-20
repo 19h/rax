@@ -1,0 +1,19 @@
+{
+  "archive": "session-alias-source-epoch1-overrides.tar.gz",
+  "bytes": 81879,
+  "sha256": "3c0defba35084d3a00c07db03d655c54a040df9a7adcf2c38b4ff133d5501c6e",
+  "parent-manifest": "region-source-epoch1.json",
+  "parent-manifest-sha256": "b8df4aa6506d8335be28e24dda2f3b8abf006964a21e4093f4fd816878bfab92",
+  "source-files": 25085,
+  "source-bytes": 1835122521,
+  "separate-overrides": [
+    "src/user/windows/native-runtime.md",
+    "src/user/windows/object_namespace.rs",
+    "src/user/windows/object_namespace/base_named_object_tests.rs",
+    "src/user/windows/object_namespace/directory_alias.rs",
+    "src/user/windows/object_namespace/installed.rs",
+    "src/user/windows/object_namespace/installed/directory_alias.rs",
+    "src/user/windows/object_namespace/installed/directory_alias/tests.rs"
+  ],
+  "deleted": []
+}

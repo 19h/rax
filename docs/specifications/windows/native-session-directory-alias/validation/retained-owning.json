@@ -1,0 +1,35 @@
+{
+  "state": "finished",
+  "exit-code": 0,
+  "files": [
+    {
+      "role": "core",
+      "source": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\debug\\deps\\librax-934115059aa64c85.rlib",
+      "retained": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-session-alias-epoch1\\target\\retained-owning-epoch1\\librax-934115059aa64c85.rlib",
+      "bytes": 508614218,
+      "sha256": "41da0087fa670ff68ce308d680e9ed2b82402f3cc02c60d6bf28d32dcd3ecd88"
+    },
+    {
+      "role": "carrier",
+      "source": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\debug\\assist_rs.lib",
+      "retained": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-session-alias-epoch1\\target\\retained-owning-epoch1\\assist_rs.lib",
+      "bytes": 857898104,
+      "sha256": "dabb27618a2739094b8e777c2c8de4376656fe964ceac132ea8c329fc798410a"
+    },
+    {
+      "role": "ordinary",
+      "source": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\session-alias-ordinary-owner-epoch2.exe",
+      "retained": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-session-alias-epoch1\\target\\retained-owning-epoch1\\session-alias-ordinary-owner-epoch2.exe",
+      "bytes": 27064320,
+      "sha256": "0d137ea8e65033f25b6170433961b4a4de7f19da465df176187f15a686545bff"
+    },
+    {
+      "role": "capi",
+      "source": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\cpp\\session-alias-owning-capi-epoch2.exe",
+      "retained": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-session-alias-epoch1\\target\\retained-owning-epoch1\\session-alias-owning-capi-epoch2.exe",
+      "bytes": 32652288,
+      "sha256": "7398f1e80219345b9007f021c516e4d3b4e3e910c1ae010ad33975ba0334773a"
+    }
+  ],
+  "scope": "Four actual observed owning artifacts copied independently; no hard links or regeneration."
+}

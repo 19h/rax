@@ -1,0 +1,124 @@
+{
+  "state": "finished",
+  "pid": 10012,
+  "source-epoch": 1,
+  "utc": "2026-10-20T02:07:24.941933+00:00",
+  "steps": [
+    {
+      "name": "toolchain",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "--version"
+      ],
+      "exit-code": 0,
+      "seconds": 0.08048120899184141,
+      "log": "session-alias-native-owning-epoch1-toolchain.log",
+      "bytes": 36,
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5"
+    },
+    {
+      "name": "artifacts-before",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "build",
+        "--locked",
+        "--offline",
+        "--features",
+        "rax",
+        "--message-format=json"
+      ],
+      "exit-code": 0,
+      "seconds": 647.4266840420023,
+      "log": "session-alias-native-owning-epoch1-artifacts-before.log",
+      "bytes": 132537,
+      "sha256": "bf953c50f3e3ec451696bea56d45343856442975bf93e9e336f4a8f778abb105"
+    },
+    {
+      "name": "archive-before",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\collect-session-alias-archives-epoch1.py",
+        "--host",
+        "windows",
+        "--source",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-session-alias-epoch1",
+        "--manifest",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\session-alias-owning-source-hashes-epoch1.json",
+        "--messages",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\session-alias-native-owning-epoch1-artifacts-before.log",
+        "--output",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-session-alias-epoch1-pre-cpp-archives.json"
+      ],
+      "exit-code": 0,
+      "seconds": 18.378349584003445,
+      "log": "session-alias-native-owning-epoch1-archive-before.log",
+      "bytes": 182,
+      "sha256": "79b17a81804b44fa54e1dabd78f138ab60e3a94bf649e3e4a6ab5abbd4660394"
+    },
+    {
+      "name": "cpp",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\helpers\\session-alias-owned-cpp-build-epoch1.py"
+      ],
+      "exit-code": 0,
+      "seconds": 75.79410966701107,
+      "log": "session-alias-native-owning-epoch1-cpp.log",
+      "bytes": 3705,
+      "sha256": "4a0b5274fb37c5600dad7800403695015228f1a6b85c21c3426baf6030895b51"
+    },
+    {
+      "name": "artifacts-after",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "build",
+        "--locked",
+        "--offline",
+        "--features",
+        "rax",
+        "--message-format=json"
+      ],
+      "exit-code": 0,
+      "seconds": 0.7526312500122003,
+      "log": "session-alias-native-owning-epoch1-artifacts-after.log",
+      "bytes": 132251,
+      "sha256": "d2dfeae4b26770b9796e1203d0aa21f7760839b08c155b2212cc427296caa99a"
+    },
+    {
+      "name": "archive-after",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\collect-session-alias-archives-epoch1.py",
+        "--host",
+        "windows",
+        "--source",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-session-alias-epoch1",
+        "--manifest",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\session-alias-owning-source-hashes-epoch1.json",
+        "--messages",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\session-alias-native-owning-epoch1-artifacts-after.log",
+        "--output",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-session-alias-epoch1-final-owning-archive-identities.json"
+      ],
+      "exit-code": 0,
+      "seconds": 9.793216582998866,
+      "log": "session-alias-native-owning-epoch1-archive-after.log",
+      "bytes": 182,
+      "sha256": "79b17a81804b44fa54e1dabd78f138ab60e3a94bf649e3e4a6ab5abbd4660394"
+    }
+  ],
+  "junction": {
+    "before": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-region-epoch1",
+    "after": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-session-alias-epoch1"
+  },
+  "current-step": "archive-after",
+  "child-pid": 8820,
+  "exit-code": 0,
+  "source-inputs": 3826,
+  "archive-identities-stable": true,
+  "scope": "Frozen session-alias-query source; retained Assist ABI184 linked consumers. Whole current-root ABI272 GUI/plugin/packages not claimed.",
+  "completed-utc": "2026-10-20T02:23:06.513582+00:00"
+}

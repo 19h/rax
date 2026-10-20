@@ -1,0 +1,11 @@
+{
+  "utc": "2026-10-20T00:07:09.616878+00:00",
+  "state": "finished",
+  "exit-code": 0,
+  "RtlGetVersion-status": 0,
+  "major": 10,
+  "minor": 0,
+  "build": 29683,
+  "native-processor-architecture": 12,
+  "scope": "Read-only native kernel/architecture metadata; no guest or host state mutation."
+}

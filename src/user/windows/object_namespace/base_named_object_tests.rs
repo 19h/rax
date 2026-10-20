@@ -386,3 +386,220 @@ fn native_namespace_parent_identity_error_reports_type_and_name_mismatches() {
         }
     }
 }
+
+#[test]
+fn session_directory_alias_preserves_symbolic_and_selected_target_identity() {
+    let source = units("\\Sessions\\7\\BaseNamedObjects");
+    let target = units("\\BaseNamedObjects");
+    let opaque_target = units("\\OpaqueSiloRoot\\BaseNamedObjects");
+    let mut values = captures(7);
+    let parent = values
+        .iter_mut()
+        .find(|dir| dir.path == units("\\Sessions\\7"))
+        .unwrap();
+    let entry = parent
+        .entries
+        .iter_mut()
+        .find(|entry| entry.name == units("BaseNamedObjects"))
+        .unwrap();
+    entry.kind = units("SymbolicLink");
+    entry.target = Some(opaque_target.clone());
+    entry.link_access = Some(LinkAccess {
+        maximum_access: 0x000F_0001,
+        system_security_status: STATUS_PRIVILEGE_NOT_HELD,
+    });
+    assert!(Namespace::selected_for_session(table(), values.clone(), Some(7)).is_err());
+    let namespace = Namespace::selected_with_directory_aliases(
+        table(),
+        values,
+        Some(7),
+        &[],
+        &[(source.clone(), target.clone())],
+    )
+    .unwrap();
+    let global = namespace.lookup(None, &target, 0x40).unwrap();
+    let aliased = namespace.lookup(None, &source, 0x40).unwrap();
+    assert!(Arc::ptr_eq(&global, &aliased));
+    assert_eq!(aliased.path, target);
+    assert_eq!(
+        namespace.lookup_link(None, &source, 0x40).unwrap().target,
+        opaque_target
+    );
+    assert_eq!(
+        namespace.lookup(None, &source, 0x1040).unwrap_err(),
+        LookupError::Status(STATUS_REPARSE_POINT_ENCOUNTERED)
+    );
+    let owned = namespace.named_win32(7, &units("OwnedAliasName")).unwrap();
+    let direct = namespace
+        .named(Some(global), &units("OwnedAliasName"), 0)
+        .unwrap();
+    assert!(owned.matches(&direct));
+}
+
+fn alias_captures() -> Vec<SelectedDirectory> {
+    let mut values = captures(7);
+    let parent = values
+        .iter_mut()
+        .find(|value| value.path == units("\\Sessions\\7"))
+        .unwrap();
+    let entry = &mut parent.entries[0];
+    entry.kind = units("SymbolicLink");
+    entry.target = Some(units("\\OpaqueSiloRoot\\BaseNamedObjects"));
+    entry.link_access = Some(LinkAccess {
+        maximum_access: 0x000F_0001,
+        system_security_status: STATUS_PRIVILEGE_NOT_HELD,
+    });
+    values
+}
+
+#[test]
+fn session_directory_alias_rejects_unselected_pairs_and_incoherent_evidence() {
+    let source = units("\\Sessions\\7\\BaseNamedObjects");
+    let target = units("\\BaseNamedObjects");
+    for (session, aliases) in [
+        (None, vec![(source.clone(), target.clone())]),
+        (Some(0), vec![(source.clone(), target.clone())]),
+        (Some(8), vec![(source.clone(), target.clone())]),
+        (Some(7), vec![(target.clone(), source.clone())]),
+        (Some(7), vec![(source.clone(), units("\\Unselected"))]),
+        (Some(7), vec![(source.clone(), target.clone()); 2]),
+    ] {
+        assert!(
+            Namespace::selected_with_directory_aliases(
+                table(),
+                alias_captures(),
+                session,
+                &[],
+                &aliases
+            )
+            .is_err()
+        );
+    }
+    for role in 0..8 {
+        let mut values = alias_captures();
+        match role {
+            0 => values.retain(|value| value.path != target),
+            1 => values.retain(|value| value.path != source),
+            2 => {
+                values
+                    .iter_mut()
+                    .find(|value| value.path == source)
+                    .unwrap()
+                    .maximum_access ^= 1
+            }
+            3 => {
+                values
+                    .iter_mut()
+                    .find(|value| value.path == source)
+                    .unwrap()
+                    .force_case_insensitive = true
+            }
+            4 => {
+                values
+                    .iter_mut()
+                    .find(|value| value.path == source)
+                    .unwrap()
+                    .system_security_status = STATUS_ACCESS_DENIED
+            }
+            5 => {
+                values
+                    .iter_mut()
+                    .find(|value| value.path == units("\\Sessions\\7"))
+                    .unwrap()
+                    .entries[0]
+                    .name = units("BASENAMEDOBJECTS")
+            }
+            6 => {
+                values
+                    .iter_mut()
+                    .find(|value| value.path == units("\\Sessions\\7"))
+                    .unwrap()
+                    .entries[0]
+                    .link_access = None
+            }
+            7 => {
+                values
+                    .iter_mut()
+                    .find(|value| value.path == units("\\Sessions\\7"))
+                    .unwrap()
+                    .entries[0]
+                    .target = Some(units("UnselectedRelativeTarget"))
+            }
+            _ => unreachable!(),
+        }
+        assert!(
+            Namespace::selected_with_directory_aliases(
+                table(),
+                values,
+                Some(7),
+                &[],
+                &[(source.clone(), target.clone())]
+            )
+            .is_err(),
+            "role={role}"
+        );
+    }
+}
+
+#[test]
+fn session_directory_alias_preserves_partial_capture_name_grammar_and_reparse_budget() {
+    let source = units("\\Sessions\\7\\BaseNamedObjects");
+    let target = units("\\BaseNamedObjects");
+    let namespace = Namespace::selected_with_directory_aliases(
+        table(),
+        alias_captures(),
+        Some(7),
+        &[source.clone()],
+        &[(source.clone(), target)],
+    )
+    .unwrap();
+    let resolved = namespace.lookup(None, &source, 0x40).unwrap();
+    assert_eq!(
+        namespace
+            .lookup(Some(resolved), &units("Missing"), 0x40)
+            .unwrap_err(),
+        LookupError::Unselected
+    );
+    for suffix in ["\\", "\\\\Missing"] {
+        assert_eq!(
+            namespace
+                .lookup(
+                    None,
+                    &units(&format!("\\Sessions\\7\\BaseNamedObjects{suffix}")),
+                    0x40
+                )
+                .unwrap_err(),
+            LookupError::Status(STATUS_OBJECT_NAME_INVALID)
+        );
+    }
+    assert_eq!(
+        namespace
+            .lookup(
+                None,
+                &units("\\Sessions\\7\\BaseNamedObjects\\Missing\\"),
+                0x40
+            )
+            .unwrap_err(),
+        LookupError::Unselected,
+    );
+    assert_eq!(
+        namespace
+            .lookup_object_reparsed(None, &source, 0x40, false, false, false, 63)
+            .err(),
+        Some(LookupError::Status(STATUS_OBJECT_NAME_NOT_FOUND))
+    );
+    assert!(matches!(
+        namespace.lookup_object_reparsed(None, &source, 0x40, false, false, false, 62),
+        Ok(SelectedObject::Directory(_))
+    ));
+    assert!(matches!(
+        namespace.lookup_object_reparsed(None, &source, 0x40, true, false, false, 63),
+        Ok(SelectedObject::Link(_))
+    ));
+    assert_eq!(
+        namespace
+            .lookup_object_reparsed(None, &source, 0x1040, false, false, false, 63)
+            .err(),
+        Some(LookupError::Status(STATUS_REPARSE_POINT_ENCOUNTERED))
+    );
+}

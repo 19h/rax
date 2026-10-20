@@ -2794,3 +2794,42 @@ consumer validation are recorded with their exact execution boundaries; complete
 process support and current-root GUI/plugin/package proof remain separate.
 
 [Region-query contract and evidence](../../../docs/specifications/windows/native-region-information/README.md).
+
+### Verified current-session directory alias projection (2026-10-20)
+
+The current Windows x64 CI constructor rejection identifies a SymbolicLink entry
+at `\Sessions\34651\BaseNamedObjects`, with the exact expected name and no
+attached child. Its target is unknown in that trace. A private four-ABI native
+probe independently establishes that following a directory link can yield the
+same underlying object as a separately opened directory, while the parent still
+enumerates SymbolicLink and OBJ_DONT_REPARSE returns 0xC000050B.
+
+Selection now retains the bounded fixed directory handles until identity checks
+finish. Only the current nonzero-session BaseNamedObjects alias may project to
+an independently captured `\BaseNamedObjects` object. NtCompareObjects must
+return success for the pinned pair and a refreshed alias open; captured link
+text/access must remain stable. The export is resolved only for this profile.
+Mismatch, unavailable evidence, or changed authorization/case metadata fails
+with an explicit diagnostic. No arbitrary native link target is opened.
+
+The immutable namespace keeps SymbolicLink enumeration/query metadata and
+attaches a separate resolved-directory identity. Directory opens and Win32
+named-object ownership reuse the selected target Arc; DONT_REPARSE, type errors,
+partial-directory uncertainty, counted-name grammar and the63-reparse budget
+remain enforced. The ordinary Directory type/name/attachment rejection remains
+unchanged for captures without identity evidence. Native handles close before
+publishing the guest namespace, including cleanup on acquisition errors.
+
+A compiled pre-fix regression observes0passed/1failed. Three portable alias tests
+cover canonical identity, unproven/wrong/duplicate pairs, missing capture/link
+metadata, rights/case disagreement, partial enumeration, malformed suffixes and
+reparse boundaries. A Windows-only acquisition test creates private temporary
+parent/child/link objects, checks the actual adapter's positive identity and
+0xC00001AC distinct-object rejection, and closes its handles. No public ABI,
+feature default, dependency, guest permission or persisted schema changes.
+
+This group does not assert that the actual CI alias resolves to the fixed target
+until that lane executes it. Other alias profiles fail closed with captured
+target/comparison context. Native probes use one build29683 ARM64 kernel across
+four ABI views. Retained Assist ABI184 consumers and current-root ABI272 products
+remain separate; the larger same-host Linux/macOS/Windows objective is active.

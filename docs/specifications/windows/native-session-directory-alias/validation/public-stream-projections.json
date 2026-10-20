@@ -1,0 +1,43 @@
+{
+  "files": [
+    {
+      "path": "docs/specifications/windows/native-session-directory-alias/validation/session-alias-native-owning-epoch1-artifacts-before.log",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 132537,
+        "sha256": "bf953c50f3e3ec451696bea56d45343856442975bf93e9e336f4a8f778abb105"
+      },
+      "published": {
+        "bytes": 129985,
+        "sha256": "932f715b0e9d49d835c57396feeaf0c496075d33b2256b190aff8349627b79fc"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private diagnostic records omitted before first publication; every remaining compiler/artifact/process/test byte is preserved. Complete original stream remains private."
+    },
+    {
+      "path": "docs/specifications/windows/native-session-directory-alias/validation/session-alias-native-owning-epoch1-artifacts-after.log",
+      "kind": "compiler-diagnostic-projection",
+      "original": {
+        "bytes": 132251,
+        "sha256": "d2dfeae4b26770b9796e1203d0aa21f7760839b08c155b2212cc427296caa99a"
+      },
+      "published": {
+        "bytes": 129699,
+        "sha256": "487add4c09d5d8bf3a85536c81bff03a0bb7494cb3d10e0af5d0ce793733fdeb"
+      },
+      "withheld-records": [
+        {
+          "bytes": 2552,
+          "sha256": "f61dffb9372fbac18daa6f5d140df1388d3c25f09250c8adf1bcf5981828cb1a"
+        }
+      ],
+      "preserved-semantics": "Complete private diagnostic records omitted before first publication; every remaining compiler/artifact/process/test byte is preserved. Complete original stream remains private."
+    }
+  ],
+  "scope": "Compiler diagnostics removed before first publication. Complete raw producer receipts retain their original identities; exact public projections are versioned in the shared adapter table."
+}

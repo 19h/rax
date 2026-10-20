@@ -4,6 +4,7 @@ use std::ffi::c_void;
 use std::ptr::null_mut;
 mod csr;
 mod data;
+mod directory_alias;
 pub(super) mod image;
 mod section;
 type Handle = *mut c_void;
@@ -331,6 +332,10 @@ pub(crate) fn snapshot(upcase: Arc<[u16]>, session: u32) -> io::Result<Namespace
     let mut sources = Vec::new();
     let mut selected = Vec::new();
     let mut incomplete = Vec::new();
+    // Retain the exact captured objects until any alias identity comparison.
+    // The fixed selection bounds this to at most nine directory handles.
+    let mut handles = Vec::new();
+    let session_parent: Vec<u16> = format!("\\Sessions\\{session}").encode_utf16().collect();
     for units in selection_paths(Some(session)) {
         let path =
             String::from_utf16(&units).map_err(|_| invalid("selected NT path is not UTF-16"))?;
@@ -410,7 +415,9 @@ pub(crate) fn snapshot(upcase: Arc<[u16]>, session: u32) -> io::Result<Namespace
                 && ["Local", "Global", "Session"]
                     .iter()
                     .any(|name| is(&entry.name, name));
-            if is(&entry.kind, "SymbolicLink") && (known_dll || base_link) {
+            let session_link =
+                session != 0 && units == session_parent && is(&entry.name, "BaseNamedObjects");
+            if is(&entry.kind, "SymbolicLink") && (known_dll || base_link || session_link) {
                 let (target, access) = target(&h, &entry.name)?;
                 entry.target = Some(target);
                 entry.link_access = Some(access);
@@ -421,7 +428,7 @@ pub(crate) fn snapshot(upcase: Arc<[u16]>, session: u32) -> io::Result<Namespace
                 "selected NT directory grant changed during capture",
             ));
         }
-        h.close()?;
+        handles.push((units.clone(), h));
         selected.push(SelectedDirectory {
             path: units,
             maximum_access,
@@ -430,8 +437,17 @@ pub(crate) fn snapshot(upcase: Arc<[u16]>, session: u32) -> io::Result<Namespace
             entries,
         });
     }
-    let mut namespace =
-        Namespace::selected_for_session_partial(upcase, selected, Some(session), &incomplete)?;
+    let aliases = directory_alias::verified(&selected, &handles, session)?;
+    for (_, handle) in handles {
+        handle.close()?;
+    }
+    let mut namespace = Namespace::selected_with_directory_aliases(
+        upcase,
+        selected,
+        Some(session),
+        &incomplete,
+        &aliases,
+    )?;
     for (path, source) in sources {
         let section = namespace
             .lookup_section(None, &path, 0x40, false)

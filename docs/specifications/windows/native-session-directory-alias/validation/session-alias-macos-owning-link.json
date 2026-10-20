@@ -1,0 +1,6 @@
+{
+  "path": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/vendor/rax",
+  "before": "/Users/int/.assist-region-20261020",
+  "after": "/Users/int/.assist-session-alias-20261020",
+  "scope": "Only task-owned retained-consumer dependency symlink changes; no sharedcurrentcheckout or installedprofile mutation."
+}

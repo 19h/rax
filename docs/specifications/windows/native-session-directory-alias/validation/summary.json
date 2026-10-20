@@ -1,0 +1,54 @@
+{
+  "source-files": 25085,
+  "source-bytes": 1835122521,
+  "source-epoch": "original-frozen-epoch1-with-explicit-public-data-projections",
+  "owning-source-inputs": 3826,
+  "library-gates": {
+    "macos": {
+      "passed": 8102,
+      "failed": 0,
+      "ignored": 2
+    },
+    "linux": {
+      "passed": 8096,
+      "failed": 0,
+      "ignored": 2
+    },
+    "windows": {
+      "passed": 7564,
+      "failed": 5,
+      "ignored": 2
+    }
+  },
+  "native-profiles": [
+    "arm64",
+    "x64",
+    "x86",
+    "x86-laa"
+  ],
+  "native-kernel": "10.0.29683 ARM64",
+  "compiled-portable-alias-tests": 3,
+  "compiled-native-acquisition-tests": 1,
+  "ci-session-alias-target": "unknown",
+  "ordinary-smoke-exit": 0,
+  "whoami-frontier": "NtQueryAttributesFile0x3d",
+  "retained-assist-abi": 184,
+  "compared-current-root-abi": 272,
+  "full-process-goal-complete": false,
+  "whole-current-root-products-validated": false,
+  "independent-x64-kernel-validated": false,
+  "portable-proof-round1": {
+    "macos": {
+      "bytes": 24947,
+      "sha256": "f1ab7643936a852e11aafae0d0b670bd3fed10793b21d84cce02c4f1a4821721"
+    },
+    "linux": {
+      "bytes": 24947,
+      "sha256": "f1ab7643936a852e11aafae0d0b670bd3fed10793b21d84cce02c4f1a4821721"
+    },
+    "windows": {
+      "bytes": 24947,
+      "sha256": "f1ab7643936a852e11aafae0d0b670bd3fed10793b21d84cce02c4f1a4821721"
+    }
+  }
+}

@@ -1,0 +1,1415 @@
+   Compiling proc-macro2 v1.0.107
+   Compiling unicode-ident v1.0.24
+   Compiling quote v1.0.47
+   Compiling libc v0.2.189
+   Compiling syn v3.0.5
+    Checking windows-link v0.2.1
+    Checking windows-sys v0.61.2
+   Compiling serde_core v1.0.229
+   Compiling jobserver v0.1.35
+   Compiling find-msvc-tools v0.1.12
+   Compiling shlex v2.0.1
+   Compiling cc v1.4.5
+   Compiling syn v2.0.119
+   Compiling pkg-config v0.3.34
+   Compiling zstd-sys v2.1.0+zstd.1.5.7
+    Checking once_cell_polyfill v1.70.2
+    Checking once_cell v1.21.4
+   Compiling winapi v0.3.9
+   Compiling thiserror v2.0.20
+    Checking anstyle v1.0.14
+    Checking utf8parse v0.2.2
+    Checking anstyle-parse v1.0.0
+    Checking anstyle-wincon v3.0.11
+    Checking tracing-core v0.1.36
+   Compiling thiserror-impl v2.0.20
+    Checking anstyle-query v1.1.5
+    Checking is_terminal_polyfill v1.70.2
+    Checking colorchoice v1.0.5
+    Checking cfg-if v1.0.4
+   Compiling zmij v1.0.23
+    Checking regex-syntax v0.8.11
+   Compiling zstd-safe v7.3.0
+   Compiling serde v1.0.229
+    Checking log v0.4.34
+    Checking regex-automata v0.4.18
+    Checking anstream v1.0.0
+   Compiling tracing-attributes v0.1.31
+   Compiling scroll_derive v0.12.1
+   Compiling serde_derive v1.0.229
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/common/entropy_common.c:18:
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/common/mem.h:18:
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/common/compiler.h:202:
+warning: zstd-sys@2.1.0+zstd.1.5.7: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include/intrin.h:35:10: fatal error: 'setjmp.h' file not found
+warning: zstd-sys@2.1.0+zstd.1.5.7:    35 | #include <setjmp.h>
+warning: zstd-sys@2.1.0+zstd.1.5.7:       |          ^~~~~~~~~~
+warning: zstd-sys@2.1.0+zstd.1.5.7: 1 error generated.
+warning: zstd-sys@2.1.0+zstd.1.5.7: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/44ff4c55aa9e5133-entropy_common.o" "-c" "zstd/lib/common/entropy_common.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/common/error_private.c:13:
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/common/error_private.h:20:
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/common/compiler.h:202:
+warning: zstd-sys@2.1.0+zstd.1.5.7: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include/intrin.h:35:10: fatal error: 'setjmp.h' file not found
+warning: zstd-sys@2.1.0+zstd.1.5.7:    35 | #include <setjmp.h>
+warning: zstd-sys@2.1.0+zstd.1.5.7:       |          ^~~~~~~~~~
+warning: zstd-sys@2.1.0+zstd.1.5.7: 1 error generated.
+warning: zstd-sys@2.1.0+zstd.1.5.7: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/44ff4c55aa9e5133-error_private.o" "-c" "zstd/lib/common/error_private.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/common/fse_decompress.c:20:
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/common/bitstream.h:26:
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/common/mem.h:18:
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/common/compiler.h:202:
+warning: zstd-sys@2.1.0+zstd.1.5.7: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include/intrin.h:35:10: fatal error: 'setjmp.h' file not found
+warning: zstd-sys@2.1.0+zstd.1.5.7:    35 | #include <setjmp.h>
+warning: zstd-sys@2.1.0+zstd.1.5.7:       |          ^~~~~~~~~~
+warning: zstd-sys@2.1.0+zstd.1.5.7: 1 error generated.
+warning: zstd-sys@2.1.0+zstd.1.5.7: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/44ff4c55aa9e5133-fse_decompress.o" "-c" "zstd/lib/common/fse_decompress.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/common/pool.c:13:
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/common/../common/allocations.h:15:
+warning: zstd-sys@2.1.0+zstd.1.5.7: zstd/lib/common/../common/zstd_deps.h:41:10: fatal error: 'string.h' file not found
+warning: zstd-sys@2.1.0+zstd.1.5.7:    41 | #include <string.h>
+warning: zstd-sys@2.1.0+zstd.1.5.7:       |          ^~~~~~~~~~
+warning: zstd-sys@2.1.0+zstd.1.5.7: 1 error generated.
+warning: zstd-sys@2.1.0+zstd.1.5.7: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/44ff4c55aa9e5133-pool.o" "-c" "zstd/lib/common/pool.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/common/zstd_common.c:17:
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/common/error_private.h:20:
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/common/compiler.h:202:
+warning: zstd-sys@2.1.0+zstd.1.5.7: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include/intrin.h:35:10: fatal error: 'setjmp.h' file not found
+warning: zstd-sys@2.1.0+zstd.1.5.7:    35 | #include <setjmp.h>
+warning: zstd-sys@2.1.0+zstd.1.5.7:       |          ^~~~~~~~~~
+warning: zstd-sys@2.1.0+zstd.1.5.7: 1 error generated.
+warning: zstd-sys@2.1.0+zstd.1.5.7: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/44ff4c55aa9e5133-zstd_common.o" "-c" "zstd/lib/common/zstd_common.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/compress/fse_compress.c:18:
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/compress/../common/compiler.h:202:
+warning: zstd-sys@2.1.0+zstd.1.5.7: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include/intrin.h:35:10: fatal error: 'setjmp.h' file not found
+warning: zstd-sys@2.1.0+zstd.1.5.7:    35 | #include <setjmp.h>
+warning: zstd-sys@2.1.0+zstd.1.5.7:       |          ^~~~~~~~~~
+warning: zstd-sys@2.1.0+zstd.1.5.7: 1 error generated.
+warning: zstd-sys@2.1.0+zstd.1.5.7: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/fb80479a5fb81f6a-fse_compress.o" "-c" "zstd/lib/compress/fse_compress.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/compress/hist.c:17:
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/compress/../common/mem.h:18:
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/compress/../common/compiler.h:202:
+warning: zstd-sys@2.1.0+zstd.1.5.7: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include/intrin.h:35:10: fatal error: 'setjmp.h' file not found
+warning: zstd-sys@2.1.0+zstd.1.5.7:    35 | #include <setjmp.h>
+warning: zstd-sys@2.1.0+zstd.1.5.7:       |          ^~~~~~~~~~
+warning: zstd-sys@2.1.0+zstd.1.5.7: 1 error generated.
+warning: zstd-sys@2.1.0+zstd.1.5.7: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/fb80479a5fb81f6a-hist.o" "-c" "zstd/lib/compress/hist.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/compress/huf_compress.c:26:
+warning: zstd-sys@2.1.0+zstd.1.5.7: zstd/lib/compress/../common/zstd_deps.h:41:10: fatal error: 'string.h' file not found
+warning: zstd-sys@2.1.0+zstd.1.5.7:    41 | #include <string.h>
+warning: zstd-sys@2.1.0+zstd.1.5.7:       |          ^~~~~~~~~~
+warning: zstd-sys@2.1.0+zstd.1.5.7: 1 error generated.
+warning: zstd-sys@2.1.0+zstd.1.5.7: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/fb80479a5fb81f6a-huf_compress.o" "-c" "zstd/lib/compress/huf_compress.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/compress/zstd_compress.c:14:
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/compress/../common/allocations.h:15:
+warning: zstd-sys@2.1.0+zstd.1.5.7: zstd/lib/compress/../common/zstd_deps.h:41:10: fatal error: 'string.h' file not found
+warning: zstd-sys@2.1.0+zstd.1.5.7:    41 | #include <string.h>
+warning: zstd-sys@2.1.0+zstd.1.5.7:       |          ^~~~~~~~~~
+warning: zstd-sys@2.1.0+zstd.1.5.7: 1 error generated.
+warning: zstd-sys@2.1.0+zstd.1.5.7: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/fb80479a5fb81f6a-zstd_compress.o" "-c" "zstd/lib/compress/zstd_compress.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/compress/zstd_compress_literals.c:14:
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/compress/zstd_compress_literals.h:14:
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/compress/zstd_compress_internal.h:21:
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/compress/../common/zstd_internal.h:22:
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/compress/../common/compiler.h:202:
+warning: zstd-sys@2.1.0+zstd.1.5.7: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include/intrin.h:35:10: fatal error: 'setjmp.h' file not found
+warning: zstd-sys@2.1.0+zstd.1.5.7:    35 | #include <setjmp.h>
+warning: zstd-sys@2.1.0+zstd.1.5.7:       |          ^~~~~~~~~~
+warning: zstd-sys@2.1.0+zstd.1.5.7: 1 error generated.
+warning: zstd-sys@2.1.0+zstd.1.5.7: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/fb80479a5fb81f6a-zstd_compress_literals.o" "-c" "zstd/lib/compress/zstd_compress_literals.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/compress/zstd_compress_sequences.c:14:
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/compress/zstd_compress_sequences.h:14:
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/compress/zstd_compress_internal.h:21:
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/compress/../common/zstd_internal.h:22:
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/compress/../common/compiler.h:202:
+warning: zstd-sys@2.1.0+zstd.1.5.7: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include/intrin.h:35:10: fatal error: 'setjmp.h' file not found
+warning: zstd-sys@2.1.0+zstd.1.5.7:    35 | #include <setjmp.h>
+warning: zstd-sys@2.1.0+zstd.1.5.7:       |          ^~~~~~~~~~
+warning: zstd-sys@2.1.0+zstd.1.5.7: 1 error generated.
+warning: zstd-sys@2.1.0+zstd.1.5.7: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/fb80479a5fb81f6a-zstd_compress_sequences.o" "-c" "zstd/lib/compress/zstd_compress_sequences.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/compress/zstd_compress_superblock.c:16:
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/compress/../common/zstd_internal.h:22:
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/compress/../common/compiler.h:202:
+warning: zstd-sys@2.1.0+zstd.1.5.7: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include/intrin.h:35:10: fatal error: 'setjmp.h' file not found
+warning: zstd-sys@2.1.0+zstd.1.5.7:    35 | #include <setjmp.h>
+warning: zstd-sys@2.1.0+zstd.1.5.7:       |          ^~~~~~~~~~
+warning: zstd-sys@2.1.0+zstd.1.5.7: 1 error generated.
+warning: zstd-sys@2.1.0+zstd.1.5.7: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/fb80479a5fb81f6a-zstd_compress_superblock.o" "-c" "zstd/lib/compress/zstd_compress_superblock.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/compress/zstd_double_fast.c:11:
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/compress/zstd_compress_internal.h:21:
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/compress/../common/zstd_internal.h:22:
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/compress/../common/compiler.h:202:
+warning: zstd-sys@2.1.0+zstd.1.5.7: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include/intrin.h:35:10: fatal error: 'setjmp.h' file not found
+warning: zstd-sys@2.1.0+zstd.1.5.7:    35 | #include <setjmp.h>
+warning: zstd-sys@2.1.0+zstd.1.5.7:       |          ^~~~~~~~~~
+warning: zstd-sys@2.1.0+zstd.1.5.7: 1 error generated.
+warning: zstd-sys@2.1.0+zstd.1.5.7: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/fb80479a5fb81f6a-zstd_double_fast.o" "-c" "zstd/lib/compress/zstd_double_fast.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/compress/zstd_fast.c:11:
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/compress/zstd_compress_internal.h:21:
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/compress/../common/zstd_internal.h:22:
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/compress/../common/compiler.h:202:
+warning: zstd-sys@2.1.0+zstd.1.5.7: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include/intrin.h:35:10: fatal error: 'setjmp.h' file not found
+warning: zstd-sys@2.1.0+zstd.1.5.7:    35 | #include <setjmp.h>
+warning: zstd-sys@2.1.0+zstd.1.5.7:       |          ^~~~~~~~~~
+warning: zstd-sys@2.1.0+zstd.1.5.7: 1 error generated.
+warning: zstd-sys@2.1.0+zstd.1.5.7: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/fb80479a5fb81f6a-zstd_fast.o" "-c" "zstd/lib/compress/zstd_fast.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/compress/zstd_lazy.c:11:
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/compress/zstd_compress_internal.h:21:
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/compress/../common/zstd_internal.h:22:
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/compress/../common/compiler.h:202:
+warning: zstd-sys@2.1.0+zstd.1.5.7: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include/intrin.h:35:10: fatal error: 'setjmp.h' file not found
+warning: zstd-sys@2.1.0+zstd.1.5.7:    35 | #include <setjmp.h>
+warning: zstd-sys@2.1.0+zstd.1.5.7:       |          ^~~~~~~~~~
+warning: zstd-sys@2.1.0+zstd.1.5.7: 1 error generated.
+warning: zstd-sys@2.1.0+zstd.1.5.7: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/fb80479a5fb81f6a-zstd_lazy.o" "-c" "zstd/lib/compress/zstd_lazy.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/compress/zstd_ldm.c:11:
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/compress/zstd_ldm.h:14:
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/compress/zstd_compress_internal.h:21:
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/compress/../common/zstd_internal.h:22:
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/compress/../common/compiler.h:202:
+warning: zstd-sys@2.1.0+zstd.1.5.7: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include/intrin.h:35:10: fatal error: 'setjmp.h' file not found
+warning: zstd-sys@2.1.0+zstd.1.5.7:    35 | #include <setjmp.h>
+warning: zstd-sys@2.1.0+zstd.1.5.7:       |          ^~~~~~~~~~
+warning: zstd-sys@2.1.0+zstd.1.5.7: 1 error generated.
+warning: zstd-sys@2.1.0+zstd.1.5.7: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/fb80479a5fb81f6a-zstd_ldm.o" "-c" "zstd/lib/compress/zstd_ldm.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/compress/zstd_opt.c:11:
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/compress/zstd_compress_internal.h:21:
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/compress/../common/zstd_internal.h:22:
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/compress/../common/compiler.h:202:
+warning: zstd-sys@2.1.0+zstd.1.5.7: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include/intrin.h:35:10: fatal error: 'setjmp.h' file not found
+warning: zstd-sys@2.1.0+zstd.1.5.7:    35 | #include <setjmp.h>
+warning: zstd-sys@2.1.0+zstd.1.5.7:       |          ^~~~~~~~~~
+warning: zstd-sys@2.1.0+zstd.1.5.7: 1 error generated.
+warning: zstd-sys@2.1.0+zstd.1.5.7: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/fb80479a5fb81f6a-zstd_opt.o" "-c" "zstd/lib/compress/zstd_opt.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/compress/zstd_preSplit.c:11:
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/compress/../common/compiler.h:202:
+warning: zstd-sys@2.1.0+zstd.1.5.7: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include/intrin.h:35:10: fatal error: 'setjmp.h' file not found
+warning: zstd-sys@2.1.0+zstd.1.5.7:    35 | #include <setjmp.h>
+warning: zstd-sys@2.1.0+zstd.1.5.7:       |          ^~~~~~~~~~
+warning: zstd-sys@2.1.0+zstd.1.5.7: 1 error generated.
+warning: zstd-sys@2.1.0+zstd.1.5.7: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/fb80479a5fb81f6a-zstd_preSplit.o" "-c" "zstd/lib/compress/zstd_preSplit.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/compress/zstdmt_compress.c:19:
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/compress/../common/allocations.h:15:
+warning: zstd-sys@2.1.0+zstd.1.5.7: zstd/lib/compress/../common/zstd_deps.h:41:10: fatal error: 'string.h' file not found
+warning: zstd-sys@2.1.0+zstd.1.5.7:    41 | #include <string.h>
+warning: zstd-sys@2.1.0+zstd.1.5.7:       |          ^~~~~~~~~~
+warning: zstd-sys@2.1.0+zstd.1.5.7: 1 error generated.
+warning: zstd-sys@2.1.0+zstd.1.5.7: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/fb80479a5fb81f6a-zstdmt_compress.o" "-c" "zstd/lib/compress/zstdmt_compress.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/decompress/huf_decompress.c:18:
+warning: zstd-sys@2.1.0+zstd.1.5.7: zstd/lib/decompress/../common/zstd_deps.h:41:10: fatal error: 'string.h' file not found
+warning: zstd-sys@2.1.0+zstd.1.5.7:    41 | #include <string.h>
+warning: zstd-sys@2.1.0+zstd.1.5.7:       |          ^~~~~~~~~~
+warning: zstd-sys@2.1.0+zstd.1.5.7: 1 error generated.
+warning: zstd-sys@2.1.0+zstd.1.5.7: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/88f362f13b0528ed-huf_decompress.o" "-c" "zstd/lib/decompress/huf_decompress.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/decompress/zstd_ddict.c:17:
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/decompress/../common/allocations.h:15:
+warning: zstd-sys@2.1.0+zstd.1.5.7: zstd/lib/decompress/../common/zstd_deps.h:41:10: fatal error: 'string.h' file not found
+warning: zstd-sys@2.1.0+zstd.1.5.7:    41 | #include <string.h>
+warning: zstd-sys@2.1.0+zstd.1.5.7:       |          ^~~~~~~~~~
+warning: zstd-sys@2.1.0+zstd.1.5.7: 1 error generated.
+warning: zstd-sys@2.1.0+zstd.1.5.7: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/88f362f13b0528ed-zstd_ddict.o" "-c" "zstd/lib/decompress/zstd_ddict.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/decompress/zstd_decompress.c:58:
+warning: zstd-sys@2.1.0+zstd.1.5.7: zstd/lib/decompress/../common/zstd_deps.h:41:10: fatal error: 'string.h' file not found
+warning: zstd-sys@2.1.0+zstd.1.5.7:    41 | #include <string.h>
+warning: zstd-sys@2.1.0+zstd.1.5.7:       |          ^~~~~~~~~~
+warning: zstd-sys@2.1.0+zstd.1.5.7: 1 error generated.
+warning: zstd-sys@2.1.0+zstd.1.5.7: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/88f362f13b0528ed-zstd_decompress.o" "-c" "zstd/lib/decompress/zstd_decompress.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/decompress/zstd_decompress_block.c:17:
+warning: zstd-sys@2.1.0+zstd.1.5.7: zstd/lib/decompress/../common/zstd_deps.h:41:10: fatal error: 'string.h' file not found
+warning: zstd-sys@2.1.0+zstd.1.5.7:    41 | #include <string.h>
+warning: zstd-sys@2.1.0+zstd.1.5.7:       |          ^~~~~~~~~~
+warning: zstd-sys@2.1.0+zstd.1.5.7: 1 error generated.
+warning: zstd-sys@2.1.0+zstd.1.5.7: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/88f362f13b0528ed-zstd_decompress_block.o" "-c" "zstd/lib/decompress/zstd_decompress_block.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+warning: zstd-sys@2.1.0+zstd.1.5.7: zstd/lib/dictBuilder/cover.c:32:10: fatal error: 'stdio.h' file not found
+warning: zstd-sys@2.1.0+zstd.1.5.7:    32 | #include <stdio.h>  /* fprintf */
+warning: zstd-sys@2.1.0+zstd.1.5.7:       |          ^~~~~~~~~
+warning: zstd-sys@2.1.0+zstd.1.5.7: 1 error generated.
+warning: zstd-sys@2.1.0+zstd.1.5.7: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/a6c81c75fc82913a-cover.o" "-c" "zstd/lib/dictBuilder/cover.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+warning: zstd-sys@2.1.0+zstd.1.5.7: zstd/lib/dictBuilder/divsufsort.c:39:10: fatal error: 'assert.h' file not found
+warning: zstd-sys@2.1.0+zstd.1.5.7:    39 | #include <assert.h>
+warning: zstd-sys@2.1.0+zstd.1.5.7:       |          ^~~~~~~~~~
+warning: zstd-sys@2.1.0+zstd.1.5.7: 1 error generated.
+warning: zstd-sys@2.1.0+zstd.1.5.7: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/a6c81c75fc82913a-divsufsort.o" "-c" "zstd/lib/dictBuilder/divsufsort.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+warning: zstd-sys@2.1.0+zstd.1.5.7: zstd/lib/dictBuilder/fastcover.c:14:10: fatal error: 'stdio.h' file not found
+warning: zstd-sys@2.1.0+zstd.1.5.7:    14 | #include <stdio.h>  /* fprintf */
+warning: zstd-sys@2.1.0+zstd.1.5.7:       |          ^~~~~~~~~
+warning: zstd-sys@2.1.0+zstd.1.5.7: 1 error generated.
+warning: zstd-sys@2.1.0+zstd.1.5.7: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/a6c81c75fc82913a-fastcover.o" "-c" "zstd/lib/dictBuilder/fastcover.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+warning: zstd-sys@2.1.0+zstd.1.5.7: zstd/lib/dictBuilder/zdict.c:39:10: fatal error: 'stdlib.h' file not found
+warning: zstd-sys@2.1.0+zstd.1.5.7:    39 | #include <stdlib.h>        /* malloc, free */
+warning: zstd-sys@2.1.0+zstd.1.5.7:       |          ^~~~~~~~~~
+warning: zstd-sys@2.1.0+zstd.1.5.7: 1 error generated.
+warning: zstd-sys@2.1.0+zstd.1.5.7: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/a6c81c75fc82913a-zdict.o" "-c" "zstd/lib/dictBuilder/zdict.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/legacy/zstd_v01.c:17:
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/legacy/../common/compiler.h:202:
+warning: zstd-sys@2.1.0+zstd.1.5.7: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include/intrin.h:35:10: fatal error: 'setjmp.h' file not found
+warning: zstd-sys@2.1.0+zstd.1.5.7:    35 | #include <setjmp.h>
+warning: zstd-sys@2.1.0+zstd.1.5.7:       |          ^~~~~~~~~~
+warning: zstd-sys@2.1.0+zstd.1.5.7: 1 error generated.
+warning: zstd-sys@2.1.0+zstd.1.5.7: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/3f451b2306bc13c8-zstd_v01.o" "-c" "zstd/lib/legacy/zstd_v01.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/legacy/zstd_v02.c:14:
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/legacy/../common/compiler.h:202:
+warning: zstd-sys@2.1.0+zstd.1.5.7: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include/intrin.h:35:10: fatal error: 'setjmp.h' file not found
+warning: zstd-sys@2.1.0+zstd.1.5.7:    35 | #include <setjmp.h>
+warning: zstd-sys@2.1.0+zstd.1.5.7:       |          ^~~~~~~~~~
+warning: zstd-sys@2.1.0+zstd.1.5.7: 1 error generated.
+warning: zstd-sys@2.1.0+zstd.1.5.7: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/3f451b2306bc13c8-zstd_v02.o" "-c" "zstd/lib/legacy/zstd_v02.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/legacy/zstd_v03.c:14:
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/legacy/../common/compiler.h:202:
+warning: zstd-sys@2.1.0+zstd.1.5.7: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include/intrin.h:35:10: fatal error: 'setjmp.h' file not found
+warning: zstd-sys@2.1.0+zstd.1.5.7:    35 | #include <setjmp.h>
+warning: zstd-sys@2.1.0+zstd.1.5.7:       |          ^~~~~~~~~~
+warning: zstd-sys@2.1.0+zstd.1.5.7: 1 error generated.
+warning: zstd-sys@2.1.0+zstd.1.5.7: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/3f451b2306bc13c8-zstd_v03.o" "-c" "zstd/lib/legacy/zstd_v03.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+warning: zstd-sys@2.1.0+zstd.1.5.7: zstd/lib/legacy/zstd_v04.c:16:10: fatal error: 'string.h' file not found
+warning: zstd-sys@2.1.0+zstd.1.5.7:    16 | #include <string.h>    /* memcpy */
+warning: zstd-sys@2.1.0+zstd.1.5.7:       |          ^~~~~~~~~~
+warning: zstd-sys@2.1.0+zstd.1.5.7: 1 error generated.
+warning: zstd-sys@2.1.0+zstd.1.5.7: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/3f451b2306bc13c8-zstd_v04.o" "-c" "zstd/lib/legacy/zstd_v04.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/legacy/zstd_v05.c:13:
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/legacy/zstd_v05.h:22:
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/legacy/../common/mem.h:18:
+warning: zstd-sys@2.1.0+zstd.1.5.7: In file included from zstd/lib/legacy/../common/compiler.h:202:
+warning: zstd-sys@2.1.0+zstd.1.5.7: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include/intrin.h:35:10: fatal error: 'setjmp.h' file not found
+warning: zstd-sys@2.1.0+zstd.1.5.7:    35 | #include <setjmp.h>
+warning: zstd-sys@2.1.0+zstd.1.5.7:       |          ^~~~~~~~~~
+warning: zstd-sys@2.1.0+zstd.1.5.7: 1 error generated.
+warning: zstd-sys@2.1.0+zstd.1.5.7: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/3f451b2306bc13c8-zstd_v05.o" "-c" "zstd/lib/legacy/zstd_v05.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+warning: zstd-sys@2.1.0+zstd.1.5.7: zstd/lib/legacy/zstd_v06.c:15:10: fatal error: 'string.h' file not found
+warning: zstd-sys@2.1.0+zstd.1.5.7:    15 | #include <string.h>    /* memcpy */
+warning: zstd-sys@2.1.0+zstd.1.5.7:       |          ^~~~~~~~~~
+warning: zstd-sys@2.1.0+zstd.1.5.7: 1 error generated.
+warning: zstd-sys@2.1.0+zstd.1.5.7: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/3f451b2306bc13c8-zstd_v06.o" "-c" "zstd/lib/legacy/zstd_v06.c"cargo:warning=zstd/lib/legacy/zstd_v07.c:14:10: fatal error: 'string.h' file not found
+warning: zstd-sys@2.1.0+zstd.1.5.7:    14 | #include <string.h>     /* memcpy */
+warning: zstd-sys@2.1.0+zstd.1.5.7:       |          ^~~~~~~~~~
+warning: zstd-sys@2.1.0+zstd.1.5.7: 1 error generated.
+warning: zstd-sys@2.1.0+zstd.1.5.7: ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/3f451b2306bc13c8-zstd_v07.o" "-c" "zstd/lib/legacy/zstd_v07.c"
+error: failed to run custom build command for `zstd-sys v2.1.0+zstd.1.5.7`
+
+Caused by:
+  process didn't exit successfully: `/Users/int/.assist-session-alias-20261020/target/windows-cross/debug/build/zstd-sys-d590460b199eb27f/build-script-build` (exit status: 1)
+  --- stdout
+  cargo:rerun-if-env-changed=ZSTD_SYS_USE_PKG_CONFIG
+  cargo:rerun-if-env-changed=CC_FORCE_DISABLE
+  CC_FORCE_DISABLE = None
+  cargo:rerun-if-env-changed=VCINSTALLDIR
+  VCINSTALLDIR = None
+  cargo:rerun-if-env-changed=CC_aarch64-pc-windows-msvc
+  CC_aarch64-pc-windows-msvc = None
+  cargo:rerun-if-env-changed=CC_aarch64_pc_windows_msvc
+  CC_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=TARGET_CC
+  TARGET_CC = None
+  cargo:rerun-if-env-changed=CC
+  CC = None
+  cargo:rerun-if-env-changed=CROSS_COMPILE
+  CROSS_COMPILE = None
+  cargo:rerun-if-env-changed=CC_ENABLE_DEBUG_OUTPUT
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CFLAGS
+  CFLAGS = None
+  cargo:rerun-if-env-changed=TARGET_CFLAGS
+  TARGET_CFLAGS = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64_pc_windows_msvc
+  CFLAGS_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64-pc-windows-msvc
+  CFLAGS_aarch64-pc-windows-msvc = None
+  cargo:rerun-if-env-changed=CFLAGS
+  CFLAGS = None
+  cargo:rerun-if-env-changed=TARGET_CFLAGS
+  TARGET_CFLAGS = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64_pc_windows_msvc
+  CFLAGS_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64-pc-windows-msvc
+  CFLAGS_aarch64-pc-windows-msvc = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CFLAGS
+  CFLAGS = None
+  cargo:rerun-if-env-changed=TARGET_CFLAGS
+  TARGET_CFLAGS = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64_pc_windows_msvc
+  CFLAGS_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64-pc-windows-msvc
+  CFLAGS_aarch64-pc-windows-msvc = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CFLAGS
+  CFLAGS = None
+  cargo:rerun-if-env-changed=TARGET_CFLAGS
+  TARGET_CFLAGS = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64_pc_windows_msvc
+  CFLAGS_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64-pc-windows-msvc
+  CFLAGS_aarch64-pc-windows-msvc = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CFLAGS
+  CFLAGS = None
+  cargo:rerun-if-env-changed=TARGET_CFLAGS
+  TARGET_CFLAGS = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64_pc_windows_msvc
+  CFLAGS_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64-pc-windows-msvc
+  CFLAGS_aarch64-pc-windows-msvc = None
+  cargo:rerun-if-env-changed=VCINSTALLDIR
+  VCINSTALLDIR = None
+  cargo:rerun-if-env-changed=CC_aarch64-pc-windows-msvc
+  CC_aarch64-pc-windows-msvc = None
+  cargo:rerun-if-env-changed=CC_aarch64_pc_windows_msvc
+  CC_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=TARGET_CC
+  TARGET_CC = None
+  cargo:rerun-if-env-changed=CC
+  CC = None
+  cargo:rerun-if-env-changed=CROSS_COMPILE
+  CROSS_COMPILE = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CFLAGS
+  CFLAGS = None
+  cargo:rerun-if-env-changed=TARGET_CFLAGS
+  TARGET_CFLAGS = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64_pc_windows_msvc
+  CFLAGS_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64-pc-windows-msvc
+  CFLAGS_aarch64-pc-windows-msvc = None
+  cargo:rerun-if-env-changed=VCINSTALLDIR
+  VCINSTALLDIR = None
+  cargo:rerun-if-env-changed=CC_aarch64-pc-windows-msvc
+  CC_aarch64-pc-windows-msvc = None
+  cargo:rerun-if-env-changed=CC_aarch64_pc_windows_msvc
+  CC_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=TARGET_CC
+  TARGET_CC = None
+  cargo:rerun-if-env-changed=CC
+  CC = None
+  cargo:rerun-if-env-changed=CROSS_COMPILE
+  CROSS_COMPILE = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CFLAGS
+  CFLAGS = None
+  cargo:rerun-if-env-changed=TARGET_CFLAGS
+  TARGET_CFLAGS = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64_pc_windows_msvc
+  CFLAGS_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64-pc-windows-msvc
+  CFLAGS_aarch64-pc-windows-msvc = None
+  cargo:warning=In file included from zstd/lib/common/entropy_common.c:18:
+  cargo:warning=In file included from zstd/lib/common/mem.h:18:
+  cargo:warning=In file included from zstd/lib/common/compiler.h:202:
+  cargo:warning=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include/intrin.h:35:10: fatal error: 'setjmp.h' file not found
+  cargo:warning=   35 | #include <setjmp.h>
+  cargo:warning=      |          ^~~~~~~~~~
+  cargo:warning=1 error generated.
+  exit status: 0
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/44ff4c55aa9e5133-entropy_common.o" "-c" "zstd/lib/common/entropy_common.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+  VCINSTALLDIR = None
+  cargo:rerun-if-env-changed=CC_aarch64-pc-windows-msvc
+  CC_aarch64-pc-windows-msvc = None
+  cargo:rerun-if-env-changed=CC_aarch64_pc_windows_msvc
+  CC_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=TARGET_CC
+  TARGET_CC = None
+  cargo:rerun-if-env-changed=CC
+  CC = None
+  cargo:rerun-if-env-changed=CROSS_COMPILE
+  CROSS_COMPILE = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CFLAGS
+  CFLAGS = None
+  cargo:rerun-if-env-changed=TARGET_CFLAGS
+  TARGET_CFLAGS = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64_pc_windows_msvc
+  CFLAGS_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64-pc-windows-msvc
+  CFLAGS_aarch64-pc-windows-msvc = None
+  cargo:warning=In file included from zstd/lib/common/error_private.c:13:
+  cargo:warning=In file included from zstd/lib/common/error_private.h:20:
+  cargo:warning=In file included from zstd/lib/common/compiler.h:202:
+  cargo:warning=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include/intrin.h:35:10: fatal error: 'setjmp.h' file not found
+  cargo:warning=   35 | #include <setjmp.h>
+  cargo:warning=      |          ^~~~~~~~~~
+  cargo:warning=1 error generated.
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/44ff4c55aa9e5133-error_private.o" "-c" "zstd/lib/common/error_private.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+  VCINSTALLDIR = None
+  cargo:rerun-if-env-changed=CC_aarch64-pc-windows-msvc
+  CC_aarch64-pc-windows-msvc = None
+  cargo:rerun-if-env-changed=CC_aarch64_pc_windows_msvc
+  CC_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=TARGET_CC
+  TARGET_CC = None
+  cargo:rerun-if-env-changed=CC
+  CC = None
+  cargo:rerun-if-env-changed=CROSS_COMPILE
+  CROSS_COMPILE = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CFLAGS
+  CFLAGS = None
+  cargo:rerun-if-env-changed=TARGET_CFLAGS
+  TARGET_CFLAGS = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64_pc_windows_msvc
+  CFLAGS_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64-pc-windows-msvc
+  CFLAGS_aarch64-pc-windows-msvc = None
+  cargo:warning=In file included from zstd/lib/common/fse_decompress.c:20:
+  cargo:warning=In file included from zstd/lib/common/bitstream.h:26:
+  cargo:warning=In file included from zstd/lib/common/mem.h:18:
+  cargo:warning=In file included from zstd/lib/common/compiler.h:202:
+  cargo:warning=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include/intrin.h:35:10: fatal error: 'setjmp.h' file not found
+  cargo:warning=   35 | #include <setjmp.h>
+  cargo:warning=      |          ^~~~~~~~~~
+  cargo:warning=1 error generated.
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/44ff4c55aa9e5133-fse_decompress.o" "-c" "zstd/lib/common/fse_decompress.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+  VCINSTALLDIR = None
+  cargo:rerun-if-env-changed=CC_aarch64-pc-windows-msvc
+  CC_aarch64-pc-windows-msvc = None
+  cargo:rerun-if-env-changed=CC_aarch64_pc_windows_msvc
+  CC_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=TARGET_CC
+  TARGET_CC = None
+  cargo:rerun-if-env-changed=CC
+  CC = None
+  cargo:rerun-if-env-changed=CROSS_COMPILE
+  CROSS_COMPILE = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CFLAGS
+  CFLAGS = None
+  cargo:rerun-if-env-changed=TARGET_CFLAGS
+  TARGET_CFLAGS = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64_pc_windows_msvc
+  CFLAGS_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64-pc-windows-msvc
+  CFLAGS_aarch64-pc-windows-msvc = None
+  cargo:warning=In file included from zstd/lib/common/pool.c:13:
+  cargo:warning=In file included from zstd/lib/common/../common/allocations.h:15:
+  cargo:warning=zstd/lib/common/../common/zstd_deps.h:41:10: fatal error: 'string.h' file not found
+  cargo:warning=   41 | #include <string.h>
+  cargo:warning=      |          ^~~~~~~~~~
+  cargo:warning=1 error generated.
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/44ff4c55aa9e5133-pool.o" "-c" "zstd/lib/common/pool.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+  VCINSTALLDIR = None
+  cargo:rerun-if-env-changed=CC_aarch64-pc-windows-msvc
+  CC_aarch64-pc-windows-msvc = None
+  cargo:rerun-if-env-changed=CC_aarch64_pc_windows_msvc
+  CC_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=TARGET_CC
+  TARGET_CC = None
+  cargo:rerun-if-env-changed=CC
+  CC = None
+  cargo:rerun-if-env-changed=CROSS_COMPILE
+  CROSS_COMPILE = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CFLAGS
+  CFLAGS = None
+  cargo:rerun-if-env-changed=TARGET_CFLAGS
+  TARGET_CFLAGS = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64_pc_windows_msvc
+  CFLAGS_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64-pc-windows-msvc
+  CFLAGS_aarch64-pc-windows-msvc = None
+  cargo:rerun-if-env-changed=VCINSTALLDIR
+  VCINSTALLDIR = None
+  cargo:rerun-if-env-changed=CC_aarch64-pc-windows-msvc
+  CC_aarch64-pc-windows-msvc = None
+  cargo:rerun-if-env-changed=CC_aarch64_pc_windows_msvc
+  CC_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=TARGET_CC
+  TARGET_CC = None
+  cargo:rerun-if-env-changed=CC
+  CC = None
+  cargo:rerun-if-env-changed=CROSS_COMPILE
+  CROSS_COMPILE = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CFLAGS
+  CFLAGS = None
+  cargo:rerun-if-env-changed=TARGET_CFLAGS
+  TARGET_CFLAGS = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64_pc_windows_msvc
+  CFLAGS_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64-pc-windows-msvc
+  CFLAGS_aarch64-pc-windows-msvc = None
+  cargo:warning=In file included from zstd/lib/common/zstd_common.c:17:
+  cargo:warning=In file included from zstd/lib/common/error_private.h:20:
+  cargo:warning=In file included from zstd/lib/common/compiler.h:202:
+  cargo:warning=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include/intrin.h:35:10: fatal error: 'setjmp.h' file not found
+  cargo:warning=   35 | #include <setjmp.h>
+  cargo:warning=      |          ^~~~~~~~~~
+  cargo:warning=1 error generated.
+
+  exit status: 0
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/44ff4c55aa9e5133-zstd_common.o" "-c" "zstd/lib/common/zstd_common.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+  VCINSTALLDIR = None
+  cargo:rerun-if-env-changed=CC_aarch64-pc-windows-msvc
+  CC_aarch64-pc-windows-msvc = None
+  cargo:rerun-if-env-changed=CC_aarch64_pc_windows_msvc
+  CC_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=TARGET_CC
+  TARGET_CC = None
+  cargo:rerun-if-env-changed=CC
+  CC = None
+  cargo:rerun-if-env-changed=CROSS_COMPILE
+  CROSS_COMPILE = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CFLAGS
+  CFLAGS = None
+  cargo:rerun-if-env-changed=TARGET_CFLAGS
+  TARGET_CFLAGS = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64_pc_windows_msvc
+  CFLAGS_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64-pc-windows-msvc
+  CFLAGS_aarch64-pc-windows-msvc = None
+  cargo:warning=In file included from zstd/lib/compress/fse_compress.c:18:
+  cargo:warning=In file included from zstd/lib/compress/../common/compiler.h:202:
+  cargo:warning=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include/intrin.h:35:10: fatal error: 'setjmp.h' file not found
+  cargo:warning=   35 | #include <setjmp.h>
+  cargo:warning=      |          ^~~~~~~~~~
+  cargo:warning=1 error generated.
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/fb80479a5fb81f6a-fse_compress.o" "-c" "zstd/lib/compress/fse_compress.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+  VCINSTALLDIR = None
+  cargo:rerun-if-env-changed=CC_aarch64-pc-windows-msvc
+  CC_aarch64-pc-windows-msvc = None
+  cargo:rerun-if-env-changed=CC_aarch64_pc_windows_msvc
+  CC_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=TARGET_CC
+  TARGET_CC = None
+  cargo:rerun-if-env-changed=CC
+  CC = None
+  cargo:rerun-if-env-changed=CROSS_COMPILE
+  CROSS_COMPILE = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CFLAGS
+  CFLAGS = None
+  cargo:rerun-if-env-changed=TARGET_CFLAGS
+  TARGET_CFLAGS = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64_pc_windows_msvc
+  CFLAGS_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64-pc-windows-msvc
+  CFLAGS_aarch64-pc-windows-msvc = None
+  cargo:warning=In file included from zstd/lib/compress/hist.c:17:
+  cargo:warning=In file included from zstd/lib/compress/../common/mem.h:18:
+  cargo:warning=In file included from zstd/lib/compress/../common/compiler.h:202:
+  cargo:warning=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include/intrin.h:35:10: fatal error: 'setjmp.h' file not found
+  cargo:warning=   35 | #include <setjmp.h>
+  cargo:warning=      |          ^~~~~~~~~~
+  cargo:warning=1 error generated.
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/fb80479a5fb81f6a-hist.o" "-c" "zstd/lib/compress/hist.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+  VCINSTALLDIR = None
+  cargo:rerun-if-env-changed=CC_aarch64-pc-windows-msvc
+  CC_aarch64-pc-windows-msvc = None
+  cargo:rerun-if-env-changed=CC_aarch64_pc_windows_msvc
+  CC_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=TARGET_CC
+  TARGET_CC = None
+  cargo:rerun-if-env-changed=CC
+  CC = None
+  cargo:rerun-if-env-changed=CROSS_COMPILE
+  CROSS_COMPILE = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CFLAGS
+  CFLAGS = None
+  cargo:rerun-if-env-changed=TARGET_CFLAGS
+  TARGET_CFLAGS = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64_pc_windows_msvc
+  CFLAGS_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64-pc-windows-msvc
+  CFLAGS_aarch64-pc-windows-msvc = None
+  cargo:warning=In file included from zstd/lib/compress/huf_compress.c:26:
+  cargo:warning=zstd/lib/compress/../common/zstd_deps.h:41:10: fatal error: 'string.h' file not found
+  cargo:warning=   41 | #include <string.h>
+  cargo:warning=      |          ^~~~~~~~~~
+  cargo:warning=1 error generated.
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/fb80479a5fb81f6a-huf_compress.o" "-c" "zstd/lib/compress/huf_compress.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+  VCINSTALLDIR = None
+  cargo:rerun-if-env-changed=CC_aarch64-pc-windows-msvc
+  CC_aarch64-pc-windows-msvc = None
+  cargo:rerun-if-env-changed=CC_aarch64_pc_windows_msvc
+  CC_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=TARGET_CC
+  TARGET_CC = None
+  cargo:rerun-if-env-changed=CC
+  CC = None
+  cargo:rerun-if-env-changed=CROSS_COMPILE
+  CROSS_COMPILE = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CFLAGS
+  CFLAGS = None
+  cargo:rerun-if-env-changed=TARGET_CFLAGS
+  TARGET_CFLAGS = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64_pc_windows_msvc
+  CFLAGS_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64-pc-windows-msvc
+  CFLAGS_aarch64-pc-windows-msvc = None
+  cargo:warning=In file included from zstd/lib/compress/zstd_compress.c:14:
+  cargo:warning=In file included from zstd/lib/compress/../common/allocations.h:15:
+  cargo:warning=zstd/lib/compress/../common/zstd_deps.h:41:10: fatal error: 'string.h' file not found
+  cargo:warning=   41 | #include <string.h>
+  cargo:warning=      |          ^~~~~~~~~~
+  cargo:warning=1 error generated.
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/fb80479a5fb81f6a-zstd_compress.o" "-c" "zstd/lib/compress/zstd_compress.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+  VCINSTALLDIR = None
+  cargo:rerun-if-env-changed=CC_aarch64-pc-windows-msvc
+  CC_aarch64-pc-windows-msvc = None
+  cargo:rerun-if-env-changed=CC_aarch64_pc_windows_msvc
+  CC_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=TARGET_CC
+  TARGET_CC = None
+  cargo:rerun-if-env-changed=CC
+  CC = None
+  cargo:rerun-if-env-changed=CROSS_COMPILE
+  CROSS_COMPILE = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CFLAGS
+  CFLAGS = None
+  cargo:rerun-if-env-changed=TARGET_CFLAGS
+  TARGET_CFLAGS = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64_pc_windows_msvc
+  CFLAGS_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64-pc-windows-msvc
+  CFLAGS_aarch64-pc-windows-msvc = None
+  cargo:warning=In file included from zstd/lib/compress/zstd_compress_literals.c:14:
+  cargo:warning=In file included from zstd/lib/compress/zstd_compress_literals.h:14:
+  cargo:warning=In file included from zstd/lib/compress/zstd_compress_internal.h:21:
+  cargo:warning=In file included from zstd/lib/compress/../common/zstd_internal.h:22:
+  cargo:warning=In file included from zstd/lib/compress/../common/compiler.h:202:
+  cargo:warning=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include/intrin.h:35:10: fatal error: 'setjmp.h' file not found
+  cargo:warning=   35 | #include <setjmp.h>
+  cargo:warning=      |          ^~~~~~~~~~
+  cargo:warning=1 error generated.
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/fb80479a5fb81f6a-zstd_compress_literals.o" "-c" "zstd/lib/compress/zstd_compress_literals.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+  VCINSTALLDIR = None
+  cargo:rerun-if-env-changed=CC_aarch64-pc-windows-msvc
+  CC_aarch64-pc-windows-msvc = None
+  cargo:rerun-if-env-changed=CC_aarch64_pc_windows_msvc
+  CC_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=TARGET_CC
+  TARGET_CC = None
+  cargo:rerun-if-env-changed=CC
+  CC = None
+  cargo:rerun-if-env-changed=CROSS_COMPILE
+  CROSS_COMPILE = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CFLAGS
+  CFLAGS = None
+  cargo:rerun-if-env-changed=TARGET_CFLAGS
+  TARGET_CFLAGS = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64_pc_windows_msvc
+  CFLAGS_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64-pc-windows-msvc
+  CFLAGS_aarch64-pc-windows-msvc = None
+  cargo:warning=In file included from zstd/lib/compress/zstd_compress_sequences.c:14:
+  cargo:warning=In file included from zstd/lib/compress/zstd_compress_sequences.h:14:
+  cargo:warning=In file included from zstd/lib/compress/zstd_compress_internal.h:21:
+  cargo:warning=In file included from zstd/lib/compress/../common/zstd_internal.h:22:
+  cargo:warning=In file included from zstd/lib/compress/../common/compiler.h:202:
+  cargo:warning=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include/intrin.h:35:10: fatal error: 'setjmp.h' file not found
+  cargo:warning=   35 | #include <setjmp.h>
+  cargo:warning=      |          ^~~~~~~~~~
+  cargo:warning=1 error generated.
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/fb80479a5fb81f6a-zstd_compress_sequences.o" "-c" "zstd/lib/compress/zstd_compress_sequences.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+  VCINSTALLDIR = None
+  cargo:rerun-if-env-changed=CC_aarch64-pc-windows-msvc
+  CC_aarch64-pc-windows-msvc = None
+  cargo:rerun-if-env-changed=CC_aarch64_pc_windows_msvc
+  CC_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=TARGET_CC
+  TARGET_CC = None
+  cargo:rerun-if-env-changed=CC
+  CC = None
+  cargo:rerun-if-env-changed=CROSS_COMPILE
+  CROSS_COMPILE = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CFLAGS
+  CFLAGS = None
+  cargo:rerun-if-env-changed=TARGET_CFLAGS
+  TARGET_CFLAGS = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64_pc_windows_msvc
+  CFLAGS_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64-pc-windows-msvc
+  CFLAGS_aarch64-pc-windows-msvc = None
+  cargo:warning=In file included from zstd/lib/compress/zstd_compress_superblock.c:16:
+  cargo:warning=In file included from zstd/lib/compress/../common/zstd_internal.h:22:
+  cargo:warning=In file included from zstd/lib/compress/../common/compiler.h:202:
+  cargo:warning=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include/intrin.h:35:10: fatal error: 'setjmp.h' file not found
+  cargo:warning=   35 | #include <setjmp.h>
+  cargo:warning=      |          ^~~~~~~~~~
+  cargo:warning=1 error generated.
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/fb80479a5fb81f6a-zstd_compress_superblock.o" "-c" "zstd/lib/compress/zstd_compress_superblock.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+  VCINSTALLDIR = None
+  cargo:rerun-if-env-changed=CC_aarch64-pc-windows-msvc
+  CC_aarch64-pc-windows-msvc = None
+  cargo:rerun-if-env-changed=CC_aarch64_pc_windows_msvc
+  CC_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=TARGET_CC
+  TARGET_CC = None
+  cargo:rerun-if-env-changed=CC
+  CC = None
+  cargo:rerun-if-env-changed=CROSS_COMPILE
+  CROSS_COMPILE = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CFLAGS
+  CFLAGS = None
+  cargo:rerun-if-env-changed=TARGET_CFLAGS
+  TARGET_CFLAGS = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64_pc_windows_msvc
+  CFLAGS_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64-pc-windows-msvc
+  CFLAGS_aarch64-pc-windows-msvc = None
+  cargo:warning=In file included from zstd/lib/compress/zstd_double_fast.c:11:
+  cargo:warning=In file included from zstd/lib/compress/zstd_compress_internal.h:21:
+  cargo:warning=In file included from zstd/lib/compress/../common/zstd_internal.h:22:
+  cargo:warning=In file included from zstd/lib/compress/../common/compiler.h:202:
+  cargo:warning=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include/intrin.h:35:10: fatal error: 'setjmp.h' file not found
+  cargo:warning=   35 | #include <setjmp.h>
+  cargo:warning=      |          ^~~~~~~~~~
+  cargo:warning=1 error generated.
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/fb80479a5fb81f6a-zstd_double_fast.o" "-c" "zstd/lib/compress/zstd_double_fast.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+  VCINSTALLDIR = None
+  cargo:rerun-if-env-changed=CC_aarch64-pc-windows-msvc
+  CC_aarch64-pc-windows-msvc = None
+  cargo:rerun-if-env-changed=CC_aarch64_pc_windows_msvc
+  CC_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=TARGET_CC
+  TARGET_CC = None
+  cargo:rerun-if-env-changed=CC
+  CC = None
+  cargo:rerun-if-env-changed=CROSS_COMPILE
+  CROSS_COMPILE = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CFLAGS
+  CFLAGS = None
+  cargo:rerun-if-env-changed=TARGET_CFLAGS
+  TARGET_CFLAGS = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64_pc_windows_msvc
+  CFLAGS_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64-pc-windows-msvc
+  CFLAGS_aarch64-pc-windows-msvc = None
+  cargo:warning=In file included from zstd/lib/compress/zstd_fast.c:11:
+  cargo:warning=In file included from zstd/lib/compress/zstd_compress_internal.h:21:
+  cargo:warning=In file included from zstd/lib/compress/../common/zstd_internal.h:22:
+  cargo:warning=In file included from zstd/lib/compress/../common/compiler.h:202:
+  cargo:warning=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include/intrin.h:35:10: fatal error: 'setjmp.h' file not found
+  cargo:warning=   35 | #include <setjmp.h>
+  cargo:warning=      |          ^~~~~~~~~~
+  cargo:warning=1 error generated.
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/fb80479a5fb81f6a-zstd_fast.o" "-c" "zstd/lib/compress/zstd_fast.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+  VCINSTALLDIR = None
+  cargo:rerun-if-env-changed=CC_aarch64-pc-windows-msvc
+  CC_aarch64-pc-windows-msvc = None
+  cargo:rerun-if-env-changed=CC_aarch64_pc_windows_msvc
+  CC_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=TARGET_CC
+  TARGET_CC = None
+  cargo:rerun-if-env-changed=CC
+  CC = None
+  cargo:rerun-if-env-changed=CROSS_COMPILE
+  CROSS_COMPILE = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CFLAGS
+  CFLAGS = None
+  cargo:rerun-if-env-changed=TARGET_CFLAGS
+  TARGET_CFLAGS = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64_pc_windows_msvc
+  CFLAGS_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64-pc-windows-msvc
+  CFLAGS_aarch64-pc-windows-msvc = None
+  cargo:warning=In file included from zstd/lib/compress/zstd_lazy.c:11:
+  cargo:warning=In file included from zstd/lib/compress/zstd_compress_internal.h:21:
+  cargo:warning=In file included from zstd/lib/compress/../common/zstd_internal.h:22:
+  cargo:warning=In file included from zstd/lib/compress/../common/compiler.h:202:
+  cargo:warning=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include/intrin.h:35:10: fatal error: 'setjmp.h' file not found
+  cargo:warning=   35 | #include <setjmp.h>
+  cargo:warning=      |          ^~~~~~~~~~
+  cargo:warning=1 error generated.
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/fb80479a5fb81f6a-zstd_lazy.o" "-c" "zstd/lib/compress/zstd_lazy.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+  VCINSTALLDIR = None
+  cargo:rerun-if-env-changed=CC_aarch64-pc-windows-msvc
+  CC_aarch64-pc-windows-msvc = None
+  cargo:rerun-if-env-changed=CC_aarch64_pc_windows_msvc
+  CC_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=TARGET_CC
+  TARGET_CC = None
+  cargo:rerun-if-env-changed=CC
+  CC = None
+  cargo:rerun-if-env-changed=CROSS_COMPILE
+  CROSS_COMPILE = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CFLAGS
+  CFLAGS = None
+  cargo:rerun-if-env-changed=TARGET_CFLAGS
+  TARGET_CFLAGS = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64_pc_windows_msvc
+  CFLAGS_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64-pc-windows-msvc
+  CFLAGS_aarch64-pc-windows-msvc = None
+  cargo:warning=In file included from zstd/lib/compress/zstd_ldm.c:11:
+  cargo:warning=In file included from zstd/lib/compress/zstd_ldm.h:14:
+  cargo:warning=In file included from zstd/lib/compress/zstd_compress_internal.h:21:
+  cargo:warning=In file included from zstd/lib/compress/../common/zstd_internal.h:22:
+  cargo:warning=In file included from zstd/lib/compress/../common/compiler.h:202:
+  cargo:warning=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include/intrin.h:35:10: fatal error: 'setjmp.h' file not found
+  cargo:warning=   35 | #include <setjmp.h>
+  cargo:warning=      |          ^~~~~~~~~~
+  cargo:warning=1 error generated.
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/fb80479a5fb81f6a-zstd_ldm.o" "-c" "zstd/lib/compress/zstd_ldm.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+  VCINSTALLDIR = None
+  cargo:rerun-if-env-changed=CC_aarch64-pc-windows-msvc
+  CC_aarch64-pc-windows-msvc = None
+  cargo:rerun-if-env-changed=CC_aarch64_pc_windows_msvc
+  CC_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=TARGET_CC
+  TARGET_CC = None
+  cargo:rerun-if-env-changed=CC
+  CC = None
+  cargo:rerun-if-env-changed=CROSS_COMPILE
+  CROSS_COMPILE = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CFLAGS
+  CFLAGS = None
+  cargo:rerun-if-env-changed=TARGET_CFLAGS
+  TARGET_CFLAGS = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64_pc_windows_msvc
+  CFLAGS_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64-pc-windows-msvc
+  CFLAGS_aarch64-pc-windows-msvc = None
+  cargo:warning=In file included from zstd/lib/compress/zstd_opt.c:11:
+  cargo:warning=In file included from zstd/lib/compress/zstd_compress_internal.h:21:
+  cargo:warning=In file included from zstd/lib/compress/../common/zstd_internal.h:22:
+  cargo:warning=In file included from zstd/lib/compress/../common/compiler.h:202:
+  cargo:warning=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include/intrin.h:35:10: fatal error: 'setjmp.h' file not found
+  cargo:warning=   35 | #include <setjmp.h>
+  cargo:warning=      |          ^~~~~~~~~~
+  cargo:warning=1 error generated.
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/fb80479a5fb81f6a-zstd_opt.o" "-c" "zstd/lib/compress/zstd_opt.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+  VCINSTALLDIR = None
+  cargo:rerun-if-env-changed=CC_aarch64-pc-windows-msvc
+  CC_aarch64-pc-windows-msvc = None
+  cargo:rerun-if-env-changed=CC_aarch64_pc_windows_msvc
+  CC_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=TARGET_CC
+  TARGET_CC = None
+  cargo:rerun-if-env-changed=CC
+  CC = None
+  cargo:rerun-if-env-changed=CROSS_COMPILE
+  CROSS_COMPILE = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CFLAGS
+  CFLAGS = None
+  cargo:rerun-if-env-changed=TARGET_CFLAGS
+  TARGET_CFLAGS = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64_pc_windows_msvc
+  CFLAGS_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64-pc-windows-msvc
+  CFLAGS_aarch64-pc-windows-msvc = None
+  cargo:warning=In file included from zstd/lib/compress/zstd_preSplit.c:11:
+  cargo:warning=In file included from zstd/lib/compress/../common/compiler.h:202:
+  cargo:warning=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include/intrin.h:35:10: fatal error: 'setjmp.h' file not found
+  cargo:warning=   35 | #include <setjmp.h>
+  cargo:warning=      |          ^~~~~~~~~~
+  cargo:warning=1 error generated.
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/fb80479a5fb81f6a-zstd_preSplit.o" "-c" "zstd/lib/compress/zstd_preSplit.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+  VCINSTALLDIR = None
+  cargo:rerun-if-env-changed=CC_aarch64-pc-windows-msvc
+  CC_aarch64-pc-windows-msvc = None
+  cargo:rerun-if-env-changed=CC_aarch64_pc_windows_msvc
+  CC_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=TARGET_CC
+  TARGET_CC = None
+  cargo:rerun-if-env-changed=CC
+  CC = None
+  cargo:rerun-if-env-changed=CROSS_COMPILE
+  CROSS_COMPILE = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CFLAGS
+  CFLAGS = None
+  cargo:rerun-if-env-changed=TARGET_CFLAGS
+  TARGET_CFLAGS = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64_pc_windows_msvc
+  CFLAGS_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64-pc-windows-msvc
+  CFLAGS_aarch64-pc-windows-msvc = None
+  cargo:warning=In file included from zstd/lib/compress/zstdmt_compress.c:19:
+  cargo:warning=In file included from zstd/lib/compress/../common/allocations.h:15:
+  cargo:warning=zstd/lib/compress/../common/zstd_deps.h:41:10: fatal error: 'string.h' file not found
+  cargo:warning=   41 | #include <string.h>
+  cargo:warning=      |          ^~~~~~~~~~
+  cargo:warning=1 error generated.
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/fb80479a5fb81f6a-zstdmt_compress.o" "-c" "zstd/lib/compress/zstdmt_compress.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+  VCINSTALLDIR = None
+  cargo:rerun-if-env-changed=CC_aarch64-pc-windows-msvc
+  CC_aarch64-pc-windows-msvc = None
+  cargo:rerun-if-env-changed=CC_aarch64_pc_windows_msvc
+  CC_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=TARGET_CC
+  TARGET_CC = None
+  cargo:rerun-if-env-changed=CC
+  CC = None
+  cargo:rerun-if-env-changed=CROSS_COMPILE
+  CROSS_COMPILE = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CFLAGS
+  CFLAGS = None
+  cargo:rerun-if-env-changed=TARGET_CFLAGS
+  TARGET_CFLAGS = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64_pc_windows_msvc
+  CFLAGS_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64-pc-windows-msvc
+  CFLAGS_aarch64-pc-windows-msvc = None
+  cargo:warning=In file included from zstd/lib/decompress/huf_decompress.c:18:
+  cargo:warning=zstd/lib/decompress/../common/zstd_deps.h:41:10: fatal error: 'string.h' file not found
+  cargo:warning=   41 | #include <string.h>
+  cargo:warning=      |          ^~~~~~~~~~
+  cargo:warning=1 error generated.
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/88f362f13b0528ed-huf_decompress.o" "-c" "zstd/lib/decompress/huf_decompress.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+  VCINSTALLDIR = None
+  cargo:rerun-if-env-changed=CC_aarch64-pc-windows-msvc
+  CC_aarch64-pc-windows-msvc = None
+  cargo:rerun-if-env-changed=CC_aarch64_pc_windows_msvc
+  CC_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=TARGET_CC
+  TARGET_CC = None
+  cargo:rerun-if-env-changed=CC
+  CC = None
+  cargo:rerun-if-env-changed=CROSS_COMPILE
+  CROSS_COMPILE = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CFLAGS
+  CFLAGS = None
+  cargo:rerun-if-env-changed=TARGET_CFLAGS
+  TARGET_CFLAGS = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64_pc_windows_msvc
+  CFLAGS_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64-pc-windows-msvc
+  CFLAGS_aarch64-pc-windows-msvc = None
+  cargo:warning=In file included from zstd/lib/decompress/zstd_ddict.c:17:
+  cargo:warning=In file included from zstd/lib/decompress/../common/allocations.h:15:
+  cargo:warning=zstd/lib/decompress/../common/zstd_deps.h:41:10: fatal error: 'string.h' file not found
+  cargo:warning=   41 | #include <string.h>
+  cargo:warning=      |          ^~~~~~~~~~
+  cargo:warning=1 error generated.
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/88f362f13b0528ed-zstd_ddict.o" "-c" "zstd/lib/decompress/zstd_ddict.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+  VCINSTALLDIR = None
+  cargo:rerun-if-env-changed=CC_aarch64-pc-windows-msvc
+  CC_aarch64-pc-windows-msvc = None
+  cargo:rerun-if-env-changed=CC_aarch64_pc_windows_msvc
+  CC_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=TARGET_CC
+  TARGET_CC = None
+  cargo:rerun-if-env-changed=CC
+  CC = None
+  cargo:rerun-if-env-changed=CROSS_COMPILE
+  CROSS_COMPILE = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CFLAGS
+  CFLAGS = None
+  cargo:rerun-if-env-changed=TARGET_CFLAGS
+  TARGET_CFLAGS = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64_pc_windows_msvc
+  CFLAGS_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64-pc-windows-msvc
+  CFLAGS_aarch64-pc-windows-msvc = None
+  cargo:warning=In file included from zstd/lib/decompress/zstd_decompress.c:58:
+  cargo:warning=zstd/lib/decompress/../common/zstd_deps.h:41:10: fatal error: 'string.h' file not found
+  cargo:warning=   41 | #include <string.h>
+  cargo:warning=      |          ^~~~~~~~~~
+  cargo:warning=1 error generated.
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/88f362f13b0528ed-zstd_decompress.o" "-c" "zstd/lib/decompress/zstd_decompress.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+  VCINSTALLDIR = None
+  cargo:rerun-if-env-changed=CC_aarch64-pc-windows-msvc
+  CC_aarch64-pc-windows-msvc = None
+  cargo:rerun-if-env-changed=CC_aarch64_pc_windows_msvc
+  CC_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=TARGET_CC
+  TARGET_CC = None
+  cargo:rerun-if-env-changed=CC
+  CC = None
+  cargo:rerun-if-env-changed=CROSS_COMPILE
+  CROSS_COMPILE = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CFLAGS
+  CFLAGS = None
+  cargo:rerun-if-env-changed=TARGET_CFLAGS
+  TARGET_CFLAGS = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64_pc_windows_msvc
+  CFLAGS_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64-pc-windows-msvc
+  CFLAGS_aarch64-pc-windows-msvc = None
+  cargo:warning=In file included from zstd/lib/decompress/zstd_decompress_block.c:17:
+  cargo:warning=zstd/lib/decompress/../common/zstd_deps.h:41:10: fatal error: 'string.h' file not found
+  cargo:warning=   41 | #include <string.h>
+  cargo:warning=      |          ^~~~~~~~~~
+  cargo:warning=1 error generated.
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/88f362f13b0528ed-zstd_decompress_block.o" "-c" "zstd/lib/decompress/zstd_decompress_block.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+  VCINSTALLDIR = None
+  cargo:rerun-if-env-changed=CC_aarch64-pc-windows-msvc
+  CC_aarch64-pc-windows-msvc = None
+  cargo:rerun-if-env-changed=CC_aarch64_pc_windows_msvc
+  CC_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=TARGET_CC
+  TARGET_CC = None
+  cargo:rerun-if-env-changed=CC
+  CC = None
+  cargo:rerun-if-env-changed=CROSS_COMPILE
+  CROSS_COMPILE = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CFLAGS
+  CFLAGS = None
+  cargo:rerun-if-env-changed=TARGET_CFLAGS
+  TARGET_CFLAGS = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64_pc_windows_msvc
+  CFLAGS_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64-pc-windows-msvc
+  CFLAGS_aarch64-pc-windows-msvc = None
+  cargo:warning=zstd/lib/dictBuilder/cover.c:32:10: fatal error: 'stdio.h' file not found
+  cargo:warning=   32 | #include <stdio.h>  /* fprintf */
+  cargo:warning=      |          ^~~~~~~~~
+  cargo:warning=1 error generated.
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/a6c81c75fc82913a-cover.o" "-c" "zstd/lib/dictBuilder/cover.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+  VCINSTALLDIR = None
+  cargo:rerun-if-env-changed=CC_aarch64-pc-windows-msvc
+  CC_aarch64-pc-windows-msvc = None
+  cargo:rerun-if-env-changed=CC_aarch64_pc_windows_msvc
+  CC_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=TARGET_CC
+  TARGET_CC = None
+  cargo:rerun-if-env-changed=CC
+  CC = None
+  cargo:rerun-if-env-changed=CROSS_COMPILE
+  CROSS_COMPILE = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CFLAGS
+  CFLAGS = None
+  cargo:rerun-if-env-changed=TARGET_CFLAGS
+  TARGET_CFLAGS = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64_pc_windows_msvc
+  CFLAGS_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64-pc-windows-msvc
+  CFLAGS_aarch64-pc-windows-msvc = None
+  cargo:warning=zstd/lib/dictBuilder/divsufsort.c:39:10: fatal error: 'assert.h' file not found
+  cargo:warning=   39 | #include <assert.h>
+  cargo:warning=      |          ^~~~~~~~~~
+  cargo:warning=1 error generated.
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/a6c81c75fc82913a-divsufsort.o" "-c" "zstd/lib/dictBuilder/divsufsort.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+  VCINSTALLDIR = None
+  cargo:rerun-if-env-changed=CC_aarch64-pc-windows-msvc
+  CC_aarch64-pc-windows-msvc = None
+  cargo:rerun-if-env-changed=CC_aarch64_pc_windows_msvc
+  CC_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=TARGET_CC
+  TARGET_CC = None
+  cargo:rerun-if-env-changed=CC
+  CC = None
+  cargo:rerun-if-env-changed=CROSS_COMPILE
+  CROSS_COMPILE = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CFLAGS
+  CFLAGS = None
+  cargo:rerun-if-env-changed=TARGET_CFLAGS
+  TARGET_CFLAGS = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64_pc_windows_msvc
+  CFLAGS_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64-pc-windows-msvc
+  CFLAGS_aarch64-pc-windows-msvc = None
+  cargo:warning=zstd/lib/dictBuilder/fastcover.c:14:10: fatal error: 'stdio.h' file not found
+  cargo:warning=   14 | #include <stdio.h>  /* fprintf */
+  cargo:warning=      |          ^~~~~~~~~
+  cargo:warning=1 error generated.
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/a6c81c75fc82913a-fastcover.o" "-c" "zstd/lib/dictBuilder/fastcover.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+  VCINSTALLDIR = None
+  cargo:rerun-if-env-changed=CC_aarch64-pc-windows-msvc
+  CC_aarch64-pc-windows-msvc = None
+  cargo:rerun-if-env-changed=CC_aarch64_pc_windows_msvc
+  CC_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=TARGET_CC
+  TARGET_CC = None
+  cargo:rerun-if-env-changed=CC
+  CC = None
+  cargo:rerun-if-env-changed=CROSS_COMPILE
+  CROSS_COMPILE = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CFLAGS
+  CFLAGS = None
+  cargo:rerun-if-env-changed=TARGET_CFLAGS
+  TARGET_CFLAGS = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64_pc_windows_msvc
+  CFLAGS_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64-pc-windows-msvc
+  CFLAGS_aarch64-pc-windows-msvc = None
+  cargo:warning=zstd/lib/dictBuilder/zdict.c:39:10: fatal error: 'stdlib.h' file not found
+  cargo:warning=   39 | #include <stdlib.h>        /* malloc, free */
+  cargo:warning=      |          ^~~~~~~~~~
+  cargo:warning=1 error generated.
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/a6c81c75fc82913a-zdict.o" "-c" "zstd/lib/dictBuilder/zdict.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+  VCINSTALLDIR = None
+  cargo:rerun-if-env-changed=CC_aarch64-pc-windows-msvc
+  CC_aarch64-pc-windows-msvc = None
+  cargo:rerun-if-env-changed=CC_aarch64_pc_windows_msvc
+  CC_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=TARGET_CC
+  TARGET_CC = None
+  cargo:rerun-if-env-changed=CC
+  CC = None
+  cargo:rerun-if-env-changed=CROSS_COMPILE
+  CROSS_COMPILE = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CFLAGS
+  CFLAGS = None
+  cargo:rerun-if-env-changed=TARGET_CFLAGS
+  TARGET_CFLAGS = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64_pc_windows_msvc
+  CFLAGS_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64-pc-windows-msvc
+  CFLAGS_aarch64-pc-windows-msvc = None
+  cargo:warning=In file included from zstd/lib/legacy/zstd_v01.c:17:
+  cargo:warning=In file included from zstd/lib/legacy/../common/compiler.h:202:
+  cargo:warning=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include/intrin.h:35:10: fatal error: 'setjmp.h' file not found
+  cargo:warning=   35 | #include <setjmp.h>
+  cargo:warning=      |          ^~~~~~~~~~
+  cargo:warning=1 error generated.
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/3f451b2306bc13c8-zstd_v01.o" "-c" "zstd/lib/legacy/zstd_v01.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+  VCINSTALLDIR = None
+  cargo:rerun-if-env-changed=CC_aarch64-pc-windows-msvc
+  CC_aarch64-pc-windows-msvc = None
+  cargo:rerun-if-env-changed=CC_aarch64_pc_windows_msvc
+  CC_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=TARGET_CC
+  TARGET_CC = None
+  cargo:rerun-if-env-changed=CC
+  CC = None
+  cargo:rerun-if-env-changed=CROSS_COMPILE
+  CROSS_COMPILE = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CFLAGS
+  CFLAGS = None
+  cargo:rerun-if-env-changed=TARGET_CFLAGS
+  TARGET_CFLAGS = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64_pc_windows_msvc
+  CFLAGS_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64-pc-windows-msvc
+  CFLAGS_aarch64-pc-windows-msvc = None
+  cargo:warning=In file included from zstd/lib/legacy/zstd_v02.c:14:
+  cargo:warning=In file included from zstd/lib/legacy/../common/compiler.h:202:
+  cargo:warning=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include/intrin.h:35:10: fatal error: 'setjmp.h' file not found
+  cargo:warning=   35 | #include <setjmp.h>
+  cargo:warning=      |          ^~~~~~~~~~
+  cargo:warning=1 error generated.
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/3f451b2306bc13c8-zstd_v02.o" "-c" "zstd/lib/legacy/zstd_v02.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+  VCINSTALLDIR = None
+  cargo:rerun-if-env-changed=CC_aarch64-pc-windows-msvc
+  CC_aarch64-pc-windows-msvc = None
+  cargo:rerun-if-env-changed=CC_aarch64_pc_windows_msvc
+  CC_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=TARGET_CC
+  TARGET_CC = None
+  cargo:rerun-if-env-changed=CC
+  CC = None
+  cargo:rerun-if-env-changed=CROSS_COMPILE
+  CROSS_COMPILE = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CFLAGS
+  CFLAGS = None
+  cargo:rerun-if-env-changed=TARGET_CFLAGS
+  TARGET_CFLAGS = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64_pc_windows_msvc
+  CFLAGS_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64-pc-windows-msvc
+  CFLAGS_aarch64-pc-windows-msvc = None
+  cargo:warning=In file included from zstd/lib/legacy/zstd_v03.c:14:
+  cargo:warning=In file included from zstd/lib/legacy/../common/compiler.h:202:
+  cargo:warning=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include/intrin.h:35:10: fatal error: 'setjmp.h' file not found
+  cargo:warning=   35 | #include <setjmp.h>
+  cargo:warning=      |          ^~~~~~~~~~
+  cargo:warning=1 error generated.
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/3f451b2306bc13c8-zstd_v03.o" "-c" "zstd/lib/legacy/zstd_v03.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+  VCINSTALLDIR = None
+  cargo:rerun-if-env-changed=CC_aarch64-pc-windows-msvc
+  CC_aarch64-pc-windows-msvc = None
+  cargo:rerun-if-env-changed=CC_aarch64_pc_windows_msvc
+  CC_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=TARGET_CC
+  TARGET_CC = None
+  cargo:rerun-if-env-changed=CC
+  CC = None
+  cargo:rerun-if-env-changed=CROSS_COMPILE
+  CROSS_COMPILE = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CFLAGS
+  CFLAGS = None
+  cargo:rerun-if-env-changed=TARGET_CFLAGS
+  TARGET_CFLAGS = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64_pc_windows_msvc
+  CFLAGS_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64-pc-windows-msvc
+  CFLAGS_aarch64-pc-windows-msvc = None
+  cargo:warning=zstd/lib/legacy/zstd_v04.c:16:10: fatal error: 'string.h' file not found
+  cargo:warning=   16 | #include <string.h>    /* memcpy */
+  cargo:warning=      |          ^~~~~~~~~~
+  cargo:warning=1 error generated.
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/3f451b2306bc13c8-zstd_v04.o" "-c" "zstd/lib/legacy/zstd_v04.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+  VCINSTALLDIR = None
+  cargo:rerun-if-env-changed=CC_aarch64-pc-windows-msvc
+  CC_aarch64-pc-windows-msvc = None
+  cargo:rerun-if-env-changed=CC_aarch64_pc_windows_msvc
+  CC_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=TARGET_CC
+  TARGET_CC = None
+  cargo:rerun-if-env-changed=CC
+  CC = None
+  cargo:rerun-if-env-changed=CROSS_COMPILE
+  CROSS_COMPILE = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CFLAGS
+  CFLAGS = None
+  cargo:rerun-if-env-changed=TARGET_CFLAGS
+  TARGET_CFLAGS = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64_pc_windows_msvc
+  CFLAGS_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64-pc-windows-msvc
+  CFLAGS_aarch64-pc-windows-msvc = None
+  cargo:warning=In file included from zstd/lib/legacy/zstd_v05.c:13:
+  cargo:warning=In file included from zstd/lib/legacy/zstd_v05.h:22:
+  cargo:warning=In file included from zstd/lib/legacy/../common/mem.h:18:
+  cargo:warning=In file included from zstd/lib/legacy/../common/compiler.h:202:
+  cargo:warning=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/21/include/intrin.h:35:10: fatal error: 'setjmp.h' file not found
+  cargo:warning=   35 | #include <setjmp.h>
+  cargo:warning=      |          ^~~~~~~~~~
+  cargo:warning=1 error generated.
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/3f451b2306bc13c8-zstd_v05.o" "-c" "zstd/lib/legacy/zstd_v05.c"cargo:rerun-if-env-changed=VCINSTALLDIR
+  VCINSTALLDIR = None
+  cargo:rerun-if-env-changed=CC_aarch64-pc-windows-msvc
+  CC_aarch64-pc-windows-msvc = None
+  cargo:rerun-if-env-changed=CC_aarch64_pc_windows_msvc
+  CC_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=TARGET_CC
+  TARGET_CC = None
+  cargo:rerun-if-env-changed=CC
+  CC = None
+  cargo:rerun-if-env-changed=CROSS_COMPILE
+  CROSS_COMPILE = None
+  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
+  CRATE_CC_NO_DEFAULTS = None
+  cargo:rerun-if-env-changed=CFLAGS
+  CFLAGS = None
+  cargo:rerun-if-env-changed=TARGET_CFLAGS
+  TARGET_CFLAGS = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64_pc_windows_msvc
+  CFLAGS_aarch64_pc_windows_msvc = None
+  cargo:rerun-if-env-changed=CFLAGS_aarch64-pc-windows-msvc
+  CFLAGS_aarch64-pc-windows-msvc = None
+  cargo:warning=zstd/lib/legacy/zstd_v06.c:15:10: fatal error: 'string.h' file not found
+  cargo:warning=   15 | #include <string.h>    /* memcpy */
+  cargo:warning=      |          ^~~~~~~~~~
+  cargo:warning=1 error generated.
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/3f451b2306bc13c8-zstd_v06.o" "-c" "zstd/lib/legacy/zstd_v06.c"cargo:warning=zstd/lib/legacy/zstd_v07.c:14:10: fatal error: 'string.h' file not found
+  cargo:warning=   14 | #include <string.h>     /* memcpy */
+  cargo:warning=      |          ^~~~~~~~~~
+  cargo:warning=1 error generated.
+
+  exit status: 1
+  cargo:warning=ToolExecError: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/3f451b2306bc13c8-zstd_v07.o" "-c" "zstd/lib/legacy/zstd_v07.c"
+
+  --- stderr
+
+
+  error occurred in cc-rs: command did not execute successfully (status code exit status: 1): LC_ALL="C" "cc" "-O0" "-ffunction-sections" "-fdata-sections" "-g" "-fno-omit-frame-pointer" "-mno-omit-leaf-frame-pointer" "--target=aarch64-pc-windows-msvc" "-I" "zstd/lib/" "-I" "zstd/lib/common" "-I" "zstd/lib/legacy" "-w" "-ffunction-sections" "-fdata-sections" "-fmerge-all-constants" "-DZSTD_DISABLE_ASM=" "-DZSTD_LIB_DEPRECATED=0" "-DXXH_PRIVATE_API=" "-DZSTDLIB_VISIBILITY=" "-DZDICTLIB_VISIBILITY=" "-DZSTDERRORLIB_VISIBILITY=" "-DZSTD_LEGACY_SUPPORT=1" "-o" "/Users/int/.assist-session-alias-20261020/target/windows-cross/aarch64-pc-windows-msvc/debug/build/zstd-sys-49a755a55c3c70f4/out/3f451b2306bc13c8-zstd_v07.o" "-c" "zstd/lib/legacy/zstd_v07.c"
+
+
+warning: build failed, waiting for other jobs to finish...

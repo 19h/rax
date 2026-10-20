@@ -1,0 +1,31 @@
+{
+  "state": "finished",
+  "pid": 10192,
+  "round": 1,
+  "steps": [
+    {
+      "name": "portable-proof",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\verify-session-alias-epoch1\\docs\\specifications\\windows\\native-session-directory-alias\\check_validation.py",
+        "--host",
+        "windows",
+        "--source",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\verify-session-alias-epoch1"
+      ],
+      "exit-code": 0,
+      "log": "session-alias-proof-windows-round1.log",
+      "bytes": 641,
+      "sha256": "fc8452310f190afd798084c05898830681488c214f8e9f6d658341eb30dab62f"
+    }
+  ],
+  "child-pid": 3436,
+  "exit-code": 0,
+  "envelope": {
+    "bytes": 24947,
+    "sha256": "f1ab7643936a852e11aafae0d0b670bd3fed10793b21d84cce02c4f1a4821721"
+  },
+  "scope": "Separateverificationtree; historicalfrozeninputs and explicitpublicprojections both checked. Productsource and retainedexecutedartifacts remainunchanged.",
+  "utc": "2026-10-20T03:01:34.554808+00:00"
+}

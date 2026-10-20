@@ -1,0 +1,58 @@
+{
+  "all-rejected": true,
+  "controls": [
+    {
+      "name": "same-object-evidence-reversed",
+      "rejected": true
+    },
+    {
+      "name": "distinct-object-falsely-equal",
+      "rejected": true
+    },
+    {
+      "name": "dont-reparse-falsely-opens",
+      "rejected": true
+    },
+    {
+      "name": "symbolic-link-type-lost",
+      "rejected": true
+    },
+    {
+      "name": "private-handle-leak",
+      "rejected": true
+    },
+    {
+      "name": "frozen-source-identity",
+      "rejected": true
+    },
+    {
+      "name": "new-windows-failure",
+      "rejected": true
+    },
+    {
+      "name": "coherent-core-feature-drift",
+      "rejected": true
+    },
+    {
+      "name": "coherent-observer-core-substitution",
+      "rejected": true
+    },
+    {
+      "name": "capi-failure-as-exit",
+      "rejected": true
+    },
+    {
+      "name": "baseline-source-substitution",
+      "rejected": true
+    },
+    {
+      "name": "invented-current-ci-target",
+      "rejected": true
+    },
+    {
+      "name": "false-whole-goal-completion",
+      "rejected": true
+    }
+  ],
+  "scope": "Each relevant log/receipt and enclosing byte ledger is rebound before semantic rejection. Immutable product/source identities are cached only during this stress runner."
+}

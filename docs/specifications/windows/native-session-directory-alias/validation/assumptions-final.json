@@ -1,0 +1,14 @@
+{
+  "assumptions": [
+    {
+      "id": "SA-A1",
+      "assumption": "An opened selected alias directory may be identical to another fixed selected directory despite its parent entry being a SymbolicLink.",
+      "basis": "Exact CI SymbolicLink rejection plus four-ABI native same/distinct object observations, three portable tests and executed Windows acquisition adapter.",
+      "dependent-result": "Admit only the identity-proven fixed pair. Actual CI target remains unknown and may be outside this profile.",
+      "stress-test": "Same object, distinct object, missing metadata, type/name mismatch, DONT_REPARSE, reparse budget, canonical named-object identity and rights.",
+      "falsification-probe": "NtCompareObjects does not establish selected target identity, or actual CI alias resolves outside the fixed target profile.",
+      "status": "retained",
+      "revisit-evidence": "All complete3host library/CAPI/integration/all-target gates and retained consumers pass within exact5knownWindowsfailures; actual CI outcome remains unverified until publication."
+    }
+  ]
+}

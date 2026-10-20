@@ -1,0 +1,19 @@
+   Compiling rax v0.1.0 (/Users/int/.assist-session-alias-20261020)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 26s
+     Running unittests src/lib.rs (target/debug/deps/rax-dd79f0cd9ae9bb68)
+
+running 1 test
+test user::windows::object_namespace::base_named_object_tests::session_directory_alias_preserves_symbolic_and_selected_target_identity ... 
+thread 'user::windows::object_namespace::base_named_object_tests::session_directory_alias_preserves_symbolic_and_selected_target_identity' (15359499) panicked at src/user/windows/object_namespace/base_named_object_tests.rs:419:6:
+called `Result::unwrap()` on an `Err` value: Custom { kind: InvalidData, error: "selected NT directory parent type/name changed: selected_path=\"\\\\Sessions\\\\7\\\\BaseNamedObjects\" parent_path=\"\\\\Sessions\\\\7\" selected_name=\"BaseNamedObjects\" captured_name=\"BaseNamedObjects\" captured_type=\"SymbolicLink\" existing_child=false" }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+
+failures:
+
+failures:
+    user::windows::object_namespace::base_named_object_tests::session_directory_alias_preserves_symbolic_and_selected_target_identity
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 8085 filtered out; finished in 0.01s
+
+error: test failed, to rerun pass `--lib`

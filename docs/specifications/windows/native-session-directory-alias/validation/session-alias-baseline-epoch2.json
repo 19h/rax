@@ -1,0 +1,50 @@
+{
+  "state": "finished",
+  "pid": 85166,
+  "argv": [
+    "cargo",
+    "+1.95.0",
+    "test",
+    "--locked",
+    "--offline",
+    "--no-default-features",
+    "--lib",
+    "session_directory_alias_preserves",
+    "--",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "inputs-before": [
+    {
+      "path": "src/user/windows/object_namespace.rs",
+      "bytes": 26052,
+      "sha256": "3762b7dd5d0eab599245fba9c07dadff493cdb336ebfa20f81cc1542e65319dc"
+    },
+    {
+      "path": "src/user/windows/object_namespace/base_named_object_tests.rs",
+      "bytes": 14402,
+      "sha256": "68a07416371d293991abca906b7e536c4e03fefb27a9ab280068237623f61a49"
+    }
+  ],
+  "exit-code": 101,
+  "seconds": 86.81853233301081,
+  "inputs-after": [
+    {
+      "path": "src/user/windows/object_namespace.rs",
+      "bytes": 26052,
+      "sha256": "3762b7dd5d0eab599245fba9c07dadff493cdb336ebfa20f81cc1542e65319dc"
+    },
+    {
+      "path": "src/user/windows/object_namespace/base_named_object_tests.rs",
+      "bytes": 14402,
+      "sha256": "68a07416371d293991abca906b7e536c4e03fefb27a9ab280068237623f61a49"
+    }
+  ],
+  "inputs-unchanged": true,
+  "log": "session-alias-baseline-epoch2.log",
+  "bytes": 1333,
+  "sha256": "88fbae98c3f237f79e17471cc7ff20cd4b6be7d469a25e9c13b24d480348cbb4",
+  "results": [
+    "FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 8085 filtered out; finished in 0.01s"
+  ]
+}

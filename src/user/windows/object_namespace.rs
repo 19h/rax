@@ -110,6 +110,7 @@ pub(crate) fn case_probe_policy(original: u32, folded: u32, explicit: u32) -> Op
 
 pub(crate) mod csr;
 pub(crate) mod data;
+mod directory_alias;
 mod image;
 mod named;
 mod section;
@@ -155,6 +156,8 @@ pub(crate) struct SelectedDirectory {
 struct Entry {
     captured: CapturedEntry,
     child: Option<Arc<Directory>>,
+    // Independently verified selected identity reached through a symbolic link.
+    resolved_directory: Option<Arc<Directory>>,
     link: Option<Arc<SymbolicLink>>,
     section: Option<SelectedSection>,
 }
@@ -218,6 +221,17 @@ impl Namespace {
         selected: Vec<SelectedDirectory>,
         session: Option<u32>,
         incomplete: &[Vec<u16>],
+    ) -> io::Result<Self> {
+        Self::selected_with_directory_aliases(upcase, selected, session, incomplete, &[])
+    }
+
+    /// Alias pairs are trusted acquisition results, never guest-supplied paths.
+    pub(crate) fn selected_with_directory_aliases(
+        upcase: Arc<[u16]>,
+        selected: Vec<SelectedDirectory>,
+        session: Option<u32>,
+        incomplete: &[Vec<u16>],
+        aliases: &[(Vec<u16>, Vec<u16>)],
     ) -> io::Result<Self> {
         let allowed = selection_paths(session);
         let mut seen = std::collections::BTreeSet::new();
@@ -319,6 +333,7 @@ impl Namespace {
                         Entry {
                             captured: e,
                             child: None,
+                            resolved_directory: None,
                             link,
                             section,
                         },
@@ -342,6 +357,7 @@ impl Namespace {
                 return Err(invalid("duplicate NT directory selection"));
             }
         }
+        let alias = directory_alias::prepare(&mut dirs, &upcase, session, aliases)?;
         // Attach deepest nodes first so every Arc already owns its selected
         // descendants. A selected child requires an independently captured parent.
         let mut paths: Vec<_> = dirs.keys().filter(|p| p.len() != 1).cloned().collect();
@@ -387,9 +403,12 @@ impl Namespace {
             }
             entry.child = Some(Arc::new(child));
         }
-        let root = dirs
+        let mut root = dirs
             .remove(&vec![92])
             .ok_or_else(|| invalid("NT directory root is not selected"))?;
+        if let Some(alias) = alias {
+            alias.attach(&mut root, &upcase)?;
+        }
         Ok(Self {
             root: Some(Arc::new(root)),
             wow_system_prefix: Vec::new(),
@@ -552,6 +571,31 @@ impl Namespace {
                 // exists. DONT_REPARSE above has independent earlier precedence.
                 if reparses == 63 {
                     return Err(LookupError::Status(STATUS_OBJECT_NAME_NOT_FOUND));
+                }
+                if let Some(resolved) = &entry.resolved_directory {
+                    let mut suffix = parts.peekable();
+                    if suffix.peek().is_some_and(|part| part.is_empty()) {
+                        return Err(LookupError::Status(STATUS_OBJECT_NAME_INVALID));
+                    }
+                    let mut remaining = Vec::new();
+                    for (index, part) in suffix.enumerate() {
+                        if index != 0 {
+                            remaining.push(b'\\' as u16);
+                        }
+                        remaining.extend_from_slice(part);
+                        if target.len() + 1 + remaining.len() > MAX_UNITS {
+                            return Err(LookupError::Unselected);
+                        }
+                    }
+                    return self.lookup_object_reparsed(
+                        Some(resolved.clone()),
+                        &remaining,
+                        flags,
+                        link,
+                        section,
+                        port,
+                        reparses + 1,
+                    );
                 }
                 let mut expanded = target.clone();
                 for remaining in parts {

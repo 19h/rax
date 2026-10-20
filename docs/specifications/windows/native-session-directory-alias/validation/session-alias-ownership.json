@@ -1,0 +1,48 @@
+{
+  "utc": "2026-10-20T01:24:36.103996+00:00",
+  "base": "6f2148297acc1e8106600306cc092b08207b80d2",
+  "worktree": "/Users/int/.assist-session-alias-20261020",
+  "owned-source-candidates": [
+    "src/user/windows/object_namespace.rs",
+    "src/user/windows/object_namespace/installed.rs",
+    "src/user/windows/object_namespace/base_named_object_tests.rs",
+    "src/user/windows/native-runtime.md",
+    "src/user/windows/object_namespace/directory_alias.rs",
+    "src/user/windows/object_namespace/installed/directory_alias.rs",
+    "src/user/windows/object_namespace/installed/directory_alias/tests.rs"
+  ],
+  "evidence-prefix": "docs/specifications/windows/native-session-directory-alias/",
+  "scope": "Preserve captured symbolic-link identity, DONT_REPARSE behavior and named-object ownership while representing a fixed current-session BaseNamedObjects alias to an independently selected directory. No arbitrary host path traversal or blanket type acceptance.",
+  "primary-failure": {
+    "pipeline": 71518,
+    "job": 424894,
+    "path": "\\Sessions\\34651\\BaseNamedObjects",
+    "captured-type": "SymbolicLink",
+    "target": "unknown"
+  },
+  "assumptions": [
+    {
+      "id": "SA-A1",
+      "assumption": "An opened selected alias directory may be identical to another fixed selected directory despite its parent entry being a SymbolicLink.",
+      "basis": "Exact CI trace; native directory aliases are possible, but actual target remains unknown.",
+      "dependent-result": "Use native object identity, rather than a guessed target string, to bind the alias.",
+      "stress-test": "Same object, distinct object, missing metadata, type/name mismatch, DONT_REPARSE, reparse budget, canonical named-object identity and rights.",
+      "falsification-probe": "NtCompareObjects does not establish selected target identity, or actual CI alias resolves outside the fixed target profile.",
+      "status": "retained"
+    }
+  ],
+  "publication-dependency": "PublishedMRIparent6f214829 integrated linearly; all5aliasinputs preserved",
+  "previous-baseline": "6f2148297acc1e8106600306cc092b08207b80d2",
+  "owned-source-paths": [
+    "src/user/windows/native-runtime.md",
+    "src/user/windows/object_namespace.rs",
+    "src/user/windows/object_namespace/base_named_object_tests.rs",
+    "src/user/windows/object_namespace/directory_alias.rs",
+    "src/user/windows/object_namespace/installed.rs",
+    "src/user/windows/object_namespace/installed/directory_alias.rs",
+    "src/user/windows/object_namespace/installed/directory_alias/tests.rs"
+  ],
+  "published-parent-integration": "session-alias-region-parent-integration.json",
+  "source-freeze": "session-alias-source-epoch1.json",
+  "publication-base": "4ca87771fd934fa3c96890e01df27c3bbcdace71"
+}

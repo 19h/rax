@@ -1,0 +1,8 @@
+from pathlib import Path
+import datetime,hashlib,json,os,subprocess,sys
+ROOT=Path('/Users/int/.assist-session-alias-20261020');CACHE=Path(__file__).parent;HOST=sys.argv[1];number=int(sys.argv[2]);assert HOST in ['macos','linux']and number in [1,2];record=CACHE/('session-alias-proof-'+HOST+'-round'+str(number)+'.json');assert not record.exists();script='docs/specifications/windows/native-session-directory-alias/check_validation.py'
+if HOST=='macos':argv=['python3','-B',str(ROOT/script),'--host',HOST,'--source',str(ROOT)]
+else:argv=['docker','run','--rm','--platform','linux/amd64','-v',str(ROOT)+':/source:ro','-w','/source','assist-rax-validation-rustfmt:1.95-bullseye-20261015','python3','-B','/source/'+script,'--host',HOST,'--source','/source']
+log=CACHE/('session-alias-proof-'+HOST+'-round'+str(number)+'.log');state={'state':'running','pid':os.getpid(),'host':HOST,'round':number};record.write_text(json.dumps(state,indent=2)+'\n')
+with log.open('wb')as out:code=subprocess.run(argv,stdout=out,stderr=subprocess.STDOUT).returncode
+raw=log.read_bytes();envelope=ROOT/'docs/specifications/windows/native-session-directory-alias/evidence-manifest.json';state.update({'state':'finished'if code==0 else'failed','exit-code':code,'steps':[{'name':'portable-proof','argv':argv,'exit-code':code,'log':log.name,'bytes':len(raw),'sha256':hashlib.sha256(raw).hexdigest()}],'envelope':{'bytes':envelope.stat().st_size,'sha256':hashlib.sha256(envelope.read_bytes()).hexdigest()},'utc':datetime.datetime.now(datetime.timezone.utc).isoformat()});record.write_text(json.dumps(state,indent=2)+'\n');print(HOST,number,code,flush=True);raise SystemExit(code)

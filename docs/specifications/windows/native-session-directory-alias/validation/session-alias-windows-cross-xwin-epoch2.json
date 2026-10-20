@@ -1,0 +1,113 @@
+{
+  "state": "finished",
+  "inputs-before": [
+    {
+      "path": "src/user/windows/object_namespace.rs",
+      "bytes": 27553,
+      "sha256": "a0e4f0deaad46c66fc2abb1814f4db34343fe3934aeaf6811e28ea8b31028bb8"
+    },
+    {
+      "path": "src/user/windows/object_namespace/base_named_object_tests.rs",
+      "bytes": 19825,
+      "sha256": "95a046a578c17f8c75f4c0088783dc5c2c2c2a23f79b8aa696558e34dec6aa10"
+    },
+    {
+      "path": "src/user/windows/object_namespace/directory_alias.rs",
+      "bytes": 4368,
+      "sha256": "78a45cf29b610b126c5eddd9cede7b103f66253fae977d79f50dac2a4b2d184a"
+    },
+    {
+      "path": "src/user/windows/object_namespace/installed.rs",
+      "bytes": 17506,
+      "sha256": "64cd6ffb1ec1df8ea0d1d383120a65d272aba8272769e72df6df3e16b5327637"
+    },
+    {
+      "path": "src/user/windows/object_namespace/installed/directory_alias.rs",
+      "bytes": 5090,
+      "sha256": "401ae92aaef928cc3ce984d6f0f2e2e72f1bc7617f731facd56e68a43d19b16d"
+    },
+    {
+      "path": "src/user/windows/object_namespace/installed/directory_alias/tests.rs",
+      "bytes": 4563,
+      "sha256": "102fbfa1f1f4679b818686d62ee397b76fcab5663185168965672b607087bb96"
+    }
+  ],
+  "steps": [
+    {
+      "arch": "aarch64",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "xwin",
+        "check",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--all-targets",
+        "--target",
+        "aarch64-pc-windows-msvc"
+      ],
+      "exit-code": 0,
+      "seconds": 56.886399415991036,
+      "log": "session-alias-windows-cross-xwin-epoch2-aarch64.log",
+      "bytes": 3067,
+      "sha256": "3d15cb7a3b8aa51a49f62fc50b36d147b73037863e110c9fb0c80585921821c7"
+    },
+    {
+      "arch": "x86_64",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "xwin",
+        "check",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--all-targets",
+        "--target",
+        "x86_64-pc-windows-msvc"
+      ],
+      "exit-code": 0,
+      "seconds": 56.47616099999868,
+      "log": "session-alias-windows-cross-xwin-epoch2-x86_64.log",
+      "bytes": 3010,
+      "sha256": "fff45570bed84670e5f32570a9cbef1a441a5274db7590ce35e11f4c52b8dbe8"
+    }
+  ],
+  "utc": "2026-10-20T02:04:10.002967+00:00",
+  "inputs-after": [
+    {
+      "path": "src/user/windows/object_namespace.rs",
+      "bytes": 27553,
+      "sha256": "a0e4f0deaad46c66fc2abb1814f4db34343fe3934aeaf6811e28ea8b31028bb8"
+    },
+    {
+      "path": "src/user/windows/object_namespace/base_named_object_tests.rs",
+      "bytes": 19825,
+      "sha256": "95a046a578c17f8c75f4c0088783dc5c2c2c2a23f79b8aa696558e34dec6aa10"
+    },
+    {
+      "path": "src/user/windows/object_namespace/directory_alias.rs",
+      "bytes": 4368,
+      "sha256": "78a45cf29b610b126c5eddd9cede7b103f66253fae977d79f50dac2a4b2d184a"
+    },
+    {
+      "path": "src/user/windows/object_namespace/installed.rs",
+      "bytes": 17506,
+      "sha256": "64cd6ffb1ec1df8ea0d1d383120a65d272aba8272769e72df6df3e16b5327637"
+    },
+    {
+      "path": "src/user/windows/object_namespace/installed/directory_alias.rs",
+      "bytes": 5090,
+      "sha256": "401ae92aaef928cc3ce984d6f0f2e2e72f1bc7617f731facd56e68a43d19b16d"
+    },
+    {
+      "path": "src/user/windows/object_namespace/installed/directory_alias/tests.rs",
+      "bytes": 4563,
+      "sha256": "102fbfa1f1f4679b818686d62ee397b76fcab5663185168965672b607087bb96"
+    }
+  ],
+  "inputs-unchanged": true,
+  "exit-code": 0,
+  "scope": "macOS-hosted Windows MSVC all-target type/build check, including Windows-only native acquisition regression. No native kernel execution is claimed."
+}

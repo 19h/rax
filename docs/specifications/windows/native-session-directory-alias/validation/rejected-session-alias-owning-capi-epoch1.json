@@ -1,0 +1,8 @@
+{
+  "state": "failed",
+  "pid": 8096,
+  "steps": [],
+  "exit-code": 1,
+  "error": "Traceback (most recent call last):\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-session-alias-owning-capi-epoch1.py\", line 22, in <module>\n    assert ordinary['state']!='failed',ordinary.get('error','ordinary failed')\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Traceback (most recent call last):\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-session-alias-native-ordinary-epoch1.py\", line 35, in <module>\n    run('build',[str(B/'toolchain/bin/rustc.exe'),'--edition=2024','--crate-name','session-alias_ordinary_owner',str(source),'-C','target-feature=+crt-static','--extern','rax='+str(core),'-L','dependency='+str(core.parent),'-o',str(executable)],env);state['executable-before']=identity(executable)\n    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-session-alias-native-ordinary-epoch1.py\", line 15, in run\n    state['steps'].append({'name':name,'argv':argv,'seconds':time.monotonic()-started,'exit-code':code,'log':log.name,**{k:v for k,v in identity(log).items()if k!='path'}});save();assert code==0,name\n                                                                                                                                                                                           ^^^^^^^\nAssertionError: build\n\n",
+  "utc": "2026-10-20T02:23:14.607053+00:00"
+}

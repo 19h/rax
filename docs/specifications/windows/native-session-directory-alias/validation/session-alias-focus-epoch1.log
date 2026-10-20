@@ -1,0 +1,11 @@
+   Compiling rax v0.1.0 (/Users/int/.assist-session-alias-20261020)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 21s
+     Running unittests src/lib.rs (target/debug/deps/rax-dd79f0cd9ae9bb68)
+
+running 3 tests
+test user::windows::object_namespace::base_named_object_tests::session_directory_alias_preserves_partial_capture_name_grammar_and_reparse_budget ... ok
+test user::windows::object_namespace::base_named_object_tests::session_directory_alias_preserves_symbolic_and_selected_target_identity ... ok
+test user::windows::object_namespace::base_named_object_tests::session_directory_alias_rejects_unselected_pairs_and_incoherent_evidence ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 8101 filtered out; finished in 0.02s
+

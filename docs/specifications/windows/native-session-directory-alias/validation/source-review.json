@@ -1,0 +1,61 @@
+{
+  "utc": "2026-10-20T02:50:56.596735+00:00",
+  "source-epoch": "original-frozen-epoch1",
+  "publication-parent": "4ca87771fd934fa3c96890e01df27c3bbcdace71",
+  "owned-source-paths": [
+    "src/user/windows/native-runtime.md",
+    "src/user/windows/object_namespace.rs",
+    "src/user/windows/object_namespace/base_named_object_tests.rs",
+    "src/user/windows/object_namespace/directory_alias.rs",
+    "src/user/windows/object_namespace/installed.rs",
+    "src/user/windows/object_namespace/installed/directory_alias.rs",
+    "src/user/windows/object_namespace/installed/directory_alias/tests.rs"
+  ],
+  "reviewed-contracts": [
+    "Alias proof is trusted acquisition-only and fixed to current nonzero session -> independently selected globalBNO; no guest-provided identity map.",
+    "All captures retain name/type/target/access/aggregate validation before one alias snapshot is projected.",
+    "Captured authorization/case evidence must agree; incomplete alias capture preserves global uncertainty.",
+    "Resolved Arc points to separate fixed root, not an ancestor; root/session ancestors are uniquely owned during attachment.",
+    "Lookup preserves link leaf, DONT_REPARSE and63reparse precedence; malformed suffix ordering reuses existing parser.",
+    "Native exact handles remain pinned until compare; refreshed open and stable link metadata revalidate capture; bounded9handles close before guest publication.",
+    "NtCompareObjects is dynamically resolved only for actual symbolic alias profile, with explicit failure when unavailable.",
+    "New unsafe calls have local lifetime/bounds/ABI arguments; no native handle or guest pointer crosses the host/guest boundary.",
+    "PublicDirectory/Namespace behavior outside proven aliases, CABI1.14, dependencies/defaults and persisted formats unchanged."
+  ],
+  "change-surface-map": {
+    "windows-native-acquisition": "affected; pinnedhandles, linktargetcapture, dynamicidentityexport and actualprivateobjecttest",
+    "immutable-namespace-and-named-ownership": "affected; all3host portabletests/unfiltered library binaries",
+    "CAPI-and-Assist": "rebuiltactualcore/carrier/structuralwalks and nativeordinary/C++CAPIexecution; no ABI change",
+    "linux-macos": "sharedpureselection/lookup semantics compile and run; nativeWindows adapter remains Windows-only OSmechanics",
+    "plugin-UI-agent-mesh-SDK-persistence-release": "no owningAPI/schema/default/layout changes; currentproduct/packaging validation remains separate"
+  },
+  "findings": [
+    {
+      "impact": "high",
+      "finding": "Actual CI sessionalias target remains unknown; off-profile identity fails closed.",
+      "blocks-this-profile": false,
+      "blocks-whole-goal": true
+    },
+    {
+      "impact": "high",
+      "finding": "Whoami still stops at NtQueryAttributesFile0x3d; retained ABI184 does not prove currentABI272 products.",
+      "blocks-this-profile": false,
+      "blocks-whole-goal": true
+    },
+    {
+      "impact": "medium",
+      "finding": "Five establishedWindowslowererfailures andtwoignoredcases remain explicit.",
+      "blocks-this-profile": false
+    },
+    {
+      "impact": "medium",
+      "finding": "One ARM64kernel suppliesfourABIviews; no separatephysicalx64kernel oracle.",
+      "blocks-this-profile": false
+    }
+  ],
+  "rejected-attempts": [
+    "InitialbaselinecompilerprivateNamefieldaccess fixedbeforecompiledred baseline.",
+    "Plaincrosscheck lackedMSVC C headers; cachedSDKxwinchecks thenpassARM64/x64.",
+    "Observerepoch1Rustcrate name hadhyphen; compilerrejectedbeforegueststart anddependentCAPIstopped; correcteduniqueepoch2 executes."
+  ]
+}

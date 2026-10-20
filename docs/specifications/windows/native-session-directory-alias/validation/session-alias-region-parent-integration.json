@@ -1,0 +1,29 @@
+{
+  "utc": "2026-10-20T01:58:58.171593+00:00",
+  "before": "dbcea8afa4292b4f5afa620963fe6f81e9301cae",
+  "after": "6f2148297acc1e8106600306cc092b08207b80d2",
+  "preserved-inputs": [
+    {
+      "path": "src/user/windows/object_namespace.rs",
+      "sha256": "63d2d2611e4e1af27340b391527e3d8335d878b5341c3c75c8bd0c484699d249"
+    },
+    {
+      "path": "src/user/windows/object_namespace/base_named_object_tests.rs",
+      "sha256": "68a07416371d293991abca906b7e536c4e03fefb27a9ab280068237623f61a49"
+    },
+    {
+      "path": "src/user/windows/object_namespace/installed.rs",
+      "sha256": "64cd6ffb1ec1df8ea0d1d383120a65d272aba8272769e72df6df3e16b5327637"
+    },
+    {
+      "path": "src/user/windows/object_namespace/directory_alias.rs",
+      "sha256": "78a45cf29b610b126c5eddd9cede7b103f66253fae977d79f50dac2a4b2d184a"
+    },
+    {
+      "path": "src/user/windows/object_namespace/installed/directory_alias.rs",
+      "sha256": "a77e8fce3a2c3e379d79a85cd53f8842f0dc81266328615e376479fe306ad6a7"
+    }
+  ],
+  "unchanged": true,
+  "scope": "Select publishedlinearMRIparentwhilepreservingall5ownedaliasinputs; no merge or published rewrite"
+}

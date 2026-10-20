@@ -1,0 +1,30 @@
+{
+  "state": "finished",
+  "pid": 15725,
+  "host": "macos",
+  "round": 1,
+  "exit-code": 0,
+  "steps": [
+    {
+      "name": "portable-proof",
+      "argv": [
+        "python3",
+        "-B",
+        "/Users/int/.assist-session-alias-20261020/docs/specifications/windows/native-session-directory-alias/check_validation.py",
+        "--host",
+        "macos",
+        "--source",
+        "/Users/int/.assist-session-alias-20261020"
+      ],
+      "exit-code": 0,
+      "log": "session-alias-proof-macos-round1.log",
+      "bytes": 604,
+      "sha256": "e2fd67c91039bcdfea87f8b254632c39c2ed0ef67487565ddd299a3dd4a27426"
+    }
+  ],
+  "envelope": {
+    "bytes": 24947,
+    "sha256": "f1ab7643936a852e11aafae0d0b670bd3fed10793b21d84cce02c4f1a4821721"
+  },
+  "utc": "2026-10-20T02:54:38.671980+00:00"
+}

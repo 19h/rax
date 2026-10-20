@@ -1,0 +1,46 @@
+{
+  "state": "failed",
+  "pid": 3872,
+  "utc": "2026-10-20T02:16:31.551196+00:00",
+  "steps": [
+    {
+      "name": "build",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\rustc.exe",
+        "--edition=2024",
+        "--crate-name",
+        "session-alias_ordinary_owner",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\helpers\\session-alias-ordinary-owner-epoch1.rs",
+        "-C",
+        "target-feature=+crt-static",
+        "--extern",
+        "rax=C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\debug\\deps\\librax-934115059aa64c85.rlib",
+        "-L",
+        "dependency=C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\debug\\deps",
+        "-o",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\session-alias-ordinary-owner-epoch1.exe"
+      ],
+      "seconds": 0.05070966700441204,
+      "exit-code": 1,
+      "log": "session-alias-native-ordinary-epoch1-build.log",
+      "bytes": 117,
+      "sha256": "cea5b80f8865a41981fbb994933655201df50e0a93bb98da5392ade0d525ef94"
+    }
+  ],
+  "outcomes": [],
+  "core-before": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\debug\\deps\\librax-934115059aa64c85.rlib",
+    "bytes": 508614218,
+    "sha256": "41da0087fa670ff68ce308d680e9ed2b82402f3cc02c60d6bf28d32dcd3ecd88"
+  },
+  "observer-before": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\helpers\\session-alias-ordinary-owner-epoch1.rs",
+    "bytes": 1044,
+    "sha256": "5c1aaf75ce1b18a7e251612e4778ec339989e9c91e110cba109c68238c67b01c"
+  },
+  "current-step": "build",
+  "child-pid": 5732,
+  "exit-code": 1,
+  "error": "Traceback (most recent call last):\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-session-alias-native-ordinary-epoch1.py\", line 35, in <module>\n    run('build',[str(B/'toolchain/bin/rustc.exe'),'--edition=2024','--crate-name','session-alias_ordinary_owner',str(source),'-C','target-feature=+crt-static','--extern','rax='+str(core),'-L','dependency='+str(core.parent),'-o',str(executable)],env);state['executable-before']=identity(executable)\n    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-session-alias-native-ordinary-epoch1.py\", line 15, in run\n    state['steps'].append({'name':name,'argv':argv,'seconds':time.monotonic()-started,'exit-code':code,'log':log.name,**{k:v for k,v in identity(log).items()if k!='path'}});save();assert code==0,name\n                                                                                                                                                                                           ^^^^^^^\nAssertionError: build\n",
+  "completed-utc": "2026-10-20T02:23:13.121705+00:00"
+}

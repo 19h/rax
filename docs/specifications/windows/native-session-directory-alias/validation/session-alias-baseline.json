@@ -1,0 +1,48 @@
+{
+  "state": "finished",
+  "pid": 74890,
+  "argv": [
+    "cargo",
+    "+1.95.0",
+    "test",
+    "--locked",
+    "--offline",
+    "--no-default-features",
+    "--lib",
+    "session_directory_alias_preserves",
+    "--",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "inputs-before": [
+    {
+      "path": "src/user/windows/object_namespace.rs",
+      "bytes": 26052,
+      "sha256": "3762b7dd5d0eab599245fba9c07dadff493cdb336ebfa20f81cc1542e65319dc"
+    },
+    {
+      "path": "src/user/windows/object_namespace/base_named_object_tests.rs",
+      "bytes": 14314,
+      "sha256": "09bfb702a37b0a9514424aa7ed0d9d832ddf84af804fb45a2ec6c430636fa91a"
+    }
+  ],
+  "exit-code": 101,
+  "seconds": 68.2596880409983,
+  "inputs-after": [
+    {
+      "path": "src/user/windows/object_namespace.rs",
+      "bytes": 26052,
+      "sha256": "3762b7dd5d0eab599245fba9c07dadff493cdb336ebfa20f81cc1542e65319dc"
+    },
+    {
+      "path": "src/user/windows/object_namespace/base_named_object_tests.rs",
+      "bytes": 14314,
+      "sha256": "09bfb702a37b0a9514424aa7ed0d9d832ddf84af804fb45a2ec6c430636fa91a"
+    }
+  ],
+  "inputs-unchanged": true,
+  "log": "session-alias-baseline.log",
+  "bytes": 3020,
+  "sha256": "b150a101ab9fba039c4226888757f5009155bcfa4ac8c633d5ca668d3c784f99",
+  "results": []
+}

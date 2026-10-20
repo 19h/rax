@@ -1,0 +1,1 @@
+program=C:\Windows\System32\whoami.exe terminal-call=2179 result=Complete(Internal("native NTDLL service NtQueryAttributesFile (0x3d) at 0x7fff38a41410 is not implemented"))
