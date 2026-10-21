@@ -1,0 +1,9 @@
+{
+  "state": "verified",
+  "recorded-native-queries": 4864,
+  "producers": 3,
+  "execution-views": 4,
+  "source-overrides": 14,
+  "live-native-files": 0,
+  "scope": "One ARM64 Windows kernel10.0.29683; four execution views, not independent physical x64 kernel proof. Repeated inputs across producer versions are included in recorded-call total."
+}

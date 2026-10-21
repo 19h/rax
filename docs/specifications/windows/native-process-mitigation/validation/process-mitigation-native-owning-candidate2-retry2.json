@@ -1,0 +1,124 @@
+{
+  "state": "finished",
+  "pid": 8032,
+  "source-epoch": 1,
+  "utc": "2026-10-21T08:13:12.328034+00:00",
+  "steps": [
+    {
+      "name": "toolchain",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "--version"
+      ],
+      "exit-code": 0,
+      "seconds": 0.04978708300041035,
+      "log": "process-mitigation-native-owning-candidate2-retry2-toolchain.log",
+      "bytes": 36,
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5"
+    },
+    {
+      "name": "artifacts-before",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "build",
+        "--locked",
+        "--offline",
+        "--features",
+        "rax",
+        "--message-format=json"
+      ],
+      "exit-code": 0,
+      "seconds": 118.5225908329885,
+      "log": "process-mitigation-native-owning-candidate2-retry2-artifacts-before.log",
+      "bytes": 132536,
+      "sha256": "b401d1e240a3f5b458066f8a7e22dfc9879e09c1b4fdffdc74dbd137fc805268"
+    },
+    {
+      "name": "archive-before",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\collect-process-mitigation-archives-candidate2.py",
+        "--host",
+        "windows",
+        "--source",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2",
+        "--manifest",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\process-mitigation-owning-source-hashes-candidate2.json",
+        "--messages",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\process-mitigation-native-owning-candidate2-retry2-artifacts-before.log",
+        "--output",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-process-mitigation-candidate2-pre-cpp-archives.json"
+      ],
+      "exit-code": 0,
+      "seconds": 4.983552834019065,
+      "log": "process-mitigation-native-owning-candidate2-retry2-archive-before.log",
+      "bytes": 182,
+      "sha256": "1000c0a8579a4d502c190cf4784669d3454c8e6b18e8d8580f5efbbd3c3730b4"
+    },
+    {
+      "name": "cpp",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\helpers\\process-mitigation-owned-cpp-build-candidate2.py"
+      ],
+      "exit-code": 0,
+      "seconds": 51.538270791992545,
+      "log": "process-mitigation-native-owning-candidate2-retry2-cpp.log",
+      "bytes": 3705,
+      "sha256": "3bdeb7d189bce15b2d860be69c0318a8d6ec443c4d5eeef60d74645e4a309bd9"
+    },
+    {
+      "name": "artifacts-after",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "build",
+        "--locked",
+        "--offline",
+        "--features",
+        "rax",
+        "--message-format=json"
+      ],
+      "exit-code": 0,
+      "seconds": 0.4175704999943264,
+      "log": "process-mitigation-native-owning-candidate2-retry2-artifacts-after.log",
+      "bytes": 132251,
+      "sha256": "87da05f968d4271c3f2d628047787ec9619a3d9cceafb28e9cc57cc5fc5851fa"
+    },
+    {
+      "name": "archive-after",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\collect-process-mitigation-archives-candidate2.py",
+        "--host",
+        "windows",
+        "--source",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2",
+        "--manifest",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\process-mitigation-owning-source-hashes-candidate2.json",
+        "--messages",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\process-mitigation-native-owning-candidate2-retry2-artifacts-after.log",
+        "--output",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-process-mitigation-candidate2-final-owning-archive-identities.json"
+      ],
+      "exit-code": 0,
+      "seconds": 5.241438416996971,
+      "log": "process-mitigation-native-owning-candidate2-retry2-archive-after.log",
+      "bytes": 182,
+      "sha256": "1000c0a8579a4d502c190cf4784669d3454c8e6b18e8d8580f5efbbd3c3730b4"
+    }
+  ],
+  "junction": {
+    "before": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1",
+    "after": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2"
+  },
+  "current-step": "archive-after",
+  "child-pid": 5036,
+  "exit-code": 0,
+  "source-inputs": 3886,
+  "archive-identities-stable": true,
+  "scope": "Frozen process-mitigation source; retained Assist ABI184 linked consumers. Whole current-root ABI274 GUI/plugin/packages not claimed.",
+  "completed-utc": "2026-10-21T08:16:17.933609+00:00"
+}

@@ -1,0 +1,13 @@
+terminal turn=2816 result=Complete(Internal("native NTDLL service NtAlpcSendWaitReceivePort (0x8e) at 0x7fff38a41920 is not implemented"))
+thread=8 pc=7FFF38A41924 sp=1A5DD90 frames=0
+registers=[68, 20000, 1A5DDE0, 0, 1A5DDE0, 1A5DDA0, 0, 0, 7FFF38E0E000, 1C30778, FE3D0000, 48, 1A5DE28, 7FFF38D9EDD6, 7FFF38B3C1AC, 1C30770, 7FFF38A43790, 44CB301AD079, 7FFDD000, 1A5DDE0, 1C30750, 7FFF38E0E000, 1A5E250, 3BD0E78, 0, 248, 1A5E250, 3, 1A5E9D0, 1A5DD90, 7FFF38A444A0]
+alpc-object=Some(LpcPort(LpcPort { view: Some(SharedViewOwner { base: 29556736, size: 65536, token: () }), peer: Some(CsrPeer { base: 4294967296, handle: 4, handles: 1, committed-bytes: 86016 }) }))
+alpc port=68 object-kind=Some(Discriminant(13))
+send-message=1A5DDE0 captured-bytes=88 raw=Ok([30, 0, 58, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 50, 7, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 78, 7, 0, 0, 1, 0, 0, 0, 48, 2, 0, 0, 0, 0, 0, 0])
+capture-buffer=100000750 raw=Err(MemFault { addr: 100000750, write: false })
+connection-information=100000778 length=584 raw=Err(MemFault { addr: 100000778, write: false })
+receive-message=1A5DDE0 raw=Ok([30, 0, 58, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 50, 7, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 78, 7, 0, 0, 1, 0, 0, 0, 48, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+buffer-length-pointer=1A5DDA0 value=Ok(3B8)
+send-attributes=0 raw=Err(MemFault { addr: 0, write: false })
+receive-attributes=0 raw=Err(MemFault { addr: 0, write: false })
+timeout=0 raw=Err(MemFault { addr: 0, write: false })

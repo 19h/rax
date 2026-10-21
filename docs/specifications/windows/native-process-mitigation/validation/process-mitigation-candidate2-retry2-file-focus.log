@@ -1,0 +1,9 @@
+
+running 4 tests
+test user::windows::process::sched::tests::services_tests::process_query_tests::process_mitigation::native_process_mitigation_filter_exact_length_and_unimplemented_selectors_preserve_memory ... ok
+test user::windows::process::sched::tests::services_tests::process_query_tests::process_mitigation::native_process_mitigation_filter_preserves_selector_return_length_and_padding_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::process_query_tests::process_mitigation::native_process_mitigation_filter_unmodeled_peer_and_other_object_handles_fail_without_publication ... ok
+test user::windows::process::sched::tests::services_tests::process_query_tests::process_mitigation::replay::native_process_mitigation_filter_replays_complete_native_fault_handle_and_alias_matrices ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 7626 filtered out; finished in 0.63s
+

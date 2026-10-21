@@ -1,0 +1,10 @@
+
+running 5 tests
+test user::windows::arch::tests::windows_cloned_x86_thread_can_reload_the_teb_selector ... ok
+test user::windows::arch::tests::windows_instruction_budget_is_exact_and_zero_is_a_noop ... ok
+test user::windows::arch::tests::windows_integer_register_width_and_invalid_indices ... ok
+test user::windows::arch::tests::windows_machine_pointer_and_processor_mappings ... ok
+test user::windows::arch::tests::windows_teb_registers_are_visible_to_guest_instructions ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 7625 filtered out; finished in 0.01s
+

@@ -1,0 +1,18 @@
+{
+  "retained": [
+    {
+      "source": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes/assist-rs-target/aarch64-apple-darwin/debug/libassist_rs.a",
+      "copy": "/Users/int/Library/Caches/assist-process-emulation/native-process-mitigation-20261021/retained-nls-sorting-macos/0-libassist_rs.a",
+      "bytes": 531361208,
+      "sha256": "be9d2e7b8d8d7a20af93fa2da73caf2c7875a8359cf0375cf328133a437a02f6"
+    },
+    {
+      "source": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes/assist-rs-target/aarch64-apple-darwin/debug/deps/librax-c89758aa402dc84d.rlib",
+      "copy": "/Users/int/Library/Caches/assist-process-emulation/native-process-mitigation-20261021/retained-nls-sorting-macos/1-librax-c89758aa402dc84d.rlib",
+      "bytes": 398403272,
+      "sha256": "48453746f8be2c2bd6fe7b7f23c8cd8235a8fc92bae23945509ab452201c41b5"
+    }
+  ],
+  "old": "/Users/int/.assist-native-nls-sorting-20261021",
+  "new": "/Users/int/.assist-native-process-mitigation-20261021"
+}

@@ -1,0 +1,3 @@
+docker: Error response from daemon: failed to create task for container: failed to create shim task: OCI runtime create failed: runc create failed: unable to start container process: error during container init: error mounting "/var/lib/docker/volumes/rax-user-target/_data" to rootfs at "/work/vendor/rax/target/linux": create mountpoint for /work/vendor/rax/target/linux mount: make mountpoint "/work/vendor/rax/target/linux": create next directory component failed: mkdirat([12]<"/var/lib/docker/rootfs/overlayfs/07865a2b40767cb94b3faed5f14c3ecff91bde6a655f011cabbf59c5ff9c9708/work/vendor/rax/target">, "linux", 0o755): Read-only file system (os error 30)
+
+Run 'docker run --help' for more information

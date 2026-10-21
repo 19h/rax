@@ -1,0 +1,452 @@
+{
+  "state": "finished",
+  "pid": 4496,
+  "utc": "2026-10-21T07:34:48.324342+00:00",
+  "scope": "Read-only NtQueryInformationProcess class52 current-process controls:32 policy selectors, seven lengths, optional ReturnLength. No policy mutation, product code or other-process access.",
+  "steps": [
+    {
+      "name": "arm64-build",
+      "argv": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\arm64\\cl.exe",
+        "/nologo",
+        "/std:c++20",
+        "/EHsc",
+        "/MT",
+        "/GS",
+        "/Od",
+        "/we4473",
+        "/we4474",
+        "/we4477",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-process-mitigation-v1-four-views\\native-process-mitigation-v1.cpp",
+        "/link",
+        "advapi32.lib",
+        "/SUBSYSTEM:CONSOLE,10.0",
+        "/OUT:C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-process-mitigation-v1-four-views\\target\\arm64\\probe.exe"
+      ],
+      "exit-code": 0,
+      "log": "native-process-mitigation-v1-four-views-arm64-build.log",
+      "sha256": "42d7e70a210f6644c431e959f1958e387aa3a2f2505231391860474290c630f4",
+      "bytes": 34
+    },
+    {
+      "name": "arm64-before",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\inspect-system-time-v2-pe.py",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-process-mitigation-v1-four-views\\target\\arm64\\probe.exe",
+        "arm64"
+      ],
+      "exit-code": 0,
+      "log": "native-process-mitigation-v1-four-views-arm64-before.log",
+      "sha256": "b9a1464530a85d1d47e60b1db6f0617331559431c65d387760b0b288b65891ff",
+      "bytes": 298
+    },
+    {
+      "name": "arm64",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-process-mitigation-v1-four-views\\target\\arm64\\probe.exe",
+        "arm64"
+      ],
+      "exit-code": 0,
+      "log": "native-process-mitigation-v1-four-views-arm64.log",
+      "sha256": "d0ef4dca9fb4ddd6327ee407919cc41b169896696303a07fb86f884bcbc4e2c1",
+      "bytes": 103049
+    },
+    {
+      "name": "arm64-after",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\inspect-system-time-v2-pe.py",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-process-mitigation-v1-four-views\\target\\arm64\\probe.exe",
+        "arm64"
+      ],
+      "exit-code": 0,
+      "log": "native-process-mitigation-v1-four-views-arm64-after.log",
+      "sha256": "b9a1464530a85d1d47e60b1db6f0617331559431c65d387760b0b288b65891ff",
+      "bytes": 298
+    },
+    {
+      "name": "x64-build",
+      "argv": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\x64\\cl.exe",
+        "/nologo",
+        "/std:c++20",
+        "/EHsc",
+        "/MT",
+        "/GS",
+        "/Od",
+        "/we4473",
+        "/we4474",
+        "/we4477",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-process-mitigation-v1-four-views\\native-process-mitigation-v1.cpp",
+        "/link",
+        "advapi32.lib",
+        "/SUBSYSTEM:CONSOLE,10.0",
+        "/OUT:C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-process-mitigation-v1-four-views\\target\\x64\\probe.exe"
+      ],
+      "exit-code": 0,
+      "log": "native-process-mitigation-v1-four-views-x64-build.log",
+      "sha256": "42d7e70a210f6644c431e959f1958e387aa3a2f2505231391860474290c630f4",
+      "bytes": 34
+    },
+    {
+      "name": "x64-before",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\inspect-system-time-v2-pe.py",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-process-mitigation-v1-four-views\\target\\x64\\probe.exe",
+        "x64"
+      ],
+      "exit-code": 0,
+      "log": "native-process-mitigation-v1-four-views-x64-before.log",
+      "sha256": "fbd31c8dab76bd802466e08f83e5e51afbe31a97b98e2d5dd50409123f3bc044",
+      "bytes": 294
+    },
+    {
+      "name": "x64",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-process-mitigation-v1-four-views\\target\\x64\\probe.exe",
+        "x64"
+      ],
+      "exit-code": 0,
+      "log": "native-process-mitigation-v1-four-views-x64.log",
+      "sha256": "70ee0d8caee9448d9a63e2fa0f3b90f43c9780f93da9c8a91d4cd8744d0351bd",
+      "bytes": 103047
+    },
+    {
+      "name": "x64-after",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\inspect-system-time-v2-pe.py",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-process-mitigation-v1-four-views\\target\\x64\\probe.exe",
+        "x64"
+      ],
+      "exit-code": 0,
+      "log": "native-process-mitigation-v1-four-views-x64-after.log",
+      "sha256": "fbd31c8dab76bd802466e08f83e5e51afbe31a97b98e2d5dd50409123f3bc044",
+      "bytes": 294
+    },
+    {
+      "name": "x86-build",
+      "argv": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\x86\\cl.exe",
+        "/nologo",
+        "/std:c++20",
+        "/EHsc",
+        "/MT",
+        "/GS",
+        "/Od",
+        "/we4473",
+        "/we4474",
+        "/we4477",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-process-mitigation-v1-four-views\\native-process-mitigation-v1.cpp",
+        "/link",
+        "advapi32.lib",
+        "/SUBSYSTEM:CONSOLE,10.0",
+        "/OUT:C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-process-mitigation-v1-four-views\\target\\x86\\probe.exe"
+      ],
+      "exit-code": 0,
+      "log": "native-process-mitigation-v1-four-views-x86-build.log",
+      "sha256": "42d7e70a210f6644c431e959f1958e387aa3a2f2505231391860474290c630f4",
+      "bytes": 34
+    },
+    {
+      "name": "x86-before",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\inspect-system-time-v2-pe.py",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-process-mitigation-v1-four-views\\target\\x86\\probe.exe",
+        "x86"
+      ],
+      "exit-code": 0,
+      "log": "native-process-mitigation-v1-four-views-x86-before.log",
+      "sha256": "440ef9e2f1b99b4748d5acc863ac61a60286cfdd66588b3fc824a992b886f5d6",
+      "bytes": 293
+    },
+    {
+      "name": "x86",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-process-mitigation-v1-four-views\\target\\x86\\probe.exe",
+        "x86"
+      ],
+      "exit-code": 0,
+      "log": "native-process-mitigation-v1-four-views-x86.log",
+      "sha256": "32c01acac26b11e2c32e784be74dc6c10a8e259020a5a0011e561cf123cc9a81",
+      "bytes": 103047
+    },
+    {
+      "name": "x86-after",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\inspect-system-time-v2-pe.py",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-process-mitigation-v1-four-views\\target\\x86\\probe.exe",
+        "x86"
+      ],
+      "exit-code": 0,
+      "log": "native-process-mitigation-v1-four-views-x86-after.log",
+      "sha256": "440ef9e2f1b99b4748d5acc863ac61a60286cfdd66588b3fc824a992b886f5d6",
+      "bytes": 293
+    },
+    {
+      "name": "x86-laa-build",
+      "argv": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\x86\\cl.exe",
+        "/nologo",
+        "/std:c++20",
+        "/EHsc",
+        "/MT",
+        "/GS",
+        "/Od",
+        "/we4473",
+        "/we4474",
+        "/we4477",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-process-mitigation-v1-four-views\\native-process-mitigation-v1.cpp",
+        "/link",
+        "advapi32.lib",
+        "/SUBSYSTEM:CONSOLE,10.0",
+        "/OUT:C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-process-mitigation-v1-four-views\\target\\x86-laa\\probe.exe",
+        "/LARGEADDRESSAWARE"
+      ],
+      "exit-code": 0,
+      "log": "native-process-mitigation-v1-four-views-x86-laa-build.log",
+      "sha256": "42d7e70a210f6644c431e959f1958e387aa3a2f2505231391860474290c630f4",
+      "bytes": 34
+    },
+    {
+      "name": "x86-laa-before",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\inspect-system-time-v2-pe.py",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-process-mitigation-v1-four-views\\target\\x86-laa\\probe.exe",
+        "x86-laa"
+      ],
+      "exit-code": 0,
+      "log": "native-process-mitigation-v1-four-views-x86-laa-before.log",
+      "sha256": "42812ef6d9c408a8b4d0c320ecf1abc87dc68e3004adc3eddd24a78735b0d460",
+      "bytes": 300
+    },
+    {
+      "name": "x86-laa",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-process-mitigation-v1-four-views\\target\\x86-laa\\probe.exe",
+        "x86-laa"
+      ],
+      "exit-code": 0,
+      "log": "native-process-mitigation-v1-four-views-x86-laa.log",
+      "sha256": "3040b46992e3047eaa87d165e60b21e6739585f9c50cf077f7017cb91617590f",
+      "bytes": 103051
+    },
+    {
+      "name": "x86-laa-after",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\inspect-system-time-v2-pe.py",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-process-mitigation-v1-four-views\\target\\x86-laa\\probe.exe",
+        "x86-laa"
+      ],
+      "exit-code": 0,
+      "log": "native-process-mitigation-v1-four-views-x86-laa-after.log",
+      "sha256": "42812ef6d9c408a8b4d0c320ecf1abc87dc68e3004adc3eddd24a78735b0d460",
+      "bytes": 300
+    }
+  ],
+  "outcomes": [
+    {
+      "profile": "arm64",
+      "exit-code": 0,
+      "log": "native-process-mitigation-v1-four-views-arm64.log",
+      "executable-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-process-mitigation-v1-four-views\\target\\arm64\\probe.exe",
+        "bytes": 145408,
+        "sha256": "663e6de8938cd6e149585b124c2bca4322bcbb0a9fddd929632460d2aa6cc3ca"
+      },
+      "executable-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-process-mitigation-v1-four-views\\target\\arm64\\probe.exe",
+        "bytes": 145408,
+        "sha256": "663e6de8938cd6e149585b124c2bca4322bcbb0a9fddd929632460d2aa6cc3ca"
+      }
+    },
+    {
+      "profile": "x64",
+      "exit-code": 0,
+      "log": "native-process-mitigation-v1-four-views-x64.log",
+      "executable-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-process-mitigation-v1-four-views\\target\\x64\\probe.exe",
+        "bytes": 142336,
+        "sha256": "2c944e23f0c753bf8d2454d6a80b4c8c29e7a4301dfd3ac7cc8ade3429bb88da"
+      },
+      "executable-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-process-mitigation-v1-four-views\\target\\x64\\probe.exe",
+        "bytes": 142336,
+        "sha256": "2c944e23f0c753bf8d2454d6a80b4c8c29e7a4301dfd3ac7cc8ade3429bb88da"
+      }
+    },
+    {
+      "profile": "x86",
+      "exit-code": 0,
+      "log": "native-process-mitigation-v1-four-views-x86.log",
+      "executable-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-process-mitigation-v1-four-views\\target\\x86\\probe.exe",
+        "bytes": 118272,
+        "sha256": "6a9f24f98a9ae2fadfe48ce68daaea5f713f5c230c3b4def5ddd08883da3e0e6"
+      },
+      "executable-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-process-mitigation-v1-four-views\\target\\x86\\probe.exe",
+        "bytes": 118272,
+        "sha256": "6a9f24f98a9ae2fadfe48ce68daaea5f713f5c230c3b4def5ddd08883da3e0e6"
+      }
+    },
+    {
+      "profile": "x86-laa",
+      "exit-code": 0,
+      "log": "native-process-mitigation-v1-four-views-x86-laa.log",
+      "executable-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-process-mitigation-v1-four-views\\target\\x86-laa\\probe.exe",
+        "bytes": 118272,
+        "sha256": "c67120fc35587f74f414cf1c2887d9fb3b8e8be454835ada7f36ebb0065f12e2"
+      },
+      "executable-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-process-mitigation-v1-four-views\\target\\x86-laa\\probe.exe",
+        "bytes": 118272,
+        "sha256": "c67120fc35587f74f414cf1c2887d9fb3b8e8be454835ada7f36ebb0065f12e2"
+      }
+    }
+  ],
+  "source-before": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-process-mitigation-v1-four-views\\native-process-mitigation-v1.cpp",
+    "bytes": 2244,
+    "sha256": "12dccde1c2dfc978b74b1bd159a1b52cd1cf6c359d013d712d0077ccbd79f214"
+  },
+  "compiler-environment": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\mutant-native-compiler-env-epoch4.json",
+    "bytes": 4122,
+    "sha256": "e6ca43bcdcbd3067b5de05d051259d4d3abf0bfa5283a98daac14fd508a05fad"
+  },
+  "runtime-modules-before": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e"
+    },
+    {
+      "path": "C:\\Windows\\System32\\KernelBase.dll",
+      "bytes": 7213728,
+      "sha256": "6b2fa508ac4f9bce5d7351676485d1dc5b5236cd9656034e2fec1eaba3b82bc9"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\KernelBase.dll",
+      "bytes": 3073488,
+      "sha256": "e9c414d7c6bd2c6fde608f31b2f31da3c2014c801b3764a30ee42abd1e9c2d58"
+    },
+    {
+      "path": "C:\\Windows\\System32\\kernel32.dll",
+      "bytes": 1500304,
+      "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\kernel32.dll",
+      "bytes": 696392,
+      "sha256": "9c9a0c54a79ea712bb533fcc79ba9935ed9f9d3f777fd65cf62d9cec6699b9df"
+    },
+    {
+      "path": "C:\\Windows\\System32\\msvcrt.dll",
+      "bytes": 1347856,
+      "sha256": "779eb5cb1ae357196254af9755307544a3dd20011c84768ae72f45d366f47148"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\msvcrt.dll",
+      "bytes": 810688,
+      "sha256": "67c03357458a951402cc1804e05d3301f011a59d352f684fbe283f546f8ae398"
+    }
+  ],
+  "selected-compilers": [
+    {
+      "profile": "arm64",
+      "path": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\arm64\\cl.exe",
+      "bytes": 787728,
+      "sha256": "5cba83692d533f6b3a6ac07c6b2cdce708e0445ed1ee36b5cb2d49a244a4c835"
+    },
+    {
+      "profile": "x64",
+      "path": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\x64\\cl.exe",
+      "bytes": 762720,
+      "sha256": "d7a46c9d0d970fbeb4e803f1f0e9fec4217f8c833e6bb6a015e5b87299024466"
+    },
+    {
+      "profile": "x86",
+      "path": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\x86\\cl.exe",
+      "bytes": 761104,
+      "sha256": "cfed9e6fa19f430235f7fb75dbcd3200b7c1fa036462e3a73d76b5ea8e35c7ad"
+    },
+    {
+      "profile": "x86-laa",
+      "path": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\x86\\cl.exe",
+      "bytes": 761104,
+      "sha256": "cfed9e6fa19f430235f7fb75dbcd3200b7c1fa036462e3a73d76b5ea8e35c7ad"
+    }
+  ],
+  "step": "x86-laa-after",
+  "child": 7252,
+  "runtime-modules-after": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e"
+    },
+    {
+      "path": "C:\\Windows\\System32\\KernelBase.dll",
+      "bytes": 7213728,
+      "sha256": "6b2fa508ac4f9bce5d7351676485d1dc5b5236cd9656034e2fec1eaba3b82bc9"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\KernelBase.dll",
+      "bytes": 3073488,
+      "sha256": "e9c414d7c6bd2c6fde608f31b2f31da3c2014c801b3764a30ee42abd1e9c2d58"
+    },
+    {
+      "path": "C:\\Windows\\System32\\kernel32.dll",
+      "bytes": 1500304,
+      "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\kernel32.dll",
+      "bytes": 696392,
+      "sha256": "9c9a0c54a79ea712bb533fcc79ba9935ed9f9d3f777fd65cf62d9cec6699b9df"
+    },
+    {
+      "path": "C:\\Windows\\System32\\msvcrt.dll",
+      "bytes": 1347856,
+      "sha256": "779eb5cb1ae357196254af9755307544a3dd20011c84768ae72f45d366f47148"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\msvcrt.dll",
+      "bytes": 810688,
+      "sha256": "67c03357458a951402cc1804e05d3301f011a59d352f684fbe283f546f8ae398"
+    }
+  ],
+  "source-after": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-process-mitigation-v1-four-views\\native-process-mitigation-v1.cpp",
+    "bytes": 2244,
+    "sha256": "12dccde1c2dfc978b74b1bd159a1b52cd1cf6c359d013d712d0077ccbd79f214"
+  },
+  "exit-code": 0,
+  "completed-utc": "2026-10-21T07:34:53.201000+00:00"
+}

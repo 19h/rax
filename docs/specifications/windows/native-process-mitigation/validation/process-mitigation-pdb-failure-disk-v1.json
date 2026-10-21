@@ -1,0 +1,14 @@
+{
+  "utc": "2026-10-21T08:04:03.161537+00:00",
+  "free-bytes": 1081630720,
+  "files": [
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\normal-candidate2\\debug\\deps\\rax-b799307a7949aa6b.pdb",
+      "bytes": 288372773
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate1\\target\\normal-candidate1",
+      "bytes": 326099207
+    }
+  ]
+}

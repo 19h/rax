@@ -1,0 +1,22 @@
+{
+  "state": "verified",
+  "targets": [
+    {
+      "target": "aarch64-pc-windows-msvc",
+      "primary-package-cleaned": true,
+      "log": "process-mitigation-candidate2-cross-aarch64.log",
+      "bytes": 1223,
+      "sha256": "7bc88246699cc53afec7f39fdbd38e2f941073b22982032a9905858c6ff7003c",
+      "clean-log": "process-mitigation-cross-aarch64-clean.log"
+    },
+    {
+      "target": "x86_64-pc-windows-msvc",
+      "primary-package-cleaned": true,
+      "log": "process-mitigation-candidate2-cross-x64.log",
+      "bytes": 1223,
+      "sha256": "ca51d9020207920dbe4f4efc6aa5b6f229d12526efb2fc782274b3f12fbf01f1",
+      "clean-log": "process-mitigation-cross-x64-clean.log"
+    }
+  ],
+  "source-ledger-sha256": "2b7b4998edb31bc7e279f055cfba099fd0d404cb6c37877be1fea6c0ae0808ec"
+}

@@ -1,0 +1,42 @@
+{
+  "state": "verified-red",
+  "utc": "2026-10-21T07:50:57.990221+00:00",
+  "exit-code": 101,
+  "argv": [
+    "cargo",
+    "+1.95.0",
+    "test",
+    "--locked",
+    "--offline",
+    "--no-default-features",
+    "--lib",
+    "native_process_mitigation_filter",
+    "--",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "log": "process-mitigation-red1.log",
+  "bytes": 1460,
+  "sha256": "cf5fa595600c91d37088e50ebf09025602a21b00d39a677e31c286306833f25e",
+  "source-ledger": {
+    "base": "243a84ae7c7da72d446069803b341fe6ac6b13d6",
+    "base-ledger-sha256": "3a026ef233ba5737936b83e56c6d461e4d59386c3c44b185054db98d22a3f186",
+    "source": "/Users/int/.assist-native-process-mitigation-20261021/target/red-source",
+    "overrides": [
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/process_query_tests.rs",
+        "kind": "file",
+        "bytes": 17756,
+        "sha256": "e2ed42a9c929776a8c7cf0ff300799155f545e738100edd1639eab82bd096ebe"
+      },
+      {
+        "path": "src/user/windows/process/sched/tests/services_tests/process_mitigation_tests.rs",
+        "kind": "file",
+        "bytes": 1180,
+        "sha256": "266f11546189c57c05ccef9bf6d858b6b259529b29caab9ac8d997e1f1fcf7ed"
+      }
+    ],
+    "inputs": 26903,
+    "scope": "Immutable baseline source hardlinks to published NLS source; both overridden test paths copied separately before product edits."
+  }
+}

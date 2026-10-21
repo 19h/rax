@@ -1,0 +1,103 @@
+{
+  "base": "243a84ae7c7da72d446069803b341fe6ac6b13d6",
+  "paired-root": "60715f46fff288a89afdd59ecaacedfeab277410",
+  "utc": "2026-10-21T07:48:32.964000+00:00",
+  "owned-source-paths": [
+    "src/user/windows/dll/native.rs",
+    "src/user/windows/dll/native/process_query.rs",
+    "src/user/windows/dll/native/process_mitigation.rs",
+    "src/user/windows/process/sched/tests/services_tests/process_query_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/process_mitigation_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/process_mitigation_tests/replay.rs"
+  ],
+  "scope": "NtQueryInformationProcess class52 selector11 for the current unfiltered standalone guest process. Do not change host policies or admit unimplemented nonzero guest filtering. Other mitigation selectors remain explicit unsupported operations.",
+  "assumptions": [
+    {
+      "id": "PM-A1",
+      "assumption": "The standalone guest process has no configured system-call filter; selector11 therefore reports FilterId0.",
+      "basis": "Existing process configuration/startup models no Win32k filter and no class52 setter is implemented; every current guest syscall uses the unfiltered personality table. Native independent controls report flags0.",
+      "dependent-result": "Shared query returns the guest default policy, rather than reading host process policy or reporting enforcement absent in the guest.",
+      "stress-test": "Nonzero initial caller flags, aliases, PRNG/LastError independence, no accepted filter setter or process-creation attribute.",
+      "falsification-probe": "A supported guest process configuration, accepted creation attribute or successful setter selects/enforces a nonzero system-call filter. Then query must use that process-owned state.",
+      "status": "confirmed source invariant: no filter configuration or setter; retained guest-default model distinct from host policy"
+    },
+    {
+      "id": "PM-A2",
+      "assumption": "The captured class52 selector11 probe/store order is shared across the three supported guest ABIs.",
+      "basis": "V2 complete384-row matrices match across ARM64/AMD64/x86/x86-LAA on one ARM64 Windows kernel.",
+      "dependent-result": "One shared native service path, with narrow guest pointer-width handling.",
+      "stress-test": "Eight handle roles, 24 fault/guard/alignment/alias cases, lengths7/8; independent V1 lengths0/1/4/7/8/9/16 and32selectors.",
+      "falsification-probe": "A captured ABI-specific difference or another supported kernel invalidates the shared ordering.",
+      "status": "confirmed for measured build29683; other builds unverified"
+    }
+  ],
+  "native-controls": {
+    "v1": {
+      "calls-per-view": 448,
+      "views": 4,
+      "source-sha256": "12dccde1c2dfc978b74b1bd159a1b52cd1cf6c359d013d712d0077ccbd79f214"
+    },
+    "v2": {
+      "calls-per-view": 384,
+      "views": 4,
+      "source-sha256": "82b2407694ceac745c84d0eed4cfae9d17961b6cf3c22e8a0f402aa01dcd3c80"
+    },
+    "v3": {
+      "status": "rejected edge-control layout",
+      "source-sha256": "912401adeb2a99a9ef93c558413b95458f16aa9795b91aa5d0192692374da04e",
+      "reason": "Case16 flags remained before the guarded page despite its name; accepted V4 corrects the offset. No final conformance claim uses V3."
+    },
+    "v4": {
+      "calls-per-view": 384,
+      "views": 4,
+      "source-sha256": "503e9b7255ee861fdb2a99e7a305ec7178a15e4b828444e07765f70ab537a0ed",
+      "result": "Separate flags READONLY|GUARD consumes its guard and returns GUARD_PAGE_VIOLATION; competing ReturnLength guard wins and leaves flags guard armed."
+    }
+  },
+  "bounded-scope": [
+    {
+      "impact": "high",
+      "item": "Unimplemented nonzero filter enforcement and other mitigation selectors are not silently admitted.",
+      "blocks-increment": false
+    },
+    {
+      "impact": "high",
+      "item": "Independent image-view unwind registration and earlier image/runtime policy frontiers remain full-goal work.",
+      "blocks-increment": false,
+      "blocks-full-goal": true
+    },
+    {
+      "impact": "high",
+      "item": "Both actual owning routes advance to NtAlpcSendWaitReceivePort: terminal2816/CAPI2817 turns, reason5. Measured next request is port0x68/flags0x20000 with88B aliased message and952B receive capacity.",
+      "blocks-increment": false,
+      "blocks-full-goal": true
+    }
+  ],
+  "implementation-candidates": {
+    "candidate1": "Rejected compile error r32 accessor; immutable receipts preserved. Linux initial mount setup failed before source build.",
+    "candidate2": {
+      "source-inputs": 26913,
+      "overrides": 14,
+      "source-ledger-sha256": "2b7b4998edb31bc7e279f055cfba099fd0d404cb6c37877be1fea6c0ae0808ec",
+      "state": "validation-running"
+    }
+  },
+  "surface-map": {
+    "plugin-lifecycle": "unaffected: no IDA/plugin lifecycle source change; actual owning consumers rebuilt",
+    "UI-state": "unaffected: no Qt widgets, state, ownership, focus or copy change",
+    "conversation-lane": "unaffected: no cancellation/history/lane representation change",
+    "agent-backend": "unaffected: no native/ACP provider or model request change",
+    "prompt-context": "unaffected: no prompt/context/discovery input change",
+    "tool-schema": "unaffected: no process tool/C API schema or manifest change",
+    "permission-mutation": "guest process object/query grants enforced; no host policy, rights or mutation forwarding",
+    "main-thread-dispatch": "unaffected: no IDA/Qt scheduling calls or callbacks changed",
+    "mesh-MCP": "existing CLI/MCP process consumers relink; routing/identity/approval semantics unchanged",
+    "transport-crypto": "unaffected: no IPC/framing/authentication/secret-handling implementation change",
+    "persistence": "unaffected: default query is process-local behavior; no persisted state or migration",
+    "SDK-ABI": "public RAX1.14.0/current Assist Rust274 unchanged; retained ABI184 consumers separately identified",
+    "optional-engines": "RAX Windows guest process-query route affected; no feature defaults or Z3/debugger/Hex-Rays availability changes",
+    "update-release": "unaffected: no version/update/TUF/package/release behavior changed; no changelog work",
+    "targets-platforms": "one shared native/WoW guest handler on all hosts; native Windows adapter and actual owning C++ surfaces exercised; no platform-specific successful stub",
+    "tests-docs": "six Rust paths and eight immutable compiled raw logs; native controls, source snapshots, actual artifacts and portable proof audits"
+  }
+}

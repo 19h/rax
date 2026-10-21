@@ -1,0 +1,228 @@
+{
+  "utc": "2026-10-21T08:05:32.557239+00:00",
+  "free-before": 1136361472,
+  "deleted": [
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-open-epoch2\\target\\normal\\debug\\deps\\librax-3019d479898316cf.rmeta",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-open-epoch2\\target\\normal\\debug\\deps\\librax-638c2fde2f532f63.rmeta",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-open-epoch2\\target\\normal\\debug\\deps\\librax-880a358b5480b7fe.rmeta",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-open-epoch2\\target\\normal\\debug\\deps\\librax-94fd581f1b963a70.rmeta",
+      "bytes": 47113987
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-open-epoch2\\target\\normal\\debug\\deps\\librax-b6577df3fbefbea4.rmeta",
+      "bytes": 57293817
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-open-epoch2\\target\\normal\\debug\\deps\\librax_isa_oracle-49a58ebedad24ef0.rmeta",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-open-epoch2\\target\\normal\\debug\\deps\\librax_isa_oracle-e440b86251d5a189.rmeta",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-open-epoch2\\target\\normal\\debug\\deps\\librax_user-5bad3bc5eee2d50b.rmeta",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-open-epoch2\\target\\normal\\debug\\deps\\librax_user-f46c51c67ad8ba35.rmeta",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-open-epoch2\\target\\normal\\debug\\deps\\rax.dll.lib",
+      "bytes": 14904
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-open-epoch2\\target\\normal\\debug\\deps\\rax.lib",
+      "bytes": 585342292
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-section-candidate1\\target\\normal-candidate1\\debug\\deps\\librax-3019d479898316cf.rmeta",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-section-candidate1\\target\\normal-candidate1\\debug\\deps\\librax-638c2fde2f532f63.rmeta",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-section-candidate1\\target\\normal-candidate1\\debug\\deps\\librax-880a358b5480b7fe.rmeta",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-section-candidate1\\target\\normal-candidate1\\debug\\deps\\librax-94fd581f1b963a70.rmeta",
+      "bytes": 47178177
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-section-candidate1\\target\\normal-candidate1\\debug\\deps\\librax-b6577df3fbefbea4.rmeta",
+      "bytes": 57364887
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-section-candidate1\\target\\normal-candidate1\\debug\\deps\\librax_isa_oracle-49a58ebedad24ef0.rmeta",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-section-candidate1\\target\\normal-candidate1\\debug\\deps\\librax_isa_oracle-e440b86251d5a189.rmeta",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-section-candidate1\\target\\normal-candidate1\\debug\\deps\\librax_user-5bad3bc5eee2d50b.rmeta",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-section-candidate1\\target\\normal-candidate1\\debug\\deps\\librax_user-f46c51c67ad8ba35.rmeta",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-section-candidate1\\target\\normal-candidate1\\debug\\deps\\rax.dll.lib",
+      "bytes": 14904
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-section-candidate1\\target\\normal-candidate1\\debug\\deps\\rax.lib",
+      "bytes": 585444438
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-current-el-candidate1\\target\\normal-candidate1\\debug\\deps\\librax-3019d479898316cf.rmeta",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-current-el-candidate1\\target\\normal-candidate1\\debug\\deps\\librax-638c2fde2f532f63.rmeta",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-current-el-candidate1\\target\\normal-candidate1\\debug\\deps\\librax-880a358b5480b7fe.rmeta",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-current-el-candidate1\\target\\normal-candidate1\\debug\\deps\\librax-94fd581f1b963a70.rmeta",
+      "bytes": 47172959
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-current-el-candidate1\\target\\normal-candidate1\\debug\\deps\\librax-b6577df3fbefbea4.rmeta",
+      "bytes": 57359700
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-current-el-candidate1\\target\\normal-candidate1\\debug\\deps\\librax_isa_oracle-49a58ebedad24ef0.rmeta",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-current-el-candidate1\\target\\normal-candidate1\\debug\\deps\\librax_isa_oracle-e440b86251d5a189.rmeta",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-current-el-candidate1\\target\\normal-candidate1\\debug\\deps\\librax_user-5bad3bc5eee2d50b.rmeta",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-current-el-candidate1\\target\\normal-candidate1\\debug\\deps\\librax_user-f46c51c67ad8ba35.rmeta",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-current-el-candidate1\\target\\normal-candidate1\\debug\\deps\\rax.dll.lib",
+      "bytes": 14904
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-current-el-candidate1\\target\\normal-candidate1\\debug\\deps\\rax.lib",
+      "bytes": 586630202
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\deps\\librax-3019d479898316cf.rmeta",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\deps\\librax-638c2fde2f532f63.rmeta",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\deps\\librax-880a358b5480b7fe.rmeta",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\deps\\librax-94fd581f1b963a70.rmeta",
+      "bytes": 47199939
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\deps\\librax-b6577df3fbefbea4.rmeta",
+      "bytes": 57388256
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\deps\\librax_isa_oracle-49a58ebedad24ef0.rmeta",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\deps\\librax_isa_oracle-e440b86251d5a189.rmeta",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\deps\\librax_user-5bad3bc5eee2d50b.rmeta",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\deps\\librax_user-f46c51c67ad8ba35.rmeta",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\deps\\rax.dll.lib",
+      "bytes": 14904
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\deps\\rax.lib",
+      "bytes": 586402112
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\deps\\librax-3019d479898316cf.rmeta",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\deps\\librax-638c2fde2f532f63.rmeta",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\deps\\librax-880a358b5480b7fe.rmeta",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\deps\\librax-94fd581f1b963a70.rmeta",
+      "bytes": 47198205
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\deps\\librax-b6577df3fbefbea4.rmeta",
+      "bytes": 57386679
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\deps\\librax_isa_oracle-49a58ebedad24ef0.rmeta",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\deps\\librax_isa_oracle-e440b86251d5a189.rmeta",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\deps\\librax_user-5bad3bc5eee2d50b.rmeta",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\deps\\librax_user-f46c51c67ad8ba35.rmeta",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\deps\\rax.dll.lib",
+      "bytes": 14904
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\deps\\rax.lib",
+      "bytes": 585918242
+    }
+  ],
+  "scope": "Only obsolete standalone primary Cargo static libraries and intermediates from five completed targets. All .exe/.rlib files, native dependency build outputs, source/log records, actual owning carrier/core/callers and separately retained artifacts remain intact.",
+  "free-after": 4588863488
+}

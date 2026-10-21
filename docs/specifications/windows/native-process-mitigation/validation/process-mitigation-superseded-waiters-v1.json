@@ -1,0 +1,42 @@
+{
+  "utc": "2026-10-21T08:07:28.738592+00:00",
+  "rows": [
+    {
+      "receipt": "process-mitigation-native-owning-candidate2.json",
+      "original": {
+        "state": "waiting-for-focus",
+        "pid": 7860,
+        "source-epoch": 1,
+        "utc": "2026-10-21T08:01:56.591319+00:00",
+        "steps": []
+      },
+      "pid": 7860,
+      "verified-command-line": "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe -B C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-process-mitigation-native-owning-candidate2.py",
+      "action": "cancelled idle task-owned waiter; replacement watches immutable retry receipt"
+    },
+    {
+      "receipt": "process-mitigation-native-ordinary-candidate2.json",
+      "original": {
+        "state": "waiting-for-owning-archives",
+        "pid": 2624,
+        "utc": "2026-10-21T08:03:16.998256+00:00",
+        "steps": [],
+        "outcomes": []
+      },
+      "pid": 2624,
+      "verified-command-line": "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe -B C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-process-mitigation-native-ordinary-candidate2.py",
+      "action": "cancelled idle task-owned waiter; replacement watches immutable retry receipt"
+    },
+    {
+      "receipt": "process-mitigation-owning-capi-candidate2.json",
+      "original": {
+        "state": "preparing",
+        "pid": 6148,
+        "steps": []
+      },
+      "pid": 6148,
+      "verified-command-line": "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe -B C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-process-mitigation-owning-capi-candidate2.py",
+      "action": "cancelled idle task-owned waiter; replacement watches immutable retry receipt"
+    }
+  ]
+}

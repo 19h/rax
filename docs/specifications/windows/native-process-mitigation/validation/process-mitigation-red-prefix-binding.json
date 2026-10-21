@@ -1,0 +1,7 @@
+{
+  "state": "verified",
+  "original-prefix-identical": true,
+  "red-test-bytes": 1180,
+  "red-test-sha256": "266f11546189c57c05ccef9bf6d858b6b259529b29caab9ac8d997e1f1fcf7ed",
+  "final-test-sha256": "435e95ce6b17c061c0a4988222dd88a5935f4e21b3970a27cee67b213587bcdc"
+}

@@ -1,0 +1,368 @@
+{
+  "utc": "2026-10-21T07:57:22.801774+00:00",
+  "free-before": 1660899328,
+  "deleted": [
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\rax.pdb",
+      "bytes": 142725120
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\rax_isa_oracle.pdb",
+      "bytes": 102699008
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\rax_user.pdb",
+      "bytes": 1363968
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\deps\\clap_derive-f7c422b4deb7c571.pdb",
+      "bytes": 2904064
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\deps\\rax-24d49cb87dffa633.pdb",
+      "bytes": 174067712
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\deps\\rax-b799307a7949aa6b.pdb",
+      "bytes": 324931584
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\deps\\rax.pdb",
+      "bytes": 142725120
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\deps\\rax_isa_oracle.pdb",
+      "bytes": 102699008
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\deps\\rax_user.pdb",
+      "bytes": 1363968
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\deps\\scroll_derive-1612bc43fc260760.pdb",
+      "bytes": 2527232
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\deps\\serde_derive-99b58877542aef55.pdb",
+      "bytes": 3092480
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\deps\\thiserror_impl-ee3ee93f5fe510ab.pdb",
+      "bytes": 2863104
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\deps\\tracing_attributes-5ab72022508808ba.pdb",
+      "bytes": 3067904
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\deps\\user_windows-e7d78e1ede169446.pdb",
+      "bytes": 3026944
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\deps\\user_windows_memory-184b1c8bfebf3d24.pdb",
+      "bytes": 4149248
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\build\\getrandom-3e8a70be616e6bf6\\build_script_build-3e8a70be616e6bf6.pdb",
+      "bytes": 1355776
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\build\\getrandom-3e8a70be616e6bf6\\build_script_build.pdb",
+      "bytes": 1355776
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\build\\getrandom-c0d8fffd88125a7a\\build_script_build-c0d8fffd88125a7a.pdb",
+      "bytes": 1355776
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\build\\getrandom-c0d8fffd88125a7a\\build_script_build.pdb",
+      "bytes": 1355776
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\build\\libc-715e13bc90434038\\build_script_build-715e13bc90434038.pdb",
+      "bytes": 1699840
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\build\\libc-715e13bc90434038\\build_script_build.pdb",
+      "bytes": 1699840
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\build\\proc-macro2-b3c67b531f10d71b\\build_script_build-b3c67b531f10d71b.pdb",
+      "bytes": 1732608
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\build\\proc-macro2-b3c67b531f10d71b\\build_script_build.pdb",
+      "bytes": 1732608
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\build\\quote-393984b48f18ac92\\build_script_build-393984b48f18ac92.pdb",
+      "bytes": 1650688
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\build\\quote-393984b48f18ac92\\build_script_build.pdb",
+      "bytes": 1650688
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\build\\rax-capi-cab0129d60286c1d\\build_script_build-cab0129d60286c1d.pdb",
+      "bytes": 1355776
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\build\\rax-capi-cab0129d60286c1d\\build_script_build.pdb",
+      "bytes": 1355776
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\build\\serde-17e6b8bb88b7f4fc\\build_script_build-17e6b8bb88b7f4fc.pdb",
+      "bytes": 1667072
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\build\\serde-17e6b8bb88b7f4fc\\build_script_build.pdb",
+      "bytes": 1667072
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\build\\serde_core-88e5d38ed408f617\\build_script_build-88e5d38ed408f617.pdb",
+      "bytes": 1667072
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\build\\serde_core-88e5d38ed408f617\\build_script_build.pdb",
+      "bytes": 1667072
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\build\\serde_json-96cb1b397eadc502\\build_script_build-96cb1b397eadc502.pdb",
+      "bytes": 1355776
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\build\\serde_json-96cb1b397eadc502\\build_script_build.pdb",
+      "bytes": 1355776
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\build\\thiserror-2900ecdfabac3c4d\\build_script_build-2900ecdfabac3c4d.pdb",
+      "bytes": 1748992
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\build\\thiserror-2900ecdfabac3c4d\\build_script_build.pdb",
+      "bytes": 1748992
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\build\\winapi-c4dbd173f7adaa07\\build_script_build-c4dbd173f7adaa07.pdb",
+      "bytes": 1454080
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\build\\winapi-c4dbd173f7adaa07\\build_script_build.pdb",
+      "bytes": 1454080
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\build\\zmij-f3b7cec877cd4f5c\\build_script_build-f3b7cec877cd4f5c.pdb",
+      "bytes": 1658880
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\build\\zmij-f3b7cec877cd4f5c\\build_script_build.pdb",
+      "bytes": 1658880
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\build\\zstd-safe-8cecbdd9318480cd\\build_script_build-8cecbdd9318480cd.pdb",
+      "bytes": 1355776
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\build\\zstd-safe-8cecbdd9318480cd\\build_script_build.pdb",
+      "bytes": 1355776
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\build\\zstd-sys-70e3cee10f865bf6\\build_script_build-70e3cee10f865bf6.pdb",
+      "bytes": 2838528
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\build\\zstd-sys-70e3cee10f865bf6\\build_script_build.pdb",
+      "bytes": 2838528
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\build\\zstd-sys-7f0f5a081e2ca035\\build_script_build-7f0f5a081e2ca035.pdb",
+      "bytes": 2838528
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\build\\zstd-sys-7f0f5a081e2ca035\\build_script_build.pdb",
+      "bytes": 2838528
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\rax.pdb",
+      "bytes": 142725120
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\rax_isa_oracle.pdb",
+      "bytes": 102690816
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\rax_user.pdb",
+      "bytes": 1363968
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\deps\\clap_derive-f7c422b4deb7c571.pdb",
+      "bytes": 2904064
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\deps\\rax-24d49cb87dffa633.pdb",
+      "bytes": 174059520
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\deps\\rax-b799307a7949aa6b.pdb",
+      "bytes": 325324800
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\deps\\rax.pdb",
+      "bytes": 142725120
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\deps\\rax_isa_oracle.pdb",
+      "bytes": 102690816
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\deps\\rax_user.pdb",
+      "bytes": 1363968
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\deps\\scroll_derive-1612bc43fc260760.pdb",
+      "bytes": 2527232
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\deps\\serde_derive-99b58877542aef55.pdb",
+      "bytes": 3092480
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\deps\\thiserror_impl-ee3ee93f5fe510ab.pdb",
+      "bytes": 2863104
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\deps\\tracing_attributes-5ab72022508808ba.pdb",
+      "bytes": 3067904
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\deps\\user_windows-e7d78e1ede169446.pdb",
+      "bytes": 3026944
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\deps\\user_windows_memory-184b1c8bfebf3d24.pdb",
+      "bytes": 4149248
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\build\\getrandom-3e8a70be616e6bf6\\build_script_build-3e8a70be616e6bf6.pdb",
+      "bytes": 1355776
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\build\\getrandom-3e8a70be616e6bf6\\build_script_build.pdb",
+      "bytes": 1355776
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\build\\getrandom-c0d8fffd88125a7a\\build_script_build-c0d8fffd88125a7a.pdb",
+      "bytes": 1355776
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\build\\getrandom-c0d8fffd88125a7a\\build_script_build.pdb",
+      "bytes": 1355776
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\build\\libc-715e13bc90434038\\build_script_build-715e13bc90434038.pdb",
+      "bytes": 1699840
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\build\\libc-715e13bc90434038\\build_script_build.pdb",
+      "bytes": 1699840
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\build\\proc-macro2-b3c67b531f10d71b\\build_script_build-b3c67b531f10d71b.pdb",
+      "bytes": 1732608
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\build\\proc-macro2-b3c67b531f10d71b\\build_script_build.pdb",
+      "bytes": 1732608
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\build\\quote-393984b48f18ac92\\build_script_build-393984b48f18ac92.pdb",
+      "bytes": 1650688
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\build\\quote-393984b48f18ac92\\build_script_build.pdb",
+      "bytes": 1650688
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\build\\rax-capi-cab0129d60286c1d\\build_script_build-cab0129d60286c1d.pdb",
+      "bytes": 1355776
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\build\\rax-capi-cab0129d60286c1d\\build_script_build.pdb",
+      "bytes": 1355776
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\build\\serde-17e6b8bb88b7f4fc\\build_script_build-17e6b8bb88b7f4fc.pdb",
+      "bytes": 1667072
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\build\\serde-17e6b8bb88b7f4fc\\build_script_build.pdb",
+      "bytes": 1667072
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\build\\serde_core-88e5d38ed408f617\\build_script_build-88e5d38ed408f617.pdb",
+      "bytes": 1667072
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\build\\serde_core-88e5d38ed408f617\\build_script_build.pdb",
+      "bytes": 1667072
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\build\\serde_json-96cb1b397eadc502\\build_script_build-96cb1b397eadc502.pdb",
+      "bytes": 1355776
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\build\\serde_json-96cb1b397eadc502\\build_script_build.pdb",
+      "bytes": 1355776
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\build\\thiserror-2900ecdfabac3c4d\\build_script_build-2900ecdfabac3c4d.pdb",
+      "bytes": 1748992
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\build\\thiserror-2900ecdfabac3c4d\\build_script_build.pdb",
+      "bytes": 1748992
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\build\\winapi-c4dbd173f7adaa07\\build_script_build-c4dbd173f7adaa07.pdb",
+      "bytes": 1454080
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\build\\winapi-c4dbd173f7adaa07\\build_script_build.pdb",
+      "bytes": 1454080
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\build\\zmij-f3b7cec877cd4f5c\\build_script_build-f3b7cec877cd4f5c.pdb",
+      "bytes": 1658880
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\build\\zmij-f3b7cec877cd4f5c\\build_script_build.pdb",
+      "bytes": 1658880
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\build\\zstd-safe-8cecbdd9318480cd\\build_script_build-8cecbdd9318480cd.pdb",
+      "bytes": 1355776
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\build\\zstd-safe-8cecbdd9318480cd\\build_script_build.pdb",
+      "bytes": 1355776
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\build\\zstd-sys-70e3cee10f865bf6\\build_script_build-70e3cee10f865bf6.pdb",
+      "bytes": 2838528
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\build\\zstd-sys-70e3cee10f865bf6\\build_script_build.pdb",
+      "bytes": 2838528
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\build\\zstd-sys-7f0f5a081e2ca035\\build_script_build-7f0f5a081e2ca035.pdb",
+      "bytes": 2838528
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\build\\zstd-sys-7f0f5a081e2ca035\\build_script_build.pdb",
+      "bytes": 2838528
+    }
+  ],
+  "scope": "Only completed older standalone Cargo .pdb files. Native unit images, actual owning archives/callers, four retained copies and all source/log evidence preserved.",
+  "free-after": 3247583232
+}

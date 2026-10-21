@@ -35,6 +35,9 @@ fn query(c: &mut Ctx) -> ApiResult {
     if returned != 0 {
         probe_write(c, returned, 4)?;
     }
+    if class == 52 {
+        return super::process_mitigation::query(c, handle, output, length);
+    }
     if class != PROCESS_COOKIE {
         return Err(c.unsupported(format!("NtQueryInformationProcess class {class}")));
     }

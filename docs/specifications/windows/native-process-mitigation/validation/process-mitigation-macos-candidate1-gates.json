@@ -1,0 +1,35 @@
+{
+  "state": "failed",
+  "source-epoch": 1,
+  "host": "macos",
+  "driver-pid": 13597,
+  "steps": [
+    {
+      "name": "focus",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "native_process_mitigation",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 101,
+      "seconds": 41.8919401250314,
+      "log": "process-mitigation-macos-candidate1-focus.log",
+      "bytes": 846,
+      "sha256": "07414cbd4ca987745eed5f1d49139d81c4a973222c38c5c8e4ec46500fa5d0fd",
+      "results": []
+    }
+  ],
+  "current-step": "focus",
+  "child-pid": 13669,
+  "exit-code": 1,
+  "error": "Traceback (most recent call last):\n  File \"/Users/int/Library/Caches/assist-process-emulation/native-process-mitigation-20261021/run-process-mitigation-unix-candidate1.py\", line 139, in <module>\n    assert code == 0, name\n           ^^^^^^^^^\nAssertionError: focus\n",
+  "completed-utc": "2026-10-21T07:57:03.435560+00:00"
+}

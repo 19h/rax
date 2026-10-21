@@ -1,0 +1,48 @@
+{
+  "state": "verified",
+  "controls": [
+    {
+      "name": "wrong-grant",
+      "state": "rejected",
+      "reason": "handle type/grant result",
+      "transitive-identities-repaired": true,
+      "fresh-positive-restoration": "verified"
+    },
+    {
+      "name": "wrong-probe-priority",
+      "state": "rejected",
+      "reason": "ReturnLength probe priority",
+      "transitive-identities-repaired": true,
+      "fresh-positive-restoration": "verified"
+    },
+    {
+      "name": "readonly-flags-guard-unvisited",
+      "state": "rejected",
+      "reason": "read-only flags guard consumption",
+      "transitive-identities-repaired": true,
+      "fresh-positive-restoration": "verified"
+    },
+    {
+      "name": "wrong-competing-guard",
+      "state": "rejected",
+      "reason": "ReturnLength wins over flags guard",
+      "transitive-identities-repaired": true,
+      "fresh-positive-restoration": "verified"
+    },
+    {
+      "name": "ReturnLength-written",
+      "state": "rejected",
+      "reason": "ReturnLength preservation",
+      "transitive-identities-repaired": true,
+      "fresh-positive-restoration": "verified"
+    },
+    {
+      "name": "incomplete-native",
+      "state": "rejected",
+      "reason": "native producer incomplete",
+      "transitive-identities-repaired": true,
+      "fresh-positive-restoration": "verified"
+    }
+  ],
+  "scope": "All four execution views are changed consistently, with transitive log/launch hashes repaired, before semantic checks reject the corruption."
+}

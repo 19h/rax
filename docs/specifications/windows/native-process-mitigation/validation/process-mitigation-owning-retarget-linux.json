@@ -1,0 +1,16 @@
+{
+  "retained": [
+    {
+      "source": "/work/build-native-attributes/linux-target/debug/libassist_rs.a",
+      "copy": "/work/build-native-attributes/linux-target/retained-nls-sorting-before-process-mitigation/0-libassist_rs.a",
+      "bytes": 946210252,
+      "sha256": "8a4514f1a805c20903de8521b5654ab1d566bc7707aa06e383e88aa88b06b965"
+    },
+    {
+      "source": "/work/build-native-attributes/linux-target/debug/deps/librax-a2a8568229f56ea7.rlib",
+      "copy": "/work/build-native-attributes/linux-target/retained-nls-sorting-before-process-mitigation/1-librax-a2a8568229f56ea7.rlib",
+      "bytes": 588367994,
+      "sha256": "aa924b2737ffe2e518afaa4cade5e0864ff94ea7425bc6a4575159d82d0a1a37"
+    }
+  ]
+}

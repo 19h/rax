@@ -1,0 +1,46 @@
+{
+  "accepted": [
+    {
+      "version": 1,
+      "launch": "native-process-mitigation-v1-four-views-launch.json",
+      "launch-bytes": 18701,
+      "launch-sha256": "6d0b8bde219b8b337436c85f2bcd9795777d7c734fc5ec25c87ee6976d46f4bf",
+      "source": "native-process-mitigation-v1.cpp",
+      "source-sha256": "12dccde1c2dfc978b74b1bd159a1b52cd1cf6c359d013d712d0077ccbd79f214",
+      "calls-per-view": 448
+    },
+    {
+      "version": 2,
+      "launch": "native-process-mitigation-v2-four-views-launch.json",
+      "launch-bytes": 18708,
+      "launch-sha256": "bd8cf0d87bbb1e3d0c5eac62646ea22df1d396d662a80a6d0c2c3638d0db37cc",
+      "source": "native-process-mitigation-v2.cpp",
+      "source-sha256": "82b2407694ceac745c84d0eed4cfae9d17961b6cf3c22e8a0f402aa01dcd3c80",
+      "calls-per-view": 384
+    },
+    {
+      "version": 4,
+      "launch": "native-process-mitigation-v4-four-views-launch.json",
+      "launch-bytes": 18734,
+      "launch-sha256": "10b901d445d486c09132e7e5eebbbe7f90a4f12896b7c0095292f12c1c282662",
+      "source": "native-process-mitigation-v4.cpp",
+      "source-sha256": "503e9b7255ee861fdb2a99e7a305ec7178a15e4b828444e07765f70ab537a0ed",
+      "calls-per-view": 384
+    }
+  ],
+  "recorded-calls": 4864,
+  "views": [
+    "arm64",
+    "x64",
+    "x86",
+    "x86-laa"
+  ],
+  "rejected": [
+    {
+      "version": 3,
+      "source-sha256": "912401adeb2a99a9ef93c558413b95458f16aa9795b91aa5d0192692374da04e",
+      "reason": "Case16 did not place flags in the guarded next page; V4 corrects that intended control."
+    }
+  ],
+  "scope": "One ARM64 Windows kernel10.0.29683; four execution views, not independent physical x64 kernel proof. Repeated inputs across producer versions are included in recorded-call total."
+}

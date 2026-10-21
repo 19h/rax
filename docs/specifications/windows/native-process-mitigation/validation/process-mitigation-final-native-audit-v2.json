@@ -1,0 +1,185 @@
+{
+  "state": "verified",
+  "utc": "2026-10-21T08:28:53.295912+00:00",
+  "runtime-module-union": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e"
+    },
+    {
+      "path": "C:\\Windows\\System32\\KernelBase.dll",
+      "bytes": 7213728,
+      "sha256": "6b2fa508ac4f9bce5d7351676485d1dc5b5236cd9656034e2fec1eaba3b82bc9"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\KernelBase.dll",
+      "bytes": 3073488,
+      "sha256": "e9c414d7c6bd2c6fde608f31b2f31da3c2014c801b3764a30ee42abd1e9c2d58"
+    },
+    {
+      "path": "C:\\Windows\\System32\\kernel32.dll",
+      "bytes": 1500304,
+      "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\kernel32.dll",
+      "bytes": 696392,
+      "sha256": "9c9a0c54a79ea712bb533fcc79ba9935ed9f9d3f777fd65cf62d9cec6699b9df"
+    },
+    {
+      "path": "C:\\Windows\\System32\\msvcrt.dll",
+      "bytes": 1347856,
+      "sha256": "779eb5cb1ae357196254af9755307544a3dd20011c84768ae72f45d366f47148"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\msvcrt.dll",
+      "bytes": 810688,
+      "sha256": "67c03357458a951402cc1804e05d3301f011a59d352f684fbe283f546f8ae398"
+    },
+    {
+      "path": "C:\\Windows\\System32\\version.dll",
+      "bytes": 73200,
+      "sha256": "d30c2a9c9d81982b112c5a60878f3579ddb3db3a09443147c63f10bc749aaab2"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\version.dll",
+      "bytes": 29208,
+      "sha256": "688ea4248da1e28bd77be9ae1088954a11cec3302c25af8aade47bae14f3ada8"
+    }
+  ],
+  "native-producer": [
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-process-mitigation-v1-four-views\\native-process-mitigation-v1.cpp",
+      "bytes": 2244,
+      "sha256": "12dccde1c2dfc978b74b1bd159a1b52cd1cf6c359d013d712d0077ccbd79f214"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-process-mitigation-v1-four-views\\target\\arm64\\probe.exe",
+      "bytes": 145408,
+      "sha256": "663e6de8938cd6e149585b124c2bca4322bcbb0a9fddd929632460d2aa6cc3ca"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-process-mitigation-v1-four-views\\target\\x64\\probe.exe",
+      "bytes": 142336,
+      "sha256": "2c944e23f0c753bf8d2454d6a80b4c8c29e7a4301dfd3ac7cc8ade3429bb88da"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-process-mitigation-v1-four-views\\target\\x86\\probe.exe",
+      "bytes": 118272,
+      "sha256": "6a9f24f98a9ae2fadfe48ce68daaea5f713f5c230c3b4def5ddd08883da3e0e6"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-process-mitigation-v1-four-views\\target\\x86-laa\\probe.exe",
+      "bytes": 118272,
+      "sha256": "c67120fc35587f74f414cf1c2887d9fb3b8e8be454835ada7f36ebb0065f12e2"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-process-mitigation-v2-four-views\\native-process-mitigation-v2.cpp",
+      "bytes": 7565,
+      "sha256": "82b2407694ceac745c84d0eed4cfae9d17961b6cf3c22e8a0f402aa01dcd3c80"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-process-mitigation-v2-four-views\\target\\arm64\\probe.exe",
+      "bytes": 148480,
+      "sha256": "005f5f8287cb9815898f6390f61e8b7cf8fbdf667dc0b67aeacdf2649db64aa5"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-process-mitigation-v2-four-views\\target\\x64\\probe.exe",
+      "bytes": 145920,
+      "sha256": "28b9e1cc064d0f220b2c3e8d786c862481569f28d103b1095cab702dc33f316b"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-process-mitigation-v2-four-views\\target\\x86\\probe.exe",
+      "bytes": 120832,
+      "sha256": "bb3a98a95bec730b67711dd82135ea3828c23c793a2b69ae86fe0b518cadcb32"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-process-mitigation-v2-four-views\\target\\x86-laa\\probe.exe",
+      "bytes": 120832,
+      "sha256": "c9ce7e2a56c305133cbdb7362e77ac3b307e1345515d00ba3fea2c5bf521267b"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-process-mitigation-v4-four-views\\native-process-mitigation-v4.cpp",
+      "bytes": 6808,
+      "sha256": "503e9b7255ee861fdb2a99e7a305ec7178a15e4b828444e07765f70ab537a0ed"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-process-mitigation-v4-four-views\\target\\arm64\\probe.exe",
+      "bytes": 148480,
+      "sha256": "972d9a5a477c20265d87041ce3b6b6692b1ca2506bf665c409ec4f061264f59a"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-process-mitigation-v4-four-views\\target\\x64\\probe.exe",
+      "bytes": 145920,
+      "sha256": "546cb09c311229f9bc10d94d32d86157a6f991a026f485802b338991def25d07"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-process-mitigation-v4-four-views\\target\\x86\\probe.exe",
+      "bytes": 120832,
+      "sha256": "2e8b6268c10e39b7017dd11cde44d415de10c64df70d6b44cb6a20e1d34ece53"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-process-mitigation-v4-four-views\\target\\x86-laa\\probe.exe",
+      "bytes": 120832,
+      "sha256": "9e3da8905ad7348170dfc98b13c0802135eb0f6a895a695c35ca62e81e6061d4"
+    }
+  ],
+  "owning-core-and-callers": [
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\debug\\deps\\librax-934115059aa64c85.rlib",
+      "bytes": 511320364,
+      "sha256": "7034c2491a3a490882599ca151b18b2e2a1128d4e6eefc9b3db9da819c0cc169"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\process-mitigation-ordinary-owner-candidate2.exe",
+      "bytes": 27212800,
+      "sha256": "bc18c07126c88aa71a2532799b6459520b33968b4e4b81b771d082a56ac5619c"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\debug\\assist_rs.lib",
+      "bytes": 860902070,
+      "sha256": "cbb316bf81752b48155ed5e96cb4a61da537bc8a36257680295079987bba3765"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\cpp\\process-mitigation-owning-capi-candidate2-retry2.exe",
+      "bytes": 32784384,
+      "sha256": "77d6aaddb7f7d6459c2dbbb2b3912f73cf72966a3cd9198ad8d5967c7a95acba"
+    }
+  ],
+  "retained-current-artifacts": [
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\retained-owning-candidate2\\core.rlib",
+      "bytes": 511320364,
+      "sha256": "7034c2491a3a490882599ca151b18b2e2a1128d4e6eefc9b3db9da819c0cc169"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\retained-owning-candidate2\\carrier.lib",
+      "bytes": 860902070,
+      "sha256": "cbb316bf81752b48155ed5e96cb4a61da537bc8a36257680295079987bba3765"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\retained-owning-candidate2\\ordinary.exe",
+      "bytes": 27212800,
+      "sha256": "bc18c07126c88aa71a2532799b6459520b33968b4e4b81b771d082a56ac5619c"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\retained-owning-candidate2\\capi.exe",
+      "bytes": 32784384,
+      "sha256": "77d6aaddb7f7d6459c2dbbb2b3912f73cf72966a3cd9198ad8d5967c7a95acba"
+    }
+  ],
+  "test-image": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\normal-candidate2\\debug\\deps\\rax-b799307a7949aa6b.exe",
+    "bytes": 546996224,
+    "sha256": "be5846e4158f28a59a6ace943e5355ffd8db0df4ebcacd6d7c50946d6c0fc0c2"
+  },
+  "windows-build": 29683,
+  "exit-code": 0,
+  "scope": "Ten DLL inputs (native process-mitigation producer includes MSVCRT; ordinary observers include version.dll), four live current owning artifacts, four separate current retained copies, three native producer sources/twelve executables, and executed native unit image rehashed. The ten DLL records bracket the ordinary executions; no whole-current-root package claim."
+}

@@ -1,0 +1,76 @@
+{
+  "files": [
+    {
+      "path": "linux-process-mitigation-candidate2-owning-artifacts.log",
+      "kind": "cargo-artifact-only",
+      "original": {
+        "bytes": 174086,
+        "sha256": "671abd8e1dd5d1f4c4540ea28680a53046801074398392cb67ab748cbbd51d7a"
+      },
+      "published": {
+        "bytes": 167252,
+        "sha256": "5d41b91ecf692e75a7f73075f5e10e1c3f19aa5a6c2d48c2a43b1e2f9e394bf0"
+      }
+    },
+    {
+      "path": "linux-process-mitigation-candidate2-owning-shipping.log",
+      "kind": "cargo-artifact-only",
+      "original": {
+        "bytes": 174435,
+        "sha256": "b5b3e7768d45f44324efebaff603474b23ef25df6d27e9593229142552939f16"
+      },
+      "published": {
+        "bytes": 167258,
+        "sha256": "6840225a878c11dbddc28f4e516468fedb5a4c712714a4da84b6d402bd3f681e"
+      }
+    },
+    {
+      "path": "macos-process-mitigation-candidate2-owning-build.log",
+      "kind": "private-build-transcript-withheld",
+      "original": {
+        "bytes": 32919,
+        "sha256": "e29230f0f6e1b44ce0aaca3e133c70b2ef7fb34d936c4c62abea733b90d03761"
+      },
+      "published": {
+        "bytes": 122,
+        "sha256": "43d88bd9462d5f433fc93f79e8b2c0aa6a3c4cff3260f04d54a3a62725c14875"
+      }
+    },
+    {
+      "path": "macos-process-mitigation-candidate2-owning-prime-artifacts.log",
+      "kind": "cargo-artifact-only",
+      "original": {
+        "bytes": 137970,
+        "sha256": "3ae64067fc15b65c44888f881df502689f160286705afdd9a11cdd094cd7b6ef"
+      },
+      "published": {
+        "bytes": 128746,
+        "sha256": "1fc3516406fda7331db3032177906beee9762a64f255d248b097bfbd49544f8c"
+      }
+    },
+    {
+      "path": "process-mitigation-native-owning-candidate2-retry2-artifacts-after.log",
+      "kind": "cargo-artifact-only",
+      "original": {
+        "bytes": 132251,
+        "sha256": "87da05f968d4271c3f2d628047787ec9619a3d9cceafb28e9cc57cc5fc5851fa"
+      },
+      "published": {
+        "bytes": 117653,
+        "sha256": "2f41d98977678616f4888ad4fa796e0432a77ce130f42c93ee8bff7bfec28e6c"
+      }
+    },
+    {
+      "path": "process-mitigation-native-owning-candidate2-retry2-artifacts-before.log",
+      "kind": "cargo-artifact-only",
+      "original": {
+        "bytes": 132536,
+        "sha256": "b401d1e240a3f5b458066f8a7e22dfc9879e09c1b4fdffdc74dbd137fc805268"
+      },
+      "published": {
+        "bytes": 117656,
+        "sha256": "9f1c35ce880d55e445c45914c770284f9808cbd559ed1853deb2c88eb98d2d81"
+      }
+    }
+  ]
+}

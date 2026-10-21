@@ -1,0 +1,24 @@
+{
+  "scope": "Class52 selector11 query increment; full same-host userland objective remains active.",
+  "utc": "2026-10-21T08:33:29.587797+00:00",
+  "gates": {
+    "QG1": "pass: no normative content required",
+    "QG2": "pass: PM-A1 guest-default invariant/source survey and PM-A2 native ordering/ABI controls; explicit falsification probes",
+    "QG3": "pass for selector11 increment: six source paths, three host suites/configurations and actual owning consumers; full goal remains incomplete",
+    "QG4": "pass: fixed8B record/four-byte fields, checked +4, explicit native matrix products, O(1) work/scratch and source/artifact hashes",
+    "QG5": "pass for increment: separate READONLY flags guard corrected from oracle; original failures preserved; other selectors/nonzero filters/peers unsupported; new ALPC frontier explicit",
+    "QG6": "pass: source-frozen native controls, real Cargo artifacts/archive walks, all three portable proof hosts and official interface references",
+    "QG7": "pass: ALPC/CSR and independent unwind gap bounded; no unrelated product change"
+  },
+  "negative-controls": 6,
+  "fresh-positive-restorations": 6,
+  "source-inputs": 26913,
+  "source-overrides": 14,
+  "source-ledger-sha256": "2b7b4998edb31bc7e279f055cfba099fd0d404cb6c37877be1fea6c0ae0808ec",
+  "native-recorded-calls": 4864,
+  "public-compiler-projections": 6,
+  "public-C-ABI": "1.14.0",
+  "current-Assist-Rust-ABI-minor": 274,
+  "retained-owning-ABI-minor": 184,
+  "whole-current-root-GUI-package-claim": false
+}

@@ -1,0 +1,36 @@
+{
+  "state": "finished",
+  "exit-code": 0,
+  "utc": "2026-10-21T08:25:08.984634+00:00",
+  "files": [
+    {
+      "role": "core",
+      "source": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\debug\\deps\\librax-934115059aa64c85.rlib",
+      "retained": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\retained-owning-candidate2\\core.rlib",
+      "bytes": 511320364,
+      "sha256": "7034c2491a3a490882599ca151b18b2e2a1128d4e6eefc9b3db9da819c0cc169"
+    },
+    {
+      "role": "carrier",
+      "source": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\debug\\assist_rs.lib",
+      "retained": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\retained-owning-candidate2\\carrier.lib",
+      "bytes": 860902070,
+      "sha256": "cbb316bf81752b48155ed5e96cb4a61da537bc8a36257680295079987bba3765"
+    },
+    {
+      "role": "ordinary",
+      "source": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\process-mitigation-ordinary-owner-candidate2.exe",
+      "retained": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\retained-owning-candidate2\\ordinary.exe",
+      "bytes": 27212800,
+      "sha256": "bc18c07126c88aa71a2532799b6459520b33968b4e4b81b771d082a56ac5619c"
+    },
+    {
+      "role": "capi",
+      "source": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\cpp\\process-mitigation-owning-capi-candidate2-retry2.exe",
+      "retained": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\retained-owning-candidate2\\capi.exe",
+      "bytes": 32784384,
+      "sha256": "77d6aaddb7f7d6459c2dbbb2b3912f73cf72966a3cd9198ad8d5967c7a95acba"
+    }
+  ],
+  "scope": "Four separate retained byte copies of the actual selected owning core, Assist carrier and two exercised ordinary-program callers. Source identities unchanged; no hardlinks."
+}

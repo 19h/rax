@@ -1,0 +1,1 @@
+program=C:\Windows\System32\whoami.exe terminal-call=2816 result=Complete(Internal("native NTDLL service NtAlpcSendWaitReceivePort (0x8e) at 0x7fff38a41920 is not implemented"))

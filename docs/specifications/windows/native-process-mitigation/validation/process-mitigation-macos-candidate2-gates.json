@@ -1,0 +1,130 @@
+{
+  "state": "finished",
+  "source-epoch": 1,
+  "host": "macos",
+  "driver-pid": 14681,
+  "steps": [
+    {
+      "name": "focus",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "native_process_mitigation",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 86.1043130410253,
+      "log": "process-mitigation-macos-candidate2-focus.log",
+      "bytes": 1386,
+      "sha256": "1a564b2fdbd24bfa33a0577345ef26e9ce0d54ad033d2492aa8ffd1b6eedb639",
+      "results": [
+        "ok. 4 passed; 0 failed; 0 ignored; 0 measured; 8155 filtered out; finished in 0.52s"
+      ]
+    },
+    {
+      "name": "full",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 451.9777190000168,
+      "log": "process-mitigation-macos-candidate2-full.log",
+      "bytes": 860649,
+      "sha256": "d08b44084fe918ce9243d6c39134b5b739255fefdea2b011ae2075ed236a6c30",
+      "results": [
+        "ok. 8157 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 447.95s"
+      ]
+    },
+    {
+      "name": "capi",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "-p",
+        "rax-capi",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 63.1783460410079,
+      "log": "process-mitigation-macos-candidate2-capi.log",
+      "bytes": 14139,
+      "sha256": "90d4f59918578bbff6dcd02e69d0d06722d301b09e8adb831068808ffce42f5f",
+      "results": [
+        "ok. 183 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 13.60s",
+        "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    {
+      "name": "integration",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--test",
+        "user_windows",
+        "--test",
+        "user_windows_memory",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 63.57907412498025,
+      "log": "process-mitigation-macos-candidate2-integration.log",
+      "bytes": 35860,
+      "sha256": "09632407bb6e58d93045b368de393522c3f2053fc17f485ab5a3a4a2f308bad1",
+      "results": [
+        "ok. 544 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 57.55s",
+        "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    {
+      "name": "all-targets",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "check",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--all-targets"
+      ],
+      "exit-code": 0,
+      "seconds": 54.7345476669725,
+      "log": "process-mitigation-macos-candidate2-all-targets.log",
+      "bytes": 383,
+      "sha256": "b7286e6f8d08b948188a72abc4495e98193c1d4940fa456152f0b9c2c02a177e",
+      "results": []
+    }
+  ],
+  "current-step": "all-targets",
+  "child-pid": 23736,
+  "exit-code": 0,
+  "post-source-inputs": 26913,
+  "completed-utc": "2026-10-21T08:10:33.555249+00:00"
+}

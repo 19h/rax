@@ -1,0 +1,14 @@
+   Compiling vm-memory v0.17.1 (/Users/int/.assist-native-process-mitigation-20261021/vendor/vm-memory)
+   Compiling linux-loader v0.13.2 (https://github.com/19h/linux-loader?rev=f745b555942c4e840a784bca61e6f3976d101960#f745b555)
+   Compiling rax v0.1.0 (/Users/int/.assist-native-process-mitigation-20261021)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 22s
+     Running unittests src/lib.rs (target/candidate2/debug/deps/rax-dd79f0cd9ae9bb68)
+
+running 4 tests
+test user::windows::process::sched::tests::services_tests::process_query_tests::process_mitigation::native_process_mitigation_filter_exact_length_and_unimplemented_selectors_preserve_memory ... ok
+test user::windows::process::sched::tests::services_tests::process_query_tests::process_mitigation::native_process_mitigation_filter_preserves_selector_return_length_and_padding_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::process_query_tests::process_mitigation::native_process_mitigation_filter_unmodeled_peer_and_other_object_handles_fail_without_publication ... ok
+test user::windows::process::sched::tests::services_tests::process_query_tests::process_mitigation::replay::native_process_mitigation_filter_replays_complete_native_fault_handle_and_alias_matrices ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 8155 filtered out; finished in 0.52s
+
