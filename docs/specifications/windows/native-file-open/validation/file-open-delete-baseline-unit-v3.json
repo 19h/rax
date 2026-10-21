@@ -1,0 +1,36 @@
+{
+  "state": "finished",
+  "pid": 6828,
+  "steps": [
+    {
+      "name": "baseline-unit",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "native_file_open_failed_delete_sharing_preserves_file_after_final_close",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 101,
+      "seconds": 539.9164952080173,
+      "log": "file-open-delete-baseline-unit-v3.log",
+      "bytes": 1943,
+      "sha256": "be754522b7cb30342bedec23d2f6605c807a3773cbfa1a5e4800b5d095b4a84f"
+    }
+  ],
+  "utc": "2026-10-21T00:43:31.894920+00:00",
+  "step": "baseline-unit",
+  "child": 9788,
+  "override-after": {
+    "bytes": 37425,
+    "sha256": "4c0acc2ff7d0f90f973b6f4638c6ca93eb9a61fffba7fa7f58ef23650ee4aaf5"
+  },
+  "exit-code": 0,
+  "scope": "Compiled failing regression against frozen candidate1 product with exactly one test-only overlay. Shared Cargo target uses its normal lock; source roots remain separate, and no active artifact/source is overwritten. Expected missing fixture after a rejected sharing open is a baseline failure, not a validation pass.",
+  "completed-utc": "2026-10-21T00:54:00.783929+00:00"
+}

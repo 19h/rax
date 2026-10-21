@@ -1,9 +1,9 @@
 //! Read-only metadata for authorized mapped files and selected installed DLLs.
 //! Guest memory is captured locally; host adapters receive only resolved paths.
 
-mod attributes;
+pub(super) mod attributes;
 mod metadata;
-mod path;
+pub(super) mod path;
 
 use super::named_object::{Checked, finish, status};
 use super::query::probe_write;

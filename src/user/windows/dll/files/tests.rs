@@ -76,6 +76,7 @@ impl Harness {
     fn call(&mut self, name: &str, args: &[u64]) -> ApiResult {
         let api = EXPORTS
             .iter()
+            .chain(super::super::native::EXPORTS.iter())
             .find_map(|e| match &e.item {
                 Item::Func(a) if a.name == name => Some(a),
                 _ => None,
@@ -887,5 +888,118 @@ fn closed_filesystem_denies_existing_paths_and_captures_console_all_abis() {
         assert_eq!(capture.drain(OutputStream::Stdout, &mut bytes).unwrap(), 5);
         assert_eq!(&bytes[..5], b"hello");
         assert_eq!(h.write(stdout, b"!"), 1);
+    }
+}
+
+#[test]
+fn native_file_open_win32_interop_hardlinks_preserve_shared_access() {
+    use crate::user::windows::nt::status::{STATUS_SHARING_VIOLATION, STATUS_SUCCESS};
+    for arch in WinArch::ALL {
+        for native_first in [false, true] {
+            let mut h = Harness::new(arch);
+            std::fs::write(h.directory.0.join("fixture.bin"), b"unchanged").unwrap();
+            std::fs::hard_link(
+                h.directory.0.join("fixture.bin"),
+                h.directory.0.join("alias.bin"),
+            )
+            .unwrap();
+            let attrs = h.memory + 0x4000;
+            let output = h.memory + 0x8000;
+            let io = h.memory + 0x9000;
+            let width = arch.ptr_size();
+            let p = h.process.state_mut();
+            p.space.wr(attrs, &[0; 48]).unwrap();
+            p.space
+                .w32(attrs, if arch.is64() { 48 } else { 24 })
+                .unwrap();
+            p.space.wptr(attrs + 2 * width, width, attrs + 64).unwrap();
+            p.space.w32(attrs + 3 * width, 0x840).unwrap();
+            let name: Vec<u16> = "\\??\\C:\\alias.bin".encode_utf16().collect();
+            p.space.w16(attrs + 64, (name.len() * 2) as u16).unwrap();
+            p.space
+                .wptr(attrs + 64 + width, width, attrs + 128)
+                .unwrap();
+            p.space.put_wunits(attrs + 128, &name).unwrap();
+            let held = if native_first {
+                assert_eq!(
+                    h.value("NtOpenFile", &[output, 0x100001, attrs, io, 0, 0x60]),
+                    u64::from(STATUS_SUCCESS)
+                );
+                h.process.state().space.ptr(output, width).unwrap()
+            } else {
+                h.open("C:\\fixture.bin", GENERIC_READ, 0, 3, 0)
+            };
+            assert_ne!(held, h.invalid());
+            if native_first {
+                assert_eq!(
+                    h.open("C:\\fixture.bin", GENERIC_READ, 7, 3, 0),
+                    h.invalid()
+                );
+                assert_eq!(h.error(), ERROR_SHARING_VIOLATION);
+            } else {
+                assert_eq!(
+                    h.value("NtOpenFile", &[output, 0x100001, attrs, io, 7, 0x60]),
+                    u64::from(STATUS_SHARING_VIOLATION)
+                );
+            }
+            h.close(held);
+            assert_eq!(
+                h.value("NtOpenFile", &[output, 0x100001, attrs, io, 7, 0x60]),
+                u64::from(STATUS_SUCCESS)
+            );
+            let native = h.process.state().space.ptr(output, width).unwrap();
+            assert_eq!(h.process.state().objects.access(native), Some(0x100001));
+            let win32 = h.open("C:\\fixture.bin", GENERIC_READ, 7, 3, 0);
+            assert_ne!(win32, h.invalid());
+            h.close(native);
+            h.close(win32);
+            assert_eq!(
+                std::fs::read(h.directory.0.join("fixture.bin")).unwrap(),
+                b"unchanged"
+            );
+        }
+    }
+}
+#[test]
+fn native_file_open_failed_delete_sharing_preserves_file_after_final_close() {
+    use crate::user::windows::nt::status::STATUS_SHARING_VIOLATION;
+    for arch in WinArch::ALL {
+        for access in [DELETE, GENERIC_READ | DELETE, GENERIC_WRITE | DELETE] {
+            let mut h = Harness::new(arch);
+            let path = h.directory.0.join("preserved.bin");
+            std::fs::write(&path, b"retained").unwrap();
+            let attrs = h.memory + 0x4000;
+            let output = h.memory + 0x8000;
+            let io = h.memory + 0x9000;
+            let width = arch.ptr_size();
+            let p = h.process.state_mut();
+            p.space.wr(attrs, &[0; 48]).unwrap();
+            p.space
+                .w32(attrs, if arch.is64() { 48 } else { 24 })
+                .unwrap();
+            p.space.wptr(attrs + 2 * width, width, attrs + 64).unwrap();
+            p.space.w32(attrs + 3 * width, 0x840).unwrap();
+            let name: Vec<u16> = "\\??\\C:\\preserved.bin".encode_utf16().collect();
+            p.space.w16(attrs + 64, (name.len() * 2) as u16).unwrap();
+            p.space
+                .wptr(attrs + 64 + width, width, attrs + 128)
+                .unwrap();
+            p.space.put_wunits(attrs + 128, &name).unwrap();
+            let held = h.open("C:\\preserved.bin", access, 7, 3, 0);
+            assert_ne!(held, h.invalid());
+            let count = h.process.state().objects.iter().count();
+            assert_eq!(
+                h.value("NtOpenFile", &[output, 0x110000, attrs, io, 3, 0x1060]),
+                u64::from(STATUS_SHARING_VIOLATION),
+                "{arch}/{access:#x}"
+            );
+            assert_eq!(h.process.state().objects.iter().count(), count);
+            h.close(held);
+            assert_eq!(
+                std::fs::read(&path).unwrap(),
+                b"retained",
+                "{arch}/{access:#x}: rejected sharing open must not schedule deletion"
+            );
+        }
     }
 }

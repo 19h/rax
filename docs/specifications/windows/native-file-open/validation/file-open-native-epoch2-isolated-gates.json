@@ -1,0 +1,248 @@
+{
+  "state": "finished",
+  "pid": 8776,
+  "steps": [
+    {
+      "name": "toolchain",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "--version"
+      ],
+      "exit-code": 0,
+      "seconds": 0.026136917003896087,
+      "log": "file-open-native-epoch2-isolated-toolchain.log",
+      "bytes": 36,
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5",
+      "results": []
+    },
+    {
+      "name": "clean-core",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "clean",
+        "--offline",
+        "--package",
+        "rax"
+      ],
+      "exit-code": 0,
+      "seconds": 0.6605755829950795,
+      "log": "file-open-native-epoch2-isolated-clean-core.log",
+      "bytes": 37,
+      "sha256": "d771c6521d70d40d340ae2998f072ecd2fa0d4b9a17a50739a8289dcec092cfa",
+      "results": []
+    },
+    {
+      "name": "test-build",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "exit-code": 0,
+      "seconds": 164.65519733398105,
+      "log": "file-open-native-epoch2-isolated-test-build.log",
+      "bytes": 89564,
+      "sha256": "933403ac4d8028f32a1a9e69ddc7220bad938a3175bcf0107647ed19021a2c7c",
+      "results": []
+    },
+    {
+      "name": "focus",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-open-epoch2\\target\\normal\\debug\\deps\\rax-b799307a7949aa6b.exe",
+        "native_file_",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 17.544937625003513,
+      "log": "file-open-native-epoch2-isolated-focus.log",
+      "bytes": 4328,
+      "sha256": "81e911b6219909a5ce82c99c5de07a9acb84b5ee5335fde6c6785983695ab2bd",
+      "results": [
+        "ok. 26 passed; 0 failed; 0 ignored; 0 measured; 7571 filtered out; finished in 17.49s"
+      ],
+      "test-image-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-open-epoch2\\target\\normal\\debug\\deps\\rax-b799307a7949aa6b.exe",
+        "bytes": 544195584,
+        "sha256": "65a4efb92038f5b249af8b1c62d02d993c78a5933df0a8638c6e4996b7926eec"
+      },
+      "test-image-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-open-epoch2\\target\\normal\\debug\\deps\\rax-b799307a7949aa6b.exe",
+        "bytes": 544195584,
+        "sha256": "65a4efb92038f5b249af8b1c62d02d993c78a5933df0a8638c6e4996b7926eec"
+      }
+    },
+    {
+      "name": "full",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-open-epoch2\\target\\normal\\debug\\deps\\rax-b799307a7949aa6b.exe",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 101,
+      "seconds": 827.7717231670104,
+      "log": "file-open-native-epoch2-isolated-full.log",
+      "bytes": 821073,
+      "sha256": "23e857283414d7b038bbf0303ea523cfb46362b61e686b71135cbca161bc5ad0",
+      "results": [
+        "FAILED. 7590 passed; 5 failed; 2 ignored; 0 measured; 0 filtered out; finished in 827.70s"
+      ],
+      "test-image-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-open-epoch2\\target\\normal\\debug\\deps\\rax-b799307a7949aa6b.exe",
+        "bytes": 544195584,
+        "sha256": "65a4efb92038f5b249af8b1c62d02d993c78a5933df0a8638c6e4996b7926eec"
+      },
+      "test-image-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-open-epoch2\\target\\normal\\debug\\deps\\rax-b799307a7949aa6b.exe",
+        "bytes": 544195584,
+        "sha256": "65a4efb92038f5b249af8b1c62d02d993c78a5933df0a8638c6e4996b7926eec"
+      }
+    },
+    {
+      "name": "capi",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "-p",
+        "rax-capi",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 147.6076443750062,
+      "log": "file-open-native-epoch2-isolated-capi.log",
+      "bytes": 14979,
+      "sha256": "d0f94e96438104432d3b2992c8dad4a16513f9dd3ae3d63a6ea806c6998c7583",
+      "results": [
+        "ok. 183 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 20.21s",
+        "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    {
+      "name": "integration",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--test",
+        "user_windows",
+        "--test",
+        "user_windows_memory",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 7.073788332985714,
+      "log": "file-open-native-epoch2-isolated-integration.log",
+      "bytes": 1770,
+      "sha256": "e26b6d93d5ccd4c0cdafdd20af0cc8ebbeaefc53316da038b1515d8a0801e860",
+      "results": [
+        "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+        "ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    {
+      "name": "all-targets",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "check",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--all-targets"
+      ],
+      "exit-code": 0,
+      "seconds": 177.06035983399488,
+      "log": "file-open-native-epoch2-isolated-all-targets.log",
+      "bytes": 1003,
+      "sha256": "192926d1063ac5fb46e8cf3ff86be3d05d896ac22af62284025bda3f13825207",
+      "results": []
+    }
+  ],
+  "utc": "2026-10-21T01:13:09.783522+00:00",
+  "verified-source-inputs": 26848,
+  "verified-source-bytes": 2021965191,
+  "cache-live-references": [],
+  "retained-rejected-full-image": {
+    "source": {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-open-epoch2\\target\\normal\\debug\\deps\\rax-b799307a7949aa6b.exe",
+      "bytes": 544195584,
+      "sha256": "f35bb52876f63aa96cfab363fc2d78f37dcf559d907a2a4325c114afe3ef9be6"
+    },
+    "retained": {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-open-epoch2\\target\\retained-rejected-full-epoch2\\unit.exe",
+      "bytes": 544195584,
+      "sha256": "f35bb52876f63aa96cfab363fc2d78f37dcf559d907a2a4325c114afe3ef9be6"
+    }
+  },
+  "prior-dependency-file": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-open-epoch2\\target\\normal\\debug\\deps\\rax-b799307a7949aa6b.d",
+    "bytes": 556265,
+    "sha256": "a9abb143c0d6be4fc8e7831fe0dc0cbc601e2538ba155d4f5105f03606eb3bfd",
+    "baseline-root-occurrences": 28,
+    "candidate-root-occurrences": 2
+  },
+  "current-step": "all-targets",
+  "child-pid": 7636,
+  "selected-test-artifact": {
+    "reason": "compiler-artifact",
+    "package_id": "path+file:///C:/Windows/Temp/assist-native-rax-20261010/src-file-open-epoch2#rax@0.1.0",
+    "manifest_path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-open-epoch2\\Cargo.toml",
+    "target": {
+      "kind": [
+        "lib"
+      ],
+      "crate_types": [
+        "lib"
+      ],
+      "name": "rax",
+      "src_path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-open-epoch2\\src\\lib.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": true,
+      "test": true
+    },
+    "profile": {
+      "opt_level": "0",
+      "debuginfo": 2,
+      "debug_assertions": true,
+      "overflow_checks": true,
+      "test": true
+    },
+    "features": [],
+    "filenames": [
+      "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-open-epoch2\\target\\normal\\debug\\deps\\rax-b799307a7949aa6b.exe",
+      "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-open-epoch2\\target\\normal\\debug\\deps\\rax-b799307a7949aa6b.pdb"
+    ],
+    "executable": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-open-epoch2\\target\\normal\\debug\\deps\\rax-b799307a7949aa6b.exe",
+    "fresh": false
+  },
+  "selected-test-image": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-open-epoch2\\target\\normal\\debug\\deps\\rax-b799307a7949aa6b.exe",
+    "bytes": 544195584,
+    "sha256": "65a4efb92038f5b249af8b1c62d02d993c78a5933df0a8638c6e4996b7926eec"
+  },
+  "exact-existing-failures": [
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_imm_index_at_width_with_flags_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_all_ones_with_flags_as_movn_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_with_flags_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_with_flags_and_low_byte_index_guards",
+    "smir::lower::aarch64::tests::vector::lowers_vector_fp16_arithmetic_runtime"
+  ],
+  "exit-code": 0,
+  "post-source-inputs": 26848,
+  "scope": "Candidate2 recompiled after primary-crate cache eviction; the actual Cargo-selected library-test executable is hashed before/after direct focused and unfiltered executions. Prior shared-target full run is rejected, not a product validation result. Dependencies reused; no baseline writer remains in this target.",
+  "completed-utc": "2026-10-21T01:36:41.813264+00:00"
+}

@@ -1,0 +1,1 @@
+program=C:\Windows\System32\whoami.exe terminal-call=2183 result=Complete(Internal("native NTDLL service NtCreateSection: Unimplemented(\"NtCreateSection: NtCreateSection for a file-backed section\")"))

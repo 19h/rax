@@ -1,0 +1,28 @@
+{
+  "state": "finished",
+  "pid": 3856,
+  "steps": [
+    {
+      "name": "final-audit",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\fo-fa1\\native-file-open\\check_validation.py",
+        "--source-root",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-open-epoch2",
+        "--output",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\file-open-public-audit-windows-final.json"
+      ],
+      "exit-code": 0,
+      "seconds": 12.114821832976304,
+      "log": "file-open-public-native-final-v1-final-audit.log",
+      "bytes": 1030,
+      "sha256": "c92cd3db0a48578b94daab6cbe3dbbf3eca4a63d93d4c2649e9b9366ee8acca4"
+    }
+  ],
+  "step": "final-audit",
+  "child": 7948,
+  "exit-code": 0,
+  "scope": "Final complete record audit after all three source-bound execution gates, including retained Windows byte identities. Full process emulation remains active.",
+  "utc": "2026-10-21T01:38:16.803679+00:00"
+}

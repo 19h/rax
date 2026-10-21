@@ -254,12 +254,30 @@ fn create(c: &mut Ctx, wide: bool) -> ApiResult {
         .read(can_read(access))
         .write(can_set_end(access) || creating || matches!(disposition, 2 | 5))
         .append(append);
+    let metadata_only = directory
+        || (!creating && !can_read(access) && !can_write(access) && !matches!(disposition, 2 | 5));
+    #[cfg(windows)]
+    {
+        use std::os::windows::fs::OpenOptionsExt;
+        // Native NT opens must see the same sharing reservation as the guest.
+        // Preserve DELETE and other explicitly requested grants in the host's
+        // sharing reservation. A metadata-only host handle would lose DELETE,
+        // allowing a rejected NT delete-on-close open to delete the file later.
+        let preparation = if !metadata_only && !append && (creating || matches!(disposition, 2 | 5))
+        {
+            GENERIC_WRITE
+        } else {
+            0
+        };
+        options.share_mode(share).access_mode(access | preparation);
+        if metadata_only {
+            options.custom_flags(0x0200_0000);
+        }
+    }
     if creating {
         options.create_new(true);
     }
-    let mut file = if directory
-        || (!creating && !can_read(access) && !can_write(access) && !matches!(disposition, 2 | 5))
-    {
+    let mut file = if metadata_only && !cfg!(windows) {
         None
     } else {
         match options.open(&host) {
@@ -274,7 +292,7 @@ fn create(c: &mut Ctx, wide: bool) -> ApiResult {
         Ok(m) => m,
         Err(e) => return c.fail(host_error(&e, Some(&host), ERROR_ACCESS_DENIED), u64::MAX),
     };
-    let actual_identity = match FileIdentity::of(&host, &actual_metadata) {
+    let actual_identity = match FileIdentity::of_open(&host, file.as_ref(), &actual_metadata) {
         Ok(i) => i,
         Err(e) => return c.fail(host_error(&e, Some(&host), ERROR_ACCESS_DENIED), u64::MAX),
     };

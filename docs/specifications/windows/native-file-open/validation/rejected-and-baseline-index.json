@@ -1,0 +1,19 @@
+{
+  "scope": "Identity inventory of local attempted baselines. No-CRT standalone images failed native loading before entry and establish no guest behavior. Compiled unit-v3 is the accepted red regression. Candidate1 is rejected; native producerv6 indexing is rejected; v9 protection roles426/427 are excluded.",
+  "local-records": [
+    {
+      "name": "file-open-delete-baseline-unit-v1-source.json",
+      "bytes": 385,
+      "sha256": "72abc3854ed12012ed5e3a169d69143f361739e92700b7bcef1bb87519c418b8",
+      "state": null,
+      "scope": "Test-only overlay against frozen epoch1 product to reproduce held DELETE grant and NtOpenFile delete-on-close sharing side effects."
+    },
+    {
+      "name": "file-open-delete-baseline-unit-v3-source.json",
+      "bytes": 390,
+      "sha256": "2cf0d0435a660858ba8035ef7b3290135fa505323a6e7c0b6de9b5fca75753b9",
+      "state": null,
+      "scope": "Exact candidate2 test file against candidate1 product: read/write sharing without delete sharing, all three held DELETE access variants."
+    }
+  ]
+}

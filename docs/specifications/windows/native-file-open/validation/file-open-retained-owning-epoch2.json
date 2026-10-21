@@ -1,0 +1,36 @@
+{
+  "state": "finished",
+  "exit-code": 0,
+  "utc": "2026-10-21T01:02:06.381764+00:00",
+  "files": [
+    {
+      "role": "core",
+      "source": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\debug\\deps\\librax-934115059aa64c85.rlib",
+      "retained": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-open-epoch2\\target\\retained-owning-epoch2\\core.rlib",
+      "bytes": 510651936,
+      "sha256": "2560cf907efaa1a692a9dcb270f7ac36d9472fad53fa9e3a5f2fb94f977477a0"
+    },
+    {
+      "role": "carrier",
+      "source": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\debug\\assist_rs.lib",
+      "retained": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-open-epoch2\\target\\retained-owning-epoch2\\carrier.lib",
+      "bytes": 860133102,
+      "sha256": "161a5f261e55a1307e0c5c9c97684a4aa013125469d8522b109de2863f1c61a7"
+    },
+    {
+      "role": "ordinary",
+      "source": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\file-open-ordinary-owner-epoch2.exe",
+      "retained": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-open-epoch2\\target\\retained-owning-epoch2\\ordinary.exe",
+      "bytes": 27163136,
+      "sha256": "d1a64e9cfd49a80d361179eda82c4b0dcdd60a78edeb08547db1f0dff0347426"
+    },
+    {
+      "role": "capi",
+      "source": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\cpp\\file-open-owning-capi-epoch2.exe",
+      "retained": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-open-epoch2\\target\\retained-owning-epoch2\\capi.exe",
+      "bytes": 32732672,
+      "sha256": "16ed8a9b1dc82b7d1f61080f5ced7ebbc4bd8a6f311d4b1d2e10c22223b4b9d9"
+    }
+  ],
+  "scope": "Four separate retained byte copies of the actual selected owning core, Assist carrier and two exercised ordinary-program callers. Source identities unchanged; no hardlinks."
+}

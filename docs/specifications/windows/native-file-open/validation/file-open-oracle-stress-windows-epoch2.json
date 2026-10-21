@@ -1,0 +1,93 @@
+{
+  "scope": "Eight oracle-record corruptions and eight fresh positive restorations. No source/product mutation; full source integrity is audited separately.",
+  "cases": [
+    {
+      "case": "missing-profile",
+      "rejected": true,
+      "reason": "native-file-open-v7 profile set",
+      "positive-restoration": {
+        "independent-v10-calls": 1836,
+        "independent-sharing-calls": 16,
+        "compiled-pair-calls-per-host": 630,
+        "compiled-boundary-calls-per-host": 162
+      }
+    },
+    {
+      "case": "duplicate-profile",
+      "rejected": true,
+      "reason": "native-file-open-v7 profile set",
+      "positive-restoration": {
+        "independent-v10-calls": 1836,
+        "independent-sharing-calls": 16,
+        "compiled-pair-calls-per-host": 630,
+        "compiled-boundary-calls-per-host": 162
+      }
+    },
+    {
+      "case": "changed-runtime",
+      "rejected": true,
+      "reason": "native-file-open-v7 runtime changed",
+      "positive-restoration": {
+        "independent-v10-calls": 1836,
+        "independent-sharing-calls": 16,
+        "compiled-pair-calls-per-host": 630,
+        "compiled-boundary-calls-per-host": 162
+      }
+    },
+    {
+      "case": "changed-executable",
+      "rejected": true,
+      "reason": "native executable changed",
+      "positive-restoration": {
+        "independent-v10-calls": 1836,
+        "independent-sharing-calls": 16,
+        "compiled-pair-calls-per-host": 630,
+        "compiled-boundary-calls-per-host": 162
+      }
+    },
+    {
+      "case": "changed-producer",
+      "rejected": true,
+      "reason": "native producer identity",
+      "positive-restoration": {
+        "independent-v10-calls": 1836,
+        "independent-sharing-calls": 16,
+        "compiled-pair-calls-per-host": 630,
+        "compiled-boundary-calls-per-host": 162
+      }
+    },
+    {
+      "case": "missing-role",
+      "rejected": true,
+      "reason": "native-file-open-v7/x86 native role set",
+      "positive-restoration": {
+        "independent-v10-calls": 1836,
+        "independent-sharing-calls": 16,
+        "compiled-pair-calls-per-host": 630,
+        "compiled-boundary-calls-per-host": 162
+      }
+    },
+    {
+      "case": "duplicate-role",
+      "rejected": true,
+      "reason": "duplicate native role",
+      "positive-restoration": {
+        "independent-v10-calls": 1836,
+        "independent-sharing-calls": 16,
+        "compiled-pair-calls-per-host": 630,
+        "compiled-boundary-calls-per-host": 162
+      }
+    },
+    {
+      "case": "forged-status",
+      "rejected": true,
+      "reason": "independent oracle mismatch 285/x86",
+      "positive-restoration": {
+        "independent-v10-calls": 1836,
+        "independent-sharing-calls": 16,
+        "compiled-pair-calls-per-host": 630,
+        "compiled-boundary-calls-per-host": 162
+      }
+    }
+  ]
+}

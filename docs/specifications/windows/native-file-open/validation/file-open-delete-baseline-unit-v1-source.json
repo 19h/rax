@@ -1,0 +1,7 @@
+{
+  "path": "src/user/windows/dll/files/tests.rs",
+  "bytes": 37425,
+  "sha256": "25a0f36bb8f17b6a64b75f85f876b853eef6eff143c5c3d4e2717c6a9751717b",
+  "original-sha256": "3332bdf77d0a9cb3cbc407d43894afeba6db269a181c4b645f45a207452ecb11",
+  "scope": "Test-only overlay against frozen epoch1 product to reproduce held DELETE grant and NtOpenFile delete-on-close sharing side effects."
+}

@@ -1,0 +1,44 @@
+{
+  "state": "finished",
+  "source-before": [
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests.rs",
+      "bytes": 49893,
+      "sha256": "19de4beb8cb11d1945a7de76c58342b8ef4fc5e89329329dce2f03cb067390e4"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/file_open_tests.rs",
+      "bytes": 8977,
+      "sha256": "c8f572ee9bdcd577d0167618a841deba714a830048476e88940fd93340497242"
+    }
+  ],
+  "pid": 38914,
+  "argv": [
+    "cargo",
+    "+1.95.0",
+    "test",
+    "--locked",
+    "--offline",
+    "--no-default-features",
+    "--lib",
+    "native_file_open_",
+    "--",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "exit-code": 101,
+  "seconds": 93.75324370799353,
+  "source-after": [
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests.rs",
+      "bytes": 49893,
+      "sha256": "19de4beb8cb11d1945a7de76c58342b8ef4fc5e89329329dce2f03cb067390e4"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/file_open_tests.rs",
+      "bytes": 8977,
+      "sha256": "c8f572ee9bdcd577d0167618a841deba714a830048476e88940fd93340497242"
+    }
+  ],
+  "utc": "2026-10-20T22:14:59.218870+00:00"
+}

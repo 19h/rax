@@ -1,0 +1,31 @@
+
+running 26 tests
+test user::windows::dll::files::tests::native_file_open_failed_delete_sharing_preserves_file_after_final_close ... ok
+test user::windows::dll::files::tests::native_file_open_win32_interop_hardlinks_preserve_shared_access ... ok
+test user::windows::process::sched::tests::services_tests::file_attributes_tests::installed::native_file_attributes_installed_leaves_match_native_metadata_and_ret8 ... ok
+test user::windows::process::sched::tests::services_tests::file_attributes_tests::native_file_attributes_output_validation_precedes_native_input ... ok
+test user::windows::process::sched::tests::services_tests::file_attributes_tests::native_file_attributes_rejects_host_access_when_disabled ... ok
+test user::windows::process::sched::tests::services_tests::file_attributes_tests::native_file_attributes_returns_mapped_metadata_and_preserves_padding ... ok
+test user::windows::process::sched::tests::services_tests::file_attributes_tests::paired::native_file_attributes_pairwise_capture_matches_independent_native_oracle ... ok
+test user::windows::process::sched::tests::services_tests::file_attributes_tests::semantics::native_file_attributes_captured_names_and_security_headers_precede_wow_output_probe ... ok
+test user::windows::process::sched::tests::services_tests::file_attributes_tests::semantics::native_file_attributes_empty_name_queries_retained_file_after_path_replacement ... ok
+test user::windows::process::sched::tests::services_tests::file_attributes_tests::semantics::native_file_attributes_preserves_nt_spelling_and_distinguishes_absence ... ok
+test user::windows::process::sched::tests::services_tests::file_attributes_tests::semantics::native_file_attributes_root_handles_retain_identity_and_native_name_rules ... ok
+test user::windows::process::sched::tests::services_tests::file_attributes_tests::semantics::native_file_attributes_selected_runtime_does_not_grant_general_host_access ... ok
+test user::windows::process::sched::tests::services_tests::file_attributes_tests::validation::native_file_attributes_flags_security_and_qos_match_captured_statuses ... ok
+test user::windows::process::sched::tests::services_tests::file_attributes_tests::validation::native_file_attributes_output_aliases_preserve_captured_inputs_and_tail ... ok
+test user::windows::process::sched::tests::services_tests::file_attributes_tests::validation::native_file_attributes_output_boundaries_match_native_and_wow_records ... ok
+test user::windows::process::sched::tests::services_tests::file_attributes_tests::validation::native_file_attributes_wow_outputs_accept_every_byte_alignment ... ok
+test user::windows::process::sched::tests::services_tests::file_open_tests::boundaries::native_file_open_redirection_and_guard_store_boundaries_match_native_v10 ... ok
+test user::windows::process::sched::tests::services_tests::file_open_tests::boundaries::native_file_open_retained_directory_no_reparse_applies_to_each_child_component ... ok
+test user::windows::process::sched::tests::services_tests::file_open_tests::boundaries::native_file_open_retained_read_execute_handle_can_query_attributes_after_replacement ... ok
+test user::windows::process::sched::tests::services_tests::file_open_tests::native_file_open_every_iosb_prefix_has_measured_ownership_and_atomic_store_effects ... ok
+test user::windows::process::sched::tests::services_tests::file_open_tests::native_file_open_failed_lookup_updates_only_wow_handle_slot ... ok
+test user::windows::process::sched::tests::services_tests::file_open_tests::native_file_open_late_iosb_fault_retains_native_and_retires_wow_handle ... ok
+test user::windows::process::sched::tests::services_tests::file_open_tests::native_file_open_mapped_file_grant_and_iosb_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::file_open_tests::native_file_open_retained_directory_resolves_children_after_rename_and_replacement ... ok
+test user::windows::process::sched::tests::services_tests::file_open_tests::native_file_open_selected_runtime_grant_is_read_only_and_cannot_enroll_other_paths ... ok
+test user::windows::process::sched::tests::services_tests::file_open_tests::paired::native_file_open_pairwise_capture_and_copyback_match_independent_native_runs ... ok
+
+test result: ok. 26 passed; 0 failed; 0 ignored; 0 measured; 7571 filtered out; finished in 17.49s
+

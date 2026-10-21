@@ -1,0 +1,83 @@
+{
+  "contract": "Exact published bytes map only to their recorded original identity; private compiler records remain local. No source/history rewrite.",
+  "files": [
+    {
+      "path": "file-open-native-owning-epoch2-artifacts-after.log",
+      "kind": "cargo-artifact-only",
+      "withheld-records": 3,
+      "original": {
+        "bytes": 132251,
+        "sha256": "447f9eecd07b21176dec2b0377d83f24145e0a8dd717251dd08932322acec957"
+      },
+      "published": {
+        "bytes": 124515,
+        "sha256": "8d11d86a4bf1c7c6042210354ceca48ee05f3bb3927282c9ab32750eae167b84"
+      }
+    },
+    {
+      "path": "file-open-native-owning-epoch2-artifacts-before.log",
+      "kind": "cargo-artifact-only",
+      "withheld-records": 6,
+      "original": {
+        "bytes": 132536,
+        "sha256": "37c995cf172521b3573f13ab8a8578c54920d5a37e6a0f932ba6b032307169e7"
+      },
+      "published": {
+        "bytes": 124518,
+        "sha256": "d3c20ea75169b2af4eb8a11edb306c8309287d98d8dfce22da5b40320493ad77"
+      }
+    },
+    {
+      "path": "linux-file-open-epoch2-owning-artifacts.log",
+      "kind": "cargo-artifact-only",
+      "withheld-records": 1,
+      "original": {
+        "bytes": 174086,
+        "sha256": "c21f852ae569582865b9e7dd35d67d30953a5fc5720eb853c87a910ed0349087"
+      },
+      "published": {
+        "bytes": 174014,
+        "sha256": "306cfec7217227de352776476b16f481ab462cb87d4d8db94447f047e8f33b9f"
+      }
+    },
+    {
+      "path": "linux-file-open-epoch2-owning-shipping.log",
+      "kind": "cargo-artifact-only",
+      "withheld-records": 6,
+      "original": {
+        "bytes": 174435,
+        "sha256": "e06aabf5972de5a5c498673c8fc7d345ca26566fe98d51e083f510f5d32e96a9"
+      },
+      "published": {
+        "bytes": 174020,
+        "sha256": "dfcab193ee561d0cd69a919ca6edecc7bad7adee406f4eca46bd345c3b880afb"
+      }
+    },
+    {
+      "path": "macos-file-open-epoch2-owning-build.log",
+      "kind": "private-build-transcript-withheld",
+      "withheld-records": 261,
+      "original": {
+        "bytes": 32919,
+        "sha256": "fe99a5ff459dfe69da0b4b65d4830bdee0a8bca7d2c89467c24ccbb47fbe569a"
+      },
+      "published": {
+        "bytes": 173,
+        "sha256": "93e6ee6eec5594033d139fb3ec81c9268ef43edb566a7cf7ad4c1aa2b10ac45e"
+      }
+    },
+    {
+      "path": "macos-file-open-epoch2-owning-prime-artifacts.log",
+      "kind": "cargo-artifact-only",
+      "withheld-records": 4,
+      "original": {
+        "bytes": 137670,
+        "sha256": "ac7473506b6965eafba1257b27e080678763999a71825d454fd0f8f8c394f6ac"
+      },
+      "published": {
+        "bytes": 137136,
+        "sha256": "60be783050efce1ca7feb5235b6848487ade0b6754580d6f710c95a54f495532"
+      }
+    }
+  ]
+}

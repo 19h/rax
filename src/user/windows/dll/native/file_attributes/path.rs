@@ -1,5 +1,8 @@
 //! Counted NT names retain filesystem spelling; no Win32 dot/space cleanup.
 
+#[cfg(unix)]
+pub(in super::super) mod unix;
+
 use super::super::named_object::{Checked, status};
 use super::attributes::Attributes;
 use crate::user::windows::arch::WinArch;
@@ -13,11 +16,14 @@ use crate::user::windows::objects::Object;
 use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 
-pub(super) struct Resolved {
-    pub(super) host: PathBuf,
-    pub(super) base: PathBuf,
-    pub(super) root: Option<u64>,
-    pub(super) directory: bool,
+pub(in super::super) struct Resolved {
+    pub(in super::super) host: PathBuf,
+    pub(in super::super) base: PathBuf,
+    pub(in super::super) root: Option<u64>,
+    /// A counted child name resolved relative to the retained directory handle.
+    pub(in super::super) relative: Option<PathBuf>,
+    pub(in super::super) directory: bool,
+    pub(in super::super) runtime_library: bool,
 }
 
 fn canonical_root(c: &Ctx, path: &Path) -> Checked<PathBuf> {
@@ -33,7 +39,7 @@ fn canonical_root(c: &Ctx, path: &Path) -> Checked<PathBuf> {
     }
 }
 
-fn equal(c: &Ctx, a: &[u16], b: &[u16]) -> bool {
+pub(in super::super) fn equal(c: &Ctx, a: &[u16], b: &[u16]) -> bool {
     let table = c.p.registry.upcase_table();
     let fold = |unit: u16| {
         table.get(usize::from(unit)).copied().unwrap_or_else(|| {
@@ -175,7 +181,28 @@ fn selected(c: &Ctx, path: &[u16]) -> Checked<Option<PathBuf>> {
     Ok(None)
 }
 
-pub(super) fn resolve(c: &Ctx, attrs: &Attributes, name: Option<&[u16]>) -> Checked<Resolved> {
+pub(in super::super) fn resolve(
+    c: &Ctx,
+    attrs: &Attributes,
+    name: Option<&[u16]>,
+) -> Checked<Resolved> {
+    resolve_kind(c, attrs, name, true)
+}
+
+pub(in super::super) fn resolve_open(
+    c: &Ctx,
+    attrs: &Attributes,
+    name: Option<&[u16]>,
+) -> Checked<Resolved> {
+    resolve_kind(c, attrs, name, true)
+}
+
+fn resolve_kind(
+    c: &Ctx,
+    attrs: &Attributes,
+    name: Option<&[u16]>,
+    retained_directory: bool,
+) -> Checked<Resolved> {
     let root = if attrs.root == 0 {
         None
     } else {
@@ -215,13 +242,27 @@ pub(super) fn resolve(c: &Ctx, attrs: &Attributes, name: Option<&[u16]>) -> Chec
         if !name.is_empty() && !file.directory {
             return status(STATUS_OBJECT_PATH_NOT_FOUND);
         }
-        if !c.p.cfg.host_filesystem {
+        if !c.p.cfg.host_filesystem && !c.p.objects.runtime_library(attrs.root) {
             return status(STATUS_ACCESS_DENIED);
         }
         if file.null {
             return Err(c.unsupported("NT NUL device metadata").into());
         }
         let (parts, directory) = parts(c, name)?;
+        if retained_directory && file.host.is_some() {
+            let mut relative = PathBuf::new();
+            for part in &parts {
+                relative.push(host_component(c, part)?);
+            }
+            return Ok(Resolved {
+                host: file.host_path.join(&relative),
+                base: file.host_path.clone(),
+                root: Some(attrs.root),
+                relative: Some(relative),
+                directory,
+                runtime_library: c.p.objects.runtime_library(attrs.root),
+            });
+        }
         let base = if name.is_empty() && file.host.is_some() {
             // An empty relative name queries the retained file object even
             // after its old pathname was renamed, replaced or removed.
@@ -233,7 +274,9 @@ pub(super) fn resolve(c: &Ctx, attrs: &Attributes, name: Option<&[u16]>) -> Chec
             host: append(c, base.clone(), &parts)?,
             base,
             root: name.is_empty().then_some(attrs.root),
+            relative: None,
             directory,
+            runtime_library: c.p.objects.runtime_library(attrs.root),
         });
     }
     if name.is_empty() || name[0] != u16::from(b'\\') {
@@ -268,7 +311,9 @@ pub(super) fn resolve(c: &Ctx, attrs: &Attributes, name: Option<&[u16]>) -> Chec
             base: c.p.native.as_ref().unwrap().directory.clone(),
             host,
             root: None,
+            relative: None,
             directory,
+            runtime_library: true,
         });
     }
     if !c.p.cfg.host_filesystem {
@@ -282,6 +327,8 @@ pub(super) fn resolve(c: &Ctx, attrs: &Attributes, name: Option<&[u16]>) -> Chec
         host: append(c, base.clone(), &components)?,
         base,
         root: None,
+        relative: None,
         directory,
+        runtime_library: false,
     })
 }

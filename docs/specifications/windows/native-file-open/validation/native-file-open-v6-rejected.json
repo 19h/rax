@@ -1,0 +1,6 @@
+{
+  "status": "rejected-producer",
+  "reason": "Generator accidentally widened the 8-element access array index gate to roles154..403 while widening the outer loop. Roles162..403 perform out-of-bounds reads. Do not use v6 observations as behavioral evidence. Original v5 gate remains correct.",
+  "replacement": "native-file-open-v7",
+  "source-sha256": "3f2fa8131e09bbea36e828ea06b0a35e1a9d472db1afee2468ee1ec30e39b776"
+}

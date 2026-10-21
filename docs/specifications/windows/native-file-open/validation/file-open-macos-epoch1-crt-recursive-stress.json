@@ -1,0 +1,101 @@
+{
+  "scope": "Characterize the exact previously failing integration case with unchanged30s subprocess deadline; original full-suite timeout remains retained.",
+  "rounds": [
+    {
+      "round": 1,
+      "exit-code": 0,
+      "seconds": 0.2491622919915244,
+      "bytes": 332,
+      "sha256": "250800d33949faa463f51b79b7dbe929b978d348ca8008db3a53aaf4df8c6e37",
+      "log": "file-open-macos-epoch1-crt-recursive-stress-1.log"
+    },
+    {
+      "round": 2,
+      "exit-code": 0,
+      "seconds": 0.13581300002988428,
+      "bytes": 332,
+      "sha256": "68be261e31189ca34695c7dffebff5900066abc1f575b8f90bcaf4452ce4fc5e",
+      "log": "file-open-macos-epoch1-crt-recursive-stress-2.log"
+    },
+    {
+      "round": 3,
+      "exit-code": 0,
+      "seconds": 0.13406995800323784,
+      "bytes": 332,
+      "sha256": "68be261e31189ca34695c7dffebff5900066abc1f575b8f90bcaf4452ce4fc5e",
+      "log": "file-open-macos-epoch1-crt-recursive-stress-3.log"
+    },
+    {
+      "round": 4,
+      "exit-code": 0,
+      "seconds": 0.15532583295134827,
+      "bytes": 332,
+      "sha256": "5898a1efca5b2fcafba36a60bdcff2f5ebdbfa29d94eb6737bf23fed3502448c",
+      "log": "file-open-macos-epoch1-crt-recursive-stress-4.log"
+    },
+    {
+      "round": 5,
+      "exit-code": 0,
+      "seconds": 0.1340647920151241,
+      "bytes": 332,
+      "sha256": "68be261e31189ca34695c7dffebff5900066abc1f575b8f90bcaf4452ce4fc5e",
+      "log": "file-open-macos-epoch1-crt-recursive-stress-5.log"
+    },
+    {
+      "round": 6,
+      "exit-code": 0,
+      "seconds": 0.14663316699443385,
+      "bytes": 332,
+      "sha256": "cc1c3ff2d3aa6a070f947435b003def6169b0bc94d4cc212c816d3831e6833f9",
+      "log": "file-open-macos-epoch1-crt-recursive-stress-6.log"
+    },
+    {
+      "round": 7,
+      "exit-code": 0,
+      "seconds": 0.1424750419682823,
+      "bytes": 332,
+      "sha256": "cc1c3ff2d3aa6a070f947435b003def6169b0bc94d4cc212c816d3831e6833f9",
+      "log": "file-open-macos-epoch1-crt-recursive-stress-7.log"
+    },
+    {
+      "round": 8,
+      "exit-code": 0,
+      "seconds": 0.145304000005126,
+      "bytes": 332,
+      "sha256": "cc1c3ff2d3aa6a070f947435b003def6169b0bc94d4cc212c816d3831e6833f9",
+      "log": "file-open-macos-epoch1-crt-recursive-stress-8.log"
+    },
+    {
+      "round": 9,
+      "exit-code": 0,
+      "seconds": 0.14844862499739975,
+      "bytes": 332,
+      "sha256": "ce081bf1d128a7e068b98eea2cad6dffa3f6005f05a0ae914d9676a4b6c7724f",
+      "log": "file-open-macos-epoch1-crt-recursive-stress-9.log"
+    },
+    {
+      "round": 10,
+      "exit-code": 0,
+      "seconds": 0.14642733300570399,
+      "bytes": 332,
+      "sha256": "5898a1efca5b2fcafba36a60bdcff2f5ebdbfa29d94eb6737bf23fed3502448c",
+      "log": "file-open-macos-epoch1-crt-recursive-stress-10.log"
+    },
+    {
+      "round": 11,
+      "exit-code": 0,
+      "seconds": 0.1315261249546893,
+      "bytes": 332,
+      "sha256": "68be261e31189ca34695c7dffebff5900066abc1f575b8f90bcaf4452ce4fc5e",
+      "log": "file-open-macos-epoch1-crt-recursive-stress-11.log"
+    },
+    {
+      "round": 12,
+      "exit-code": 0,
+      "seconds": 0.130446832976304,
+      "bytes": 332,
+      "sha256": "68be261e31189ca34695c7dffebff5900066abc1f575b8f90bcaf4452ce4fc5e",
+      "log": "file-open-macos-epoch1-crt-recursive-stress-12.log"
+    }
+  ]
+}

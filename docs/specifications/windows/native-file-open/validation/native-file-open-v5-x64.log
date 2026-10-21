@@ -1,0 +1,646 @@
+profile pointer-bytes=8 attrs-bytes=48 iosb-bytes=16 roles=161
+case role=1 status=00000000 exception=00000000 hprot=00000004 iprot=00000004 hvalid=1 closed=1 hflags=00000000 hout=F000000000000000 iosb=00000000000000000100000000000000 io-prefix=00000000000000000100000000000000 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=1
+diag role=1 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=1 granted=00100021 basic-status=C0000022 standard-status=00000000 network-status=C0000022 directory=0 rooted-basic-status=00000000
+identity role=1 available=1 stable=1
+case role=2 status=00000000 exception=00000000 hprot=00000004 iprot=00000004 hvalid=1 closed=1 hflags=00000000 hout=F000000000000000 iosb=00000000000000000100000000000000 io-prefix=00000000000000000100000000000000 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=1
+diag role=2 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=2 granted=00100021 basic-status=C0000022 standard-status=00000000 network-status=C0000022 directory=0 rooted-basic-status=00000000
+identity role=2 available=1 stable=1
+case role=3 status=C0000034 exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=3 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=3 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=3 available=0 stable=0
+case role=4 status=C000003A exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=4 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=4 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=4 available=0 stable=0
+case role=5 status=C00000BA exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=5 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=5 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=5 available=0 stable=0
+case role=6 status=C0000103 exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=6 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=6 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=6 available=0 stable=0
+case role=7 status=00000000 exception=00000000 hprot=00000004 iprot=00000004 hvalid=1 closed=1 hflags=00000000 hout=F400000000000000 iosb=00000000000000000100000000000000 io-prefix=00000000000000000100000000000000 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=1
+diag role=7 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=7 granted=00100021 basic-status=C0000022 standard-status=00000000 network-status=C0000022 directory=0 rooted-basic-status=00000000
+identity role=7 available=1 stable=1
+case role=8 status=C0000005 exception=00000000 hprot=00000001 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=- iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=8 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=8 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=8 available=0 stable=0
+case role=9 status=C0000005 exception=00000000 hprot=00000004 iprot=00000001 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=- io-prefix=00000000000000000000000000000000 io-readable=00000000000000000000000000000000 handle-count-before=62 handle-count-after=62 changed=0
+diag role=9 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=9 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=9 available=0 stable=0
+case role=10 status=C000000D exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=10 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=10 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=10 available=0 stable=0
+case role=11 status=80000002 exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=11 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=11 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=11 available=0 stable=0
+case role=12 status=C000000D exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=12 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=12 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=12 available=0 stable=0
+case role=13 status=00000000 exception=00000000 hprot=00000004 iprot=00000004 hvalid=1 closed=1 hflags=00000000 hout=F400000000000000 iosb=00000000000000000100000000000000 io-prefix=00000000000000000100000000000000 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=1
+diag role=13 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=13 granted=00100021 basic-status=C0000022 standard-status=00000000 network-status=C0000022 directory=0 rooted-basic-status=00000000
+identity role=13 available=1 stable=1
+case role=14 status=00000000 exception=00000000 hprot=00000004 iprot=00000004 hvalid=1 closed=1 hflags=00000000 hout=F400000000000000 iosb=00000000000000000100000000000000 io-prefix=00000000000000000100000000000000 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=1
+diag role=14 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=14 granted=00100021 basic-status=C0000022 standard-status=00000000 network-status=C0000022 directory=0 rooted-basic-status=00000000
+identity role=14 available=1 stable=1
+case role=15 status=00000000 exception=00000000 hprot=00000004 iprot=00000004 hvalid=1 closed=1 hflags=00000000 hout=F400000000000000 iosb=00000000000000000100000000000000 io-prefix=00000000000000000100000000000000 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=1
+diag role=15 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=15 granted=00100021 basic-status=C0000022 standard-status=00000000 network-status=C0000022 directory=0 rooted-basic-status=00000000
+identity role=15 available=1 stable=1
+case role=16 status=00000000 exception=00000000 hprot=00000004 iprot=00000004 hvalid=1 closed=1 hflags=00000000 hout=F400000000000000 iosb=00000000000000000100000000000000 io-prefix=00000000000000000100000000000000 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=1
+diag role=16 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=16 granted=00100021 basic-status=C0000022 standard-status=00000000 network-status=C0000022 directory=0 rooted-basic-status=00000000
+identity role=16 available=1 stable=1
+case role=17 status=00000000 exception=00000000 hprot=00000004 iprot=00000004 hvalid=1 closed=1 hflags=00000000 hout=F400000000000000 iosb=00000000000000000100000000000000 io-prefix=00000000000000000100000000000000 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=1
+diag role=17 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=17 granted=00100021 basic-status=C0000022 standard-status=00000000 network-status=C0000022 directory=0 rooted-basic-status=00000000
+identity role=17 available=1 stable=1
+case role=18 status=00000000 exception=00000000 hprot=00000004 iprot=00000004 hvalid=1 closed=1 hflags=00000000 hout=F400000000000000 iosb=00000000000000000100000000000000 io-prefix=00000000000000000100000000000000 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=1
+diag role=18 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=18 granted=00100021 basic-status=C0000022 standard-status=00000000 network-status=C0000022 directory=0 rooted-basic-status=00000000
+identity role=18 available=1 stable=1
+case role=19 status=C0000005 exception=00000000 hprot=00000001 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=- iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=19 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=19 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=19 available=0 stable=0
+case role=20 status=C0000005 exception=00000000 hprot=00000004 iprot=00000001 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=- io-prefix=00000000000000000000000000000000 io-readable=00000000000000000000000000000000 handle-count-before=62 handle-count-after=62 changed=0
+diag role=20 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=20 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=20 available=0 stable=0
+case role=21 status=C0000005 exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=21 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=21 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=21 available=0 stable=0
+case role=22 status=C0000005 exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=22 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=22 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=22 available=0 stable=0
+case role=23 status=C0000005 exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=23 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=23 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=23 available=0 stable=0
+case role=24 status=80000001 exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=0000000000000000 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=1
+diag role=24 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=24 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=24 available=0 stable=0
+case role=25 status=80000001 exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=00000000000000000000000000000000 io-prefix=00000000000000000000000000000000 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=25 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=25 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=25 available=0 stable=0
+case role=26 status=80000001 exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=26 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=26 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=26 available=0 stable=0
+case role=27 status=80000001 exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=27 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=27 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=27 available=0 stable=0
+case role=28 status=80000001 exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=28 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=28 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=28 available=0 stable=0
+case role=29 status=C0000005 exception=00000000 hprot=00000001 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=- iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=29 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=29 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=29 available=0 stable=0
+case role=30 status=C0000005 exception=00000000 hprot=00000004 iprot=00000001 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=- io-prefix=00000000000000000000000000000000 io-readable=00000000000000000000000000000000 handle-count-before=62 handle-count-after=62 changed=0
+diag role=30 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=30 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=30 available=0 stable=0
+case role=31 status=80000001 exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=0000000000000000 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=1
+diag role=31 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=31 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=31 available=0 stable=0
+case role=32 status=80000001 exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=00000000000000000000000000000000 io-prefix=00000000000000000000000000000000 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=32 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=32 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=32 available=0 stable=0
+case role=33 status=C0000005 exception=00000000 hprot=00000001 iprot=00000104 hvalid=0 closed=0 hflags=00000000 hout=- iosb=- io-prefix=00000000000000000000000000000000 io-readable=00000000000000000000000000000000 handle-count-before=62 handle-count-after=62 changed=0
+diag role=33 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=33 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=33 available=0 stable=0
+case role=34 status=80000001 exception=00000000 hprot=00000004 iprot=00000001 hvalid=0 closed=0 hflags=00000000 hout=0000000000000000 iosb=- io-prefix=00000000000000000000000000000000 io-readable=00000000000000000000000000000000 handle-count-before=62 handle-count-after=62 changed=1
+diag role=34 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=34 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=34 available=0 stable=0
+case role=35 status=C000000D exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=35 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=35 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=35 available=0 stable=0
+case role=36 status=C0000008 exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=36 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=36 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=36 available=0 stable=0
+case role=37 status=C0000024 exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=37 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=37 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=37 available=0 stable=0
+case role=38 status=00000000 exception=00000000 hprot=00000004 iprot=00000004 hvalid=1 closed=1 hflags=00000000 hout=F400000000000000 iosb=00000000000000000100000000000000 io-prefix=00000000000000000100000000000000 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=1
+diag role=38 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=38 granted=00100021 basic-status=C0000022 standard-status=00000000 network-status=C0000022 directory=0 rooted-basic-status=00000000
+identity role=38 available=1 stable=1
+case role=39 status=00000000 exception=00000000 hprot=00000004 iprot=00000004 hvalid=1 closed=1 hflags=00000000 hout=F400000000000000 iosb=00000000000000000100000000000000 io-prefix=00000000000000000100000000000000 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=1
+diag role=39 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=39 granted=00100021 basic-status=C0000022 standard-status=00000000 network-status=C0000022 directory=0 rooted-basic-status=00000000
+identity role=39 available=1 stable=1
+case role=40 status=C000003A exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=40 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=40 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=40 available=0 stable=0
+case role=41 status=C000003B exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=41 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=41 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=41 available=0 stable=0
+case role=42 status=C000003B exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=42 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=42 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=42 available=0 stable=0
+case role=43 status=C0000033 exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=43 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=43 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=43 available=0 stable=0
+case role=44 status=80000002 exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=44 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=44 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=44 available=0 stable=0
+case role=45 status=C0000005 exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=- iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=45 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=45 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=45 available=0 stable=0
+case role=46 status=C0000005 exception=00000000 hprot=00000004 iprot=00000004 hvalid=1 closed=1 hflags=00000000 hout=F400000000000000 iosb=- io-prefix=0000000000000000A5A5A5A5A5A5A500 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00 handle-count-before=62 handle-count-after=62 changed=1
+diag role=46 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=46 granted=00100021 basic-status=C0000022 standard-status=00000000 network-status=C0000022 directory=0 rooted-basic-status=00000000
+identity role=46 available=1 stable=1
+case role=47 status=C0000005 exception=00000000 hprot=00000002 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=47 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=47 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=47 available=0 stable=0
+case role=48 status=C0000005 exception=00000000 hprot=00000004 iprot=00000002 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=48 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=48 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=48 available=0 stable=0
+case role=49 status=80000001 exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=0000000000000000 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=1
+diag role=49 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=49 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=49 available=0 stable=0
+case role=50 status=C000003B exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=50 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=50 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=50 available=0 stable=0
+case role=51 status=80000002 exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=51 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=51 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=51 available=0 stable=0
+case role=52 status=C0000005 exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=52 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=52 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=52 available=0 stable=0
+case role=53 status=C00000A5 exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=53 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=53 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=53 available=0 stable=0
+case role=54 status=C000000D exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=54 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=54 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=54 available=0 stable=0
+case role=55 status=80000002 exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=55 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=55 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=55 available=0 stable=0
+case role=56 status=C0000005 exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=56 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=56 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=56 available=0 stable=0
+case role=57 status=C0000058 exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=57 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=57 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=57 available=0 stable=0
+case role=58 status=C0000005 exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=58 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=58 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=58 available=0 stable=0
+case role=59 status=C0000005 exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=59 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=59 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=59 available=0 stable=0
+case role=60 status=00000000 exception=00000000 hprot=00000004 iprot=00000004 hvalid=1 closed=1 hflags=00000000 hout=F400000000000000 iosb=00000000000000000100000000000000 io-prefix=00000000000000000100000000000000 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=1
+diag role=60 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=60 granted=00100080 basic-status=00000000 standard-status=00000000 network-status=00000000 directory=0 rooted-basic-status=00000000
+identity role=60 available=1 stable=1
+case role=61 status=C000000D exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=61 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=61 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=61 available=0 stable=0
+case role=62 status=C0000022 exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=62 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=62 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=62 available=0 stable=0
+case role=63 status=C000000D exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=63 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=63 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=63 available=0 stable=0
+case role=64 status=C000000D exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=64 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=64 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=64 available=0 stable=0
+case role=65 status=C000000D exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=65 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=65 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=65 available=0 stable=0
+case role=66 status=C000000D exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=66 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=66 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=66 available=0 stable=0
+case role=67 status=C000000D exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=67 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=67 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=67 available=0 stable=0
+case role=68 status=00000000 exception=00000000 hprot=00000004 iprot=00000004 hvalid=1 closed=1 hflags=00000000 hout=F400000000000000 iosb=00000000000000000100000000000000 io-prefix=00000000000000000100000000000000 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=1
+diag role=68 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=68 granted=00110000 basic-status=C0000022 standard-status=00000000 network-status=C0000022 directory=0 rooted-basic-status=00000000
+identity role=68 available=1 stable=1
+case role=69 status=C000000D exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=69 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=69 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=69 available=0 stable=0
+case role=70 status=00000000 exception=00000000 hprot=00000004 iprot=00000004 hvalid=1 closed=1 hflags=00000000 hout=F400000000000000 iosb=00000000000000000100000000000000 io-prefix=00000000000000000100000000000000 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=1
+diag role=70 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=70 granted=00100021 basic-status=C0000022 standard-status=00000000 network-status=C0000022 directory=0 rooted-basic-status=00000000
+identity role=70 available=1 stable=1
+case role=71 status=00000000 exception=00000000 hprot=00000004 iprot=00000004 hvalid=1 closed=1 hflags=00000000 hout=F400000000000000 iosb=00000000000000000100000000000000 io-prefix=00000000000000000100000000000000 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=1
+diag role=71 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=71 granted=00100021 basic-status=C0000022 standard-status=00000000 network-status=C0000022 directory=1 rooted-basic-status=00000000
+identity role=71 available=1 stable=1
+case role=72 status=C000000D exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=72 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=72 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=72 available=0 stable=0
+case role=73 status=C00000BA exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=73 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=73 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=73 available=0 stable=0
+case role=74 status=00000000 exception=00000000 hprot=00000004 iprot=00000004 hvalid=1 closed=1 hflags=00000001 hout=F400000000000000 iosb=00000000000000000100000000000000 io-prefix=00000000000000000100000000000000 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=1
+diag role=74 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=74 granted=00100021 basic-status=C0000022 standard-status=00000000 network-status=C0000022 directory=0 rooted-basic-status=00000000
+identity role=74 available=1 stable=1
+case role=75 status=00000000 exception=00000000 hprot=00000004 iprot=00000004 hvalid=1 closed=1 hflags=00000000 hout=F400000000000000 iosb=00000000000000000100000000000000 io-prefix=00000000000000000100000000000000 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=1
+diag role=75 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=75 granted=00100021 basic-status=C0000022 standard-status=00000000 network-status=C0000022 directory=0 rooted-basic-status=00000000
+identity role=75 available=1 stable=1
+case role=76 status=00000000 exception=00000000 hprot=00000004 iprot=00000004 hvalid=1 closed=1 hflags=00000000 hout=F400000000000000 iosb=00000000000000000100000000000000 io-prefix=00000000000000000100000000000000 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=1
+diag role=76 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=76 granted=00100021 basic-status=C0000022 standard-status=00000000 network-status=C0000022 directory=0 rooted-basic-status=00000000
+identity role=76 available=1 stable=1
+case role=77 status=00000000 exception=00000000 hprot=00000004 iprot=00000004 hvalid=1 closed=1 hflags=00000000 hout=F400000000000000 iosb=00000000000000000100000000000000 io-prefix=00000000000000000100000000000000 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=1
+diag role=77 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=77 granted=00100021 basic-status=C0000022 standard-status=00000000 network-status=C0000022 directory=0 rooted-basic-status=00000000
+identity role=77 available=1 stable=1
+case role=78 status=00000000 exception=00000000 hprot=00000004 iprot=00000004 hvalid=1 closed=1 hflags=00000000 hout=F400000000000000 iosb=00000000000000000100000000000000 io-prefix=00000000000000000100000000000000 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=1
+diag role=78 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=78 granted=00100021 basic-status=C0000022 standard-status=00000000 network-status=C0000022 directory=0 rooted-basic-status=00000000
+identity role=78 available=1 stable=1
+case role=79 status=C0000005 exception=00000000 hprot=00000004 iprot=00000001 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=- io-prefix=00000000000000000000000000000000 io-readable=00000000000000000000000000000000 handle-count-before=62 handle-count-after=62 changed=0
+diag role=79 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=79 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=79 available=0 stable=0
+case role=80 status=C0000005 exception=00000000 hprot=00000001 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=- iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=80 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=80 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=80 available=0 stable=0
+case role=81 status=80000001 exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=0000000000000000 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=1
+diag role=81 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=81 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=81 available=0 stable=0
+case role=82 status=80000001 exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=00000000000000000000000000000000 io-prefix=00000000000000000000000000000000 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=82 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=82 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=82 available=0 stable=0
+case role=83 status=80000001 exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=00000000000000000000000000000000 io-prefix=00000000000000000000000000000000 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=83 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=83 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=83 available=0 stable=0
+case role=84 status=80000001 exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=0000000000000000 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=1
+diag role=84 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=84 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=84 available=0 stable=0
+case role=85 status=C000003B exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=85 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=85 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=85 available=0 stable=0
+case role=86 status=C0000033 exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=86 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=86 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=86 available=0 stable=0
+case role=87 status=C0000033 exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=87 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=87 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=87 available=0 stable=0
+case role=88 status=C0000005 exception=00000000 hprot=00000004 iprot=00000001 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=- io-prefix=00000000000000000000000000000000 io-readable=00000000000000000000000000000000 handle-count-before=62 handle-count-after=62 changed=0
+diag role=88 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=88 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=88 available=0 stable=0
+case role=89 status=C0000005 exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=- io-prefix=A5000000000000000000000000000000 io-readable=FF000000000000000000000000000000 handle-count-before=62 handle-count-after=62 changed=0
+diag role=89 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=89 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=89 available=0 stable=0
+case role=90 status=C0000005 exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=- io-prefix=A5A50000000000000000000000000000 io-readable=FFFF0000000000000000000000000000 handle-count-before=62 handle-count-after=62 changed=0
+diag role=90 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=90 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=90 available=0 stable=0
+case role=91 status=C0000005 exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=- io-prefix=A5A5A500000000000000000000000000 io-readable=FFFFFF00000000000000000000000000 handle-count-before=62 handle-count-after=62 changed=0
+diag role=91 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=91 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=91 available=0 stable=0
+case role=92 status=C0000005 exception=00000000 hprot=00000004 iprot=00000004 hvalid=1 closed=1 hflags=00000000 hout=F000000000000000 iosb=- io-prefix=A5A5A5A5000000000000000000000000 io-readable=FFFFFFFF000000000000000000000000 handle-count-before=62 handle-count-after=62 changed=1
+diag role=92 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=92 granted=00100021 basic-status=C0000022 standard-status=00000000 network-status=C0000022 directory=0 rooted-basic-status=00000000
+identity role=92 available=1 stable=1
+case role=93 status=C0000005 exception=00000000 hprot=00000004 iprot=00000004 hvalid=1 closed=1 hflags=00000000 hout=F000000000000000 iosb=- io-prefix=A5A5A5A5A50000000000000000000000 io-readable=FFFFFFFFFF0000000000000000000000 handle-count-before=62 handle-count-after=62 changed=1
+diag role=93 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=93 granted=00100021 basic-status=C0000022 standard-status=00000000 network-status=C0000022 directory=0 rooted-basic-status=00000000
+identity role=93 available=1 stable=1
+case role=94 status=C0000005 exception=00000000 hprot=00000004 iprot=00000004 hvalid=1 closed=1 hflags=00000000 hout=F000000000000000 iosb=- io-prefix=A5A5A5A5A5A500000000000000000000 io-readable=FFFFFFFFFFFF00000000000000000000 handle-count-before=62 handle-count-after=62 changed=1
+diag role=94 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=94 granted=00100021 basic-status=C0000022 standard-status=00000000 network-status=C0000022 directory=0 rooted-basic-status=00000000
+identity role=94 available=1 stable=1
+case role=95 status=C0000005 exception=00000000 hprot=00000004 iprot=00000004 hvalid=1 closed=1 hflags=00000000 hout=F000000000000000 iosb=- io-prefix=A5A5A5A5A5A5A5000000000000000000 io-readable=FFFFFFFFFFFFFF000000000000000000 handle-count-before=62 handle-count-after=62 changed=1
+diag role=95 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=95 granted=00100021 basic-status=C0000022 standard-status=00000000 network-status=C0000022 directory=0 rooted-basic-status=00000000
+identity role=95 available=1 stable=1
+case role=96 status=C0000005 exception=00000000 hprot=00000004 iprot=00000004 hvalid=1 closed=1 hflags=00000000 hout=F000000000000000 iosb=- io-prefix=00000000000000000000000000000000 io-readable=FFFFFFFFFFFFFFFF0000000000000000 handle-count-before=62 handle-count-after=62 changed=1
+diag role=96 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=96 granted=00100021 basic-status=C0000022 standard-status=00000000 network-status=C0000022 directory=0 rooted-basic-status=00000000
+identity role=96 available=1 stable=1
+case role=97 status=C0000005 exception=00000000 hprot=00000004 iprot=00000004 hvalid=1 closed=1 hflags=00000000 hout=F000000000000000 iosb=- io-prefix=0000000000000000A500000000000000 io-readable=FFFFFFFFFFFFFFFFFF00000000000000 handle-count-before=62 handle-count-after=62 changed=1
+diag role=97 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=97 granted=00100021 basic-status=C0000022 standard-status=00000000 network-status=C0000022 directory=0 rooted-basic-status=00000000
+identity role=97 available=1 stable=1
+case role=98 status=C0000005 exception=00000000 hprot=00000004 iprot=00000004 hvalid=1 closed=1 hflags=00000000 hout=F000000000000000 iosb=- io-prefix=0000000000000000A5A5000000000000 io-readable=FFFFFFFFFFFFFFFFFFFF000000000000 handle-count-before=62 handle-count-after=62 changed=1
+diag role=98 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=98 granted=00100021 basic-status=C0000022 standard-status=00000000 network-status=C0000022 directory=0 rooted-basic-status=00000000
+identity role=98 available=1 stable=1
+case role=99 status=C0000005 exception=00000000 hprot=00000004 iprot=00000004 hvalid=1 closed=1 hflags=00000000 hout=F000000000000000 iosb=- io-prefix=0000000000000000A5A5A50000000000 io-readable=FFFFFFFFFFFFFFFFFFFFFF0000000000 handle-count-before=62 handle-count-after=62 changed=1
+diag role=99 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=99 granted=00100021 basic-status=C0000022 standard-status=00000000 network-status=C0000022 directory=0 rooted-basic-status=00000000
+identity role=99 available=1 stable=1
+case role=100 status=C0000005 exception=00000000 hprot=00000004 iprot=00000004 hvalid=1 closed=1 hflags=00000000 hout=F000000000000000 iosb=- io-prefix=0000000000000000A5A5A5A500000000 io-readable=FFFFFFFFFFFFFFFFFFFFFFFF00000000 handle-count-before=62 handle-count-after=62 changed=1
+diag role=100 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=100 granted=00100021 basic-status=C0000022 standard-status=00000000 network-status=C0000022 directory=0 rooted-basic-status=00000000
+identity role=100 available=1 stable=1
+case role=101 status=C0000005 exception=00000000 hprot=00000004 iprot=00000004 hvalid=1 closed=1 hflags=00000000 hout=F000000000000000 iosb=- io-prefix=0000000000000000A5A5A5A5A5000000 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFF000000 handle-count-before=62 handle-count-after=62 changed=1
+diag role=101 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=101 granted=00100021 basic-status=C0000022 standard-status=00000000 network-status=C0000022 directory=0 rooted-basic-status=00000000
+identity role=101 available=1 stable=1
+case role=102 status=C0000005 exception=00000000 hprot=00000004 iprot=00000004 hvalid=1 closed=1 hflags=00000000 hout=F000000000000000 iosb=- io-prefix=0000000000000000A5A5A5A5A5A50000 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFF0000 handle-count-before=62 handle-count-after=62 changed=1
+diag role=102 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=102 granted=00100021 basic-status=C0000022 standard-status=00000000 network-status=C0000022 directory=0 rooted-basic-status=00000000
+identity role=102 available=1 stable=1
+case role=103 status=C0000005 exception=00000000 hprot=00000004 iprot=00000004 hvalid=1 closed=1 hflags=00000000 hout=F000000000000000 iosb=- io-prefix=0000000000000000A5A5A5A5A5A5A500 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00 handle-count-before=62 handle-count-after=62 changed=1
+diag role=103 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=103 granted=00100021 basic-status=C0000022 standard-status=00000000 network-status=C0000022 directory=0 rooted-basic-status=00000000
+identity role=103 available=1 stable=1
+case role=104 status=00000000 exception=00000000 hprot=00000004 iprot=00000004 hvalid=1 closed=1 hflags=00000000 hout=F000000000000000 iosb=00000000000000000100000000000000 io-prefix=00000000000000000100000000000000 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=1
+diag role=104 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=104 granted=00100021 basic-status=C0000022 standard-status=00000000 network-status=C0000022 directory=0 rooted-basic-status=00000000
+identity role=104 available=1 stable=1
+case role=105 status=C0000005 exception=00000000 hprot=00000001 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=- iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=105 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=105 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=105 available=0 stable=0
+case role=106 status=C0000005 exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=- iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=106 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=106 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=106 available=0 stable=0
+case role=107 status=C0000005 exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=- iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=107 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=107 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=107 available=0 stable=0
+case role=108 status=C0000005 exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=- iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=108 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=108 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=108 available=0 stable=0
+case role=109 status=C0000005 exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=- iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=109 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=109 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=109 available=0 stable=0
+case role=110 status=C0000005 exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=- iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=110 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=110 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=110 available=0 stable=0
+case role=111 status=C0000005 exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=- iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=111 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=111 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=111 available=0 stable=0
+case role=112 status=C0000005 exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=- iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=112 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=112 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=112 available=0 stable=0
+case role=113 status=00000000 exception=00000000 hprot=00000004 iprot=00000004 hvalid=1 closed=1 hflags=00000000 hout=F000000000000000 iosb=00000000000000000100000000000000 io-prefix=00000000000000000100000000000000 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=1
+diag role=113 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=113 granted=00100021 basic-status=C0000022 standard-status=00000000 network-status=C0000022 directory=0 rooted-basic-status=00000000
+identity role=113 available=1 stable=1
+case role=114 status=C0000005 exception=00000000 hprot=00000001 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=- iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=114 api-last-error=12345678 before-attrs=00000020 before-error=0 after-attrs=00000020 after-error=0
+owned role=114 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=114 available=0 stable=0
+case role=115 status=C0000005 exception=00000000 hprot=00000001 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=- iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=115 api-last-error=12345678 before-attrs=00000020 before-error=0 after-attrs=00000020 after-error=0
+owned role=115 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=115 available=0 stable=0
+case role=116 status=80000001 exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=0000000000000000 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=1
+diag role=116 api-last-error=12345678 before-attrs=00000020 before-error=0 after-attrs=00000020 after-error=0
+owned role=116 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=116 available=0 stable=0
+case role=117 status=C0000005 exception=00000000 hprot=00000004 iprot=00000001 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=- io-prefix=00000000000000000000000000000000 io-readable=00000000000000000000000000000000 handle-count-before=62 handle-count-after=62 changed=0
+diag role=117 api-last-error=12345678 before-attrs=00000020 before-error=0 after-attrs=00000020 after-error=0
+owned role=117 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=117 available=0 stable=0
+case role=118 status=C0000005 exception=00000000 hprot=00000004 iprot=00000001 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=- io-prefix=00000000000000000000000000000000 io-readable=00000000000000000000000000000000 handle-count-before=62 handle-count-after=62 changed=0
+diag role=118 api-last-error=12345678 before-attrs=00000020 before-error=0 after-attrs=00000020 after-error=0
+owned role=118 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=118 available=0 stable=0
+case role=119 status=80000001 exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=00000000000000000000000000000000 io-prefix=00000000000000000000000000000000 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=119 api-last-error=12345678 before-attrs=00000020 before-error=0 after-attrs=00000020 after-error=0
+owned role=119 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=119 available=0 stable=0
+case role=120 status=C0000005 exception=00000000 hprot=00000004 iprot=00000004 hvalid=1 closed=1 hflags=00000000 hout=F000000000000000 iosb=- io-prefix=0000000000000000A5A5A5A5A5A5A500 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00 handle-count-before=62 handle-count-after=62 changed=1
+diag role=120 api-last-error=12345678 before-attrs=00000020 before-error=0 after-attrs=FFFFFFFF after-error=2
+owned role=120 granted=00110021 basic-status=C0000022 standard-status=00000000 network-status=C0000022 directory=0 rooted-basic-status=00000000
+identity role=120 available=1 stable=1
+case role=121 status=00000000 exception=00000000 hprot=00000004 iprot=00000004 hvalid=1 closed=1 hflags=00000000 hout=F000000000000000 iosb=00000000000000000100000000000000 io-prefix=00000000000000000100000000000000 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=1
+diag role=121 api-last-error=12345678 before-attrs=00000020 before-error=0 after-attrs=FFFFFFFF after-error=2
+owned role=121 granted=00110021 basic-status=C0000022 standard-status=00000000 network-status=C0000022 directory=0 rooted-basic-status=00000000
+identity role=121 available=1 stable=1
+case role=122 status=C000000D exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=122 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=122 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=122 available=0 stable=0
+case role=123 status=00000000 exception=00000000 hprot=00000004 iprot=00000004 hvalid=1 closed=1 hflags=00000001 hout=F000000000000000 iosb=00000000000000000100000000000000 io-prefix=00000000000000000100000000000000 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=1
+diag role=123 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=123 granted=00100021 basic-status=C0000022 standard-status=00000000 network-status=C0000022 directory=0 rooted-basic-status=00000000
+identity role=123 available=1 stable=1
+case role=124 status=C000000D exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=124 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=124 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=124 available=0 stable=0
+case role=125 status=C000000D exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=125 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=125 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=125 available=0 stable=0
+case role=126 status=C000000D exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=126 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=126 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=126 available=0 stable=0
+case role=127 status=C000000D exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=127 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=127 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=127 available=0 stable=0
+case role=128 status=00000000 exception=00000000 hprot=00000004 iprot=00000004 hvalid=1 closed=1 hflags=00000000 hout=F400000000000000 iosb=00000000000000000100000000000000 io-prefix=00000000000000000100000000000000 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=1
+diag role=128 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=128 granted=00100021 basic-status=C0000022 standard-status=00000000 network-status=C0000022 directory=0 rooted-basic-status=00000000
+identity role=128 available=1 stable=1
+case role=129 status=00000000 exception=00000000 hprot=00000004 iprot=00000004 hvalid=1 closed=1 hflags=00000000 hout=F400000000000000 iosb=00000000000000000100000000000000 io-prefix=00000000000000000100000000000000 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=1
+diag role=129 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=129 granted=00100021 basic-status=C0000022 standard-status=00000000 network-status=C0000022 directory=0 rooted-basic-status=00000000
+identity role=129 available=1 stable=1
+case role=130 status=C000000D exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=130 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=130 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=130 available=0 stable=0
+case role=131 status=00000000 exception=00000000 hprot=00000004 iprot=00000004 hvalid=1 closed=1 hflags=00000000 hout=F400000000000000 iosb=00000000000000000100000000000000 io-prefix=00000000000000000100000000000000 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=1
+diag role=131 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=131 granted=00100021 basic-status=C0000022 standard-status=00000000 network-status=C0000022 directory=0 rooted-basic-status=00000000
+identity role=131 available=1 stable=1
+case role=132 status=00000000 exception=00000000 hprot=00000004 iprot=00000004 hvalid=1 closed=1 hflags=00000000 hout=F400000000000000 iosb=00000000000000000100000000000000 io-prefix=00000000000000000100000000000000 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=1
+diag role=132 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=132 granted=00100021 basic-status=C0000022 standard-status=00000000 network-status=C0000022 directory=0 rooted-basic-status=00000000
+identity role=132 available=1 stable=1
+case role=133 status=00000000 exception=00000000 hprot=00000004 iprot=00000004 hvalid=1 closed=1 hflags=00000000 hout=F400000000000000 iosb=00000000000000000100000000000000 io-prefix=00000000000000000100000000000000 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=1
+diag role=133 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=133 granted=00100021 basic-status=C0000022 standard-status=00000000 network-status=C0000022 directory=0 rooted-basic-status=00000000
+identity role=133 available=1 stable=1
+case role=134 status=00000000 exception=00000000 hprot=00000004 iprot=00000004 hvalid=1 closed=1 hflags=00000000 hout=F400000000000000 iosb=00000000000000000100000000000000 io-prefix=00000000000000000100000000000000 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=1
+diag role=134 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=134 granted=00100021 basic-status=C0000022 standard-status=00000000 network-status=C0000022 directory=0 rooted-basic-status=00000000
+identity role=134 available=1 stable=1
+case role=135 status=C000000D exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=135 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=135 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=135 available=0 stable=0
+case role=136 status=C000000D exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=136 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=136 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=136 available=0 stable=0
+case role=137 status=C000000D exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=137 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=137 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=137 available=0 stable=0
+case role=138 status=00000000 exception=00000000 hprot=00000004 iprot=00000004 hvalid=1 closed=1 hflags=00000000 hout=F400000000000000 iosb=00000000000000000100000000000000 io-prefix=00000000000000000100000000000000 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=1
+diag role=138 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=138 granted=00100021 basic-status=C0000022 standard-status=00000000 network-status=C0000022 directory=0 rooted-basic-status=00000000
+identity role=138 available=1 stable=1
+case role=139 status=C000000D exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=139 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=139 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=139 available=0 stable=0
+case role=140 status=C000000D exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=140 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=140 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=140 available=0 stable=0
+case role=141 status=C000000D exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=141 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=141 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=141 available=0 stable=0
+case role=142 status=C000000D exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=142 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=142 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=142 available=0 stable=0
+case role=143 status=C000000D exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=143 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=143 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=143 available=0 stable=0
+case role=144 status=C000000D exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=144 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=144 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=144 available=0 stable=0
+case role=145 status=C000000D exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=145 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=145 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=145 available=0 stable=0
+case role=146 status=C000000D exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=146 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=146 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=146 available=0 stable=0
+case role=147 status=C000000D exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=147 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=147 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=147 available=0 stable=0
+case role=148 status=C000000D exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=148 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=148 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=148 available=0 stable=0
+case role=149 status=C000000D exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=149 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=149 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=149 available=0 stable=0
+case role=150 status=C000000D exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=150 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=150 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=150 available=0 stable=0
+case role=151 status=C000000D exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=151 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=151 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=151 available=0 stable=0
+case role=152 status=C000000D exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=152 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=152 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=152 available=0 stable=0
+case role=153 status=C000000D exception=00000000 hprot=00000004 iprot=00000004 hvalid=0 closed=0 hflags=00000000 hout=A5A5A5A5A5A5A5A5 iosb=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-prefix=A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=0
+diag role=153 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=153 granted=00000000 basic-status=FFFFFFFF standard-status=FFFFFFFF network-status=FFFFFFFF directory=0 rooted-basic-status=FFFFFFFF
+identity role=153 available=0 stable=0
+case role=154 status=00000000 exception=00000000 hprot=00000004 iprot=00000004 hvalid=1 closed=1 hflags=00000000 hout=F400000000000000 iosb=00000000000000000100000000000000 io-prefix=00000000000000000100000000000000 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=1
+diag role=154 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=154 granted=00120089 basic-status=00000000 standard-status=00000000 network-status=00000000 directory=0 rooted-basic-status=00000000
+identity role=154 available=1 stable=1
+case role=155 status=00000000 exception=00000000 hprot=00000004 iprot=00000004 hvalid=1 closed=1 hflags=00000000 hout=F400000000000000 iosb=00000000000000000100000000000000 io-prefix=00000000000000000100000000000000 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=1
+diag role=155 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=155 granted=00120116 basic-status=C0000022 standard-status=00000000 network-status=C0000022 directory=0 rooted-basic-status=00000000
+identity role=155 available=1 stable=1
+case role=156 status=00000000 exception=00000000 hprot=00000004 iprot=00000004 hvalid=1 closed=1 hflags=00000000 hout=F400000000000000 iosb=00000000000000000100000000000000 io-prefix=00000000000000000100000000000000 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=1
+diag role=156 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=156 granted=001200A0 basic-status=00000000 standard-status=00000000 network-status=00000000 directory=0 rooted-basic-status=00000000
+identity role=156 available=1 stable=1
+case role=157 status=00000000 exception=00000000 hprot=00000004 iprot=00000004 hvalid=1 closed=1 hflags=00000000 hout=F400000000000000 iosb=00000000000000000100000000000000 io-prefix=00000000000000000100000000000000 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=1
+diag role=157 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=157 granted=001F01FF basic-status=00000000 standard-status=00000000 network-status=00000000 directory=0 rooted-basic-status=00000000
+identity role=157 available=1 stable=1
+case role=158 status=00000000 exception=00000000 hprot=00000004 iprot=00000004 hvalid=1 closed=1 hflags=00000000 hout=F400000000000000 iosb=00000000000000000100000000000000 io-prefix=00000000000000000100000000000000 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=1
+diag role=158 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=158 granted=00100080 basic-status=00000000 standard-status=00000000 network-status=00000000 directory=0 rooted-basic-status=00000000
+identity role=158 available=1 stable=1
+case role=159 status=00000000 exception=00000000 hprot=00000004 iprot=00000004 hvalid=1 closed=1 hflags=00000000 hout=F400000000000000 iosb=00000000000000000100000000000000 io-prefix=00000000000000000100000000000000 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=1
+diag role=159 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=159 granted=00100020 basic-status=C0000022 standard-status=00000000 network-status=C0000022 directory=0 rooted-basic-status=00000000
+identity role=159 available=1 stable=1
+case role=160 status=00000000 exception=00000000 hprot=00000004 iprot=00000004 hvalid=1 closed=1 hflags=00000000 hout=F400000000000000 iosb=00000000000000000100000000000000 io-prefix=00000000000000000100000000000000 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=1
+diag role=160 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=160 granted=00100001 basic-status=C0000022 standard-status=00000000 network-status=C0000022 directory=0 rooted-basic-status=00000000
+identity role=160 available=1 stable=1
+case role=161 status=00000000 exception=00000000 hprot=00000004 iprot=00000004 hvalid=1 closed=1 hflags=00000000 hout=F400000000000000 iosb=00000000000000000100000000000000 io-prefix=00000000000000000100000000000000 io-readable=FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF handle-count-before=62 handle-count-after=62 changed=1
+diag role=161 api-last-error=12345678 before-attrs=00000000 before-error=0 after-attrs=00000000 after-error=0
+owned role=161 granted=00100000 basic-status=C0000022 standard-status=00000000 network-status=C0000022 directory=0 rooted-basic-status=00000000
+identity role=161 available=1 stable=1
+finished=1 handle-count-before=62 handle-count-after=62

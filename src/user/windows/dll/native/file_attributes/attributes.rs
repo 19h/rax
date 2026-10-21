@@ -12,9 +12,9 @@ use crate::user::windows::nt::status::{
 const INVALID_ACL: u32 = 0xc000_0077;
 const BAD_IMPERSONATION_LEVEL: u32 = 0xc000_00a5;
 
-pub(super) struct Attributes {
-    pub(super) root: u64,
-    pub(super) flags: u32,
+pub(in super::super) struct Attributes {
+    pub(in super::super) root: u64,
+    pub(in super::super) flags: u32,
     name: Option<Name>,
     security: Option<Security>,
     qos: Option<Vec<u8>>,
@@ -109,7 +109,25 @@ fn validate_qos(qos: &[u8]) -> Checked<()> {
     Ok(())
 }
 
-pub(super) fn capture(c: &Ctx, address: u64, wow: bool) -> Checked<Option<Attributes>> {
+pub(in super::super) fn capture(c: &Ctx, address: u64, wow: bool) -> Checked<Option<Attributes>> {
+    capture_with(c, address, wow, 0x11ff2, false)
+}
+
+pub(in super::super) fn capture_open(
+    c: &Ctx,
+    address: u64,
+    wow: bool,
+) -> Checked<Option<Attributes>> {
+    capture_with(c, address, wow, 0x11ec2, true)
+}
+
+fn capture_with(
+    c: &Ctx,
+    address: u64,
+    wow: bool,
+    allowed: u32,
+    opening: bool,
+) -> Checked<Option<Attributes>> {
     if address == 0 {
         return Ok(None);
     }
@@ -126,7 +144,7 @@ pub(super) fn capture(c: &Ctx, address: u64, wow: bool) -> Checked<Option<Attrib
     }
     let width = if wow { 4 } else { 8 };
     let flags = u32_at(&header, width * 3);
-    if !wow && flags & !0x11ff2 != 0 {
+    if !wow && flags & !allowed != 0 {
         return status(STATUS_INVALID_PARAMETER);
     }
     let name_address = pointer(&header, width * 2, !wow);
@@ -141,7 +159,13 @@ pub(super) fn capture(c: &Ctx, address: u64, wow: bool) -> Checked<Option<Attrib
         // Header conversion precedes reachable character reads. Malformed
         // odd/overlong names reach kernel syntax validation without visiting
         // their character buffer, including a guarded/unmapped buffer.
+        // The measured WoW64 open wrapper cannot redirect an invalid root.
+        // It still captures headers, but leaves its character buffer for the
+        // native capture and consequently publishes a zero failed handle.
+        let root = pointer(&header, width, false);
+        let deferred_root = opening && root != 0 && c.p.objects.get(root).is_none();
         if let Some(name) = &mut name
+            && !deferred_root
             && name.buffer != 0
             && name.length % 2 == 0
             && name.length < 65534
@@ -222,7 +246,7 @@ fn security_validate(c: &Ctx, captured: &Security) -> Checked<()> {
     Ok(())
 }
 
-pub(super) fn validate(c: &Ctx, attrs: &Attributes) -> Checked<Option<Vec<u16>>> {
+pub(in super::super) fn validate(c: &Ctx, attrs: &Attributes) -> Checked<Option<Vec<u16>>> {
     if attrs.flags & !0x11ff2 != 0 {
         return status(STATUS_INVALID_PARAMETER);
     }

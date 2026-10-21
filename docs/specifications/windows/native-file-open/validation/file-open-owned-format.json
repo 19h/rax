@@ -1,0 +1,33 @@
+{
+  "argv": [
+    "rustfmt",
+    "+1.95.0",
+    "--edition",
+    "2024",
+    "--config",
+    "skip_children=true",
+    "--check",
+    "/Users/int/.assist-native-file-open-20261020/src/user/windows/process/sched/tests/services_tests.rs",
+    "/Users/int/.assist-native-file-open-20261020/src/user/windows/process/sched/tests/services_tests/file_open_tests.rs",
+    "/Users/int/.assist-native-file-open-20261020/src/user/windows/dll/native.rs",
+    "/Users/int/.assist-native-file-open-20261020/src/user/windows/dll/native/file_open.rs",
+    "/Users/int/.assist-native-file-open-20261020/src/user/windows/dll/native/file_open/host.rs",
+    "/Users/int/.assist-native-file-open-20261020/src/user/windows/dll/native/file_open/host/windows.rs",
+    "/Users/int/.assist-native-file-open-20261020/src/user/windows/dll/native/file_open/host/unix.rs",
+    "/Users/int/.assist-native-file-open-20261020/src/user/windows/dll/native/file_attributes.rs",
+    "/Users/int/.assist-native-file-open-20261020/src/user/windows/dll/native/file_attributes/attributes.rs",
+    "/Users/int/.assist-native-file-open-20261020/src/user/windows/dll/native/file_attributes/path.rs",
+    "/Users/int/.assist-native-file-open-20261020/src/user/windows/dll/native/file_attributes/metadata/windows.rs",
+    "/Users/int/.assist-native-file-open-20261020/src/user/windows/objects.rs",
+    "/Users/int/.assist-native-file-open-20261020/src/user/windows/fs.rs",
+    "/Users/int/.assist-native-file-open-20261020/src/user/windows/process/sched/tests/services_tests/file_open_tests/paired.rs",
+    "/Users/int/.assist-native-file-open-20261020/src/user/windows/fs/windows.rs",
+    "/Users/int/.assist-native-file-open-20261020/src/user/windows/dll/files/open.rs",
+    "/Users/int/.assist-native-file-open-20261020/src/user/windows/dll/files/tests.rs",
+    "/Users/int/.assist-native-file-open-20261020/src/user/windows/process/sched/tests/services_tests/file_open_tests/boundaries.rs",
+    "/Users/int/.assist-native-file-open-20261020/src/user/windows/dll/native/file_attributes/path/unix.rs",
+    "/Users/int/.assist-native-file-open-20261020/src/user/windows/dll/native/file_attributes/metadata.rs"
+  ],
+  "exit-code": 0,
+  "seconds": 0.07776579196797684
+}

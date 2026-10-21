@@ -1,0 +1,15 @@
+{
+  "state": "verified",
+  "owning-hosts": [
+    "macos",
+    "linux",
+    "windows"
+  ],
+  "public-projections": 6,
+  "ordinary": {
+    "smoke": "Exited(0) through owning core and C API",
+    "whoami": "NtCreateSection/file-backed explicit frontier through both routes",
+    "retained-native-files-hashed": 0
+  },
+  "scope": "Recorded native and compiled behavior, exact frozen source, actual selected core/carrier archives, retained ABI184 consumers. No full current-root GUI/package or complete process-userland claim."
+}

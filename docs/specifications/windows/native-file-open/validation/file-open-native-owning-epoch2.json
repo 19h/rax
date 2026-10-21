@@ -1,0 +1,124 @@
+{
+  "state": "finished",
+  "pid": 2812,
+  "source-epoch": 2,
+  "utc": "2026-10-21T00:30:49.107696+00:00",
+  "steps": [
+    {
+      "name": "toolchain",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "--version"
+      ],
+      "exit-code": 0,
+      "seconds": 0.15628925000783056,
+      "log": "file-open-native-owning-epoch2-toolchain.log",
+      "bytes": 36,
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5"
+    },
+    {
+      "name": "artifacts-before",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "build",
+        "--locked",
+        "--offline",
+        "--features",
+        "rax",
+        "--message-format=json"
+      ],
+      "exit-code": 0,
+      "seconds": 402.42548850001185,
+      "log": "file-open-native-owning-epoch2-artifacts-before.log",
+      "bytes": 132536,
+      "sha256": "37c995cf172521b3573f13ab8a8578c54920d5a37e6a0f932ba6b032307169e7"
+    },
+    {
+      "name": "archive-before",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\collect-file-open-archives-epoch2.py",
+        "--host",
+        "windows",
+        "--source",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-open-epoch2",
+        "--manifest",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\file-open-owning-source-hashes-epoch2.json",
+        "--messages",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\file-open-native-owning-epoch2-artifacts-before.log",
+        "--output",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-file-open-epoch2-pre-cpp-archives.json"
+      ],
+      "exit-code": 0,
+      "seconds": 8.625299875013297,
+      "log": "file-open-native-owning-epoch2-archive-before.log",
+      "bytes": 182,
+      "sha256": "ba0b01e814869a8f2e7b08874baa1e6225aeec55bb0bd6a889abe36b4134b0ad"
+    },
+    {
+      "name": "cpp",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\helpers\\file-open-owned-cpp-build-epoch2.py"
+      ],
+      "exit-code": 0,
+      "seconds": 91.04327170900069,
+      "log": "file-open-native-owning-epoch2-cpp.log",
+      "bytes": 3705,
+      "sha256": "fab051d7071be9ce1aa7cc5e7c3f99bc53cdaeb52c9e126c7fb2ca1f6fb9ad17"
+    },
+    {
+      "name": "artifacts-after",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "build",
+        "--locked",
+        "--offline",
+        "--features",
+        "rax",
+        "--message-format=json"
+      ],
+      "exit-code": 0,
+      "seconds": 0.6940726249886211,
+      "log": "file-open-native-owning-epoch2-artifacts-after.log",
+      "bytes": 132251,
+      "sha256": "447f9eecd07b21176dec2b0377d83f24145e0a8dd717251dd08932322acec957"
+    },
+    {
+      "name": "archive-after",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\collect-file-open-archives-epoch2.py",
+        "--host",
+        "windows",
+        "--source",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-open-epoch2",
+        "--manifest",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\file-open-owning-source-hashes-epoch2.json",
+        "--messages",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\file-open-native-owning-epoch2-artifacts-after.log",
+        "--output",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-file-open-epoch2-final-owning-archive-identities.json"
+      ],
+      "exit-code": 0,
+      "seconds": 10.09867945901351,
+      "log": "file-open-native-owning-epoch2-archive-after.log",
+      "bytes": 182,
+      "sha256": "ba0b01e814869a8f2e7b08874baa1e6225aeec55bb0bd6a889abe36b4134b0ad"
+    }
+  ],
+  "junction": {
+    "before": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-attributes-epoch3",
+    "after": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-open-epoch2"
+  },
+  "current-step": "archive-after",
+  "child-pid": 2500,
+  "exit-code": 0,
+  "source-inputs": 3849,
+  "archive-identities-stable": true,
+  "scope": "Frozen file-open source; retained Assist ABI184 linked consumers. Whole current-root ABI274 GUI/plugin/packages not claimed.",
+  "completed-utc": "2026-10-21T00:53:46.077610+00:00"
+}

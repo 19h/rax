@@ -1,0 +1,5 @@
+case role=0 held-access=00000000 status=00000000 published=1 exists-after-close=0 query-error=2
+case role=1 held-access=00010000 status=C0000043 published=0 exists-after-close=1 query-error=0
+case role=2 held-access=80010000 status=C0000043 published=0 exists-after-close=1 query-error=0
+case role=3 held-access=40010000 status=C0000043 published=0 exists-after-close=1 query-error=0
+end handle-count-before=59 handle-count-after=59

@@ -1,0 +1,90 @@
+{
+  "scope": "Bounded NtOpenFile increment; full process-userland goal remains active at file-backed NtCreateSection. No complete current-root GUI/package claim.",
+  "source-ledger": "validation/file-open-source-epoch2.json",
+  "source-ledger-sha256": "f257d4a412aeed642d4351ca6e7d1dea89ec95173a09eb430e5036651ac625a5",
+  "execution-gates": {
+    "macos": {
+      "receipt": "validation/file-open-macos-epoch2-gates.json",
+      "results": {
+        "focus": [
+          "ok. 26 passed; 0 failed; 0 ignored; 0 measured; 8104 filtered out; finished in 8.83s"
+        ],
+        "full": [
+          "ok. 8128 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 477.63s"
+        ],
+        "capi": [
+          "ok. 183 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 13.97s",
+          "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+        ],
+        "integration": [
+          "ok. 544 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 57.78s",
+          "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+        ]
+      },
+      "scope": "All requested gates pass."
+    },
+    "linux": {
+      "receipt": "validation/file-open-linux-epoch2-gates.json",
+      "results": {
+        "focus": [
+          "ok. 26 passed; 0 failed; 0 ignored; 0 measured; 8098 filtered out; finished in 12.49s"
+        ],
+        "full": [
+          "ok. 8122 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 918.63s"
+        ],
+        "capi": [
+          "ok. 183 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 10.30s",
+          "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+        ],
+        "integration": [
+          "ok. 544 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 191.33s",
+          "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+        ]
+      },
+      "scope": "All requested gates pass."
+    },
+    "windows": {
+      "receipt": "validation/file-open-native-epoch2-isolated-gates.json",
+      "results": {
+        "focus": [
+          "ok. 26 passed; 0 failed; 0 ignored; 0 measured; 7571 filtered out; finished in 17.49s"
+        ],
+        "full": [
+          "FAILED. 7590 passed; 5 failed; 2 ignored; 0 measured; 0 filtered out; finished in 827.70s"
+        ],
+        "capi": [
+          "ok. 183 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 20.21s",
+          "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+        ],
+        "integration": [
+          "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+          "ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+        ]
+      },
+      "scope": "Windows full retains exact5existing lowerer failures; other requested gates pass."
+    }
+  },
+  "evidence-audit-state": "verified on macOS, Linux and native Windows",
+  "public-projections": 6,
+  "supplemental-controls": {
+    "oracle-negative-per-host": 8,
+    "owning-negative-per-host": 8,
+    "fresh-positive-after-each-negative": true,
+    "owning-semantic-round": 2
+  },
+  "utc": "2026-10-21T01:39:51.960735+00:00",
+  "quality-gates": {
+    "QG1": "Technical behavior only; no normative content required.",
+    "QG2": "Six material assumptions with dependent results, stress tests and falsification probes in assumptions.json.",
+    "QG3": "Bounded existing-file behavior, actual native/compiled dispatch, three-host library/C API/integration/all-target and owning surfaces covered; full process goal explicitly active.",
+    "QG4": "Pointer/IOSB byte widths, corpus cardinalities and552-to374byte configuration substitution checked.",
+    "QG5": "Native/WoW64 output and lifetime distinctions reconciled. Pre-fix deletion regression preserved. Cached baseline full attempt rejected and replaced by exact freshly rebuilt test-image execution.",
+    "QG6": "Primary SDK contracts, independent native producers, original/public projection identities, frozen source and actual owning archive/executable provenance retained.",
+    "QG7": "High full-process frontier and resolved evidence-cache error plus narrower platform/current-root/CI findings recorded without adjacent code changes."
+  },
+  "final-audits": [
+    "validation/file-open-public-audit-macos-final.json",
+    "validation/file-open-public-audit-linux-final.json",
+    "validation/file-open-public-audit-windows-final.json"
+  ]
+}

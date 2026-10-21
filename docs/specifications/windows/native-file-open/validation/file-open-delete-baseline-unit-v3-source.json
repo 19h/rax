@@ -1,0 +1,7 @@
+{
+  "path": "src/user/windows/dll/files/tests.rs",
+  "bytes": 37425,
+  "sha256": "4c0acc2ff7d0f90f973b6f4638c6ca93eb9a61fffba7fa7f58ef23650ee4aaf5",
+  "original-sha256": "3332bdf77d0a9cb3cbc407d43894afeba6db269a181c4b645f45a207452ecb11",
+  "scope": "Exact candidate2 test file against candidate1 product: read/write sharing without delete sharing, all three held DELETE access variants."
+}

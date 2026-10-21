@@ -1,0 +1,85 @@
+{
+  "state": "failed",
+  "pid": 3564,
+  "utc": "2026-10-21T00:25:20.565094+00:00",
+  "steps": [
+    {
+      "name": "toolchain",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "--version"
+      ],
+      "exit-code": 0,
+      "seconds": 0.1311712920141872,
+      "log": "file-open-native-epoch2-toolchain.log",
+      "bytes": 36,
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5",
+      "results": []
+    },
+    {
+      "name": "focus",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "native_file_",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 1097.038453999994,
+      "log": "file-open-native-epoch2-focus.log",
+      "bytes": 5420,
+      "sha256": "de8357c578010904881919e454cc34bacafaa4cc060aeefe7ac223654136c44f",
+      "results": [
+        "ok. 26 passed; 0 failed; 0 ignored; 0 measured; 7571 filtered out; finished in 109.03s"
+      ]
+    },
+    {
+      "name": "full",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 101,
+      "seconds": 1462.7918752499972,
+      "log": "file-open-native-epoch2-full.log",
+      "bytes": 822595,
+      "sha256": "dd0f1cba8748ba1167ef6bc3682db343dc71537efc8dbf9e6c23fbf4fbe9b803",
+      "results": [
+        "FAILED. 7589 passed; 6 failed; 2 ignored; 0 measured; 0 filtered out; finished in 979.51s"
+      ]
+    }
+  ],
+  "verified-source-inputs": 26848,
+  "verified-source-bytes": 2021965191,
+  "cache-live-references": [],
+  "retained-failing-test": {
+    "source": {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-open-epoch1\\target\\normal\\debug\\deps\\rax-b799307a7949aa6b.exe",
+      "bytes": 544195584,
+      "sha256": "5a855a0370a9a5082fa7ace387a9c25c42c39d74a4166f57032fdccdfd110e66"
+    },
+    "retained": {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\fo-db2\\target\\retained-baseline-v2\\unit.exe",
+      "bytes": 544195584,
+      "sha256": "5a855a0370a9a5082fa7ace387a9c25c42c39d74a4166f57032fdccdfd110e66"
+    }
+  },
+  "current-step": "full",
+  "child-pid": 6876,
+  "exit-code": 1,
+  "error": "Traceback (most recent call last):\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-file-open-native-epoch2.py\", line 68, in <module>\n    final=output[output.rfind('\\nfailures:\\n'):];failures=set(re.findall(r'^    (\\S+)\\r?$',final,re.M));assert code==101 and failures==baseline\n                                                                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+  "completed-utc": "2026-10-21T01:10:31.307301+00:00"
+}

@@ -1,0 +1,8 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.04s
+     Running tests/suites/user/windows/main.rs (target/debug/deps/user_windows-3131912268e4d9ae)
+
+running 1 test
+test crt_termination::x64_ucrt_recursive ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 543 filtered out; finished in 0.07s
+

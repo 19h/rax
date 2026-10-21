@@ -282,6 +282,8 @@ impl Object {
 #[derive(Debug)]
 struct Entry {
     obj: Object,
+    /// Read-only installed-library authority, retained independently of a catalog.
+    runtime_library: bool,
     refs: u32,
     name: Option<String>,
     native_name: Option<super::object_namespace::NativeName>,
@@ -349,6 +351,7 @@ impl Objects {
             next,
             Entry {
                 obj,
+                runtime_library: false,
                 refs: 0,
                 name: None,
                 native_name: None,
@@ -441,6 +444,19 @@ impl Objects {
         self.retire_scheduler_object(&e.obj);
         self.retire_lpc_object(&mut e.obj);
         Some(e.obj)
+    }
+
+    pub(crate) fn mark_runtime_library(&mut self, id: ObjId) {
+        let entry = self.objs.get_mut(&id).expect("new file object");
+        assert!(matches!(entry.obj, Object::File(_)));
+        entry.runtime_library = true;
+    }
+
+    pub(crate) fn runtime_library(&self, handle: u64) -> bool {
+        Self::key(handle)
+            .and_then(|h| self.handles.get(&h))
+            .and_then(|h| self.objs.get(&h.obj))
+            .is_some_and(|e| e.runtime_library)
     }
 
     /// Opens a handle to `id`.

@@ -39,40 +39,45 @@ struct Network {
 
 const _: [(); 56] = [(); std::mem::size_of::<Network>()];
 
-#[repr(C)]
-struct IoStatus {
-    status: usize,
-    information: usize,
-}
-
 #[link(name = "ntdll")]
 unsafe extern "system" {
     fn NtQueryFullAttributesFile(attributes: *const Attributes, info: *mut Network) -> i32;
-    fn NtQueryInformationFile(
-        file: *mut c_void,
-        status: *mut IoStatus,
-        info: *mut Network,
-        length: u32,
-        class: u32,
-    ) -> i32;
+
 }
 
 pub(super) fn query(
     c: &Ctx,
     path: &Path,
     file: Option<&File>,
+    relative: Option<&Path>,
     no_reparse: bool,
 ) -> Checked<Information> {
     let mut info = Network::default();
     let result = if let Some(file) = file {
-        let mut io = IoStatus {
-            status: 0,
-            information: 0,
+        let units: Vec<u16> =
+            relative.map_or_else(Vec::new, |name| name.as_os_str().encode_wide().collect());
+        if units.len() > 32766 || units.contains(&0) {
+            return Err(c
+                .unsupported("retained NT metadata name is not representable")
+                .into());
+        }
+        let unicode = Unicode {
+            length: (units.len() * 2) as u16,
+            maximum: (units.len() * 2) as u16,
+            buffer: units.as_ptr(),
         };
-        // SAFETY: the borrowed File keeps this host handle alive. Both outputs
-        // are exclusive initialized local buffers of the declared sizes. Class
-        // 34 is FileNetworkOpenInformation; no pointer is retained or unwinds.
-        unsafe { NtQueryInformationFile(file.as_raw_handle(), &mut io, &mut info, 56, 34) }
+        let attrs = Attributes {
+            length: std::mem::size_of::<Attributes>() as u32,
+            root: file.as_raw_handle(),
+            name: &unicode,
+            flags: 0x40 | if no_reparse { 0x1000 } else { 0 },
+            security: std::ptr::null_mut(),
+            qos: std::ptr::null_mut(),
+        };
+        // SAFETY: the borrowed owned handle and every host-local argument stay
+        // live through the synchronous query. An empty counted name queries the
+        // retained object without requiring READ_ATTRIBUTES on its open grant.
+        unsafe { NtQueryFullAttributesFile(&attrs, &mut info) }
     } else {
         let absolute = std::path::absolute(path)
             .map_err(|error| c.unsupported(format!("absolute host metadata path: {error}")))?;

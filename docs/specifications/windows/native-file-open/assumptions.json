@@ -1,0 +1,137 @@
+{
+  "base": "e9488fa7f89e9325e27fcb8138e48f83f1fb6766",
+  "worktree": "/Users/int/.assist-native-file-open-20261020",
+  "source-edits": [
+    "src/user/windows/process/sched/tests/services_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/file_open_tests.rs",
+    "src/user/windows/dll/native.rs",
+    "src/user/windows/dll/native/file_open.rs",
+    "src/user/windows/dll/native/file_open/host.rs",
+    "src/user/windows/dll/native/file_open/host/windows.rs",
+    "src/user/windows/dll/native/file_open/host/unix.rs",
+    "src/user/windows/dll/native/file_attributes.rs",
+    "src/user/windows/dll/native/file_attributes/attributes.rs",
+    "src/user/windows/dll/native/file_attributes/path.rs",
+    "src/user/windows/dll/native/file_attributes/metadata/windows.rs",
+    "src/user/windows/objects.rs",
+    "src/user/windows/fs.rs",
+    "src/user/windows/process/sched/tests/services_tests/file_open_tests/paired.rs",
+    "src/user/windows/process/sched/tests/services_tests/file_open_tests/paired-v7.json",
+    "src/user/windows/fs/windows.rs",
+    "src/user/windows/dll/files/open.rs",
+    "src/user/windows/dll/files/tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/file_open_tests/boundaries.rs",
+    "src/user/windows/process/sched/tests/services_tests/file_open_tests/boundaries-v10.json",
+    "src/user/windows/dll/native/file_attributes/path/unix.rs",
+    "src/user/windows/dll/native/file_attributes/metadata.rs"
+  ],
+  "intended-contract": "Measured NtOpenFile ownership for existing mapped files and selected read-only runtime files. NtCreateFile is not included without independent native evidence. No broad host grant or public ABI/default change.",
+  "status": "bounded candidate2 implementation and final three-host evidence audits complete; full same-host process-userland goal remains active",
+  "assumptions": [
+    {
+      "id": "FO-A1",
+      "assumption": "The next observed ordinary-program frontier is the installed NtOpenFile service.",
+      "basis": "Two final file-attribute owning routes report NtOpenFile0x33. Fresh retained-core observation confirms VERSION.dll, access0x00100021, share0x5, options0x60. Candidate2 owning core and C API both reach file-backed NtCreateSection.",
+      "dependent-result": "Existing-file opens implemented; fresh ordinary execution determines the subsequent file-backed section frontier.",
+      "stress-test": "Retained-core observation plus unchanged native whoami controls and six DLL identities.",
+      "falsification-probe": "Fresh owning execution stops at another service or before the observed open.",
+      "status": "confirmed"
+    },
+    {
+      "id": "FO-A2",
+      "assumption": "Windows kernel sharing reservations must retain the actual requested DELETE grant across Win32 and NT paths.",
+      "basis": "Independent sharing-v2 control in four ABI profiles; compiled candidate1 regression lost its fixture after a rejected sharing open.",
+      "dependent-result": "Explicit Windows host access_mode and shared lifetime behavior.",
+      "stress-test": "DELETE, GENERIC_READ|DELETE and GENERIC_WRITE|DELETE held grants; new read/write sharing without delete sharing; final close must preserve exact contents.",
+      "falsification-probe": "native_file_open_failed_delete_sharing_preserves_file_after_final_close fails or native sharing-v2 controls disagree.",
+      "status": "confirmed"
+    },
+    {
+      "id": "FO-A3",
+      "assumption": "Native64 and WoW64 caller copyback have different late-fault handle lifetimes.",
+      "basis": "Native v3/v10 output span and guard sweeps; candidate2 pair/boundary dispatcher tests.",
+      "dependent-result": "Native retains published handle; WoW64 retires temporary result on copyback failure.",
+      "stress-test": "Every IOSB prefix, readonly guard stores, simultaneous input/output faults.",
+      "falsification-probe": "Published handle validity or untouched bytes differ from captured independent native rows.",
+      "status": "confirmed"
+    },
+    {
+      "id": "FO-A4",
+      "assumption": "Selected runtime files require an internal retained authority marker to keep host_filesystem=false boundaries.",
+      "basis": "Existing NativeRuntime selection contract and compiled selected-runtime denial tests.",
+      "dependent-result": "No arbitrary file or write admission through a selected DLL handle.",
+      "stress-test": "Unselected executable, mapped arbitrary file, write/delete masks, duplicates and retained roots.",
+      "falsification-probe": "A denied path or write operation succeeds without an independent general filesystem grant.",
+      "status": "confirmed"
+    },
+    {
+      "id": "FO-A5",
+      "assumption": "Captured native ABI views describe one Windows10.0.29683 ARM64 kernel, without proving an independent x64 kernel.",
+      "basis": "Native producer environment and unchanged module identities.",
+      "dependent-result": "Platform evidence scope.",
+      "stress-test": "Native ARM64/x64 and WoW64 x86/x86LAA controls agree within their widths.",
+      "falsification-probe": "Profile disagreement or changed runtime inputs.",
+      "status": "confirmed"
+    },
+    {
+      "id": "FO-A6",
+      "assumption": "Final Windows gate results execute the compiled image corresponding to the frozen candidate source.",
+      "basis": "The initial full attempt reused a pre-fix image: its dependency file named the baseline root28times, and the deletion regression failed. The replacement evicts the primary crate, selects a freshly emitted Cargo test artifact and binds one exact image around both executions.",
+      "dependent-result": "Windows7590passed/exact5known-failure full-suite evidence.",
+      "stress-test": "A baseline build replaced the shared-target image between focused and full runs; that attempt is rejected and retained. Fresh final execution must differ from that image.",
+      "falsification-probe": "Selected artifact is marked fresh, absent from the current Cargo build output, matches the rejected image hash or changes across either execution.",
+      "status": "confirmed"
+    }
+  ],
+  "utc": "2026-10-20T16:55:49.081163+00:00",
+  "initial-base": "ac3b2031184165b9f3c6b7568f7dedb2300d44b8",
+  "observed-arguments": {
+    "object-attributes-length": 48,
+    "attributes": "0x840",
+    "root": 0,
+    "path": "\\??\\C:\\WINDOWS\\SYSTEM32\\VERSION.dll",
+    "desired-access": "0x00100021",
+    "share-access": "0x5",
+    "open-options": "0x60"
+  },
+  "candidate-manifest": "file-open-source-epoch2.json",
+  "bounded-scope": [
+    {
+      "impact": "high",
+      "item": "Full process goal remains incomplete; file-backed NtCreateSection and other unsupported native services remain.",
+      "evidence": "file-section-frontier-v1-guest.log, file-open-native-ordinary-epoch2-whoami.log and file-open-owning-capi-epoch2.json independently identify file-backed NtCreateSection.",
+      "blocks": "Full goal completion; does not justify narrowing the goal."
+    },
+    {
+      "impact": "medium",
+      "item": "Independent physical x64 Windows kernel not exercised.",
+      "evidence": "All four ABI views run on the same ARM64 kernel.",
+      "blocks": "Any broad independent-x64-kernel equivalence claim."
+    },
+    {
+      "impact": "medium",
+      "item": "Unrelated Windows CI retry failed WebXR WebSocket and timed out cluster client ports.",
+      "evidence": "GitLab job427377; full trace remains private.",
+      "blocks": "A claim that the entire root pipeline is green."
+    },
+    {
+      "impact": "medium",
+      "item": "Candidate1 macOS full integration had one30s subprocess timeout; exact unchanged case passed12 replays.",
+      "evidence": "file-open-macos-epoch1-integration.log and crt-recursive-stress.json.",
+      "blocks": "Candidate1 all-green claim; candidate2 full 544-case integration passes."
+    },
+    {
+      "impact": "high",
+      "item": "The first Windows candidate2 full attempt executed a cached pre-fix test image after a baseline build reused its Cargo target.",
+      "evidence": "Original failed full log, retained-rejected-full-image, prior-dependency-file baseline-root-occurrences28 and isolated source-bound recompile/executions.",
+      "blocks": "Resolved for final library proof: fresh executable reports7590passes/exact5knownfailures; rejected attempt remains historical evidence."
+    },
+    {
+      "impact": "low",
+      "item": "resolve and resolve_open both delegate to resolve_kind with retained_directory=true, leaving a redundant policy parameter.",
+      "evidence": "src/user/windows/dll/native/file_attributes/path.rs:resolve/resolve_open.",
+      "blocks": "No; source remains frozen and cleanup is outside this semantic increment."
+    }
+  ],
+  "updated-utc": "2026-10-21T00:34:24.608299+00:00"
+}

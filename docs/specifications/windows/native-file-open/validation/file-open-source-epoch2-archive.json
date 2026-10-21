@@ -1,0 +1,16 @@
+{
+  "archive": "file-open-source-epoch2-overrides.tar.gz",
+  "bytes": 10199,
+  "sha256": "e793781ec69b76ff2aff96bcc2538e8fad471982fd81e85f96d5415d28af950a",
+  "parent-manifest": "file-open-source-epoch1.json",
+  "parent-manifest-sha256": "c6ee9720aac4533038b34203269db930fcef98b0f15d90251be1e9c591793be4",
+  "source-manifest": "file-open-source-epoch2.json",
+  "source-manifest-sha256": "f257d4a412aeed642d4351ca6e7d1dea89ec95173a09eb430e5036651ac625a5",
+  "source-files": 26848,
+  "source-bytes": 2021965191,
+  "separate-overrides": [
+    "src/user/windows/dll/files/open.rs",
+    "src/user/windows/dll/files/tests.rs"
+  ],
+  "deleted": []
+}

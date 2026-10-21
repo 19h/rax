@@ -40,7 +40,7 @@ pub(super) fn io_error(c: &Ctx, error: std::io::Error, path: &Path) -> Checked<I
 }
 
 pub(super) fn query(c: &Ctx, resolved: &Resolved, no_reparse: bool) -> Checked<Information> {
-    if no_reparse {
+    if no_reparse && resolved.relative.is_none() {
         let mut parent = Some(resolved.host.as_path());
         while let Some(path) = parent {
             // The selected/mapped root is already an admitted namespace
@@ -75,9 +75,46 @@ pub(super) fn query(c: &Ctx, resolved: &Resolved, no_reparse: bool) -> Checked<I
         None
     };
     #[cfg(windows)]
-    let info = windows::query(c, &resolved.host, file, no_reparse)?;
+    let info = windows::query(
+        c,
+        &resolved.host,
+        file,
+        resolved.relative.as_deref(),
+        no_reparse,
+    )?;
     #[cfg(unix)]
-    let info = unix::query(c, &resolved.host, file)?;
+    let info = {
+        let child = if resolved
+            .relative
+            .as_ref()
+            .is_some_and(|name| !name.as_os_str().is_empty())
+        {
+            #[cfg(target_os = "linux")]
+            let flags = libc::O_PATH | libc::O_CLOEXEC;
+            #[cfg(target_os = "macos")]
+            let flags = libc::O_EVTONLY | libc::O_CLOEXEC;
+            #[cfg(not(any(target_os = "linux", target_os = "macos")))]
+            let flags = libc::O_RDONLY | libc::O_CLOEXEC;
+            match super::path::unix::open(
+                c,
+                resolved,
+                flags,
+                false,
+                false,
+                false,
+                if no_reparse { 0x1000 } else { 0 },
+            ) {
+                Ok((file, _)) => Some(file),
+                Err(error) if super::path::unix::nt_status(&error).is_some() => {
+                    return status(super::path::unix::nt_status(&error).unwrap());
+                }
+                Err(error) => return io_error(c, error, &resolved.host),
+            }
+        } else {
+            None
+        };
+        unix::query(c, &resolved.host, child.as_ref().or(file))?
+    };
     #[cfg(not(any(windows, unix)))]
     return Err(c
         .unsupported("host file metadata has no platform adapter")

@@ -1,0 +1,4 @@
+terminal slice=2183 result=Complete(Internal("native NTDLL service NtCreateSection: Unimplemented(\"NtCreateSection: NtCreateSection for a file-backed section\")"))
+thread=8 pc=0x7fff38a414e4 args=[1a5e600, d, 0, 0, 10, 1000000, a0, 210b6be]
+section-output=Ok([0, 0, 0, 0, 0, 0, 0, 0])
+backing-file handle=0xa0 access=0x100021 share=0x5 directory=false path="\\??\\C:\\WINDOWS\\SYSTEM32\\VERSION.dll" host-path="\\\\?\\C:\\Windows\\System32\\VERSION.dll" owned=true

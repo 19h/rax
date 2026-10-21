@@ -1,0 +1,4442 @@
+{
+  "source": "Independent installed NTDLL calls on Windows10.0.29683 ARM64 kernel; native ARM64/x64 and WoW64 x86/x86LAA agree within each width. v6 is rejected and unused.",
+  "producers": [
+    {
+      "path": "native-file-open-v7.cpp",
+      "bytes": 23345,
+      "sha256": "bb703b99b58404b288dbea5032bc3df505c10bd55ceba590475195cb6705d6a1"
+    },
+    {
+      "path": "native-file-open-v7-arm64.log",
+      "bytes": 250254,
+      "sha256": "12a05d3808cf722b6db522298d59245934026ef1b427ecc29b785f034e70d43b"
+    },
+    {
+      "path": "native-file-open-v7-x64.log",
+      "bytes": 250254,
+      "sha256": "5ee7f0ae24bb551db24e0b57041e8e28af9a85dcfda1f1f0a78b76d316ab7cf2"
+    },
+    {
+      "path": "native-file-open-v7-x86.log",
+      "bytes": 229156,
+      "sha256": "5f1fe9b6589e61332b1bf4d0b48c0551fa090a725768d59b49f04b3df5312157"
+    },
+    {
+      "path": "native-file-open-v7-x86-laa.log",
+      "bytes": 229156,
+      "sha256": "153fba5abede90d1f24351f7b8ffbffb02202a7c59443d7d89e901f5a303b4fb"
+    }
+  ],
+  "cases": [
+    {
+      "role": 194,
+      "left": 0,
+      "right": 1,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 195,
+      "left": 0,
+      "right": 2,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 196,
+      "left": 0,
+      "right": 3,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 197,
+      "left": 0,
+      "right": 4,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 198,
+      "left": 0,
+      "right": 5,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 199,
+      "left": 0,
+      "right": 6,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 200,
+      "left": 0,
+      "right": 7,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 201,
+      "left": 0,
+      "right": 8,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 202,
+      "left": 0,
+      "right": 9,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 203,
+      "left": 0,
+      "right": 10,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 204,
+      "left": 0,
+      "right": 11,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 205,
+      "left": 0,
+      "right": 12,
+      "native": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 206,
+      "left": 0,
+      "right": 13,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 207,
+      "left": 0,
+      "right": 14,
+      "native": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 208,
+      "left": 0,
+      "right": 15,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 209,
+      "left": 0,
+      "right": 16,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 260,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 210,
+      "left": 0,
+      "right": 17,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "00000000000000000000000000000000"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 260,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 211,
+      "left": 0,
+      "right": 18,
+      "native": {
+        "status": 2147483650,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 212,
+      "left": 0,
+      "right": 19,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 213,
+      "left": 0,
+      "right": 20,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 214,
+      "left": 1,
+      "right": 2,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 215,
+      "left": 1,
+      "right": 3,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 216,
+      "left": 1,
+      "right": 4,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 217,
+      "left": 1,
+      "right": 5,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 218,
+      "left": 1,
+      "right": 6,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 219,
+      "left": 1,
+      "right": 7,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 220,
+      "left": 1,
+      "right": 8,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 221,
+      "left": 1,
+      "right": 9,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 222,
+      "left": 1,
+      "right": 10,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 223,
+      "left": 1,
+      "right": 11,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 224,
+      "left": 1,
+      "right": 12,
+      "native": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 225,
+      "left": 1,
+      "right": 13,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 226,
+      "left": 1,
+      "right": 14,
+      "native": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 227,
+      "left": 1,
+      "right": 15,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 228,
+      "left": 1,
+      "right": 16,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 229,
+      "left": 1,
+      "right": 17,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "00000000000000000000000000000000"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 260,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 230,
+      "left": 1,
+      "right": 18,
+      "native": {
+        "status": 2147483650,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 231,
+      "left": 1,
+      "right": 19,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 232,
+      "left": 1,
+      "right": 20,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 233,
+      "left": 2,
+      "right": 3,
+      "native": {
+        "status": 2147483650,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 234,
+      "left": 2,
+      "right": 4,
+      "native": {
+        "status": 2147483650,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 235,
+      "left": 2,
+      "right": 5,
+      "native": {
+        "status": 2147483650,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 236,
+      "left": 2,
+      "right": 6,
+      "native": {
+        "status": 2147483650,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 237,
+      "left": 2,
+      "right": 7,
+      "native": {
+        "status": 2147483650,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 238,
+      "left": 2,
+      "right": 8,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 239,
+      "left": 2,
+      "right": 9,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 240,
+      "left": 2,
+      "right": 10,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 241,
+      "left": 2,
+      "right": 11,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 242,
+      "left": 2,
+      "right": 12,
+      "native": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 243,
+      "left": 2,
+      "right": 13,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 244,
+      "left": 2,
+      "right": 14,
+      "native": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 245,
+      "left": 2,
+      "right": 15,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 246,
+      "left": 2,
+      "right": 16,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 260,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 247,
+      "left": 2,
+      "right": 17,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "00000000000000000000000000000000"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 260,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 248,
+      "left": 2,
+      "right": 18,
+      "native": {
+        "status": 2147483650,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 249,
+      "left": 2,
+      "right": 19,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 250,
+      "left": 2,
+      "right": 20,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 251,
+      "left": 3,
+      "right": 4,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 252,
+      "left": 3,
+      "right": 5,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 253,
+      "left": 3,
+      "right": 6,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 254,
+      "left": 3,
+      "right": 7,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 255,
+      "left": 3,
+      "right": 8,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 256,
+      "left": 3,
+      "right": 9,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 257,
+      "left": 3,
+      "right": 10,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 258,
+      "left": 3,
+      "right": 11,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 259,
+      "left": 3,
+      "right": 12,
+      "native": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 260,
+      "left": 3,
+      "right": 13,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 261,
+      "left": 3,
+      "right": 14,
+      "native": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 262,
+      "left": 3,
+      "right": 15,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 263,
+      "left": 3,
+      "right": 16,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 260,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 264,
+      "left": 3,
+      "right": 17,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "00000000000000000000000000000000"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 260,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 265,
+      "left": 3,
+      "right": 18,
+      "native": {
+        "status": 2147483650,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 266,
+      "left": 3,
+      "right": 19,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 267,
+      "left": 3,
+      "right": 20,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 268,
+      "left": 4,
+      "right": 5,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 269,
+      "left": 4,
+      "right": 6,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 270,
+      "left": 4,
+      "right": 7,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 271,
+      "left": 4,
+      "right": 8,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 272,
+      "left": 4,
+      "right": 9,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 273,
+      "left": 4,
+      "right": 10,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 274,
+      "left": 4,
+      "right": 11,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 275,
+      "left": 4,
+      "right": 12,
+      "native": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 276,
+      "left": 4,
+      "right": 13,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 277,
+      "left": 4,
+      "right": 14,
+      "native": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 278,
+      "left": 4,
+      "right": 15,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 279,
+      "left": 4,
+      "right": 16,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 260,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 280,
+      "left": 4,
+      "right": 17,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "00000000000000000000000000000000"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 260,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 281,
+      "left": 4,
+      "right": 18,
+      "native": {
+        "status": 2147483650,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 282,
+      "left": 4,
+      "right": 19,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 283,
+      "left": 4,
+      "right": 20,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 284,
+      "left": 5,
+      "right": 6,
+      "native": {
+        "status": 3221225523,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225523,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 285,
+      "left": 5,
+      "right": 7,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 286,
+      "left": 5,
+      "right": 8,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 287,
+      "left": 5,
+      "right": 9,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 288,
+      "left": 5,
+      "right": 10,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 289,
+      "left": 5,
+      "right": 11,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 290,
+      "left": 5,
+      "right": 12,
+      "native": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 291,
+      "left": 5,
+      "right": 13,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 292,
+      "left": 5,
+      "right": 14,
+      "native": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 293,
+      "left": 5,
+      "right": 15,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 294,
+      "left": 5,
+      "right": 16,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 260,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 295,
+      "left": 5,
+      "right": 17,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "00000000000000000000000000000000"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 260,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 296,
+      "left": 5,
+      "right": 18,
+      "native": {
+        "status": 2147483650,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 297,
+      "left": 5,
+      "right": 19,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 298,
+      "left": 5,
+      "right": 20,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 299,
+      "left": 6,
+      "right": 7,
+      "native": {
+        "status": 3221225523,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225523,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 300,
+      "left": 6,
+      "right": 8,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 301,
+      "left": 6,
+      "right": 9,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 302,
+      "left": 6,
+      "right": 10,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 303,
+      "left": 6,
+      "right": 11,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 304,
+      "left": 6,
+      "right": 12,
+      "native": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 305,
+      "left": 6,
+      "right": 13,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 306,
+      "left": 6,
+      "right": 14,
+      "native": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 307,
+      "left": 6,
+      "right": 15,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 3221225523,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 308,
+      "left": 6,
+      "right": 16,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 309,
+      "left": 6,
+      "right": 17,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "00000000000000000000000000000000"
+      },
+      "wow": {
+        "status": 3221225523,
+        "hprot": 4,
+        "iprot": 260,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 310,
+      "left": 6,
+      "right": 18,
+      "native": {
+        "status": 2147483650,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 311,
+      "left": 6,
+      "right": 19,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 312,
+      "left": 6,
+      "right": 20,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 313,
+      "left": 7,
+      "right": 8,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 314,
+      "left": 7,
+      "right": 9,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 315,
+      "left": 7,
+      "right": 10,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 316,
+      "left": 7,
+      "right": 11,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 317,
+      "left": 7,
+      "right": 12,
+      "native": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 318,
+      "left": 7,
+      "right": 13,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 319,
+      "left": 7,
+      "right": 14,
+      "native": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 320,
+      "left": 7,
+      "right": 15,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 3221225480,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 321,
+      "left": 7,
+      "right": 16,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 322,
+      "left": 7,
+      "right": 17,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "00000000000000000000000000000000"
+      },
+      "wow": {
+        "status": 3221225480,
+        "hprot": 4,
+        "iprot": 260,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 323,
+      "left": 7,
+      "right": 18,
+      "native": {
+        "status": 2147483650,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 324,
+      "left": 7,
+      "right": 19,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 325,
+      "left": 7,
+      "right": 20,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 326,
+      "left": 8,
+      "right": 9,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 327,
+      "left": 8,
+      "right": 10,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 328,
+      "left": 8,
+      "right": 11,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 329,
+      "left": 8,
+      "right": 12,
+      "native": {
+        "status": 3221225485,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 330,
+      "left": 8,
+      "right": 13,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 331,
+      "left": 8,
+      "right": 14,
+      "native": {
+        "status": 3221225485,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 332,
+      "left": 8,
+      "right": 15,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 333,
+      "left": 8,
+      "right": 16,
+      "native": {
+        "status": 3221225485,
+        "hprot": 260,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 334,
+      "left": 8,
+      "right": 17,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 260,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 260,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 335,
+      "left": 8,
+      "right": 18,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 336,
+      "left": 8,
+      "right": 19,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 337,
+      "left": 8,
+      "right": 20,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 338,
+      "left": 9,
+      "right": 10,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 339,
+      "left": 9,
+      "right": 11,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 340,
+      "left": 9,
+      "right": 12,
+      "native": {
+        "status": 3221225485,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 341,
+      "left": 9,
+      "right": 13,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 342,
+      "left": 9,
+      "right": 14,
+      "native": {
+        "status": 3221225485,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 343,
+      "left": 9,
+      "right": 15,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 344,
+      "left": 9,
+      "right": 16,
+      "native": {
+        "status": 3221225485,
+        "hprot": 260,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 345,
+      "left": 9,
+      "right": 17,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 260,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 260,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 346,
+      "left": 9,
+      "right": 18,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 347,
+      "left": 9,
+      "right": 19,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 348,
+      "left": 9,
+      "right": 20,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 349,
+      "left": 10,
+      "right": 11,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 350,
+      "left": 10,
+      "right": 12,
+      "native": {
+        "status": 3221225485,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 351,
+      "left": 10,
+      "right": 13,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 352,
+      "left": 10,
+      "right": 14,
+      "native": {
+        "status": 3221225485,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 353,
+      "left": 10,
+      "right": 15,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 354,
+      "left": 10,
+      "right": 16,
+      "native": {
+        "status": 3221225485,
+        "hprot": 260,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 355,
+      "left": 10,
+      "right": 17,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 260,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 260,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 356,
+      "left": 10,
+      "right": 18,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 357,
+      "left": 10,
+      "right": 19,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 358,
+      "left": 10,
+      "right": 20,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 359,
+      "left": 11,
+      "right": 12,
+      "native": {
+        "status": 3221225485,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 360,
+      "left": 11,
+      "right": 13,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 361,
+      "left": 11,
+      "right": 14,
+      "native": {
+        "status": 3221225485,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 362,
+      "left": 11,
+      "right": 15,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 363,
+      "left": 11,
+      "right": 16,
+      "native": {
+        "status": 3221225485,
+        "hprot": 260,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 364,
+      "left": 11,
+      "right": 17,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 260,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 260,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 365,
+      "left": 11,
+      "right": 18,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 366,
+      "left": 11,
+      "right": 19,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 367,
+      "left": 11,
+      "right": 20,
+      "native": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 368,
+      "left": 12,
+      "right": 13,
+      "native": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 1,
+        "handle": "-",
+        "valid": false,
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 1,
+        "handle": "-",
+        "valid": false,
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 369,
+      "left": 12,
+      "right": 14,
+      "native": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 370,
+      "left": 12,
+      "right": 15,
+      "native": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 1,
+        "handle": "-",
+        "valid": false,
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 1,
+        "handle": "-",
+        "valid": false,
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 371,
+      "left": 12,
+      "right": 16,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 372,
+      "left": 12,
+      "right": 17,
+      "native": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 260,
+        "handle": "-",
+        "valid": false,
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 260,
+        "handle": "-",
+        "valid": false,
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 373,
+      "left": 12,
+      "right": 18,
+      "native": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 374,
+      "left": 12,
+      "right": 19,
+      "native": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 375,
+      "left": 12,
+      "right": 20,
+      "native": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 2147483649,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 376,
+      "left": 13,
+      "right": 14,
+      "native": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 1,
+        "handle": "-",
+        "valid": false,
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 1,
+        "handle": "-",
+        "valid": false,
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 377,
+      "left": 13,
+      "right": 15,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "published",
+        "valid": false,
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 378,
+      "left": 13,
+      "right": 16,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 379,
+      "left": 13,
+      "right": 17,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "00000000000000000000000000000000"
+      },
+      "wow": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "published",
+        "valid": false,
+        "iosb": "0000000000000000"
+      }
+    },
+    {
+      "role": 380,
+      "left": 13,
+      "right": 18,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 381,
+      "left": 13,
+      "right": 19,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 382,
+      "left": 13,
+      "right": 20,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 383,
+      "left": 14,
+      "right": 15,
+      "native": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 1,
+        "handle": "-",
+        "valid": false,
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 1,
+        "handle": "-",
+        "valid": false,
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 384,
+      "left": 14,
+      "right": 16,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 385,
+      "left": 14,
+      "right": 17,
+      "native": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 260,
+        "handle": "-",
+        "valid": false,
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 260,
+        "handle": "-",
+        "valid": false,
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 386,
+      "left": 14,
+      "right": 18,
+      "native": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 387,
+      "left": 14,
+      "right": 19,
+      "native": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 388,
+      "left": 14,
+      "right": 20,
+      "native": {
+        "status": 3221225477,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 2147483649,
+        "hprot": 1,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 389,
+      "left": 15,
+      "right": 16,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 390,
+      "left": 15,
+      "right": 17,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "00000000000000000000000000000000"
+      },
+      "wow": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "published",
+        "valid": false,
+        "iosb": "0000000000000000"
+      }
+    },
+    {
+      "role": 391,
+      "left": 15,
+      "right": 18,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 392,
+      "left": 15,
+      "right": 19,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 393,
+      "left": 15,
+      "right": 20,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 1,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 394,
+      "left": 16,
+      "right": 17,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "00000000000000000000000000000000"
+      },
+      "wow": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "0000000000000000"
+      }
+    },
+    {
+      "role": 395,
+      "left": 16,
+      "right": 18,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 260,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 396,
+      "left": 16,
+      "right": 19,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 260,
+        "iprot": 4,
+        "handle": "-",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 397,
+      "left": 16,
+      "right": 20,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "zero",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 398,
+      "left": 17,
+      "right": 18,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "00000000000000000000000000000000"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 260,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 399,
+      "left": 17,
+      "right": 19,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "00000000000000000000000000000000"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 260,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 400,
+      "left": 17,
+      "right": 20,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "00000000000000000000000000000000"
+      },
+      "wow": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "0000000000000000"
+      }
+    },
+    {
+      "role": 401,
+      "left": 18,
+      "right": 19,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 402,
+      "left": 18,
+      "right": 20,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 403,
+      "left": 19,
+      "right": 20,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "handle": "sentinel",
+        "valid": false,
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    }
+  ]
+}

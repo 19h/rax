@@ -1,0 +1,950 @@
+{
+  "scope": "Installed Windows10.0.29683 ARM64 kernel, four ABI profiles. Native and WoW64 observations agree within width. Roles426/427 called VirtualProtect with invalid NOACCESS|GUARD; excluded, not treated as protected-memory evidence.",
+  "producers": [
+    {
+      "path": "native-file-open-v10.cpp",
+      "bytes": 26087,
+      "sha256": "373022e729ffbeb66119a989db604d6504f966d62519311e2c5cbe31fe1711a6"
+    },
+    {
+      "path": "native-file-open-v10-arm64.log",
+      "bytes": 283664,
+      "sha256": "8a90c5a5517df3741025c1887cce8155e25b4acea02548c2376773560e4a9dcd"
+    },
+    {
+      "path": "native-file-open-v10-x64.log",
+      "bytes": 283664,
+      "sha256": "46f6b755c8d030f97086a6e09c4121af260b298fba9b924beea1fe2154fbd38b"
+    },
+    {
+      "path": "native-file-open-v10-x86.log",
+      "bytes": 259784,
+      "sha256": "61e14281d333cea82c034ef16c16df9bb2e05e65b459576e91bc561af5579ce4"
+    },
+    {
+      "path": "native-file-open-v10-x86-laa.log",
+      "bytes": 259784,
+      "sha256": "b6babbed9a5b8ff9e294f74040917d28344f9df41138cca8476521b93bd7dd06"
+    }
+  ],
+  "cases": [
+    {
+      "role": 404,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "sentinel",
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "zero",
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 405,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "sentinel",
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "zero",
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 406,
+      "native": {
+        "status": 2147483650,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "sentinel",
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 2147483650,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "zero",
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 407,
+      "native": {
+        "status": 3221225523,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "sentinel",
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225523,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "zero",
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 408,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "sentinel",
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "sentinel",
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 409,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "sentinel",
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "sentinel",
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 410,
+      "native": {
+        "status": 2147483650,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "sentinel",
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "sentinel",
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 411,
+      "native": {
+        "status": 3221225523,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "sentinel",
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225523,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "zero",
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 412,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "sentinel",
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "sentinel",
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 413,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "sentinel",
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "sentinel",
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 414,
+      "native": {
+        "status": 2147483650,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "sentinel",
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "sentinel",
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 415,
+      "native": {
+        "status": 3221225523,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "sentinel",
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225523,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "zero",
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 416,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "sentinel",
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "sentinel",
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 417,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "sentinel",
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "sentinel",
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 418,
+      "native": {
+        "status": 2147483650,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "sentinel",
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "sentinel",
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 419,
+      "native": {
+        "status": 3221225523,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "sentinel",
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225523,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "zero",
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 420,
+      "native": {
+        "status": 3221225506,
+        "hprot": 260,
+        "iprot": 4,
+        "hout": "-",
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "zero",
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 421,
+      "native": {
+        "status": 3221225506,
+        "hprot": 4,
+        "iprot": 260,
+        "hout": "sentinel",
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 3221225506,
+        "hprot": 4,
+        "iprot": 260,
+        "hout": "zero",
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 422,
+      "native": {
+        "status": 3221225506,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "sentinel",
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "sentinel",
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 423,
+      "native": {
+        "status": 3221225506,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "sentinel",
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225485,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "sentinel",
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 424,
+      "native": {
+        "status": 2147483649,
+        "hprot": 2,
+        "iprot": 4,
+        "hout": "sentinel",
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 258,
+        "iprot": 4,
+        "hout": "-",
+        "iosb": "A5A5A5A5A5A5A5A5"
+      }
+    },
+    {
+      "role": 425,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 2,
+        "hout": "sentinel",
+        "iosb": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 258,
+        "hout": "published",
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 428,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 2,
+        "hout": "sentinel",
+        "iosb": "00000000000000000000000000000000"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 258,
+        "hout": "published",
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 429,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "sentinel",
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "published",
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 430,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "sentinel",
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "published",
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 431,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "sentinel",
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "published",
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 432,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "published",
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "published",
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 433,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "published",
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "published",
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 434,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "published",
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "published",
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 435,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "published",
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "published",
+        "iosb": "-"
+      }
+    },
+    {
+      "role": 436,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "published",
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 0,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "published",
+        "iosb": "0000000001000000"
+      }
+    },
+    {
+      "role": 437,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "published",
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 0,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "published",
+        "iosb": "0000000001000000"
+      }
+    },
+    {
+      "role": 438,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "published",
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 0,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "published",
+        "iosb": "0000000001000000"
+      }
+    },
+    {
+      "role": 439,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "published",
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 0,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "published",
+        "iosb": "0000000001000000"
+      }
+    },
+    {
+      "role": 440,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "published",
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 0,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "published",
+        "iosb": "0000000001000000"
+      }
+    },
+    {
+      "role": 441,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "published",
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 0,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "published",
+        "iosb": "0000000001000000"
+      }
+    },
+    {
+      "role": 442,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "published",
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 0,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "published",
+        "iosb": "0000000001000000"
+      }
+    },
+    {
+      "role": 443,
+      "native": {
+        "status": 3221225477,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "published",
+        "iosb": "-"
+      },
+      "wow": {
+        "status": 0,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "published",
+        "iosb": "0000000001000000"
+      }
+    },
+    {
+      "role": 444,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "sentinel",
+        "iosb": "00000000000000000000000000000000"
+      },
+      "wow": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "published",
+        "iosb": "0000000000000000"
+      }
+    },
+    {
+      "role": 445,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "sentinel",
+        "iosb": "A5000000000000000000000000000000"
+      },
+      "wow": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "published",
+        "iosb": "A500000000000000"
+      }
+    },
+    {
+      "role": 446,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "sentinel",
+        "iosb": "A5A50000000000000000000000000000"
+      },
+      "wow": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "published",
+        "iosb": "A5A5000000000000"
+      }
+    },
+    {
+      "role": 447,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "sentinel",
+        "iosb": "A5A5A500000000000000000000000000"
+      },
+      "wow": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "published",
+        "iosb": "A5A5A50000000000"
+      }
+    },
+    {
+      "role": 448,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "published",
+        "iosb": "A5A5A5A5000000000000000000000000"
+      },
+      "wow": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "published",
+        "iosb": "0000000000000000"
+      }
+    },
+    {
+      "role": 449,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "published",
+        "iosb": "A5A5A5A5A50000000000000000000000"
+      },
+      "wow": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "published",
+        "iosb": "00000000A5000000"
+      }
+    },
+    {
+      "role": 450,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "published",
+        "iosb": "A5A5A5A5A5A500000000000000000000"
+      },
+      "wow": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "published",
+        "iosb": "00000000A5A50000"
+      }
+    },
+    {
+      "role": 451,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "published",
+        "iosb": "A5A5A5A5A5A5A5000000000000000000"
+      },
+      "wow": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "published",
+        "iosb": "00000000A5A5A500"
+      }
+    },
+    {
+      "role": 452,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "published",
+        "iosb": "00000000000000000000000000000000"
+      },
+      "wow": {
+        "status": 0,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "published",
+        "iosb": "0000000001000000"
+      }
+    },
+    {
+      "role": 453,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "published",
+        "iosb": "0000000000000000A500000000000000"
+      },
+      "wow": {
+        "status": 0,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "published",
+        "iosb": "0000000001000000"
+      }
+    },
+    {
+      "role": 454,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "published",
+        "iosb": "0000000000000000A5A5000000000000"
+      },
+      "wow": {
+        "status": 0,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "published",
+        "iosb": "0000000001000000"
+      }
+    },
+    {
+      "role": 455,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "published",
+        "iosb": "0000000000000000A5A5A50000000000"
+      },
+      "wow": {
+        "status": 0,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "published",
+        "iosb": "0000000001000000"
+      }
+    },
+    {
+      "role": 456,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "published",
+        "iosb": "0000000000000000A5A5A5A500000000"
+      },
+      "wow": {
+        "status": 0,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "published",
+        "iosb": "0000000001000000"
+      }
+    },
+    {
+      "role": 457,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "published",
+        "iosb": "0000000000000000A5A5A5A5A5000000"
+      },
+      "wow": {
+        "status": 0,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "published",
+        "iosb": "0000000001000000"
+      }
+    },
+    {
+      "role": 458,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "published",
+        "iosb": "0000000000000000A5A5A5A5A5A50000"
+      },
+      "wow": {
+        "status": 0,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "published",
+        "iosb": "0000000001000000"
+      }
+    },
+    {
+      "role": 459,
+      "native": {
+        "status": 2147483649,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "published",
+        "iosb": "0000000000000000A5A5A5A5A5A5A500"
+      },
+      "wow": {
+        "status": 0,
+        "hprot": 4,
+        "iprot": 4,
+        "hout": "published",
+        "iosb": "0000000001000000"
+      }
+    }
+  ]
+}

@@ -16,11 +16,16 @@
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
+#[cfg(windows)]
+mod windows;
+
 /// Identity used by process-local sharing and deferred deletion.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum FileIdentity {
     /// Unix host device and inode numbers (also detect hard-link aliases).
     Unix(u64, u64),
+    /// Native Windows volume and 128-bit file identity captured from an owned handle.
+    Windows(u64, [u8; 16]),
     /// Canonical host path on hosts without a supported stable file identity.
     Path(PathBuf),
     /// The NUL character device, which has no host pathname.
@@ -36,11 +41,43 @@ impl FileIdentity {
             let _ = path;
             Ok(Self::Unix(metadata.dev(), metadata.ino()))
         }
-        #[cfg(not(unix))]
+        #[cfg(windows)]
+        {
+            use std::os::windows::fs::OpenOptionsExt;
+            let _ = metadata;
+            let file = std::fs::OpenOptions::new()
+                .access_mode(0)
+                .share_mode(7)
+                .custom_flags(0x0200_0000)
+                .open(path)?;
+            Self::retained(&file)
+        }
+        #[cfg(not(any(unix, windows)))]
         {
             let _ = metadata;
             Ok(Self::Path(path.canonicalize()?))
         }
+    }
+
+    /// Uses the retained object when available, so a renamed/replaced pathname
+    /// cannot substitute another identity during an open's final validation.
+    pub(crate) fn of_open(
+        path: &Path,
+        file: Option<&std::fs::File>,
+        metadata: &std::fs::Metadata,
+    ) -> std::io::Result<Self> {
+        #[cfg(windows)]
+        if let Some(file) = file {
+            return Self::retained(file);
+        }
+        #[cfg(not(windows))]
+        let _ = file;
+        Self::of(path, metadata)
+    }
+
+    #[cfg(windows)]
+    pub(crate) fn retained(file: &std::fs::File) -> std::io::Result<Self> {
+        windows::identity(file)
     }
 
     /// Whether replacement-safe deferred unlink is available on this host.

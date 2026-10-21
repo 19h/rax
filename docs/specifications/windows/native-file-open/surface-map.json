@@ -1,0 +1,62 @@
+{
+  "Instruction decode/SMIR/lowering": {
+    "state": "unaffected",
+    "evidence": "No edits under ISA, SMIR or lowering paths; new service dispatch reuses existing compiled execution."
+  },
+  "Windows user/kernel boundary": {
+    "state": "affected",
+    "evidence": "NtOpenFile factory, guest capture/copyback, real owned file objects, grant/sharing and native runtime authority."
+  },
+  "Linux/macOS user-mode policy": {
+    "state": "unaffected",
+    "evidence": "Native Linux/macOS syscall and loader implementations unchanged; complete registered user integration suites still execute."
+  },
+  "Host filesystem adapters": {
+    "state": "affected",
+    "evidence": "Windows NT host-owned structures and file-ID identity; POSIX retained-descriptor traversal; three native host gates."
+  },
+  "Object lifecycle": {
+    "state": "affected",
+    "evidence": "Internal object authority marker, shared identity/lifetime and delayed copyback cleanup; aliases/hardlinks/delete regression."
+  },
+  "Guest memory": {
+    "state": "affected caller",
+    "evidence": "Existing probe/store VM contract reused with measured width/guard/copyback ordering; memory engine unchanged."
+  },
+  "Runtime library selection": {
+    "state": "affected consumer",
+    "evidence": "Existing selected-library path authority reused; retained object marker preserves read-only selection after catalog/path changes."
+  },
+  "Public Rust/C ABI": {
+    "state": "Rust identity enum extended; C ABI unchanged",
+    "evidence": "FileIdentity gains Windows(volume,id128); FileObj/public C layouts and C API1.14.0 remain unchanged. In-tree Rust targets and actual C++ drift/bridge/archive consumers compile and run."
+  },
+  "Assist plugin/UI/agent/permission dispatch": {
+    "state": "unaffected implementation",
+    "evidence": "No root C++/UI/tool schema/permission edits; retained process consumers and current shipping CI remain separate evidence planes."
+  },
+  "Persistence/transport/crypto": {
+    "state": "unaffected",
+    "evidence": "No persisted schema, configuration, protocol, crypto or transport source edits."
+  },
+  "Build defaults/dependencies": {
+    "state": "unaffected",
+    "evidence": "Cargo manifests/lock, dependency pins, CMake defaults and CRT policy unchanged. Owning core features[] and carrier[default,rax] checked."
+  },
+  "Windows/macOS/Linux targets": {
+    "state": "affected and validated",
+    "evidence": "Shared dispatcher tests26/host, unfiltered owning lib, CAPI183, registered integration and all-targets; native Windows kernel adapters run. Cross aarch64/x64 Windows all-target checks pass."
+  },
+  "Packages": {
+    "state": "existing wiring",
+    "evidence": "No new external runtime dependency or executable/resource to stage. RAX remains in existing Assist static carrier; current-root six package lanes require independent CI evidence."
+  },
+  "Tests/evidence": {
+    "state": "affected",
+    "evidence": "Compiled native/Win32 sharing, descriptor lifetime, authority, 210 fault pairs and54 boundaries; independent four-view Windows controls and pre-fix compiled regression."
+  },
+  "Release notes": {
+    "state": "out of scope",
+    "evidence": "No changelog or release-note work."
+  }
+}
