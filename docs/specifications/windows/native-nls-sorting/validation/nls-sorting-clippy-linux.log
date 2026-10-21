@@ -1,0 +1,16 @@
+     Removed 812 files, 2.8GiB total
+info: downloading component clippy
+    Checking vm-memory v0.17.1 (/work/vendor/rax/vendor/vm-memory)
+    Checking linux-loader v0.13.2 (https://github.com/19h/linux-loader?rev=f745b555942c4e840a784bca61e6f3976d101960#f745b555)
+    Checking rax v0.1.0 (/work/vendor/rax)
+error: function `operand_has_vector_register` is never used
+   --> tests/suites/coverage/x86_64/../../../support/x86_64/avx512_spec.rs:312:4
+    |
+312 | fn operand_has_vector_register(operand: &str) -> bool {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `-D dead-code` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[expect(dead_code)]` or `#[allow(dead_code)]`
+
+error: could not compile `rax` (test "x86_64_avx512_inventory") due to 1 previous error
+warning: build failed, waiting for other jobs to finish...

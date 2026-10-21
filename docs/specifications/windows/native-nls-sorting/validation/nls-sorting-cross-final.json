@@ -1,0 +1,31 @@
+{
+  "state": "verified",
+  "targets": [
+    {
+      "target": "aarch64-pc-windows-msvc",
+      "primary-package-cleaned": true,
+      "log": "nls-sorting-candidate1-cross-aarch64.log",
+      "bytes": 1209,
+      "sha256": "653979f62a009176e4cc6e6825756b540c4e0ea8092eab7a212a0c63df33e818",
+      "clean-log": "nls-sorting-cross-aarch64-clean.log",
+      "clean-log-identity": {
+        "bytes": 21,
+        "sha256": "0bdaeb2aa6a92a0fdfec2d2cc4d0ab71946de5d0654e08c526e4629130ae0f28"
+      }
+    },
+    {
+      "target": "x86_64-pc-windows-msvc",
+      "primary-package-cleaned": true,
+      "log": "nls-sorting-candidate1-cross-x64.log",
+      "bytes": 1209,
+      "sha256": "2143d72790060112b95c661129e79a0b40fb1277bd59bf8f0aefd464706623ad",
+      "clean-log": "nls-sorting-cross-x64-clean.log",
+      "clean-log-identity": {
+        "bytes": 21,
+        "sha256": "0bdaeb2aa6a92a0fdfec2d2cc4d0ab71946de5d0654e08c526e4629130ae0f28"
+      }
+    }
+  ],
+  "source-ledger-sha256": "3a026ef233ba5737936b83e56c6d461e4d59386c3c44b185054db98d22a3f186",
+  "scope": "Serial Windows x64 then ARM64 all-target cross-checks; no shared clang-cl setup race."
+}

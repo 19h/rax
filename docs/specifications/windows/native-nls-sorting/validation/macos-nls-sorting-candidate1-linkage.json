@@ -1,0 +1,49 @@
+{
+  "targets": [
+    {
+      "target": "test/assist_rust_archive_link_tests",
+      "selected-carrier-in-link-rule": true,
+      "link-rule-sha256": "9871ddcd0d01fc9bd69096076edde98ac7f63fb0e11c71804783a23e781543b1"
+    },
+    {
+      "target": "test/assist_rax_process_tests",
+      "selected-carrier-in-link-rule": true,
+      "link-rule-sha256": "2ffa8d2358686c71791e1d99cbe614ac9deb3a6283440f98a65717361cff948d"
+    },
+    {
+      "target": "test/assist_process_tool_tests",
+      "selected-carrier-in-link-rule": true,
+      "link-rule-sha256": "227501a3f19df07690fce42222ef693ce5f6f24a2c7816f3339726a998cffc8d"
+    },
+    {
+      "target": "test/assist_process_tool_unavailable_tests",
+      "selected-carrier-in-link-rule": true,
+      "link-rule-sha256": "560ed7d2148e3f7011d13b441c44649f3cdbd1857cea339de1d830d521ccaf46"
+    },
+    {
+      "target": "test/assist_e14_rax_abi_drift_tests",
+      "selected-carrier-in-link-rule": true,
+      "link-rule-sha256": "70c3191464bb940b926a3f71f2956fa5d4a592e37a0b6fedb223c896ad0321d1"
+    },
+    {
+      "target": "test/assist_mcp_tool_manifest_tests",
+      "selected-carrier-in-link-rule": true,
+      "link-rule-sha256": "e6fa2ff3459c3684686169a68871fe8dde06efd2506fb17148bb3a1a88ac3e11"
+    },
+    {
+      "target": "assist-mcp",
+      "selected-carrier-in-link-rule": true,
+      "link-rule-sha256": "afc0af6d4531ebca31c16e1b1d57d622ea17444e11b3b3f46371039617f76c7f"
+    },
+    {
+      "target": "assist-cli",
+      "selected-carrier-in-link-rule": true,
+      "link-rule-sha256": "cafb02cef63fec0e39a3d44cb19671f616f8c09162ddb9b994f077e14f9d55fd"
+    }
+  ],
+  "carrier-path": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes/assist-rs-target/aarch64-apple-darwin/debug/libassist_rs.a",
+  "core-path": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes/assist-rs-target/aarch64-apple-darwin/debug/deps/librax-c89758aa402dc84d.rlib",
+  "new-fixed-nls-path-present-in-core": true,
+  "build-log-sha256": "e00735c6ae0790bcd1c1be3675d4df313207fc8772d5c3b0c661f015001802c1",
+  "ninja-file-sha256": "58bcbe100a6557612c514ce817b10b0856d853e4a7f186e70f5ac44dccb66be9"
+}

@@ -1,0 +1,10 @@
+{
+  "utc": "2026-10-21T07:18:29.452869+00:00",
+  "free-before": 3538034688,
+  "retained-unit": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-red3\\target\\normal-red1\\debug\\deps\\rax-b799307a7949aa6b.exe",
+  "target": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-red3\\target\\normal-red1",
+  "deleted-files": 1240,
+  "deleted-bytes": 714372866,
+  "scope": "Keep the exact executed red unit image at its original path; remove only its now-unused isolated build cache.",
+  "free-after": 4227809280
+}

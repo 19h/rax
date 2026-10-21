@@ -1,0 +1,80 @@
+{
+  "base": "9e3e0647c131fa3e91a991a44acb81c464d67756",
+  "paired-root": "c6609256d49113fc9733b6b0a8464d9671ddb301",
+  "utc": "2026-10-21T07:08:29.911198+00:00",
+  "owned-source-paths": [
+    "src/user/windows/registry.rs",
+    "src/user/windows/registry/tree.rs",
+    "src/user/windows/registry/installed.rs",
+    "src/user/windows/registry/nls_sorting_tests.rs",
+    "src/user/windows/registry/installed/nls_sorting_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/registry_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/nls_sorting_registry_tests.rs"
+  ],
+  "assumptions": [
+    {
+      "id": "NS-A1",
+      "assumption": "The measured fixed NLS Sorting Versions key belongs in selected immutable startup metadata.",
+      "basis": "Both actual owning routes request the exact absolute path with KEY_READ; existing fixed subtree acquisition supplies bounded, read-only, handle-free snapshots.",
+      "dependent-result": "Admit only this fixed subtree during NativeRuntime selection.",
+      "stress-test": "Present/absent roots, access errors, view parity, raw value identity, bounds, lifetime, missing descendants and adjacent unselected keys.",
+      "falsification-probe": "Native views differ in unsupported ways, acquisition requires mutation, or requests escape the fixed selected subtree.",
+      "status": "confirmed for measured native kernel, captured raw values, read-only snapshot and all three guest ABIs; later kernels require independent controls"
+    }
+  ],
+  "bounded-scope": [
+    {
+      "impact": "high",
+      "item": "Whole same-host userland remains incomplete beyond measured frontier; independent new-image unwind registration gap retained.",
+      "blocks-increment": false
+    },
+    {
+      "impact": "medium",
+      "item": "Extra-strict Clippy -D warnings rejects unchanged AVX-512 helper dead-code warning; repository canonical all-target default-feature Clippy passes without suppressing warnings.",
+      "blocks-increment": false
+    },
+    {
+      "impact": "high",
+      "item": "Both actual owning routes next stop at NtQueryInformationProcess class52. Rust terminal2802, CAPI2803 turns/reason5. No guest exit claimed.",
+      "blocks-increment": false,
+      "blocks-full-goal": true
+    }
+  ],
+  "surface": {
+    "affected": [
+      "native Windows runtime selection",
+      "shared immutable registry lookup on all hosts",
+      "native and WoW64 registry services via existing object snapshot",
+      "tests/engineering evidence"
+    ],
+    "unaffected-reason": "No public ABI, permissions, dependency, build default, package membership, GUI, transport, Linux/macOS personality or CI changes."
+  },
+  "native-control": {
+    "source-sha256": "3bdb54d13d924eca28052b1c50a60f45f07407de03fb2ae1378b6ee5450c91ff",
+    "views": 4,
+    "open-calls": 320,
+    "key-present": true,
+    "raw-values-per-view": 10,
+    "children": 0,
+    "WOW-view-parity": true,
+    "scope": "One ARM64 Windows kernel; three registry views per four execution views."
+  },
+  "surface-map": {
+    "plugin-lifecycle": "unaffected: no lifecycle/installation source changes; owning CLI/MCP consumers rebuilt",
+    "UI-state": "unaffected: no widget, ownership, focus, theme or copy contract changes",
+    "conversation-lane": "unaffected: no conversation/cancellation/history representation change",
+    "agent-backend": "unaffected: no native/ACP agent request or result change",
+    "prompt-context": "unaffected: no prompt/context source or embedding change",
+    "tool-schema": "unaffected: existing process tool/C API contract; no schema or discovery change",
+    "permission-mutation": "existing read-only registry grants retained; no host mutation or guest write admission",
+    "main-thread-dispatch": "unaffected: no IDA/Qt callback or scheduling code change",
+    "mesh-MCP": "existing MCP process consumer rebuilt; routing/identity/approval semantics unchanged",
+    "transport-crypto": "unaffected: no framing, authentication or secret handling changes",
+    "persistence": "immutable in-memory selection gains one fixed root; no persisted schema/settings migration",
+    "SDK-ABI": "RAX C ABI1.14.0 and current Assist Rust ABI274 unchanged; retained ABI184 consumers separately exercised",
+    "optional-engines": "RAX Windows native runtime selection and shared registry tests affected; no Z3/debugger/Hex-Rays availability change",
+    "update-release": "unaffected: no release/TUF/archive/update logic changes; no changelog work",
+    "targets-platforms": "Windows real read-only acquisition; macOS/Linux shared guest snapshot semantics tested. Owning plugin carrier and CLI/MCP/test link surfaces exercised; packaging definitions/defaults unchanged",
+    "tests-docs": "seven Rust source/test paths, four immutable compiled native logs, native producers and portable source/consumer proof audits"
+  }
+}

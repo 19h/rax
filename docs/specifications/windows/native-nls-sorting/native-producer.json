@@ -1,0 +1,16 @@
+{
+  "source": "native/native-nls-sorting-v1.cpp",
+  "source-sha256": "3bdb54d13d924eca28052b1c50a60f45f07407de03fb2ae1378b6ee5450c91ff",
+  "launch": "native/native-nls-sorting-v1-four-views-launch.json",
+  "profiles": [
+    "arm64",
+    "x64",
+    "x86",
+    "x86-laa"
+  ],
+  "native-open-calls": 320,
+  "raw-value-observations": 120,
+  "scope": "One ARM64 Windows kernel10.0.29683 with four execution views; three registry views per execution view. Fixed read-only native controls, not independent physical AMD64 kernel coverage.",
+  "launch-bytes": 18333,
+  "launch-sha256": "f8e8e55718358cf5e0de3c052097df95c2e8e1e5181da6a7b4abfd3c0326db21"
+}

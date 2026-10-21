@@ -1,0 +1,16 @@
+{
+  "retained": [
+    {
+      "source": "/work/build-native-attributes/linux-target/debug/libassist_rs.a",
+      "copy": "/work/build-native-attributes/linux-target/retained-volume-query-before-nls-sorting/0-libassist_rs.a",
+      "bytes": 945131996,
+      "sha256": "76523bde561c5fb298f58cc039d51009b89bf01ed3a2ef0f8a672c84880ed289"
+    },
+    {
+      "source": "/work/build-native-attributes/linux-target/debug/deps/librax-a2a8568229f56ea7.rlib",
+      "copy": "/work/build-native-attributes/linux-target/retained-volume-query-before-nls-sorting/1-librax-a2a8568229f56ea7.rlib",
+      "bytes": 587290356,
+      "sha256": "ca47f99ed295031e9e119991b84f40042733003767d3453cb6ea839812f3134a"
+    }
+  ]
+}

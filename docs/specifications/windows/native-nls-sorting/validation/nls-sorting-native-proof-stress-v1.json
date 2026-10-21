@@ -1,0 +1,41 @@
+{
+  "state": "verified",
+  "negative-controls": [
+    {
+      "name": "wrong-root-status",
+      "state": "rejected",
+      "reason": "native path status",
+      "transitive-identities-repaired": true,
+      "fresh-restoration": "verified"
+    },
+    {
+      "name": "different-view-value",
+      "state": "rejected",
+      "reason": "raw values differ between native views",
+      "transitive-identities-repaired": true,
+      "fresh-restoration": "verified"
+    },
+    {
+      "name": "duplicated-input",
+      "state": "rejected",
+      "reason": "duplicate or missing native input",
+      "transitive-identities-repaired": true,
+      "fresh-restoration": "verified"
+    },
+    {
+      "name": "handle-leak",
+      "state": "rejected",
+      "reason": "native handle balance",
+      "transitive-identities-repaired": true,
+      "fresh-restoration": "verified"
+    },
+    {
+      "name": "incomplete-launch",
+      "state": "rejected",
+      "reason": "native completion",
+      "transitive-identities-repaired": true,
+      "fresh-restoration": "verified"
+    }
+  ],
+  "scope": "Semantic corruptions rejected after log/launch receipt hashes are repaired; each negative followed by fresh positive restoration."
+}

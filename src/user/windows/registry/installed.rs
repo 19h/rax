@@ -293,6 +293,9 @@ pub(crate) fn snapshot() -> io::Result<Registry> {
     let registry = registry.with_tree(root, selected)?;
     let root = super::TreeRoot::FileSystem;
     let selected = tree::capture_root(&registry, root)?;
+    let registry = registry.with_tree(root, selected)?;
+    let root = super::TreeRoot::NlsSortingVersions;
+    let selected = tree::capture_root(&registry, root)?;
     registry.with_tree(root, selected)
 }
 
@@ -323,3 +326,7 @@ mod user_policy_tests;
 #[cfg(test)]
 #[path = "installed/filesystem_tests.rs"]
 mod filesystem_tests;
+
+#[cfg(test)]
+#[path = "installed/nls_sorting_tests.rs"]
+mod nls_sorting_tests;

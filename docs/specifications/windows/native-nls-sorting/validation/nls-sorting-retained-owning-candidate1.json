@@ -1,0 +1,36 @@
+{
+  "state": "finished",
+  "exit-code": 0,
+  "utc": "2026-10-21T07:30:56.421262+00:00",
+  "files": [
+    {
+      "role": "core",
+      "source": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\debug\\deps\\librax-934115059aa64c85.rlib",
+      "retained": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\retained-owning-candidate1\\core.rlib",
+      "bytes": 511626678,
+      "sha256": "6a438221ae1ccca27ad16c44fa0f1337f0f463423299a2a9dad279be4bca352c"
+    },
+    {
+      "role": "carrier",
+      "source": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\debug\\assist_rs.lib",
+      "retained": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\retained-owning-candidate1\\carrier.lib",
+      "bytes": 861213116,
+      "sha256": "89267220625923654476f90221742808f42d7b18d945f087a9af36f547c25cd5"
+    },
+    {
+      "role": "ordinary",
+      "source": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\nls-sorting-ordinary-owner-candidate1.exe",
+      "retained": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\retained-owning-candidate1\\ordinary.exe",
+      "bytes": 27210240,
+      "sha256": "5e3fb2a726adaebdf465c9c25f0ad89294db68e030621e89a6d83c9560f37db6"
+    },
+    {
+      "role": "capi",
+      "source": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\cpp\\nls-sorting-owning-capi-candidate1.exe",
+      "retained": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\retained-owning-candidate1\\capi.exe",
+      "bytes": 32782848,
+      "sha256": "7270f7ed71d2ea7883cc3d0335858a1b254be861ce65f0ef686638eab6699cff"
+    }
+  ],
+  "scope": "Four separate retained byte copies of the actual selected owning core, Assist carrier and two exercised ordinary-program callers. Source identities unchanged; no hardlinks."
+}

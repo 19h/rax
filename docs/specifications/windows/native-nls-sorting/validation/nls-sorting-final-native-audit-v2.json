@@ -1,0 +1,135 @@
+{
+  "state": "verified",
+  "utc": "2026-10-21T07:38:12.144519+00:00",
+  "runtime-module-union": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e"
+    },
+    {
+      "path": "C:\\Windows\\System32\\KernelBase.dll",
+      "bytes": 7213728,
+      "sha256": "6b2fa508ac4f9bce5d7351676485d1dc5b5236cd9656034e2fec1eaba3b82bc9"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\KernelBase.dll",
+      "bytes": 3073488,
+      "sha256": "e9c414d7c6bd2c6fde608f31b2f31da3c2014c801b3764a30ee42abd1e9c2d58"
+    },
+    {
+      "path": "C:\\Windows\\System32\\kernel32.dll",
+      "bytes": 1500304,
+      "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\kernel32.dll",
+      "bytes": 696392,
+      "sha256": "9c9a0c54a79ea712bb533fcc79ba9935ed9f9d3f777fd65cf62d9cec6699b9df"
+    },
+    {
+      "path": "C:\\Windows\\System32\\msvcrt.dll",
+      "bytes": 1347856,
+      "sha256": "779eb5cb1ae357196254af9755307544a3dd20011c84768ae72f45d366f47148"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\msvcrt.dll",
+      "bytes": 810688,
+      "sha256": "67c03357458a951402cc1804e05d3301f011a59d352f684fbe283f546f8ae398"
+    },
+    {
+      "path": "C:\\Windows\\System32\\version.dll",
+      "bytes": 73200,
+      "sha256": "d30c2a9c9d81982b112c5a60878f3579ddb3db3a09443147c63f10bc749aaab2"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\version.dll",
+      "bytes": 29208,
+      "sha256": "688ea4248da1e28bd77be9ae1088954a11cec3302c25af8aade47bae14f3ada8"
+    }
+  ],
+  "native-producer": [
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-nls-sorting-v1-four-views\\native-nls-sorting-v1.cpp",
+      "bytes": 5969,
+      "sha256": "3bdb54d13d924eca28052b1c50a60f45f07407de03fb2ae1378b6ee5450c91ff"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-nls-sorting-v1-four-views\\target\\arm64\\probe.exe",
+      "bytes": 186880,
+      "sha256": "1ed66c3bcd59a4a283cf84c8b09c1089d6defce906227793394e87f498915059"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-nls-sorting-v1-four-views\\target\\x64\\probe.exe",
+      "bytes": 198656,
+      "sha256": "8e7484d1f3cdd864445aa35edaee697b73087cb29576e5351335925a4e802620"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-nls-sorting-v1-four-views\\target\\x86\\probe.exe",
+      "bytes": 160768,
+      "sha256": "19065f8b5c7662e607815fed556a78707a62e0affd401b8c843fba8998339a0b"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-nls-sorting-v1-four-views\\target\\x86-laa\\probe.exe",
+      "bytes": 160768,
+      "sha256": "3c77ab50db4f83c913c10b5dcadc14e0ddece0986714d68347a633391c7d80db"
+    }
+  ],
+  "owning-core-and-callers": [
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\debug\\deps\\librax-934115059aa64c85.rlib",
+      "bytes": 511626678,
+      "sha256": "6a438221ae1ccca27ad16c44fa0f1337f0f463423299a2a9dad279be4bca352c"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\nls-sorting-ordinary-owner-candidate1.exe",
+      "bytes": 27210240,
+      "sha256": "5e3fb2a726adaebdf465c9c25f0ad89294db68e030621e89a6d83c9560f37db6"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\debug\\assist_rs.lib",
+      "bytes": 861213116,
+      "sha256": "89267220625923654476f90221742808f42d7b18d945f087a9af36f547c25cd5"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\cpp\\nls-sorting-owning-capi-candidate1.exe",
+      "bytes": 32782848,
+      "sha256": "7270f7ed71d2ea7883cc3d0335858a1b254be861ce65f0ef686638eab6699cff"
+    }
+  ],
+  "retained-current-artifacts": [
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\retained-owning-candidate1\\core.rlib",
+      "bytes": 511626678,
+      "sha256": "6a438221ae1ccca27ad16c44fa0f1337f0f463423299a2a9dad279be4bca352c"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\retained-owning-candidate1\\carrier.lib",
+      "bytes": 861213116,
+      "sha256": "89267220625923654476f90221742808f42d7b18d945f087a9af36f547c25cd5"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\retained-owning-candidate1\\ordinary.exe",
+      "bytes": 27210240,
+      "sha256": "5e3fb2a726adaebdf465c9c25f0ad89294db68e030621e89a6d83c9560f37db6"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\retained-owning-candidate1\\capi.exe",
+      "bytes": 32782848,
+      "sha256": "7270f7ed71d2ea7883cc3d0335858a1b254be861ce65f0ef686638eab6699cff"
+    }
+  ],
+  "test-image": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1\\debug\\deps\\rax-b799307a7949aa6b.exe",
+    "bytes": 546140672,
+    "sha256": "7c11558d396a192938dfcc366ed7775420a4fe0a1751d0e20bf1269d8a926256"
+  },
+  "windows-build": 29683,
+  "exit-code": 0,
+  "scope": "Ten DLL inputs (native nls-sorting producer includes MSVCRT; ordinary observers include version.dll), four live current owning artifacts, four separate current retained copies, native producer source/four executables, and executed native unit image rehashed. The ten DLL records bracket the ordinary executions; no whole-current-root package claim."
+}

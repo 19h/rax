@@ -12,6 +12,8 @@ pub(crate) const SAFER_CODE_IDENTIFIERS_KEY: &str =
     "\\Registry\\Machine\\Software\\Policies\\Microsoft\\Windows\\Safer\\CodeIdentifiers";
 pub(crate) const FILESYSTEM_KEY: &str =
     "\\Registry\\Machine\\System\\CurrentControlSet\\Control\\FileSystem";
+pub(crate) const NLS_SORTING_VERSIONS_KEY: &str =
+    "\\Registry\\Machine\\System\\CurrentControlSet\\Control\\Nls\\Sorting\\Versions";
 pub(super) const MAX_TREE_KEYS: usize = 1024;
 pub(super) const MAX_TREE_DEPTH: usize = 32;
 pub(super) const MAX_COMPONENT_UNITS: usize = 255;
@@ -31,6 +33,7 @@ pub(crate) enum TreeRoot {
     SrpDll,
     SaferCodeIdentifiers,
     FileSystem,
+    NlsSortingVersions,
 }
 impl TreeRoot {
     pub(crate) fn path(self) -> &'static str {
@@ -41,6 +44,7 @@ impl TreeRoot {
             Self::SrpDll => SRP_DLL_KEY,
             Self::SaferCodeIdentifiers => SAFER_CODE_IDENTIFIERS_KEY,
             Self::FileSystem => FILESYSTEM_KEY,
+            Self::NlsSortingVersions => NLS_SORTING_VERSIONS_KEY,
         }
     }
 }

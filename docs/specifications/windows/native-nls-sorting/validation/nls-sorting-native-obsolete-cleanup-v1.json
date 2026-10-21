@@ -1,0 +1,11 @@
+{
+  "utc": "2026-10-21T07:14:36.829883+00:00",
+  "free-before": 0,
+  "paths": [
+    "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-section-prototype1\\target\\normal-prototype1",
+    "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-section-prototype2\\target\\normal-prototype2",
+    "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-red2\\target\\normal-red1"
+  ],
+  "scope": "Only rejected prototype and incomplete setup Cargo target directories. All source, logs, captured native controls, final native unit images and retained owning artifacts preserved.",
+  "free-after": 4797526016
+}

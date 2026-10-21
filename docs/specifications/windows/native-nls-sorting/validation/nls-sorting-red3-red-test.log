@@ -1,0 +1,15 @@
+
+running 1 test
+test user::windows::registry::installed::nls_sorting_tests::installed_nls_sorting_registry_snapshot_matches_independent_native_presence_and_views ... 
+thread 'user::windows::registry::installed::nls_sorting_tests::installed_nls_sorting_registry_snapshot_matches_independent_native_presence_and_views' (9544) panicked at src\user\windows\registry\installed\nls_sorting_tests.rs:35:13:
+assertion failed: matches!(registry.lookup(&guest), super::super::Lookup::Present(_))
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+
+failures:
+
+failures:
+    user::windows::registry::installed::nls_sorting_tests::installed_nls_sorting_registry_snapshot_matches_independent_native_presence_and_views
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 7616 filtered out; finished in 0.01s
+

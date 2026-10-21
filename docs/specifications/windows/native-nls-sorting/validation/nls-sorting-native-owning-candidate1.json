@@ -1,0 +1,124 @@
+{
+  "state": "finished",
+  "pid": 5804,
+  "source-epoch": 1,
+  "utc": "2026-10-21T07:22:36.407380+00:00",
+  "steps": [
+    {
+      "name": "toolchain",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "--version"
+      ],
+      "exit-code": 0,
+      "seconds": 0.08064845800981857,
+      "log": "nls-sorting-native-owning-candidate1-toolchain.log",
+      "bytes": 36,
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5"
+    },
+    {
+      "name": "artifacts-before",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "build",
+        "--locked",
+        "--offline",
+        "--features",
+        "rax",
+        "--message-format=json"
+      ],
+      "exit-code": 0,
+      "seconds": 138.20172116698814,
+      "log": "nls-sorting-native-owning-candidate1-artifacts-before.log",
+      "bytes": 132536,
+      "sha256": "08a27cdfe483c9764cdcef25040d3c65f6bbf1166f45fd4f926431bc1f4633b6"
+    },
+    {
+      "name": "archive-before",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\collect-nls-sorting-archives-candidate1.py",
+        "--host",
+        "windows",
+        "--source",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1",
+        "--manifest",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\nls-sorting-owning-source-hashes-candidate1.json",
+        "--messages",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\nls-sorting-native-owning-candidate1-artifacts-before.log",
+        "--output",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-nls-sorting-candidate1-pre-cpp-archives.json"
+      ],
+      "exit-code": 0,
+      "seconds": 4.579908375017112,
+      "log": "nls-sorting-native-owning-candidate1-archive-before.log",
+      "bytes": 182,
+      "sha256": "5d9d9d20c189a4c0e3ea528597fc96763a6dccbfc46523c68ec96798eefbd541"
+    },
+    {
+      "name": "cpp",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\helpers\\nls-sorting-owned-cpp-build-candidate1.py"
+      ],
+      "exit-code": 0,
+      "seconds": 49.39998370799003,
+      "log": "nls-sorting-native-owning-candidate1-cpp.log",
+      "bytes": 3705,
+      "sha256": "79dd2d4c49682d3d563a665dc827d0b3adcb0d1f4e8534bb7df43669217a8293"
+    },
+    {
+      "name": "artifacts-after",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "build",
+        "--locked",
+        "--offline",
+        "--features",
+        "rax",
+        "--message-format=json"
+      ],
+      "exit-code": 0,
+      "seconds": 0.7086313750187401,
+      "log": "nls-sorting-native-owning-candidate1-artifacts-after.log",
+      "bytes": 132251,
+      "sha256": "7933d98ae955d63928061f6bb96e57bce2d8e9328df91343f47aab391e34dba1"
+    },
+    {
+      "name": "archive-after",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\collect-nls-sorting-archives-candidate1.py",
+        "--host",
+        "windows",
+        "--source",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1",
+        "--manifest",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\nls-sorting-owning-source-hashes-candidate1.json",
+        "--messages",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\nls-sorting-native-owning-candidate1-artifacts-after.log",
+        "--output",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-nls-sorting-candidate1-final-owning-archive-identities.json"
+      ],
+      "exit-code": 0,
+      "seconds": 7.241707749984926,
+      "log": "nls-sorting-native-owning-candidate1-archive-after.log",
+      "bytes": 182,
+      "sha256": "5d9d9d20c189a4c0e3ea528597fc96763a6dccbfc46523c68ec96798eefbd541"
+    }
+  ],
+  "junction": {
+    "before": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1",
+    "after": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1"
+  },
+  "current-step": "archive-after",
+  "child-pid": 4860,
+  "exit-code": 0,
+  "source-inputs": 3875,
+  "archive-identities-stable": true,
+  "scope": "Frozen nls-sorting source; retained Assist ABI184 linked consumers. Whole current-root ABI274 GUI/plugin/packages not claimed.",
+  "completed-utc": "2026-10-21T07:26:04.112037+00:00"
+}

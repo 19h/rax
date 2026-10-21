@@ -1,0 +1,18 @@
+{
+  "retained": [
+    {
+      "source": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes/assist-rs-target/aarch64-apple-darwin/debug/libassist_rs.a",
+      "copy": "/Users/int/Library/Caches/assist-process-emulation/native-nls-sorting-20261021/retained-volume-query-macos/0-libassist_rs.a",
+      "bytes": 531860224,
+      "sha256": "bb120ba5658aec647639bf1f21319c560698209843a1857c2bf7de742ea53ec4"
+    },
+    {
+      "source": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes/assist-rs-target/aarch64-apple-darwin/debug/deps/librax-c89758aa402dc84d.rlib",
+      "copy": "/Users/int/Library/Caches/assist-process-emulation/native-nls-sorting-20261021/retained-volume-query-macos/1-librax-c89758aa402dc84d.rlib",
+      "bytes": 398902632,
+      "sha256": "94adb739894777e16863f76aa9018bcc1ae396e1f347da063a589651138de39d"
+    }
+  ],
+  "old": "/Users/int/.assist-native-volume-query-20261021",
+  "new": "/Users/int/.assist-native-nls-sorting-20261021"
+}

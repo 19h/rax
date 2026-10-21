@@ -1,0 +1,9 @@
+{
+  "state": "failed",
+  "pid": 6140,
+  "steps": [],
+  "utc": "2026-10-21T07:10:52.829631+00:00",
+  "exit-code": 1,
+  "error": "Traceback (most recent call last):\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-nls-sorting-red1.py\", line 150, in <module>\n    os.link(BASE / name, target)\n    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^\nFileNotFoundError: [WinError 2] The system cannot find the file specified: 'C:\\\\Windows\\\\Temp\\\\assist-native-rax-20261010\\\\src-nls-sorting-red1\\\\.cargo\\\\config.toml' -> 'C:\\\\Windows\\\\Temp\\\\assist-native-rax-20261010\\\\src-nls-sorting-red1\\\\.cargo\\\\config.toml'\n",
+  "completed-utc": "2026-10-21T07:10:52.912975+00:00"
+}

@@ -1,0 +1,9 @@
+{
+  "state": "verified",
+  "native-open-calls": 320,
+  "raw-value-observations": 120,
+  "execution-views": 4,
+  "registry-views-per-execution": 3,
+  "live-native-files": 13,
+  "scope": "One ARM64 Windows kernel10.0.29683 with four execution views; three registry views per execution view. Fixed read-only native controls, not independent physical AMD64 kernel coverage."
+}

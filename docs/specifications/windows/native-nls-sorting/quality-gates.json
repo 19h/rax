@@ -1,0 +1,26 @@
+{
+  "scope": "Fixed NLS Sorting Versions snapshot increment; full same-host userland goal remains active.",
+  "utc": "2026-10-21T07:40:18.672052+00:00",
+  "gates": {
+    "QG1": "pass: no normative content",
+    "QG2": "pass: NS-A1 native/portable evidence and concrete falsification probe recorded",
+    "QG3": "pass for fixed-root increment: implementation, ABI ordering, all platform compilation and actual owning consumers; full objective remains incomplete",
+    "QG4": "pass: explicit byte/count bounds, native matrix products, source and artifact hashes, bounded complexity",
+    "QG5": "pass for increment: exact five old native lowerer failures separated; read-only grant/unselected-name policy boundaries explicit; next class52 request retained",
+    "QG6": "pass: immutable native controls, selected Cargo artifacts, complete archive walks, three-host proof execution, official API references",
+    "QG7": "pass: process-query frontier and independent unwind-registration gap bounded; no adjacent product mutations"
+  },
+  "native-negative-controls": 5,
+  "fresh-positive-restorations": 5,
+  "proof-hosts": [
+    "macos",
+    "linux",
+    "windows"
+  ],
+  "public-compiler-projections": 6,
+  "source-ledger-sha256": "3a026ef233ba5737936b83e56c6d461e4d59386c3c44b185054db98d22a3f186",
+  "public-C-ABI": "1.14.0",
+  "current-Assist-Rust-ABI-minor": 274,
+  "retained-owning-ABI-minor": 184,
+  "whole-current-root-GUI-package-claim": false
+}

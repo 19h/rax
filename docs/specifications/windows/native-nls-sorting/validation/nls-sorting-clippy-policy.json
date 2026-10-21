@@ -1,0 +1,19 @@
+{
+  "state": "canonical-pass",
+  "canonical-command": "cargo clippy --locked --offline --all-targets --features x86_64-suite",
+  "workflow-contract": ".github/workflows/ci.yml:55-61",
+  "canonical-log": {
+    "log": "nls-sorting-clippy-linux-canonical.log",
+    "bytes": 151,
+    "sha256": "49528633c151e6725592f1553fb2a2e6469b4503316917baa49d23daa30a9f95"
+  },
+  "extra-strict-experiment": {
+    "log": "nls-sorting-clippy-linux.log",
+    "bytes": 850,
+    "sha256": "5b8caef853e0e005ce24d306b11ec428898c47b8cd3ae7735520c43dec244e77",
+    "failure": "-D warnings rejects unchanged operand_has_vector_register dead-code warning",
+    "unchanged-parent-file": "tests/support/x86_64/avx512_spec.rs",
+    "parent-file-sha256": "58daca08d316becdfa559c482c44244e72be8148471afdf2fc98c771cb29e310"
+  },
+  "scope": "Canonical warning policy unchanged; no lint suppression or unrelated source edit."
+}

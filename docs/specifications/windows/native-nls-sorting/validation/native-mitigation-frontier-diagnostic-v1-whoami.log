@@ -1,0 +1,6 @@
+terminal turn=2802 result=Complete(Internal("native NTDLL service NtQueryInformationProcess: Unimplemented(\"NtQueryInformationProcess: NtQueryInformationProcess class 52\")"))
+thread=8 pc=7FFF38A411A4 sp=1A5E690 frames=0
+registers=[FFFFFFFFFFFFFFFF, 34, 1A5E6A8, 8, 0, 5, 1000100, 2119024, B, 30F2E7C, 7FFF38E08B40, 7FFF38E08B40, 1AA0008, 3D94FC0, 7FFF38B3C1AC, 3D831F0, 7FFF38A411A0, 8372240F24B2, 7FFDD000, 4, 1A5E6F0, 1, 3D80000, 0, 0, 3D89F80, 2109378, 1, 1A5E9D0, 1A5E690, 30F2ED4]
+process-query handle=FFFFFFFFFFFFFFFF class=52 output=1A5E6A8 length=8 return-length=0 object=None
+output=Ok([B, 0, 0, 0, 0, 0, 0, 0])
+return-length=Err(MemFault { addr: 0, write: false })
