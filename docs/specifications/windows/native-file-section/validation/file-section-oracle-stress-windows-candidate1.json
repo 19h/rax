@@ -1,0 +1,56 @@
+{
+  "state": "verified",
+  "negative-rejections": 8,
+  "positive-restorations": 8,
+  "cases": [
+    {
+      "case": "producer-source",
+      "reason": "native producer source",
+      "rejected": true,
+      "fresh-positive-restoration": true
+    },
+    {
+      "case": "runtime-after",
+      "reason": "runtime-modules changed",
+      "rejected": true,
+      "fresh-positive-restoration": true
+    },
+    {
+      "case": "executable-after",
+      "reason": "native executable changed",
+      "rejected": true,
+      "fresh-positive-restoration": true
+    },
+    {
+      "case": "role-count",
+      "reason": "native role count",
+      "rejected": true,
+      "fresh-positive-restoration": true
+    },
+    {
+      "case": "role-sequence",
+      "reason": "native role sequence",
+      "rejected": true,
+      "fresh-positive-restoration": true
+    },
+    {
+      "case": "handle-balance",
+      "reason": "native resource balance",
+      "rejected": true,
+      "fresh-positive-restoration": true
+    },
+    {
+      "case": "pe-laa",
+      "reason": "native PE LAA",
+      "rejected": true,
+      "fresh-positive-restoration": true
+    },
+    {
+      "case": "shared-coherence",
+      "reason": "native shared image coherence",
+      "rejected": true,
+      "fresh-positive-restoration": true
+    }
+  ],
+  "scope": "Native oracle semantics with self-consistent receipt/catalog rebinding; fresh complete positive native/source audit after every corruption. This does not substitute for executing product gates."
+}

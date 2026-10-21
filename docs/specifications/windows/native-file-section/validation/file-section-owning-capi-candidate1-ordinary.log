@@ -1,0 +1,6 @@
+api-open program=C:\Windows\Temp\assist-native-rax-20261010\src-file-section-candidate1\tests\fixtures\user\windows\bin\arm64\smoke.exe modules=4
+api-progress program=C:\Windows\Temp\assist-native-rax-20261010\src-file-section-candidate1\tests\fixtures\user\windows\bin\arm64\smoke.exe attempt=0 reason=4 turns=975 elapsed-us=3648034
+api-result {"diagnostic":"exited with status 0 (0x0)","elapsed-us":3648034,"exit-code":0,"native-runtime":true,"program":"C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-section-candidate1\\tests\\fixtures\\user\\windows\\bin\\arm64\\smoke.exe","reason":4,"slice-instructions":4096,"stderr-hex":"","stdout-hex":"","turns-started":975}
+api-open program=C:\Windows\System32\whoami.exe modules=21
+api-progress program=C:\Windows\System32\whoami.exe attempt=0 reason=5 turns=2549 elapsed-us=10511234
+api-result {"diagnostic":"emulator failure: SEH frame walk cyclic or exceeds 4096 frames at PC 0x37349f8, SP 0x1a5e560","elapsed-us":10511234,"exit-code":0,"native-runtime":true,"program":"C:\\Windows\\System32\\whoami.exe","reason":5,"slice-instructions":4096,"stderr-hex":"","stdout-hex":"","turns-started":2549}

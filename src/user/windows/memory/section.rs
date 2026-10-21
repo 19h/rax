@@ -63,7 +63,7 @@ impl VirtualMemory {
                 .and_then(|prefix| prefix.checked_add(size))
                 .is_none_or(|end| end > allocation_size)
             || allocation_size % PAGE_SIZE != 0
-            || section.size != image.bytes.len() as u64
+            || section.image_size != image.bytes.len() as u64
         {
             return Err(VmError::InvalidParameter);
         }
@@ -172,10 +172,10 @@ impl VirtualMemory {
     }
     pub(crate) fn section_image_information(&self, address: u64) -> Option<(u64, u64, u32)> {
         let view = self.section_view(address)?;
-        let partial = view.offset != 0 || view.size != view.section.size;
+        let partial = view.offset != 0 || view.size != view.section.image_size;
         Some((
             view.image_base,
-            view.section.size,
+            view.section.image_size,
             u32::from(partial)
                 | if view.extensions.iter().any(Option::is_some) {
                     0x40

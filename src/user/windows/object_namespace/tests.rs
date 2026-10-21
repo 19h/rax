@@ -186,12 +186,18 @@ fn native_section_open_selection_case_policy_bounds_and_uncaptured_resources_are
     assert_eq!(resource.grant(0xD, false), Ok(0xD));
     assert_eq!(
         resource.grant(0x01000000, false),
-        Err(STATUS_PRIVILEGE_NOT_HELD)
+        Err(SectionGrantError::Status(STATUS_PRIVILEGE_NOT_HELD))
     );
-    assert_eq!(resource.grant(0, false), Err(STATUS_ACCESS_DENIED));
+    assert_eq!(
+        resource.grant(0, false),
+        Err(SectionGrantError::Status(STATUS_ACCESS_DENIED))
+    );
     assert_eq!(resource.grant(0, true), Ok(0));
     assert_eq!(resource.grant(0x20, true), Ok(0));
-    assert_eq!(resource.grant(0x100000, true), Err(STATUS_ACCESS_DENIED));
+    assert_eq!(
+        resource.grant(0x100000, true),
+        Err(SectionGrantError::Status(STATUS_ACCESS_DENIED))
+    );
     for bad in [
         CapturedSection {
             maximum_access: 0,

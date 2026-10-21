@@ -1,0 +1,36 @@
+   Compiling rax v0.1.0 (/Users/int/.assist-native-file-section-20261021)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 24s
+     Running unittests src/lib.rs (target/prototype-v1/debug/deps/rax-dd79f0cd9ae9bb68)
+
+running 19 tests
+test user::windows::object_namespace::tests::native_section_open_selection_case_policy_bounds_and_uncaptured_resources_are_explicit ... ok
+test user::windows::process::sched::tests::services_tests::section_create_tests::file::native_section_file_image_create_publishes_a_typed_owned_section_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::section_create_tests::file::ownership::native_section_file_partial_maximum_maps_rounded_extent_and_pins_file_after_close ... ok
+test user::windows::process::sched::tests::services_tests::section_create_tests::file::ownership::native_section_file_reduced_handle_grants_control_construction_before_backing ... ok
+test user::windows::process::sched::tests::services_tests::section_create_tests::file::replay::native_section_file_replays_1720_independent_win32_duplicate_grants_and_last_error ... ok
+test user::windows::process::sched::tests::services_tests::section_create_tests::file::replay::native_section_file_replays_independent_ctor_grants_and_capture_priority ... native file-section constructor replay: 2072 matched, 60 explicit policy boundaries
+ok
+test user::windows::process::sched::tests::services_tests::section_create_tests::native_section_create_captures_aliased_maximum_before_publishing_and_duplicates_identity ... ok
+test user::windows::process::sched::tests::services_tests::section_create_tests::native_section_create_owns_zero_filled_page_rounded_backing_and_releases_last_handle ... ok
+test user::windows::process::sched::tests::services_tests::section_create_tests::native_section_create_status_mapping_matches_installed_ntdll ... ok
+test user::windows::process::sched::tests::services_tests::section_create_tests::native_section_create_unsupported_modes_do_not_publish_or_allocate ... ok
+test user::windows::process::sched::tests::services_tests::section_create_tests::replay::native_section_create_replays_all_5376_protection_allocation_cross_controls ... section-create arm64: native status/bytes=1344, explicit unsupported=0
+section-create x64: native status/bytes=1344, explicit unsupported=0
+section-create x86: native status/bytes=1344, explicit unsupported=0
+section-create x86: native status/bytes=1344, explicit unsupported=0
+ok
+test user::windows::process::sched::tests::services_tests::section_create_tests::replay::native_section_create_replays_all_5544_priority_and_copyback_controls ... section-create arm64: native status/bytes=1375, explicit unsupported=11
+section-create x64: native status/bytes=1375, explicit unsupported=11
+section-create x86: native status/bytes=1375, explicit unsupported=11
+section-create x86: native status/bytes=1375, explicit unsupported=11
+ok
+test user::windows::process::sched::tests::services_tests::section_map_tests::native_section_map_original_ten_argument_service_returns_owned_rebased_view ... ok
+test user::windows::process::sched::tests::services_tests::section_map_tests::native_section_map_protection_requires_exact_section_access_before_geometry ... ok
+test user::windows::process::sched::tests::services_tests::section_map_tests::native_section_map_wow64_late_output_fault_keeps_view_and_copyback_order ... ok
+test user::windows::process::sched::tests::services_tests::section_map_tests::replay::native_section_map_replays_all_4236_native_access_and_low_address_observations ... ok
+test user::windows::process::sched::tests::services_tests::section_open_tests::duplicate::native_section_open_replays_all_71040_duplicate_grants_flags_and_slot_reuse_rows ... ok
+test user::windows::process::sched::tests::services_tests::section_open_tests::native_section_open_replays_all_13752_access_names_roots_flags_and_counted_string_rows ... ok
+test user::windows::process::sched::tests::services_tests::section_open_tests::native_section_open_replays_all_8832_attributes_output_unicode_and_buffer_fault_rows ... ok
+
+test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 8116 filtered out; finished in 10.16s
+

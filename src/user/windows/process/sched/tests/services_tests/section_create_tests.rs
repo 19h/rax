@@ -2,6 +2,8 @@
 use super::*;
 
 const SERVICE: u32 = 0x4A;
+#[path = "file_section_create_tests/create.rs"]
+mod file;
 #[cfg(windows)]
 #[path = "section_create_leaf_tests.rs"]
 mod installed;

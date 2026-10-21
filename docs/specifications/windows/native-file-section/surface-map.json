@@ -1,0 +1,11 @@
+{
+  "Windows user/kernel boundary": "affected: file-backed image constructor and error/capture policy",
+  "Object namespace and lifetime": "affected: owned unnamed image identity and retained backing",
+  "Guest VM": "affected: arbitrary maximum sizes while retaining mapped image ownership",
+  "PE parsing/native projections": "affected: installed Windows kernel image capture; portable standard PE templates",
+  "Rust/C ABI": "inspect: preserve CAPI1.14.0 and narrow internal additions",
+  "Build/dependencies/CI definitions": "unchanged: reuse explicit modules and existing tests; no defaults or new CI definitions",
+  "Windows/macOS/Linux": "mandatory compiled and native adapter execution surfaces; no silent platform stubs",
+  "Assist UI/agent/transport/persistence": "unaffected: no caller contract or root implementation change planned",
+  "Tests/evidence": "affected: independent native controls, typed dispatcher tests and complete matrix"
+}

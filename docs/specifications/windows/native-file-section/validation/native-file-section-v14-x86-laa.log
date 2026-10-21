@@ -1,0 +1,4 @@
+case role=0 rva=139264 view=155648 before=13579BDF after=2468ACE0 protection=00000004 state=00001000 type=01000000
+case role=1 rva=139264 view=155648 before=13579BDF after=2468ACE0 protection=00000004 state=00001000 type=01000000
+case role=2 rva=139264 view=155648 before=13579BDF after=2468ACE0 protection=00000004 state=00001000 type=01000000
+summary profile=x86-laa cases=3 handles-before=95 handles-after=95

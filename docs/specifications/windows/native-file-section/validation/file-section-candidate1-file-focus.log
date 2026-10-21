@@ -1,0 +1,14 @@
+
+running 8 tests
+test user::windows::process::sched::tests::services_tests::section_create_tests::file::installed::native_section_file_installed_host_and_wow_leaves_preserve_full_image_metadata ... ok
+test user::windows::process::sched::tests::services_tests::section_create_tests::file::native_section_file_image_create_publishes_a_typed_owned_section_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::section_create_tests::file::ownership::native_section_file_creation_preserves_retained_file_cursor ... ok
+test user::windows::process::sched::tests::services_tests::section_create_tests::file::ownership::native_section_file_partial_maximum_maps_rounded_extent_and_pins_file_after_close ... ok
+test user::windows::process::sched::tests::services_tests::section_create_tests::file::ownership::native_section_file_reduced_handle_grants_control_construction_before_backing ... ok
+test user::windows::process::sched::tests::services_tests::section_create_tests::file::ownership::native_section_file_shared_writable_image_is_an_explicit_boundary_without_publication ... ok
+test user::windows::process::sched::tests::services_tests::section_create_tests::file::replay::native_section_file_replays_1720_independent_win32_duplicate_grants_and_last_error ... ok
+test user::windows::process::sched::tests::services_tests::section_create_tests::file::replay::native_section_file_replays_independent_ctor_grants_and_capture_priority ... native file-section constructor replay: 2072 matched, 60 explicit policy boundaries
+ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 7597 filtered out; finished in 2.15s
+

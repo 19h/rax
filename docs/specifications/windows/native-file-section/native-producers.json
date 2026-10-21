@@ -1,0 +1,93 @@
+{
+  "scope": "7396 recorded input/view rows across eleven accepted independent producers; includes constructor, duplicate and view procedures. These are not7396 NtCreateSection calls. Rejected producers1/4/9/13 establish no final behavior. One Windows ARM64 kernel, including its AMD64 and WoW64 execution views; no independent physical x64 oracle.",
+  "accepted": [
+    {
+      "version": 2,
+      "roles-per-view": 72,
+      "views": 4,
+      "receipt": "native-file-section-v2-launch.json",
+      "bytes": 17635,
+      "sha256": "da99a30ca8ebea72dbc27dfd14dda0c708b2d5b9c0f192ba7d9c62ad276a35bf"
+    },
+    {
+      "version": 3,
+      "roles-per-view": 149,
+      "views": 4,
+      "receipt": "native-file-section-v3-launch.json",
+      "bytes": 17713,
+      "sha256": "3d7677fdff35874bcb131a9f7e196b966b3cdbe73104f02693e5fc146026bc93"
+    },
+    {
+      "version": 5,
+      "roles-per-view": 272,
+      "views": 4,
+      "receipt": "native-file-section-v5-launch.json",
+      "bytes": 17717,
+      "sha256": "f5e85abf388ea1b8abd021f015e4134525ec5b802783ee520d92b06ff9affc85"
+    },
+    {
+      "version": 6,
+      "roles-per-view": 149,
+      "views": 4,
+      "receipt": "native-file-section-v6-launch.json",
+      "bytes": 17733,
+      "sha256": "f5bbf7d1de9593a6e323e40df39cb5c9339a454f8063b4d3f7ef40a87854ec5c"
+    },
+    {
+      "version": 7,
+      "roles-per-view": 112,
+      "views": 4,
+      "receipt": "native-file-section-v7-launch.json",
+      "bytes": 17689,
+      "sha256": "326e5f7de02687ba72530141ae61cbfcf7aad8f82e732e51b5e8c2b8b130351f"
+    },
+    {
+      "version": 8,
+      "roles-per-view": 430,
+      "views": 4,
+      "receipt": "native-file-section-v8-launch.json",
+      "bytes": 17592,
+      "sha256": "0befb08dc02fae80ba8a45036c7364291a883f7d719cbd0469133b0cabdf8f7c"
+    },
+    {
+      "version": 10,
+      "roles-per-view": 3,
+      "views": 4,
+      "receipt": "native-file-section-v10-launch.json",
+      "bytes": 17735,
+      "sha256": "69f9b27ade8135f2ade9a9b5213c7c021e858ec88841fcd910eddc685893e403"
+    },
+    {
+      "version": 11,
+      "roles-per-view": 226,
+      "views": 4,
+      "receipt": "native-file-section-v11-launch.json",
+      "bytes": 17689,
+      "sha256": "13c324179f03eee06f25542a6af6949548d554675789f2fb32f237360228e794"
+    },
+    {
+      "version": 12,
+      "roles-per-view": 430,
+      "views": 4,
+      "receipt": "native-file-section-v12-launch.json",
+      "bytes": 17695,
+      "sha256": "972695e9719fa193e8c8c4a9bc0fa97ebbd91c86945f3f831888e1b4faee2e92"
+    },
+    {
+      "version": 14,
+      "roles-per-view": 3,
+      "views": 4,
+      "receipt": "native-file-section-v14-launch.json",
+      "bytes": 17692,
+      "sha256": "2c4477cb9c0e72da674acb66854dc0c5dd82149817d3270be8d1d1a337836061"
+    },
+    {
+      "version": 15,
+      "roles-per-view": 3,
+      "views": 4,
+      "receipt": "native-file-section-v15-launch.json",
+      "bytes": 17736,
+      "sha256": "eb44d71e5de5400146c446133c89abe2a997e36e29c1a889497de4cf7d9a4c9a"
+    }
+  ]
+}

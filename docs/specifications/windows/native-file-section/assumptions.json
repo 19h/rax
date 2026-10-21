@@ -1,0 +1,47 @@
+[
+  {
+    "id": "FS-A1",
+    "assumption": "The next actual ordinary-program request is file-backed SEC_IMAGE with access0xD, page0x10, flags0x01000000, no maximum pointer and the retained VERSION.dll handle.",
+    "basis": "Fresh file-section-frontier-v1 owning observation and both ordinary owning routes at file-open candidate2.",
+    "dependent-result": "Section construction and image-template integration.",
+    "stress-test": "Re-run both actual owning routes and native controls after implementation.",
+    "falsification-probe": "A fresh ordinary route fails before this call or arguments differ.",
+    "status": "confirmed"
+  },
+  {
+    "id": "FS-A2",
+    "assumption": "An image view must retain section/backing authority after its caller file and section handles close.",
+    "basis": "Accepted independent v10/v15 native controls close caller file and Section handles before image queries/reads; compiled portable and native installed-leaf tests retain the view until unmap. Native controls also observe deletion failure while mapped, but no complete guest deletion contract is claimed.",
+    "dependent-result": "Backing acquisition and alias/close lifetime.",
+    "stress-test": "Close caller file/section handles, replace/rename pathname, map/unmap aliases and inspect original data.",
+    "falsification-probe": "Native lifetime controls or compiled resource counts disagree with the proposed retention.",
+    "status": "confirmed"
+  },
+  {
+    "id": "FS-A3",
+    "assumption": "Native SEC_IMAGE file access depends on PAGE protection; requested section grants alone do not grant file authority.",
+    "basis": "Accepted v2/v3 independent controls, including77file-grant/protection combinations per ABI view.",
+    "dependent-result": "Shared rights validation before acquiring image backing.",
+    "stress-test": "Read-only, execute-only, zero and write grants against all seven accepted PAGE bases.",
+    "falsification-probe": "Independent native matrix disagrees on grant/status ordering.",
+    "status": "confirmed"
+  },
+  {
+    "id": "FS-A4",
+    "assumption": "Reported maximum size and rounded mapped extent must remain distinct.",
+    "basis": "Native v3 maximum1 reports basic size1 but maps4096bytes; default native image size90112bytes and WoW32size32768bytes.",
+    "dependent-result": "Partial image creation, metadata and mapping geometry.",
+    "stress-test": "NULL/zero,1,4096,65536,negative and misaligned maximum sizes.",
+    "falsification-probe": "Basic information or mapped extent differs from the independent cases.",
+    "status": "confirmed"
+  },
+  {
+    "id": "FS-A5",
+    "assumption": "Portable Windows capture owns the retained file cursor under scheduler serialization.",
+    "basis": "Guest kernel dispatch holds exclusive mutable process state; this adapter receives the process-owned File. Rust seek_read changes the cursor, unlike Unix read_at.",
+    "dependent-result": "Windows cursor save/read/restore adapter.",
+    "stress-test": "Success and short/error reads; caller position7 is preserved by the compiled test on all hosts.",
+    "falsification-probe": "An embedder concurrently seeks an externally cloned host file during capture; such external alias ownership would require synchronization beyond guest scheduling.",
+    "status": "retained"
+  }
+]

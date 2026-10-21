@@ -1,0 +1,5 @@
+{
+  "state": "rejected",
+  "scope": "Entire v1 exploration is excluded from the semantic oracle. NtQuerySection incorrectly declared its ReturnLength pointer as PULONG instead of PSIZE_T, allowing an8-byte native64 return into a4-byte local. NtQueryObject also used an oversized fixed64-byte basic-information query and obtained STATUS_INFO_LENGTH_MISMATCH. Re-run v2 uses separate exact native prototypes and56-byte object-basic length.",
+  "producer": "native-file-section-v1.cpp"
+}

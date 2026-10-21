@@ -110,10 +110,16 @@ pub(crate) enum SelectedSection {
     Data(Arc<DataSection>),
 }
 impl SelectedSection {
-    pub(crate) fn grant(&self, access: u32, duplicate: bool) -> Result<u32, u32> {
+    pub(crate) fn grant(
+        &self,
+        access: u32,
+        duplicate: bool,
+    ) -> Result<u32, super::SectionGrantError> {
         match self {
             Self::Image(section) => section.grant(access, duplicate),
-            Self::Data(section) => section.grant(access, duplicate),
+            Self::Data(section) => section
+                .grant(access, duplicate)
+                .map_err(super::SectionGrantError::Status),
         }
     }
 }

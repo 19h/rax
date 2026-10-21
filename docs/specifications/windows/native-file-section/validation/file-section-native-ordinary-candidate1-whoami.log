@@ -1,0 +1,1 @@
+program=C:\Windows\System32\whoami.exe terminal-call=2548 result=Complete(Internal("SEH frame walk cyclic or exceeds 4096 frames at PC 0x37349f8, SP 0x1a5e560"))

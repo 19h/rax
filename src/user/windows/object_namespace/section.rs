@@ -2,6 +2,16 @@
 use super::*;
 use std::sync::OnceLock;
 const ALL: u32 = 0x000F_001F;
+#[derive(Debug, PartialEq, Eq)]
+pub(crate) enum GrantError {
+    Status(u32),
+    Unavailable(&'static str),
+}
+#[derive(Debug)]
+enum Access {
+    Selected(CapturedSection),
+    Created { system_security: Option<u32> },
+}
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct CapturedSection {
     pub(crate) maximum_access: u32,
@@ -28,7 +38,9 @@ pub struct ImageSection {
     pub(crate) path: Vec<u16>,
     pub(crate) attributes: u32,
     pub(crate) size: u64,
-    access: CapturedSection,
+    pub(crate) image_size: u64,
+    access: Access,
+    _file: Option<Arc<crate::user::windows::fs::FileLifetime>>,
     pub(super) image: OnceLock<Result<Arc<ImageTemplate>, String>>,
     #[cfg(windows)]
     projected_x64: OnceLock<Result<Arc<ImageTemplate>, String>>,
@@ -56,7 +68,9 @@ impl ImageSection {
             path,
             attributes: access.attributes,
             size: access.size,
-            access,
+            image_size: access.size,
+            access: Access::Selected(access),
+            _file: None,
             image: OnceLock::new(),
             #[cfg(windows)]
             projected_x64: OnceLock::new(),
@@ -99,13 +113,54 @@ impl ImageSection {
         let _ = arch;
         Ok(image)
     }
-    pub(crate) fn grant(&self, access: u32, duplicate: bool) -> Result<u32, u32> {
-        grant(
-            self.access.maximum_access,
-            self.access.system_security_status,
-            access,
-            duplicate,
-        )
+    pub(crate) fn created(
+        backing: super::file_image::Backing,
+        file: Arc<crate::user::windows::fs::FileLifetime>,
+        system_security: Option<u32>,
+    ) -> Arc<Self> {
+        let template = backing.template;
+        let section = Arc::new(Self {
+            path: Vec::new(),
+            attributes: backing.attributes,
+            size: backing.maximum,
+            image_size: template.bytes.len() as u64,
+            access: Access::Created { system_security },
+            _file: Some(file),
+            image: OnceLock::new(),
+            #[cfg(windows)]
+            projected_x64: OnceLock::new(),
+            #[cfg(windows)]
+            source: OnceLock::new(),
+        });
+        section.image.set(Ok(template)).expect("new image slot");
+        #[cfg(windows)]
+        if let Some(source) = backing.source {
+            section.source.set(source).expect("new native image source");
+        }
+        section
+    }
+    pub(crate) fn grant(&self, access: u32, duplicate: bool) -> Result<u32, GrantError> {
+        match self.access {
+            Access::Selected(captured) => grant(
+                captured.maximum_access,
+                captured.system_security_status,
+                access,
+                duplicate,
+            )
+            .map_err(GrantError::Status),
+            Access::Created { system_security } => {
+                // NtDuplicateObject does not expand MAXIMUM_ALLOWED, even for
+                // a creator-owned object. The constructor does expand it.
+                super::file_image::grant(
+                    if duplicate {
+                        access & !0x0200_0000
+                    } else {
+                        access
+                    },
+                    system_security,
+                )
+            }
+        }
     }
 }
 impl Namespace {

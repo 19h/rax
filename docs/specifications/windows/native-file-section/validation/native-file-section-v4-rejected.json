@@ -1,0 +1,5 @@
+{
+  "state": "rejected",
+  "scope": "V4 did not compile and produced no native observations: OBJECT_ATTRIBUTES pointer and object-basic array reused the same local name. V5 also preserves the original misaligned-maximum recipe and updates explicit recipe metadata after mutations.",
+  "producer": "native-file-section-v4.cpp"
+}

@@ -1,0 +1,30 @@
+{
+  "state": "finished",
+  "expected-test-exit-code": 101,
+  "base": "02cefa7d675fbdb83494f8d2635a9e880bb4cba9",
+  "overlay": [
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/section_create_tests.rs",
+      "bytes": 6818,
+      "sha256": "b7d3da43fcd8cee8afd2416d45b1f325c4b4961273a5788bc5fd2c5f373bf230"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/file_section_create_tests/create.rs",
+      "bytes": 4291,
+      "sha256": "ec8ba37fc5720916666a39f1bbeb49bcd65498f1108148184e3ab924290c3e76"
+    }
+  ],
+  "log": "file-section-red-v1.log",
+  "bytes": 3858,
+  "sha256": "a48e1406fd22b723a51f5e7adfee6018890fa0fd576ce70cddb5c07db876b486",
+  "result": "0passed/1failed; NtCreateSection file-backed service is explicitly unimplemented. Product source unchanged.",
+  "source-after-stable": true,
+  "test-body-binding": {
+    "bytes": 2722,
+    "sha256": "fb98cab0c26bb1a7994f0806cb8e2a6d144dbd9ac6f8232b8bb1d472834c1029",
+    "baseline-source-container": "file-section-prototype1-overrides.tar.gz",
+    "baseline-container-sha256": "d0026d15c77852ced5825794a24fd728c63d4da60beb9642e4cae9d825254f60",
+    "candidate-source-file": "src/user/windows/process/sched/tests/services_tests/file_section_create_tests/create.rs",
+    "scope": "Identical constructor test body; later helper/module declarations extend the surrounding final source file. No claim that the complete baseline/final test file bytes are identical."
+  }
+}

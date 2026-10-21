@@ -54,6 +54,7 @@ unsafe extern "system" {
 }
 pub(crate) struct Source {
     handle: Owned,
+    _creation: Option<Owned>,
     attributes: u32,
     size: u64,
 }
@@ -98,8 +99,22 @@ impl Source {
     pub(super) fn new(handle: Owned, attributes: u32, size: u64) -> Arc<Self> {
         Arc::new(Self {
             handle,
+            _creation: None,
             attributes,
             size,
+        })
+    }
+    pub(super) fn with_creation(
+        handle: Owned,
+        attributes: u32,
+        size: u64,
+        creation: Owned,
+    ) -> Arc<Self> {
+        Arc::new(Self {
+            handle,
+            attributes,
+            size,
+            _creation: Some(creation),
         })
     }
     pub(crate) fn image(&self) -> io::Result<Arc<ImageTemplate>> {

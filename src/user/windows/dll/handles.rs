@@ -338,7 +338,15 @@ fn duplicate_directory(
         match c.p.objects.obj(id) {
             Some(Object::Directory(d)) => d.grant(desired, true),
             Some(Object::SymbolicLink(l)) => l.grant(desired, true),
-            Some(Object::ImageSection(s)) => s.grant(desired, true),
+            Some(Object::ImageSection(s)) => match s.grant(desired, true) {
+                Ok(grant) => Ok(grant),
+                Err(crate::user::windows::object_namespace::SectionGrantError::Status(status)) => {
+                    Err(status)
+                }
+                Err(crate::user::windows::object_namespace::SectionGrantError::Unavailable(
+                    reason,
+                )) => return Err(c.unsupported(reason)),
+            },
             Some(Object::DataSection(s)) => s.grant(desired, true),
             _ => unreachable!("selected namespace resource"),
         }

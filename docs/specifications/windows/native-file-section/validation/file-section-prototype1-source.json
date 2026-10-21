@@ -1,0 +1,96 @@
+{
+  "base": "02cefa7d675fbdb83494f8d2635a9e880bb4cba9",
+  "base-source-ledger": "file-open-source-epoch2.json",
+  "base-source-ledger-sha256": "f257d4a412aeed642d4351ca6e7d1dea89ec95173a09eb430e5036651ac625a5",
+  "archive": "file-section-prototype1-overrides.tar.gz",
+  "bytes": 39780,
+  "sha256": "d0026d15c77852ced5825794a24fd728c63d4da60beb9642e4cae9d825254f60",
+  "overrides": [
+    {
+      "path": "src/user/windows/dll/handles.rs",
+      "bytes": 21020,
+      "sha256": "3b87968e6970a5c07ac5903d9c82a29fa83964c99a5ee58be42fd82a1f5d7797"
+    },
+    {
+      "path": "src/user/windows/dll/native/directory.rs",
+      "bytes": 15820,
+      "sha256": "6681dc3889839a39547e2acf1e5689290a408cfceeb0999ddeb5a07afd83aaa7"
+    },
+    {
+      "path": "src/user/windows/dll/native/section_create.rs",
+      "bytes": 7043,
+      "sha256": "a0d46b4fe1758278c7d1ee5afa7c81970147a933067b1bbd6f301b4a15a85ad6"
+    },
+    {
+      "path": "src/user/windows/dll/native/section_create/file.rs",
+      "bytes": 4198,
+      "sha256": "4e3cc939a20a6f274729dba896c4f40a9c2933afdf47d59f17e41fe1bbceefe6"
+    },
+    {
+      "path": "src/user/windows/dll/native/section_map.rs",
+      "bytes": 8471,
+      "sha256": "50906309a307000f4d5e9b228accbc51a4c1e0cadea067a145e00dbc6a3c4060"
+    },
+    {
+      "path": "src/user/windows/memory/section.rs",
+      "bytes": 7904,
+      "sha256": "934adecff5bdb0f5019c5b19b937c973ba42c5509d73d73f22aad25ca14874cc"
+    },
+    {
+      "path": "src/user/windows/object_namespace.rs",
+      "bytes": 27637,
+      "sha256": "41ee3d5564c231b4fecc6cbe54d0ba700cff9fee476fd99161a65c779f076fa1"
+    },
+    {
+      "path": "src/user/windows/object_namespace/data.rs",
+      "bytes": 6835,
+      "sha256": "fd88511b056cd95f82021a564b56dfcbe1888164a128a5141994ef99b04ad028"
+    },
+    {
+      "path": "src/user/windows/object_namespace/file_image.rs",
+      "bytes": 1870,
+      "sha256": "3bde1c587559683cc83e54b553bb1bb45cc7c50ad8addd66c83eb2c2d6a9afc7"
+    },
+    {
+      "path": "src/user/windows/object_namespace/file_image/portable.rs",
+      "bytes": 3840,
+      "sha256": "a26be443f861d8f1a5e96c7e0884a178a2820c74c8eed724264be18256ea1abd"
+    },
+    {
+      "path": "src/user/windows/object_namespace/installed.rs",
+      "bytes": 17533,
+      "sha256": "c4604eda06111e7b83b83f928b11a9556cd48ab0f195f63570ac7fc3c904610a"
+    },
+    {
+      "path": "src/user/windows/object_namespace/installed/file_image.rs",
+      "bytes": 4444,
+      "sha256": "f69bb10b999a9a8d9d430f403e9d7c4648921e6d6fcaed9bfde3a3662e0ff8ef"
+    },
+    {
+      "path": "src/user/windows/object_namespace/installed/image.rs",
+      "bytes": 12571,
+      "sha256": "359e8df3205cfb613f048172759d8bdf36a2ddb633c2179152d6c8e12dfdee34"
+    },
+    {
+      "path": "src/user/windows/object_namespace/section.rs",
+      "bytes": 7601,
+      "sha256": "297578f71ad2b64f7848386a3dabc15c3de4879488692d0abe2ac2208a76877d"
+    },
+    {
+      "path": "src/user/windows/object_namespace/tests.rs",
+      "bytes": 9185,
+      "sha256": "09b16c8eea33b40eb98c8965ac49dd58601260d955c5e92b4e7ff278baeedf29"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/file_section_create_tests/create.rs",
+      "bytes": 4291,
+      "sha256": "ec8ba37fc5720916666a39f1bbeb49bcd65498f1108148184e3ab924290c3e76"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/section_create_tests.rs",
+      "bytes": 6818,
+      "sha256": "b7d3da43fcd8cee8afd2416d45b1f325c4b4961273a5788bc5fd2c5f373bf230"
+    }
+  ],
+  "scope": "Prototype1 product/test overlay; not final validation. New publication docs are excluded from this compilation graph."
+}

@@ -1,0 +1,5 @@
+{
+  "producer-sha256": "6ca0bf9a2267528c9e31e50dd61dd36aeeef73ee7b84d2ae8192f6283ef09725",
+  "status": "rejected",
+  "reason": "Handle baseline included the owned fixture File, while final count followed its close:59 to58. Native shared values were observed but v13 failed its cleanup gate; no final claim uses it. v14 performs owned-file warmup, closes it before baseline, then reopens for the experiment."
+}

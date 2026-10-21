@@ -1,0 +1,6 @@
+{
+  "source": "native-file-section-v9.cpp",
+  "sha256": "4e1608c03a9abd4d6bea51e2c3d18318fbbdbb889eec2571360d752a1c4aac24",
+  "status": "rejected",
+  "reason": "Initial handle count preceded the first CreateFileW/CloseHandle call; lazy initialization grew43 to58 handles. Although all3 ARM64 calls and cleanup succeeded, the producer failed its handle-balance gate. No final native lifetime claim uses v9. v10 adds owned-file warmup before the handle baseline."
+}

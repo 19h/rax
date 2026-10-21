@@ -4,11 +4,12 @@ use super::object_create::{self, Attributes};
 use super::query::{guard_result, probe_write};
 use crate::user::mm::{PAGE_SIZE, SharedObject};
 use crate::user::windows::arch::WinArch;
-use crate::user::windows::hle::{ApiResult, Ctx, Flow};
+use crate::user::windows::hle::{ApiErr, ApiResult, Ctx, Flow};
 use crate::user::windows::memory::Mem;
 use crate::user::windows::nt::status::*;
 use crate::user::windows::objects::Object;
 use std::sync::Arc;
+mod file;
 
 const KIND: &str = "pagefile section";
 const SECTION_ALL_ACCESS: u32 = 0x000F_001F;
@@ -25,6 +26,7 @@ pub(super) fn create(c: &mut Ctx) -> ApiResult {
     let result = checked(c);
     guard_result(c, result)
 }
+#[derive(Clone, Copy)]
 struct Request {
     out: u64,
     access: u32,
@@ -70,8 +72,29 @@ fn checked(c: &mut Ctx) -> ApiResult {
         }
         return result;
     }
-    probe_write(c, out, c.psize() as usize)?;
+    // WoW64 passes a private native HANDLE output and copies it to the caller
+    // after the service, except its NULL destination is rejected up front.
+    // In particular a maximum-size guard is visited before a late inaccessible
+    // or guarded caller destination (independent v5 roles149/165).
+    if !wow || out == 0 {
+        probe_write(c, out, c.psize() as usize)?;
+    }
     let result = construct(c, request, converted);
+    if wow && matches!(&result, Err(ApiErr::Fault(fault)) if fault.write) {
+        // Publication already attempted the caller copy and rolled back the
+        // handle. Its store fault must not cause a second zero copy-back.
+        return result;
+    }
+    // Faults after the WoW64 conversion/output probe occur inside the native
+    // service. The wrapper copies its zero HANDLE back for these failures too.
+    // Conversion and initial destination faults returned above retain their
+    // distinct output/guard behavior.
+    let result = guard_result(c, result);
+    let result = if wow && matches!(result, Err(ApiErr::Fault(_))) {
+        Flow::ret(STATUS_ACCESS_VIOLATION.into())
+    } else {
+        result
+    };
     object_create::wow_failure(c, out, &result)?;
     result
 }
@@ -82,7 +105,7 @@ fn preflight_attributes(attributes: u32) -> Option<u32> {
     let mode = attributes & (SEC_RESERVE | SEC_COMMIT | SEC_IMAGE);
     if attributes & !OUTER_ALLOCATION_BITS != 0
         || !matches!(mode, SEC_RESERVE | SEC_COMMIT | SEC_IMAGE)
-        || (mode == SEC_IMAGE && attributes & !(SEC_IMAGE | SEC_NOCACHE | 1) != 0)
+        || (mode == SEC_IMAGE && attributes & !(SEC_IMAGE | SEC_NOCACHE | 0x7F) != 0)
     {
         return Some(STATUS_INVALID_PARAMETER_6);
     }
@@ -113,6 +136,11 @@ fn construct(c: &mut Ctx, request: Request, converted: Option<Attributes>) -> Ap
     if !valid_section_protection(protection) {
         return Flow::ret(STATUS_INVALID_PAGE_PROTECTION.into());
     }
+    if mode == SEC_IMAGE && attributes & SEC_NOCACHE != 0 && protection != 2 {
+        // SEC_IMAGE_NO_EXECUTE accepts PAGE_READONLY only. The independent
+        // v11 matrix rejects every other PAGE before file-access validation.
+        return Flow::ret(STATUS_INVALID_PAGE_PROTECTION.into());
+    }
     // WC alone rejects executable sections after maximum-size capture.
     // With both cache flags, NOCACHE wins and the section reports no WC bit.
     if attributes & (SEC_NOCACHE | SEC_WRITECOMBINE) == SEC_WRITECOMBINE && protection & 0xF0 != 0 {
@@ -122,16 +150,7 @@ fn construct(c: &mut Ctx, request: Request, converted: Option<Attributes>) -> Ap
         return Flow::ret(STATUS_INVALID_PARAMETER.into());
     }
     if file != 0 {
-        return match c.p.objects.get(file) {
-            Some(Object::File(_)) => {
-                Err(c.unsupported("NtCreateSection for a file-backed section"))
-            }
-            Some(_) => Flow::ret(STATUS_OBJECT_TYPE_MISMATCH.into()),
-            None if file == c.arch().ptr(u64::MAX) || file == c.arch().ptr(u64::MAX - 1) => {
-                Flow::ret(STATUS_OBJECT_TYPE_MISMATCH.into())
-            }
-            None => Flow::ret(STATUS_INVALID_HANDLE.into()),
-        };
+        return file::construct(c, request, converted, size);
     }
     if mode == SEC_IMAGE {
         return Flow::ret(STATUS_INVALID_FILE_FOR_SECTION.into());

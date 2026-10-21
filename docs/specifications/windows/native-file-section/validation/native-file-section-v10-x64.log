@@ -1,0 +1,4 @@
+case role=0 maximum=0 created=00000000 mapped=00000000 view=90112 closed=00000000 query=00000000 returned=24 image-size=90112 flags=00000040 header=4D5A virtual-query=48 region-size=4096 region-state=00001000 region-type=01000000 delete=0 delete-error=5 unmap=00000000 deleted-after=1
+case role=1 maximum=1 created=00000000 mapped=00000000 view=4096 closed=00000000 query=00000000 returned=24 image-size=90112 flags=00000001 header=4D5A virtual-query=48 region-size=4096 region-state=00001000 region-type=01000000 delete=0 delete-error=5 unmap=00000000 deleted-after=1
+case role=2 maximum=4096 created=00000000 mapped=00000000 view=4096 closed=00000000 query=00000000 returned=24 image-size=90112 flags=00000001 header=4D5A virtual-query=48 region-size=4096 region-state=00001000 region-type=01000000 delete=0 delete-error=5 unmap=00000000 deleted-after=1
+summary profile=x64 cases=3 handles-before=80 handles-after=80

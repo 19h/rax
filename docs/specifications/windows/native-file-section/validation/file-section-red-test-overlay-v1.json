@@ -1,0 +1,16 @@
+{
+  "base": "02cefa7d675fbdb83494f8d2635a9e880bb4cba9",
+  "scope": "Exactly two test-only source changes against unchanged pre-implementation product. Separate Cargo target; no final-validation writer shares it.",
+  "files": [
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/section_create_tests.rs",
+      "bytes": 6818,
+      "sha256": "b7d3da43fcd8cee8afd2416d45b1f325c4b4961273a5788bc5fd2c5f373bf230"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/file_section_create_tests/create.rs",
+      "bytes": 4291,
+      "sha256": "ec8ba37fc5720916666a39f1bbeb49bcd65498f1108148184e3ab924290c3e76"
+    }
+  ]
+}

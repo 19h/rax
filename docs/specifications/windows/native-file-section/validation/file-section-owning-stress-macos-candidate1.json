@@ -1,0 +1,55 @@
+{
+  "negative-rejections": 8,
+  "positive-restorations": 8,
+  "scope": "Supplemental owning/native-control/ordinary-result/retention/red-test boundaries. Each trial uses copied records, no identity cache and a complete fresh positive restoration. Native Windows also rehashes the retained owning artifacts.",
+  "cases": [
+    {
+      "case": "missing-owning-gate",
+      "rejected": true,
+      "reason": "incomplete owning gate selection",
+      "fresh-positive-restoration": true
+    },
+    {
+      "case": "changed-owning-source-set",
+      "rejected": true,
+      "reason": "owning source selection",
+      "fresh-positive-restoration": true
+    },
+    {
+      "case": "forged-selected-artifact",
+      "rejected": true,
+      "reason": "actual selected Cargo artifact missing",
+      "fresh-positive-restoration": true
+    },
+    {
+      "case": "incomplete-archive-walk",
+      "rejected": true,
+      "reason": "incomplete archive walk",
+      "fresh-positive-restoration": true
+    },
+    {
+      "case": "changed-native-control",
+      "rejected": true,
+      "reason": "native changed",
+      "fresh-positive-restoration": true
+    },
+    {
+      "case": "failed-smoke-zero-exit-field",
+      "rejected": true,
+      "reason": "C API smoke did not exit",
+      "fresh-positive-restoration": true
+    },
+    {
+      "case": "wrong-retained-core",
+      "rejected": true,
+      "reason": "retained artifact is not exercised artifact",
+      "fresh-positive-restoration": true
+    },
+    {
+      "case": "different-red-test",
+      "rejected": true,
+      "reason": "red/green constructor body changed",
+      "fresh-positive-restoration": true
+    }
+  ]
+}

@@ -1,0 +1,76 @@
+{
+  "state": "verified",
+  "source-receipt": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\file-section-candidate1-windows.json",
+    "bytes": 6800839,
+    "sha256": "743442b49407af7647a5a66582421a829f35431951406def690c35a73b502101"
+  },
+  "source-freeze": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\file-section-candidate1-source.json",
+    "bytes": 6306443,
+    "sha256": "985b35da38a798311293a8c3c48599f107e7a358547cbf2e9499d8414291413a"
+  },
+  "required-executed-steps": [
+    "toolchain",
+    "clean-core",
+    "test-build",
+    "file-focus",
+    "section-focus",
+    "full",
+    "capi",
+    "integration",
+    "all-targets"
+  ],
+  "exact-existing-failures": [
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_imm_index_at_width_with_flags_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_all_ones_with_flags_as_movn_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_with_flags_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_with_flags_and_low_byte_index_guards",
+    "smir::lower::aarch64::tests::vector::lowers_vector_fp16_arithmetic_runtime"
+  ],
+  "live-test-image-before": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-section-candidate1\\target\\normal-candidate1\\debug\\deps\\rax-b799307a7949aa6b.exe",
+    "bytes": 545516544,
+    "sha256": "0d31aa934b7fb33d057f8fb934032793df05ec5caf6515cabbd46a6870d4bb96"
+  },
+  "live-test-image-after": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-section-candidate1\\target\\normal-candidate1\\debug\\deps\\rax-b799307a7949aa6b.exe",
+    "bytes": 545516544,
+    "sha256": "0d31aa934b7fb33d057f8fb934032793df05ec5caf6515cabbd46a6870d4bb96"
+  },
+  "source-inputs": 26884,
+  "extra-core-artifact": {
+    "reason": "compiler-artifact",
+    "package_id": "path+file:///C:/Windows/Temp/assist-native-rax-20261010/src-file-section-candidate1#rax@0.1.0",
+    "manifest_path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-section-candidate1\\Cargo.toml",
+    "target": {
+      "kind": [
+        "lib"
+      ],
+      "crate_types": [
+        "lib"
+      ],
+      "name": "rax",
+      "src_path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-section-candidate1\\src\\lib.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": true,
+      "test": true
+    },
+    "profile": {
+      "opt_level": "0",
+      "debuginfo": 2,
+      "debug_assertions": true,
+      "overflow_checks": true,
+      "test": false
+    },
+    "features": [],
+    "filenames": [
+      "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-section-candidate1\\target\\normal-candidate1\\debug\\librax.rlib",
+      "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-section-candidate1\\target\\normal-candidate1\\debug\\deps\\librax-b6577df3fbefbea4.rmeta"
+    ],
+    "executable": null,
+    "fresh": true
+  },
+  "scope": "All nine required native build/execution gates completed with their declared results. The subsequent optional ordinary-core selector rejected fresh=true even though this same candidate core was already built during the C API gate. That harness error is retained, not recast as a successful driver. Actual ordinary execution is validated separately through the selected Assist owning core and carrier."
+}

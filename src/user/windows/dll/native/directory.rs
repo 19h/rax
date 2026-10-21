@@ -275,7 +275,14 @@ fn open_object(c: &mut Ctx, access: u32, attrs: Option<Attributes>, kind: Kind) 
         if attrs.flags & 0x100 != 0 {
             return status(STATUS_INVALID_PARAMETER);
         }
-        let grant = section.grant(access, false).map_err(Failure::Status)?;
+        let grant = section.grant(access, false).map_err(|error| match error {
+            crate::user::windows::object_namespace::SectionGrantError::Status(status) => {
+                Failure::Status(status)
+            }
+            crate::user::windows::object_namespace::SectionGrantError::Unavailable(reason) => {
+                Failure::Api(c.unsupported(reason))
+            }
+        })?;
         if attrs.flags & 0x20 != 0 {
             return status(STATUS_INVALID_PARAMETER);
         }

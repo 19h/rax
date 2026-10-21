@@ -169,10 +169,15 @@ fn checked(c: &mut Ctx) -> ApiResult {
     let image = section
         .image_for(c.arch())
         .map_err(|error| c.unsupported(format!("selected image section backing: {error}")))?;
+    let limit = section
+        .size
+        .checked_add(4095)
+        .ok_or_else(|| c.unsupported("image section extent overflow"))?
+        & !4095;
     let plan = match geometry::with_extensions(
         &c.p.vm,
         image.preferred,
-        section.size,
+        limit,
         base,
         size,
         offset,
@@ -181,7 +186,11 @@ fn checked(c: &mut Ctx) -> ApiResult {
         flags,
         wow,
         c.p.vm.section_low_placement(&section),
-        image.allocation_size() - image.bytes.len() as u64,
+        if limit == section.image_size {
+            image.allocation_size() - image.bytes.len() as u64
+        } else {
+            0
+        },
         image.large_pages,
     ) {
         Ok(plan) => plan,

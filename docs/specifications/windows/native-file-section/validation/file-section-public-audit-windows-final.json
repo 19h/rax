@@ -1,0 +1,11 @@
+{
+  "state": "verified",
+  "native-rows": 7396,
+  "source-inputs": 26884,
+  "scope": "Frozen source, complete gates, selected owning archives/consumers and actual ordinary routes; no full current-root GUI/package or full-userland completion claim.",
+  "ordinary": {
+    "smoke": "Exited(0) through owning core and C API",
+    "whoami": "SEH frame-walk boundary through both owning routes; no process completion",
+    "retained-native-files-hashed": 4
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "owned-rust-format": {
+    "toolchain": "1.95.0",
+    "edition": "2024",
+    "skip-children": true,
+    "files": 21,
+    "exit-code": 0
+  },
+  "linux-default-feature-clippy": {
+    "toolchain": "1.95.0",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--offline",
+      "--all-targets",
+      "--features",
+      "x86_64-suite"
+    ],
+    "exit-code": 0,
+    "log": "file-section-linux-candidate1-clippy.log"
+  },
+  "scope": "Source unchanged from candidate1; initial image lacked Clippy, then the pinned toolchain component was installed in an ephemeral container. No project dependency or CI definition changed."
+}

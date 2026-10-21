@@ -1,0 +1,54 @@
+{
+  "scope": "Bounded owned-file standard private SEC_IMAGE construction, mapping integration, error/capture semantics and actual owning consumers. Full same-host userland objective remains active.",
+  "gates": {
+    "QG1": {
+      "status": "pass",
+      "evidence": "Technical implementation and factual results require no normative content."
+    },
+    "QG2": {
+      "status": "pass",
+      "evidence": "assumptions.json includes material assumptions, bases, dependencies, stress tests and falsification probes; external host cursor aliases remain an explicit retained ownership assumption."
+    },
+    "QG3": {
+      "status": "pass",
+      "evidence": "All bounded constructor acceptance surfaces are covered by shared implementation, Windows native acquisition, portable backing, actual Cargo core/carrier selections, C++ consumers and ordinary routes. No full-userland completion claim."
+    },
+    "QG4": {
+      "status": "pass",
+      "evidence": "Maximum1 B, mapped4096 B and complete image extent remain distinct; FFI native SIZE_T layouts and exact output/protection fields are asserted. Source bytes and hashes are reproducible."
+    },
+    "QG5": {
+      "status": "pass",
+      "evidence": "Explicit policy boundaries and known failures remain visible. Cached-core selector failure is retained and separately audited; no failed-driver success or zero-field guest exit is inferred."
+    },
+    "QG6": {
+      "status": "pass",
+      "evidence": "Eleven independent accepted native producers, raw records, immutable source/test-body binding, exact executed test image, source-bound actual owning archives, before/after archive walks and native caller/runtime identities. Three final public audits verified."
+    },
+    "QG7": {
+      "status": "pass",
+      "evidence": "README remaining-boundary table identifies high-impact shared writable coherence, data/naming/security, AMD64-on-ARM64 spawn and ordinary SEH boundaries without unrelated edits."
+    }
+  },
+  "source-inputs": 26884,
+  "source-total-bytes-original-config": 2023863904,
+  "source-total-bytes-native-config": 2023863726,
+  "native-recorded-rows": 7396,
+  "constructor-matches": 2072,
+  "constructor-policy-boundaries": 60,
+  "win32-duplicate-matches": 1720,
+  "native-existing-failures": [
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_imm_index_at_width_with_flags_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_all_ones_with_flags_as_movn_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_with_flags_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_with_flags_and_low_byte_index_guards",
+    "smir::lower::aarch64::tests::vector::lowers_vector_fp16_arithmetic_runtime"
+  ],
+  "adversarial-rejections": 48,
+  "fresh-positive-restorations": 48,
+  "public-compiler-projections": 6,
+  "owning-assist-abi": 184,
+  "paired-current-root-abi": 274,
+  "c-api": "1.14.0",
+  "goal-status": "active"
+}
