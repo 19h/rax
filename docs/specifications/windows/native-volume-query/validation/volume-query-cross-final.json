@@ -1,0 +1,23 @@
+{
+  "state": "verified",
+  "targets": [
+    {
+      "target": "aarch64-pc-windows-msvc",
+      "primary-package-cleaned": true,
+      "log": "volume-query-candidate1-cross-aarch64-retry1.log",
+      "bytes": 1211,
+      "sha256": "5e13bad8cac1ea4bbdf04fbe4ff3e2220153712902a8dd6f70a646a714932f44",
+      "clean-log": "volume-query-cross-aarch64-clean.log"
+    },
+    {
+      "target": "x86_64-pc-windows-msvc",
+      "primary-package-cleaned": true,
+      "log": "volume-query-candidate1-cross-x64.log",
+      "bytes": 1211,
+      "sha256": "eadcc5632b93e10a44bb163f8524c856a3c64b2e64c2819c5ef25dc89f014e8f",
+      "clean-log": "volume-query-cross-x64-clean.log"
+    }
+  ],
+  "source-ledger-sha256": "336e8771aaa128fabb49c5e87cd2629285344f0b04f2de7eee78d851ceab44de",
+  "initial-aarch64-setup-failure": "cargo-xwin clang-cl symlink race with parallel x64 setup; serial retry passed."
+}

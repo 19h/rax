@@ -1,0 +1,4 @@
+Error: Failed to setup clang-cl symlink
+
+Caused by:
+    failed to symlink file from /Users/int/Library/Caches/cargo-xwin/clang-cl to /opt/homebrew/opt/llvm/bin/clang: File exists (os error 17)

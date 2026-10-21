@@ -1,0 +1,36 @@
+{
+  "state": "finished",
+  "exit-code": 0,
+  "utc": "2026-10-21T06:42:43.443663+00:00",
+  "files": [
+    {
+      "role": "core",
+      "source": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\debug\\deps\\librax-934115059aa64c85.rlib",
+      "retained": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\retained-owning-candidate1\\core.rlib",
+      "bytes": 511485170,
+      "sha256": "7322db7ee2f1ba09ddd97e094ffd96dfeaf25843deebc4b841225472d2585a9b"
+    },
+    {
+      "role": "carrier",
+      "source": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\debug\\assist_rs.lib",
+      "retained": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\retained-owning-candidate1\\carrier.lib",
+      "bytes": 861072820,
+      "sha256": "5c0d6ca2507ff3d11709c7142560036e7fe3187468e25303151dab062806b836"
+    },
+    {
+      "role": "ordinary",
+      "source": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\volume-query-ordinary-owner-candidate1.exe",
+      "retained": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\retained-owning-candidate1\\ordinary.exe",
+      "bytes": 27209728,
+      "sha256": "a90f2b02ee77c027efda7ba4021fcb0b586a1e67ec35dfbec1821741ec5bb7f1"
+    },
+    {
+      "role": "capi",
+      "source": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\cpp\\volume-query-owning-capi-candidate1.exe",
+      "retained": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\retained-owning-candidate1\\capi.exe",
+      "bytes": 32782336,
+      "sha256": "5165f075bbf61526ce022cabb52db7f46549495616e8a2d642cbe8b46b64b171"
+    }
+  ],
+  "scope": "Four separate retained byte copies of the actual selected owning core, Assist carrier and two exercised ordinary-program callers. Source identities unchanged; no hardlinks."
+}

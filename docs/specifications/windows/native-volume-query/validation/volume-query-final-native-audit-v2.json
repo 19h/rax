@@ -1,0 +1,135 @@
+{
+  "state": "verified",
+  "utc": "2026-10-21T06:50:30.319599+00:00",
+  "runtime-module-union": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e"
+    },
+    {
+      "path": "C:\\Windows\\System32\\KernelBase.dll",
+      "bytes": 7213728,
+      "sha256": "6b2fa508ac4f9bce5d7351676485d1dc5b5236cd9656034e2fec1eaba3b82bc9"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\KernelBase.dll",
+      "bytes": 3073488,
+      "sha256": "e9c414d7c6bd2c6fde608f31b2f31da3c2014c801b3764a30ee42abd1e9c2d58"
+    },
+    {
+      "path": "C:\\Windows\\System32\\kernel32.dll",
+      "bytes": 1500304,
+      "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\kernel32.dll",
+      "bytes": 696392,
+      "sha256": "9c9a0c54a79ea712bb533fcc79ba9935ed9f9d3f777fd65cf62d9cec6699b9df"
+    },
+    {
+      "path": "C:\\Windows\\System32\\msvcrt.dll",
+      "bytes": 1347856,
+      "sha256": "779eb5cb1ae357196254af9755307544a3dd20011c84768ae72f45d366f47148"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\msvcrt.dll",
+      "bytes": 810688,
+      "sha256": "67c03357458a951402cc1804e05d3301f011a59d352f684fbe283f546f8ae398"
+    },
+    {
+      "path": "C:\\Windows\\System32\\version.dll",
+      "bytes": 73200,
+      "sha256": "d30c2a9c9d81982b112c5a60878f3579ddb3db3a09443147c63f10bc749aaab2"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\version.dll",
+      "bytes": 29208,
+      "sha256": "688ea4248da1e28bd77be9ae1088954a11cec3302c25af8aade47bae14f3ada8"
+    }
+  ],
+  "native-producer": [
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-volume-query-v7-four-views\\native-volume-query-v7.cpp",
+      "bytes": 3681,
+      "sha256": "f483d959ba180702865bcc28a488bc45d47cb8918720eb5c9a81ace5acd09382"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-volume-query-v7-four-views\\target\\arm64\\probe.exe",
+      "bytes": 145408,
+      "sha256": "b897eb0162a29f1e6ad38795f9f3e7f48bd8af2b1dcab03f6aa03ae94d78aba9"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-volume-query-v7-four-views\\target\\x64\\probe.exe",
+      "bytes": 143360,
+      "sha256": "1e757cffbc2ceff4158b6d2ab149428cf179847e7b411c9455baa471a3607857"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-volume-query-v7-four-views\\target\\x86\\probe.exe",
+      "bytes": 118784,
+      "sha256": "99c1c4a4aef9516a82e8e65c8d0770cf79bbdea6684ec0d2a8f8cf57de4e07e9"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-volume-query-v7-four-views\\target\\x86-laa\\probe.exe",
+      "bytes": 118784,
+      "sha256": "cd4c795d39c443d3d204572c45acbff93479a3633410bd6bcefa6acecf77fab0"
+    }
+  ],
+  "owning-core-and-callers": [
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\debug\\deps\\librax-934115059aa64c85.rlib",
+      "bytes": 511485170,
+      "sha256": "7322db7ee2f1ba09ddd97e094ffd96dfeaf25843deebc4b841225472d2585a9b"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\volume-query-ordinary-owner-candidate1.exe",
+      "bytes": 27209728,
+      "sha256": "a90f2b02ee77c027efda7ba4021fcb0b586a1e67ec35dfbec1821741ec5bb7f1"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\debug\\assist_rs.lib",
+      "bytes": 861072820,
+      "sha256": "5c0d6ca2507ff3d11709c7142560036e7fe3187468e25303151dab062806b836"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\cpp\\volume-query-owning-capi-candidate1.exe",
+      "bytes": 32782336,
+      "sha256": "5165f075bbf61526ce022cabb52db7f46549495616e8a2d642cbe8b46b64b171"
+    }
+  ],
+  "retained-current-artifacts": [
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\retained-owning-candidate1\\core.rlib",
+      "bytes": 511485170,
+      "sha256": "7322db7ee2f1ba09ddd97e094ffd96dfeaf25843deebc4b841225472d2585a9b"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\retained-owning-candidate1\\carrier.lib",
+      "bytes": 861072820,
+      "sha256": "5c0d6ca2507ff3d11709c7142560036e7fe3187468e25303151dab062806b836"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\retained-owning-candidate1\\ordinary.exe",
+      "bytes": 27209728,
+      "sha256": "a90f2b02ee77c027efda7ba4021fcb0b586a1e67ec35dfbec1821741ec5bb7f1"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\retained-owning-candidate1\\capi.exe",
+      "bytes": 32782336,
+      "sha256": "5165f075bbf61526ce022cabb52db7f46549495616e8a2d642cbe8b46b64b171"
+    }
+  ],
+  "test-image": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1\\debug\\deps\\rax-b799307a7949aa6b.exe",
+    "bytes": 546045952,
+    "sha256": "5d19b784e0a01dd702238772b1d019f42693cd7053461473473085e701b9c67c"
+  },
+  "windows-build": 29683,
+  "exit-code": 0,
+  "scope": "Ten DLL inputs (native volume-query producer includes MSVCRT; ordinary observers include version.dll), four live current owning artifacts, four separate current retained copies, native producer source/four executables, and executed native unit image rehashed. The ten DLL records bracket the ordinary executions; no whole-current-root package claim."
+}

@@ -1,0 +1,8 @@
+terminal turn=2558 result=Complete(Internal("native NTDLL service NtOpenKey: Unimplemented(\"NtOpenKey: registry key outside selected runtime snapshot\")"))
+thread=8 pc=7FFF38A41134 sp=1A5D500 frames=0
+registers=[1A5D740, 20019, 1A5D760, 28, 34FC86A, 1A5D810, 0, 0, 1A5D750, 8E, 1AA0000, 0, 2302490, 1D2001C, A, 21, 7FFF38A41130, FFFFFD428771F568, 7FFDD000, 1A5D500, 36458E8, 1A5DBF8, 32, 1A5D740, 0, 34FA000, 200, 0, 1A5DF60, 1A5DBA0, 306B6E0]
+attributes=1A5D760 raw=Ok([30, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 50, D7, A5, 1, 0, 0, 0, 0, 40, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+registry-root handle=0 object=None
+registry-name="\\Registry\\Machine\\System\\CurrentControlSet\\Control\\Nls\\Sorting\\Versions"
+memory iosb=Err(MemFault { addr: 20019, write: false })
+memory output=Ok([30, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 50, D7, A5, 1, 0, 0, 0, 0, 40, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5C, 0, 52, 0, 65, 0, 67, 0, 69, 0, 73, 0, 74, 0, 72, 0, 79, 0, 5C, 0, 4D, 0, 61, 0, 63, 0, 68, 0, 69, 0, 6E, 0, 65, 0, 5C, 0, 53, 0, 79, 0, 73, 0, 74, 0, 65, 0, 6D, 0, 5C, 0, 43, 0, 75, 0, 72, 0, 72, 0, 65, 0, 6E, 0, 74, 0, 43, 0, 6F, 0, 6E, 0, 74, 0, 72, 0, 6F, 0, 6C, 0, 53, 0, 65, 0, 74, 0, 5C, 0, 43, 0, 6F, 0, 6E, 0, 74, 0, 72, 0, 6F, 0, 6C, 0, 5C, 0, 4E, 0, 6C, 0, 73, 0, 5C, 0, 53, 0, 6F, 0, 72, 0, 74, 0, 69, 0, 6E, 0, 67, 0, 5C, 0, 56, 0, 65, 0, 72, 0, 73, 0, 69, 0, 6F, 0, 6E, 0, 73, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 90, 51, 11, 2, 0, 0, 0, 0, D0, DD, A5, 1, 0, 0, 0, 0, 2C, F6, B1, 38, FF, 7F, 0, 0, 50, D8, A5, 1, 0, 0, 0, 0, 50, BB, B3, 38, FF, 7F, 0, 0, E0, E0, A5, 1, 0, 0, 0, 0, 28, 0, 1, 0, 3, 0, 0, 0])

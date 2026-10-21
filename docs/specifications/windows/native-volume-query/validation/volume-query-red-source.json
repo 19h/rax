@@ -1,0 +1,13 @@
+{
+  "base": "3661ff6beec3860e29852d94e38ce5f327bdfbab",
+  "test": {
+    "path": "src/user/windows/process/sched/tests/services_tests/volume_query_tests.rs",
+    "bytes": 4868,
+    "sha256": "3399621f57682a426f83f97808a8f00adb78e85a4666fd1d50aaedb26569a023"
+  },
+  "exit-code": 101,
+  "passed": 0,
+  "failed": 3,
+  "log-sha256": "c6bc2d748932bfce1659697e460a367dd4d1b4e873f82c9f7db7be49868b0eeb",
+  "separate-target": "/Users/int/.assist-native-volume-query-20261021/target/red-only"
+}

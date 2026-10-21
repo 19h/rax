@@ -1,0 +1,124 @@
+{
+  "state": "finished",
+  "pid": 4800,
+  "source-epoch": 1,
+  "utc": "2026-10-21T06:27:47.122172+00:00",
+  "steps": [
+    {
+      "name": "toolchain",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "--version"
+      ],
+      "exit-code": 0,
+      "seconds": 0.030353541020303965,
+      "log": "volume-query-native-owning-candidate1-toolchain.log",
+      "bytes": 36,
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5"
+    },
+    {
+      "name": "artifacts-before",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "build",
+        "--locked",
+        "--offline",
+        "--features",
+        "rax",
+        "--message-format=json"
+      ],
+      "exit-code": 0,
+      "seconds": 128.27824562499882,
+      "log": "volume-query-native-owning-candidate1-artifacts-before.log",
+      "bytes": 132536,
+      "sha256": "b4d8890c3a1b9af3431f57230d806fe52c1e36c09074c5afb3ccdd00adf2ecd7"
+    },
+    {
+      "name": "archive-before",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\collect-volume-query-archives-candidate1.py",
+        "--host",
+        "windows",
+        "--source",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1",
+        "--manifest",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\volume-query-owning-source-hashes-candidate1.json",
+        "--messages",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\volume-query-native-owning-candidate1-artifacts-before.log",
+        "--output",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-volume-query-candidate1-pre-cpp-archives.json"
+      ],
+      "exit-code": 0,
+      "seconds": 5.227836957987165,
+      "log": "volume-query-native-owning-candidate1-archive-before.log",
+      "bytes": 182,
+      "sha256": "2101706efd6c94ad1889a343bb2c56e743d815c5eedfe56605a7cc59576c3f85"
+    },
+    {
+      "name": "cpp",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\helpers\\volume-query-owned-cpp-build-candidate1.py"
+      ],
+      "exit-code": 0,
+      "seconds": 50.893279959011124,
+      "log": "volume-query-native-owning-candidate1-cpp.log",
+      "bytes": 3705,
+      "sha256": "b9b25f994f2b96604af9e08bf8e23007a093556f25b6e9886843cd43f4631fc4"
+    },
+    {
+      "name": "artifacts-after",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "build",
+        "--locked",
+        "--offline",
+        "--features",
+        "rax",
+        "--message-format=json"
+      ],
+      "exit-code": 0,
+      "seconds": 0.4503578750009183,
+      "log": "volume-query-native-owning-candidate1-artifacts-after.log",
+      "bytes": 132251,
+      "sha256": "afea05b75bfeb2826140c4c4d9604f80154411703dd38d53018621dee4677dd0"
+    },
+    {
+      "name": "archive-after",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\collect-volume-query-archives-candidate1.py",
+        "--host",
+        "windows",
+        "--source",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1",
+        "--manifest",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\volume-query-owning-source-hashes-candidate1.json",
+        "--messages",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\volume-query-native-owning-candidate1-artifacts-after.log",
+        "--output",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-volume-query-candidate1-final-owning-archive-identities.json"
+      ],
+      "exit-code": 0,
+      "seconds": 5.1091451669926755,
+      "log": "volume-query-native-owning-candidate1-archive-after.log",
+      "bytes": 182,
+      "sha256": "2101706efd6c94ad1889a343bb2c56e743d815c5eedfe56605a7cc59576c3f85"
+    }
+  ],
+  "junction": {
+    "before": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-current-el-candidate1",
+    "after": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1"
+  },
+  "current-step": "archive-after",
+  "child-pid": 192,
+  "exit-code": 0,
+  "source-inputs": 3868,
+  "archive-identities-stable": true,
+  "scope": "Frozen volume-query source; retained Assist ABI184 linked consumers. Whole current-root ABI274 GUI/plugin/packages not claimed.",
+  "completed-utc": "2026-10-21T06:31:01.962660+00:00"
+}

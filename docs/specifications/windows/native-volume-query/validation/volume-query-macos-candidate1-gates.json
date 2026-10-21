@@ -1,0 +1,37 @@
+{
+  "state": "failed",
+  "source-epoch": 1,
+  "host": "macos",
+  "driver-pid": 41989,
+  "steps": [
+    {
+      "name": "focus",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "volume_query_tests",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 101,
+      "seconds": 2.3094407090102322,
+      "log": "volume-query-macos-candidate1-focus.log",
+      "bytes": 2038,
+      "sha256": "c1b43b094689922a6aa512a7864ee234d9f12d5ba6c4a0496b10e06e894ebc22",
+      "results": [
+        "FAILED. 5 passed; 1 failed; 0 ignored; 0 measured; 8142 filtered out; finished in 0.48s"
+      ]
+    }
+  ],
+  "current-step": "focus",
+  "child-pid": 42205,
+  "exit-code": 1,
+  "error": "Traceback (most recent call last):\n  File \"/Users/int/Library/Caches/assist-process-emulation/native-volume-query-20261021/run-volume-query-unix-candidate1.py\", line 139, in <module>\n    assert code == 0, name\n           ^^^^^^^^^\nAssertionError: focus\n",
+  "completed-utc": "2026-10-21T06:16:26.248296+00:00"
+}

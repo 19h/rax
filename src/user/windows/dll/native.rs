@@ -40,6 +40,7 @@ mod token_query;
 mod topology;
 mod trace;
 mod virtual_memory;
+mod volume_query;
 mod wait;
 mod wait_packet;
 mod wnf;
@@ -52,6 +53,12 @@ pub(super) static EXPORTS: &[Export] = &[
         Stdcall,
         &[Ptr, I32, Ptr, Ptr, I32, I32],
         file_open::open,
+    ),
+    Export::func(
+        "NtQueryVolumeInformationFile",
+        Stdcall,
+        &[Ptr, Ptr, Ptr, I32, I32],
+        volume_query::query,
     ),
     Export::func(
         "NtQueryAttributesFile",

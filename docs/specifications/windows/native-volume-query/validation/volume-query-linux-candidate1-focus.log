@@ -1,0 +1,16 @@
+   Compiling vm-memory v0.17.1 (/work/vendor/rax/vendor/vm-memory)
+   Compiling linux-loader v0.13.2 (https://github.com/19h/linux-loader?rev=f745b555942c4e840a784bca61e6f3976d101960#f745b555)
+   Compiling rax v0.1.0 (/work/vendor/rax)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2m 07s
+     Running unittests src/lib.rs (target/linux/volume-query-candidate1/debug/deps/rax-3e31f1d94bc1cdf9)
+
+running 6 tests
+test user::windows::process::sched::tests::services_tests::volume_query_tests::native_volume_device_query_file_null_and_reduced_grants_match_standard_null_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::volume_query_tests::native_volume_device_query_length_precedes_handle_and_guard_probes_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::volume_query_tests::native_volume_device_query_native_and_wow_probe_order_preserves_reached_guards ... ok
+test user::windows::process::sched::tests::services_tests::volume_query_tests::native_volume_device_query_standard_objects_preserves_lengths_padding_and_last_error_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::volume_query_tests::native_volume_device_query_unimplemented_classes_are_explicit_without_output_or_guard_changes ... ok
+test user::windows::process::sched::tests::services_tests::volume_query_tests::replay::native_volume_device_query_replays_all_1056_pointer_guard_alias_and_kind_observations ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 8136 filtered out; finished in 4.09s
+

@@ -1,0 +1,23 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.12s
+     Running unittests src/lib.rs (target/candidate1/debug/deps/rax-dd79f0cd9ae9bb68)
+
+running 6 tests
+test user::windows::process::sched::tests::services_tests::volume_query_tests::native_volume_device_query_file_null_and_reduced_grants_match_standard_null_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::volume_query_tests::native_volume_device_query_length_precedes_handle_and_guard_probes_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::volume_query_tests::native_volume_device_query_native_and_wow_probe_order_preserves_reached_guards ... ok
+test user::windows::process::sched::tests::services_tests::volume_query_tests::native_volume_device_query_standard_objects_preserves_lengths_padding_and_last_error_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::volume_query_tests::native_volume_device_query_unimplemented_classes_are_explicit_without_output_or_guard_changes ... ok
+test user::windows::process::sched::tests::services_tests::volume_query_tests::replay::native_volume_device_query_replays_all_1056_pointer_guard_alias_and_kind_observations ... 
+thread 'user::windows::process::sched::tests::services_tests::volume_query_tests::replay::native_volume_device_query_replays_all_1056_pointer_guard_alias_and_kind_observations' (23501048) panicked at src/user/windows/process/sched/tests/services_tests/volume_query_tests/replay.rs:23:10:
+called `Result::unwrap()` on an `Err` value: Os { code: 2, kind: NotFound, message: "No such file or directory" }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+
+failures:
+
+failures:
+    user::windows::process::sched::tests::services_tests::volume_query_tests::replay::native_volume_device_query_replays_all_1056_pointer_guard_alias_and_kind_observations
+
+test result: FAILED. 5 passed; 1 failed; 0 ignored; 0 measured; 8142 filtered out; finished in 0.48s
+
+error: test failed, to rerun pass `--lib`

@@ -1,0 +1,33 @@
+{
+  "scope": "Volume-device query class4 increment; full same-host userland remains active.",
+  "utc": "2026-10-21T07:00:28.379114+00:00",
+  "gates": {
+    "QG1": "No normative content required.",
+    "QG2": "Native metadata/capture confirmed for observed profiles; Unix WindowsDriveMap virtualdiskprofile explicit; pending-kernel path not exercised, private buffer/API lifetime argument retained.",
+    "QG3": "Class4 standarddevices and admittedfiles; six focused tests perhost;1056 byte/protection observations; zero-grant control and real Windowsfile adapter; owning Rust/CAPI execution reachesnext registry boundary.",
+    "QG4": "Class4 fixed8B output; Status32/pointer-sized Information; checked publication address; O(P) guest-span probe, O(1) scratch. Rawcounts include repeatedinputs.",
+    "QG5": "Native/WoW capture, guard/readonly ordering, aliasing, partialpublication, typedhandles and LastError verified; unused upperStatusunion explicitlyzeroed, provider-reserved padding not universalbytecontract.",
+    "QG6": "Five accepted nativeproducer versions3152 four-viewcalls; before/after source/exe/DLL identities; sourcefreeze26895; archivewalks and current retainedartifacts; portable audits passall3hosts.",
+    "QG7": "NextNLS sortingkey, existing image/unwind/runtime boundaries, wholecurrentrootABI274/GUI/package separation, and unrelatedAMTP CIretry remainexplicit."
+  },
+  "change-surface": {
+    "affected": [
+      "WindowsNT exportfactory, native/WoW dispatcher consumer",
+      "Windowsguest memory and IOSB publication",
+      "Private Windows owned-file metadata adapter",
+      "Unix WindowsDriveMap metadata adapter",
+      "RAX library/CAPI and retained Assist consumers onWindows,macOS,Linux",
+      "Strategic tests and independentnative data"
+    ],
+    "unaffected": {
+      "Linux/macOS process personalities": "Only Windowsguest namespace implementation changes.",
+      "PublicCABI, RustABI, persistence, approvals, UI/mainthread, releases": "No layout/schema, permission or UI code changed; CABI1.14.0 retained.",
+      "File/path admission and guestgrants": "No new paths or data privileges admitted; nativeclass4 zero-grant metadata controls establish access behavior."
+    }
+  },
+  "setup-failures-preserved": [
+    "OriginalmacOS launch missingconfiguredTMPDIR; successfulcomplete retry aftercreating directory, no productedit.",
+    "Initialaarch64 xwin sharedclang-cl symlinkrace; serialretryafterx64completed passed.",
+    "V1 initializer-list compilefailure; V6 reopen/identityexperiment rejected."
+  ]
+}

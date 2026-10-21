@@ -1,0 +1,35 @@
+{
+  "state": "verified",
+  "negative-cases": 4,
+  "fresh-positive-cases": 4,
+  "cases": [
+    {
+      "mutation": "wrong-console-device",
+      "rejected": true,
+      "reason": "native console result",
+      "transitive-identities-repaired": true,
+      "fresh-positive-restored": true
+    },
+    {
+      "mutation": "wrong-abi-guard-order",
+      "rejected": true,
+      "reason": "ABI guard ordering",
+      "transitive-identities-repaired": true,
+      "fresh-positive-restored": true
+    },
+    {
+      "mutation": "zero-grant-denied",
+      "rejected": true,
+      "reason": "zero-grant metadata query",
+      "transitive-identities-repaired": true,
+      "fresh-positive-restored": true
+    },
+    {
+      "mutation": "completion-not-finished",
+      "rejected": true,
+      "reason": "native completion prefix",
+      "transitive-identities-repaired": true,
+      "fresh-positive-restored": true
+    }
+  ]
+}

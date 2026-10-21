@@ -1,0 +1,9 @@
+role=disk access=00000000 status=00000000 complete=1 error=0 bytes=8 polls=1 internal=0 information=8 ok=1 out=0700000020000200
+role=disk access=00100000 status=00000000 complete=1 error=0 bytes=8 polls=1 internal=0 information=8 ok=1 out=0700000020000200
+role=directory access=00000000 status=00000000 complete=1 error=0 bytes=8 polls=1 internal=0 information=8 ok=1 out=0700000020000200
+role=directory access=00100000 status=00000000 complete=1 error=0 bytes=8 polls=1 internal=0 information=8 ok=1 out=0700000020000200
+role=async-private access=00000000 status=00000000 complete=1 error=0 bytes=8 polls=1 internal=0 information=8 ok=1 out=0700000020000200
+role=async-private access=00100000 status=00000000 complete=1 error=0 bytes=8 polls=1 internal=0 information=8 ok=1 out=0700000020000200
+role=shared-output access=00000000 status=00000000 complete=1 error=0 bytes=8 polls=1 internal=0 information=8 ok=1 out=0700000010000000
+role=shared-output access=00100000 status=00000000 complete=1 error=0 bytes=8 polls=1 internal=0 information=8 ok=1 out=0700000010000000
+summary calls=8 duplicates=8 closes=8 original-owned=3 original-closed=3 temporary-removed=1 failures=0

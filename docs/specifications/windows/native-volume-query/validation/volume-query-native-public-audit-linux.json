@@ -1,0 +1,9 @@
+{
+  "state": "verified",
+  "native-recorded-calls": 3152,
+  "native-producers": 5,
+  "native-views": 4,
+  "current-source-inputs": 12,
+  "live-native-files": 0,
+  "scope": "One ARM64 Windows kernel with native/emulated execution views; reserved IOSB padding is not a universal native byte contract."
+}

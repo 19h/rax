@@ -1,0 +1,76 @@
+{
+  "base": "3661ff6beec3860e29852d94e38ce5f327bdfbab",
+  "paired-root": "fc0c2bc20d89247c6c37415386240619ba0c29be",
+  "utc": "2026-10-21T05:39:29.103830+00:00",
+  "owned-source-paths": [
+    "src/user/windows/dll/native.rs",
+    "src/user/windows/dll/native/volume_query.rs",
+    "src/user/windows/dll/native/volume_query/host.rs",
+    "src/user/windows/dll/native/volume_query/host/windows.rs",
+    "src/user/windows/dll/native/volume_query/host/unix.rs",
+    "src/user/windows/process/sched/tests/services_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/volume_query_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/volume_query_tests/replay.rs"
+  ],
+  "observed-request": {
+    "service": "NtQueryVolumeInformationFile",
+    "class": 4,
+    "length-B": 8,
+    "object": "Console(In)"
+  },
+  "native-controls": {
+    "v1": "Rejected MSVC initializer-list compile failure; no behavior proof.",
+    "v2": "78 input roles/length observations per4 native execution views; source/exe/module hashes stable.",
+    "v3": "240 pointer/guard/alignment/alias observations per4 native execution views; all960 calls return status to caller, no uncaught exceptions; source/exe/module hashes stable."
+  },
+  "assumptions": [
+    {
+      "id": "VQ-A1",
+      "assumption": "The native class4 standard-device metadata and capture order can be modeled independently of host OS.",
+      "basis": "Native ARM64, AMD64 and WoW64 views on build29683; synthetic Windows object types already define Console/NUL/Pipe/File.",
+      "dependent-result": "Shared service plus narrow host-file adapter if real filesystem properties are required.",
+      "stress-test": "32/64-bit IOSB, invalid kinds, pointer guards, aliases, reduced grants and installed leaf routes.",
+      "falsification-probe": "Native captures disagree outside explained ABI conversion; File device properties are guessed from pathname.",
+      "status": "confirmed for captured standard-device semantics and 1056 complete replay rows on all3 hosts; explicit virtual Windows disk profile on Unix; real Windows files query actual volume"
+    },
+    {
+      "id": "VQ-A2",
+      "assumption": "An IOSB-compatible OVERLAPPED prefix and GetOverlappedResult(FALSE) can observe private NT completion without added handle grants.",
+      "basis": "V7 complete controls:regular,directory,async-opened,shared output; grants0 andSYNCHRONIZE on4 views. All observed requests complete immediately.",
+      "dependent-result": "Safe private buffer lifetime if a native query returnsSTATUS_PENDING.",
+      "stress-test": "Heap allocations stay stable and alive through terminal completion; actual pending kernel request not observed.",
+      "falsification-probe": "A supported native backend returns pending and completion API rejects a valid prefix or reports terminal before kernel completion.",
+      "status": "retained for pending path; immediate completion API/ABI pairing confirmed"
+    }
+  ],
+  "bounded-scope": [
+    {
+      "impact": "high",
+      "item": "NLS Sorting\\Versions key is outside selected runtime snapshot; both owning whoami routes reach it after class4 succeeds.",
+      "blocks-increment": false,
+      "blocks-full-goal": true
+    },
+    {
+      "impact": "medium",
+      "item": "Native provider reserved IOSB upperStatusword may remain unchanged; implementation zeroes it. Defined Status32 and Information fields are the conformance contract.",
+      "blocks-increment": false
+    },
+    {
+      "impact": "medium",
+      "item": "Metadata-only pathname fallback revalidatesidentity and fails closed on replacement; actual retained file paths avoid this dependency.",
+      "blocks-increment": false
+    },
+    {
+      "impact": "medium",
+      "item": "The current root AMTP socket ownership CI test failed an fd-number assertion; one retry is in progress, no transport source changed.",
+      "blocks-increment": false
+    }
+  ],
+  "design": {
+    "real-Windows-files": "Use retained file handle and stable private IOSB/OVERLAPPED-prefix/output boxes. Never reopen normal files or forward guest pointers/handles. GetOverlappedResult(FALSE) observes any pending completion without requiring SYNCHRONIZE. V7 validates prefix completion for regular,directory,async-opened and shared-output handles with grants0/SYNCHRONIZE; all observed calls completed immediately.",
+    "portable-mapped-files": "A Windows DriveMap on Unix represents a virtual mounted Windows disk with captured profile(7,0x20020). It does not report Unix hardware flags as Windows bits. Metadata-only path handles revalidate identity.",
+    "IOSB-reserved-upper-word": "Native64 status union upper32 bits are zeroed deterministically. Native shared-filesystem providers can leave this reserved word unchanged; defined NTSTATUS32 and Information are the conformance fields.",
+    "rejected-v6": "ReOpenFile fails for directory handles; shared backend FileIdInfo is unavailable. Rejected controls retained; no reopen path used for retained normal files."
+  },
+  "updated-utc": "2026-10-21T06:57:28.057674+00:00"
+}

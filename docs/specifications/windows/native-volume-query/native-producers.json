@@ -1,0 +1,71 @@
+{
+  "accepted": [
+    {
+      "version": 2,
+      "launch": "native-volume-query-v2-four-views-launch.json",
+      "source": "native-volume-query-v2.cpp",
+      "driver": "run-native-volume-query-v2-four-views-retry1.py",
+      "calls-per-view": 78,
+      "views": 4,
+      "recorded-calls": 312,
+      "launch-bytes": 18382,
+      "launch-sha256": "dc17b23d6130463190eb57708326fca2e4ddf18927da16bebe0157d4411d1f4c"
+    },
+    {
+      "version": 3,
+      "launch": "native-volume-query-v3-four-views-launch.json",
+      "source": "native-volume-query-v3.cpp",
+      "driver": "run-native-volume-query-v3-four-views.py",
+      "calls-per-view": 240,
+      "views": 4,
+      "recorded-calls": 960,
+      "launch-bytes": 18367,
+      "launch-sha256": "b0bf14611bf2db7b35849355f05ff19d4a62145ad381449bff8f3f2db47b00bf"
+    },
+    {
+      "version": 4,
+      "launch": "native-volume-query-v4-four-views-launch.json",
+      "source": "native-volume-query-v4.cpp",
+      "driver": "run-native-volume-query-v4-four-views.py",
+      "calls-per-view": 264,
+      "views": 4,
+      "recorded-calls": 1056,
+      "launch-bytes": 18367,
+      "launch-sha256": "5f8f5d0c8db66119ea2edd1fbaa3106e9c8d47f7688b6d86f1e558cd41f96314"
+    },
+    {
+      "version": 5,
+      "launch": "native-volume-query-v5-four-views-launch.json",
+      "source": "native-volume-query-v5.cpp",
+      "driver": "run-native-volume-query-v5-four-views.py",
+      "calls-per-view": 198,
+      "views": 4,
+      "recorded-calls": 792,
+      "launch-bytes": 18397,
+      "launch-sha256": "a2c0c7fc40ab1d03bdcc6557c7e5819b8c72c4744f2749573fba4e2cd96b0771"
+    },
+    {
+      "version": 7,
+      "launch": "native-volume-query-v7-four-views-launch.json",
+      "source": "native-volume-query-v7.cpp",
+      "driver": "run-native-volume-query-v7-four-views.py",
+      "calls-per-view": 8,
+      "views": 4,
+      "recorded-calls": 32,
+      "launch-bytes": 18429,
+      "launch-sha256": "d9e4cfb350c4c9de520890ece2312698ed521122ae464742df4875edd4a34f84"
+    }
+  ],
+  "recorded-four-view-calls": 3152,
+  "rejected": [
+    {
+      "version": 1,
+      "reason": "initializer-list compile failure"
+    },
+    {
+      "version": 6,
+      "reason": "directory reopen denied and shared FileIdInfo unavailable; driver stopped after failed ARM64 experiment"
+    }
+  ],
+  "scope": "Recorded calls include repeated inputs; all views share one observed ARM64 Windows kernel."
+}

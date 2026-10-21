@@ -1,0 +1,10 @@
+native-volume-query-v1.cpp
+C:\Windows\Temp\assist-native-rax-20261010\native-volume-query-v1\native-volume-query-v1.cpp(65): error C3312: no callable 'begin' function found for type 'initializer list'
+C:\Windows\Temp\assist-native-rax-20261010\native-volume-query-v1\native-volume-query-v1.cpp(65): error C3312: no callable 'end' function found for type 'initializer list'
+C:\Windows\Temp\assist-native-rax-20261010\native-volume-query-v1\native-volume-query-v1.cpp(65): error C2143: syntax error: missing ';' before ':'
+C:\Windows\Temp\assist-native-rax-20261010\native-volume-query-v1\native-volume-query-v1.cpp(65): error C2143: syntax error: missing ';' before '{'
+C:\Windows\Temp\assist-native-rax-20261010\native-volume-query-v1\native-volume-query-v1.cpp(65): error C2143: syntax error: missing ')' before '{'
+C:\Windows\Temp\assist-native-rax-20261010\native-volume-query-v1\native-volume-query-v1.cpp(65): error C2143: syntax error: missing ';' before '}'
+C:\Windows\Temp\assist-native-rax-20261010\native-volume-query-v1\native-volume-query-v1.cpp(65): error C2059: syntax error: ')'
+C:\Windows\Temp\assist-native-rax-20261010\native-volume-query-v1\native-volume-query-v1.cpp(70): error C2065: 'length': undeclared identifier
+C:\Windows\Temp\assist-native-rax-20261010\native-volume-query-v1\native-volume-query-v1.cpp(76): error C2065: 'length': undeclared identifier
