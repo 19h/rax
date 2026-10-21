@@ -1,0 +1,29 @@
+{
+  "state": "verified",
+  "utc": "2026-10-21T05:16:50.348628+00:00",
+  "targets": [
+    {
+      "target": "aarch64-pc-windows-msvc",
+      "gate": "all-targets check",
+      "scope": "Cross compilation; native Windows execution is separate.",
+      "primary-package-cleaned": true,
+      "log": "current-el-candidate1-cross-aarch64-cleaned.log",
+      "bytes": 985,
+      "sha256": "902b7d7c9166b9c5c6d4a23a718af9abdbac4b2621b9208db4ddd56b60f0f3b3",
+      "clean-log": "current-el-cross-aarch64-clean.log",
+      "clean-log-sha256": "1c826bf9630bd66c0dceea53430f6c53e585a67291f863c9e7842f90565bb93a"
+    },
+    {
+      "target": "x86_64-pc-windows-msvc",
+      "gate": "all-targets check",
+      "scope": "Cross compilation; native Windows execution is separate.",
+      "primary-package-cleaned": true,
+      "log": "current-el-candidate1-cross-x64-cleaned.log",
+      "bytes": 985,
+      "sha256": "9823234095e7630e19e0d58a0c2c5e2d7b5f7b0eac208e3a781c9f24771c7d89",
+      "clean-log": "current-el-cross-x64-clean.log",
+      "clean-log-sha256": "590ada48fd699a904f3a38bbee23b527ef1a2399acf77611f74fdf4ff5d82be5"
+    }
+  ],
+  "source-ledger-sha256": "19a00e62c8665cbbeaa131625af9bd01ddb452f56dd5e7b6c16a5d7600456d49"
+}

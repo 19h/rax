@@ -1,0 +1,8 @@
+info: downloading component clippy
+    Blocking waiting for file lock on build directory
+    Checking bitflags v1.3.2
+   Compiling kvm-ioctls v0.24.0
+    Checking vmm-sys-util v0.15.0
+    Checking kvm-bindings v0.14.1
+    Checking rax v0.1.0 (/work/vendor/rax)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2m 48s

@@ -1,0 +1,138 @@
+{
+  "state": "finished",
+  "source-epoch": 1,
+  "host": "macos",
+  "driver-pid": 84809,
+  "steps": [
+    {
+      "name": "focus",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "current_el_tests",
+        "--features",
+        "x86_64-suite,smir-jit",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 111.95466087502427,
+      "log": "current-el-macos-candidate1-focus.log",
+      "bytes": 1284,
+      "sha256": "f159ad8d1286c5371bc5f19d269aa4cc03289c0bccdc5cb944572b0c39c27e68",
+      "results": [
+        "ok. 5 passed; 0 failed; 0 ignored; 0 measured; 10318 filtered out; finished in 0.02s"
+      ]
+    },
+    {
+      "name": "full",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "--features",
+        "x86_64-suite,smir-jit",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 1348.0234520829981,
+      "log": "current-el-macos-candidate1-full.log",
+      "bytes": 1173717,
+      "sha256": "9bab608f8aac904a5839a741570a872e74894db895df6f04b66d0841c67d3aa1",
+      "results": [
+        "ok. 10321 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 1344.13s"
+      ]
+    },
+    {
+      "name": "capi",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "-p",
+        "rax-capi",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 58.86813550000079,
+      "log": "current-el-macos-candidate1-capi.log",
+      "bytes": 14123,
+      "sha256": "21899fcf138e5498adbf919701b256ae0b1f86413ae89f4e4ae2c94624860a63",
+      "results": [
+        "ok. 183 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 13.41s",
+        "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    {
+      "name": "integration",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--test",
+        "user_windows",
+        "--test",
+        "user_windows_memory",
+        "--features",
+        "x86_64-suite,smir-jit",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 103.85871608299203,
+      "log": "current-el-macos-candidate1-integration.log",
+      "bytes": 35853,
+      "sha256": "336f9960126082ab3953c22bd8b88d4d0c7ff87943ca2c3d5843a6173055f334",
+      "results": [
+        "ok. 544 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 56.13s",
+        "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    {
+      "name": "all-targets",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "check",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--all-targets",
+        "--features",
+        "x86_64-suite,smir-jit"
+      ],
+      "exit-code": 0,
+      "seconds": 65.92596200003754,
+      "log": "current-el-macos-candidate1-all-targets.log",
+      "bytes": 367,
+      "sha256": "b276672d8d0b64b6ca04d1321d527cc9a4cf426d358387a2ace9d24fe142fb3c",
+      "results": []
+    }
+  ],
+  "current-step": "all-targets",
+  "child-pid": 11702,
+  "exit-code": 0,
+  "post-source-inputs": 26885,
+  "completed-utc": "2026-10-21T05:24:34.462813+00:00"
+}

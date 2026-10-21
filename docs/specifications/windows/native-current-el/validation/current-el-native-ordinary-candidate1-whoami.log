@@ -1,0 +1,1 @@
+program=C:\Windows\System32\whoami.exe terminal-call=2550 result=Complete(Internal("native NTDLL service NtQueryVolumeInformationFile (0x49) at 0x7fff38a414d0 is not implemented"))

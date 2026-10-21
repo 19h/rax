@@ -1,0 +1,29 @@
+{
+  "utc": "2026-10-21T05:00:19.360023+00:00",
+  "before": "/Users/int/.assist-native-file-section-20261021",
+  "after": "/Users/int/.assist-native-current-el-20261021",
+  "retained": [
+    {
+      "source": {
+        "path": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes/assist-rs-target/aarch64-apple-darwin/debug/libassist_rs.a",
+        "bytes": 530544784,
+        "sha256": "c2fca9162130b8c6a02de33bcd9e03d0f71b2fa25cdede6be72723d265380e87",
+        "members": 1467,
+        "structural-member-walk": "pass"
+      },
+      "retained-path": "/Users/int/Library/Caches/assist-process-emulation/native-image-seh-20261021/retained-file-section-macos/0-libassist_rs.a",
+      "separate-inode": true
+    },
+    {
+      "source": {
+        "path": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes/assist-rs-target/aarch64-apple-darwin/debug/deps/librax-c89758aa402dc84d.rlib",
+        "bytes": 397571752,
+        "sha256": "19d867f8fd429bcfee362ceba7c353d62a82b37ee6f58fefba1c4f78787c98ff",
+        "members": 258,
+        "structural-member-walk": "pass"
+      },
+      "retained-path": "/Users/int/Library/Caches/assist-process-emulation/native-image-seh-20261021/retained-file-section-macos/1-librax-c89758aa402dc84d.rlib",
+      "separate-inode": true
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "scope": "Windows ARM64 CurrentEL increment only; full same-host userland goal remains active.",
+  "utc": "2026-10-21T05:27:42.303974+00:00",
+  "gates": {
+    "QG1": "No normative content required.",
+    "QG2": "CE-A1 observed on build29683; CE-A2 original fault resolved in both owning routes; CE-A3 implementation-boundary inference retained, native trap component unknown.",
+    "QG3": "All32 destination encodings plus privileged negatives, shared-core isolation, three host configurations, owning products and caller routes audited. Full objective remains incomplete.",
+    "QG4": "PC increments by4B with alignment/overflow checks; code-page allocations4096B; counts and zero-based terminal/turn distinctions reproducible.",
+    "QG5": "Reserved X18 and XZR, stale PCs, missing/guarded/nonexecuting fetches, no shared ISA relaxation; known native lowerer failures and original Linux launcher error remain explicit.",
+    "QG6": "Native source/exe/DLL identities, source freeze, executed image and actual selected archives; complete public gate audits verified on all3 hosts.",
+    "QG7": "Next volume service and independent image-view unwind gap recorded; whole current-root ABI274/GUI/packages and published CI not claimed."
+  },
+  "bounded-scope": [
+    {
+      "impact": "high",
+      "item": "NtQueryVolumeInformationFile class4 on Console(In) is the new whoami boundary; full goal incomplete.",
+      "blocks-increment": false
+    },
+    {
+      "impact": "high",
+      "item": "Image-view exception metadata outside initial module registry remains incomplete.",
+      "blocks-increment": false
+    },
+    {
+      "impact": "medium",
+      "item": "Published preceding RAX revision has3 observed GitHub failures: Windows installed-profile precheck and2 KVM differential jobs; causes of KVM failures not established here.",
+      "blocks-increment": false
+    },
+    {
+      "impact": "medium",
+      "item": "Native controls cover one ARM64 Windows kernel under Parallels. Other supported kernel behavior remains a falsifiable assumption.",
+      "blocks-increment": false
+    }
+  ]
+}

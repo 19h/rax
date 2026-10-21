@@ -1,0 +1,52 @@
+{
+  "state": "verified",
+  "suites": [
+    {
+      "host": "macos",
+      "passed": 10321,
+      "known-failures": 0,
+      "ignored": 2,
+      "capi-passed": 183,
+      "integration-passed": 544
+    },
+    {
+      "host": "linux",
+      "passed": 8134,
+      "known-failures": 0,
+      "ignored": 2,
+      "capi-passed": 183,
+      "integration-passed": 544
+    },
+    {
+      "host": "windows",
+      "passed": 7603,
+      "known-failures": 5,
+      "ignored": 2,
+      "capi-passed": 183,
+      "integration-passed": 4
+    }
+  ],
+  "owning": [
+    {
+      "host": "macos",
+      "verified": true,
+      "archives": 2
+    },
+    {
+      "host": "linux",
+      "verified": true,
+      "archives": 2
+    },
+    {
+      "host": "windows",
+      "verified": true,
+      "archives": 2
+    }
+  ],
+  "macos-carrier-links": 8,
+  "macos-ctests": 7,
+  "native-runtime-DLL-union": 10,
+  "ordinary-new-boundary": "NtQueryVolumeInformationFile",
+  "whole-root-and-CI-success": false,
+  "scope": "Retained Assist ABI184 consumers; current ABI274 root packages/GUI and CI are separate evidence."
+}

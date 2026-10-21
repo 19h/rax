@@ -1,0 +1,24 @@
+{
+  "base": "ba278d44871ce08d95a805ac95e80d196b3e3993",
+  "utc": "2026-10-21T04:51:12.266948+00:00",
+  "test-source": {
+    "path": "src/user/windows/process/sched/tests/current_el_tests.rs",
+    "bytes": 2986,
+    "sha256": "6741849f627680153bdbb57b363b940082fec58803b655873c2d3d990bc954cc"
+  },
+  "owned-source-paths": [
+    "src/user/windows/process/sched.rs",
+    "src/user/windows/process/sched/tests/current_el_tests.rs"
+  ],
+  "target": "/Users/int/.assist-native-current-el-20261021/target/red-only",
+  "isolated-from-final": true,
+  "result": {
+    "exit-code": 101,
+    "passed": 2,
+    "failed": 1,
+    "ignored": 0,
+    "filtered": 10318,
+    "expected-failure": "windows_current_el_read_retires_all_destinations_and_preserves_context",
+    "log-sha256": "990026053a289126e2496807fa48327818ee56c346de87bff23ec34086013c00"
+  }
+}

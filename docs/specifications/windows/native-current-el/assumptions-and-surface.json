@@ -1,0 +1,66 @@
+{
+  "utc": "2026-10-21T04:52:03.206090+00:00",
+  "base": "ba278d44871ce08d95a805ac95e80d196b3e3993",
+  "assumptions": [
+    {
+      "id": "CE-A1",
+      "assumption": "Windows ARM64 userland accepts MRS CurrentEL and returns zero to ordinary destinations, while reserved X18 retains the TEB.",
+      "basis": "native-current-el-v3: 32 destination rows and 4 privileged negative controls; all 36 calls completed with balanced allocation/release and stable code/source/executable/module identities.",
+      "dependent-result": "Narrow Windows scheduler compatibility; no shared ISA privilege relaxation.",
+      "stress-test": "All 32 Rt encodings, X18, XZR, privilege-control registers, unchanged registers/flags/SP/PC/code; same tests on macOS/Linux/Windows.",
+      "falsification-probe": "Native v3 on another supported ARM64 Windows kernel yields a different status/value; current register matrix fails.",
+      "status": "confirmed for observed Windows kernel 10.0.29683; retained across other kernels"
+    },
+    {
+      "id": "CE-A2",
+      "assumption": "CurrentEL refusal is the original whoami illegal instruction behind the later bounded SEH walk failure.",
+      "basis": "actual owning core diagnostic v2: original exception 0xC000001D at 0x376CF90; bytes D5384250 (MRS X16,CurrentEL), native v3 Rt16 succeeds.",
+      "dependent-result": "Expected progress past this original fault; does not establish full whoami completion.",
+      "stress-test": "Repeat owning Rust and C API ordinary routes after replacement, identify next terminal result directly.",
+      "falsification-probe": "Source-matched current owning core still stops at that exact original instruction.",
+      "status": "confirmed; both owning routes pass the original fault and reach NtQueryVolumeInformationFile class4 on Console(In), terminal2550 / turns2551"
+    },
+    {
+      "id": "CE-A3",
+      "assumption": "The Windows scheduler is the correct emulation boundary for the observed user-mode CurrentEL behavior.",
+      "basis": "Shared architecture rejects EL0 CurrentEL; native Windows v3 accepts all32 destinations with the reserved-X18 exception.",
+      "dependent-result": "Implementation placement, not identification of native kernel internals.",
+      "stress-test": "The shared-core rejection test remains true; Windows handler is architecture/PC/fetch/encoding gated.",
+      "falsification-probe": "The native behavior changes under an otherwise supported Windows profile or requires a user exception callback.",
+      "status": "retained; exact native trap-handling component unknown and not traced"
+    }
+  ],
+  "scope-findings": [
+    {
+      "impact": "high",
+      "item": "Newly mapped MSVCRT image is outside the initial module/unwind registry. Secondary SEH frame walking is incomplete.",
+      "blocks": "Full original objective remains incomplete; does not block measured CurrentEL compatibility.",
+      "evidence": "native-image-seh-diagnostic-v2-whoami.log"
+    },
+    {
+      "impact": "medium",
+      "item": "Windows GitHub installed-profile precheck still fails exactly five prior profile/clock assertions; constructor feature tests are not implicated by the observed failure list.",
+      "blocks": "All-green CI claim; do not skip or weaken.",
+      "evidence": "private-github-windows-119038772190.log"
+    }
+  ],
+  "owned-source-paths": [
+    "src/user/windows/process/sched.rs",
+    "src/user/windows/process/sched/tests/current_el_tests.rs"
+  ],
+  "planes": {
+    "affected": [
+      "Windows CPU/exception scheduler frontier",
+      "Windows kernel personality behavior",
+      "library tests on all hosts",
+      "owning static/core consumers for actual end-to-end verification"
+    ],
+    "unaffected": {
+      "shared ISA and Linux/macOS personalities": "No edits to architectural EL0 permission policy or other OS scheduler paths.",
+      "PE loading, file sections, native DLL projection": "No changes to parsing, mapping, access/grants or image-source mechanics.",
+      "public C ABI, Rust ABI, persistence, UI, packaging": "No exported layouts, ABI versions, product schema or build membership changes; existing library target compiles scheduler automatically on all hosts."
+    }
+  },
+  "native-v2-rejection": "All rows captured; wrong zero-only assertion rejected X18 expected TEB, hence launch stops before final hash checks. Kept immutable. Native v3 corrects assertion and completes all before/after checks.",
+  "updated-utc": "2026-10-21T05:19:37.020082+00:00"
+}

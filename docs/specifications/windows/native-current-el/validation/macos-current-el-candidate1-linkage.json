@@ -1,0 +1,39 @@
+{
+  "targets": [
+    {
+      "target": "test/assist_rust_archive_link_tests",
+      "selected-carrier-in-link-rule": true
+    },
+    {
+      "target": "test/assist_rax_process_tests",
+      "selected-carrier-in-link-rule": true
+    },
+    {
+      "target": "test/assist_process_tool_tests",
+      "selected-carrier-in-link-rule": true
+    },
+    {
+      "target": "test/assist_process_tool_unavailable_tests",
+      "selected-carrier-in-link-rule": true
+    },
+    {
+      "target": "test/assist_e14_rax_abi_drift_tests",
+      "selected-carrier-in-link-rule": true
+    },
+    {
+      "target": "test/assist_mcp_tool_manifest_tests",
+      "selected-carrier-in-link-rule": true
+    },
+    {
+      "target": "assist-mcp",
+      "selected-carrier-in-link-rule": true
+    },
+    {
+      "target": "assist-cli",
+      "selected-carrier-in-link-rule": true
+    }
+  ],
+  "carrier-path": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes/assist-rs-target/aarch64-apple-darwin/debug/libassist_rs.a",
+  "build-log-sha256": "98da34b95b27d873c69217ccbdd0e167260c9bda74e8444e15b25e49b1e0c5f5",
+  "ninja-file-sha256": "58bcbe100a6557612c514ce817b10b0856d853e4a7f186e70f5ac44dccb66be9"
+}

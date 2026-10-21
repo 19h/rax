@@ -1,0 +1,133 @@
+{
+  "state": "finished",
+  "host": "macos",
+  "pid": 88024,
+  "source-inputs": 3858,
+  "scope": "Retained Assist ABI184 linked consumers; no whole current root GUI/plugin/package claim.",
+  "steps": [
+    {
+      "gate": "prime-artifacts",
+      "cwd": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/rust/assist-rs",
+      "command": [
+        "cmake",
+        "-E",
+        "env",
+        "CARGO_TARGET_DIR=/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes/assist-rs-target",
+        "CARGO_PROFILE_RELEASE_STRIP=false",
+        "MACOSX_DEPLOYMENT_TARGET=10.15",
+        "ASSIST_RESOURCE_PYTHON=/opt/homebrew/Frameworks/Python.framework/Versions/3.15/bin/python3.15",
+        "CARGO_BUILD_JOBS=2",
+        "RUSTUP_TOOLCHAIN=1.95.0",
+        "/Users/int/.cargo/bin/cargo",
+        "build",
+        "--locked",
+        "--offline",
+        "--manifest-path",
+        "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/rust/assist-rs/Cargo.toml",
+        "--package",
+        "assist-rs",
+        "--target",
+        "aarch64-apple-darwin",
+        "--features",
+        "rax",
+        "--message-format=json"
+      ],
+      "exit-code": 0,
+      "seconds": 54.771711457986385,
+      "log": "macos-current-el-candidate1-owning-prime-artifacts.log",
+      "bytes": 137970,
+      "sha256": "1d9bfb475fb1dd550d765cfd56da1029be10a1219e84588013453c6e4818972b"
+    },
+    {
+      "gate": "archives-before",
+      "command": [
+        "python3",
+        "-B",
+        "/Users/int/Library/Caches/assist-process-emulation/native-image-seh-20261021/collect-current-el-archives-candidate1.py",
+        "--host",
+        "macos",
+        "--source",
+        "/Users/int/.assist-native-current-el-20261021",
+        "--manifest",
+        "/Users/int/Library/Caches/assist-process-emulation/native-image-seh-20261021/current-el-owning-source-hashes-candidate1.json",
+        "--messages",
+        "/Users/int/Library/Caches/assist-process-emulation/native-image-seh-20261021/macos-current-el-candidate1-owning-prime-artifacts.log",
+        "--output",
+        "/Users/int/Library/Caches/assist-process-emulation/native-image-seh-20261021/macos-current-el-candidate1-archives-before.json"
+      ],
+      "exit-code": 0,
+      "seconds": 0.7556368749937974,
+      "log": "macos-current-el-candidate1-owning-archives-before.log",
+      "bytes": 180,
+      "sha256": "f9aaf25b5892e41316754b038572a71c85233b7cfa79c9969978fbacf57600e1"
+    },
+    {
+      "gate": "build",
+      "command": [
+        "cmake",
+        "--build",
+        "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes",
+        "--target",
+        "assist_idalib_cli",
+        "assist_mcp",
+        "assist_mcp_tool_manifest_tests",
+        "assist_rax_process_tests",
+        "assist_process_tool_tests",
+        "assist_process_tool_unavailable_tests",
+        "assist_e14_rax_abi_drift_tests",
+        "assist_rust_archive_link_tests",
+        "--parallel",
+        "2"
+      ],
+      "exit-code": 0,
+      "seconds": 15.954202082997654,
+      "log": "macos-current-el-candidate1-owning-build.log",
+      "bytes": 32919,
+      "sha256": "98da34b95b27d873c69217ccbdd0e167260c9bda74e8444e15b25e49b1e0c5f5"
+    },
+    {
+      "gate": "ctest",
+      "command": [
+        "ctest",
+        "--test-dir",
+        "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes",
+        "--output-on-failure",
+        "-R",
+        "^(assist_rust_archive_link_tests|assist_rax_process_tests|assist_process_tool_tests|assist_process_tool_unavailable_tests|assist_e14_rax_abi_drift_tests|assist_mcp_tool_manifest_tests|assist_mcp_manifest_runtime_test)$"
+      ],
+      "exit-code": 0,
+      "seconds": 4.87376491696341,
+      "log": "macos-current-el-candidate1-owning-ctest.log",
+      "bytes": 1298,
+      "sha256": "bd35a12923abc75b46ce3a2f84e6ad8396b4a0120cca00cb0946cca5ecdde831"
+    },
+    {
+      "gate": "archives-after",
+      "command": [
+        "python3",
+        "-B",
+        "/Users/int/Library/Caches/assist-process-emulation/native-image-seh-20261021/collect-current-el-archives-candidate1.py",
+        "--host",
+        "macos",
+        "--source",
+        "/Users/int/.assist-native-current-el-20261021",
+        "--manifest",
+        "/Users/int/Library/Caches/assist-process-emulation/native-image-seh-20261021/current-el-owning-source-hashes-candidate1.json",
+        "--messages",
+        "/Users/int/Library/Caches/assist-process-emulation/native-image-seh-20261021/macos-current-el-candidate1-owning-prime-artifacts.log",
+        "--output",
+        "/Users/int/Library/Caches/assist-process-emulation/native-image-seh-20261021/macos-current-el-candidate1-archives-after.json"
+      ],
+      "exit-code": 0,
+      "seconds": 0.7609591660439037,
+      "log": "macos-current-el-candidate1-owning-archives-after.log",
+      "bytes": 180,
+      "sha256": "f9aaf25b5892e41316754b038572a71c85233b7cfa79c9969978fbacf57600e1"
+    }
+  ],
+  "current-step": "archives-after",
+  "child-pid": 89287,
+  "exit-code": 0,
+  "archive-identities-stable": true,
+  "completed-utc": "2026-10-21T05:02:02.563311+00:00"
+}

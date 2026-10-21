@@ -1,0 +1,9 @@
+{
+  "state": "verified",
+  "native-cases": 36,
+  "native-destinations": 32,
+  "negative-privileged-controls": 4,
+  "previous-owning-artifacts-retained": 4,
+  "live-native-files": 14,
+  "scope": "Native behavior and identity provenance; full-suite, owning-consumer and ordinary-program receipts are separate gates."
+}

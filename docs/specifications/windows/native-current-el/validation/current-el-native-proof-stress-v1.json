@@ -1,0 +1,35 @@
+{
+  "state": "verified",
+  "negative-cases": 4,
+  "fresh-positive-cases": 4,
+  "cases": [
+    {
+      "mutation": "wrong-destination-zero",
+      "rejected": true,
+      "reason": "native destination value",
+      "transitive-log-and-launch-digests-repaired": true,
+      "fresh-positive-restored": true
+    },
+    {
+      "mutation": "clobbered-teb",
+      "rejected": true,
+      "reason": "native destination value",
+      "transitive-log-and-launch-digests-repaired": true,
+      "fresh-positive-restored": true
+    },
+    {
+      "mutation": "privileged-read-admitted",
+      "rejected": true,
+      "reason": "privileged negative control",
+      "transitive-log-and-launch-digests-repaired": true,
+      "fresh-positive-restored": true
+    },
+    {
+      "mutation": "wrong-system-register",
+      "rejected": true,
+      "reason": "native MRS encoding",
+      "transitive-log-and-launch-digests-repaired": true,
+      "fresh-positive-restored": true
+    }
+  ]
+}

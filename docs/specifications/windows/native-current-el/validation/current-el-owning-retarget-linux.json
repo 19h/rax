@@ -1,0 +1,30 @@
+{
+  "retained": [
+    {
+      "source": {
+        "path": "/target/debug/libassist_rs.a",
+        "bytes": 942768512,
+        "sha256": "f0ba2983f895eca181a8fb4eb43755a5919beceb403267eb3629db5170425c70"
+      },
+      "retained": {
+        "path": "/target/retained-file-section-before-current-el/carrier.a",
+        "bytes": 942768512,
+        "sha256": "f0ba2983f895eca181a8fb4eb43755a5919beceb403267eb3629db5170425c70"
+      },
+      "same-file": false
+    },
+    {
+      "source": {
+        "path": "/target/debug/deps/librax-a2a8568229f56ea7.rlib",
+        "bytes": 584912048,
+        "sha256": "2dc573040b4f1a7872dcdab5c88400e63c3f4c79baa9daee6c74ed0e0f15ac71"
+      },
+      "retained": {
+        "path": "/target/retained-file-section-before-current-el/core.rlib",
+        "bytes": 584912048,
+        "sha256": "2dc573040b4f1a7872dcdab5c88400e63c3f4c79baa9daee6c74ed0e0f15ac71"
+      },
+      "same-file": false
+    }
+  ]
+}

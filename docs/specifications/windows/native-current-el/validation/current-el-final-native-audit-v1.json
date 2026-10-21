@@ -1,0 +1,120 @@
+{
+  "state": "verified",
+  "utc": "2026-10-21T05:23:49.282281+00:00",
+  "runtime-module-union": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e"
+    },
+    {
+      "path": "C:\\Windows\\System32\\kernel32.dll",
+      "bytes": 1500304,
+      "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\kernel32.dll",
+      "bytes": 696392,
+      "sha256": "9c9a0c54a79ea712bb533fcc79ba9935ed9f9d3f777fd65cf62d9cec6699b9df"
+    },
+    {
+      "path": "C:\\Windows\\System32\\KernelBase.dll",
+      "bytes": 7213728,
+      "sha256": "6b2fa508ac4f9bce5d7351676485d1dc5b5236cd9656034e2fec1eaba3b82bc9"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\KernelBase.dll",
+      "bytes": 3073488,
+      "sha256": "e9c414d7c6bd2c6fde608f31b2f31da3c2014c801b3764a30ee42abd1e9c2d58"
+    },
+    {
+      "path": "C:\\Windows\\System32\\msvcrt.dll",
+      "bytes": 1347856,
+      "sha256": "779eb5cb1ae357196254af9755307544a3dd20011c84768ae72f45d366f47148"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\msvcrt.dll",
+      "bytes": 810688,
+      "sha256": "67c03357458a951402cc1804e05d3301f011a59d352f684fbe283f546f8ae398"
+    },
+    {
+      "path": "C:\\Windows\\System32\\version.dll",
+      "bytes": 73200,
+      "sha256": "d30c2a9c9d81982b112c5a60878f3579ddb3db3a09443147c63f10bc749aaab2"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\version.dll",
+      "bytes": 29208,
+      "sha256": "688ea4248da1e28bd77be9ae1088954a11cec3302c25af8aade47bae14f3ada8"
+    }
+  ],
+  "native-producer": [
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\native-current-el-v3\\native-current-el-v3.cpp",
+      "bytes": 2535,
+      "sha256": "98b1c8d0fbef484558ff97605d9af51632b9d6ab797e728bf406527cf5679d3a"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\native-current-el-v3\\probe.exe",
+      "bytes": 145408,
+      "sha256": "49ef7c3ad353943c2ee607c37db34d2b58e44c133b0603bbdd05adbeac322a40"
+    }
+  ],
+  "owning-core-and-callers": [
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\debug\\deps\\librax-934115059aa64c85.rlib",
+      "bytes": 511728356,
+      "sha256": "28f435f9419f1cc43d1c534542348d0c2be70cac1d0d6e4fafa9a830fd81c0b1"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\current-el-ordinary-owner-candidate1.exe",
+      "bytes": 27199488,
+      "sha256": "7bc9ca6d7ca8282b955de98526bd62c89bff4f5b335c155367aa2a8395021fae"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\debug\\assist_rs.lib",
+      "bytes": 861338766,
+      "sha256": "2154d298cffd89a286358828e70e73a41946cdc39eb5c175dbed7cd2f3b89d24"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\cpp\\current-el-owning-capi-candidate1.exe",
+      "bytes": 32773120,
+      "sha256": "d4967ea7593fe62e5c163dcabe39c1898aa694b6d16fbda53a25e177137df00a"
+    }
+  ],
+  "retained-current-artifacts": [
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-current-el-candidate1\\target\\retained-owning-candidate1\\core.rlib",
+      "bytes": 511728356,
+      "sha256": "28f435f9419f1cc43d1c534542348d0c2be70cac1d0d6e4fafa9a830fd81c0b1"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-current-el-candidate1\\target\\retained-owning-candidate1\\carrier.lib",
+      "bytes": 861338766,
+      "sha256": "2154d298cffd89a286358828e70e73a41946cdc39eb5c175dbed7cd2f3b89d24"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-current-el-candidate1\\target\\retained-owning-candidate1\\ordinary.exe",
+      "bytes": 27199488,
+      "sha256": "7bc9ca6d7ca8282b955de98526bd62c89bff4f5b335c155367aa2a8395021fae"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-current-el-candidate1\\target\\retained-owning-candidate1\\capi.exe",
+      "bytes": 32773120,
+      "sha256": "d4967ea7593fe62e5c163dcabe39c1898aa694b6d16fbda53a25e177137df00a"
+    }
+  ],
+  "test-image": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-current-el-candidate1\\target\\normal-candidate1\\debug\\deps\\rax-b799307a7949aa6b.exe",
+    "bytes": 545539584,
+    "sha256": "337ea63c003cb9747537a8108a643021801bd467357a4060f5d08e450719b3be"
+  },
+  "windows-build": 29683,
+  "exit-code": 0,
+  "scope": "Ten DLL inputs (native CurrentEL producer includes MSVCRT; ordinary observers include version.dll), four live current owning artifacts, four separate current retained copies, native producer source/exe, and executed native unit image rehashed. The ten DLL records bracket the ordinary executions; no whole-current-root package claim."
+}

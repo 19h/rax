@@ -689,6 +689,33 @@ fn x86_event(p: &mut Proc, t: &mut Thread, e: X86UserEvent) -> Outcome {
     raise(p, t, code, address, vec![], pc)
 }
 
+/// Windows ARM64 handles an EL0 CurrentEL read in the kernel. The observed
+/// user result is zero, except that the reserved X18 TEB register survives
+/// exception return. Keep this OS compatibility outside the shared ISA core.
+fn windows_current_el(p: &Proc, t: &mut Thread, pc: u64) -> bool {
+    if p.arch != WinArch::Arm64 || t.cpu.arch() != WinArch::Arm64 || pc & 3 != 0 || t.cpu.pc() != pc
+    {
+        return false;
+    }
+    let Some(next) = pc.checked_add(4) else {
+        return false;
+    };
+    let mut bytes = [0; 4];
+    if p.space.fetch(pc, &mut bytes).is_err() {
+        return false;
+    }
+    let word = u32::from_le_bytes(bytes);
+    if word & !31 != 0xD538_4240 {
+        return false;
+    }
+    let rt = (word & 31) as usize;
+    if rt < 31 && rt != 18 {
+        t.cpu.set_gpr(rt, 0);
+    }
+    t.cpu.set_pc(next);
+    true
+}
+
 fn handle_stop(p: &mut Proc, t: &mut Thread, stop: CpuStop) -> Outcome {
     match stop {
         CpuStop::Fault(f) => access_fault(p, t, f),
@@ -713,6 +740,7 @@ fn handle_stop(p: &mut Proc, t: &mut Thread, stop: CpuStop) -> Outcome {
         }
         CpuStop::Brk { imm: 0xF003, .. } => seh::fail_fast(t.cpu.gpr(0)),
         CpuStop::Brk { pc, imm } => raise(p, t, STATUS_BREAKPOINT, pc, vec![u64::from(imm)], pc),
+        CpuStop::Undefined { pc, .. } if windows_current_el(p, t, pc) => Outcome::Continue,
         CpuStop::Undefined { pc, .. } => raise(p, t, STATUS_ILLEGAL_INSTRUCTION, pc, vec![], pc),
         CpuStop::Yield => Outcome::Yield,
         CpuStop::Internal(message) => Outcome::Fail(message),
@@ -792,6 +820,9 @@ mod tests {
 
     #[path = "services_tests.rs"]
     mod services_tests;
+
+    #[path = "current_el_tests.rs"]
+    mod current_el_tests;
 
     fn process(arch: WinArch) -> Proc {
         let space = AddressSpace::new(SpaceConfig {

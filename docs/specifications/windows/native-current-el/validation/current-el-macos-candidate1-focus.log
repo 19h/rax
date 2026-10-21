@@ -1,0 +1,15 @@
+   Compiling vm-memory v0.17.1 (/Users/int/.assist-native-current-el-20261021/vendor/vm-memory)
+   Compiling linux-loader v0.13.2 (https://github.com/19h/linux-loader?rev=f745b555942c4e840a784bca61e6f3976d101960#f745b555)
+   Compiling rax v0.1.0 (/Users/int/.assist-native-current-el-20261021)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 48s
+     Running unittests src/lib.rs (target/candidate1/debug/deps/rax-f6d06d1d5f8f45e3)
+
+running 5 tests
+test user::windows::process::sched::tests::current_el_tests::shared_arm64_core_still_rejects_current_el_at_el0_for_every_destination ... ok
+test user::windows::process::sched::tests::current_el_tests::windows_current_el_compatibility_does_not_admit_other_privileged_instructions ... ok
+test user::windows::process::sched::tests::current_el_tests::windows_current_el_consumes_one_scheduler_turn_and_resumes_at_next_instruction ... ok
+test user::windows::process::sched::tests::current_el_tests::windows_current_el_read_retires_all_destinations_and_preserves_context ... ok
+test user::windows::process::sched::tests::current_el_tests::windows_current_el_requires_matching_arm64_pc_and_executable_instruction ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 10318 filtered out; finished in 0.02s
+
