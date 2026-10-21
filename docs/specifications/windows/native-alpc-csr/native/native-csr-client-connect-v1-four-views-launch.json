@@ -1,0 +1,452 @@
+{
+  "state": "finished",
+  "pid": 2732,
+  "utc": "2026-10-21T08:43:24.841708+00:00",
+  "scope": "Independent native CSR client-connect serverDLL3 with584zero inputbytes, two calls in a disposable current process; no foreign-process handles/pointers or global configuration. Capture exact status, output, tail preservation and resource counts before any product reply model.",
+  "steps": [
+    {
+      "name": "arm64-build",
+      "argv": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\arm64\\cl.exe",
+        "/nologo",
+        "/std:c++20",
+        "/EHsc",
+        "/MT",
+        "/GS",
+        "/Od",
+        "/we4473",
+        "/we4474",
+        "/we4477",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-csr-client-connect-v1-four-views\\native-csr-client-connect-v1.cpp",
+        "/link",
+        "advapi32.lib",
+        "/SUBSYSTEM:CONSOLE,10.0",
+        "/OUT:C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-csr-client-connect-v1-four-views\\target\\arm64\\probe.exe"
+      ],
+      "exit-code": 0,
+      "log": "native-csr-client-connect-v1-four-views-arm64-build.log",
+      "sha256": "29ee03a70b1c10aeb4b640e9f34cc72ff838a8996be0fe2ae3570ab16515082a",
+      "bytes": 34
+    },
+    {
+      "name": "arm64-before",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\inspect-system-time-v2-pe.py",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-csr-client-connect-v1-four-views\\target\\arm64\\probe.exe",
+        "arm64"
+      ],
+      "exit-code": 0,
+      "log": "native-csr-client-connect-v1-four-views-arm64-before.log",
+      "sha256": "085351ac5d447d3b7af3a51a9c505e1a9c979a116957042b51d9b4533ca9a76f",
+      "bytes": 298
+    },
+    {
+      "name": "arm64",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-csr-client-connect-v1-four-views\\target\\arm64\\probe.exe",
+        "arm64"
+      ],
+      "exit-code": 0,
+      "log": "native-csr-client-connect-v1-four-views-arm64.log",
+      "sha256": "761ca74c288a8ef60eb37c7fa6bd253f9f3fec8ca7440d92263e1930adfa0afc",
+      "bytes": 4385
+    },
+    {
+      "name": "arm64-after",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\inspect-system-time-v2-pe.py",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-csr-client-connect-v1-four-views\\target\\arm64\\probe.exe",
+        "arm64"
+      ],
+      "exit-code": 0,
+      "log": "native-csr-client-connect-v1-four-views-arm64-after.log",
+      "sha256": "085351ac5d447d3b7af3a51a9c505e1a9c979a116957042b51d9b4533ca9a76f",
+      "bytes": 298
+    },
+    {
+      "name": "x64-build",
+      "argv": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\x64\\cl.exe",
+        "/nologo",
+        "/std:c++20",
+        "/EHsc",
+        "/MT",
+        "/GS",
+        "/Od",
+        "/we4473",
+        "/we4474",
+        "/we4477",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-csr-client-connect-v1-four-views\\native-csr-client-connect-v1.cpp",
+        "/link",
+        "advapi32.lib",
+        "/SUBSYSTEM:CONSOLE,10.0",
+        "/OUT:C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-csr-client-connect-v1-four-views\\target\\x64\\probe.exe"
+      ],
+      "exit-code": 0,
+      "log": "native-csr-client-connect-v1-four-views-x64-build.log",
+      "sha256": "29ee03a70b1c10aeb4b640e9f34cc72ff838a8996be0fe2ae3570ab16515082a",
+      "bytes": 34
+    },
+    {
+      "name": "x64-before",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\inspect-system-time-v2-pe.py",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-csr-client-connect-v1-four-views\\target\\x64\\probe.exe",
+        "x64"
+      ],
+      "exit-code": 0,
+      "log": "native-csr-client-connect-v1-four-views-x64-before.log",
+      "sha256": "466c8511b164d62d55f3d587d66deddfc7df4fdc7a7631b06df4ebf3dfac85c7",
+      "bytes": 294
+    },
+    {
+      "name": "x64",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-csr-client-connect-v1-four-views\\target\\x64\\probe.exe",
+        "x64"
+      ],
+      "exit-code": 0,
+      "log": "native-csr-client-connect-v1-four-views-x64.log",
+      "sha256": "b83265a701663428743b0f07314b7ca2f0e3dbafc678cdf22c182f1808b035a0",
+      "bytes": 4383
+    },
+    {
+      "name": "x64-after",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\inspect-system-time-v2-pe.py",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-csr-client-connect-v1-four-views\\target\\x64\\probe.exe",
+        "x64"
+      ],
+      "exit-code": 0,
+      "log": "native-csr-client-connect-v1-four-views-x64-after.log",
+      "sha256": "466c8511b164d62d55f3d587d66deddfc7df4fdc7a7631b06df4ebf3dfac85c7",
+      "bytes": 294
+    },
+    {
+      "name": "x86-build",
+      "argv": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\x86\\cl.exe",
+        "/nologo",
+        "/std:c++20",
+        "/EHsc",
+        "/MT",
+        "/GS",
+        "/Od",
+        "/we4473",
+        "/we4474",
+        "/we4477",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-csr-client-connect-v1-four-views\\native-csr-client-connect-v1.cpp",
+        "/link",
+        "advapi32.lib",
+        "/SUBSYSTEM:CONSOLE,10.0",
+        "/OUT:C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-csr-client-connect-v1-four-views\\target\\x86\\probe.exe"
+      ],
+      "exit-code": 0,
+      "log": "native-csr-client-connect-v1-four-views-x86-build.log",
+      "sha256": "29ee03a70b1c10aeb4b640e9f34cc72ff838a8996be0fe2ae3570ab16515082a",
+      "bytes": 34
+    },
+    {
+      "name": "x86-before",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\inspect-system-time-v2-pe.py",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-csr-client-connect-v1-four-views\\target\\x86\\probe.exe",
+        "x86"
+      ],
+      "exit-code": 0,
+      "log": "native-csr-client-connect-v1-four-views-x86-before.log",
+      "sha256": "7882005ff025d1b9df6b076cc373c70484f44044f30c0ec92f6d6906ff77fc55",
+      "bytes": 293
+    },
+    {
+      "name": "x86",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-csr-client-connect-v1-four-views\\target\\x86\\probe.exe",
+        "x86"
+      ],
+      "exit-code": 0,
+      "log": "native-csr-client-connect-v1-four-views-x86.log",
+      "sha256": "c63b393ba62e5d903dd33639957116eedb27fbb7befc9bf4efa1e498a9bb70ad",
+      "bytes": 4387
+    },
+    {
+      "name": "x86-after",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\inspect-system-time-v2-pe.py",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-csr-client-connect-v1-four-views\\target\\x86\\probe.exe",
+        "x86"
+      ],
+      "exit-code": 0,
+      "log": "native-csr-client-connect-v1-four-views-x86-after.log",
+      "sha256": "7882005ff025d1b9df6b076cc373c70484f44044f30c0ec92f6d6906ff77fc55",
+      "bytes": 293
+    },
+    {
+      "name": "x86-laa-build",
+      "argv": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\x86\\cl.exe",
+        "/nologo",
+        "/std:c++20",
+        "/EHsc",
+        "/MT",
+        "/GS",
+        "/Od",
+        "/we4473",
+        "/we4474",
+        "/we4477",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-csr-client-connect-v1-four-views\\native-csr-client-connect-v1.cpp",
+        "/link",
+        "advapi32.lib",
+        "/SUBSYSTEM:CONSOLE,10.0",
+        "/OUT:C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-csr-client-connect-v1-four-views\\target\\x86-laa\\probe.exe",
+        "/LARGEADDRESSAWARE"
+      ],
+      "exit-code": 0,
+      "log": "native-csr-client-connect-v1-four-views-x86-laa-build.log",
+      "sha256": "29ee03a70b1c10aeb4b640e9f34cc72ff838a8996be0fe2ae3570ab16515082a",
+      "bytes": 34
+    },
+    {
+      "name": "x86-laa-before",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\inspect-system-time-v2-pe.py",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-csr-client-connect-v1-four-views\\target\\x86-laa\\probe.exe",
+        "x86-laa"
+      ],
+      "exit-code": 0,
+      "log": "native-csr-client-connect-v1-four-views-x86-laa-before.log",
+      "sha256": "2f4d7030fa413ec1dc2a40b0dccb632c0f83fd48a40b723bddf71914bd6cfeea",
+      "bytes": 300
+    },
+    {
+      "name": "x86-laa",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-csr-client-connect-v1-four-views\\target\\x86-laa\\probe.exe",
+        "x86-laa"
+      ],
+      "exit-code": 0,
+      "log": "native-csr-client-connect-v1-four-views-x86-laa.log",
+      "sha256": "4b24ff3e37e8286c5d91f18d7c3e66651b65d817580cb89f93b96ca37f920969",
+      "bytes": 4391
+    },
+    {
+      "name": "x86-laa-after",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\inspect-system-time-v2-pe.py",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-csr-client-connect-v1-four-views\\target\\x86-laa\\probe.exe",
+        "x86-laa"
+      ],
+      "exit-code": 0,
+      "log": "native-csr-client-connect-v1-four-views-x86-laa-after.log",
+      "sha256": "2f4d7030fa413ec1dc2a40b0dccb632c0f83fd48a40b723bddf71914bd6cfeea",
+      "bytes": 300
+    }
+  ],
+  "outcomes": [
+    {
+      "profile": "arm64",
+      "exit-code": 0,
+      "log": "native-csr-client-connect-v1-four-views-arm64.log",
+      "executable-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-csr-client-connect-v1-four-views\\target\\arm64\\probe.exe",
+        "bytes": 144384,
+        "sha256": "581599d6782e90ce0dfc0e79d1323a825d416fb00ce1a9ea81b62dd5c518fe97"
+      },
+      "executable-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-csr-client-connect-v1-four-views\\target\\arm64\\probe.exe",
+        "bytes": 144384,
+        "sha256": "581599d6782e90ce0dfc0e79d1323a825d416fb00ce1a9ea81b62dd5c518fe97"
+      }
+    },
+    {
+      "profile": "x64",
+      "exit-code": 0,
+      "log": "native-csr-client-connect-v1-four-views-x64.log",
+      "executable-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-csr-client-connect-v1-four-views\\target\\x64\\probe.exe",
+        "bytes": 141824,
+        "sha256": "8f1274ad60030203439597a6e1c662b4615600cfa34f0b4ae86e773bab36e768"
+      },
+      "executable-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-csr-client-connect-v1-four-views\\target\\x64\\probe.exe",
+        "bytes": 141824,
+        "sha256": "8f1274ad60030203439597a6e1c662b4615600cfa34f0b4ae86e773bab36e768"
+      }
+    },
+    {
+      "profile": "x86",
+      "exit-code": 0,
+      "log": "native-csr-client-connect-v1-four-views-x86.log",
+      "executable-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-csr-client-connect-v1-four-views\\target\\x86\\probe.exe",
+        "bytes": 118272,
+        "sha256": "ed368506eae02311aa6f2a33a952458728174f65c8a8b5db686a5b835ef620e0"
+      },
+      "executable-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-csr-client-connect-v1-four-views\\target\\x86\\probe.exe",
+        "bytes": 118272,
+        "sha256": "ed368506eae02311aa6f2a33a952458728174f65c8a8b5db686a5b835ef620e0"
+      }
+    },
+    {
+      "profile": "x86-laa",
+      "exit-code": 0,
+      "log": "native-csr-client-connect-v1-four-views-x86-laa.log",
+      "executable-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-csr-client-connect-v1-four-views\\target\\x86-laa\\probe.exe",
+        "bytes": 118272,
+        "sha256": "d3a9341495bd21a72aecdddd10c9d124bdb6a2ce6f058668619d0f2bab577c0d"
+      },
+      "executable-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-csr-client-connect-v1-four-views\\target\\x86-laa\\probe.exe",
+        "bytes": 118272,
+        "sha256": "d3a9341495bd21a72aecdddd10c9d124bdb6a2ce6f058668619d0f2bab577c0d"
+      }
+    }
+  ],
+  "source-before": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-csr-client-connect-v1-four-views\\native-csr-client-connect-v1.cpp",
+    "bytes": 2033,
+    "sha256": "96735399ba2cd1a81239dec76a154156f67c0cc7795451dc7d60906c946bf798"
+  },
+  "compiler-environment": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\mutant-native-compiler-env-epoch4.json",
+    "bytes": 4122,
+    "sha256": "e6ca43bcdcbd3067b5de05d051259d4d3abf0bfa5283a98daac14fd508a05fad"
+  },
+  "runtime-modules-before": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e"
+    },
+    {
+      "path": "C:\\Windows\\System32\\KernelBase.dll",
+      "bytes": 7213728,
+      "sha256": "6b2fa508ac4f9bce5d7351676485d1dc5b5236cd9656034e2fec1eaba3b82bc9"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\KernelBase.dll",
+      "bytes": 3073488,
+      "sha256": "e9c414d7c6bd2c6fde608f31b2f31da3c2014c801b3764a30ee42abd1e9c2d58"
+    },
+    {
+      "path": "C:\\Windows\\System32\\kernel32.dll",
+      "bytes": 1500304,
+      "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\kernel32.dll",
+      "bytes": 696392,
+      "sha256": "9c9a0c54a79ea712bb533fcc79ba9935ed9f9d3f777fd65cf62d9cec6699b9df"
+    },
+    {
+      "path": "C:\\Windows\\System32\\msvcrt.dll",
+      "bytes": 1347856,
+      "sha256": "779eb5cb1ae357196254af9755307544a3dd20011c84768ae72f45d366f47148"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\msvcrt.dll",
+      "bytes": 810688,
+      "sha256": "67c03357458a951402cc1804e05d3301f011a59d352f684fbe283f546f8ae398"
+    }
+  ],
+  "selected-compilers": [
+    {
+      "profile": "arm64",
+      "path": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\arm64\\cl.exe",
+      "bytes": 787728,
+      "sha256": "5cba83692d533f6b3a6ac07c6b2cdce708e0445ed1ee36b5cb2d49a244a4c835"
+    },
+    {
+      "profile": "x64",
+      "path": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\x64\\cl.exe",
+      "bytes": 762720,
+      "sha256": "d7a46c9d0d970fbeb4e803f1f0e9fec4217f8c833e6bb6a015e5b87299024466"
+    },
+    {
+      "profile": "x86",
+      "path": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\x86\\cl.exe",
+      "bytes": 761104,
+      "sha256": "cfed9e6fa19f430235f7fb75dbcd3200b7c1fa036462e3a73d76b5ea8e35c7ad"
+    },
+    {
+      "profile": "x86-laa",
+      "path": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\x86\\cl.exe",
+      "bytes": 761104,
+      "sha256": "cfed9e6fa19f430235f7fb75dbcd3200b7c1fa036462e3a73d76b5ea8e35c7ad"
+    }
+  ],
+  "step": "x86-laa-after",
+  "child": 8812,
+  "runtime-modules-after": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e"
+    },
+    {
+      "path": "C:\\Windows\\System32\\KernelBase.dll",
+      "bytes": 7213728,
+      "sha256": "6b2fa508ac4f9bce5d7351676485d1dc5b5236cd9656034e2fec1eaba3b82bc9"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\KernelBase.dll",
+      "bytes": 3073488,
+      "sha256": "e9c414d7c6bd2c6fde608f31b2f31da3c2014c801b3764a30ee42abd1e9c2d58"
+    },
+    {
+      "path": "C:\\Windows\\System32\\kernel32.dll",
+      "bytes": 1500304,
+      "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\kernel32.dll",
+      "bytes": 696392,
+      "sha256": "9c9a0c54a79ea712bb533fcc79ba9935ed9f9d3f777fd65cf62d9cec6699b9df"
+    },
+    {
+      "path": "C:\\Windows\\System32\\msvcrt.dll",
+      "bytes": 1347856,
+      "sha256": "779eb5cb1ae357196254af9755307544a3dd20011c84768ae72f45d366f47148"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\msvcrt.dll",
+      "bytes": 810688,
+      "sha256": "67c03357458a951402cc1804e05d3301f011a59d352f684fbe283f546f8ae398"
+    }
+  ],
+  "source-after": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-csr-client-connect-v1-four-views\\native-csr-client-connect-v1.cpp",
+    "bytes": 2033,
+    "sha256": "96735399ba2cd1a81239dec76a154156f67c0cc7795451dc7d60906c946bf798"
+  },
+  "exit-code": 0,
+  "completed-utc": "2026-10-21T08:43:27.537455+00:00"
+}

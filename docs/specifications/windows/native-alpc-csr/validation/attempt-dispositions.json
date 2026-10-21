@@ -1,0 +1,28 @@
+{
+  "attempts": [
+    {
+      "receipt": "alpc-cross-candidate2.json",
+      "terminal-classification": "setup-failed",
+      "observed-exit": 101,
+      "cause": "Plain cargo cross check did not select the Windows SDK/compiler; zstd-sys lacks setjmp.h/string.h. Original receipt state running was not finalized by that driver. Successful cargo-xwin retry is recorded separately."
+    },
+    {
+      "receipt": "alpc-candidate1-windows.json",
+      "terminal-classification": "link-setup-failed",
+      "cause": "LNK1180 insufficient disk space; no unit test execution in this attempt. Exact obsolete task symbols cleanup and retained-artifact lossless compression are independently recorded."
+    },
+    {
+      "receipts": [
+        "alpc-final-native-audit-v2.json",
+        "alpc-final-native-audit-v3.json"
+      ],
+      "terminal-classification": "audit-driver-path-errors",
+      "cause": "First attempt referenced a nonexistent retry2 receipt. Second used an unexposed hidden-home Parallels share path. Separate v4 uses the transferred source-bound manifest and verifies all native inputs."
+    },
+    {
+      "semantic-candidate": "candidate1",
+      "terminal-classification": "rejected",
+      "cause": "Independent zero-grant/access-order and WoW64 overflowing-total tests both fail on source bound pre-fix kernel."
+    }
+  ]
+}

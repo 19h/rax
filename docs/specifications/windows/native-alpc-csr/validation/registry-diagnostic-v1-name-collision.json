@@ -1,0 +1,18 @@
+{
+  "utc": "2026-10-21T17:46:25.612593+00:00",
+  "result": "Rejected reused-name result; current new observer not executed because driver asserted record absent, preserving old result",
+  "old-receipt-utc": "2026-10-21T06:35:22.563741+00:00",
+  "old-observer": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\helpers\\native-registry-frontier-diagnostic-v1.rs",
+    "bytes": 2346,
+    "sha256": "af13d86be6ae0fa95d724274b82b5cfc692f8ec061b302f2ca78b2946d183b6e"
+  },
+  "new-observer": {
+    "path": "/Users/int/Library/Caches/assist-process-emulation/native-alpc-frontier-20261021/native-alpc-next-registry-20261021-v2.rs",
+    "bytes": 2703,
+    "sha256": "06620e3a554868a5125f27b18611bc23ec682cfd5de0630b773502e1f26b8a24",
+    "scope": "Unique current ALPC-candidate1 actual owning source, bounded next registry diagnostic; no host registry lookup."
+  },
+  "new-unique-prefix": "native-alpc-next-registry-20261021-v2",
+  "incorrect-observation": "Old result turns2558/NlsSortingVersions is not the current source/kernel frontier; do not use as current evidence."
+}

@@ -38,6 +38,29 @@ impl DataSection {
         size: u64,
         regions: Vec<DataRegion>,
     ) -> io::Result<Arc<Self>> {
+        Self::selected_inner(
+            "\\Windows\\SharedSection".encode_utf16().collect(),
+            maximum_access,
+            system_security_status,
+            force_case_insensitive,
+            size,
+            regions,
+        )
+    }
+
+    /// An unnamed, immutable client-data view, never published as an NT name.
+    pub(crate) fn private_readonly(size: u64, regions: Vec<DataRegion>) -> io::Result<Arc<Self>> {
+        Self::selected_inner(Vec::new(), 4, STATUS_ACCESS_DENIED, false, size, regions)
+    }
+
+    fn selected_inner(
+        path: Vec<u16>,
+        maximum_access: u32,
+        system_security_status: u32,
+        force_case_insensitive: bool,
+        size: u64,
+        regions: Vec<DataRegion>,
+    ) -> io::Result<Arc<Self>> {
         if maximum_access & 4 == 0
             || maximum_access & !0x000F_001F != 0
             || maximum_access & 0x1B != 0
@@ -86,7 +109,7 @@ impl DataSection {
             ));
         }
         Ok(Arc::new(Self {
-            path: "\\Windows\\SharedSection".encode_utf16().collect(),
+            path,
             size,
             regions,
             maximum_access,

@@ -1,0 +1,869 @@
+{
+  "accepted": [
+    {
+      "prefix": "native-csr-client-connect-v4",
+      "kind": "csr",
+      "calls-per-view": null,
+      "profiles": [
+        "arm64",
+        "x64",
+        "x86",
+        "x86-laa"
+      ],
+      "source": "native-csr-client-connect-v4.cpp",
+      "source-sha256": "f4204c2f6f680cf5cf84e499f46d3600b84699622b9c2355dd515156384da903",
+      "launch": "native-csr-client-connect-v4-four-views-launch.json",
+      "launch-bytes": 18779,
+      "launch-sha256": "95092fa1a917c18d16b310e294cd0d936c2b2872ea26880422de153174ee9cc2",
+      "driver": "run-native-csr-client-connect-v4-four-views.py"
+    },
+    {
+      "prefix": "native-csr-client-connect-v5",
+      "kind": "csr",
+      "calls-per-view": null,
+      "profiles": [
+        "arm64",
+        "x64",
+        "x86",
+        "x86-laa"
+      ],
+      "source": "native-csr-client-connect-v5.cpp",
+      "source-sha256": "d45abba893fc5dbc341dfb33c690fa52584af1f92cff41fef0f1e0ee1dd543f6",
+      "launch": "native-csr-client-connect-v5-four-views-launch.json",
+      "launch-bytes": 18762,
+      "launch-sha256": "f1dcf6983fbb29222d3783c2ad62f48eb2d60f6795f7225ec0dfe0c0e9de4d74",
+      "driver": "run-native-csr-client-connect-v5-four-views.py"
+    },
+    {
+      "prefix": "native-csr-client-connect-v6",
+      "kind": "mapping",
+      "calls-per-view": null,
+      "profiles": [
+        "arm64",
+        "x64",
+        "x86",
+        "x86-laa"
+      ],
+      "source": "native-csr-client-connect-v6.cpp",
+      "source-sha256": "b2dd00ddae8338f3757da59e53cc67785523ec5879e8e74cf006dbadad5d6b10",
+      "launch": "native-csr-client-connect-v6-four-views-launch.json",
+      "launch-bytes": 18763,
+      "launch-sha256": "72b872f1fcb067f4fae31d54f613e419794232d34a8c5f3e3b3156a49cc138ea",
+      "driver": "run-native-csr-client-connect-v6-four-views.py"
+    },
+    {
+      "prefix": "native-csr-client-connect-v7",
+      "kind": "shared-export",
+      "calls-per-view": null,
+      "profiles": [
+        "arm64",
+        "x64",
+        "x86",
+        "x86-laa"
+      ],
+      "source": "native-csr-client-connect-v7.cpp",
+      "source-sha256": "c4434c7fdbd5c2d7daa217d6f1ed385d18ccf0ad4617e5758a7b1077bb19040b",
+      "launch": "native-csr-client-connect-v7-four-views-launch.json",
+      "launch-bytes": 21571,
+      "launch-sha256": "4423c8536b010a16cc6e9834537080a579c86c0fd20619de0c4ac260324331e5",
+      "driver": "run-native-csr-client-connect-v7-four-views.py"
+    },
+    {
+      "prefix": "native-alpc-csr-trace-v1",
+      "kind": "trace",
+      "calls-per-view": null,
+      "profiles": [
+        "arm64"
+      ],
+      "source": "native-alpc-csr-trace-v1.cpp",
+      "source-sha256": "814d88155ebc88d5c4e44b47e5efbac3eb73fae4ca9f42503b68cb5f8e1e4696",
+      "launch": "native-alpc-csr-trace-v1-four-views-launch.json",
+      "launch-bytes": 7847,
+      "launch-sha256": "368283c19bb46ab62e3c407062bb6b488a1125459e7ae5b438c850fcb2a84c72",
+      "driver": "run-native-alpc-csr-trace-v1.py"
+    },
+    {
+      "prefix": "native-alpc-private-echo-v4",
+      "kind": "echo",
+      "calls-per-view": 1,
+      "profiles": [
+        "arm64",
+        "x64",
+        "x86",
+        "x86-laa"
+      ],
+      "source": "native-alpc-private-echo-v4.cpp",
+      "source-sha256": "7be70d70e13f7712e46628e1e33f71f16f735096a9a93a4ef6e6d779d947abd6",
+      "launch": "native-alpc-private-echo-v4-four-views-launch.json",
+      "launch-bytes": 18678,
+      "launch-sha256": "7f7afdefb006a51d54ba5c18dbbf0ddd5886d51658b29b8b1f4b966f84251381",
+      "driver": "run-native-alpc-private-echo-v4-four-views.py"
+    },
+    {
+      "prefix": "native-alpc-private-matrix-v5",
+      "kind": "faults",
+      "calls-per-view": 40,
+      "profiles": [
+        "arm64",
+        "x64",
+        "x86",
+        "x86-laa"
+      ],
+      "source": "native-alpc-private-matrix-v5.cpp",
+      "source-sha256": "5b4359fedf32fa35998c9dbf7efa62cc33b08eabde2361c5984accc27232ccc1",
+      "launch": "native-alpc-private-matrix-v5-four-views-launch.json",
+      "launch-bytes": 18858,
+      "launch-sha256": "6b3ffad2d7341677e6c7e000dacb079fc932e0e64b34e422f31cd51440a53021",
+      "driver": "run-native-alpc-private-matrix-v5-four-views.py"
+    },
+    {
+      "prefix": "native-alpc-private-priority-v6",
+      "kind": "priority",
+      "calls-per-view": 33,
+      "profiles": [
+        "arm64",
+        "x64",
+        "x86",
+        "x86-laa"
+      ],
+      "source": "native-alpc-private-priority-v6.cpp",
+      "source-sha256": "95a79d3edf71bd7995a6536ef29cb6cda50c01a16e5cbb4fa97f8301117f9754",
+      "launch": "native-alpc-private-priority-v6-four-views-launch.json",
+      "launch-bytes": 19023,
+      "launch-sha256": "2af0d4c42617eb148b3685819f6b9b0d554e374ec9e8b64b27da9234eaffe092",
+      "driver": "run-native-alpc-private-priority-v6-four-views.py"
+    },
+    {
+      "prefix": "native-alpc-private-alignment-v7",
+      "kind": "alignment",
+      "calls-per-view": 11,
+      "profiles": [
+        "arm64",
+        "x64",
+        "x86",
+        "x86-laa"
+      ],
+      "source": "native-alpc-private-alignment-v7.cpp",
+      "source-sha256": "8b29b8c70c576c5b17c379ef9fa4c7fb0a1f6ede392d738a81f765eb19bfefa9",
+      "launch": "native-alpc-private-alignment-v7-four-views-launch.json",
+      "launch-bytes": 19059,
+      "launch-sha256": "fe2392709284289c5600f2e51261e26e905d5e9f22aed511cd93ba6a3d2f3e5c",
+      "driver": "run-native-alpc-private-alignment-v7-four-views.py"
+    },
+    {
+      "prefix": "native-alpc-private-limits-v9",
+      "kind": "limits",
+      "calls-per-view": 23,
+      "profiles": [
+        "arm64",
+        "x64",
+        "x86",
+        "x86-laa"
+      ],
+      "source": "native-alpc-private-limits-v9.cpp",
+      "source-sha256": "04d5059bfe34c7341887613a987e30d3c3810db683c0ad61ebeb1771c9cc329b",
+      "launch": "native-alpc-private-limits-v9-four-views-launch.json",
+      "launch-bytes": 18970,
+      "launch-sha256": "c3783ae4457873cf6f33d91d45341d0e1e76d1c5d3f81615ad8bc1b5e4d6af52",
+      "driver": "run-native-alpc-private-limits-v9-four-views.py"
+    },
+    {
+      "prefix": "native-alpc-private-priority-v12",
+      "kind": "grant-priority",
+      "calls-per-view": 12,
+      "profiles": [
+        "arm64",
+        "x64",
+        "x86",
+        "x86-laa"
+      ],
+      "source": "native-alpc-private-priority-v12.cpp",
+      "source-sha256": "3c9437800af54760001fa540569d1164d2cb33e68e772023ab39b932f3b55d3c",
+      "launch": "native-alpc-private-priority-v12-four-views-launch.json",
+      "launch-bytes": 19144,
+      "launch-sha256": "4c634582c214dd577f7cdc6bd3b1d514b5cff37bc5ec25d54dc5a22ddeedb902",
+      "driver": "run-native-alpc-private-priority-v12-four-views.py"
+    }
+  ],
+  "rejected-controls": [
+    {
+      "prefix": "native-csr-client-connect-v1",
+      "reason": "Historical PULONG length ABI returned NO_MEMORY; not a current CSR reply oracle.",
+      "files": [
+        {
+          "path": "native-csr-client-connect-v1.cpp",
+          "bytes": 2033,
+          "sha256": "96735399ba2cd1a81239dec76a154156f67c0cc7795451dc7d60906c946bf798"
+        },
+        {
+          "path": "native-csr-client-connect-v1-four-views-launch.json",
+          "bytes": 18784,
+          "sha256": "7746a33010895eeec936213e1a9413039fa5f30f9303600e783745e66152ddef"
+        },
+        {
+          "path": "run-native-csr-client-connect-v1-four-views.py",
+          "bytes": 5940,
+          "sha256": "43f7f80948b166a7c04438e4ab81e3e9b7a5f10134239d3a5c87b7bc8582e128"
+        },
+        {
+          "path": "native-csr-client-connect-v1-four-views-arm64-build.log",
+          "bytes": 34,
+          "sha256": "29ee03a70b1c10aeb4b640e9f34cc72ff838a8996be0fe2ae3570ab16515082a"
+        },
+        {
+          "path": "native-csr-client-connect-v1-four-views-arm64-before.log",
+          "bytes": 298,
+          "sha256": "085351ac5d447d3b7af3a51a9c505e1a9c979a116957042b51d9b4533ca9a76f"
+        },
+        {
+          "path": "native-csr-client-connect-v1-four-views-arm64.log",
+          "bytes": 4385,
+          "sha256": "761ca74c288a8ef60eb37c7fa6bd253f9f3fec8ca7440d92263e1930adfa0afc"
+        },
+        {
+          "path": "native-csr-client-connect-v1-four-views-arm64-after.log",
+          "bytes": 298,
+          "sha256": "085351ac5d447d3b7af3a51a9c505e1a9c979a116957042b51d9b4533ca9a76f"
+        },
+        {
+          "path": "native-csr-client-connect-v1-four-views-x64-build.log",
+          "bytes": 34,
+          "sha256": "29ee03a70b1c10aeb4b640e9f34cc72ff838a8996be0fe2ae3570ab16515082a"
+        },
+        {
+          "path": "native-csr-client-connect-v1-four-views-x64-before.log",
+          "bytes": 294,
+          "sha256": "466c8511b164d62d55f3d587d66deddfc7df4fdc7a7631b06df4ebf3dfac85c7"
+        },
+        {
+          "path": "native-csr-client-connect-v1-four-views-x64.log",
+          "bytes": 4383,
+          "sha256": "b83265a701663428743b0f07314b7ca2f0e3dbafc678cdf22c182f1808b035a0"
+        },
+        {
+          "path": "native-csr-client-connect-v1-four-views-x64-after.log",
+          "bytes": 294,
+          "sha256": "466c8511b164d62d55f3d587d66deddfc7df4fdc7a7631b06df4ebf3dfac85c7"
+        },
+        {
+          "path": "native-csr-client-connect-v1-four-views-x86-build.log",
+          "bytes": 34,
+          "sha256": "29ee03a70b1c10aeb4b640e9f34cc72ff838a8996be0fe2ae3570ab16515082a"
+        },
+        {
+          "path": "native-csr-client-connect-v1-four-views-x86-before.log",
+          "bytes": 293,
+          "sha256": "7882005ff025d1b9df6b076cc373c70484f44044f30c0ec92f6d6906ff77fc55"
+        },
+        {
+          "path": "native-csr-client-connect-v1-four-views-x86.log",
+          "bytes": 4387,
+          "sha256": "c63b393ba62e5d903dd33639957116eedb27fbb7befc9bf4efa1e498a9bb70ad"
+        },
+        {
+          "path": "native-csr-client-connect-v1-four-views-x86-after.log",
+          "bytes": 293,
+          "sha256": "7882005ff025d1b9df6b076cc373c70484f44044f30c0ec92f6d6906ff77fc55"
+        },
+        {
+          "path": "native-csr-client-connect-v1-four-views-x86-laa-build.log",
+          "bytes": 34,
+          "sha256": "29ee03a70b1c10aeb4b640e9f34cc72ff838a8996be0fe2ae3570ab16515082a"
+        },
+        {
+          "path": "native-csr-client-connect-v1-four-views-x86-laa-before.log",
+          "bytes": 300,
+          "sha256": "2f4d7030fa413ec1dc2a40b0dccb632c0f83fd48a40b723bddf71914bd6cfeea"
+        },
+        {
+          "path": "native-csr-client-connect-v1-four-views-x86-laa.log",
+          "bytes": 4391,
+          "sha256": "4b24ff3e37e8286c5d91f18d7c3e66651b65d817580cb89f93b96ca37f920969"
+        },
+        {
+          "path": "native-csr-client-connect-v1-four-views-x86-laa-after.log",
+          "bytes": 300,
+          "sha256": "2f4d7030fa413ec1dc2a40b0dccb632c0f83fd48a40b723bddf71914bd6cfeea"
+        }
+      ],
+      "state": "finished"
+    },
+    {
+      "prefix": "native-csr-client-connect-v2",
+      "reason": "Explicit directory but historical PULONG ABI still wrong.",
+      "files": [
+        {
+          "path": "native-csr-client-connect-v2.cpp",
+          "bytes": 2208,
+          "sha256": "3c66d48918695e724aebddc9eb787bc40074fdb44765e76a2c5399f260cfb124"
+        },
+        {
+          "path": "native-csr-client-connect-v2-four-views-launch.json",
+          "bytes": 18766,
+          "sha256": "8951120b7f7d9153f90acbe6603faaa47c5fb0b0e87a072ba77ff7ee7472d6be"
+        },
+        {
+          "path": "run-native-csr-client-connect-v2-four-views.py",
+          "bytes": 5922,
+          "sha256": "95fa7248d2e94fa931f03b520d54ad3a0cb99fb665db7ab0a616d092f13d2687"
+        },
+        {
+          "path": "native-csr-client-connect-v2-four-views-arm64-build.log",
+          "bytes": 34,
+          "sha256": "b286a7fa245666bff938f0c668a35abd0bbd9d7538f4d9ac65eff4b463c05d62"
+        },
+        {
+          "path": "native-csr-client-connect-v2-four-views-arm64-before.log",
+          "bytes": 298,
+          "sha256": "ed67e6ed8bc348c046200b5541b180741068cd5a3250c41cb4f8a7cc59718d7f"
+        },
+        {
+          "path": "native-csr-client-connect-v2-four-views-arm64.log",
+          "bytes": 4385,
+          "sha256": "761ca74c288a8ef60eb37c7fa6bd253f9f3fec8ca7440d92263e1930adfa0afc"
+        },
+        {
+          "path": "native-csr-client-connect-v2-four-views-arm64-after.log",
+          "bytes": 298,
+          "sha256": "ed67e6ed8bc348c046200b5541b180741068cd5a3250c41cb4f8a7cc59718d7f"
+        },
+        {
+          "path": "native-csr-client-connect-v2-four-views-x64-build.log",
+          "bytes": 34,
+          "sha256": "b286a7fa245666bff938f0c668a35abd0bbd9d7538f4d9ac65eff4b463c05d62"
+        },
+        {
+          "path": "native-csr-client-connect-v2-four-views-x64-before.log",
+          "bytes": 294,
+          "sha256": "a8a60df28f7c303cc8056f5b09579e12c55e9bf2a6a024248e074c317cbf428d"
+        },
+        {
+          "path": "native-csr-client-connect-v2-four-views-x64.log",
+          "bytes": 4383,
+          "sha256": "b83265a701663428743b0f07314b7ca2f0e3dbafc678cdf22c182f1808b035a0"
+        },
+        {
+          "path": "native-csr-client-connect-v2-four-views-x64-after.log",
+          "bytes": 294,
+          "sha256": "a8a60df28f7c303cc8056f5b09579e12c55e9bf2a6a024248e074c317cbf428d"
+        },
+        {
+          "path": "native-csr-client-connect-v2-four-views-x86-build.log",
+          "bytes": 34,
+          "sha256": "b286a7fa245666bff938f0c668a35abd0bbd9d7538f4d9ac65eff4b463c05d62"
+        },
+        {
+          "path": "native-csr-client-connect-v2-four-views-x86-before.log",
+          "bytes": 293,
+          "sha256": "a689ee89ffc3b64e1c9b048505ba56010ae13b86d24856f8d55ff772e28bfaf7"
+        },
+        {
+          "path": "native-csr-client-connect-v2-four-views-x86.log",
+          "bytes": 4387,
+          "sha256": "c63b393ba62e5d903dd33639957116eedb27fbb7befc9bf4efa1e498a9bb70ad"
+        },
+        {
+          "path": "native-csr-client-connect-v2-four-views-x86-after.log",
+          "bytes": 293,
+          "sha256": "a689ee89ffc3b64e1c9b048505ba56010ae13b86d24856f8d55ff772e28bfaf7"
+        },
+        {
+          "path": "native-csr-client-connect-v2-four-views-x86-laa-build.log",
+          "bytes": 34,
+          "sha256": "b286a7fa245666bff938f0c668a35abd0bbd9d7538f4d9ac65eff4b463c05d62"
+        },
+        {
+          "path": "native-csr-client-connect-v2-four-views-x86-laa-before.log",
+          "bytes": 300,
+          "sha256": "e85675175a4411c55aabe1dfbe0b933470007b02a63db54e0e1cd43dbe490c95"
+        },
+        {
+          "path": "native-csr-client-connect-v2-four-views-x86-laa.log",
+          "bytes": 4391,
+          "sha256": "4b24ff3e37e8286c5d91f18d7c3e66651b65d817580cb89f93b96ca37f920969"
+        },
+        {
+          "path": "native-csr-client-connect-v2-four-views-x86-laa-after.log",
+          "bytes": 300,
+          "sha256": "e85675175a4411c55aabe1dfbe0b933470007b02a63db54e0e1cd43dbe490c95"
+        }
+      ],
+      "state": "finished"
+    },
+    {
+      "prefix": "native-csr-client-connect-v3",
+      "reason": "Bootstrap/capture allocation controls succeeded; PULONG assumption rejected.",
+      "files": [
+        {
+          "path": "native-csr-client-connect-v3.cpp",
+          "bytes": 3307,
+          "sha256": "aa720fcf7d43bec5e0200a93fdedabcef4174bef7ed1c5d3f7b638b0ebbeb64a"
+        },
+        {
+          "path": "native-csr-client-connect-v3-four-views-launch.json",
+          "bytes": 18780,
+          "sha256": "c46a264c89125063adcea0bc69e971755d3747c09a2faff586795ca6a970e8d1"
+        },
+        {
+          "path": "run-native-csr-client-connect-v3-four-views.py",
+          "bytes": 5936,
+          "sha256": "4517a17deaf0dca2b49fd08ce5216abbca8d27804bb413b250819a49e653389f"
+        },
+        {
+          "path": "native-csr-client-connect-v3-four-views-arm64-build.log",
+          "bytes": 34,
+          "sha256": "d3ed8876614da484799711e0d8791f4f3b28367193b0057ac2c64356ada8ad85"
+        },
+        {
+          "path": "native-csr-client-connect-v3-four-views-arm64-before.log",
+          "bytes": 298,
+          "sha256": "e28b26a1a1b34186e381b5bebd3e2b2abc37fb616495aff179ae48e6dabbda96"
+        },
+        {
+          "path": "native-csr-client-connect-v3-four-views-arm64.log",
+          "bytes": 4558,
+          "sha256": "afa24b6fc2e13a3bf82482c5e1157ab89711145caf6ad85ec0fb4e28b20a3853"
+        },
+        {
+          "path": "native-csr-client-connect-v3-four-views-arm64-after.log",
+          "bytes": 298,
+          "sha256": "e28b26a1a1b34186e381b5bebd3e2b2abc37fb616495aff179ae48e6dabbda96"
+        },
+        {
+          "path": "native-csr-client-connect-v3-four-views-x64-build.log",
+          "bytes": 34,
+          "sha256": "d3ed8876614da484799711e0d8791f4f3b28367193b0057ac2c64356ada8ad85"
+        },
+        {
+          "path": "native-csr-client-connect-v3-four-views-x64-before.log",
+          "bytes": 294,
+          "sha256": "f4d0a9610d3e1e5fb93fbb2f66d8d465df86651f95e23906057598ea4103a831"
+        },
+        {
+          "path": "native-csr-client-connect-v3-four-views-x64.log",
+          "bytes": 4556,
+          "sha256": "229897421cf2caa92f49d3b6639bd3b6b9da914e047ab027326e768d05c60b49"
+        },
+        {
+          "path": "native-csr-client-connect-v3-four-views-x64-after.log",
+          "bytes": 294,
+          "sha256": "f4d0a9610d3e1e5fb93fbb2f66d8d465df86651f95e23906057598ea4103a831"
+        },
+        {
+          "path": "native-csr-client-connect-v3-four-views-x86-build.log",
+          "bytes": 34,
+          "sha256": "d3ed8876614da484799711e0d8791f4f3b28367193b0057ac2c64356ada8ad85"
+        },
+        {
+          "path": "native-csr-client-connect-v3-four-views-x86-before.log",
+          "bytes": 293,
+          "sha256": "7adc54d0aaadd2ff688719e552b10e32eacb076ccccc223b53241c72c69a652e"
+        },
+        {
+          "path": "native-csr-client-connect-v3-four-views-x86.log",
+          "bytes": 4560,
+          "sha256": "de0f473e38125cd38e1dd8f1eface232bfc89f7dd4fdd868ffbe5ee0a7aea996"
+        },
+        {
+          "path": "native-csr-client-connect-v3-four-views-x86-after.log",
+          "bytes": 293,
+          "sha256": "7adc54d0aaadd2ff688719e552b10e32eacb076ccccc223b53241c72c69a652e"
+        },
+        {
+          "path": "native-csr-client-connect-v3-four-views-x86-laa-build.log",
+          "bytes": 34,
+          "sha256": "d3ed8876614da484799711e0d8791f4f3b28367193b0057ac2c64356ada8ad85"
+        },
+        {
+          "path": "native-csr-client-connect-v3-four-views-x86-laa-before.log",
+          "bytes": 300,
+          "sha256": "1222e6a05f28050dccde6084d6cff1b522110328a6daee4fafab216d151e64be"
+        },
+        {
+          "path": "native-csr-client-connect-v3-four-views-x86-laa.log",
+          "bytes": 4564,
+          "sha256": "670fd54818faa66ccbc57c967bff7c5c78d661ad481960bcbda950ffd891b789"
+        },
+        {
+          "path": "native-csr-client-connect-v3-four-views-x86-laa-after.log",
+          "bytes": 300,
+          "sha256": "1222e6a05f28050dccde6084d6cff1b522110328a6daee4fafab216d151e64be"
+        }
+      ],
+      "state": "finished"
+    },
+    {
+      "prefix": "native-alpc-private-echo-v1",
+      "reason": "952B NtCreatePort request rejected before creation.",
+      "files": [
+        {
+          "path": "native-alpc-private-echo-v1.cpp",
+          "bytes": 6651,
+          "sha256": "7742ff433de5818d391f3836979f324229527263db27ca3dea2de4ec2e5ac2e1"
+        },
+        {
+          "path": "native-alpc-private-echo-v1-four-views-launch.json",
+          "bytes": 6512,
+          "sha256": "4c0b3653e0d95e81bd7eb7d2e2a39f6528bbd729e27f14385ecb2c2df380ecca"
+        },
+        {
+          "path": "run-native-alpc-private-echo-v1-four-views.py",
+          "bytes": 5888,
+          "sha256": "4777c18f00a108231ed5f16b1a2d59ab4e28d302e35e23f9ee5d02c536cd7939"
+        },
+        {
+          "path": "native-alpc-private-echo-v1-four-views-arm64-build.log",
+          "bytes": 33,
+          "sha256": "0eec3518499a3fc5d811e5f17a95908537aefb7b18096e757d3f795a9524acc1"
+        },
+        {
+          "path": "native-alpc-private-echo-v1-four-views-arm64-before.log",
+          "bytes": 297,
+          "sha256": "f821f42efc867e3996b256dfdcc7d70809b600d1c177ca1b41e8a9944c321e99"
+        },
+        {
+          "path": "native-alpc-private-echo-v1-four-views-arm64.log",
+          "bytes": 63,
+          "sha256": "87c0eda2bbaefd85102a3d7bdfd8e06c80de549a5888783530c1093c821dc92b"
+        },
+        {
+          "path": "native-alpc-private-echo-v1-four-views-arm64-after.log",
+          "bytes": 297,
+          "sha256": "f821f42efc867e3996b256dfdcc7d70809b600d1c177ca1b41e8a9944c321e99"
+        }
+      ],
+      "state": "failed"
+    },
+    {
+      "prefix": "native-alpc-private-echo-v2",
+      "reason": "Echo succeeded in native64 views; global handle count changed during initial runtime threading.",
+      "files": [
+        {
+          "path": "native-alpc-private-echo-v2.cpp",
+          "bytes": 6651,
+          "sha256": "944bbf5c55516c1dc22e80c5d3226991f23708162a8d6fe90575a3d85566154e"
+        },
+        {
+          "path": "native-alpc-private-echo-v2-four-views-launch.json",
+          "bytes": 10077,
+          "sha256": "f31a819455018ea26d8cf5bb7c4804f01e912f005e47bda85f3e728a187b467f"
+        },
+        {
+          "path": "run-native-alpc-private-echo-v2-four-views.py",
+          "bytes": 5888,
+          "sha256": "d9c206b911b4c3e1416c870afd3be80f3adfd3733fa67dce8bdeecc10fb25001"
+        },
+        {
+          "path": "native-alpc-private-echo-v2-four-views-arm64-build.log",
+          "bytes": 33,
+          "sha256": "019790e4ff783a83f6d9cc4d7d206a695071569b1d979a26774d31537fd38e4f"
+        },
+        {
+          "path": "native-alpc-private-echo-v2-four-views-arm64-before.log",
+          "bytes": 297,
+          "sha256": "560ed1b46c10d9c771d5c0e9af20ff55c132ebe3b5808f8b9af5b1bdf376be85"
+        },
+        {
+          "path": "native-alpc-private-echo-v2-four-views-arm64.log",
+          "bytes": 491,
+          "sha256": "f1407a407e2e32814ae1a8bbacb203408b863106dd35be14ef24d14f86253510"
+        },
+        {
+          "path": "native-alpc-private-echo-v2-four-views-arm64-after.log",
+          "bytes": 297,
+          "sha256": "560ed1b46c10d9c771d5c0e9af20ff55c132ebe3b5808f8b9af5b1bdf376be85"
+        },
+        {
+          "path": "native-alpc-private-echo-v2-four-views-x64-build.log",
+          "bytes": 33,
+          "sha256": "019790e4ff783a83f6d9cc4d7d206a695071569b1d979a26774d31537fd38e4f"
+        },
+        {
+          "path": "native-alpc-private-echo-v2-four-views-x64-before.log",
+          "bytes": 293,
+          "sha256": "661ad7340712c896b0b07638ff4b0865bbb2fa9a1e5d7d91e8c4c4cc4099f3d5"
+        },
+        {
+          "path": "native-alpc-private-echo-v2-four-views-x64.log",
+          "bytes": 489,
+          "sha256": "e58fbdb4e5a7f035f5d35226963671ec9282226095be3a587d22bb6b4a028217"
+        },
+        {
+          "path": "native-alpc-private-echo-v2-four-views-x64-after.log",
+          "bytes": 293,
+          "sha256": "661ad7340712c896b0b07638ff4b0865bbb2fa9a1e5d7d91e8c4c4cc4099f3d5"
+        }
+      ],
+      "state": "failed"
+    },
+    {
+      "prefix": "native-alpc-private-echo-v3",
+      "reason": "WoW ALPC client24B vs legacy server40B conversion and volatile global handle counts require corrected accounting.",
+      "files": [
+        {
+          "path": "native-alpc-private-echo-v3.cpp",
+          "bytes": 6758,
+          "sha256": "a655269bc879ce742983e56abdd33295029ee125c387b8e098537524408f48a7"
+        },
+        {
+          "path": "native-alpc-private-echo-v3-four-views-launch.json",
+          "bytes": 13645,
+          "sha256": "8103c141bd2d4683614b2baa7eac456f904a1478a34c2a15bf5a73841af85575"
+        },
+        {
+          "path": "run-native-alpc-private-echo-v3-four-views.py",
+          "bytes": 5888,
+          "sha256": "ee7dbe895e67fb7de337fdb6dd5e4f89146f7a3b46bc712a91865419bc837e56"
+        },
+        {
+          "path": "native-alpc-private-echo-v3-four-views-arm64-build.log",
+          "bytes": 33,
+          "sha256": "37a0929367e9723ec2c569627860a431601114f69d9a8632390c2c3f4cd8546c"
+        },
+        {
+          "path": "native-alpc-private-echo-v3-four-views-arm64-before.log",
+          "bytes": 297,
+          "sha256": "269c54d0cd37a28535766ebe787f8063a74df7028487ee3909e28970e5d349fa"
+        },
+        {
+          "path": "native-alpc-private-echo-v3-four-views-arm64.log",
+          "bytes": 491,
+          "sha256": "23397560a5fc8fa2094bbbdc776200ff25be099a82d51ef754d788e22c87679a"
+        },
+        {
+          "path": "native-alpc-private-echo-v3-four-views-arm64-after.log",
+          "bytes": 297,
+          "sha256": "269c54d0cd37a28535766ebe787f8063a74df7028487ee3909e28970e5d349fa"
+        },
+        {
+          "path": "native-alpc-private-echo-v3-four-views-x64-build.log",
+          "bytes": 33,
+          "sha256": "37a0929367e9723ec2c569627860a431601114f69d9a8632390c2c3f4cd8546c"
+        },
+        {
+          "path": "native-alpc-private-echo-v3-four-views-x64-before.log",
+          "bytes": 293,
+          "sha256": "72e262fb68b0d6481221aa36fd602573879cf8928b74455b75257eff4a647c80"
+        },
+        {
+          "path": "native-alpc-private-echo-v3-four-views-x64.log",
+          "bytes": 489,
+          "sha256": "ae9b48820beae2e7d5c907e57a20f5e4333058deeef54b21bd8ce4bcc3f06c24"
+        },
+        {
+          "path": "native-alpc-private-echo-v3-four-views-x64-after.log",
+          "bytes": 293,
+          "sha256": "72e262fb68b0d6481221aa36fd602573879cf8928b74455b75257eff4a647c80"
+        },
+        {
+          "path": "native-alpc-private-echo-v3-four-views-x86-build.log",
+          "bytes": 33,
+          "sha256": "37a0929367e9723ec2c569627860a431601114f69d9a8632390c2c3f4cd8546c"
+        },
+        {
+          "path": "native-alpc-private-echo-v3-four-views-x86-before.log",
+          "bytes": 292,
+          "sha256": "e005b8b70f50cb40eb87dfb63f86e583a48422f69afe9fce9ac357d64ce71a8d"
+        },
+        {
+          "path": "native-alpc-private-echo-v3-four-views-x86.log",
+          "bytes": 489,
+          "sha256": "18e22b2b8f45e0f0dbcd10a7eff3b605450f5572046b45543750e544c3d47ee1"
+        },
+        {
+          "path": "native-alpc-private-echo-v3-four-views-x86-after.log",
+          "bytes": 292,
+          "sha256": "e005b8b70f50cb40eb87dfb63f86e583a48422f69afe9fce9ac357d64ce71a8d"
+        }
+      ],
+      "state": "failed"
+    },
+    {
+      "prefix": "native-alpc-private-limits-v8",
+      "reason": "New ALPC plus legacy server setup did not complete connection. Exact owned child stopped. Reason unknown; not an accepted transport oracle.",
+      "files": [
+        {
+          "path": "native-alpc-private-limits-v8.cpp",
+          "bytes": 18055,
+          "sha256": "b41d686ca7c02bb3da05bb2dcdcc8ab96e714df07be10c1354a198158af0dd5c"
+        },
+        {
+          "path": "native-alpc-private-limits-v8-four-views-launch.json",
+          "bytes": 6707,
+          "sha256": "373ba9362bb01f3dfb43422198f3da2fb4c69b3bb54340d95f7665846f7d8800"
+        },
+        {
+          "path": "run-native-alpc-private-limits-v8-four-views.py",
+          "bytes": 6042,
+          "sha256": "ce45d1d1c2939ee9bfbddcf238a117a356c1c6a0c3a4f0bfa234f34abe1a370b"
+        },
+        {
+          "path": "native-alpc-private-limits-v8-four-views-arm64-build.log",
+          "bytes": 35,
+          "sha256": "5a20f6ac8efd0ea2a677ee08560dd7ba2eca15d5ac2305be27212c93ae892e2f"
+        },
+        {
+          "path": "native-alpc-private-limits-v8-four-views-arm64-before.log",
+          "bytes": 299,
+          "sha256": "66a5dbe2c927f3606ae0e2517818bfd9c85af9457b2ba6efbac585ca2567e637"
+        },
+        {
+          "path": "native-alpc-private-limits-v8-four-views-arm64.log",
+          "bytes": 77,
+          "sha256": "fb670c7b8d302d679587fbc8e4d2a8c431b966fd6ecad4aac95c76cdbbeb5f56"
+        },
+        {
+          "path": "native-alpc-private-limits-v8-four-views-arm64-after.log",
+          "bytes": 299,
+          "sha256": "66a5dbe2c927f3606ae0e2517818bfd9c85af9457b2ba6efbac585ca2567e637"
+        }
+      ],
+      "state": "failed"
+    },
+    {
+      "prefix": "native-alpc-private-priority-v10",
+      "reason": "ALPC observations completed; auxiliary fixed64B basic query failed. Printed zero granted value is unknown. Replaced by V12 successful SDK-size query.",
+      "files": [
+        {
+          "path": "native-alpc-private-priority-v10.cpp",
+          "bytes": 18335,
+          "sha256": "202d424628fce87a8cebde9faf09cca41e371e30b8e4c1c3cbca637a4434bd1e"
+        },
+        {
+          "path": "native-alpc-private-priority-v10-four-views-launch.json",
+          "bytes": 19095,
+          "sha256": "8a23f4cb1abf0e3064f069d217487e7914e5e6fa4a508bcc16b4975b2ecdc4e4"
+        },
+        {
+          "path": "run-native-alpc-private-priority-v10-four-views.py",
+          "bytes": 6041,
+          "sha256": "ba731df55f5105568e22e63dbb65dd6bd29ed39e41695026cea46959a0141d53"
+        },
+        {
+          "path": "native-alpc-private-priority-v10-four-views-arm64-build.log",
+          "bytes": 38,
+          "sha256": "bd16bff6b3d10804f11d540492154546313a6c339c489792bc39a532718ef5c2"
+        },
+        {
+          "path": "native-alpc-private-priority-v10-four-views-arm64-before.log",
+          "bytes": 302,
+          "sha256": "aa45d8f2f49f48f042185fc94d92ea511e5347fc55bf0fd7b1b01d92f1687f3a"
+        },
+        {
+          "path": "native-alpc-private-priority-v10-four-views-arm64.log",
+          "bytes": 16391,
+          "sha256": "c963e65163a849f73c61b967220c793a1d1171e4f0db144afe8802881d25e296"
+        },
+        {
+          "path": "native-alpc-private-priority-v10-four-views-arm64-after.log",
+          "bytes": 302,
+          "sha256": "aa45d8f2f49f48f042185fc94d92ea511e5347fc55bf0fd7b1b01d92f1687f3a"
+        },
+        {
+          "path": "native-alpc-private-priority-v10-four-views-x64-build.log",
+          "bytes": 38,
+          "sha256": "bd16bff6b3d10804f11d540492154546313a6c339c489792bc39a532718ef5c2"
+        },
+        {
+          "path": "native-alpc-private-priority-v10-four-views-x64-before.log",
+          "bytes": 298,
+          "sha256": "0f995161e8281eecffc4884efbe4890dad92d48e33514c671d46785295f38aa6"
+        },
+        {
+          "path": "native-alpc-private-priority-v10-four-views-x64.log",
+          "bytes": 16367,
+          "sha256": "8aafb8274a59cc071b9501d386a56c6ca120b7d299ed93c259472190635a01c7"
+        },
+        {
+          "path": "native-alpc-private-priority-v10-four-views-x64-after.log",
+          "bytes": 298,
+          "sha256": "0f995161e8281eecffc4884efbe4890dad92d48e33514c671d46785295f38aa6"
+        },
+        {
+          "path": "native-alpc-private-priority-v10-four-views-x86-build.log",
+          "bytes": 38,
+          "sha256": "bd16bff6b3d10804f11d540492154546313a6c339c489792bc39a532718ef5c2"
+        },
+        {
+          "path": "native-alpc-private-priority-v10-four-views-x86-before.log",
+          "bytes": 297,
+          "sha256": "c49076dc251ce8c7e912e9a8954fa8b2f5febf2395640cb98d83cb11a1feab64"
+        },
+        {
+          "path": "native-alpc-private-priority-v10-four-views-x86.log",
+          "bytes": 16703,
+          "sha256": "658df9678e2e1fdb96b85f6d9e99c467edd95956565a40a47330b44a0958fcd0"
+        },
+        {
+          "path": "native-alpc-private-priority-v10-four-views-x86-after.log",
+          "bytes": 297,
+          "sha256": "c49076dc251ce8c7e912e9a8954fa8b2f5febf2395640cb98d83cb11a1feab64"
+        },
+        {
+          "path": "native-alpc-private-priority-v10-four-views-x86-laa-build.log",
+          "bytes": 38,
+          "sha256": "bd16bff6b3d10804f11d540492154546313a6c339c489792bc39a532718ef5c2"
+        },
+        {
+          "path": "native-alpc-private-priority-v10-four-views-x86-laa-before.log",
+          "bytes": 304,
+          "sha256": "e0a952440f53cf9e375126f894bac29b1ebf93f2b35fa99350ad0c96c1176792"
+        },
+        {
+          "path": "native-alpc-private-priority-v10-four-views-x86-laa.log",
+          "bytes": 16751,
+          "sha256": "0dcf9da0029c52b788ce7b5bf18548b5fb5f5d42aa413d65ed458e110b73f00e"
+        },
+        {
+          "path": "native-alpc-private-priority-v10-four-views-x86-laa-after.log",
+          "bytes": 304,
+          "sha256": "e0a952440f53cf9e375126f894bac29b1ebf93f2b35fa99350ad0c96c1176792"
+        }
+      ],
+      "state": "finished"
+    },
+    {
+      "prefix": "native-alpc-private-limits-v11",
+      "reason": "Zero-length basic query did not supply nonzero size. No ALPC call observation; replaced by V12 SDK-size query.",
+      "files": [
+        {
+          "path": "native-alpc-private-limits-v11.cpp",
+          "bytes": 18103,
+          "sha256": "f50b72d7094ff792133c65e08e4c936a9aad3a4d592773c73a8cd2685a804c1f"
+        },
+        {
+          "path": "native-alpc-private-limits-v11-four-views-launch.json",
+          "bytes": 6782,
+          "sha256": "7ec3dfe47af492f0ded6ff8adf805e8be703616605ad1baf94e5b832db8489ff"
+        },
+        {
+          "path": "run-native-alpc-private-limits-v11-four-views.py",
+          "bytes": 6121,
+          "sha256": "026836cd414f957b18f25df72e6698bc1c47f6db60fa0e9266a078ef4d969819"
+        },
+        {
+          "path": "native-alpc-private-limits-v11-four-views-arm64-build.log",
+          "bytes": 36,
+          "sha256": "439156988e2a1b918f09f8c5f3283e398472e8a67875e90fd775d0324757b5ee"
+        },
+        {
+          "path": "native-alpc-private-limits-v11-four-views-arm64-before.log",
+          "bytes": 300,
+          "sha256": "7594fbd366bc9ac65ff4de858ab90bbc7c46124bfdc13a1065b64c737fe8e285"
+        },
+        {
+          "path": "native-alpc-private-limits-v11-four-views-arm64.log",
+          "bytes": 122,
+          "sha256": "60d6c924fad6ed91d86bc084053859888c3d7de9efcc34a41c3b2b727a4347ad"
+        },
+        {
+          "path": "native-alpc-private-limits-v11-four-views-arm64-after.log",
+          "bytes": 300,
+          "sha256": "7594fbd366bc9ac65ff4de858ab90bbc7c46124bfdc13a1065b64c737fe8e285"
+        }
+      ],
+      "state": "failed"
+    }
+  ],
+  "kernel-scope": "Four execution views on one Windows10.0.29683 ARM64 kernel; no independent physical x64 kernel oracle."
+}

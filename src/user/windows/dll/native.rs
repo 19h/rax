@@ -7,6 +7,7 @@ use super::super::nt::status::*;
 mod access_check;
 mod alert;
 mod allocate;
+mod alpc;
 mod apphelp;
 mod directory;
 mod events;
@@ -49,6 +50,12 @@ mod wnf_query;
 mod worker_factory;
 
 pub(super) static EXPORTS: &[Export] = &[
+    Export::func(
+        "NtAlpcSendWaitReceivePort",
+        Stdcall,
+        &[Ptr, I32, Ptr, Ptr, Ptr, Ptr, Ptr, Ptr],
+        alpc::send_wait_receive,
+    ),
     Export::func(
         "NtOpenFile",
         Stdcall,

@@ -1,0 +1,9 @@
+{
+  "state": "verified",
+  "native-executables": 41,
+  "private-ALPC-calls": 480,
+  "successful-USER-queries": 33,
+  "unique-live-inputs": 68,
+  "source-inputs": 28357,
+  "kernel-scope": "Four execution views on one Windows10.0.29683 ARM64 kernel; no independent physical x64 kernel oracle."
+}

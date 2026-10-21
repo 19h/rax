@@ -29,6 +29,16 @@ impl LpcPort {
         self.peer.as_deref()
     }
 
+    pub(crate) fn peer_mut(
+        &mut self,
+    ) -> Option<&mut crate::user::windows::object_namespace::csr::CsrPeer> {
+        self.peer.as_deref_mut()
+    }
+
+    pub(crate) fn view(&self) -> Option<&SharedViewOwner> {
+        self.view.as_ref()
+    }
+
     pub(super) fn take_view(&mut self) -> Option<SharedViewOwner> {
         self.view.take()
     }

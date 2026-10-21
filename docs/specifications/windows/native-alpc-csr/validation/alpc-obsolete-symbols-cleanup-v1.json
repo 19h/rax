@@ -1,0 +1,188 @@
+{
+  "utc": "2026-10-21T16:05:23.463911+00:00",
+  "state": "finished",
+  "free-before": 218177536,
+  "removed": [
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\normal-candidate2\\debug\\rax.pdb",
+      "bytes": 142749696,
+      "sha256": "a0e182f2afbd144c9921befb0b9487706aec90e161615bf3437354d3d58ac092",
+      "links": 2,
+      "file-id": 562949955214799
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\normal-candidate2\\debug\\rax_isa_oracle.pdb",
+      "bytes": 102715392,
+      "sha256": "ef40c6679fc793d701afa45d8c2db0a26c6fbd5455571dc3f24317e49bd499b2",
+      "links": 2,
+      "file-id": 562949955204124
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\normal-candidate2\\debug\\rax_user.pdb",
+      "bytes": 1363968,
+      "sha256": "f08679cd6fc1a4a426f448df29ecb33f3eb6a195b2fdb68f47cc72acde128611",
+      "links": 2,
+      "file-id": 1407374885283383
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\normal-candidate2\\debug\\deps\\librax-3019d479898316cf.rmeta",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "links": 1,
+      "file-id": 562949955217156
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\normal-candidate2\\debug\\deps\\librax-638c2fde2f532f63.rmeta",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "links": 1,
+      "file-id": 281474978506542
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\normal-candidate2\\debug\\deps\\librax-880a358b5480b7fe.rmeta",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "links": 1,
+      "file-id": 281474978506614
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\normal-candidate2\\debug\\deps\\librax-94fd581f1b963a70.rmeta",
+      "bytes": 47223355,
+      "sha256": "bc3e066368160c6d349d571806ea5e76bf0007b6a18e1d00beaf9877429b0a97",
+      "links": 1,
+      "file-id": 844424931927562
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\normal-candidate2\\debug\\deps\\librax-b6577df3fbefbea4.rmeta",
+      "bytes": 57412156,
+      "sha256": "c84597530e8c9bb6e3f48144fea7ef214bfddb04baf9c8271c5e0a0739d4fb65",
+      "links": 1,
+      "file-id": 2533274791000390
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\normal-candidate2\\debug\\deps\\librax_isa_oracle-49a58ebedad24ef0.rmeta",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "links": 1,
+      "file-id": 281474978506620
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\normal-candidate2\\debug\\deps\\librax_isa_oracle-e440b86251d5a189.rmeta",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "links": 1,
+      "file-id": 281474978506584
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\normal-candidate2\\debug\\deps\\librax_user-5bad3bc5eee2d50b.rmeta",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "links": 1,
+      "file-id": 281474978506626
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\normal-candidate2\\debug\\deps\\librax_user-f46c51c67ad8ba35.rmeta",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "links": 1,
+      "file-id": 562949955217162
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\normal-candidate2\\debug\\deps\\rax-24d49cb87dffa633.pdb",
+      "bytes": 174092288,
+      "sha256": "bd354f1460beef48f8a9854178240e43a1a25e890c23f3e6bb51be32388502e5",
+      "links": 1,
+      "file-id": 562949955190035
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\normal-candidate2\\debug\\deps\\rax-b799307a7949aa6b.pdb",
+      "bytes": 325373952,
+      "sha256": "256f2fd3c31e7b5a75696abb2e471e89a384a3fd3bf4a9c0979efd0ca2f349b7",
+      "links": 1,
+      "file-id": 5066549581002349
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\normal-candidate2\\debug\\deps\\rax.dll.lib",
+      "bytes": 14904,
+      "sha256": "86df1192fab12955d58f95a3a75dd0a8fde42632572b2dd20cfe7a5a7d9b45bd",
+      "links": 1,
+      "file-id": 562949955190245
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\normal-candidate2\\debug\\deps\\rax.lib",
+      "bytes": 585810322,
+      "sha256": "50283bc42a7ed4f77d9e0c65bade9da35dc25190e44a87c34e13f61518b11014",
+      "links": 1,
+      "file-id": 844424931863122
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\normal-candidate2\\debug\\deps\\rax.pdb",
+      "bytes": 142749696,
+      "sha256": "a0e182f2afbd144c9921befb0b9487706aec90e161615bf3437354d3d58ac092",
+      "links": 1,
+      "file-id": 562949955214799
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\normal-candidate2\\debug\\deps\\rax_isa_oracle.pdb",
+      "bytes": 102715392,
+      "sha256": "ef40c6679fc793d701afa45d8c2db0a26c6fbd5455571dc3f24317e49bd499b2",
+      "links": 1,
+      "file-id": 562949955204124
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\normal-candidate2\\debug\\deps\\rax_user.pdb",
+      "bytes": 1363968,
+      "sha256": "f08679cd6fc1a4a426f448df29ecb33f3eb6a195b2fdb68f47cc72acde128611",
+      "links": 1,
+      "file-id": 1407374885283383
+    }
+  ],
+  "scope": "Only explicit inspected old task-owned PM standalone primary symbols/intermediate objects/import/static libs; preserve every .exe/.dll/.rlib, native producer, source and actual-owning retained4artifact copies. Prior current native attempt terminal link failure; no old-cache cargo/rustc/observer processes.",
+  "retained-receipt-before-sha256": "3b02b0266921d2d1410b5a0e66852c9b7b5b36ee4d998e78611d2f9e37fd901c",
+  "retained-before": [
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\retained-owning-candidate2\\capi.exe",
+      "bytes": 32784384,
+      "sha256": "77d6aaddb7f7d6459c2dbbb2b3912f73cf72966a3cd9198ad8d5967c7a95acba"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\retained-owning-candidate2\\carrier.lib",
+      "bytes": 860902070,
+      "sha256": "cbb316bf81752b48155ed5e96cb4a61da537bc8a36257680295079987bba3765"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\retained-owning-candidate2\\core.rlib",
+      "bytes": 511320364,
+      "sha256": "7034c2491a3a490882599ca151b18b2e2a1128d4e6eefc9b3db9da819c0cc169"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\retained-owning-candidate2\\ordinary.exe",
+      "bytes": 27212800,
+      "sha256": "bc18c07126c88aa71a2532799b6459520b33968b4e4b81b771d082a56ac5619c"
+    }
+  ],
+  "retained-after": [
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\retained-owning-candidate2\\capi.exe",
+      "bytes": 32784384,
+      "sha256": "77d6aaddb7f7d6459c2dbbb2b3912f73cf72966a3cd9198ad8d5967c7a95acba"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\retained-owning-candidate2\\carrier.lib",
+      "bytes": 860902070,
+      "sha256": "cbb316bf81752b48155ed5e96cb4a61da537bc8a36257680295079987bba3765"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\retained-owning-candidate2\\core.rlib",
+      "bytes": 511320364,
+      "sha256": "7034c2491a3a490882599ca151b18b2e2a1128d4e6eefc9b3db9da819c0cc169"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\retained-owning-candidate2\\ordinary.exe",
+      "bytes": 27212800,
+      "sha256": "bc18c07126c88aa71a2532799b6459520b33968b4e4b81b771d082a56ac5619c"
+    }
+  ],
+  "free-after": 1654943744,
+  "removed-logical-bytes": 1683585089
+}

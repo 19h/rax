@@ -1,0 +1,26 @@
+{
+  "archive": "alpc-prefixed-red-kernel-overrides-v2.tar.gz",
+  "bytes": 5500,
+  "sha256": "6f729a3557fe4fc88d2aaad956dc38d03ea382c712adcecb7dcde4c5850e927b",
+  "overrides": [
+    {
+      "path": "src/user/windows/dll/native/alpc.rs",
+      "kind": "file",
+      "bytes": 3462,
+      "sha256": "cfaf530447b287f3b58019c016b85d448e2a66b7d7e6219fc67f22a2a30c5325"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/alpc_tests.rs",
+      "kind": "file",
+      "bytes": 7840,
+      "sha256": "44464bf3e40cc900cd229e02ba4aab42871a08fb0109975a53a930d3bd601f39"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/alpc_tests/replay.rs",
+      "kind": "file",
+      "bytes": 10575,
+      "sha256": "18c7f47fc378802eefcbb237780e724da7126f0ff3f10c67bb6c3dff779aaf08"
+    }
+  ],
+  "scope": "Apply these original pre-fix kernel/test source bytes over the final source to reproduce both red tests. The four V12 non-source fixture logs are not consumed by the red build and are absent from its recorded input set."
+}

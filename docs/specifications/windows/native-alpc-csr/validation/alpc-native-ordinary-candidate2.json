@@ -1,0 +1,234 @@
+{
+  "state": "finished",
+  "pid": 6292,
+  "utc": "2026-10-21T19:50:04.628632+00:00",
+  "steps": [
+    {
+      "name": "build",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\rustc.exe",
+        "--edition=2024",
+        "--crate-name",
+        "file_attributes_ordinary_owner",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\helpers\\alpc-ordinary-owner-candidate2.rs",
+        "-C",
+        "target-feature=+crt-static",
+        "--extern",
+        "rax=C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\debug\\deps\\librax-934115059aa64c85.rlib",
+        "-L",
+        "dependency=C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\debug\\deps",
+        "-o",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\alpc-ordinary-owner-candidate2.exe"
+      ],
+      "seconds": 2.4908096250146627,
+      "exit-code": 0,
+      "log": "alpc-native-ordinary-candidate2-build.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "smoke",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\alpc-ordinary-owner-candidate2.exe",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate2\\tests\\fixtures\\user\\windows\\bin\\arm64\\smoke.exe"
+      ],
+      "seconds": 2.7364819580106996,
+      "exit-code": 0,
+      "log": "alpc-native-ordinary-candidate2-smoke.log",
+      "bytes": 164,
+      "sha256": "91ddfed3190aa0f1e57772bb7a00441a1107cb762759788e003d23395ff27b64"
+    },
+    {
+      "name": "whoami",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\alpc-ordinary-owner-candidate2.exe",
+        "C:\\Windows\\System32\\whoami.exe"
+      ],
+      "seconds": 7.744858541991562,
+      "exit-code": 0,
+      "log": "alpc-native-ordinary-candidate2-whoami.log",
+      "bytes": 196,
+      "sha256": "c48ebb1afb5abb7cbf552509993fd32294dbe789d5ddda18710826836af813b5"
+    }
+  ],
+  "outcomes": [
+    {
+      "name": "smoke",
+      "program-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate2\\tests\\fixtures\\user\\windows\\bin\\arm64\\smoke.exe",
+        "bytes": 3584,
+        "sha256": "325730e33e981784bff4a60bc6f342cf95c2735e85042c89748fc471cbe7781b"
+      },
+      "native-before": {
+        "exit-code": 0,
+        "stdout-bytes": 0,
+        "stdout-sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr-bytes": 0,
+        "stderr-sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "program-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate2\\tests\\fixtures\\user\\windows\\bin\\arm64\\smoke.exe",
+        "bytes": 3584,
+        "sha256": "325730e33e981784bff4a60bc6f342cf95c2735e85042c89748fc471cbe7781b"
+      },
+      "native-after": {
+        "exit-code": 0,
+        "stdout-bytes": 0,
+        "stdout-sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr-bytes": 0,
+        "stderr-sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "log": "alpc-native-ordinary-candidate2-smoke.log",
+      "log-sha256": "91ddfed3190aa0f1e57772bb7a00441a1107cb762759788e003d23395ff27b64"
+    },
+    {
+      "name": "whoami",
+      "program-before": {
+        "path": "C:\\Windows\\System32\\whoami.exe",
+        "bytes": 84480,
+        "sha256": "48fde190b002a5a4c4b8b19db014377263ba94220f23a4f0a117fec082d46bf6"
+      },
+      "native-before": {
+        "exit-code": 0,
+        "stdout-bytes": 21,
+        "stdout-sha256": "1d11fe0d35f45662cdc2e6237b8a12d402752770ca2f76c2ac3ef54f0b006fb6",
+        "stderr-bytes": 0,
+        "stderr-sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "program-after": {
+        "path": "C:\\Windows\\System32\\whoami.exe",
+        "bytes": 84480,
+        "sha256": "48fde190b002a5a4c4b8b19db014377263ba94220f23a4f0a117fec082d46bf6"
+      },
+      "native-after": {
+        "exit-code": 0,
+        "stdout-bytes": 21,
+        "stdout-sha256": "1d11fe0d35f45662cdc2e6237b8a12d402752770ca2f76c2ac3ef54f0b006fb6",
+        "stderr-bytes": 0,
+        "stderr-sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "log": "alpc-native-ordinary-candidate2-whoami.log",
+      "log-sha256": "c48ebb1afb5abb7cbf552509993fd32294dbe789d5ddda18710826836af813b5"
+    }
+  ],
+  "core-before": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\debug\\deps\\librax-934115059aa64c85.rlib",
+    "bytes": 511102428,
+    "sha256": "c9b7b6c87e4dd4a8493b51feb250777a6e16bd5be5d9da81a9902b4d475d7476"
+  },
+  "observer-before": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\helpers\\alpc-ordinary-owner-candidate2.rs",
+    "bytes": 1044,
+    "sha256": "5c1aaf75ce1b18a7e251612e4778ec339989e9c91e110cba109c68238c67b01c"
+  },
+  "current-step": "whoami",
+  "child-pid": 7400,
+  "executable-before": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\alpc-ordinary-owner-candidate2.exe",
+    "bytes": 27252224,
+    "sha256": "10187e8a80b911a7742bfa58bbca3eebbbfdc38764a6283c0be710713e8f4bfe"
+  },
+  "runtime-before": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e"
+    },
+    {
+      "path": "C:\\Windows\\System32\\KernelBase.dll",
+      "bytes": 7213728,
+      "sha256": "6b2fa508ac4f9bce5d7351676485d1dc5b5236cd9656034e2fec1eaba3b82bc9"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\KernelBase.dll",
+      "bytes": 3073488,
+      "sha256": "e9c414d7c6bd2c6fde608f31b2f31da3c2014c801b3764a30ee42abd1e9c2d58"
+    },
+    {
+      "path": "C:\\Windows\\System32\\kernel32.dll",
+      "bytes": 1500304,
+      "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\kernel32.dll",
+      "bytes": 696392,
+      "sha256": "9c9a0c54a79ea712bb533fcc79ba9935ed9f9d3f777fd65cf62d9cec6699b9df"
+    },
+    {
+      "path": "C:\\Windows\\System32\\version.dll",
+      "bytes": 73200,
+      "sha256": "d30c2a9c9d81982b112c5a60878f3579ddb3db3a09443147c63f10bc749aaab2"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\version.dll",
+      "bytes": 29208,
+      "sha256": "688ea4248da1e28bd77be9ae1088954a11cec3302c25af8aade47bae14f3ada8"
+    }
+  ],
+  "core-after": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\debug\\deps\\librax-934115059aa64c85.rlib",
+    "bytes": 511102428,
+    "sha256": "c9b7b6c87e4dd4a8493b51feb250777a6e16bd5be5d9da81a9902b4d475d7476"
+  },
+  "observer-after": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\helpers\\alpc-ordinary-owner-candidate2.rs",
+    "bytes": 1044,
+    "sha256": "5c1aaf75ce1b18a7e251612e4778ec339989e9c91e110cba109c68238c67b01c"
+  },
+  "executable-after": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\alpc-ordinary-owner-candidate2.exe",
+    "bytes": 27252224,
+    "sha256": "10187e8a80b911a7742bfa58bbca3eebbbfdc38764a6283c0be710713e8f4bfe"
+  },
+  "runtime-after": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e"
+    },
+    {
+      "path": "C:\\Windows\\System32\\KernelBase.dll",
+      "bytes": 7213728,
+      "sha256": "6b2fa508ac4f9bce5d7351676485d1dc5b5236cd9656034e2fec1eaba3b82bc9"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\KernelBase.dll",
+      "bytes": 3073488,
+      "sha256": "e9c414d7c6bd2c6fde608f31b2f31da3c2014c801b3764a30ee42abd1e9c2d58"
+    },
+    {
+      "path": "C:\\Windows\\System32\\kernel32.dll",
+      "bytes": 1500304,
+      "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\kernel32.dll",
+      "bytes": 696392,
+      "sha256": "9c9a0c54a79ea712bb533fcc79ba9935ed9f9d3f777fd65cf62d9cec6699b9df"
+    },
+    {
+      "path": "C:\\Windows\\System32\\version.dll",
+      "bytes": 73200,
+      "sha256": "d30c2a9c9d81982b112c5a60878f3579ddb3db3a09443147c63f10bc749aaab2"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\version.dll",
+      "bytes": 29208,
+      "sha256": "688ea4248da1e28bd77be9ae1088954a11cec3302c25af8aade47bae14f3ada8"
+    }
+  ],
+  "exit-code": 0,
+  "source-inputs": 3918,
+  "scope": "Actual owning core ordinary execution and exact native controls. Guest terminal records determine success or unsupported frontier; observer exit0 alone is not guest success.",
+  "completed-utc": "2026-10-21T19:50:23.565935+00:00"
+}

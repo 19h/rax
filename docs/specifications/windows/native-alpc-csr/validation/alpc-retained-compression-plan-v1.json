@@ -1,0 +1,90 @@
+{
+  "utc": "2026-10-21T16:09:32.212448+00:00",
+  "free-bytes": 1770205184,
+  "files": [
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\retained-owning-candidate2\\capi.exe",
+      "bytes": 32784384,
+      "physical-bytes": 32784384,
+      "attributes": 32,
+      "links": 1
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\retained-owning-candidate2\\carrier.lib",
+      "bytes": 860902070,
+      "physical-bytes": 860902070,
+      "attributes": 32,
+      "links": 1
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\retained-owning-candidate2\\core.rlib",
+      "bytes": 511320364,
+      "physical-bytes": 511320364,
+      "attributes": 32,
+      "links": 1
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\retained-owning-candidate2\\ordinary.exe",
+      "bytes": 27212800,
+      "physical-bytes": 27212800,
+      "attributes": 32,
+      "links": 1
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\retained-owning-candidate1\\capi.exe",
+      "bytes": 32782848,
+      "physical-bytes": 32782848,
+      "attributes": 32,
+      "links": 1
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\retained-owning-candidate1\\carrier.lib",
+      "bytes": 861213116,
+      "physical-bytes": 861213116,
+      "attributes": 32,
+      "links": 1
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\retained-owning-candidate1\\core.rlib",
+      "bytes": 511626678,
+      "physical-bytes": 511626678,
+      "attributes": 32,
+      "links": 1
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\retained-owning-candidate1\\ordinary.exe",
+      "bytes": 27210240,
+      "physical-bytes": 27210240,
+      "attributes": 32,
+      "links": 1
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\retained-owning-candidate1\\capi.exe",
+      "bytes": 32782336,
+      "physical-bytes": 32782336,
+      "attributes": 32,
+      "links": 1
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\retained-owning-candidate1\\carrier.lib",
+      "bytes": 861072820,
+      "physical-bytes": 861072820,
+      "attributes": 32,
+      "links": 1
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\retained-owning-candidate1\\core.rlib",
+      "bytes": 511485170,
+      "physical-bytes": 511485170,
+      "attributes": 32,
+      "links": 1
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\retained-owning-candidate1\\ordinary.exe",
+      "bytes": 27209728,
+      "physical-bytes": 27209728,
+      "attributes": 32,
+      "links": 1
+    }
+  ]
+}

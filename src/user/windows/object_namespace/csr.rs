@@ -2,11 +2,13 @@
 use super::{DataSection, LookupError, Namespace, SelectedSection, invalid};
 use crate::user::mm::{AddressSpace, SharedObject, SpaceConfig};
 use crate::user::windows::arch::WinArch;
-use crate::user::windows::memory::{VirtualMemory, VmError, prot};
+use crate::user::windows::memory::{Mem, VirtualMemory, VmError, mem, prot};
 use crate::user::windows::objects::{LpcPort, Object, Objects};
 use std::io;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU32, Ordering};
+
+pub(crate) mod client_data;
 
 /// Native server pointers remain protocol address values; the selected
 /// readonly section supplies their bytes independently at a guest-owned base.
@@ -24,12 +26,21 @@ pub(crate) struct CsrServer {
     pub(crate) metadata: CsrMetadata,
     section: Arc<DataSection>,
     connections: Arc<AtomicU32>,
+    pub(crate) client_data: Option<Arc<client_data::CsrClientData>>,
 }
 
 impl CsrServer {
     pub(crate) fn selected(
         section: Arc<DataSection>,
         metadata: CsrMetadata,
+    ) -> io::Result<Arc<Self>> {
+        Self::selected_with_client_data(section, metadata, None)
+    }
+
+    pub(crate) fn selected_with_client_data(
+        section: Arc<DataSection>,
+        metadata: CsrMetadata,
+        client_data: Option<Arc<client_data::CsrClientData>>,
     ) -> io::Result<Arc<Self>> {
         let prefix = section
             .regions
@@ -62,6 +73,7 @@ impl CsrServer {
             metadata,
             section,
             connections: Arc::new(AtomicU32::new(0)),
+            client_data,
         }))
     }
 
@@ -98,11 +110,31 @@ impl CsrServer {
         let handle = objects
             .open_access(id, false, 0x001F_0001)
             .ok_or(VmError::NoMemory)?;
+        // These are modeled server identities, not handles to host processes.
+        // The private server owns the records for the lifetime of this peer.
+        objects
+            .try_create(Object::Process {
+                pid: self.metadata.server_pid,
+                exit_code: None,
+            })
+            .ok_or(VmError::NoMemory)?;
+        let server_thread = 4;
+        objects
+            .try_create(Object::Thread {
+                tid: server_thread,
+                exit_code: None,
+            })
+            .ok_or(VmError::NoMemory)?;
         Ok(CsrPeer {
             vm,
             objects,
             handle,
             base,
+            client_data: self.client_data.clone(),
+            server_pid: self.metadata.server_pid,
+            server_thread,
+            next_message: 1,
+            capture_storage: None,
             _lease: lease,
         })
     }
@@ -115,7 +147,53 @@ pub(crate) struct CsrPeer {
     objects: Objects,
     handle: u32,
     pub(crate) base: u64,
+    pub(crate) client_data: Option<Arc<client_data::CsrClientData>>,
+    pub(crate) server_pid: u32,
+    pub(crate) server_thread: u32,
+    next_message: u32,
+    capture_storage: Option<u64>,
     _lease: ConnectionLease,
+}
+
+impl CsrPeer {
+    /// Bounded private server storage for one synchronous CSR capture. Each
+    /// peer reuses one page and one increasing message identifier; neither
+    /// address nor identity is acquired from a host server process.
+    pub(crate) fn prepare_capture(
+        &mut self,
+        header: &[u8; 40],
+        information: &[u8; client_data::INFORMATION_BYTES],
+    ) -> Result<(u64, u32), VmError> {
+        let next = self.next_message.checked_add(1).ok_or(VmError::NoMemory)?;
+        let (base, newly_allocated) = match self.capture_storage {
+            Some(base) => (base, false),
+            None => (
+                self.vm
+                    .allocate(
+                        Some(0x2_0000_0000),
+                        4096,
+                        mem::RESERVE | mem::COMMIT,
+                        prot::READWRITE,
+                    )?
+                    .0,
+                true,
+            ),
+        };
+        let mut bytes = [0; 628];
+        bytes[..40].copy_from_slice(header);
+        bytes[8..16].fill(0);
+        bytes[40..40 + information.len()].copy_from_slice(information);
+        if self.vm.space().wr(base, &bytes).is_err() {
+            if newly_allocated {
+                self.vm.release(base)?;
+            }
+            return Err(VmError::NoMemory);
+        }
+        self.capture_storage = Some(base);
+        let message = self.next_message;
+        self.next_message = next;
+        Ok((base, message))
+    }
 }
 struct ConnectionLease(Arc<AtomicU32>);
 impl Drop for ConnectionLease {

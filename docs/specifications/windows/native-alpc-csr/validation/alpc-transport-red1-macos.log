@@ -1,0 +1,24 @@
+   Compiling rax v0.1.0 (/Users/int/.assist-native-alpc-csr-20261021)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 46s
+     Running unittests src/lib.rs (target/client-data-v1/debug/deps/rax-af6644010c3bea37)
+
+running 1 test
+test user::windows::process::sched::tests::services_tests::alpc_tests::native_alpc_invalid_handle_is_kernel_status_without_output_publication_all_abis ... FAILED
+
+failures:
+
+---- user::windows::process::sched::tests::services_tests::alpc_tests::native_alpc_invalid_handle_is_kernel_status_without_output_publication_all_abis stdout ----
+
+thread 'user::windows::process::sched::tests::services_tests::alpc_tests::native_alpc_invalid_handle_is_kernel_status_without_output_publication_all_abis' (25946337) panicked at src/user/windows/process/sched/tests/services_tests/alpc_tests.rs:42:9:
+assertion `left == right` failed
+  left: Fail("native NTDLL service NtAlpcSendWaitReceivePort (0x8e) at 0x12340000 is not implemented")
+ right: Continue
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    user::windows::process::sched::tests::services_tests::alpc_tests::native_alpc_invalid_handle_is_kernel_status_without_output_publication_all_abis
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 10344 filtered out; finished in 0.01s
+
+error: test failed, to rerun pass `--lib`

@@ -1,0 +1,10 @@
+{
+  "utc": "2026-10-21T16:24:36.068836+00:00",
+  "pid": 8056,
+  "expected-image": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-alpc-private-limits-v8-four-views\\target\\arm64\\probe.exe",
+  "driver-state-before": "running",
+  "action": "Stop only exact task-owned unsuccessful private ALPC compatibility control child; no other process, Defender or global configuration changes. Source/executable identity checks remain in original driver.",
+  "exit-code": 0,
+  "stdout": "{\n    \"ProcessId\":  8056,\n    \"ParentProcessId\":  6796,\n    \"ExecutablePath\":  \"C:\\\\Windows\\\\Temp\\\\assist-native-rax-20261010\\\\probe-src-native-alpc-private-limits-v8-four-views\\\\target\\\\arm64\\\\probe.exe\",\n    \"CommandLine\":  \"C:\\\\Windows\\\\Temp\\\\assist-native-rax-20261010\\\\probe-src-native-alpc-private-limits-v8-four-views\\\\target\\\\arm64\\\\probe.exe arm64\"\n}\nowned-child-stopped\n",
+  "stderr": ""
+}

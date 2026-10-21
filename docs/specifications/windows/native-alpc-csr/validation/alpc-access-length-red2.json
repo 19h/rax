@@ -1,0 +1,25 @@
+{
+  "state": "finished",
+  "pid": 20935,
+  "source-manifest-sha256": "a267bc3c686a50af3cf338c147b5d31a6577c15e5760f4a4b96ddd002667b1cf",
+  "source-inputs": 28353,
+  "argv": [
+    "cargo",
+    "+1.95.0",
+    "test",
+    "--locked",
+    "--offline",
+    "--no-default-features",
+    "--lib",
+    "services_tests::alpc_tests::limits",
+    "--",
+    "--test-threads=1"
+  ],
+  "child-pid": 20985,
+  "exit-code": 0,
+  "observed-test-exit": 101,
+  "log": "alpc-access-length-red2.log",
+  "bytes": 2460,
+  "sha256": "4c1fd7b07d112c3317cf0bdbeaf749ebf725275bb17f38d1775a33e04567ca4e",
+  "completed-utc": "2026-10-21T20:01:09.767476+00:00"
+}

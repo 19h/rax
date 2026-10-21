@@ -1,0 +1,28 @@
+{
+  "utc": "2026-10-21T17:46:58.074327+00:00",
+  "files": [
+    {
+      "path": "/Users/int/Downloads/assist-native-allocate-ex-transfer-20261010-2154/native-registry-frontier-diagnostic-v1.rs",
+      "restored-from": "/Users/int/.assist-native-alpc-csr-20261021/docs/specifications/windows/native-volume-query/validation/native-registry-frontier-diagnostic-v1.rs",
+      "before-sha256": "06620e3a554868a5125f27b18611bc23ec682cfd5de0630b773502e1f26b8a24",
+      "restored-sha256": "af13d86be6ae0fa95d724274b82b5cfc692f8ec061b302f2ca78b2946d183b6e",
+      "bytes": 2346
+    },
+    {
+      "path": "/Users/int/Downloads/assist-native-allocate-ex-transfer-20261010-2154/native-registry-frontier-diagnostic-v1-source.json",
+      "restored-from": "/Users/int/.assist-native-alpc-csr-20261021/docs/specifications/windows/native-volume-query/validation/native-registry-frontier-diagnostic-v1-source.json",
+      "before-sha256": "512c224254d1bce0ffc77223a1af2a0794d752236b57348134c0f231c07fe00d",
+      "restored-sha256": "49b1e5f077f728d5b07874a432474cdad9ef7009a7ca18c14d5be09df9a844b5",
+      "bytes": 100
+    },
+    {
+      "path": "/Users/int/Downloads/assist-native-allocate-ex-transfer-20261010-2154/run-native-registry-frontier-diagnostic-v1.py",
+      "restored-from": "/Users/int/.assist-native-alpc-csr-20261021/docs/specifications/windows/native-volume-query/validation/run-native-registry-frontier-diagnostic-v1.py",
+      "before-sha256": "6a5e7fdcaf148fbd774e982704686a93ca79ea9494167dca970641ff6cd27f63",
+      "restored-sha256": "c871f491ac587c15b7542a6c40128d7ffe1a683d98db437e95d9072eeb566b3e",
+      "bytes": 7424
+    }
+  ],
+  "old-run-receipt-preserved": true,
+  "current-observer-unique": "native-alpc-next-registry-20261021-v2"
+}

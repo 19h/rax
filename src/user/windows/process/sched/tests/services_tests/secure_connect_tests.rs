@@ -6,7 +6,7 @@ use std::sync::Arc;
 const SERVICE: u32 = 0x194;
 
 #[path = "secure_connect_csr_tests.rs"]
-mod csr;
+pub(super) mod csr;
 #[cfg(windows)]
 #[path = "secure_connect_leaf_tests.rs"]
 mod installed;

@@ -1,0 +1,10 @@
+
+running 5 tests
+test user::windows::object_namespace::csr::client_data::tests::native_csr_client_data_does_not_rewrite_untyped_address_sized_values ... ok
+test user::windows::object_namespace::csr::client_data::tests::native_csr_client_data_mapping_collision_rolls_back_only_new_views ... ok
+test user::windows::object_namespace::csr::client_data::tests::native_csr_client_data_rejects_foreign_and_reserved_pointer_fields ... ok
+test user::windows::object_namespace::csr::client_data::tests::native_csr_client_data_replays_all_four_selected_snapshots ... ok
+test user::windows::object_namespace::csr::client_data::tests::native_csr_client_data_reuse_checks_current_pages_and_snapshot_identity ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 7636 filtered out; finished in 0.14s
+

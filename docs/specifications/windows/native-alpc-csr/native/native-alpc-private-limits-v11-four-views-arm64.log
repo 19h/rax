@@ -1,0 +1,4 @@
+PROFILE arm64 POINTER_BYTES 8
+BEGIN case=0
+CREATE status=00000000 owned=1
+CONNECT status=00000000 owned=1 maximum=512

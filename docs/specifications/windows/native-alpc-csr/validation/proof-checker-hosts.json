@@ -1,0 +1,36 @@
+{
+  "state": "verified",
+  "complete-gates": [
+    {
+      "host": "macos",
+      "log": "alpc-complete-gates-macos-final-v1.log",
+      "bytes": 1065,
+      "sha256": "e1f7ec027fa4eed44c143a2055c5c8bd0015969803ceacf6e3916eb840f757b7",
+      "state": "verified"
+    },
+    {
+      "host": "linux",
+      "log": "alpc-complete-gates-linux-final-v1.log",
+      "bytes": 1065,
+      "sha256": "e1f7ec027fa4eed44c143a2055c5c8bd0015969803ceacf6e3916eb840f757b7",
+      "state": "verified"
+    },
+    {
+      "host": "windows",
+      "log": "alpc-complete-gates-windows-final-v1.log",
+      "bytes": 1117,
+      "sha256": "fb527e7546d36c4662ecb75fd22375de515925431616b356deb1b8b67bd5882a",
+      "state": "verified"
+    }
+  ],
+  "native-proof-source-inputs": 28357,
+  "native-proof-platforms": [
+    "macos",
+    "linux",
+    "windows"
+  ],
+  "live-native-inputs": 68,
+  "native-kernel-build": 29683,
+  "checker-sha256": "e17524232d3539c38fecc66671300e01c73ef35e4b3a6c4ca320cfbba0c20b32",
+  "native-checker-sha256": "31fb5a504d41589795fe3c6aec052aa4edcc204c70efd029652814542528d4ee"
+}

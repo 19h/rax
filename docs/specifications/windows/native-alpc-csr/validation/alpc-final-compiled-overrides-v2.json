@@ -1,0 +1,275 @@
+{
+  "base": "b546b4b4a11954c764516dec535af3959e1aaa6e",
+  "source-ledger": "alpc-candidate2-source.json",
+  "source-ledger-sha256": "662497516020160fb00c21e0b56eb2ee941c5d08ac125ba1c0321973db4db2f0",
+  "archive": "alpc-final-compiled-overrides-v2.tar.gz",
+  "bytes": 83714,
+  "sha256": "cbc61118dd5557a7f915c59dfcb61cd5942d02ee6f5ed58246a0748ac504c1ac",
+  "overrides": [
+    {
+      "path": "docs/specifications/windows/native-alpc-csr/native/native-alpc-private-alignment-v7-four-views-arm64.log",
+      "kind": "file",
+      "bytes": 15083,
+      "sha256": "9b54efafd5cfa8258aa25b8670b4a7714f4b60b2737ab06a1a3fac55dedae8c7"
+    },
+    {
+      "path": "docs/specifications/windows/native-alpc-csr/native/native-alpc-private-alignment-v7-four-views-x64.log",
+      "kind": "file",
+      "bytes": 15061,
+      "sha256": "586cdcf98a44f16b2460c865205fcf5b96e27eeda49e41aaf49382ec1ab70185"
+    },
+    {
+      "path": "docs/specifications/windows/native-alpc-csr/native/native-alpc-private-alignment-v7-four-views-x86-laa.log",
+      "kind": "file",
+      "bytes": 15105,
+      "sha256": "36665e611e5f90195bd770eef75c6dbf279ce069a495c947f4324ed078902709"
+    },
+    {
+      "path": "docs/specifications/windows/native-alpc-csr/native/native-alpc-private-alignment-v7-four-views-x86.log",
+      "kind": "file",
+      "bytes": 15061,
+      "sha256": "4cba148d3d58a76bdd5d52a44f7953cf8ce07646e32db66ac1e498d3294f1ab9"
+    },
+    {
+      "path": "docs/specifications/windows/native-alpc-csr/native/native-alpc-private-limits-v9-four-views-arm64.log",
+      "kind": "file",
+      "bytes": 114271,
+      "sha256": "24bbcf4f4a5262e915040e7c2b6bf4acb37083f342c26662c330f06ac79e5b75"
+    },
+    {
+      "path": "docs/specifications/windows/native-alpc-csr/native/native-alpc-private-limits-v9-four-views-x64.log",
+      "kind": "file",
+      "bytes": 114225,
+      "sha256": "2001b73e198d7d216bfe4e2c0e5fb52383f6d451e352e030ebba64355ce85a01"
+    },
+    {
+      "path": "docs/specifications/windows/native-alpc-csr/native/native-alpc-private-limits-v9-four-views-x86-laa.log",
+      "kind": "file",
+      "bytes": 114317,
+      "sha256": "134836edf6a37b158ab826f71aa4a6ca960d1b7a10cd14d5a62a7bcd233dc098"
+    },
+    {
+      "path": "docs/specifications/windows/native-alpc-csr/native/native-alpc-private-limits-v9-four-views-x86.log",
+      "kind": "file",
+      "bytes": 114225,
+      "sha256": "362357bb731dfcac3fe5d5788d0b7eb3ba898dc8b739047f59c39255591ba5cb"
+    },
+    {
+      "path": "docs/specifications/windows/native-alpc-csr/native/native-alpc-private-matrix-v5-four-views-arm64.log",
+      "kind": "file",
+      "bytes": 54748,
+      "sha256": "b026f943d699f193dd88e6e483182702b315ba07910372d285866cba99308fc1"
+    },
+    {
+      "path": "docs/specifications/windows/native-alpc-csr/native/native-alpc-private-matrix-v5-four-views-x64.log",
+      "kind": "file",
+      "bytes": 54668,
+      "sha256": "fe9820c14e9ef9124563051e49468019665078cc6b541ddd7d440a4a8c6e7876"
+    },
+    {
+      "path": "docs/specifications/windows/native-alpc-csr/native/native-alpc-private-matrix-v5-four-views-x86-laa.log",
+      "kind": "file",
+      "bytes": 54828,
+      "sha256": "ce8643b532b9f146bf95d5d15d65d11166fa8c6b8b8c97432e8fbc8b8a142f93"
+    },
+    {
+      "path": "docs/specifications/windows/native-alpc-csr/native/native-alpc-private-matrix-v5-four-views-x86.log",
+      "kind": "file",
+      "bytes": 54668,
+      "sha256": "48a7891ad180e79df4e8fef7efafe243ddaecf75707757e0d324cb811d734da8"
+    },
+    {
+      "path": "docs/specifications/windows/native-alpc-csr/native/native-alpc-private-priority-v12-four-views-arm64.log",
+      "kind": "file",
+      "bytes": 16679,
+      "sha256": "67c4a19622310b1b4490128c4583146733a988f5adf238170ccf1294c751bcd9"
+    },
+    {
+      "path": "docs/specifications/windows/native-alpc-csr/native/native-alpc-private-priority-v12-four-views-x64.log",
+      "kind": "file",
+      "bytes": 16655,
+      "sha256": "1c980fcccd4d07515e43c84effa5f4284a7f73a5a05277cb9f372bdeaeccf6e2"
+    },
+    {
+      "path": "docs/specifications/windows/native-alpc-csr/native/native-alpc-private-priority-v12-four-views-x86-laa.log",
+      "kind": "file",
+      "bytes": 17039,
+      "sha256": "717c188a9874ef089fb37af4626f2eacf21509464777aa6412243842768dea57"
+    },
+    {
+      "path": "docs/specifications/windows/native-alpc-csr/native/native-alpc-private-priority-v12-four-views-x86.log",
+      "kind": "file",
+      "bytes": 16991,
+      "sha256": "1045bb963d8ba7977f004a3d0b24dd8e05fd6f1d7e78159f03c4773ae883cb91"
+    },
+    {
+      "path": "docs/specifications/windows/native-alpc-csr/native/native-alpc-private-priority-v6-four-views-arm64.log",
+      "kind": "file",
+      "bytes": 44451,
+      "sha256": "738cc2d08ae2e606c8b906b24c9a7a74d5c859a39147e87a2c729b5f72209222"
+    },
+    {
+      "path": "docs/specifications/windows/native-alpc-csr/native/native-alpc-private-priority-v6-four-views-x64.log",
+      "kind": "file",
+      "bytes": 44385,
+      "sha256": "6f5189776a1ad9a878b8766140e6860a1a5a28ffe24f361b540a47ab68adda1b"
+    },
+    {
+      "path": "docs/specifications/windows/native-alpc-csr/native/native-alpc-private-priority-v6-four-views-x86-laa.log",
+      "kind": "file",
+      "bytes": 44685,
+      "sha256": "c8c18d09ed1e5d9454e841b4fe0d7651f01ded1cca09f25d2051d0507e2ea1f9"
+    },
+    {
+      "path": "docs/specifications/windows/native-alpc-csr/native/native-alpc-private-priority-v6-four-views-x86.log",
+      "kind": "file",
+      "bytes": 44553,
+      "sha256": "1a424acdcd56b766b2af8e45a975ef81c2513f3d5386aec94df3ee943f673a30"
+    },
+    {
+      "path": "docs/specifications/windows/native-alpc-csr/native/native-csr-client-connect-v6-four-views-arm64.log",
+      "kind": "file",
+      "bytes": 90212,
+      "sha256": "6172d4d67e6a5f31e2e01e21694cc35bb5c3597701a428ec972aeefcff989149"
+    },
+    {
+      "path": "docs/specifications/windows/native-alpc-csr/native/native-csr-client-connect-v6-four-views-x64.log",
+      "kind": "file",
+      "bytes": 90210,
+      "sha256": "bf053dbeb0e5587f8658b17faffed69a3fec58bf4ddfee6b5e4064147392d405"
+    },
+    {
+      "path": "docs/specifications/windows/native-alpc-csr/native/native-csr-client-connect-v6-four-views-x86-laa.log",
+      "kind": "file",
+      "bytes": 90214,
+      "sha256": "67b023cdb552d7c16ffcdffaa64e78dd580dfbef8e7547aac06f361acd6f1b02"
+    },
+    {
+      "path": "docs/specifications/windows/native-alpc-csr/native/native-csr-client-connect-v6-four-views-x86.log",
+      "kind": "file",
+      "bytes": 90210,
+      "sha256": "257a463780cd822dde78b614140e2788ef06495fb9fd8fc179e33ac406df190a"
+    },
+    {
+      "path": "src/user/windows/dll/native.rs",
+      "kind": "file",
+      "bytes": 22148,
+      "sha256": "3acebfbb67cf7336873940289bb64f095976f58845015b85d652c5d98a3e55a9"
+    },
+    {
+      "path": "src/user/windows/dll/native/alpc.rs",
+      "kind": "file",
+      "bytes": 4038,
+      "sha256": "d1aea747395e52e980780d0229d8cdc8343a2a44cf5106bbc8aa830481a5a076"
+    },
+    {
+      "path": "src/user/windows/dll/native/alpc/csr.rs",
+      "kind": "file",
+      "bytes": 6126,
+      "sha256": "703e35c25eb0a91f2470a140859ce270b7b7896c28a4098c36d05f5b30fa5816"
+    },
+    {
+      "path": "src/user/windows/memory/data_section.rs",
+      "kind": "file",
+      "bytes": 4916,
+      "sha256": "e20f34440f362cbf0cc2623defed837d72e4e2d5d76e2d2b0bca46e20b2dbfe2"
+    },
+    {
+      "path": "src/user/windows/memory/shared_section.rs",
+      "kind": "file",
+      "bytes": 5983,
+      "sha256": "beadea016b1581b0ac1ad64eabcd16cdd1fd2db306680b2896725f9412804276"
+    },
+    {
+      "path": "src/user/windows/object_namespace/csr.rs",
+      "kind": "file",
+      "bytes": 9085,
+      "sha256": "efcf16b783337c109e8ed65ab1694ec4c19392eaf5b34d28c2f767b10a385a78"
+    },
+    {
+      "path": "src/user/windows/object_namespace/csr/client_data.rs",
+      "kind": "file",
+      "bytes": 4820,
+      "sha256": "92553e61e084ea111878cdc5faff8510a6b51aa3c4c8dce751031b5360da9061"
+    },
+    {
+      "path": "src/user/windows/object_namespace/csr/client_data/tests.rs",
+      "kind": "file",
+      "bytes": 7868,
+      "sha256": "942cb1fa0305f1b3dd6ba5201af85f24a96c8aa515198bce589a9f05c9e9ef42"
+    },
+    {
+      "path": "src/user/windows/object_namespace/data.rs",
+      "kind": "file",
+      "bytes": 7543,
+      "sha256": "c49706d8ebf0a9816b58b8d7f1b0182d7244126cd46f016bfe95aa967b394350"
+    },
+    {
+      "path": "src/user/windows/object_namespace/installed.rs",
+      "kind": "file",
+      "bytes": 17674,
+      "sha256": "7e22251a687b6499ebdbaf909f867f7d48bdfc711ec34e2f6f4361f5fad81d9e"
+    },
+    {
+      "path": "src/user/windows/object_namespace/installed/csr.rs",
+      "kind": "file",
+      "bytes": 5993,
+      "sha256": "cf796332f20144a7444fbf594a70af22d76bdcda7acce5aba19e3775e028d49e"
+    },
+    {
+      "path": "src/user/windows/object_namespace/installed/csr/client_data.rs",
+      "kind": "file",
+      "bytes": 5255,
+      "sha256": "11fa69f0deac4a92a46fc22564817af3b3499c51ab5c32e935ebf8fa7a999f88"
+    },
+    {
+      "path": "src/user/windows/object_namespace/installed/data.rs",
+      "kind": "file",
+      "bytes": 8825,
+      "sha256": "dfd97766e308e25a38f7aaa3cbff749e155270631320df1ee0be83529f66de40"
+    },
+    {
+      "path": "src/user/windows/objects/lpc.rs",
+      "kind": "file",
+      "bytes": 2601,
+      "sha256": "d315fbab7f11c961e4f7739838afe809d96903cb40ac98feed0375194a5c79d3"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests.rs",
+      "kind": "file",
+      "bytes": 50025,
+      "sha256": "75bff5f6615e0347b84d721570a1019ba1ea667e53f710452b9fa04bdfe3632c"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/alpc_tests.rs",
+      "kind": "file",
+      "bytes": 8130,
+      "sha256": "e88e1bbe6b1e68ed0e6bc0f000f11099bb512b591cb7468c0e23b917bd06eb3f"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/alpc_tests/limits.rs",
+      "kind": "file",
+      "bytes": 4303,
+      "sha256": "69a021f22e922ad0905bf329cccf2fb25c0ee0e50654cbbc6def86fae490f577"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/alpc_tests/replay.rs",
+      "kind": "file",
+      "bytes": 13271,
+      "sha256": "ef4d9d562b3087259b2f439069c51109dab7a21d2aebb8930789723823d595a8"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/secure_connect_csr_tests.rs",
+      "kind": "file",
+      "bytes": 8556,
+      "sha256": "cb5e559c8f9da62b47dea200e86be2f80e59ec47e031bde7a2728f500c848848"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/secure_connect_tests.rs",
+      "kind": "file",
+      "bytes": 7633,
+      "sha256": "22d3c133bc904fe5576e3a4479c58e0657e8806e04712cb07ce5400aed78d36b"
+    }
+  ],
+  "scope": "Public Git baseline plus these source/data overrides reconstructs all final compiler input rows. Original development materialization archives remain local; their identities remain in original source-freeze records."
+}

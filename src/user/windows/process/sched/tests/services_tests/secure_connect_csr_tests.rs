@@ -9,7 +9,7 @@ const BASE: u64 = 0x0000_7FF5_F57C_0000;
 #[path = "secure_connect_csr_leaf_tests.rs"]
 mod installed_csr;
 
-fn server() -> (Arc<DataSection>, Arc<CsrServer>) {
+pub(in super::super) fn server() -> (Arc<DataSection>, Arc<CsrServer>) {
     let mut prefix = vec![0; 5 * 4096];
     prefix[40..48].copy_from_slice(&BASE.to_le_bytes());
     prefix[48..56].copy_from_slice(&BASE.to_le_bytes());

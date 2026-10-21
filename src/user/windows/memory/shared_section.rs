@@ -25,6 +25,12 @@ pub(super) struct SharedViews {
 }
 
 impl VirtualMemory {
+    pub(crate) fn owns_shared_view(&self, owner: &SharedViewOwner) -> bool {
+        self.shared_views
+            .views
+            .get(&owner.base)
+            .is_some_and(|view| view.size == owner.size && Arc::ptr_eq(&view.token, &owner.token))
+    }
     pub(crate) fn is_shared_view(&self, address: u64) -> bool {
         self.allocation(address)
             .is_some_and(|allocation| self.shared_views.views.contains_key(&allocation.base))
@@ -155,12 +161,7 @@ impl VirtualMemory {
     /// Last-handle retirement cannot free a private or mapped replacement at
     /// the same address after a caller explicitly unmapped the original view.
     pub(crate) fn retire_shared_view(&mut self, owner: &SharedViewOwner) -> Result<(), VmError> {
-        let owned = self
-            .shared_views
-            .views
-            .get(&owner.base)
-            .is_some_and(|view| view.size == owner.size && Arc::ptr_eq(&view.token, &owner.token));
-        if owned {
+        if self.owns_shared_view(owner) {
             self.release(owner.base)?;
         }
         Ok(())

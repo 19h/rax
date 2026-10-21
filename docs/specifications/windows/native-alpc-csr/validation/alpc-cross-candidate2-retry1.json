@@ -1,0 +1,53 @@
+{
+  "state": "finished",
+  "pid": 16327,
+  "source-ledger-sha256": "662497516020160fb00c21e0b56eb2ee941c5d08ac125ba1c0321973db4db2f0",
+  "targets": [
+    {
+      "target": "aarch64-pc-windows-msvc",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "xwin",
+        "check",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "--target",
+        "aarch64-pc-windows-msvc"
+      ],
+      "exit-code": 0,
+      "log": "alpc-cross-aarch64-candidate2-retry1.log",
+      "bytes": 1203,
+      "sha256": "19ee7a15cafb38124256f513e036742c68b4ad4a080b3a9815876b1d863a81ab",
+      "clean-log": "alpc-cross-aarch64-candidate2-retry1-clean.log",
+      "primary-package-cleaned": true
+    },
+    {
+      "target": "x86_64-pc-windows-msvc",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "xwin",
+        "check",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "--target",
+        "x86_64-pc-windows-msvc"
+      ],
+      "exit-code": 0,
+      "log": "alpc-cross-x64-candidate2-retry1.log",
+      "bytes": 1203,
+      "sha256": "064c19de54e42d88fc39deec80044b95ab37108f45429fac8e237e5d75ee2513",
+      "clean-log": "alpc-cross-x64-candidate2-retry1-clean.log",
+      "primary-package-cleaned": true
+    }
+  ],
+  "target": "x86_64-pc-windows-msvc",
+  "child-pid": 17013,
+  "exit-code": 0,
+  "completed-utc": "2026-10-21T19:52:37.597762+00:00"
+}

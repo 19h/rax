@@ -1,0 +1,14 @@
+   Compiling rax v0.1.0 (/Users/int/.assist-native-alpc-csr-20261021)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 29s
+     Running unittests src/lib.rs (target/candidate2/debug/deps/rax-dd79f0cd9ae9bb68)
+
+running 6 tests
+test user::windows::process::sched::tests::services_tests::alpc_tests::limits::native_alpc_port_connect_grant_denial_replays_all_execution_views_without_publication ... ok
+test user::windows::process::sched::tests::services_tests::alpc_tests::limits::native_alpc_word_length_wrap_replays_native_and_wow_validation_without_body_access ... ok
+test user::windows::process::sched::tests::services_tests::alpc_tests::native_alpc_csr_exchange_owns_repeated_reply_mappings_and_server_capture ... ok
+test user::windows::process::sched::tests::services_tests::alpc_tests::native_alpc_csr_rejects_foreign_capture_and_changed_schema_without_publication ... ok
+test user::windows::process::sched::tests::services_tests::alpc_tests::native_alpc_invalid_handle_is_kernel_status_without_output_publication_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::alpc_tests::replay::native_alpc_pre_peer_faults_replay_four_complete_execution_views ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 8164 filtered out; finished in 0.82s
+

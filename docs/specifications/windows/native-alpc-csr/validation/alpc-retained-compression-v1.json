@@ -1,0 +1,193 @@
+{
+  "utc": "2026-10-21T16:10:25.274427+00:00",
+  "state": "finished",
+  "pid": 4312,
+  "free-before": 1892642816,
+  "files": [
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\retained-owning-candidate2\\capi.exe",
+      "before": {
+        "bytes": 32784384,
+        "sha256": "77d6aaddb7f7d6459c2dbbb2b3912f73cf72966a3cd9198ad8d5967c7a95acba"
+      },
+      "physical-before": 32784384,
+      "compact-exit-code": 0,
+      "log": "alpc-retained-compression-v1-0.log",
+      "after": {
+        "bytes": 32784384,
+        "sha256": "77d6aaddb7f7d6459c2dbbb2b3912f73cf72966a3cd9198ad8d5967c7a95acba"
+      },
+      "physical-after": 21139456
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\retained-owning-candidate2\\carrier.lib",
+      "before": {
+        "bytes": 860902070,
+        "sha256": "cbb316bf81752b48155ed5e96cb4a61da537bc8a36257680295079987bba3765"
+      },
+      "physical-before": 860902070,
+      "compact-exit-code": 0,
+      "log": "alpc-retained-compression-v1-1.log",
+      "after": {
+        "bytes": 860902070,
+        "sha256": "cbb316bf81752b48155ed5e96cb4a61da537bc8a36257680295079987bba3765"
+      },
+      "physical-after": 347111424
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\retained-owning-candidate2\\core.rlib",
+      "before": {
+        "bytes": 511320364,
+        "sha256": "7034c2491a3a490882599ca151b18b2e2a1128d4e6eefc9b3db9da819c0cc169"
+      },
+      "physical-before": 511320364,
+      "compact-exit-code": 0,
+      "log": "alpc-retained-compression-v1-2.log",
+      "after": {
+        "bytes": 511320364,
+        "sha256": "7034c2491a3a490882599ca151b18b2e2a1128d4e6eefc9b3db9da819c0cc169"
+      },
+      "physical-after": 206254080
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\retained-owning-candidate2\\ordinary.exe",
+      "before": {
+        "bytes": 27212800,
+        "sha256": "bc18c07126c88aa71a2532799b6459520b33968b4e4b81b771d082a56ac5619c"
+      },
+      "physical-before": 27212800,
+      "compact-exit-code": 0,
+      "log": "alpc-retained-compression-v1-3.log",
+      "after": {
+        "bytes": 27212800,
+        "sha256": "bc18c07126c88aa71a2532799b6459520b33968b4e4b81b771d082a56ac5619c"
+      },
+      "physical-after": 17686528
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\retained-owning-candidate1\\capi.exe",
+      "before": {
+        "bytes": 32782848,
+        "sha256": "7270f7ed71d2ea7883cc3d0335858a1b254be861ce65f0ef686638eab6699cff"
+      },
+      "physical-before": 32782848,
+      "compact-exit-code": 0,
+      "log": "alpc-retained-compression-v1-4.log",
+      "after": {
+        "bytes": 32782848,
+        "sha256": "7270f7ed71d2ea7883cc3d0335858a1b254be861ce65f0ef686638eab6699cff"
+      },
+      "physical-after": 21127168
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\retained-owning-candidate1\\carrier.lib",
+      "before": {
+        "bytes": 861213116,
+        "sha256": "89267220625923654476f90221742808f42d7b18d945f087a9af36f547c25cd5"
+      },
+      "physical-before": 861213116,
+      "compact-exit-code": 0,
+      "log": "alpc-retained-compression-v1-5.log",
+      "after": {
+        "bytes": 861213116,
+        "sha256": "89267220625923654476f90221742808f42d7b18d945f087a9af36f547c25cd5"
+      },
+      "physical-after": 347430912
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\retained-owning-candidate1\\core.rlib",
+      "before": {
+        "bytes": 511626678,
+        "sha256": "6a438221ae1ccca27ad16c44fa0f1337f0f463423299a2a9dad279be4bca352c"
+      },
+      "physical-before": 511626678,
+      "compact-exit-code": 0,
+      "log": "alpc-retained-compression-v1-6.log",
+      "after": {
+        "bytes": 511626678,
+        "sha256": "6a438221ae1ccca27ad16c44fa0f1337f0f463423299a2a9dad279be4bca352c"
+      },
+      "physical-after": 206585856
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\retained-owning-candidate1\\ordinary.exe",
+      "before": {
+        "bytes": 27210240,
+        "sha256": "5e3fb2a726adaebdf465c9c25f0ad89294db68e030621e89a6d83c9560f37db6"
+      },
+      "physical-before": 27210240,
+      "compact-exit-code": 0,
+      "log": "alpc-retained-compression-v1-7.log",
+      "after": {
+        "bytes": 27210240,
+        "sha256": "5e3fb2a726adaebdf465c9c25f0ad89294db68e030621e89a6d83c9560f37db6"
+      },
+      "physical-after": 17739776
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\retained-owning-candidate1\\capi.exe",
+      "before": {
+        "bytes": 32782336,
+        "sha256": "5165f075bbf61526ce022cabb52db7f46549495616e8a2d642cbe8b46b64b171"
+      },
+      "physical-before": 32782336,
+      "compact-exit-code": 0,
+      "log": "alpc-retained-compression-v1-8.log",
+      "after": {
+        "bytes": 32782336,
+        "sha256": "5165f075bbf61526ce022cabb52db7f46549495616e8a2d642cbe8b46b64b171"
+      },
+      "physical-after": 21155840
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\retained-owning-candidate1\\carrier.lib",
+      "before": {
+        "bytes": 861072820,
+        "sha256": "5c0d6ca2507ff3d11709c7142560036e7fe3187468e25303151dab062806b836"
+      },
+      "physical-before": 861072820,
+      "compact-exit-code": 0,
+      "log": "alpc-retained-compression-v1-9.log",
+      "after": {
+        "bytes": 861072820,
+        "sha256": "5c0d6ca2507ff3d11709c7142560036e7fe3187468e25303151dab062806b836"
+      },
+      "physical-after": 347152384
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\retained-owning-candidate1\\core.rlib",
+      "before": {
+        "bytes": 511485170,
+        "sha256": "7322db7ee2f1ba09ddd97e094ffd96dfeaf25843deebc4b841225472d2585a9b"
+      },
+      "physical-before": 511485170,
+      "compact-exit-code": 0,
+      "log": "alpc-retained-compression-v1-10.log",
+      "after": {
+        "bytes": 511485170,
+        "sha256": "7322db7ee2f1ba09ddd97e094ffd96dfeaf25843deebc4b841225472d2585a9b"
+      },
+      "physical-after": 206462976
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\retained-owning-candidate1\\ordinary.exe",
+      "before": {
+        "bytes": 27209728,
+        "sha256": "a90f2b02ee77c027efda7ba4021fcb0b586a1e67ec35dfbec1821741ec5bb7f1"
+      },
+      "physical-before": 27209728,
+      "compact-exit-code": 0,
+      "log": "alpc-retained-compression-v1-11.log",
+      "after": {
+        "bytes": 27209728,
+        "sha256": "a90f2b02ee77c027efda7ba4021fcb0b586a1e67ec35dfbec1821741ec5bb7f1"
+      },
+      "physical-after": 17723392
+    }
+  ],
+  "scope": "NTFS lossless compression of12 explicit old task-owned retained archive/executable byte copies. Keep paths, logical bytes and SHA256 unchanged. No source, active output, Defender setting or user build altered.",
+  "current-file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\retained-owning-candidate1\\ordinary.exe",
+  "free-after": 9186193408,
+  "physical-before": 4297602554,
+  "physical-after": 1777569792
+}

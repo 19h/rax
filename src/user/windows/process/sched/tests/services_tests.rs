@@ -1,6 +1,9 @@
 use super::*;
 use crate::user::windows::loader::services::tests::table;
 
+#[path = "services_tests/alpc_tests.rs"]
+mod alpc_tests;
+
 #[path = "services_tests/file_open_tests.rs"]
 mod file_open_tests;
 

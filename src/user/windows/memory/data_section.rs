@@ -8,6 +8,33 @@ pub(super) struct DataView {
     _section: Arc<DataSection>,
 }
 impl VirtualMemory {
+    pub(crate) fn owns_readonly_data_view(&self, base: u64, section: &Arc<DataSection>) -> bool {
+        let identity = self
+            .data_views
+            .get(&base)
+            .is_some_and(|view| Arc::ptr_eq(&view._section, section));
+        let Some(allocation) = self.allocation(base).filter(|allocation| {
+            identity
+                && allocation.base == base
+                && allocation.size == section.size
+                && allocation.protect == prot::READONLY
+        }) else {
+            return false;
+        };
+        section.regions.iter().all(|region| {
+            allocation
+                .runs(
+                    region.offset / PAGE_SIZE,
+                    (region.offset + region.size) / PAGE_SIZE,
+                )
+                .into_iter()
+                .all(|(_, _, page)| {
+                    page.committed == region.bytes.is_some()
+                        && page.protect == if page.committed { prot::READONLY } else { 0 }
+                        && page.reported.is_none()
+                })
+        })
+    }
     pub(crate) fn is_data_view(&self, address: u64) -> bool {
         self.allocation(address)
             .is_some_and(|a| self.data_views.contains_key(&a.base))
@@ -35,7 +62,8 @@ impl VirtualMemory {
         {
             return Err(VmError::InvalidParameter);
         }
-        let name = String::from_utf16_lossy(&section.path).into();
+        let name =
+            (!section.path.is_empty()).then(|| String::from_utf16_lossy(&section.path).into());
         let ordinary_protection = protection & !(prot::NOCACHE | prot::WRITECOMBINE);
         let allocation = self.reserve(
             Some(base),
@@ -43,7 +71,7 @@ impl VirtualMemory {
             ordinary_protection,
             AllocKind::Mapped,
             false,
-            Some(name),
+            name,
         )?;
         let result = (|| {
             for region in &section.regions {

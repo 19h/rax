@@ -4,6 +4,23 @@ use crate::user::windows::object_namespace::csr::CsrMetadata;
 use crate::user::windows::object_namespace::data::DataRegion;
 use std::io;
 
+#[cfg(target_arch = "aarch64")]
+mod client_data;
+
+pub(super) fn capture_client_data(
+    metadata: &CsrMetadata,
+) -> io::Result<
+    Option<std::sync::Arc<crate::user::windows::object_namespace::csr::client_data::CsrClientData>>,
+> {
+    #[cfg(target_arch = "aarch64")]
+    return client_data::capture(metadata).map(Some);
+    #[cfg(not(target_arch = "aarch64"))]
+    {
+        let _ = metadata;
+        Ok(None)
+    }
+}
+
 #[cfg(not(target_arch = "aarch64"))]
 pub(super) fn capture(_: &[DataRegion]) -> io::Result<Option<CsrMetadata>> {
     Ok(None)

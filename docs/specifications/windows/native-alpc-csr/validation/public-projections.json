@@ -1,0 +1,76 @@
+{
+  "files": [
+    {
+      "path": "alpc-native-owning-candidate2-artifacts-after.log",
+      "kind": "cargo-artifact-only",
+      "original": {
+        "bytes": 132251,
+        "sha256": "94cbeab5c8b305229d1dfd12ab8fd9a6a5f6ae0e8709bd4d5f23b1dab8b19401"
+      },
+      "published": {
+        "bytes": 117653,
+        "sha256": "6c58a2350c9b0578be17a1f593989bdb1ff57e9c3bb3709c6e5e748333dd0e4e"
+      }
+    },
+    {
+      "path": "alpc-native-owning-candidate2-artifacts-before.log",
+      "kind": "cargo-artifact-only",
+      "original": {
+        "bytes": 132536,
+        "sha256": "d02c1d5f35814ceb8573116406e3f127d4323834c1bf041a75745c701a132518"
+      },
+      "published": {
+        "bytes": 117656,
+        "sha256": "1998c1d589f176ce69409e116671b6aa1a8b0ad488bcea1945376f74b74f5a3f"
+      }
+    },
+    {
+      "path": "linux-alpc-candidate2-owning-artifacts.log",
+      "kind": "cargo-artifact-only",
+      "original": {
+        "bytes": 174086,
+        "sha256": "c95ec25fd5d4e07c8de72c70f5eb909c472a7b7a172349ddb5a8a1bf808503ae"
+      },
+      "published": {
+        "bytes": 167252,
+        "sha256": "34fd0ca552ac19c6cc1c19c2aa2f080e19e1b373726805026b459d2682f7511f"
+      }
+    },
+    {
+      "path": "linux-alpc-candidate2-owning-shipping.log",
+      "kind": "cargo-artifact-only",
+      "original": {
+        "bytes": 174239,
+        "sha256": "fe6cb4d58daa0455d41f5b7bc82844c3107ce62923f474943e53d67a97019d18"
+      },
+      "published": {
+        "bytes": 167255,
+        "sha256": "0a05ea4155257284833fcfd63de2e7defb8e68cb43d98f7050195f673646f17a"
+      }
+    },
+    {
+      "path": "macos-alpc-candidate2-owning-build.log",
+      "kind": "private-build-transcript-withheld",
+      "original": {
+        "bytes": 1403,
+        "sha256": "d078a82ebead44c1d2476a9bc1490f190c54670aa50fc567b35e7c1873daaed6"
+      },
+      "published": {
+        "bytes": 111,
+        "sha256": "ced38143c2779c87519e6be5a0fed184800836878479d0fe792f31e6860ddf08"
+      }
+    },
+    {
+      "path": "macos-alpc-candidate2-owning-prime-artifacts.log",
+      "kind": "cargo-artifact-only",
+      "original": {
+        "bytes": 137670,
+        "sha256": "a92e5384ecb9dec7416c6e2fe810553e3c4d86432f590025a1bb429eaf96c016"
+      },
+      "published": {
+        "bytes": 128743,
+        "sha256": "735ff3a5d53d4121809826dc3c614d4c81ec186c71a700212f388cc800e6287a"
+      }
+    }
+  ]
+}

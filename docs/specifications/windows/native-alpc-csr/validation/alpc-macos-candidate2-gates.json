@@ -1,0 +1,130 @@
+{
+  "state": "finished",
+  "source-epoch": 1,
+  "host": "macos",
+  "driver-pid": 17988,
+  "steps": [
+    {
+      "name": "focus",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "native_alpc",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 93.70971658400958,
+      "log": "alpc-macos-candidate2-focus.log",
+      "bytes": 1304,
+      "sha256": "37d2393e1c2135f2a1a7faff6756ca70ea8d70cc1b5821f200c31854377e3bdb",
+      "results": [
+        "ok. 6 passed; 0 failed; 0 ignored; 0 measured; 8164 filtered out; finished in 0.82s"
+      ]
+    },
+    {
+      "name": "full",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 453.22025712498,
+      "log": "alpc-macos-candidate2-full.log",
+      "bytes": 862291,
+      "sha256": "9606221ce85bda28ad6d7d255abf982875e3023e9a032869464bc8d6528a3c32",
+      "results": [
+        "ok. 8168 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 449.44s"
+      ]
+    },
+    {
+      "name": "capi",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "-p",
+        "rax-capi",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 61.94958695798414,
+      "log": "alpc-macos-candidate2-capi.log",
+      "bytes": 14119,
+      "sha256": "d2955645bcbb122afa1ffcfb0c87d96f88c5ad6b1fc593ea245dba18ab5619a8",
+      "results": [
+        "ok. 183 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 13.78s",
+        "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    {
+      "name": "integration",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--test",
+        "user_windows",
+        "--test",
+        "user_windows_memory",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 61.38432712497888,
+      "log": "alpc-macos-candidate2-integration.log",
+      "bytes": 35850,
+      "sha256": "5f762dd17ece4d69ee765b1e17392c5a7e2a619121a06f91e643065961784f07",
+      "results": [
+        "ok. 544 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 57.37s",
+        "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    {
+      "name": "all-targets",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "check",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--all-targets"
+      ],
+      "exit-code": 0,
+      "seconds": 50.47839041601401,
+      "log": "alpc-macos-candidate2-all-targets.log",
+      "bytes": 143,
+      "sha256": "50dc69594f5922ab6f0724ce4b93d2860750865ca424814e97e2927b039d50b5",
+      "results": []
+    }
+  ],
+  "current-step": "all-targets",
+  "child-pid": 26575,
+  "exit-code": 0,
+  "post-source-inputs": 28357,
+  "completed-utc": "2026-10-21T17:55:48.590516+00:00"
+}

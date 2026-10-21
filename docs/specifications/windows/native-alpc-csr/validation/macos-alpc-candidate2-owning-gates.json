@@ -1,0 +1,133 @@
+{
+  "state": "finished",
+  "host": "macos",
+  "pid": 10637,
+  "source-inputs": 3918,
+  "scope": "Retained Assist ABI184 linked consumers; no whole current root GUI/plugin/package claim.",
+  "steps": [
+    {
+      "gate": "prime-artifacts",
+      "cwd": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/rust/assist-rs",
+      "command": [
+        "cmake",
+        "-E",
+        "env",
+        "CARGO_TARGET_DIR=/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes/assist-rs-target",
+        "CARGO_PROFILE_RELEASE_STRIP=false",
+        "MACOSX_DEPLOYMENT_TARGET=10.15",
+        "ASSIST_RESOURCE_PYTHON=/opt/homebrew/Frameworks/Python.framework/Versions/3.15/bin/python3.15",
+        "CARGO_BUILD_JOBS=2",
+        "RUSTUP_TOOLCHAIN=1.95.0",
+        "/Users/int/.cargo/bin/cargo",
+        "build",
+        "--locked",
+        "--offline",
+        "--manifest-path",
+        "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/rust/assist-rs/Cargo.toml",
+        "--package",
+        "assist-rs",
+        "--target",
+        "aarch64-apple-darwin",
+        "--features",
+        "rax",
+        "--message-format=json"
+      ],
+      "exit-code": 0,
+      "seconds": 26.19603070797166,
+      "log": "macos-alpc-candidate2-owning-prime-artifacts.log",
+      "bytes": 137670,
+      "sha256": "a92e5384ecb9dec7416c6e2fe810553e3c4d86432f590025a1bb429eaf96c016"
+    },
+    {
+      "gate": "archives-before",
+      "command": [
+        "python3",
+        "-B",
+        "/Users/int/Library/Caches/assist-process-emulation/native-alpc-frontier-20261021/collect-alpc-archives-candidate2.py",
+        "--host",
+        "macos",
+        "--source",
+        "/Users/int/.assist-native-alpc-csr-20261021",
+        "--manifest",
+        "/Users/int/Library/Caches/assist-process-emulation/native-alpc-frontier-20261021/alpc-owning-source-hashes-candidate2.json",
+        "--messages",
+        "/Users/int/Library/Caches/assist-process-emulation/native-alpc-frontier-20261021/macos-alpc-candidate2-owning-prime-artifacts.log",
+        "--output",
+        "/Users/int/Library/Caches/assist-process-emulation/native-alpc-frontier-20261021/macos-alpc-candidate2-archives-before.json"
+      ],
+      "exit-code": 0,
+      "seconds": 0.9086048330063932,
+      "log": "macos-alpc-candidate2-owning-archives-before.log",
+      "bytes": 180,
+      "sha256": "dc77d8c665f4b23393f1f138712bb31253dfe13664ed77502a9c7713cf514053"
+    },
+    {
+      "gate": "build",
+      "command": [
+        "cmake",
+        "--build",
+        "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes",
+        "--target",
+        "assist_idalib_cli",
+        "assist_mcp",
+        "assist_mcp_tool_manifest_tests",
+        "assist_rax_process_tests",
+        "assist_process_tool_tests",
+        "assist_process_tool_unavailable_tests",
+        "assist_e14_rax_abi_drift_tests",
+        "assist_rust_archive_link_tests",
+        "--parallel",
+        "2"
+      ],
+      "exit-code": 0,
+      "seconds": 17.269536832987797,
+      "log": "macos-alpc-candidate2-owning-build.log",
+      "bytes": 1403,
+      "sha256": "d078a82ebead44c1d2476a9bc1490f190c54670aa50fc567b35e7c1873daaed6"
+    },
+    {
+      "gate": "ctest",
+      "command": [
+        "ctest",
+        "--test-dir",
+        "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes",
+        "--output-on-failure",
+        "-R",
+        "^(assist_rust_archive_link_tests|assist_rax_process_tests|assist_process_tool_tests|assist_process_tool_unavailable_tests|assist_e14_rax_abi_drift_tests|assist_mcp_tool_manifest_tests|assist_mcp_manifest_runtime_test)$"
+      ],
+      "exit-code": 0,
+      "seconds": 5.395523166982457,
+      "log": "macos-alpc-candidate2-owning-ctest.log",
+      "bytes": 1298,
+      "sha256": "3d6ff18bde8a20dd888aa9c5d5b773b6c21f800c26423746e3b553b146384fef"
+    },
+    {
+      "gate": "archives-after",
+      "command": [
+        "python3",
+        "-B",
+        "/Users/int/Library/Caches/assist-process-emulation/native-alpc-frontier-20261021/collect-alpc-archives-candidate2.py",
+        "--host",
+        "macos",
+        "--source",
+        "/Users/int/.assist-native-alpc-csr-20261021",
+        "--manifest",
+        "/Users/int/Library/Caches/assist-process-emulation/native-alpc-frontier-20261021/alpc-owning-source-hashes-candidate2.json",
+        "--messages",
+        "/Users/int/Library/Caches/assist-process-emulation/native-alpc-frontier-20261021/macos-alpc-candidate2-owning-prime-artifacts.log",
+        "--output",
+        "/Users/int/Library/Caches/assist-process-emulation/native-alpc-frontier-20261021/macos-alpc-candidate2-archives-after.json"
+      ],
+      "exit-code": 0,
+      "seconds": 1.2482933339779265,
+      "log": "macos-alpc-candidate2-owning-archives-after.log",
+      "bytes": 180,
+      "sha256": "dc77d8c665f4b23393f1f138712bb31253dfe13664ed77502a9c7713cf514053"
+    }
+  ],
+  "current-step": "archives-after",
+  "child-pid": 11470,
+  "exit-code": 0,
+  "archive-identities-stable": true,
+  "completed-utc": "2026-10-21T19:46:46.511033+00:00"
+}

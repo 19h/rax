@@ -1,0 +1,124 @@
+{
+  "state": "finished",
+  "pid": 3276,
+  "source-epoch": 1,
+  "utc": "2026-10-21T19:45:56.740084+00:00",
+  "steps": [
+    {
+      "name": "toolchain",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "--version"
+      ],
+      "exit-code": 0,
+      "seconds": 0.045904707978479564,
+      "log": "alpc-native-owning-candidate2-toolchain.log",
+      "bytes": 36,
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5"
+    },
+    {
+      "name": "artifacts-before",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "build",
+        "--locked",
+        "--offline",
+        "--features",
+        "rax",
+        "--message-format=json"
+      ],
+      "exit-code": 0,
+      "seconds": 110.02941604200169,
+      "log": "alpc-native-owning-candidate2-artifacts-before.log",
+      "bytes": 132536,
+      "sha256": "d02c1d5f35814ceb8573116406e3f127d4323834c1bf041a75745c701a132518"
+    },
+    {
+      "name": "archive-before",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\collect-alpc-archives-candidate2.py",
+        "--host",
+        "windows",
+        "--source",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate2",
+        "--manifest",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\alpc-owning-source-hashes-candidate2.json",
+        "--messages",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\alpc-native-owning-candidate2-artifacts-before.log",
+        "--output",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-alpc-candidate2-pre-cpp-archives.json"
+      ],
+      "exit-code": 0,
+      "seconds": 5.018563375022495,
+      "log": "alpc-native-owning-candidate2-archive-before.log",
+      "bytes": 182,
+      "sha256": "21fc7c1245481b2392e51a3a7f92775fc938bd731ad06cf1b4acee1db1c74b28"
+    },
+    {
+      "name": "cpp",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\helpers\\alpc-owned-cpp-build-candidate2.py"
+      ],
+      "exit-code": 0,
+      "seconds": 41.77445674999035,
+      "log": "alpc-native-owning-candidate2-cpp.log",
+      "bytes": 3705,
+      "sha256": "6ec80d0d0b2f2e509d20d42162283ce50b3a4a195c91cca282e81e600227d0c4"
+    },
+    {
+      "name": "artifacts-after",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "build",
+        "--locked",
+        "--offline",
+        "--features",
+        "rax",
+        "--message-format=json"
+      ],
+      "exit-code": 0,
+      "seconds": 0.5075662499875762,
+      "log": "alpc-native-owning-candidate2-artifacts-after.log",
+      "bytes": 132251,
+      "sha256": "94cbeab5c8b305229d1dfd12ab8fd9a6a5f6ae0e8709bd4d5f23b1dab8b19401"
+    },
+    {
+      "name": "archive-after",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\collect-alpc-archives-candidate2.py",
+        "--host",
+        "windows",
+        "--source",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate2",
+        "--manifest",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\alpc-owning-source-hashes-candidate2.json",
+        "--messages",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\alpc-native-owning-candidate2-artifacts-after.log",
+        "--output",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-alpc-candidate2-final-owning-archive-identities.json"
+      ],
+      "exit-code": 0,
+      "seconds": 5.082032499980414,
+      "log": "alpc-native-owning-candidate2-archive-after.log",
+      "bytes": 182,
+      "sha256": "21fc7c1245481b2392e51a3a7f92775fc938bd731ad06cf1b4acee1db1c74b28"
+    }
+  ],
+  "junction": {
+    "before": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate1",
+    "after": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate2"
+  },
+  "current-step": "archive-after",
+  "child-pid": 6856,
+  "exit-code": 0,
+  "source-inputs": 3918,
+  "archive-identities-stable": true,
+  "scope": "Frozen alpc source; retained Assist ABI184 linked consumers. Whole current-root ABI274 GUI/plugin/packages not claimed.",
+  "completed-utc": "2026-10-21T19:48:44.374102+00:00"
+}

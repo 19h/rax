@@ -1,0 +1,7 @@
+{
+  "path": "/Users/int/Library/Caches/assist-process-emulation/native-alpc-frontier-20261021/alpc-owning-capi.cpp",
+  "bytes": 3573,
+  "sha256": "706cb2a46c143a557f3c565792d954c40e596ddbd767a2138a9d2303e94261e3",
+  "source-parent": "process-mitigation-owning-capi.cpp",
+  "scope": "Versioned unchanged ordinary caller source bound to new actual-owning archive identities; process outcomes independent of observer exit."
+}

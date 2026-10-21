@@ -75,8 +75,7 @@ impl View {
         Ok(())
     }
 }
-fn regions(view: &View, size: usize) -> io::Result<Vec<DataRegion>> {
-    let base = view.0 as usize;
+pub(super) fn regions(base: usize, size: usize) -> io::Result<Vec<DataRegion>> {
     let mut offset = 0;
     let mut regions = Vec::new();
     let mut committed = 0usize;
@@ -236,8 +235,8 @@ pub(super) fn capture() -> io::Result<(
     }
     let mut captured = None;
     for _ in 0..3 {
-        let first = regions(&view, size)?;
-        if first == regions(&view, size)? {
+        let first = regions(view.0 as usize, size)?;
+        if first == regions(view.0 as usize, size)? {
             captured = Some(first);
             break;
         }

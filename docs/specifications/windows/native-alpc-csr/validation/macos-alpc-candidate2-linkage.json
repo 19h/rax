@@ -1,0 +1,47 @@
+{
+  "targets": [
+    {
+      "target": "test/assist_rust_archive_link_tests",
+      "selected-carrier-in-link-rule": true,
+      "link-rule-sha256": "eee1069d27c115fe6b3bc76ab9007fa6b1345dd1ce39bed4170b3fe357cd1ad6"
+    },
+    {
+      "target": "test/assist_rax_process_tests",
+      "selected-carrier-in-link-rule": true,
+      "link-rule-sha256": "866c8a24813d25d2d8b95bfd14854a39ced95136f8fbe965726d7d3ab2f5ac35"
+    },
+    {
+      "target": "test/assist_process_tool_tests",
+      "selected-carrier-in-link-rule": true,
+      "link-rule-sha256": "bd1babc7b4f242ee52872ac4677f1d054338d24f296873f1e257742552ea2a84"
+    },
+    {
+      "target": "test/assist_process_tool_unavailable_tests",
+      "selected-carrier-in-link-rule": true,
+      "link-rule-sha256": "881c775bfd8bb6d112df010215426568bc470b83b529e290b1d2bd528298aa4c"
+    },
+    {
+      "target": "test/assist_e14_rax_abi_drift_tests",
+      "selected-carrier-in-link-rule": true,
+      "link-rule-sha256": "d481b3b1c15baa27653fb27ac6130c5de52f5599b2cfa68cc1ca72c90300b0b2"
+    },
+    {
+      "target": "test/assist_mcp_tool_manifest_tests",
+      "selected-carrier-in-link-rule": true,
+      "link-rule-sha256": "952284c36c23a4a8158dd0b8f58c029bb5d225fba37c28118834ecfb1ad46048"
+    },
+    {
+      "target": "assist-mcp",
+      "selected-carrier-in-link-rule": true,
+      "link-rule-sha256": "ba6c21c38fddd243ef4e73b12c34b17382a112e970ab54500d2cae59bf34faca"
+    },
+    {
+      "target": "assist-cli",
+      "selected-carrier-in-link-rule": true,
+      "link-rule-sha256": "6f49f32e603410da33dba4663872fbda58f9e5b3dd095c818f218e9349a11ebf"
+    }
+  ],
+  "carrier-path": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes/assist-rs-target/aarch64-apple-darwin/debug/libassist_rs.a",
+  "ninja-file-sha256": "58bcbe100a6557612c514ce817b10b0856d853e4a7f186e70f5ac44dccb66be9",
+  "scope": "Current final ALPC owning build rules for retained ABI184 Assist consumers. Compiled source/artifact proof is in before/after archive ledgers."
+}

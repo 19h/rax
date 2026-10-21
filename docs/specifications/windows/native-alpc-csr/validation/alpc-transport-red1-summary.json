@@ -1,0 +1,10 @@
+{
+  "utc": "2026-10-21T15:43:43.379374+00:00",
+  "test": "native_alpc_invalid_handle_is_kernel_status_without_output_publication_all_abis",
+  "passed": 0,
+  "failed": 1,
+  "observed": "native NTDLL service NtAlpcSendWaitReceivePort (0x8e) at0x12340000 is not implemented",
+  "source-base": "b546b4b4a11954c764516dec535af3959e1aaa6e",
+  "scope": "new regression executed with pending snapshot foundation changes, before adding native ALPC registration; not a clean published-source full baseline",
+  "log-sha256": "baeab95e559c2b23cf731ccc5275d1acf1d464e9df8ca9ce4cc9552998fb9d6f"
+}

@@ -1,0 +1,92 @@
+{
+  "utc": "2026-10-21T16:03:55.092786+00:00",
+  "free-bytes": 218185728,
+  "cleanup-candidates": [
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\normal-candidate2\\debug\\rax.pdb",
+      "bytes": 142749696
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\normal-candidate2\\debug\\rax_isa_oracle.pdb",
+      "bytes": 102715392
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\normal-candidate2\\debug\\rax_user.pdb",
+      "bytes": 1363968
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\normal-candidate2\\debug\\deps\\librax-3019d479898316cf.rmeta",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\normal-candidate2\\debug\\deps\\librax-638c2fde2f532f63.rmeta",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\normal-candidate2\\debug\\deps\\librax-880a358b5480b7fe.rmeta",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\normal-candidate2\\debug\\deps\\librax-94fd581f1b963a70.rmeta",
+      "bytes": 47223355
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\normal-candidate2\\debug\\deps\\librax-b6577df3fbefbea4.rmeta",
+      "bytes": 57412156
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\normal-candidate2\\debug\\deps\\librax_isa_oracle-49a58ebedad24ef0.rmeta",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\normal-candidate2\\debug\\deps\\librax_isa_oracle-e440b86251d5a189.rmeta",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\normal-candidate2\\debug\\deps\\librax_user-5bad3bc5eee2d50b.rmeta",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\normal-candidate2\\debug\\deps\\librax_user-f46c51c67ad8ba35.rmeta",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\normal-candidate2\\debug\\deps\\rax-24d49cb87dffa633.pdb",
+      "bytes": 174092288
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\normal-candidate2\\debug\\deps\\rax-b799307a7949aa6b.pdb",
+      "bytes": 325373952
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\normal-candidate2\\debug\\deps\\rax.dll.lib",
+      "bytes": 14904
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\normal-candidate2\\debug\\deps\\rax.lib",
+      "bytes": 585810322
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\normal-candidate2\\debug\\deps\\rax.pdb",
+      "bytes": 142749696
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\normal-candidate2\\debug\\deps\\rax_isa_oracle.pdb",
+      "bytes": 102715392
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\normal-candidate2\\debug\\deps\\rax_user.pdb",
+      "bytes": 1363968
+    }
+  ],
+  "import-libraries": [
+    {
+      "path": "C:\\Program Files (x86)\\Windows Kits\\10\\lib\\10.0.26100.0\\um\\arm64\\ntdll.lib",
+      "bytes": 1089480,
+      "sha256": "5f429b3bf5ee63209e844d0f3f1140cfa74a4f5d136afc0d3fb7928d878fa412",
+      "CsrClientConnectToServer": true,
+      "CsrGetProcessId": true
+    }
+  ],
+  "old-cache-processes": ""
+}

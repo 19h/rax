@@ -1,0 +1,410 @@
+{
+  "state": "verified",
+  "utc": "2026-10-21T20:06:50.568087+00:00",
+  "runtime-module-union": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e"
+    },
+    {
+      "path": "C:\\Windows\\System32\\KernelBase.dll",
+      "bytes": 7213728,
+      "sha256": "6b2fa508ac4f9bce5d7351676485d1dc5b5236cd9656034e2fec1eaba3b82bc9"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\KernelBase.dll",
+      "bytes": 3073488,
+      "sha256": "e9c414d7c6bd2c6fde608f31b2f31da3c2014c801b3764a30ee42abd1e9c2d58"
+    },
+    {
+      "path": "C:\\Windows\\System32\\kernel32.dll",
+      "bytes": 1500304,
+      "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\kernel32.dll",
+      "bytes": 696392,
+      "sha256": "9c9a0c54a79ea712bb533fcc79ba9935ed9f9d3f777fd65cf62d9cec6699b9df"
+    },
+    {
+      "path": "C:\\Windows\\System32\\msvcrt.dll",
+      "bytes": 1347856,
+      "sha256": "779eb5cb1ae357196254af9755307544a3dd20011c84768ae72f45d366f47148"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\msvcrt.dll",
+      "bytes": 810688,
+      "sha256": "67c03357458a951402cc1804e05d3301f011a59d352f684fbe283f546f8ae398"
+    },
+    {
+      "path": "C:\\Windows\\System32\\version.dll",
+      "bytes": 73200,
+      "sha256": "d30c2a9c9d81982b112c5a60878f3579ddb3db3a09443147c63f10bc749aaab2"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\version.dll",
+      "bytes": 29208,
+      "sha256": "688ea4248da1e28bd77be9ae1088954a11cec3302c25af8aade47bae14f3ada8"
+    },
+    {
+      "path": "C:\\Windows\\System32\\user32.dll",
+      "bytes": 2799192,
+      "sha256": "bd104076063e3bc8ce65fb744a947f533b8ac6bc737c999b1d7beacbc1b6b058"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\user32.dll",
+      "bytes": 2039408,
+      "sha256": "f32a037264cb173501c4ba0c3fff25cd274e154e59be85c06a75a02f89a8e64b"
+    },
+    {
+      "path": "C:\\Windows\\System32\\win32u.dll",
+      "bytes": 387768,
+      "sha256": "e2aa1e93f5e45377922bf6e5525d9fc37a60494da1d602033974883987e9c7d4"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\win32u.dll",
+      "bytes": 109280,
+      "sha256": "098802d32f359f1ccd53e654f6a4fbfd6bf7d3cce58cc8f73ef389c8a9b26117"
+    },
+    {
+      "path": "C:\\Windows\\System32\\gdi32.dll",
+      "bytes": 462600,
+      "sha256": "55a43a68318f896557d8433d1094b0acce8c9ec05b7085bbce558fefa280d42a"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\gdi32.dll",
+      "bytes": 160416,
+      "sha256": "e1b13f557255c4568a68ab85736c3f9461e1e8a162936fcce3437eaafbed9f8a"
+    },
+    {
+      "path": "C:\\Windows\\System32\\gdi32full.dll",
+      "bytes": 1893296,
+      "sha256": "3f73ffd0d20b492cfc3302c7ba193138a96d6161c2bea0b6b6c559f104f7f70e"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\gdi32full.dll",
+      "bytes": 954272,
+      "sha256": "0ea5a50fd5653f6c88fa657a3aec92dde0bfaa106c14df4d928886b85cd7d099"
+    }
+  ],
+  "native-producer": [
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-csr-client-connect-v4-four-views\\native-csr-client-connect-v4.cpp",
+      "bytes": 3349,
+      "sha256": "f4204c2f6f680cf5cf84e499f46d3600b84699622b9c2355dd515156384da903"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-csr-client-connect-v4-four-views\\target\\arm64\\probe.exe",
+      "bytes": 145408,
+      "sha256": "9ffa2073853e1e233fb91a2efee13fd469a0a1a0a17db9be556da1dfd1ba33db"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-csr-client-connect-v4-four-views\\target\\x64\\probe.exe",
+      "bytes": 142848,
+      "sha256": "4b58334c7cadce235d96fe85744559e729e83dbb8455dd675088ae495d244c84"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-csr-client-connect-v4-four-views\\target\\x86\\probe.exe",
+      "bytes": 118784,
+      "sha256": "62c6b7b0cbae9504410a3589b9d946462da9030f99f0fba82ed3e588593284cd"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-csr-client-connect-v4-four-views\\target\\x86-laa\\probe.exe",
+      "bytes": 118784,
+      "sha256": "a26eb1caf2c37ef32d5e7e8ed0c192dcde18138039fa9ba7be233451db5ffa71"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-csr-client-connect-v5-four-views\\native-csr-client-connect-v5.cpp",
+      "bytes": 5388,
+      "sha256": "d45abba893fc5dbc341dfb33c690fa52584af1f92cff41fef0f1e0ee1dd543f6"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-csr-client-connect-v5-four-views\\target\\arm64\\probe.exe",
+      "bytes": 146432,
+      "sha256": "52c7f3c0e56cc0e0fc8d1f23ef399e401255444379e225f54bfd5d411cae2095"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-csr-client-connect-v5-four-views\\target\\x64\\probe.exe",
+      "bytes": 143872,
+      "sha256": "d279acf3294cce64a0176f19341f112d1d667721e7f33cc2706503467ad1acc7"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-csr-client-connect-v5-four-views\\target\\x86\\probe.exe",
+      "bytes": 120320,
+      "sha256": "d5e049255ccc9fff5b6ebbdd16ee06083f9bdfbcd0dc332ef0bda48761119a05"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-csr-client-connect-v5-four-views\\target\\x86-laa\\probe.exe",
+      "bytes": 120320,
+      "sha256": "b7770d43e56b8aed6dc93368b73a4f3846eae7e41f64f74c9cc8bf24f399d887"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-csr-client-connect-v6-four-views\\native-csr-client-connect-v6.cpp",
+      "bytes": 8453,
+      "sha256": "b2dd00ddae8338f3757da59e53cc67785523ec5879e8e74cf006dbadad5d6b10"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-csr-client-connect-v6-four-views\\target\\arm64\\probe.exe",
+      "bytes": 155136,
+      "sha256": "0bf45aff1b172ec1509f816d2ed7b37618f208aeb1c1576731b21b0e463ae9ca"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-csr-client-connect-v6-four-views\\target\\x64\\probe.exe",
+      "bytes": 166912,
+      "sha256": "cb2cee6fd95598599b5315b4932faf38b60750c4f215af6484301f9bef5c0851"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-csr-client-connect-v6-four-views\\target\\x86\\probe.exe",
+      "bytes": 135168,
+      "sha256": "fc4fc852d4774f9592f05502b01d169d3d0993a8915899ba5c3df50a23c75f56"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-csr-client-connect-v6-four-views\\target\\x86-laa\\probe.exe",
+      "bytes": 135168,
+      "sha256": "eaf6bb235861f74419c302bbc6fe9517d528b9815c00db9b34c121c16d2c489a"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-csr-client-connect-v7-four-views\\native-csr-client-connect-v7.cpp",
+      "bytes": 6050,
+      "sha256": "c4434c7fdbd5c2d7daa217d6f1ed385d18ccf0ad4617e5758a7b1077bb19040b"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-csr-client-connect-v7-four-views\\target\\arm64\\probe.exe",
+      "bytes": 148480,
+      "sha256": "6d0f8c557bcfd0f9cf17cf95457eab04e96aa4979720433169bea57632417e96"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-csr-client-connect-v7-four-views\\target\\x64\\probe.exe",
+      "bytes": 145920,
+      "sha256": "86b131bb2376f6997d630a33210e99734de24c900805b9187489076269a3770b"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-csr-client-connect-v7-four-views\\target\\x86\\probe.exe",
+      "bytes": 121344,
+      "sha256": "8ce8dd262314a1153a87eb1d136e314563a1cd4c2eb520cc0c521f6044dee055"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-csr-client-connect-v7-four-views\\target\\x86-laa\\probe.exe",
+      "bytes": 121344,
+      "sha256": "4f71926491fa0f915fe766f552545bf9e8673e1ee5cd734cd4878d36139f441d"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-alpc-csr-trace-v1-four-views\\native-alpc-csr-trace-v1.cpp",
+      "bytes": 15367,
+      "sha256": "814d88155ebc88d5c4e44b47e5efbac3eb73fae4ca9f42503b68cb5f8e1e4696"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-alpc-csr-trace-v1-four-views\\target\\arm64\\probe.exe",
+      "bytes": 184832,
+      "sha256": "42a3064fef5521368915e0882c8a62b98f9e3d48dbaf4c11358d0480dd83220a"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-alpc-private-echo-v4-four-views\\native-alpc-private-echo-v4.cpp",
+      "bytes": 7410,
+      "sha256": "7be70d70e13f7712e46628e1e33f71f16f735096a9a93a4ef6e6d779d947abd6"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-alpc-private-echo-v4-four-views\\target\\arm64\\probe.exe",
+      "bytes": 178176,
+      "sha256": "bbece9ed4c49228e4e2bb7b79420a30c6b38e3ae9dae9e36b40ac3006d669222"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-alpc-private-echo-v4-four-views\\target\\x64\\probe.exe",
+      "bytes": 186368,
+      "sha256": "5dc1756aaa5d95bcdc8fa7c968f8fe788bd023fdbf08d7acaeaaf84d92dca6f6"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-alpc-private-echo-v4-four-views\\target\\x86\\probe.exe",
+      "bytes": 144384,
+      "sha256": "18f6f58b61fea3edd320ac19920cc8ea10b997b937667ecbfdfb68dc9178b116"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-alpc-private-echo-v4-four-views\\target\\x86-laa\\probe.exe",
+      "bytes": 144384,
+      "sha256": "e5b47af6a8197b555da21f1617de3ae219078d73f84fa07a499cdeb395170181"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-alpc-private-matrix-v5-four-views\\native-alpc-private-matrix-v5.cpp",
+      "bytes": 14620,
+      "sha256": "5b4359fedf32fa35998c9dbf7efa62cc33b08eabde2361c5984accc27232ccc1"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-alpc-private-matrix-v5-four-views\\target\\arm64\\probe.exe",
+      "bytes": 182784,
+      "sha256": "551621d998075a6692ef1928342a37c6f5cd4fd9ce8192867b198101e53df9a5"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-alpc-private-matrix-v5-four-views\\target\\x64\\probe.exe",
+      "bytes": 191488,
+      "sha256": "cddc23473b948c5d2fdf2900af918dbde137119f71f19ba9109f1afa05d8eeaf"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-alpc-private-matrix-v5-four-views\\target\\x86\\probe.exe",
+      "bytes": 149504,
+      "sha256": "9f8b120c373039edc5327cbffcc812e0c33326cd664ecb6db6880b1eefa4c936"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-alpc-private-matrix-v5-four-views\\target\\x86-laa\\probe.exe",
+      "bytes": 149504,
+      "sha256": "c18367aa5100d28834a9a34dd5369b85618e8b41eae6adb216db2ae949091196"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-alpc-private-priority-v6-four-views\\native-alpc-private-priority-v6.cpp",
+      "bytes": 18717,
+      "sha256": "95a79d3edf71bd7995a6536ef29cb6cda50c01a16e5cbb4fa97f8301117f9754"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-alpc-private-priority-v6-four-views\\target\\arm64\\probe.exe",
+      "bytes": 184320,
+      "sha256": "f7a98e27785c1621e511ca5ce3d538242a999ad490b0527e9e79e04a47634154"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-alpc-private-priority-v6-four-views\\target\\x64\\probe.exe",
+      "bytes": 193024,
+      "sha256": "5eef82d010d176b47b7412c61714cdef7f30c42d7548ab0545d4ed8ef677c23f"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-alpc-private-priority-v6-four-views\\target\\x86\\probe.exe",
+      "bytes": 151040,
+      "sha256": "e59db558fa238919834d0895612bc50b08a254d1c6b72bbd010e0e0ef1583d9b"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-alpc-private-priority-v6-four-views\\target\\x86-laa\\probe.exe",
+      "bytes": 151040,
+      "sha256": "af431a92833d0c4ef519fc423a99209f97f0b27fea7b51922532f906fe111a37"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-alpc-private-alignment-v7-four-views\\native-alpc-private-alignment-v7.cpp",
+      "bytes": 15941,
+      "sha256": "8b29b8c70c576c5b17c379ef9fa4c7fb0a1f6ede392d738a81f765eb19bfefa9"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-alpc-private-alignment-v7-four-views\\target\\arm64\\probe.exe",
+      "bytes": 183296,
+      "sha256": "2d7ecf6b2adeed10ef000ccfa051580f6bd81a357aa0e5ee2eb1a0a08ff1d82e"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-alpc-private-alignment-v7-four-views\\target\\x64\\probe.exe",
+      "bytes": 192000,
+      "sha256": "e8cee4874fe0d189b7d8b22e954d6b340895a1764880edab2017fddb86bd1ae8"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-alpc-private-alignment-v7-four-views\\target\\x86\\probe.exe",
+      "bytes": 150016,
+      "sha256": "c4a9ab0372d1b2e9e49e32a3dd22d58e3d9c42a312047fc2858298b3c5236236"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-alpc-private-alignment-v7-four-views\\target\\x86-laa\\probe.exe",
+      "bytes": 150016,
+      "sha256": "b34dff8b0db6d7e6a9bc28c6ff57170ce630a27e8923f14b8cce9e4d3539ae5d"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-alpc-private-limits-v9-four-views\\native-alpc-private-limits-v9.cpp",
+      "bytes": 17363,
+      "sha256": "04d5059bfe34c7341887613a987e30d3c3810db683c0ad61ebeb1771c9cc329b"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-alpc-private-limits-v9-four-views\\target\\arm64\\probe.exe",
+      "bytes": 184320,
+      "sha256": "c59158ff435193d7f0bf6e4d0f62beb273ecfb83427ea871717ac1c184d77991"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-alpc-private-limits-v9-four-views\\target\\x64\\probe.exe",
+      "bytes": 193024,
+      "sha256": "4683a60ceb22b79abe5289e5cdb8a60f7406aa38916327e0d6b0f4f345fa65e9"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-alpc-private-limits-v9-four-views\\target\\x86\\probe.exe",
+      "bytes": 150528,
+      "sha256": "234a48da7ec045b06276e03fb9abd763a90147358fcbd27396ad2de82530990b"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-alpc-private-limits-v9-four-views\\target\\x86-laa\\probe.exe",
+      "bytes": 150528,
+      "sha256": "134498f9902094693760e71a5e78110a8934aba32dca7d9f9a42ae18bc5ddebe"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-alpc-private-priority-v12-four-views\\native-alpc-private-priority-v12.cpp",
+      "bytes": 18408,
+      "sha256": "3c9437800af54760001fa540569d1164d2cb33e68e772023ab39b932f3b55d3c"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-alpc-private-priority-v12-four-views\\target\\arm64\\probe.exe",
+      "bytes": 185344,
+      "sha256": "5b3193bc1f3265ef5adc26cae8a92256a2ef923cbaa2507a45f05b7ba39bd652"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-alpc-private-priority-v12-four-views\\target\\x64\\probe.exe",
+      "bytes": 194048,
+      "sha256": "7078134ffbdb9ffbb058708a85cbb3ca2399ff6c5e2293d2bc516d25eddb2b0d"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-alpc-private-priority-v12-four-views\\target\\x86\\probe.exe",
+      "bytes": 151040,
+      "sha256": "3f49875f1962629ce8e45cac3799b4cd7a0e26b7e69548868d37d8555219d852"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-alpc-private-priority-v12-four-views\\target\\x86-laa\\probe.exe",
+      "bytes": 151040,
+      "sha256": "a8ddcb5136fadba1dcfb9187c09dbd63d09cc1baabd4d6ea12178451a5e3346c"
+    }
+  ],
+  "owning-core-and-callers": [
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\debug\\deps\\librax-934115059aa64c85.rlib",
+      "bytes": 511102428,
+      "sha256": "c9b7b6c87e4dd4a8493b51feb250777a6e16bd5be5d9da81a9902b4d475d7476"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\alpc-ordinary-owner-candidate2.exe",
+      "bytes": 27252224,
+      "sha256": "10187e8a80b911a7742bfa58bbca3eebbbfdc38764a6283c0be710713e8f4bfe"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\debug\\assist_rs.lib",
+      "bytes": 860516160,
+      "sha256": "9b9060cf4591e09c4006e7eeb4d62b0fcbf51ecc67bb9df8059cc91951412d08"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\cpp\\alpc-owning-capi-candidate2.exe",
+      "bytes": 32820736,
+      "sha256": "e749579cf42292b3d6134a67eb6f1553f6f61a9d1ed6cb2d584cbb6ccf77a784"
+    }
+  ],
+  "retained-current-artifacts": [
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate2\\target\\retained-owning-candidate2\\core.rlib",
+      "bytes": 511102428,
+      "sha256": "c9b7b6c87e4dd4a8493b51feb250777a6e16bd5be5d9da81a9902b4d475d7476"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate2\\target\\retained-owning-candidate2\\carrier.lib",
+      "bytes": 860516160,
+      "sha256": "9b9060cf4591e09c4006e7eeb4d62b0fcbf51ecc67bb9df8059cc91951412d08"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate2\\target\\retained-owning-candidate2\\ordinary.exe",
+      "bytes": 27252224,
+      "sha256": "10187e8a80b911a7742bfa58bbca3eebbbfdc38764a6283c0be710713e8f4bfe"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate2\\target\\retained-owning-candidate2\\capi.exe",
+      "bytes": 32820736,
+      "sha256": "e749579cf42292b3d6134a67eb6f1553f6f61a9d1ed6cb2d584cbb6ccf77a784"
+    }
+  ],
+  "test-image": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate2\\target\\normal-candidate2\\debug\\deps\\rax-b799307a7949aa6b.exe",
+    "bytes": 548428288,
+    "sha256": "d4b0087445209125b8cc79690e7c7e0638dd6d83484d9aaa786a7f15f12953c8"
+  },
+  "windows-build": 29683,
+  "exit-code": 0,
+  "scope": "Eighteen runtime DLL inputs across eleven accepted native producers and owning ordinary callers; eleven producer sources, forty-one executed images, four actual owning artifacts, four separately retained byte copies, and native unit image rehashed. No whole-current-root package claim."
+}

@@ -1,0 +1,150 @@
+{
+  "state": "finished",
+  "utc": "2026-10-21T19:57:22.669498+00:00",
+  "cases": [
+    {
+      "case": "connect-right-bypassed",
+      "rejected": true,
+      "reason": "PORT_CONNECT required",
+      "positive-before": {
+        "state": "verified",
+        "native-executables": 41,
+        "private-ALPC-calls": 480,
+        "successful-USER-queries": 33,
+        "unique-live-inputs": 68,
+        "source-inputs": 0,
+        "kernel-scope": "Four execution views on one Windows10.0.29683 ARM64 kernel; no independent physical x64 kernel oracle."
+      },
+      "fresh-restore": {
+        "state": "verified",
+        "native-executables": 41,
+        "private-ALPC-calls": 480,
+        "successful-USER-queries": 33,
+        "unique-live-inputs": 68,
+        "source-inputs": 0,
+        "kernel-scope": "Four execution views on one Windows10.0.29683 ARM64 kernel; no independent physical x64 kernel oracle."
+      },
+      "scope": "All execution-view logs modified consistently where applicable; log/launch/manifest digests repaired before negative check."
+    },
+    {
+      "case": "both-guards-consumed",
+      "rejected": true,
+      "reason": "receiver-before-sender guard",
+      "positive-before": {
+        "state": "verified",
+        "native-executables": 41,
+        "private-ALPC-calls": 480,
+        "successful-USER-queries": 33,
+        "unique-live-inputs": 68,
+        "source-inputs": 0,
+        "kernel-scope": "Four execution views on one Windows10.0.29683 ARM64 kernel; no independent physical x64 kernel oracle."
+      },
+      "fresh-restore": {
+        "state": "verified",
+        "native-executables": 41,
+        "private-ALPC-calls": 480,
+        "successful-USER-queries": 33,
+        "unique-live-inputs": 68,
+        "source-inputs": 0,
+        "kernel-scope": "Four execution views on one Windows10.0.29683 ARM64 kernel; no independent physical x64 kernel oracle."
+      },
+      "scope": "All execution-view logs modified consistently where applicable; log/launch/manifest digests repaired before negative check."
+    },
+    {
+      "case": "wow-word-wrap",
+      "rejected": true,
+      "reason": "16bit wrapped native total",
+      "positive-before": {
+        "state": "verified",
+        "native-executables": 41,
+        "private-ALPC-calls": 480,
+        "successful-USER-queries": 33,
+        "unique-live-inputs": 68,
+        "source-inputs": 0,
+        "kernel-scope": "Four execution views on one Windows10.0.29683 ARM64 kernel; no independent physical x64 kernel oracle."
+      },
+      "fresh-restore": {
+        "state": "verified",
+        "native-executables": 41,
+        "private-ALPC-calls": 480,
+        "successful-USER-queries": 33,
+        "unique-live-inputs": 68,
+        "source-inputs": 0,
+        "kernel-scope": "Four execution views on one Windows10.0.29683 ARM64 kernel; no independent physical x64 kernel oracle."
+      },
+      "scope": "All execution-view logs modified consistently where applicable; log/launch/manifest digests repaired before negative check."
+    },
+    {
+      "case": "wrong-export-correlation",
+      "rejected": true,
+      "reason": "current gSharedInfo layout correlation",
+      "positive-before": {
+        "state": "verified",
+        "native-executables": 41,
+        "private-ALPC-calls": 480,
+        "successful-USER-queries": 33,
+        "unique-live-inputs": 68,
+        "source-inputs": 0,
+        "kernel-scope": "Four execution views on one Windows10.0.29683 ARM64 kernel; no independent physical x64 kernel oracle."
+      },
+      "fresh-restore": {
+        "state": "verified",
+        "native-executables": 41,
+        "private-ALPC-calls": 480,
+        "successful-USER-queries": 33,
+        "unique-live-inputs": 68,
+        "source-inputs": 0,
+        "kernel-scope": "Four execution views on one Windows10.0.29683 ARM64 kernel; no independent physical x64 kernel oracle."
+      },
+      "scope": "All execution-view logs modified consistently where applicable; log/launch/manifest digests repaired before negative check."
+    },
+    {
+      "case": "reserved-pages-readable",
+      "rejected": true,
+      "reason": "allocation cover/commitment",
+      "positive-before": {
+        "state": "verified",
+        "native-executables": 41,
+        "private-ALPC-calls": 480,
+        "successful-USER-queries": 33,
+        "unique-live-inputs": 68,
+        "source-inputs": 0,
+        "kernel-scope": "Four execution views on one Windows10.0.29683 ARM64 kernel; no independent physical x64 kernel oracle."
+      },
+      "fresh-restore": {
+        "state": "verified",
+        "native-executables": 41,
+        "private-ALPC-calls": 480,
+        "successful-USER-queries": 33,
+        "unique-live-inputs": 68,
+        "source-inputs": 0,
+        "kernel-scope": "Four execution views on one Windows10.0.29683 ARM64 kernel; no independent physical x64 kernel oracle."
+      },
+      "scope": "All execution-view logs modified consistently where applicable; log/launch/manifest digests repaired before negative check."
+    },
+    {
+      "case": "related-buffer-not-cleared",
+      "rejected": true,
+      "reason": "native related-buffer transition",
+      "positive-before": {
+        "state": "verified",
+        "native-executables": 41,
+        "private-ALPC-calls": 480,
+        "successful-USER-queries": 33,
+        "unique-live-inputs": 68,
+        "source-inputs": 0,
+        "kernel-scope": "Four execution views on one Windows10.0.29683 ARM64 kernel; no independent physical x64 kernel oracle."
+      },
+      "fresh-restore": {
+        "state": "verified",
+        "native-executables": 41,
+        "private-ALPC-calls": 480,
+        "successful-USER-queries": 33,
+        "unique-live-inputs": 68,
+        "source-inputs": 0,
+        "kernel-scope": "Four execution views on one Windows10.0.29683 ARM64 kernel; no independent physical x64 kernel oracle."
+      },
+      "scope": "All execution-view logs modified consistently where applicable; log/launch/manifest digests repaired before negative check."
+    }
+  ]
+}

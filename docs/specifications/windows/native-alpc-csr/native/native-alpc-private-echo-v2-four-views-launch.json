@@ -1,0 +1,237 @@
+{
+  "state": "failed",
+  "pid": 8020,
+  "utc": "2026-10-21T09:16:18.415269+00:00",
+  "scope": "Private ephemeral task-owned LPC listener/client, same-process bounded server thread and one NtAlpcSendWaitReceivePort echo; all handles closed, no foreign process or system CSR messages. Four execution views on one ARM64 kernel.",
+  "steps": [
+    {
+      "name": "arm64-build",
+      "argv": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\arm64\\cl.exe",
+        "/nologo",
+        "/std:c++20",
+        "/EHsc",
+        "/MT",
+        "/GS",
+        "/Od",
+        "/we4473",
+        "/we4474",
+        "/we4477",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-alpc-private-echo-v2-four-views\\native-alpc-private-echo-v2.cpp",
+        "/link",
+        "advapi32.lib",
+        "/SUBSYSTEM:CONSOLE,10.0",
+        "/OUT:C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-alpc-private-echo-v2-four-views\\target\\arm64\\probe.exe"
+      ],
+      "exit-code": 0,
+      "log": "native-alpc-private-echo-v2-four-views-arm64-build.log",
+      "sha256": "019790e4ff783a83f6d9cc4d7d206a695071569b1d979a26774d31537fd38e4f",
+      "bytes": 33
+    },
+    {
+      "name": "arm64-before",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\inspect-system-time-v2-pe.py",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-alpc-private-echo-v2-four-views\\target\\arm64\\probe.exe",
+        "arm64"
+      ],
+      "exit-code": 0,
+      "log": "native-alpc-private-echo-v2-four-views-arm64-before.log",
+      "sha256": "560ed1b46c10d9c771d5c0e9af20ff55c132ebe3b5808f8b9af5b1bdf376be85",
+      "bytes": 297
+    },
+    {
+      "name": "arm64",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-alpc-private-echo-v2-four-views\\target\\arm64\\probe.exe",
+        "arm64"
+      ],
+      "exit-code": 0,
+      "log": "native-alpc-private-echo-v2-four-views-arm64.log",
+      "sha256": "f1407a407e2e32814ae1a8bbacb203408b863106dd35be14ef24d14f86253510",
+      "bytes": 491
+    },
+    {
+      "name": "arm64-after",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\inspect-system-time-v2-pe.py",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-alpc-private-echo-v2-four-views\\target\\arm64\\probe.exe",
+        "arm64"
+      ],
+      "exit-code": 0,
+      "log": "native-alpc-private-echo-v2-four-views-arm64-after.log",
+      "sha256": "560ed1b46c10d9c771d5c0e9af20ff55c132ebe3b5808f8b9af5b1bdf376be85",
+      "bytes": 297
+    },
+    {
+      "name": "x64-build",
+      "argv": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\x64\\cl.exe",
+        "/nologo",
+        "/std:c++20",
+        "/EHsc",
+        "/MT",
+        "/GS",
+        "/Od",
+        "/we4473",
+        "/we4474",
+        "/we4477",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-alpc-private-echo-v2-four-views\\native-alpc-private-echo-v2.cpp",
+        "/link",
+        "advapi32.lib",
+        "/SUBSYSTEM:CONSOLE,10.0",
+        "/OUT:C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-alpc-private-echo-v2-four-views\\target\\x64\\probe.exe"
+      ],
+      "exit-code": 0,
+      "log": "native-alpc-private-echo-v2-four-views-x64-build.log",
+      "sha256": "019790e4ff783a83f6d9cc4d7d206a695071569b1d979a26774d31537fd38e4f",
+      "bytes": 33
+    },
+    {
+      "name": "x64-before",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\inspect-system-time-v2-pe.py",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-alpc-private-echo-v2-four-views\\target\\x64\\probe.exe",
+        "x64"
+      ],
+      "exit-code": 0,
+      "log": "native-alpc-private-echo-v2-four-views-x64-before.log",
+      "sha256": "661ad7340712c896b0b07638ff4b0865bbb2fa9a1e5d7d91e8c4c4cc4099f3d5",
+      "bytes": 293
+    },
+    {
+      "name": "x64",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-alpc-private-echo-v2-four-views\\target\\x64\\probe.exe",
+        "x64"
+      ],
+      "exit-code": 6,
+      "log": "native-alpc-private-echo-v2-four-views-x64.log",
+      "sha256": "e58fbdb4e5a7f035f5d35226963671ec9282226095be3a587d22bb6b4a028217",
+      "bytes": 489
+    },
+    {
+      "name": "x64-after",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\inspect-system-time-v2-pe.py",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-alpc-private-echo-v2-four-views\\target\\x64\\probe.exe",
+        "x64"
+      ],
+      "exit-code": 0,
+      "log": "native-alpc-private-echo-v2-four-views-x64-after.log",
+      "sha256": "661ad7340712c896b0b07638ff4b0865bbb2fa9a1e5d7d91e8c4c4cc4099f3d5",
+      "bytes": 293
+    }
+  ],
+  "outcomes": [
+    {
+      "profile": "arm64",
+      "exit-code": 0,
+      "log": "native-alpc-private-echo-v2-four-views-arm64.log",
+      "executable-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-alpc-private-echo-v2-four-views\\target\\arm64\\probe.exe",
+        "bytes": 176128,
+        "sha256": "d5d0e2ae5c5cf01f852c52c37732427059a72ea8fb1fd9a18833c2b5dfe99c83"
+      },
+      "executable-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-alpc-private-echo-v2-four-views\\target\\arm64\\probe.exe",
+        "bytes": 176128,
+        "sha256": "d5d0e2ae5c5cf01f852c52c37732427059a72ea8fb1fd9a18833c2b5dfe99c83"
+      }
+    },
+    {
+      "profile": "x64",
+      "exit-code": 6,
+      "log": "native-alpc-private-echo-v2-four-views-x64.log",
+      "executable-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-alpc-private-echo-v2-four-views\\target\\x64\\probe.exe",
+        "bytes": 184832,
+        "sha256": "27be374d914da5565eab15ddf2a8c6014db8939f01f5df9e27f827a59a492875"
+      },
+      "executable-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-alpc-private-echo-v2-four-views\\target\\x64\\probe.exe",
+        "bytes": 184832,
+        "sha256": "27be374d914da5565eab15ddf2a8c6014db8939f01f5df9e27f827a59a492875"
+      }
+    }
+  ],
+  "source-before": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-alpc-private-echo-v2-four-views\\native-alpc-private-echo-v2.cpp",
+    "bytes": 6651,
+    "sha256": "944bbf5c55516c1dc22e80c5d3226991f23708162a8d6fe90575a3d85566154e"
+  },
+  "compiler-environment": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\mutant-native-compiler-env-epoch4.json",
+    "bytes": 4122,
+    "sha256": "e6ca43bcdcbd3067b5de05d051259d4d3abf0bfa5283a98daac14fd508a05fad"
+  },
+  "runtime-modules-before": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e"
+    },
+    {
+      "path": "C:\\Windows\\System32\\KernelBase.dll",
+      "bytes": 7213728,
+      "sha256": "6b2fa508ac4f9bce5d7351676485d1dc5b5236cd9656034e2fec1eaba3b82bc9"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\KernelBase.dll",
+      "bytes": 3073488,
+      "sha256": "e9c414d7c6bd2c6fde608f31b2f31da3c2014c801b3764a30ee42abd1e9c2d58"
+    },
+    {
+      "path": "C:\\Windows\\System32\\kernel32.dll",
+      "bytes": 1500304,
+      "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\kernel32.dll",
+      "bytes": 696392,
+      "sha256": "9c9a0c54a79ea712bb533fcc79ba9935ed9f9d3f777fd65cf62d9cec6699b9df"
+    },
+    {
+      "path": "C:\\Windows\\System32\\msvcrt.dll",
+      "bytes": 1347856,
+      "sha256": "779eb5cb1ae357196254af9755307544a3dd20011c84768ae72f45d366f47148"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\msvcrt.dll",
+      "bytes": 810688,
+      "sha256": "67c03357458a951402cc1804e05d3301f011a59d352f684fbe283f546f8ae398"
+    }
+  ],
+  "selected-compilers": [
+    {
+      "profile": "arm64",
+      "path": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\arm64\\cl.exe",
+      "bytes": 787728,
+      "sha256": "5cba83692d533f6b3a6ac07c6b2cdce708e0445ed1ee36b5cb2d49a244a4c835"
+    },
+    {
+      "profile": "x64",
+      "path": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\x64\\cl.exe",
+      "bytes": 762720,
+      "sha256": "d7a46c9d0d970fbeb4e803f1f0e9fec4217f8c833e6bb6a015e5b87299024466"
+    }
+  ],
+  "step": "x64-after",
+  "child": 7908,
+  "exit-code": 1,
+  "error": "Traceback (most recent call last):\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-native-alpc-private-echo-v2-four-views.py\", line 160, in <module>\n    assert r[\"outcomes\"][-1][\"exit-code\"] == 0, \"native producer \" + profile\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: native producer x64\n",
+  "completed-utc": "2026-10-21T09:16:19.555694+00:00"
+}

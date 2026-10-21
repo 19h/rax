@@ -1,0 +1,6 @@
+{
+  "state": "failed",
+  "utc": "2026-10-21T20:05:54.172819+00:00",
+  "exit-code": 1,
+  "error": "Traceback (most recent call last):\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\audit-alpc-final-native-v2.py\", line 43, in <module>\n    gates = json.loads((S / \"alpc-candidate2-windows-retry2.json\").read_text())\n                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^\n  File \"pathlib\\__init__.py\", line 792, in read_text\n  File \"pathlib\\__init__.py\", line 776, in open\nFileNotFoundError: [Errno 2] No such file or directory: 'C:\\\\Mac\\\\Home\\\\Downloads\\\\assist-native-allocate-ex-transfer-20261010-2154\\\\alpc-candidate2-windows-retry2.json'\n"
+}
