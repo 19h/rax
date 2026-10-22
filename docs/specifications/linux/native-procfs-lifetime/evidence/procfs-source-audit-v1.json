@@ -1,0 +1,26 @@
+{
+  "state": "finished",
+  "parent": "e621a832adb9e9dcbe4173f8e467571f2e6b34c1",
+  "inherited-inputs-matching-parent": 29133,
+  "compiler-inputs": 29141,
+  "overlay-members": 8,
+  "tracked-diff": [
+    "src/user/linux/process.rs",
+    "src/user/linux/procfs.rs",
+    "src/user/linux/syscall/child.rs",
+    "src/user/linux/syscall/thread.rs",
+    "src/user/linux/tests/mod.rs",
+    "src/user/linux/tests/procfs.rs"
+  ],
+  "new-files": [
+    "src/user/linux/procfs/ids.rs",
+    "src/user/linux/tests/procfs_lifetime.rs"
+  ],
+  "full-input-hashes-verified": true,
+  "symlink-text-inputs": 16,
+  "public-capi-header": {
+    "bytes": 70196,
+    "sha256": "e8438269c7f9411da7c92dff70942dbb839570cda9a6ac1bec0b78ed731e829a"
+  },
+  "capi-header-diff": ""
+}

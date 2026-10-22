@@ -1,0 +1,35 @@
+{
+  "argv": [
+    "rustup",
+    "run",
+    "1.95.0",
+    "rustfmt",
+    "--edition",
+    "2024",
+    "--check",
+    "--config",
+    "skip_children=true",
+    "src/user/linux/process.rs",
+    "src/user/linux/procfs.rs",
+    "src/user/linux/procfs/ids.rs",
+    "src/user/linux/syscall/child.rs",
+    "src/user/linux/syscall/thread.rs",
+    "src/user/linux/tests/mod.rs",
+    "src/user/linux/tests/procfs.rs",
+    "src/user/linux/tests/procfs_lifetime.rs"
+  ],
+  "exit-code": 0,
+  "owned": [
+    "src/user/linux/process.rs",
+    "src/user/linux/procfs.rs",
+    "src/user/linux/procfs/ids.rs",
+    "src/user/linux/syscall/child.rs",
+    "src/user/linux/syscall/thread.rs",
+    "src/user/linux/tests/mod.rs",
+    "src/user/linux/tests/procfs.rs",
+    "src/user/linux/tests/procfs_lifetime.rs"
+  ],
+  "log": "procfs-rustfmt-owned-v1.log",
+  "bytes": 0,
+  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

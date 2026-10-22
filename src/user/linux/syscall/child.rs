@@ -216,6 +216,7 @@ fn become_child(c: &mut Ctx<'_>, args: &ForkArgs) {
     super::uring::forked(p);
     p.ppid = host::ppid();
     p.next_tid = pid + 1;
+    p.procfs_thread_ids.reset(pid);
     p.children = Default::default();
     p.shared_pending = super::super::signal::SigPending::new();
     p.itimers = Default::default();

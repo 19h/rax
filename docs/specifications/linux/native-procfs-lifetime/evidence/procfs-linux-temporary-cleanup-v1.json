@@ -1,0 +1,17 @@
+{
+  "state": "finished",
+  "volume": [
+    {
+      "CreatedAt": "2026-10-22T20:13:17+02:00",
+      "Driver": "local",
+      "Labels": null,
+      "Mountpoint": "/var/lib/docker/volumes/assist-native-procfs-linux-tmp-20261022/_data",
+      "Name": "assist-native-procfs-linux-tmp-20261022",
+      "Options": null,
+      "Scope": "local"
+    }
+  ],
+  "no-container-users": true,
+  "remove-exit-code": 0,
+  "intended-use-complete": "Frozen Linux full/CAPI/integration/all-target and user_linux gates finished; mounted temporary filesystem only, no source or dependency data."
+}

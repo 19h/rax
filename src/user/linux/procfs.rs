@@ -15,6 +15,9 @@ use super::fs::fd::DirEntry;
 use super::process::{ProcState, Thread};
 use crate::user::mm::{Backing, Perms};
 
+mod ids;
+pub use ids::ThreadIds;
+
 /// A synthesized entry.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ProcEntry {
@@ -489,6 +492,19 @@ pub fn lookup(p: &ProcState, cur: &Thread, threads: &[&Thread], guest: &str) -> 
 /// threads.
 pub fn owned(p: &ProcState, threads: &[&Thread], guest: &str) -> bool {
     let path = guest.trim_end_matches('/');
+    // A retired virtual TID must not become an unrelated host task's path.
+    // Keep exact issued IDs, including sparse clone3 IDs and bare directories.
+    // A live guest thread or a known process link retains its existing route.
+    if let Some(id) = path.strip_prefix("/proc/")
+        && let Ok(id) = id.split('/').next().unwrap_or("").parse::<i32>()
+        && id != p.pid
+        && p.procfs_thread_ids.contains(id)
+        && !threads.iter().any(|t| t.tid == id)
+        && p.tracees.get(id).is_none()
+        && super::ptrace::link_to(p, id).is_none()
+    {
+        return true;
+    }
     let rest = if let Some(r) = path.strip_prefix("/proc/self/") {
         r
     } else if let Some(r) = path.strip_prefix("/proc/thread-self/") {

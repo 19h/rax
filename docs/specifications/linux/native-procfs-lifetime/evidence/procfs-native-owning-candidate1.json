@@ -1,0 +1,124 @@
+{
+  "state": "finished",
+  "pid": 7128,
+  "source-epoch": 1,
+  "utc": "2026-10-22T18:18:01.887529+00:00",
+  "steps": [
+    {
+      "name": "toolchain",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "--version"
+      ],
+      "exit-code": 0,
+      "seconds": 0.03397799999220297,
+      "log": "procfs-native-owning-candidate1-toolchain.log",
+      "bytes": 36,
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5"
+    },
+    {
+      "name": "artifacts-before",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "build",
+        "--locked",
+        "--offline",
+        "--features",
+        "rax",
+        "--message-format=json"
+      ],
+      "exit-code": 0,
+      "seconds": 181.80186770902947,
+      "log": "procfs-native-owning-candidate1-artifacts-before.log",
+      "bytes": 132536,
+      "sha256": "33d435d4c50546ece7893df59adbd51caf810d869b660df7c0e73660536b3d66"
+    },
+    {
+      "name": "archive-before",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\collect-procfs-archives-candidate1.py",
+        "--host",
+        "windows",
+        "--source",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1",
+        "--manifest",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\procfs-owning-source-hashes-candidate1.json",
+        "--messages",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\procfs-native-owning-candidate1-artifacts-before.log",
+        "--output",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-procfs-candidate1-pre-cpp-archives.json"
+      ],
+      "exit-code": 0,
+      "seconds": 8.459496958006639,
+      "log": "procfs-native-owning-candidate1-archive-before.log",
+      "bytes": 182,
+      "sha256": "b7759a2965b8170dd5df9e144e2bb38403aca31224438af12aa84887c242f5b3"
+    },
+    {
+      "name": "cpp",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\helpers\\procfs-owned-cpp-build-candidate1.py"
+      ],
+      "exit-code": 0,
+      "seconds": 75.4837330839946,
+      "log": "procfs-native-owning-candidate1-cpp.log",
+      "bytes": 3705,
+      "sha256": "6dae4a9fdf55bc342f9f48b86a3b46d9bc8f0c2d24b92b944fb4c25793e394c0"
+    },
+    {
+      "name": "artifacts-after",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "build",
+        "--locked",
+        "--offline",
+        "--features",
+        "rax",
+        "--message-format=json"
+      ],
+      "exit-code": 0,
+      "seconds": 0.5771482500131242,
+      "log": "procfs-native-owning-candidate1-artifacts-after.log",
+      "bytes": 132251,
+      "sha256": "11c7d7c28a0b80a3ed0237f0b81d23dd528a9ce36b11d46ff622cf606eee4011"
+    },
+    {
+      "name": "archive-after",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\collect-procfs-archives-candidate1.py",
+        "--host",
+        "windows",
+        "--source",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1",
+        "--manifest",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\procfs-owning-source-hashes-candidate1.json",
+        "--messages",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\procfs-native-owning-candidate1-artifacts-after.log",
+        "--output",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-procfs-candidate1-final-owning-archive-identities.json"
+      ],
+      "exit-code": 0,
+      "seconds": 7.345149540982675,
+      "log": "procfs-native-owning-candidate1-archive-after.log",
+      "bytes": 182,
+      "sha256": "b7759a2965b8170dd5df9e144e2bb38403aca31224438af12aa84887c242f5b3"
+    }
+  ],
+  "junction": {
+    "before": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1",
+    "after": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1"
+  },
+  "current-step": "archive-after",
+  "child-pid": 3160,
+  "exit-code": 0,
+  "source-inputs": 3974,
+  "archive-identities-stable": true,
+  "scope": "Frozen procfs lifetime source; retained Assist ABI184 linked consumers. Whole current-root ABI274 GUI/plugin/packages not claimed.",
+  "completed-utc": "2026-10-22T18:27:26.486957+00:00"
+}

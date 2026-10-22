@@ -1,0 +1,48 @@
+{
+  "state": "finished",
+  "removed": [
+    {
+      "path": "/Users/int/.assist-native-display-policy-20261022/t/rax-abstract-501",
+      "files": [],
+      "ownership": "Private task-created TMPDIR; source names verified in net/name.rs, fsnotify/hub.rs and integration support.rs; no lsof users."
+    },
+    {
+      "path": "/Users/int/.assist-native-display-policy-20261022/t/rax-user-fsnotify-501",
+      "files": [
+        {
+          "path": "t/rax-user-fsnotify-501/index",
+          "mode": "0o100600",
+          "bytes": 67645440,
+          "sha256": "e30e0bf2e8be83745c41d7bef12158ab2deecc812e4e5fe8d322c9cc2aa44407"
+        },
+        {
+          "path": "t/rax-user-fsnotify-501/lock",
+          "mode": "0o100600",
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "ownership": "Private task-created TMPDIR; source names verified in net/name.rs, fsnotify/hub.rs and integration support.rs; no lsof users."
+    },
+    {
+      "path": "/Users/int/.assist-native-display-policy-20261022/t/rax-user-test-86580",
+      "files": [
+        {
+          "path": "t/rax-user-test-86580/hexagon.elf",
+          "mode": "0o100644",
+          "bytes": 64,
+          "sha256": "f04de37014207183f15fa651726d00d0285d8ff054e005ee9deab78a4a580f73"
+        },
+        {
+          "path": "t/rax-user-test-86580/not-elf",
+          "mode": "0o100644",
+          "bytes": 26,
+          "sha256": "9e8b26a0daaedf12acee1976a6b7f63d831f6a150ffcc1cf9879f504998f4e18"
+        }
+      ],
+      "ownership": "Private task-created TMPDIR; source names verified in net/name.rs, fsnotify/hub.rs and integration support.rs; no lsof users."
+    }
+  ],
+  "temporary-root-retained": "Empty exact-worktree t/ for subsequent format/compiler commands in this goal.",
+  "prior-attempt": "Conservative v1 command stopped at the unlisted empty abstract-socket registry before any deletion; all three paths are now inspected and explicitly owned."
+}

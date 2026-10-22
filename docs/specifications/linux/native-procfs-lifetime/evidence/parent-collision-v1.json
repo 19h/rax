@@ -1,0 +1,16 @@
+{
+  "state": "finished",
+  "baseline": "e621a832adb9e9dcbe4173f8e467571f2e6b34c1",
+  "test-overlay": {
+    "file": "procfs-parent-test-overlay-v1.rs",
+    "bytes": 4174,
+    "sha256": "eb0b671b2d56720d9bec03772b0db58f328d22c957192611591bcf6cecbb844a"
+  },
+  "exit-code": 101,
+  "log": {
+    "file": "procfs-linux-parent-collision-v1.log",
+    "bytes": 884,
+    "sha256": "614165fbb06c5749811a1b7c7693817e48dce9b0127ad8d534d27193364e3211"
+  },
+  "observation": "Controlled owned host thread remained alive; opening the retired colliding guest TID status returned descriptor3 rather than -ENOENT(-2)."
+}

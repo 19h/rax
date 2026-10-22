@@ -1,0 +1,21 @@
+   Compiling rax v0.1.0 (/work/vendor/rax)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2m 48s
+     Running unittests src/lib.rs (target/linux/candidate1/debug/deps/rax-3e31f1d94bc1cdf9)
+
+running 1 test
+test user::linux::tests::procfs::an_exited_guest_tid_never_opens_a_colliding_live_host_thread ... 
+thread 'user::linux::tests::procfs::an_exited_guest_tid_never_opens_a_colliding_live_host_thread' (59) panicked at src/user/linux/tests/procfs.rs:97:13:
+assertion `left == right` failed: X86_64
+  left: 3
+ right: -2
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+
+failures:
+
+failures:
+    user::linux::tests::procfs::an_exited_guest_tid_never_opens_a_colliding_live_host_thread
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 8174 filtered out; finished in 0.06s
+
+error: test failed, to rerun pass `--lib`

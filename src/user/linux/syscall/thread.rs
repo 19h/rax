@@ -395,6 +395,7 @@ fn kernel_clone(c: &mut Ctx<'_>, args: CloneArgs) -> Result<Outcome, Errno> {
         child.clear_child_tid = args.child_tid;
     }
     c.p.next_tid = c.p.next_tid.max(tid + 1);
+    c.p.procfs_thread_ids.record(tid);
     if flags & CLONE_PARENT_SETTID != 0 {
         let _ = c.write_u32(args.parent_tid, tid as u32);
     }

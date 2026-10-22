@@ -1,0 +1,37 @@
+{
+  "state": "finished",
+  "host": "macos",
+  "pid": 86045,
+  "steps": [
+    {
+      "name": "integration",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--test",
+        "user_linux",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 240.377820334048,
+      "log": "procfs-macos-user-linux-v1-integration.log",
+      "bytes": 3143,
+      "sha256": "fd9edf7fe0fbe0dbe25b322d43df978034f995183854a2eeca30e9cc34658bc3",
+      "results": [
+        "ok. 42 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 238.69s"
+      ]
+    }
+  ],
+  "manifest-sha256": "b1c920a113cb4a6e35243e907bfe72751d4e6c0a6eef67afaafa14047d7b57cb",
+  "step": "integration",
+  "child": 86072,
+  "exit-code": 0,
+  "source-inputs": 29141,
+  "completed-utc": "2026-10-22T18:35:00.073960+00:00"
+}

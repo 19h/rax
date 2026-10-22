@@ -1,0 +1,16 @@
+   Compiling rax v0.1.0 (/Users/int/.assist-native-display-policy-20261022)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2m 47s
+     Running unittests src/lib.rs (target/candidate1/debug/deps/rax-dd79f0cd9ae9bb68)
+
+running 8 tests
+test user::linux::procfs::ids::tests::procfs_thread_ids_keep_sequential_lifetimes_in_one_run_and_reset_fork_ownership ... ok
+test user::linux::procfs::ids::tests::procfs_thread_ids_match_exact_membership_at_sparse_and_integer_boundaries ... ok
+test user::linux::procfs::tests::maps_prefix_width_matches_seq_setwidth ... ok
+test user::linux::tests::procfs::a_closed_descriptor_or_an_exited_thread_has_no_proc_entry ... ok
+test user::linux::tests::procfs_lifetime::procfs_lifetime_known_process_links_keep_the_existing_numeric_root_route ... ok
+test user::linux::tests::procfs_lifetime::procfs_lifetime_nonleader_exec_keeps_retired_thread_identity ... ok
+test user::linux::tests::procfs_lifetime::procfs_lifetime_retires_numeric_and_task_aliases_and_accepts_live_id_reuse ... ok
+test user::linux::tests::procfs_lifetime::procfs_lifetime_sparse_clone3_ids_never_claim_unassigned_gaps ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 8178 filtered out; finished in 0.03s
+

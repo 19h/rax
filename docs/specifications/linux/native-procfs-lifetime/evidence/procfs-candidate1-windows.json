@@ -1,0 +1,209 @@
+{
+  "state": "finished",
+  "pid": 9620,
+  "steps": [
+    {
+      "name": "toolchain",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "--version"
+      ],
+      "exit-code": 0,
+      "seconds": 0.0417599169886671,
+      "log": "procfs-candidate1-toolchain.log",
+      "bytes": 36,
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5",
+      "results": []
+    },
+    {
+      "name": "test-build",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "exit-code": 0,
+      "seconds": 203.31936754198978,
+      "log": "procfs-candidate1-test-build.log",
+      "bytes": 92179,
+      "sha256": "32ab9f89e0b049147ec5ae9bb253ab184c365455e6384127837d29d411fd7c7e",
+      "results": []
+    },
+    {
+      "name": "focus",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\normal-candidate1\\debug\\deps\\rax-b799307a7949aa6b.exe",
+        "procfs",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 0.13891670905286446,
+      "log": "procfs-candidate1-focus.log",
+      "bytes": 784,
+      "sha256": "700828a2dc5e3446ec9f296603609b9b5fa215f26c1ee6217db6c23cb5158a83",
+      "results": [
+        "ok. 6 passed; 0 failed; 0 ignored; 0 measured; 7656 filtered out; finished in 0.07s"
+      ]
+    },
+    {
+      "name": "full",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\normal-candidate1\\debug\\deps\\rax-b799307a7949aa6b.exe",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 101,
+      "seconds": 931.4963662080118,
+      "log": "procfs-candidate1-full.log",
+      "bytes": 831933,
+      "sha256": "d998a9d59c9825628667609d4d1ee26bad4b3a9140ee8cad790ae95fd6a4921f",
+      "results": [
+        "FAILED. 7655 passed; 5 failed; 2 ignored; 0 measured; 0 filtered out; finished in 931.42s"
+      ]
+    },
+    {
+      "name": "capi",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "-p",
+        "rax-capi",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 119.97946308297105,
+      "log": "procfs-candidate1-capi.log",
+      "bytes": 14994,
+      "sha256": "8eb6aa4e495e70a42bc790b08e39db7164e6b6482e8f68983eb2c39194d47d48",
+      "results": [
+        "ok. 183 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 13.26s",
+        "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    {
+      "name": "integration",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--test",
+        "user_windows",
+        "--test",
+        "user_windows_memory",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 7.034593041986227,
+      "log": "procfs-candidate1-integration.log",
+      "bytes": 1794,
+      "sha256": "08ec9985f77972acbf9dbe1c8fcda71b7b659febd16e05876aee5d9f66d12ca6",
+      "results": [
+        "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+        "ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    {
+      "name": "all-targets",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "check",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--all-targets"
+      ],
+      "exit-code": 0,
+      "seconds": 131.91590675001498,
+      "log": "procfs-candidate1-all-targets.log",
+      "bytes": 1005,
+      "sha256": "9a145afa0eebdc982dce431ae4d61bc9ebf38fc6176ae15a0849a88b79c6be9a",
+      "results": []
+    }
+  ],
+  "utc": "2026-10-22T18:17:58.971865+00:00",
+  "source-inputs": 29141,
+  "manifest": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\procfs-candidate1-source.json",
+    "bytes": 6874181,
+    "sha256": "b1c920a113cb4a6e35243e907bfe72751d4e6c0a6eef67afaafa14047d7b57cb"
+  },
+  "dependency-cache-source": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\normal-candidate1",
+  "current-step": "all-targets",
+  "child-pid": 5784,
+  "build-environment": {
+    "CARGO_TARGET_DIR": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\normal-candidate1",
+    "TMPDIR": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\tmp",
+    "TMP": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\tmp",
+    "TEMP": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\tmp",
+    "CCACHE_DISABLE": "1",
+    "SCCACHE_DISABLE": "1"
+  },
+  "test-artifact": {
+    "reason": "compiler-artifact",
+    "package_id": "path+file:///C:/Windows/Temp/assist-native-rax-20261010/src-display-candidate1#rax@0.1.0",
+    "manifest_path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\Cargo.toml",
+    "target": {
+      "kind": [
+        "lib"
+      ],
+      "crate_types": [
+        "lib"
+      ],
+      "name": "rax",
+      "src_path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\src\\lib.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": true,
+      "test": true
+    },
+    "profile": {
+      "opt_level": "0",
+      "debuginfo": 2,
+      "debug_assertions": true,
+      "overflow_checks": true,
+      "test": true
+    },
+    "features": [],
+    "filenames": [
+      "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\normal-candidate1\\debug\\deps\\rax-b799307a7949aa6b.exe",
+      "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\normal-candidate1\\debug\\deps\\rax-b799307a7949aa6b.pdb"
+    ],
+    "executable": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\normal-candidate1\\debug\\deps\\rax-b799307a7949aa6b.exe",
+    "fresh": false
+  },
+  "test-image-before": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\normal-candidate1\\debug\\deps\\rax-b799307a7949aa6b.exe",
+    "bytes": 564926464,
+    "sha256": "c63416fc856ad0b63ea92c70b0cff360d2bdd7cb8ea2c587f6623ad74fca44f4"
+  },
+  "exact-full-failures": [
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_imm_index_at_width_with_flags_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_all_ones_with_flags_as_movn_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_with_flags_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_with_flags_and_low_byte_index_guards",
+    "smir::lower::aarch64::tests::vector::lowers_vector_fp16_arithmetic_runtime"
+  ],
+  "test-image-after": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\normal-candidate1\\debug\\deps\\rax-b799307a7949aa6b.exe",
+    "bytes": 564926464,
+    "sha256": "c63416fc856ad0b63ea92c70b0cff360d2bdd7cb8ea2c587f6623ad74fca44f4"
+  },
+  "exit-code": 0,
+  "scope": "Frozen procfs lifetime source: native Windows ARM64 focused/full/CAPI/integration/all-target. Existing five lowerer failures are explicit; full suite is not green.",
+  "completed-utc": "2026-10-22T18:43:32.999826+00:00"
+}

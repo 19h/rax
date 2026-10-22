@@ -1,0 +1,430 @@
+{
+  "schema": 1,
+  "files": [
+    {
+      "path": "evidence/assumption-refinement-v1.json",
+      "bytes": 651,
+      "sha256": "3e4aa2bd7dd5c3b22f27e1417367a47c11324d770b531e0102b7f5c70155ddca"
+    },
+    {
+      "path": "evidence/baseline-assumptions-v1.json",
+      "bytes": 2515,
+      "sha256": "613e13e464785f51fce82e4285c3a7bd23d9198c5de56fee9e2d8df5c24c1949"
+    },
+    {
+      "path": "evidence/collect-procfs-archives-candidate1.py",
+      "bytes": 3471,
+      "sha256": "ec27e74a5b1b1e2302b638f65fc827480d562b19ef4254ab84e27aefee328c71"
+    },
+    {
+      "path": "evidence/current-cpp-consumers-wait-root.json",
+      "bytes": 2147,
+      "sha256": "53d9e0caa94fe53441aa9f5d429b26c8e801e8fca5b4297af248206c1a3f8dac"
+    },
+    {
+      "path": "evidence/linux-procfs-candidate1-archives-after.json",
+      "bytes": 760308,
+      "sha256": "e59e31af2362ecd0bc6e7fabc0cc4d3694d25fdff2018107ff62eabcb4f85a75"
+    },
+    {
+      "path": "evidence/linux-procfs-candidate1-archives-before.json",
+      "bytes": 760309,
+      "sha256": "5136ee38df9028c96789e9e85a23797b7ebf2c6ff154dc083ee664277271495c"
+    },
+    {
+      "path": "evidence/linux-procfs-candidate1-owning-commands-v2.json",
+      "bytes": 7824,
+      "sha256": "1b2760adc2eaa23534897b5f0a51fcfa180e9cc57e551b7d6639c888809813cd"
+    },
+    {
+      "path": "evidence/linux-procfs-candidate1-owning-gates-v2.json",
+      "bytes": 9766,
+      "sha256": "f6c97ef03c7ad7004fac28165c75c1e59738bf54ef8072fdab3a8f6aa15a259b"
+    },
+    {
+      "path": "evidence/linux-procfs-candidate1-owning-v2-archive-before.log",
+      "bytes": 180,
+      "sha256": "de73db37d439f02021c83b45c3c860261eb6b80ac103f67fceee0f9002475b0f"
+    },
+    {
+      "path": "evidence/linux-procfs-candidate1-owning-v2-archive-identities.log",
+      "bytes": 180,
+      "sha256": "de73db37d439f02021c83b45c3c860261eb6b80ac103f67fceee0f9002475b0f"
+    },
+    {
+      "path": "evidence/linux-procfs-candidate1-owning-v2-artifacts.log",
+      "bytes": 174086,
+      "sha256": "9426f54c9656ff503398fb2a663e38851b885f55ac606df05ef8e66245d84c9a"
+    },
+    {
+      "path": "evidence/linux-procfs-candidate1-owning-v2-cpp.log",
+      "bytes": 2574,
+      "sha256": "db3f0c80de6ab8963b8895e2a229c5403a068f14666399bdd249d506401cda02"
+    },
+    {
+      "path": "evidence/linux-procfs-candidate1-owning-v2-shipping.log",
+      "bytes": 174239,
+      "sha256": "647c6a2f2deaad4a8d61e4e46748b366728fcbb1f6d141d6b34747651a231fc0"
+    },
+    {
+      "path": "evidence/macos-procfs-candidate1-archives-after.json",
+      "bytes": 761662,
+      "sha256": "e07461342b45b392b6ced85f90976fe68602cb1ecbeca00b6dca9fe7d0242e41"
+    },
+    {
+      "path": "evidence/macos-procfs-candidate1-archives-before.json",
+      "bytes": 761662,
+      "sha256": "e07461342b45b392b6ced85f90976fe68602cb1ecbeca00b6dca9fe7d0242e41"
+    },
+    {
+      "path": "evidence/macos-procfs-candidate1-owning-commands-v2.json",
+      "bytes": 3793,
+      "sha256": "e14d08e20377c3665ee6db879b1d0b7dd3f971e512391068c97b85fe407e4184"
+    },
+    {
+      "path": "evidence/macos-procfs-candidate1-owning-gates-v2.json",
+      "bytes": 5498,
+      "sha256": "0ae37e0a02cccea406b95bc8f2750477c1dcf7b86ecad94b9e41eee8cafd5778"
+    },
+    {
+      "path": "evidence/macos-procfs-candidate1-owning-v2-archives-after.log",
+      "bytes": 180,
+      "sha256": "870143e2134ad4de0e3589efd0a71b70d6661d54499dc3d8f086c791a5bcb467"
+    },
+    {
+      "path": "evidence/macos-procfs-candidate1-owning-v2-archives-before.log",
+      "bytes": 180,
+      "sha256": "870143e2134ad4de0e3589efd0a71b70d6661d54499dc3d8f086c791a5bcb467"
+    },
+    {
+      "path": "evidence/macos-procfs-candidate1-owning-v2-build.log",
+      "bytes": 1403,
+      "sha256": "2348c7981c6bf4116999135c08fd1dbac85bd163d27c59dfa5851f955daf1014"
+    },
+    {
+      "path": "evidence/macos-procfs-candidate1-owning-v2-ctest.log",
+      "bytes": 1298,
+      "sha256": "76a6799e4e3beb0afcf5ba3be4c27b1815fd7cb6de2f633a0664252acf99c09e"
+    },
+    {
+      "path": "evidence/macos-procfs-candidate1-owning-v2-prime-artifacts.log",
+      "bytes": 137670,
+      "sha256": "cdb26518db3010db05c377de5a504683165a19551a23e49e1316adc7f5156562"
+    },
+    {
+      "path": "evidence/mutant-native-baseline-failures.json",
+      "bytes": 635,
+      "sha256": "9f679114d1dd64361640d4c11e5f124b248e159ad234777bb9b53855f848750b"
+    },
+    {
+      "path": "evidence/native-procfs-candidate1-final-owning-archive-identities.json",
+      "bytes": 780841,
+      "sha256": "35acda2047780fd2d108afaa811d69dff5a05e8b35956ecebcba15e3832f0cff"
+    },
+    {
+      "path": "evidence/native-procfs-candidate1-pre-cpp-archives.json",
+      "bytes": 780844,
+      "sha256": "ac6a958197109ca062c05f7ff75bb8c28bc31aca8600cb2fc15b870d3b76cf56"
+    },
+    {
+      "path": "evidence/owning-linux-cpp-build-procfs-candidate1.py",
+      "bytes": 3036,
+      "sha256": "e96a29009a8ddd86133b9dace57554a3bc893855e37a12e1d4005c1919b2e9f8"
+    },
+    {
+      "path": "evidence/parent-collision-v1.json",
+      "bytes": 602,
+      "sha256": "db8d805cea5422fa5f584f6eb2b0ff47c376638ca1275f5eb42e5705679988a9"
+    },
+    {
+      "path": "evidence/procfs-candidate1-all-targets.log",
+      "bytes": 1005,
+      "sha256": "9a145afa0eebdc982dce431ae4d61bc9ebf38fc6176ae15a0849a88b79c6be9a"
+    },
+    {
+      "path": "evidence/procfs-candidate1-capi.log",
+      "bytes": 14994,
+      "sha256": "8eb6aa4e495e70a42bc790b08e39db7164e6b6482e8f68983eb2c39194d47d48"
+    },
+    {
+      "path": "evidence/procfs-candidate1-focus.log",
+      "bytes": 784,
+      "sha256": "700828a2dc5e3446ec9f296603609b9b5fa215f26c1ee6217db6c23cb5158a83"
+    },
+    {
+      "path": "evidence/procfs-candidate1-full.log",
+      "bytes": 831933,
+      "sha256": "d998a9d59c9825628667609d4d1ee26bad4b3a9140ee8cad790ae95fd6a4921f"
+    },
+    {
+      "path": "evidence/procfs-candidate1-integration.log",
+      "bytes": 1794,
+      "sha256": "08ec9985f77972acbf9dbe1c8fcda71b7b659febd16e05876aee5d9f66d12ca6"
+    },
+    {
+      "path": "evidence/procfs-candidate1-overrides.tar.gz",
+      "bytes": 34254,
+      "sha256": "22e233a9dce12f494d47326f04051a5ce257c31446b4e50ece7d7baee8c63b1c"
+    },
+    {
+      "path": "evidence/procfs-candidate1-source.json",
+      "bytes": 6874181,
+      "sha256": "b1c920a113cb4a6e35243e907bfe72751d4e6c0a6eef67afaafa14047d7b57cb"
+    },
+    {
+      "path": "evidence/procfs-candidate1-test-build.log",
+      "bytes": 92179,
+      "sha256": "32ab9f89e0b049147ec5ae9bb253ab184c365455e6384127837d29d411fd7c7e"
+    },
+    {
+      "path": "evidence/procfs-candidate1-toolchain.log",
+      "bytes": 36,
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5"
+    },
+    {
+      "path": "evidence/procfs-candidate1-windows.json",
+      "bytes": 8053,
+      "sha256": "241fcdcfa35ac4e4eb2b3d0ecf8a46bc33e99b566100e66de3fe87ce06c09455"
+    },
+    {
+      "path": "evidence/procfs-clippy-lib-strict-v1.log",
+      "bytes": 203,
+      "sha256": "c98022e89c8b9df594f8958bfadf8b9eba1e90e2794a780300925e06e65f355c"
+    },
+    {
+      "path": "evidence/procfs-clippy-v1.log",
+      "bytes": 194102,
+      "sha256": "348037be68c2928255f6852622f7da9d51ceb882d82162c758999a5fa69dc834"
+    },
+    {
+      "path": "evidence/procfs-clippy-v2.log",
+      "bytes": 149,
+      "sha256": "1568c4aa49310332d8747782c1f16e15d29436eba2f7c1310e9672c4a20ba550"
+    },
+    {
+      "path": "evidence/procfs-final-assumptions-v1.json",
+      "bytes": 3247,
+      "sha256": "6044b152096040be96b0cd8d6b8d7aa0ef52bd02214360bfb2df9553d6a166fb"
+    },
+    {
+      "path": "evidence/procfs-linux-candidate1-all-targets.log",
+      "bytes": 116,
+      "sha256": "296fb2b96e937837528b718acf05c647bbd5d46bf042c0e7d60f16bbc1134d74"
+    },
+    {
+      "path": "evidence/procfs-linux-candidate1-capi.log",
+      "bytes": 14061,
+      "sha256": "ddb5bf6e193848ef7b93909a246a85bc5009bc7dea5fdd0d7f10dcfb6119ad11"
+    },
+    {
+      "path": "evidence/procfs-linux-candidate1-focus.log",
+      "bytes": 1270,
+      "sha256": "5362c8523d3fec433ed901c53035681f12f0a525f252861489f2f906a7c1aec9"
+    },
+    {
+      "path": "evidence/procfs-linux-candidate1-full.log",
+      "bytes": 864725,
+      "sha256": "3f7c20b7e32f5fda56819121c764b0ff8f660d9b11bba6656a3b67559c6417af"
+    },
+    {
+      "path": "evidence/procfs-linux-candidate1-gates.json",
+      "bytes": 8614,
+      "sha256": "fd3a0fe6168509468aa08eee7a7b21c63ea75151e611497d7718a9096f892394"
+    },
+    {
+      "path": "evidence/procfs-linux-candidate1-integration.log",
+      "bytes": 35836,
+      "sha256": "b1c15c298f2ac0fff68a88f940eba6ee4eb0f3e7c1f06ea0b422cdecbb08302e"
+    },
+    {
+      "path": "evidence/procfs-linux-parent-collision-v1.log",
+      "bytes": 884,
+      "sha256": "614165fbb06c5749811a1b7c7693817e48dce9b0127ad8d534d27193364e3211"
+    },
+    {
+      "path": "evidence/procfs-linux-temporary-cleanup-v1.json",
+      "bytes": 575,
+      "sha256": "58d6a39d25e64eb78743b10ec14ddef31bd02accaaef968853d1390123c9827c"
+    },
+    {
+      "path": "evidence/procfs-linux-user-linux-v1-integration.log",
+      "bytes": 3116,
+      "sha256": "18c38a4224f1d3644e732adea8c4685cf6135560ba6705cc466301a628c6651b"
+    },
+    {
+      "path": "evidence/procfs-linux-user-linux-v1.json",
+      "bytes": 1974,
+      "sha256": "36489f14a1cb310b4f36f7f24ec1165504e759aaca06b388d306e5bf09d85288"
+    },
+    {
+      "path": "evidence/procfs-macos-candidate1-all-targets.log",
+      "bytes": 149,
+      "sha256": "357ef9e759fcc2aaff648f2da8bd98d2436d12df04013706ab2ef11954865579"
+    },
+    {
+      "path": "evidence/procfs-macos-candidate1-capi.log",
+      "bytes": 14131,
+      "sha256": "9ca42642c4ade5accfedd919c4b10c42487739cd7a6d1e655ff485ab36bd1e93"
+    },
+    {
+      "path": "evidence/procfs-macos-candidate1-focus.log",
+      "bytes": 1240,
+      "sha256": "6502666a575ee334ae9e5e2184477af90a07bd65483faa727bd2d44a1ae080f0"
+    },
+    {
+      "path": "evidence/procfs-macos-candidate1-full.log",
+      "bytes": 864559,
+      "sha256": "4fbed10f32d3e9b2e5d22ca24b6a89ae571bc82bf70ea207c502423350906428"
+    },
+    {
+      "path": "evidence/procfs-macos-candidate1-gates.json",
+      "bytes": 3482,
+      "sha256": "0fe7e864a126aa7d419327b387c7d1d7e92778b09a8bb0dc81ae74dc2cbb6b9d"
+    },
+    {
+      "path": "evidence/procfs-macos-candidate1-integration.log",
+      "bytes": 35856,
+      "sha256": "b5fec34cd14626397443bf56957484e1e57b0b89cf7332081c410573436491b5"
+    },
+    {
+      "path": "evidence/procfs-macos-temporary-cleanup-v2.json",
+      "bytes": 2004,
+      "sha256": "386e420740086f6cbcf4e7cfbeac371e9fc25139fe7ba64eca935900ff1463df"
+    },
+    {
+      "path": "evidence/procfs-macos-user-linux-v1-integration.log",
+      "bytes": 3143,
+      "sha256": "fd9edf7fe0fbe0dbe25b322d43df978034f995183854a2eeca30e9cc34658bc3"
+    },
+    {
+      "path": "evidence/procfs-macos-user-linux-v1.json",
+      "bytes": 948,
+      "sha256": "d769797a108e4aaff9f365a3f14c90cbf284d2bd5fe2b3a05ae1d72596157e9a"
+    },
+    {
+      "path": "evidence/procfs-native-owning-candidate1-archive-after.log",
+      "bytes": 182,
+      "sha256": "b7759a2965b8170dd5df9e144e2bb38403aca31224438af12aa84887c242f5b3"
+    },
+    {
+      "path": "evidence/procfs-native-owning-candidate1-archive-before.log",
+      "bytes": 182,
+      "sha256": "b7759a2965b8170dd5df9e144e2bb38403aca31224438af12aa84887c242f5b3"
+    },
+    {
+      "path": "evidence/procfs-native-owning-candidate1-artifacts-after.log",
+      "bytes": 132251,
+      "sha256": "11c7d7c28a0b80a3ed0237f0b81d23dd528a9ce36b11d46ff622cf606eee4011"
+    },
+    {
+      "path": "evidence/procfs-native-owning-candidate1-artifacts-before.log",
+      "bytes": 132536,
+      "sha256": "33d435d4c50546ece7893df59adbd51caf810d869b660df7c0e73660536b3d66"
+    },
+    {
+      "path": "evidence/procfs-native-owning-candidate1-cpp.log",
+      "bytes": 3705,
+      "sha256": "6dae4a9fdf55bc342f9f48b86a3b46d9bc8f0c2d24b92b944fb4c25793e394c0"
+    },
+    {
+      "path": "evidence/procfs-native-owning-candidate1-toolchain.log",
+      "bytes": 36,
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5"
+    },
+    {
+      "path": "evidence/procfs-native-owning-candidate1.json",
+      "bytes": 4959,
+      "sha256": "a570d23d45b021e7f4b04de6a390c584fc3fa6d38ebc96db500a42c2a1d4f346"
+    },
+    {
+      "path": "evidence/procfs-owned-cpp-build-candidate1.py",
+      "bytes": 3384,
+      "sha256": "2c0963382517595dfab4f3d8ffac24b2a314b28e535db9ef58537837f43d35fc"
+    },
+    {
+      "path": "evidence/procfs-owning-manifest-provenance-v2.json",
+      "bytes": 547,
+      "sha256": "0877b3f14fe32c12b282b062de2c6eba49bf0264fa6430b25fb3dff8a61a9c83"
+    },
+    {
+      "path": "evidence/procfs-owning-source-hashes-candidate1-v2.json",
+      "bytes": 758954,
+      "sha256": "8b79d571b3cde8bccf2edfdbb3cdbe7076dbcb4e4616b8cb0cbeb81732561996"
+    },
+    {
+      "path": "evidence/procfs-owning-source-hashes-candidate1.json",
+      "bytes": 758903,
+      "sha256": "ca2aab09025683885b174c19e231869d70a5f7eea5dab0bb24d99ea2bbc2f221"
+    },
+    {
+      "path": "evidence/procfs-parent-test-overlay-v1.rs",
+      "bytes": 4174,
+      "sha256": "eb0b671b2d56720d9bec03772b0db58f328d22c957192611591bcf6cecbb844a"
+    },
+    {
+      "path": "evidence/procfs-quality-gates-v1.json",
+      "bytes": 1639,
+      "sha256": "f9be9638e65c0a26d06bdbfbf7b4ecfa980f1f03cfdb4163d3eda4dd5823aaee"
+    },
+    {
+      "path": "evidence/procfs-rustfmt-owned-v1.json",
+      "bytes": 928,
+      "sha256": "655019bd95fc46f7eb3223abb94c992823d0820240570bb569a79045a96589e4"
+    },
+    {
+      "path": "evidence/procfs-rustfmt-owned-v1.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "evidence/procfs-source-audit-v1.json",
+      "bytes": 749,
+      "sha256": "b2a39b61444dee04f9ab6791c13ec197df304d2421ef73eb6a87bcfa5fee5fc7"
+    },
+    {
+      "path": "evidence/procfs-windows-user-linux-v1-integration.log",
+      "bytes": 1233,
+      "sha256": "5d526d01dcf78f8d9277099750f3e9187f7d849298dc0f864e80eec7c4ec664c"
+    },
+    {
+      "path": "evidence/procfs-windows-user-linux-v1-toolchain.log",
+      "bytes": 36,
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5"
+    },
+    {
+      "path": "evidence/procfs-windows-user-linux-v1.json",
+      "bytes": 2208,
+      "sha256": "08d96ec031fb775109c8a185b5af5174800445bd8775ab72e28939d1120c5638"
+    },
+    {
+      "path": "evidence/run-procfs-candidate1-windows.py",
+      "bytes": 9295,
+      "sha256": "0697d9d3fb8b411038a94e699faafd02b1954d70916856ab9072c6ddcbc631fd"
+    },
+    {
+      "path": "evidence/run-procfs-native-owning-candidate1.py",
+      "bytes": 6902,
+      "sha256": "4fdb27cdae298e4e13c070b0fa9e21b11416039c5255cfa76902eb8ee5336659"
+    },
+    {
+      "path": "evidence/run-procfs-owning-candidate1-v2.py",
+      "bytes": 3430,
+      "sha256": "589bbf70ad130bd6c698d1573c9fe27b573133eabd57a909fe3142a7d5f99739"
+    },
+    {
+      "path": "evidence/run-procfs-unix-candidate1.py",
+      "bytes": 4432,
+      "sha256": "5296cc8adc06a2a300658f8785b8bfb298f4dc2b0216556c7c3eb3e6af02c19c"
+    },
+    {
+      "path": "evidence/run-procfs-unix-user-linux-v1.py",
+      "bytes": 4600,
+      "sha256": "bdba42a864a23c8938cc9b5d2a3758e17c2f294ae686551dae5993a54760d746"
+    },
+    {
+      "path": "evidence/run-procfs-windows-user-linux-v1.py",
+      "bytes": 6477,
+      "sha256": "f1c5817741081768b61e899f73ca37ca0d8810472d7f4b2c3eabc2a7c8d8bfbf"
+    }
+  ]
+}

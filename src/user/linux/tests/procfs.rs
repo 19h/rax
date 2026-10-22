@@ -66,3 +66,47 @@ fn a_closed_descriptor_or_an_exited_thread_has_no_proc_entry() {
         );
     });
 }
+
+#[cfg(target_os = "linux")]
+#[test]
+fn an_exited_guest_tid_never_opens_a_colliding_live_host_thread() {
+    // The host thread remains alive throughout every guest ABI's checks. Its
+    // native /proc entry is the deterministic collision behind the CI failure.
+    std::thread::scope(|scope| {
+        let (send_tid, receive_tid) = std::sync::mpsc::channel();
+        let (release, wait) = std::sync::mpsc::channel::<()>();
+        scope.spawn(move || {
+            let own = std::fs::read_link("/proc/thread-self").unwrap();
+            let tid: i32 = own.file_name().unwrap().to_str().unwrap().parse().unwrap();
+            send_tid.send(tid).unwrap();
+            // Dropping release while unwinding also releases this thread.
+            let _ = wait.recv();
+        });
+        let tid = receive_tid.recv().unwrap();
+        let native = format!("/proc/{tid}/status");
+        assert!(std::fs::read_to_string(&native).unwrap().contains("Tgid:"));
+        each_abi(|abi| {
+            let mut h = Harness::new(abi);
+            assert_ne!(h.proc.state.pid, tid);
+            h.proc.state.next_tid = tid;
+            let flags = CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND | CLONE_THREAD;
+            assert_eq!(h.ok(Sysno::Clone, &[flags, 0, 0, 0, 0]), tid as u64);
+            let child = h.index_of(tid);
+            h.start(child, Sysno::Exit, &[0]);
+            assert!(std::fs::metadata(&native).is_ok());
+            for path in [
+                native.clone(),
+                format!("/proc/{tid}"),
+                format!("/proc/{tid}/fd/0"),
+            ] {
+                assert_eq!(open(&mut h, &path), -(ENOENT as i64), "{abi:?}/{path}");
+            }
+            assert_eq!(
+                readlink(&mut h, &format!("/proc/{tid}/exe")),
+                -(ENOENT as i64),
+                "{abi:?}"
+            );
+        });
+        drop(release);
+    });
+}

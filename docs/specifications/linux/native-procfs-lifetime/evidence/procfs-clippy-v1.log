@@ -1,0 +1,5765 @@
+    Checking rax v0.1.0 (/Users/int/.assist-native-display-policy-20261022)
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/integer/arithmetic/adcx_adox.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `-D unused-imports` implied by `-D warnings`
+  = help: to override `-D warnings` add `#[allow(unused_imports)]`
+
+error: unused import: `VCpu`
+ --> tests/suites/isa/x86_64/integer/arithmetic/bcd/aaa.rs:2:32
+  |
+2 | use rax::vm::vcpu::{Registers, VCpu};
+  |                                ^^^^
+
+error: unused import: `VCpu`
+ --> tests/suites/isa/x86_64/integer/arithmetic/bcd/aad.rs:2:32
+  |
+2 | use rax::vm::vcpu::{Registers, VCpu};
+  |                                ^^^^
+
+error: unused import: `VCpu`
+ --> tests/suites/isa/x86_64/integer/arithmetic/bcd/aam.rs:2:32
+  |
+2 | use rax::vm::vcpu::{Registers, VCpu};
+  |                                ^^^^
+
+error: unused import: `VCpu`
+ --> tests/suites/isa/x86_64/integer/arithmetic/bcd/aas.rs:2:32
+  |
+2 | use rax::vm::vcpu::{Registers, VCpu};
+  |                                ^^^^
+
+error: unused import: `VCpu`
+ --> tests/suites/isa/x86_64/integer/arithmetic/bcd/daa.rs:2:32
+  |
+2 | use rax::vm::vcpu::{Registers, VCpu};
+  |                                ^^^^
+
+error: unused import: `VCpu`
+ --> tests/suites/isa/x86_64/integer/arithmetic/bcd/das.rs:2:32
+  |
+2 | use rax::vm::vcpu::{Registers, VCpu};
+  |                                ^^^^
+
+error: unused import: `VCpu`
+ --> tests/suites/isa/x86_64/integer/arithmetic/inc_dec.rs:3:32
+  |
+3 | use rax::vm::vcpu::{Registers, VCpu};
+  |                                ^^^^
+
+error: unused import: `VCpu`
+ --> tests/suites/isa/x86_64/integer/arithmetic/neg.rs:2:32
+  |
+2 | use rax::vm::vcpu::{Registers, VCpu};
+  |                                ^^^^
+
+error: unused import: `VM`
+ --> tests/suites/isa/x86_64/control_flow/call_return/call.rs:2:16
+  |
+2 |     CODE_ADDR, VM, run_until_hlt_legacy as run_until_hlt, setup_vm_legacy as setup_vm,
+  |                ^^
+
+error: unused import: `VM`
+ --> tests/suites/isa/x86_64/control_flow/call_return/ret.rs:2:16
+  |
+2 |     CODE_ADDR, VM, run_until_hlt_legacy as run_until_hlt, setup_vm_legacy as setup_vm,
+  |                ^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/control_flow/conditional_jump/ja.rs:1:5
+  |
+1 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/control_flow/conditional_jump/jae.rs:1:5
+  |
+1 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/control_flow/conditional_jump/jb.rs:1:5
+  |
+1 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/control_flow/conditional_jump/jbe.rs:1:5
+  |
+1 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/control_flow/conditional_jump/je.rs:1:5
+  |
+1 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/control_flow/conditional_jump/jg.rs:1:5
+  |
+1 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/control_flow/conditional_jump/jge.rs:1:5
+  |
+1 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/control_flow/conditional_jump/jl.rs:1:5
+  |
+1 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/control_flow/conditional_jump/jle.rs:1:5
+  |
+1 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/control_flow/conditional_jump/jne.rs:1:5
+  |
+1 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/control_flow/conditional_jump/jno.rs:1:5
+  |
+1 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `VM`
+ --> tests/suites/isa/x86_64/control_flow/conditional_jump/jnp.rs:1:21
+  |
+1 | use crate::common::{VM, run_until_hlt_legacy as run_until_hlt, setup_vm_legacy as setup_vm};
+  |                     ^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/control_flow/conditional_jump/jns.rs:1:5
+  |
+1 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/control_flow/conditional_jump/jo.rs:1:5
+  |
+1 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/control_flow/conditional_jump/jp.rs:1:5
+  |
+1 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/control_flow/conditional_jump/js.rs:1:5
+  |
+1 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `Registers`
+ --> tests/suites/isa/x86_64/control_flow/int_into_int3.rs:5:21
+  |
+5 | use rax::vm::vcpu::{Registers, Segment, VCpu, VcpuExit};
+  |                     ^^^^^^^^^
+
+error: unused import: `VM`
+ --> tests/suites/isa/x86_64/control_flow/loop/loop.rs:1:21
+  |
+1 | use crate::common::{VM, run_until_hlt_legacy as run_until_hlt, setup_vm_legacy as setup_vm};
+  |                     ^^
+
+error: unused import: `VM`
+ --> tests/suites/isa/x86_64/control_flow/loop/loope.rs:1:21
+  |
+1 | use crate::common::{VM, run_until_hlt_legacy as run_until_hlt, setup_vm_legacy as setup_vm};
+  |                     ^^
+
+error: unused import: `VM`
+ --> tests/suites/isa/x86_64/control_flow/loop/loopne.rs:1:21
+  |
+1 | use crate::common::{VM, run_until_hlt_legacy as run_until_hlt, setup_vm_legacy as setup_vm};
+  |                     ^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/control_flow/syscall_sysret.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::isa::x86_64::flags::bits`
+ --> tests/suites/isa/x86_64/control_flow/sysenter_sysexit.rs:4:5
+  |
+4 | use rax::isa::x86_64::flags::bits;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/control_flow/sysenter_sysexit.rs:5:5
+  |
+5 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `VM`
+ --> tests/suites/isa/x86_64/control_flow/unconditional_jump/jmp.rs:1:21
+  |
+1 | use crate::common::{VM, run_until_hlt_legacy as run_until_hlt, setup_vm_legacy as setup_vm};
+  |                     ^^
+
+error: unused imports: `write_mem_u16` and `write_mem_u8`
+ --> tests/suites/isa/x86_64/data/conversion/movzx.rs:3:46
+  |
+3 | use crate::common::{run_until_hlt, setup_vm, write_mem_u8, write_mem_u16};
+  |                                              ^^^^^^^^^^^^  ^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/crypto/aesdec.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/crypto/aesdeclast.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/crypto/aesdeclast.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/crypto/aesenc.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/crypto/aesenclast.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/crypto/aesenclast.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/crypto/aesimc.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/crypto/aesimc.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/crypto/aeskeygenassist.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/crypto/aeskeygenassist.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+  --> tests/suites/isa/x86_64/crypto/gf2p8.rs:16:5
+   |
+16 | use rax::vm::vcpu::Registers;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/data/movement/compare_exchange/cmpxchg.rs:1:5
+  |
+1 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/data/movement/exchange_add/xadd.rs:1:5
+  |
+1 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `VM`
+ --> tests/suites/isa/x86_64/data/transfer/lea.rs:1:21
+  |
+1 | use crate::common::{VM, run_until_hlt_legacy as run_until_hlt, setup_vm_legacy as setup_vm};
+  |                     ^^
+
+error: unused import: `DATA_ADDR`
+ --> tests/suites/isa/x86_64/data/transfer/setcc.rs:1:21
+  |
+1 | use crate::common::{DATA_ADDR, read_mem_u8, run_until_hlt, setup_vm, write_mem_u8};
+  |                     ^^^^^^^^^
+
+error: unused imports: `Bytes` and `VM`
+ --> tests/suites/isa/x86_64/data/transfer/xchg.rs:2:5
+  |
+2 |     Bytes, VM, run_until_hlt_legacy as run_until_hlt, setup_vm_legacy as setup_vm,
+  |     ^^^^^  ^^
+
+error: unnecessary parentheses around assigned value
+   --> tests/suites/isa/x86_64/integer/flags/cld_std.rs:352:18
+    |
+352 |     let before = (0x2 | 0xFFF);
+    |                  ^           ^
+    |
+    = note: `-D unused-parens` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(unused_parens)]`
+help: remove these parentheses
+    |
+352 -     let before = (0x2 | 0xFFF);
+352 +     let before = 0x2 | 0xFFF;
+    |
+
+error: unused import: `rax::vm::vcpu::Registers`
+  --> tests/suites/isa/x86_64/floating_point/x87/f2xm1.rs:23:5
+   |
+23 | use rax::vm::vcpu::Registers;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+  --> tests/suites/isa/x86_64/floating_point/x87/fabs.rs:17:5
+   |
+17 | use rax::vm::vcpu::Registers;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+  --> tests/suites/isa/x86_64/floating_point/x87/fchs.rs:18:5
+   |
+18 | use rax::vm::vcpu::Registers;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+  --> tests/suites/isa/x86_64/floating_point/x87/fcom.rs:29:5
+   |
+29 | use rax::vm::vcpu::Registers;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+  --> tests/suites/isa/x86_64/floating_point/x87/fcos.rs:18:5
+   |
+18 | use rax::vm::vcpu::Registers;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+  --> tests/suites/isa/x86_64/floating_point/x87/ffree.rs:17:5
+   |
+17 | use rax::vm::vcpu::Registers;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+  --> tests/suites/isa/x86_64/floating_point/x87/fincstp_fdecstp.rs:25:5
+   |
+25 | use rax::vm::vcpu::Registers;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+  --> tests/suites/isa/x86_64/floating_point/x87/fld.rs:17:5
+   |
+17 | use rax::vm::vcpu::Registers;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+  --> tests/suites/isa/x86_64/floating_point/x87/fld_constants.rs:33:5
+   |
+33 | use rax::vm::vcpu::Registers;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+  --> tests/suites/isa/x86_64/floating_point/x87/fldcw_fstcw.rs:30:5
+   |
+30 | use rax::vm::vcpu::Registers;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+  --> tests/suites/isa/x86_64/floating_point/x87/fnop.rs:17:5
+   |
+17 | use rax::vm::vcpu::Registers;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+  --> tests/suites/isa/x86_64/floating_point/x87/fprem.rs:21:5
+   |
+21 | use rax::vm::vcpu::Registers;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+  --> tests/suites/isa/x86_64/floating_point/x87/fprem1.rs:21:5
+   |
+21 | use rax::vm::vcpu::Registers;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+  --> tests/suites/isa/x86_64/floating_point/x87/frndint.rs:19:5
+   |
+19 | use rax::vm::vcpu::Registers;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+  --> tests/suites/isa/x86_64/floating_point/x87/fsin_fcos.rs:26:5
+   |
+26 | use rax::vm::vcpu::Registers;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+  --> tests/suites/isa/x86_64/floating_point/x87/fsincos.rs:20:5
+   |
+20 | use rax::vm::vcpu::Registers;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+  --> tests/suites/isa/x86_64/floating_point/x87/fsqrt.rs:23:5
+   |
+23 | use rax::vm::vcpu::Registers;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+  --> tests/suites/isa/x86_64/floating_point/x87/ftst.rs:24:5
+   |
+24 | use rax::vm::vcpu::Registers;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+  --> tests/suites/isa/x86_64/floating_point/x87/fucomi_fucomip.rs:28:5
+   |
+28 | use rax::vm::vcpu::Registers;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+  --> tests/suites/isa/x86_64/floating_point/x87/fxam.rs:27:5
+   |
+27 | use rax::vm::vcpu::Registers;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+  --> tests/suites/isa/x86_64/floating_point/x87/fxch.rs:18:5
+   |
+18 | use rax::vm::vcpu::Registers;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+  --> tests/suites/isa/x86_64/floating_point/x87/fyl2x.rs:18:5
+   |
+18 | use rax::vm::vcpu::Registers;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+  --> tests/suites/isa/x86_64/floating_point/x87/fyl2xp1.rs:19:5
+   |
+19 | use rax::vm::vcpu::Registers;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `EbpfDecodeError`
+ --> tests/suites/smir/lift/ebpf_review_decode.rs:2:22
+  |
+2 | use rax::isa::ebpf::{EbpfDecodeError, EbpfOp, decode_insn};
+  |                      ^^^^^^^^^^^^^^^
+  |
+  = note: `-D unused-imports` implied by `-D warnings`
+  = help: to override `-D warnings` add `#[allow(unused_imports)]`
+
+error: unused import: `std::sync::Arc`
+  --> tests/suites/isa/x86_64/integer/bit_logic/rotates_basic/rcl.rs:33:5
+   |
+33 | use std::sync::Arc;
+   |     ^^^^^^^^^^^^^^
+
+error: unused import: `std::sync::Arc`
+  --> tests/suites/isa/x86_64/integer/bit_logic/rotates_basic/rcr.rs:33:5
+   |
+33 | use std::sync::Arc;
+   |     ^^^^^^^^^^^^^^
+
+error: unused import: `std::sync::Arc`
+  --> tests/suites/isa/x86_64/integer/bit_logic/rotates_basic/rol.rs:29:5
+   |
+29 | use std::sync::Arc;
+   |     ^^^^^^^^^^^^^^
+
+error: unused import: `std::sync::Arc`
+  --> tests/suites/isa/x86_64/integer/bit_logic/rotates_basic/ror.rs:29:5
+   |
+29 | use std::sync::Arc;
+   |     ^^^^^^^^^^^^^^
+
+error: unused import: `std::sync::Arc`
+  --> tests/suites/isa/x86_64/integer/bit_logic/shifts_arithmetic/sar.rs:30:5
+   |
+30 | use std::sync::Arc;
+   |     ^^^^^^^^^^^^^^
+
+error: unused import: `std::sync::Arc`
+  --> tests/suites/isa/x86_64/integer/bit_logic/shifts_double_precision/shld.rs:25:5
+   |
+25 | use std::sync::Arc;
+   |     ^^^^^^^^^^^^^^
+
+error: unused import: `std::sync::Arc`
+  --> tests/suites/isa/x86_64/integer/bit_logic/shifts_double_precision/shrd.rs:25:5
+   |
+25 | use std::sync::Arc;
+   |     ^^^^^^^^^^^^^^
+
+error: unused import: `std::sync::Arc`
+  --> tests/suites/isa/x86_64/integer/bit_logic/shifts_logical/shl.rs:27:5
+   |
+27 | use std::sync::Arc;
+   |     ^^^^^^^^^^^^^^
+
+error: unused import: `std::sync::Arc`
+  --> tests/suites/isa/x86_64/integer/bit_logic/shifts_logical/shr.rs:30:5
+   |
+30 | use std::sync::Arc;
+   |     ^^^^^^^^^^^^^^
+
+error: unused import: `write_mem_at_u16`
+ --> tests/suites/isa/x86_64/miscellaneous/cldemote.rs:4:22
+  |
+4 |     write_mem_at_u8, write_mem_at_u16, write_mem_at_u32, write_mem_at_u64,
+  |                      ^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/miscellaneous/clflush.rs:7:17
+  |
+7 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `write_mem_at_u16`
+ --> tests/suites/isa/x86_64/miscellaneous/clwb.rs:4:22
+  |
+4 |     write_mem_at_u8, write_mem_at_u16, write_mem_at_u32, write_mem_at_u64,
+  |                      ^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/miscellaneous/cpuid_extended.rs:3:5
+  |
+3 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `pf_set`
+ --> tests/suites/isa/x86_64/miscellaneous/lock.rs:3:21
+  |
+3 |     cf_set, of_set, pf_set, read_mem_at_u8, read_mem_at_u16, read_mem_at_u32, read_mem_at_u64,
+  |                     ^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/miscellaneous/lock.rs:8:17
+  |
+8 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `DATA_ADDR`
+ --> tests/suites/isa/x86_64/miscellaneous/movdir64b_extended.rs:3:5
+  |
+3 |     DATA_ADDR, read_mem_at_u64, run_until_hlt, setup_vm, setup_vm_no_idt, write_mem_at_u64,
+  |     ^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+  --> tests/suites/isa/x86_64/miscellaneous/tpause_umonitor_umwait.rs:16:5
+   |
+16 | use rax::vm::vcpu::Registers;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `sf_set` and `zf_set`
+  --> tests/suites/isa/x86_64/integer/shifts/rcl.rs:27:37
+   |
+27 | use crate::common::{cf_set, of_set, sf_set, zf_set};
+   |                                     ^^^^^^  ^^^^^^
+
+error: unused imports: `sf_set` and `zf_set`
+  --> tests/suites/isa/x86_64/integer/shifts/rcr.rs:27:37
+   |
+27 | use crate::common::{cf_set, of_set, sf_set, zf_set};
+   |                                     ^^^^^^  ^^^^^^
+
+error: unused imports: `sf_set` and `zf_set`
+  --> tests/suites/isa/x86_64/integer/shifts/rol.rs:26:37
+   |
+26 | use crate::common::{cf_set, of_set, sf_set, zf_set};
+   |                                     ^^^^^^  ^^^^^^
+
+error: unused import: `rax::isa::x86_64::flags`
+  --> tests/suites/isa/x86_64/integer/shifts/rol_ror_extended.rs:12:5
+   |
+12 | use rax::isa::x86_64::flags;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `sf_set` and `zf_set`
+  --> tests/suites/isa/x86_64/integer/shifts/ror.rs:26:37
+   |
+26 | use crate::common::{cf_set, of_set, sf_set, zf_set};
+   |                                     ^^^^^^  ^^^^^^
+
+error: unused import: `rax::isa::x86_64::flags`
+  --> tests/suites/isa/x86_64/integer/shifts/shld_shrd_extended.rs:11:5
+   |
+11 | use rax::isa::x86_64::flags;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `std::sync::Arc`
+ --> tests/suites/isa/x86_64/segments/mov_segment.rs:3:5
+  |
+3 | use std::sync::Arc;
+  |     ^^^^^^^^^^^^^^
+
+error: unused import: `std::sync::Arc`
+ --> tests/suites/isa/x86_64/segments/push_pop_segment.rs:3:5
+  |
+3 | use std::sync::Arc;
+  |     ^^^^^^^^^^^^^^
+
+error: could not compile `rax` (test "ebpf_smir_lift") due to 1 previous error
+warning: build failed, waiting for other jobs to finish...
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx2/vmpsadbw.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx2/vpaddsb.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx2/vpaddsw.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx2/vpaddusb.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx2/vpaddusw.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx2/vpandn.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx2/vpblendvb.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx2/vpblendw.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx2/vphminposuw.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx2/vpmovmskb.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/avx2/vpmovmskb.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx2/vpmuldq.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx2/vpmuludq.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx2/vpslldq.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx2/vpsrldq.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx2/vpsubsb.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx2/vpsubsw.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx2/vpsubusb.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx2/vpsubusw.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+  --> tests/suites/isa/x86_64/simd/avx512_extended.rs:21:5
+   |
+21 | use rax::vm::vcpu::Registers;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+  --> tests/suites/isa/x86_64/simd/avx512/kadd_mask.rs:17:5
+   |
+17 | use rax::vm::vcpu::Registers;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx512/kand_kor_kxor.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/avx512/kand_kor_kxor.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+  --> tests/suites/isa/x86_64/simd/avx512/kandn_knot_mask.rs:22:5
+   |
+22 | use rax::vm::vcpu::Registers;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx512/kmov.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/avx512/kmov.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx512/vaddps_zmm.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+  --> tests/suites/isa/x86_64/simd/avx512/valign_vprol_vpror_vpternlog.rs:21:5
+   |
+21 | use rax::vm::vcpu::Registers;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+  --> tests/suites/isa/x86_64/simd/avx512/vdbpsadbw_vplzcnt_vpshld.rs:28:5
+   |
+28 | use rax::vm::vcpu::Registers;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx512/vdivps_zmm.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx512/vmovaps_zmm.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx512/vmovups_zmm.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx512/vmulps_zmm.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx512/vsubps_zmm.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vaddps_vaddpd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vaddss_vaddsd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vaddsubps_vaddsubpd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vandnps_vandnpd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vandps_vandpd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vblendps_vblendpd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vblendvps.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/avx/vblendvps.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vbroadcastss_vbroadcastsd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vcmpps_vcmppd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vcomisd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/avx/vcomisd.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vcomiss.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/avx/vcomiss.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vcvtdq2pd_vcvtpd2dq.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vcvtdq2ps_vcvtps2dq.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vcvtps2pd_vcvtpd2ps.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vcvtsi2ss_vcvtsi2sd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vcvtss2sd_vcvtsd2ss.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vcvtss2si_vcvtsd2si.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vcvttps2dq_vcvttpd2dq.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vcvttss2si_vcvttsd2si.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vdivps_vdivpd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vdivss_vdivsd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vdpps.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vextractf128.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/avx/vextractf128.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vfmadd132pd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vfmadd132ps.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vfmadd213pd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vfmadd213ps.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vfmadd231pd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vfmadd231ps.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vfmsub132pd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vfmsub132ps.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vfmsub213pd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vfmsub213ps.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vfmsub231pd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vfmsub231ps.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vfnmadd132pd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vfnmadd132ps.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vfnmadd213pd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vfnmadd213ps.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vfnmadd231pd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vfnmadd231ps.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vfnmsub132pd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vfnmsub132ps.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vfnmsub213pd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vfnmsub213ps.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vfnmsub231pd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vfnmsub231ps.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vhaddps_vhaddpd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vhsubps_vhsubpd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vinsertf128.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vldmxcsr_vstmxcsr.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vmaskmovps_vmaskmovpd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vmaxps_vmaxpd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vminps_vminpd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vmovaps_vmovapd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vmovddup.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vmovhlps.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/avx/vmovhlps.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vmovhpd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vmovhps.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vmovlhps.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/avx/vmovlhps.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vmovlpd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vmovlps.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vmovmskps_vmovmskpd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/avx/vmovmskps_vmovmskpd.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vmovntdq.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vmovntpd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vmovntps.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vmovsd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/avx/vmovsd.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vmovshdup.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vmovsldup.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vmovss.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/avx/vmovss.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vmovups_vmovupd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vmulps_vmulpd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vmulss_vmulsd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vorps_vorpd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vperm2f128.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vpermilpd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/avx/vpermilpd.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vpermilps.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/avx/vpermilps.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vrcpps.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vroundpd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/avx/vroundpd.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vroundps.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/avx/vroundps.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vroundsd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/avx/vroundsd.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vroundss.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/avx/vroundss.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vrsqrtps.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vshufps_vshufpd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vsqrtps_vsqrtpd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vsubps_vsubpd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vsubss_vsubsd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vucomisd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/avx/vucomisd.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vucomiss.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/avx/vucomiss.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vunpckhps_vunpckhpd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vunpcklps_vunpcklpd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vxorps_vxorpd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/avx/vzeroupper_vzeroall.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/fma/vfmadd132pd_vfmadd213pd_vfmadd231pd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/fma/vfmadd132pd_vfmadd213pd_vfmadd231pd.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/fma/vfmadd132ps_vfmadd213ps_vfmadd231ps.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/fma/vfmadd132ps_vfmadd213ps_vfmadd231ps.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/fma/vfmadd132sd_vfmadd213sd_vfmadd231sd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/fma/vfmadd132sd_vfmadd213sd_vfmadd231sd.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/fma/vfmadd132ss_vfmadd213ss_vfmadd231ss.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/fma/vfmadd132ss_vfmadd213ss_vfmadd231ss.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/fma/vfmaddsub_vfmsubadd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/fma/vfmaddsub_vfmsubadd.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/fma/vfmsub_variants.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/fma/vfmsub_variants.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/fma/vfnmadd_variants.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/fma/vfnmadd_variants.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/fma/vfnmsub_variants.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/fma/vfnmsub_variants.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+  --> tests/suites/isa/x86_64/simd/mmx/paddb_paddw_paddd.rs:17:5
+   |
+17 | use rax::vm::vcpu::Registers;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/sse/addps_addpd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/sse/addps_addpd.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/sse/addss_addsd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/sse/addss_addsd.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/sse/addsubps_addsubpd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/sse/addsubps_addsubpd.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/sse/blendps_blendpd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/sse/blendps_blendpd.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/sse/blendvps_blendvpd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/sse/blendvps_blendvpd.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/sse/clflushopt.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/sse/clflushopt.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/sse/comiss_comisd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/sse/comiss_comisd.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/sse/divps_divpd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/sse/divps_divpd.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/sse/divss_divsd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/sse/divss_divsd.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/sse/haddps_haddpd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/sse/haddps_haddpd.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/sse/hsubps_hsubpd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/sse/hsubps_hsubpd.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/sse/lddqu.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/sse/lddqu.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/sse/ldmxcsr_stmxcsr.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/sse/ldmxcsr_stmxcsr.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/sse/lfence_mfence_sfence.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/sse/lfence_mfence_sfence.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/sse/maskmovdqu.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/sse/maskmovdqu.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/sse/maxps_maxpd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/sse/maxps_maxpd.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/sse/minps_minpd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/sse/minps_minpd.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/sse/movapd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/sse/movaps.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/sse/movddup.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/sse/movddup.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/sse/movdqa.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/sse/movdqu.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/sse/movhlps_movlhps.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/sse/movhlps_movlhps.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/sse/movmskps_movmskpd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/sse/movmskps_movmskpd.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/sse/movntdq.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/sse/movntdq.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/sse/movntdqa.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/sse/movntdqa.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/sse/movnti.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/sse/movnti.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/sse/movntps_movntpd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/sse/movntps_movntpd.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/sse/movntq.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/sse/movntq.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/sse/movntss_movntsd.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/sse/movshdup_movsldup.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/sse/movshdup_movsldup.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/sse/movupd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/sse/movups.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/sse/mulps_mulpd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/sse/mulps_mulpd.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/sse/mulss_mulsd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/sse/mulss_mulsd.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/sse/pause.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/sse/pause.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/sse/pclmulqdq_extended.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/sse/pclmulqdq_extended.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/sse/pcmpgtq.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/sse/pcmpgtq.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/sse/pmovmskb.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/sse/pmovmskb.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/sse/pmulhw.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/sse/pmulhw.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/sse/prefetchnta_prefetcht0_prefetcht1_prefetcht2.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/sse/prefetchnta_prefetcht0_prefetcht1_prefetcht2.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/sse/punpckhbw_punpckhwd_punpckhdq_punpckhqdq.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/sse/punpckhbw_punpckhwd_punpckhdq_punpckhqdq.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/sse/punpcklbw_punpcklwd_punpckldq_punpcklqdq.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/sse/punpcklbw_punpcklwd_punpckldq_punpcklqdq.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/sse/rcpps.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/sse/rcpps.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/sse/rcpss.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/sse/rcpss.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/sse/roundps_roundpd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/sse/roundps_roundpd.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/sse/roundss_roundsd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/sse/roundss_roundsd.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/sse/rsqrtps.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/sse/rsqrtps.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/sse/rsqrtss.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/sse/rsqrtss.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/sse/sqrtps_sqrtpd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/sse/sqrtps_sqrtpd.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/sse/sqrtss_sqrtsd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/sse/sqrtss_sqrtsd.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/sse/subps_subpd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/sse/subps_subpd.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/sse/subss_subsd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/sse/subss_subsd.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/simd/sse/ucomiss_ucomisd.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/simd/sse/ucomiss_ucomisd.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `read_mem_at_u64`
+ --> tests/suites/isa/x86_64/stack/leave_extended.rs:1:21
+  |
+1 | use crate::common::{read_mem_at_u64, run_until_hlt, setup_vm, write_mem_at_u64};
+  |                     ^^^^^^^^^^^^^^^
+
+error: unused import: `read_mem_at_u64`
+ --> tests/suites/isa/x86_64/stack/stack_alignment.rs:1:21
+  |
+1 | use crate::common::{read_mem_at_u64, run_until_hlt, setup_vm};
+  |                     ^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `VM`
+ --> tests/suites/isa/x86_64/strings/cmps.rs:2:5
+  |
+2 |     Bytes, VM, run_until_hlt_legacy as run_until_hlt, setup_vm_legacy as setup_vm,
+  |     ^^^^^  ^^
+
+error: unused imports: `Bytes` and `VM`
+ --> tests/suites/isa/x86_64/strings/lods.rs:2:5
+  |
+2 |     Bytes, VM, run_until_hlt_legacy as run_until_hlt, setup_vm_legacy as setup_vm,
+  |     ^^^^^  ^^
+
+error: unused imports: `Bytes` and `VM`
+ --> tests/suites/isa/x86_64/strings/movs.rs:2:5
+  |
+2 |     Bytes, VM, run_until_hlt_legacy as run_until_hlt, setup_vm_legacy as setup_vm,
+  |     ^^^^^  ^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/strings/rep_movs.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/strings/rep_movs.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/strings/rep_stos.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/strings/rep_stos.rs:3:17
+  |
+3 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::isa::x86_64::flags`
+ --> tests/suites/isa/x86_64/strings/repe_cmps.rs:2:5
+  |
+2 | use rax::isa::x86_64::flags;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/strings/repe_cmps.rs:3:5
+  |
+3 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/strings/repe_cmps.rs:4:17
+  |
+4 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::isa::x86_64::flags`
+ --> tests/suites/isa/x86_64/strings/repe_scas.rs:2:5
+  |
+2 | use rax::isa::x86_64::flags;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/strings/repe_scas.rs:3:5
+  |
+3 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/strings/repe_scas.rs:4:17
+  |
+4 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::isa::x86_64::flags`
+ --> tests/suites/isa/x86_64/strings/repne_cmps.rs:2:5
+  |
+2 | use rax::isa::x86_64::flags;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/strings/repne_cmps.rs:3:5
+  |
+3 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/strings/repne_cmps.rs:4:17
+  |
+4 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::isa::x86_64::flags`
+ --> tests/suites/isa/x86_64/strings/repne_scas.rs:2:5
+  |
+2 | use rax::isa::x86_64::flags;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/strings/repne_scas.rs:3:5
+  |
+3 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/strings/repne_scas.rs:4:17
+  |
+4 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `VM`
+ --> tests/suites/isa/x86_64/strings/scas.rs:2:5
+  |
+2 |     Bytes, VM, run_until_hlt_legacy as run_until_hlt, setup_vm_legacy as setup_vm,
+  |     ^^^^^  ^^
+
+error: unused imports: `Bytes` and `VM`
+ --> tests/suites/isa/x86_64/strings/stos.rs:2:5
+  |
+2 |     Bytes, VM, run_until_hlt_legacy as run_until_hlt, setup_vm_legacy as setup_vm,
+  |     ^^^^^  ^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/synchronization/cmpxchg.rs:1:5
+  |
+1 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/synchronization/cmpxchg16b_extended.rs:2:5
+  |
+2 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+  --> tests/suites/isa/x86_64/system/amx.rs:24:5
+   |
+24 | use rax::vm::vcpu::Registers;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+  --> tests/suites/isa/x86_64/system/arpl.rs:21:5
+   |
+21 | use rax::vm::vcpu::Registers;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+  --> tests/suites/isa/x86_64/system/cache_invalidate.rs:18:5
+   |
+18 | use rax::vm::vcpu::Registers;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+  --> tests/suites/isa/x86_64/system/clac_stac.rs:25:5
+   |
+25 | use rax::vm::vcpu::Registers;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `Bytes` and `GuestAddress`
+ --> tests/suites/isa/x86_64/system/cpuid.rs:2:17
+  |
+2 | use vm_memory::{Bytes, GuestAddress};
+  |                 ^^^^^  ^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+  --> tests/suites/isa/x86_64/system/fences.rs:19:5
+   |
+19 | use rax::vm::vcpu::Registers;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/system/lar.rs:1:5
+  |
+1 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/system/lgdt_lidt.rs:1:5
+  |
+1 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused imports: `read_mem_at_u16` and `read_mem_at_u64`
+ --> tests/suites/isa/x86_64/system/lgdt_lidt.rs:4:16
+  |
+4 |     DATA_ADDR, read_mem_at_u16, read_mem_at_u64, run_until_hlt, setup_vm, write_mem_at_u16,
+  |                ^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/system/lsl.rs:1:5
+  |
+1 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+  --> tests/suites/isa/x86_64/system/protection_keys.rs:10:5
+   |
+10 | use rax::vm::vcpu::Registers;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+  --> tests/suites/isa/x86_64/system/rdpkru_wrpkru.rs:26:5
+   |
+26 | use rax::vm::vcpu::Registers;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/system/rdrand.rs:1:5
+  |
+1 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/system/rdseed.rs:1:5
+  |
+1 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/system/rdtsc.rs:1:5
+  |
+1 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/system/sgdt_sidt.rs:1:5
+  |
+1 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+  --> tests/suites/isa/x86_64/system/sgx.rs:13:5
+   |
+13 | use rax::vm::vcpu::Registers;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+  --> tests/suites/isa/x86_64/system/swapgs.rs:24:5
+   |
+24 | use rax::vm::vcpu::Registers;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+  --> tests/suites/isa/x86_64/system/user_mode_wait.rs:17:5
+   |
+17 | use rax::vm::vcpu::Registers;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+ --> tests/suites/isa/x86_64/system/verr_verw.rs:1:5
+  |
+1 | use rax::vm::vcpu::Registers;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: unused import: `rax::vm::vcpu::Registers`
+  --> tests/suites/isa/x86_64/system/xsave_extended.rs:16:5
+   |
+16 | use rax::vm::vcpu::Registers;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: variable does not need to be mutable
+   --> tests/suites/isa/x86_64/integer/bmi/popcnt.rs:335:9
+    |
+335 |     let mut regs = Registers::default();
+    |         ----^^^^
+    |         |
+    |         help: remove this `mut`
+    |
+    = note: `-D unused-mut` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(unused_mut)]`
+
+error: variable does not need to be mutable
+   --> tests/suites/isa/x86_64/integer/bmi/popcnt.rs:350:9
+    |
+350 |     let mut regs = Registers::default();
+    |         ----^^^^
+    |         |
+    |         help: remove this `mut`
+
+error: variable does not need to be mutable
+   --> tests/suites/isa/x86_64/integer/bmi/popcnt.rs:365:9
+    |
+365 |     let mut regs = Registers::default();
+    |         ----^^^^
+    |         |
+    |         help: remove this `mut`
+
+error: variable does not need to be mutable
+   --> tests/suites/isa/x86_64/integer/bmi/popcnt.rs:380:9
+    |
+380 |     let mut regs = Registers::default();
+    |         ----^^^^
+    |         |
+    |         help: remove this `mut`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/control_flow/call_ret/call.rs:144:9
+    |
+144 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+    |
+    = note: `-D unused-variables` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(unused_variables)]`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/control_flow/call_ret/ret.rs:293:9
+    |
+293 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/control_flow/far_ret.rs:681:9
+    |
+681 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/control_flow/int_into_int3.rs:434:9
+    |
+434 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+    --> tests/suites/isa/x86_64/control_flow/int_into_int3.rs:1045:9
+     |
+1045 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+     |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+    --> tests/suites/isa/x86_64/control_flow/int_into_int3.rs:1062:9
+     |
+1062 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+     |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/control_flow/iret_iretd_iretq.rs:681:9
+    |
+681 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/control_flow/iret_iretd_iretq.rs:700:9
+    |
+700 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+  --> tests/suites/isa/x86_64/control_flow/syscall_sysret.rs:40:9
+   |
+40 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+   |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+  --> tests/suites/isa/x86_64/control_flow/syscall_sysret.rs:55:9
+   |
+55 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+   |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/control_flow/syscall_sysret.rs:190:9
+    |
+190 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `mem`
+   --> tests/suites/isa/x86_64/control_flow/syscall_sysret.rs:277:20
+    |
+277 |     let (mut vcpu, mem) = setup_vm(&code, None);
+    |                    ^^^ help: if this is intentional, prefix it with an underscore: `_mem`
+
+error: unused variable: `handler`
+   --> tests/suites/isa/x86_64/control_flow/syscall_sysret.rs:280:9
+    |
+280 |     let handler = [
+    |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_handler`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/control_flow/syscall_sysret.rs:286:9
+    |
+286 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/control_flow/syscall_sysret.rs:320:9
+    |
+320 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/control_flow/syscall_sysret.rs:334:9
+    |
+334 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/control_flow/syscall_sysret.rs:349:9
+    |
+349 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/control_flow/syscall_sysret.rs:451:9
+    |
+451 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/control_flow/syscall_sysret.rs:493:9
+    |
+493 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/control_flow/syscall_sysret.rs:541:9
+    |
+541 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/control_flow/syscall_sysret.rs:602:9
+    |
+602 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/control_flow/syscall_sysret.rs:622:9
+    |
+622 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/control_flow/syscall_sysret.rs:640:9
+    |
+640 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/control_flow/sysenter_sysexit.rs:419:9
+    |
+419 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/data/movement/conditional_move/cmovb.rs:401:9
+    |
+401 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/data/movement/conditional_move/cmovl.rs:251:9
+    |
+251 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/data/movement/conditional_move/cmovs.rs:326:9
+    |
+326 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/data/movement/lea/lea.rs:331:9
+    |
+331 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: variable does not need to be mutable
+    --> tests/suites/isa/x86_64/data/transfer/cmov.rs:1088:9
+     |
+1088 |     let mut regs = Registers::default();
+     |         ----^^^^
+     |         |
+     |         help: remove this `mut`
+
+error: variable does not need to be mutable
+    --> tests/suites/isa/x86_64/data/transfer/cmov.rs:1104:9
+     |
+1104 |     let mut regs = Registers::default();
+     |         ----^^^^
+     |         |
+     |         help: remove this `mut`
+
+error: variable does not need to be mutable
+    --> tests/suites/isa/x86_64/data/transfer/cmov.rs:1120:9
+     |
+1120 |     let mut regs = Registers::default();
+     |         ----^^^^
+     |         |
+     |         help: remove this `mut`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/data/transfer/mov_extended.rs:237:9
+    |
+237 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/data/transfer/mov_extended.rs:265:9
+    |
+265 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/data/transfer/mov_extended.rs:293:9
+    |
+293 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/data/transfer/mov_extended.rs:324:9
+    |
+324 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/data/transfer/mov_extended.rs:552:9
+    |
+552 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/data/transfer/mov_extended.rs:705:9
+    |
+705 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/data/transfer/mov_extended.rs:719:9
+    |
+719 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/data/transfer/pop_extended.rs:550:9
+    |
+550 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/data/transfer/push_extended.rs:449:9
+    |
+449 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/data/transfer/push_extended.rs:467:9
+    |
+467 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/data/transfer/push_extended.rs:519:13
+    |
+519 |         let regs = run_until_hlt(&mut vcpu).unwrap();
+    |             ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/data/transfer/push_extended.rs:612:9
+    |
+612 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/data/transfer/push_extended.rs:626:9
+    |
+626 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/data/transfer/push_extended.rs:646:9
+    |
+646 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/data/transfer/push_extended.rs:689:9
+    |
+689 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `initial_flags`
+   --> tests/suites/isa/x86_64/integer/flags/clc_stc_cmc.rs:151:9
+    |
+151 |     let initial_flags = regs.rflags;
+    |         ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_initial_flags`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/integer/flags/clc_stc_cmc.rs:418:9
+    |
+418 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `initial_flags`
+   --> tests/suites/isa/x86_64/integer/flags/cld_std.rs:112:9
+    |
+112 |     let initial_flags = regs.rflags;
+    |         ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_initial_flags`
+
+error: unused variable: `ah`
+   --> tests/suites/isa/x86_64/integer/flags/lahf_sahf.rs:380:9
+    |
+380 |     let ah = (regs.rax >> 8) & 0xFF;
+    |         ^^ help: if this is intentional, prefix it with an underscore: `_ah`
+
+error: variable does not need to be mutable
+  --> tests/suites/isa/x86_64/integer/flags/pushf_popf.rs:44:9
+   |
+44 |     let mut regs = Registers::default();
+   |         ----^^^^
+   |         |
+   |         help: remove this `mut`
+
+error: unused variable: `regs`
+  --> tests/suites/isa/x86_64/integer/flags/pushf_popf.rs:50:9
+   |
+50 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+   |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: variable does not need to be mutable
+   --> tests/suites/isa/x86_64/integer/flags/pushf_popf.rs:112:9
+    |
+112 |     let mut regs = Registers::default();
+    |         ----^^^^
+    |         |
+    |         help: remove this `mut`
+
+error: variable does not need to be mutable
+   --> tests/suites/isa/x86_64/integer/flags/pushf_popf.rs:192:9
+    |
+192 |     let mut regs = Registers::default();
+    |         ----^^^^
+    |         |
+    |         help: remove this `mut`
+
+error: variable does not need to be mutable
+   --> tests/suites/isa/x86_64/integer/flags/pushf_popf.rs:234:9
+    |
+234 |     let mut regs = Registers::default();
+    |         ----^^^^
+    |         |
+    |         help: remove this `mut`
+
+error: variable does not need to be mutable
+   --> tests/suites/isa/x86_64/integer/flags/pushf_popf.rs:425:9
+    |
+425 |     let mut regs = Registers::default();
+    |         ----^^^^
+    |         |
+    |         help: remove this `mut`
+
+error: unused variable: `rax_on_stack`
+   --> tests/suites/isa/x86_64/integer/flags/pushf_popf.rs:430:9
+    |
+430 |     let rax_on_stack = read_mem_at_u64(&mem, regs.rsp);
+    |         ^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_rax_on_stack`
+
+error: variable does not need to be mutable
+   --> tests/suites/isa/x86_64/integer/flags/pushf_popf.rs:450:13
+    |
+450 |         let mut regs = Registers::default();
+    |             ----^^^^
+    |             |
+    |             help: remove this `mut`
+
+error: unused variable: `expected`
+   --> tests/suites/isa/x86_64/integer/flags/pushf_popf.rs:449:23
+    |
+449 |     for (stack_value, expected) in test_cases {
+    |                       ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_expected`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/integer/flags/pushf_popf.rs:454:13
+    |
+454 |         let regs = run_until_hlt(&mut vcpu).unwrap();
+    |             ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: variable does not need to be mutable
+   --> tests/suites/isa/x86_64/integer/flags/pushf_popf.rs:512:9
+    |
+512 |     let mut regs = Registers::default();
+    |         ----^^^^
+    |         |
+    |         help: remove this `mut`
+
+error: unused variable: `status_before`
+   --> tests/suites/isa/x86_64/floating_point/x87/fclex_fnclex.rs:463:9
+    |
+463 |     let status_before = read_u16(&mem, 0x3000);
+    |         ^^^^^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_status_before`
+
+error: variable does not need to be mutable
+   --> tests/suites/isa/x86_64/floating_point/x87/ffree.rs:382:13
+    |
+382 |         let mut code = vec![
+    |             ----^^^^
+    |             |
+    |             help: remove this `mut`
+
+error: unused variable: `mem`
+   --> tests/suites/isa/x86_64/floating_point/x87/fnsave_fnop.rs:165:20
+    |
+165 |     let (mut vcpu, mem) = setup_vm(&code, None);
+    |                    ^^^ help: if this is intentional, prefix it with an underscore: `_mem`
+
+error: unused variable: `addresses`
+   --> tests/suites/isa/x86_64/floating_point/x87/fstsw_fnstsw.rs:448:9
+    |
+448 |     let addresses = vec![0x3000, 0x3100, 0x3200];
+    |         ^^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_addresses`
+
+error: unused variable: `size`
+   --> tests/suites/isa/x86_64/io/in.rs:139:36
+    |
+139 |             VcpuExit::IoIn { port, size } => {
+    |                                    ^^^^ help: try ignoring the field: `size: _`
+
+error: variable does not need to be mutable
+   --> tests/suites/isa/x86_64/io/in.rs:157:9
+    |
+157 |     let mut regs = Registers::default();
+    |         ----^^^^
+    |         |
+    |         help: remove this `mut`
+
+error: unused variable: `size`
+   --> tests/suites/isa/x86_64/io/in.rs:164:36
+    |
+164 |             VcpuExit::IoIn { port, size } => {
+    |                                    ^^^^ help: try ignoring the field: `size: _`
+
+error: variable does not need to be mutable
+   --> tests/suites/isa/x86_64/io/in.rs:267:9
+    |
+267 |     let mut regs = Registers::default();
+    |         ----^^^^
+    |         |
+    |         help: remove this `mut`
+
+error: variable does not need to be mutable
+   --> tests/suites/isa/x86_64/io/in.rs:375:9
+    |
+375 |     let mut regs = Registers::default();
+    |         ----^^^^
+    |         |
+    |         help: remove this `mut`
+
+error: variable does not need to be mutable
+   --> tests/suites/isa/x86_64/io/in.rs:398:9
+    |
+398 |     let mut regs = Registers::default();
+    |         ----^^^^
+    |         |
+    |         help: remove this `mut`
+
+error: unused variable: `port`
+   --> tests/suites/isa/x86_64/io/in.rs:403:30
+    |
+403 |             VcpuExit::IoIn { port, .. } => {
+    |                              ^^^^ help: try ignoring the field: `port: _`
+
+error: unused variable: `size`
+   --> tests/suites/isa/x86_64/io/in.rs:455:36
+    |
+455 |             VcpuExit::IoIn { port, size } => {
+    |                                    ^^^^ help: try ignoring the field: `size: _`
+
+error: unused variable: `size`
+   --> tests/suites/isa/x86_64/io/in.rs:478:36
+    |
+478 |             VcpuExit::IoIn { port, size } => {
+    |                                    ^^^^ help: try ignoring the field: `size: _`
+
+error: unused variable: `port`
+   --> tests/suites/isa/x86_64/io/in.rs:576:30
+    |
+576 |             VcpuExit::IoIn { port, .. } => {
+    |                              ^^^^ help: try ignoring the field: `port: _`
+
+error: unused variable: `size`
+   --> tests/suites/isa/x86_64/io/in.rs:597:36
+    |
+597 |             VcpuExit::IoIn { port, size } => {
+    |                                    ^^^^ help: try ignoring the field: `size: _`
+
+error: unused variable: `port`
+   --> tests/suites/isa/x86_64/io/in.rs:671:30
+    |
+671 |             VcpuExit::IoIn { port, .. } => {
+    |                              ^^^^ help: try ignoring the field: `port: _`
+
+error: variable does not need to be mutable
+   --> tests/suites/isa/x86_64/io/in.rs:800:9
+    |
+800 |     let mut regs = Registers::default();
+    |         ----^^^^
+    |         |
+    |         help: remove this `mut`
+
+error: variable `count` is assigned to, but never used
+   --> tests/suites/isa/x86_64/io/ins.rs:566:9
+    |
+566 |     let mut count = 0;
+    |         ^^^^^^^^^
+    |
+    = note: consider using `_count` instead
+
+error: value assigned to `count` is never read
+   --> tests/suites/isa/x86_64/io/ins.rs:570:17
+    |
+570 |                 count += 1;
+    |                 ^^^^^^^^^^
+    |
+    = help: maybe it is overwritten before being read?
+    = note: `-D unused-assignments` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(unused_assignments)]`
+
+error: variable `count` is assigned to, but never used
+   --> tests/suites/isa/x86_64/io/ins.rs:668:9
+    |
+668 |     let mut count = 0;
+    |         ^^^^^^^^^
+    |
+    = note: consider using `_count` instead
+
+error: value assigned to `count` is never read
+   --> tests/suites/isa/x86_64/io/ins.rs:672:17
+    |
+672 |                 count += 1;
+    |                 ^^^^^^^^^^
+    |
+    = help: maybe it is overwritten before being read?
+
+error: variable does not need to be mutable
+   --> tests/suites/isa/x86_64/io/out.rs:838:9
+    |
+838 |     let mut regs = Registers::default();
+    |         ----^^^^
+    |         |
+    |         help: remove this `mut`
+
+error: unused variable: `ror_cf`
+   --> tests/suites/isa/x86_64/integer/bit_logic/rotates_advanced/rorx.rs:384:9
+    |
+384 |     let ror_cf = cf_set(regs_ror.rflags);
+    |         ^^^^^^ help: if this is intentional, prefix it with an underscore: `_ror_cf`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/integer/bit_logic/rotates_basic/rol.rs:527:9
+    |
+527 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/integer/bit_logic/rotates_basic/ror.rs:509:9
+    |
+509 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: variable does not need to be mutable
+   --> tests/suites/isa/x86_64/integer/logic/shl_sal.rs:468:10
+    |
+468 |     let (mut vcpu, mem) = setup_vm(&code, None);
+    |          ----^^^^
+    |          |
+    |          help: remove this `mut`
+
+error: unused variable: `vcpu`
+   --> tests/suites/isa/x86_64/integer/logic/shl_sal.rs:468:10
+    |
+468 |     let (mut vcpu, mem) = setup_vm(&code, None);
+    |          ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_vcpu`
+
+error: unused variable: `vm`
+   --> tests/suites/isa/x86_64/memory/enter_leave.rs:453:20
+    |
+453 |     let (mut vcpu, vm) = setup_vm(&code, Some(regs));
+    |                    ^^ help: if this is intentional, prefix it with an underscore: `_vm`
+
+error: unused variable: `vm`
+   --> tests/suites/isa/x86_64/memory/enter_leave.rs:530:20
+    |
+530 |     let (mut vcpu, vm) = setup_vm(&code, Some(regs));
+    |                    ^^ help: if this is intentional, prefix it with an underscore: `_vm`
+
+error: variable does not need to be mutable
+   --> tests/suites/isa/x86_64/miscellaneous/cldemote.rs:534:9
+    |
+534 |     let mut regs = Registers::default();
+    |         ----^^^^
+    |         |
+    |         help: remove this `mut`
+
+error: variable does not need to be mutable
+   --> tests/suites/isa/x86_64/miscellaneous/clflush.rs:643:9
+    |
+643 |     let mut regs = Registers::default();
+    |         ----^^^^
+    |         |
+    |         help: remove this `mut`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/miscellaneous/clflush.rs:649:9
+    |
+649 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/miscellaneous/clflush.rs:719:9
+    |
+719 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/miscellaneous/clflush.rs:768:9
+    |
+768 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: variable does not need to be mutable
+   --> tests/suites/isa/x86_64/miscellaneous/clflush_extended.rs:383:9
+    |
+383 |     let mut regs = Registers::default();
+    |         ----^^^^
+    |         |
+    |         help: remove this `mut`
+
+error: variable does not need to be mutable
+   --> tests/suites/isa/x86_64/miscellaneous/clwb.rs:443:9
+    |
+443 |     let mut regs = Registers::default();
+    |         ----^^^^
+    |         |
+    |         help: remove this `mut`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/miscellaneous/crc32.rs:471:9
+    |
+471 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/miscellaneous/lock.rs:736:9
+    |
+736 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/miscellaneous/lock.rs:811:9
+    |
+811 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/miscellaneous/lock.rs:859:9
+    |
+859 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/miscellaneous/lock.rs:885:9
+    |
+885 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/miscellaneous/lock.rs:913:9
+    |
+913 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/miscellaneous/lock.rs:937:9
+    |
+937 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/miscellaneous/monitor_mwait.rs:449:9
+    |
+449 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `edx_byte`
+   --> tests/suites/isa/x86_64/miscellaneous/xsave_xrstor.rs:365:13
+    |
+365 |         let edx_byte = ((*bitmap >> 8) & 0xFF) as u8;
+    |             ^^^^^^^^ help: if this is intentional, prefix it with an underscore: `_edx_byte`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/integer/shifts/rcl.rs:931:9
+    |
+931 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/integer/shifts/rcl.rs:960:9
+    |
+960 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/integer/shifts/rcl.rs:990:9
+    |
+990 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/integer/shifts/rcr.rs:680:9
+    |
+680 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/integer/shifts/rcr.rs:702:9
+    |
+702 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/integer/shifts/rcr.rs:729:9
+    |
+729 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/integer/shifts/rol.rs:810:9
+    |
+810 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/integer/shifts/rol.rs:834:9
+    |
+834 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/integer/shifts/rol.rs:863:9
+    |
+863 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/integer/shifts/ror.rs:812:9
+    |
+812 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/integer/shifts/ror.rs:836:9
+    |
+836 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/integer/shifts/ror.rs:865:9
+    |
+865 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+  --> tests/suites/isa/x86_64/stack/pop_mem.rs:46:9
+   |
+46 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+   |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+  --> tests/suites/isa/x86_64/stack/pop_mem.rs:63:9
+   |
+63 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+   |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+  --> tests/suites/isa/x86_64/stack/pop_mem.rs:80:9
+   |
+80 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+   |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/pop_mem.rs:101:9
+    |
+101 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/pop_mem.rs:118:9
+    |
+118 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/pop_mem.rs:136:9
+    |
+136 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/pop_mem.rs:157:9
+    |
+157 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/pop_mem.rs:174:9
+    |
+174 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/pop_mem.rs:196:9
+    |
+196 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/pop_mem.rs:215:9
+    |
+215 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/pop_mem.rs:233:9
+    |
+233 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/pop_mem.rs:251:9
+    |
+251 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/pop_mem.rs:273:9
+    |
+273 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/pop_mem.rs:291:9
+    |
+291 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/pop_mem.rs:309:9
+    |
+309 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/pop_mem.rs:359:9
+    |
+359 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/pop_mem.rs:425:9
+    |
+425 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/pop_mem.rs:447:9
+    |
+447 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/pop_mem.rs:464:9
+    |
+464 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/pop_mem.rs:481:9
+    |
+481 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/pop_mem.rs:532:9
+    |
+532 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/pop_mem.rs:549:9
+    |
+549 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/pop_mem.rs:566:9
+    |
+566 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/pop_mem.rs:584:9
+    |
+584 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/pop_mem.rs:602:9
+    |
+602 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/pop_mem.rs:620:9
+    |
+620 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/pop_mem.rs:642:9
+    |
+642 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/pop_mem.rs:664:9
+    |
+664 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/pop_mem.rs:688:9
+    |
+688 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+  --> tests/suites/isa/x86_64/stack/push_imm.rs:40:9
+   |
+40 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+   |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+  --> tests/suites/isa/x86_64/stack/push_imm.rs:55:9
+   |
+55 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+   |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+  --> tests/suites/isa/x86_64/stack/push_imm.rs:70:9
+   |
+70 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+   |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+  --> tests/suites/isa/x86_64/stack/push_imm.rs:85:9
+   |
+85 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+   |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/push_imm.rs:100:9
+    |
+100 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/push_imm.rs:115:9
+    |
+115 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/push_imm.rs:130:9
+    |
+130 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/push_imm.rs:194:9
+    |
+194 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/push_imm.rs:209:9
+    |
+209 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/push_imm.rs:224:9
+    |
+224 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/push_imm.rs:239:9
+    |
+239 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/push_imm.rs:254:9
+    |
+254 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/push_imm.rs:269:9
+    |
+269 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/push_imm.rs:284:9
+    |
+284 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/push_imm.rs:299:9
+    |
+299 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/push_imm.rs:514:9
+    |
+514 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/push_imm.rs:529:9
+    |
+529 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/push_imm.rs:583:9
+    |
+583 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/push_imm.rs:598:9
+    |
+598 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/push_imm.rs:616:9
+    |
+616 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/push_imm.rs:631:9
+    |
+631 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+  --> tests/suites/isa/x86_64/stack/push_mem.rs:53:9
+   |
+53 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+   |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+  --> tests/suites/isa/x86_64/stack/push_mem.rs:72:9
+   |
+72 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+   |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+  --> tests/suites/isa/x86_64/stack/push_mem.rs:91:9
+   |
+91 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+   |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/push_mem.rs:114:9
+    |
+114 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/push_mem.rs:133:9
+    |
+133 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/push_mem.rs:152:9
+    |
+152 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/push_mem.rs:175:9
+    |
+175 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/push_mem.rs:194:9
+    |
+194 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/push_mem.rs:218:9
+    |
+218 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/push_mem.rs:238:9
+    |
+238 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/push_mem.rs:258:9
+    |
+258 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/push_mem.rs:278:9
+    |
+278 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/push_mem.rs:302:9
+    |
+302 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/push_mem.rs:322:9
+    |
+322 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/push_mem.rs:342:9
+    |
+342 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/push_mem.rs:490:9
+    |
+490 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/push_mem.rs:509:9
+    |
+509 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/push_mem.rs:528:9
+    |
+528 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/push_mem.rs:573:9
+    |
+573 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/push_mem.rs:592:9
+    |
+592 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/push_mem.rs:611:9
+    |
+611 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/push_mem.rs:663:9
+    |
+663 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/push_mem.rs:682:9
+    |
+682 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/push_mem.rs:703:9
+    |
+703 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/push_mem.rs:725:9
+    |
+725 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/push/push.rs:185:9
+    |
+185 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/push/push.rs:279:9
+    |
+279 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+  --> tests/suites/isa/x86_64/stack/pushf_popf_extended.rs:48:9
+   |
+48 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+   |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+  --> tests/suites/isa/x86_64/stack/pushf_popf_extended.rs:66:9
+   |
+66 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+   |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+  --> tests/suites/isa/x86_64/stack/pushf_popf_extended.rs:85:9
+   |
+85 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+   |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/pushf_popf_extended.rs:105:9
+    |
+105 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/pushf_popf_extended.rs:488:9
+    |
+488 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/pushf_popf_extended.rs:525:9
+    |
+525 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/pushf_popf_extended.rs:591:9
+    |
+591 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/pushf_popf_extended.rs:671:9
+    |
+671 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/pushf_popf_extended.rs:709:9
+    |
+709 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/stack/rsp_operations.rs:588:9
+    |
+588 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `vm`
+   --> tests/suites/isa/x86_64/strings/cmps.rs:387:9
+    |
+387 |     let vm = run_until_hlt(vm);
+    |         ^^ help: if this is intentional, prefix it with an underscore: `_vm`
+
+error: unused variable: `vm`
+   --> tests/suites/isa/x86_64/strings/scas.rs:270:9
+    |
+270 |     let vm = run_until_hlt(vm);
+    |         ^^ help: if this is intentional, prefix it with an underscore: `_vm`
+
+error: unused variable: `mem_val`
+  --> tests/suites/isa/x86_64/synchronization/cmpxchg8b_cmpxchg16b.rs:47:9
+   |
+47 |     let mem_val = u64::from_le_bytes(buf);
+   |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_mem_val`
+
+error: unused variable: `mem`
+   --> tests/suites/isa/x86_64/synchronization/cmpxchg8b_cmpxchg16b.rs:249:20
+    |
+249 |     let (mut vcpu, mem) = setup_vm(&code, None);
+    |                    ^^^ help: if this is intentional, prefix it with an underscore: `_mem`
+
+error: unused variable: `size`
+    --> tests/suites/isa/x86_64/system/page_fault.rs:1575:10
+     |
+1575 |     for (size, read_op, name) in sizes_and_ops {
+     |          ^^^^ help: if this is intentional, prefix it with an underscore: `_size`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/system/rdmsr.rs:254:9
+    |
+254 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+  --> tests/suites/isa/x86_64/system/wrmsr.rs:61:9
+   |
+61 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+   |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `regs`
+   --> tests/suites/isa/x86_64/system/wrmsr.rs:332:9
+    |
+332 |     let regs = run_until_hlt(&mut vcpu).unwrap();
+    |         ^^^^ help: if this is intentional, prefix it with an underscore: `_regs`
+
+error: unused variable: `value`
+   --> tests/suites/isa/x86_64/system/wrmsr.rs:401:9
+    |
+401 |     let value = ((regs.rdx as u64) << 32) | (regs.rax as u64);
+    |         ^^^^^ help: if this is intentional, prefix it with an underscore: `_value`
+
+error: function `get_xmm_vcpu` is never used
+   --> tests/suites/isa/x86_64/../../../support/x86_64/common/mod.rs:509:8
+    |
+509 | pub fn get_xmm_vcpu(vcpu: &X86_64Vcpu, index: usize) -> u128 {
+    |        ^^^^^^^^^^^^
+    |
+    = note: `-D dead-code` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[expect(dead_code)]` or `#[allow(dead_code)]`
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/crypto/aesdec.rs:23:7
+   |
+23 | const ALIGNED_ADDR: u64 = 0x3000; // 16-byte aligned address for testing
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/crypto/aesdeclast.rs:22:7
+   |
+22 | const ALIGNED_ADDR: u64 = 0x3000; // 16-byte aligned address for testing
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/crypto/aesenc.rs:22:7
+   |
+22 | const ALIGNED_ADDR: u64 = 0x3000; // 16-byte aligned address for testing
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/crypto/aesenclast.rs:21:7
+   |
+21 | const ALIGNED_ADDR: u64 = 0x3000; // 16-byte aligned address for testing
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/crypto/aesimc.rs:21:7
+   |
+21 | const ALIGNED_ADDR: u64 = 0x3000; // 16-byte aligned address for testing
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/crypto/aeskeygenassist.rs:26:7
+   |
+26 | const ALIGNED_ADDR: u64 = 0x3000; // 16-byte aligned address for testing
+   |       ^^^^^^^^^^^^
+
+error: constant `B_BIT` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/fclex_fnclex.rs:41:7
+   |
+41 | const B_BIT: u16 = 0x8000; // Busy
+   |       ^^^^^
+
+error: function `write_u16` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/fclex_fnclex.rs:46:4
+   |
+46 | fn write_u16(mem: &vm_memory::GuestMemoryMmap, addr: u64, val: u16) {
+   |    ^^^^^^^^^
+
+error: constant `DEFAULT_TAG_WORD` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/finit_fninit.rs:31:7
+   |
+31 | const DEFAULT_TAG_WORD: u16 = 0xFFFF; // All registers empty
+   |       ^^^^^^^^^^^^^^^^
+
+error: constant `C2_BIT` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/finit_fninit.rs:43:7
+   |
+43 | const C2_BIT: u16 = 0x0400; // Condition Code 2
+   |       ^^^^^^
+
+error: constant `C3_BIT` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/finit_fninit.rs:45:7
+   |
+45 | const C3_BIT: u16 = 0x4000; // Condition Code 3
+   |       ^^^^^^
+
+error: constant `C0_BIT` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/finit_fninit.rs:46:7
+   |
+46 | const C0_BIT: u16 = 0x0100; // Condition Code 0
+   |       ^^^^^^
+
+error: constant `B_BIT` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/finit_fninit.rs:47:7
+   |
+47 | const B_BIT: u16 = 0x8000; // Busy
+   |       ^^^^^
+
+error: function `write_u16` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/finit_fninit.rs:50:4
+   |
+50 | fn write_u16(mem: &vm_memory::GuestMemoryMmap, addr: u64, val: u16) {
+   |    ^^^^^^^^^
+
+error: constant `CW_MASK_DENORMAL` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/fldcw_fstcw.rs:61:7
+   |
+61 | const CW_MASK_DENORMAL: u16 = 0x0002;
+   |       ^^^^^^^^^^^^^^^^
+
+error: constant `CW_MASK_ZERODIVIDE` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/fldcw_fstcw.rs:62:7
+   |
+62 | const CW_MASK_ZERODIVIDE: u16 = 0x0004;
+   |       ^^^^^^^^^^^^^^^^^^
+
+error: constant `CW_MASK_OVERFLOW` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/fldcw_fstcw.rs:63:7
+   |
+63 | const CW_MASK_OVERFLOW: u16 = 0x0008;
+   |       ^^^^^^^^^^^^^^^^
+
+error: constant `CW_MASK_UNDERFLOW` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/fldcw_fstcw.rs:64:7
+   |
+64 | const CW_MASK_UNDERFLOW: u16 = 0x0010;
+   |       ^^^^^^^^^^^^^^^^^
+
+error: constant `CW_MASK_PRECISION` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/fldcw_fstcw.rs:65:7
+   |
+65 | const CW_MASK_PRECISION: u16 = 0x0020;
+   |       ^^^^^^^^^^^^^^^^^
+
+error: constant `CW_PRECISION_MASK` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/fldcw_fstcw.rs:66:7
+   |
+66 | const CW_PRECISION_MASK: u16 = 0x0300;
+   |       ^^^^^^^^^^^^^^^^^
+
+error: constant `CW_ROUNDING_MASK` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/fldcw_fstcw.rs:67:7
+   |
+67 | const CW_ROUNDING_MASK: u16 = 0x0C00;
+   |       ^^^^^^^^^^^^^^^^
+
+error: constant `ENV_FIP` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/fldenv_fstenv.rs:64:7
+   |
+64 | const ENV_FIP: usize = 12; // Instruction Pointer offset (4 bytes)
+   |       ^^^^^^^
+
+error: constant `ENV_FCS` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/fldenv_fstenv.rs:65:7
+   |
+65 | const ENV_FCS: usize = 16; // Instruction Pointer selector (2 bytes); FOP in bits 26:16
+   |       ^^^^^^^
+
+error: constant `ENV_FDP` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/fldenv_fstenv.rs:66:7
+   |
+66 | const ENV_FDP: usize = 20; // Data Pointer offset (4 bytes)
+   |       ^^^^^^^
+
+error: constant `ENV_FDS` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/fldenv_fstenv.rs:67:7
+   |
+67 | const ENV_FDS: usize = 24; // Data Pointer selector (2 bytes)
+   |       ^^^^^^^
+
+error: constant `ENV_SIZE` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/fldenv_fstenv.rs:68:7
+   |
+68 | const ENV_SIZE: usize = 28; // Total environment size
+   |       ^^^^^^^^
+
+error: constant `IE_BIT` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/fldenv_fstenv.rs:71:7
+   |
+71 | const IE_BIT: u16 = 0x0001;
+   |       ^^^^^^
+
+error: constant `DE_BIT` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/fldenv_fstenv.rs:72:7
+   |
+72 | const DE_BIT: u16 = 0x0002;
+   |       ^^^^^^
+
+error: constant `ZE_BIT` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/fldenv_fstenv.rs:73:7
+   |
+73 | const ZE_BIT: u16 = 0x0004;
+   |       ^^^^^^
+
+error: constant `OE_BIT` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/fldenv_fstenv.rs:74:7
+   |
+74 | const OE_BIT: u16 = 0x0008;
+   |       ^^^^^^
+
+error: constant `UE_BIT` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/fldenv_fstenv.rs:75:7
+   |
+75 | const UE_BIT: u16 = 0x0010;
+   |       ^^^^^^
+
+error: constant `PE_BIT` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/fldenv_fstenv.rs:76:7
+   |
+76 | const PE_BIT: u16 = 0x0020;
+   |       ^^^^^^
+
+error: constant `SF_BIT` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/fldenv_fstenv.rs:77:7
+   |
+77 | const SF_BIT: u16 = 0x0040;
+   |       ^^^^^^
+
+error: constant `ES_BIT` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/fldenv_fstenv.rs:78:7
+   |
+78 | const ES_BIT: u16 = 0x0080;
+   |       ^^^^^^
+
+error: constant `TOP_MASK` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/fldenv_fstenv.rs:79:7
+   |
+79 | const TOP_MASK: u16 = 0x3800;
+   |       ^^^^^^^^
+
+error: function `write_u16` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/fnsave_fnop.rs:19:4
+   |
+19 | fn write_u16(mem: &vm_memory::GuestMemoryMmap, addr: u64, val: u16) {
+   |    ^^^^^^^^^
+
+error: constant `FSAVE_SIZE` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/fsave_frstor.rs:59:7
+   |
+59 | const FSAVE_SIZE: u64 = 108; // Total size in 32-bit protected mode
+   |       ^^^^^^^^^^
+
+error: constant `IE_BIT` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/fsave_frstor.rs:62:7
+   |
+62 | const IE_BIT: u16 = 0x0001;
+   |       ^^^^^^
+
+error: constant `TOP_MASK` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/fsave_frstor.rs:63:7
+   |
+63 | const TOP_MASK: u16 = 0x3800;
+   |       ^^^^^^^^
+
+error: function `read_f64` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/fstenv_fnstenv.rs:41:4
+   |
+41 | fn read_f64(mem: &vm_memory::GuestMemoryMmap, addr: u64) -> f64 {
+   |    ^^^^^^^^
+
+error: constant `SF_BIT` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/fstsw_fnstsw.rs:46:7
+   |
+46 | const SF_BIT: u16 = 0x0040; // Stack Fault
+   |       ^^^^^^
+
+error: constant `ES_BIT` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/fstsw_fnstsw.rs:47:7
+   |
+47 | const ES_BIT: u16 = 0x0080; // Exception Summary Status
+   |       ^^^^^^
+
+error: constant `C2_BIT` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/fstsw_fnstsw.rs:49:7
+   |
+49 | const C2_BIT: u16 = 0x0400; // Condition Code 2
+   |       ^^^^^^
+
+error: constant `C1_BIT` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/fstsw_fnstsw.rs:50:7
+   |
+50 | const C1_BIT: u16 = 0x0200; // Condition Code 1
+   |       ^^^^^^
+
+error: constant `C3_BIT` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/fstsw_fnstsw.rs:51:7
+   |
+51 | const C3_BIT: u16 = 0x4000; // Condition Code 3
+   |       ^^^^^^
+
+error: constant `C0_BIT` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/fstsw_fnstsw.rs:52:7
+   |
+52 | const C0_BIT: u16 = 0x0100; // Condition Code 0
+   |       ^^^^^^
+
+error: constant `B_BIT` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/fstsw_fnstsw.rs:53:7
+   |
+53 | const B_BIT: u16 = 0x8000; // Busy
+   |       ^^^^^
+
+error: function `write_u16` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/fstsw_fnstsw.rs:56:4
+   |
+56 | fn write_u16(mem: &vm_memory::GuestMemoryMmap, addr: u64, val: u16) {
+   |    ^^^^^^^^^
+
+error: function `write_u64` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/fucomi_fucomip.rs:52:4
+   |
+52 | fn write_u64(mem: &vm_memory::GuestMemoryMmap, addr: u64, val: u64) {
+   |    ^^^^^^^^^
+
+error: function `write_u32` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/fxsave_fxrstor.rs:46:4
+   |
+46 | fn write_u32(mem: &vm_memory::GuestMemoryMmap, addr: u64, val: u32) {
+   |    ^^^^^^^^^
+
+error: function `read_u32` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/fxsave_fxrstor.rs:52:4
+   |
+52 | fn read_u32(mem: &vm_memory::GuestMemoryMmap, addr: u64) -> u32 {
+   |    ^^^^^^^^
+
+error: function `write_bytes` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/fxsave_fxrstor.rs:72:4
+   |
+72 | fn write_bytes(mem: &vm_memory::GuestMemoryMmap, addr: u64, data: &[u8]) {
+   |    ^^^^^^^^^^^
+
+error: function `read_bytes` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/fxsave_fxrstor.rs:77:4
+   |
+77 | fn read_bytes(mem: &vm_memory::GuestMemoryMmap, addr: u64, len: usize) -> Vec<u8> {
+   |    ^^^^^^^^^^
+
+error: constant `FXSAVE_FOP` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/fxsave_fxrstor.rs:87:7
+   |
+87 | const FXSAVE_FOP: u64 = 6; // Last Opcode
+   |       ^^^^^^^^^^
+
+error: constant `FXSAVE_ST0` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/fxsave_fxrstor.rs:88:7
+   |
+88 | const FXSAVE_ST0: u64 = 32; // First FPU register (16 bytes each)
+   |       ^^^^^^^^^^
+
+error: constant `FXSAVE_ST1` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/fxsave_fxrstor.rs:89:7
+   |
+89 | const FXSAVE_ST1: u64 = 48;
+   |       ^^^^^^^^^^
+
+error: constant `FXSAVE_ST2` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/fxsave_fxrstor.rs:90:7
+   |
+90 | const FXSAVE_ST2: u64 = 64;
+   |       ^^^^^^^^^^
+
+error: constant `FXSAVE_ST3` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/fxsave_fxrstor.rs:91:7
+   |
+91 | const FXSAVE_ST3: u64 = 80;
+   |       ^^^^^^^^^^
+
+error: constant `FXSAVE_ST4` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/fxsave_fxrstor.rs:92:7
+   |
+92 | const FXSAVE_ST4: u64 = 96;
+   |       ^^^^^^^^^^
+
+error: constant `FXSAVE_ST5` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/fxsave_fxrstor.rs:93:7
+   |
+93 | const FXSAVE_ST5: u64 = 112;
+   |       ^^^^^^^^^^
+
+error: constant `FXSAVE_ST6` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/fxsave_fxrstor.rs:94:7
+   |
+94 | const FXSAVE_ST6: u64 = 128;
+   |       ^^^^^^^^^^
+
+error: constant `FXSAVE_ST7` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/fxsave_fxrstor.rs:95:7
+   |
+95 | const FXSAVE_ST7: u64 = 144;
+   |       ^^^^^^^^^^
+
+error: constant `FXSAVE_SIZE` is never used
+  --> tests/suites/isa/x86_64/floating_point/x87/fxsave_fxrstor.rs:96:7
+   |
+96 | const FXSAVE_SIZE: u64 = 512; // Total size of FXSAVE area
+   |       ^^^^^^^^^^^
+
+error: constant `DATA_REG` is never used
+  --> tests/suites/isa/x86_64/io/serial.rs:25:7
+   |
+25 | const DATA_REG: u16 = COM1_BASE; // 0x3F8
+   |       ^^^^^^^^
+
+error: constant `IER_REG` is never used
+  --> tests/suites/isa/x86_64/io/serial.rs:26:7
+   |
+26 | const IER_REG: u16 = COM1_BASE + 1; // 0x3F9
+   |       ^^^^^^^
+
+error: constant `IIR_REG` is never used
+  --> tests/suites/isa/x86_64/io/serial.rs:27:7
+   |
+27 | const IIR_REG: u16 = COM1_BASE + 2; // 0x3FA
+   |       ^^^^^^^
+
+error: constant `LCR_REG` is never used
+  --> tests/suites/isa/x86_64/io/serial.rs:28:7
+   |
+28 | const LCR_REG: u16 = COM1_BASE + 3; // 0x3FB
+   |       ^^^^^^^
+
+error: constant `MCR_REG` is never used
+  --> tests/suites/isa/x86_64/io/serial.rs:29:7
+   |
+29 | const MCR_REG: u16 = COM1_BASE + 4; // 0x3FC
+   |       ^^^^^^^
+
+error: constant `LSR_REG` is never used
+  --> tests/suites/isa/x86_64/io/serial.rs:30:7
+   |
+30 | const LSR_REG: u16 = COM1_BASE + 5; // 0x3FD
+   |       ^^^^^^^
+
+error: constant `MSR_REG` is never used
+  --> tests/suites/isa/x86_64/io/serial.rs:31:7
+   |
+31 | const MSR_REG: u16 = COM1_BASE + 6; // 0x3FE
+   |       ^^^^^^^
+
+error: constant `LCR_DLAB` is never used
+  --> tests/suites/isa/x86_64/io/serial.rs:51:7
+   |
+51 | const LCR_DLAB: u8 = 0x80; // bit 7: Divisor Latch Access Bit
+   |       ^^^^^^^^
+
+error: constant `IIR_NO_PENDING` is never used
+  --> tests/suites/isa/x86_64/io/serial.rs:54:7
+   |
+54 | const IIR_NO_PENDING: u8 = 0x01; // bit 0: 1 = no interrupt pending
+   |       ^^^^^^^^^^^^^^
+
+error: constant `IIR_THRE` is never used
+  --> tests/suites/isa/x86_64/io/serial.rs:57:7
+   |
+57 | const IIR_THRE: u8 = 0x02; // THR Empty (bits 3:1 = 001)
+   |       ^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/avx512/vcompress_vexpand.rs:31:7
+   |
+31 | const ALIGNED_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+ --> tests/suites/isa/x86_64/simd/avx2/vmpsadbw.rs:7:7
+  |
+7 | const ALIGNED_ADDR: u64 = 0x3000;
+  |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR2` is never used
+  --> tests/suites/isa/x86_64/simd/avx2/vpacksswb_vpackssdw.rs:22:7
+   |
+22 | const ALIGNED_ADDR2: u64 = 0x3100;
+   |       ^^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR2` is never used
+  --> tests/suites/isa/x86_64/simd/avx2/vpackuswb_vpackusdw.rs:22:7
+   |
+22 | const ALIGNED_ADDR2: u64 = 0x3100;
+   |       ^^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR2` is never used
+  --> tests/suites/isa/x86_64/simd/avx2/vpaddb_vpaddw_vpaddd_vpaddq.rs:21:7
+   |
+21 | const ALIGNED_ADDR2: u64 = 0x3100;
+   |       ^^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+ --> tests/suites/isa/x86_64/simd/avx2/vpaddsb.rs:7:7
+  |
+7 | const ALIGNED_ADDR: u64 = 0x3000;
+  |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+ --> tests/suites/isa/x86_64/simd/avx2/vpaddsw.rs:7:7
+  |
+7 | const ALIGNED_ADDR: u64 = 0x3000;
+  |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+ --> tests/suites/isa/x86_64/simd/avx2/vpaddusb.rs:7:7
+  |
+7 | const ALIGNED_ADDR: u64 = 0x3000;
+  |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+ --> tests/suites/isa/x86_64/simd/avx2/vpaddusw.rs:7:7
+  |
+7 | const ALIGNED_ADDR: u64 = 0x3000;
+  |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR2` is never used
+  --> tests/suites/isa/x86_64/simd/avx2/vpand_vpor_vpxor.rs:18:7
+   |
+18 | const ALIGNED_ADDR2: u64 = 0x3100;
+   |       ^^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+ --> tests/suites/isa/x86_64/simd/avx2/vpandn.rs:7:7
+  |
+7 | const ALIGNED_ADDR: u64 = 0x3000;
+  |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR2` is never used
+  --> tests/suites/isa/x86_64/simd/avx2/vpavgb_vpavgw.rs:17:7
+   |
+17 | const ALIGNED_ADDR2: u64 = 0x3100;
+   |       ^^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+ --> tests/suites/isa/x86_64/simd/avx2/vpblendvb.rs:7:7
+  |
+7 | const ALIGNED_ADDR: u64 = 0x3000;
+  |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+ --> tests/suites/isa/x86_64/simd/avx2/vpblendw.rs:7:7
+  |
+7 | const ALIGNED_ADDR: u64 = 0x3000;
+  |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR2` is never used
+  --> tests/suites/isa/x86_64/simd/avx2/vpcmpeqb_vpcmpeqw_vpcmpeqd_vpcmpeqq.rs:21:7
+   |
+21 | const ALIGNED_ADDR2: u64 = 0x3100;
+   |       ^^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR2` is never used
+  --> tests/suites/isa/x86_64/simd/avx2/vpcmpgtb_vpcmpgtw_vpcmpgtd_vpcmpgtq.rs:21:7
+   |
+21 | const ALIGNED_ADDR2: u64 = 0x3100;
+   |       ^^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+ --> tests/suites/isa/x86_64/simd/avx2/vpermpd.rs:7:7
+  |
+7 | const ALIGNED_ADDR: u64 = 0x3000;
+  |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+ --> tests/suites/isa/x86_64/simd/avx2/vpermps.rs:7:7
+  |
+7 | const ALIGNED_ADDR: u64 = 0x3000;
+  |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/avx2/vpgatherdd_vpgatherdq.rs:17:7
+   |
+17 | const ALIGNED_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/avx2/vpgatherqd_vpgatherqq.rs:17:7
+   |
+17 | const ALIGNED_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+ --> tests/suites/isa/x86_64/simd/avx2/vphminposuw.rs:7:7
+  |
+7 | const ALIGNED_ADDR: u64 = 0x3000;
+  |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR2` is never used
+  --> tests/suites/isa/x86_64/simd/avx2/vpmaddubsw.rs:22:7
+   |
+22 | const ALIGNED_ADDR2: u64 = 0x3100;
+   |       ^^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR2` is never used
+  --> tests/suites/isa/x86_64/simd/avx2/vpmaddwd.rs:21:7
+   |
+21 | const ALIGNED_ADDR2: u64 = 0x3100;
+   |       ^^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR2` is never used
+  --> tests/suites/isa/x86_64/simd/avx2/vpmaxsb_vpmaxsw_vpmaxsd.rs:19:7
+   |
+19 | const ALIGNED_ADDR2: u64 = 0x3100;
+   |       ^^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR2` is never used
+  --> tests/suites/isa/x86_64/simd/avx2/vpmaxub_vpmaxuw_vpmaxud.rs:19:7
+   |
+19 | const ALIGNED_ADDR2: u64 = 0x3100;
+   |       ^^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR2` is never used
+  --> tests/suites/isa/x86_64/simd/avx2/vpminsb_vpminsw_vpminsd.rs:19:7
+   |
+19 | const ALIGNED_ADDR2: u64 = 0x3100;
+   |       ^^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR2` is never used
+  --> tests/suites/isa/x86_64/simd/avx2/vpminub_vpminuw_vpminud.rs:19:7
+   |
+19 | const ALIGNED_ADDR2: u64 = 0x3100;
+   |       ^^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+ --> tests/suites/isa/x86_64/simd/avx2/vpmovmskb.rs:7:7
+  |
+7 | const ALIGNED_ADDR: u64 = 0x3000;
+  |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+ --> tests/suites/isa/x86_64/simd/avx2/vpmuldq.rs:7:7
+  |
+7 | const ALIGNED_ADDR: u64 = 0x3000;
+  |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR2` is never used
+  --> tests/suites/isa/x86_64/simd/avx2/vpmulhw_vpmulhuw.rs:16:7
+   |
+16 | const ALIGNED_ADDR2: u64 = 0x3100;
+   |       ^^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR2` is never used
+  --> tests/suites/isa/x86_64/simd/avx2/vpmullw_vpmulld.rs:16:7
+   |
+16 | const ALIGNED_ADDR2: u64 = 0x3100;
+   |       ^^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+ --> tests/suites/isa/x86_64/simd/avx2/vpmuludq.rs:7:7
+  |
+7 | const ALIGNED_ADDR: u64 = 0x3000;
+  |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR2` is never used
+  --> tests/suites/isa/x86_64/simd/avx2/vpsadbw.rs:21:7
+   |
+21 | const ALIGNED_ADDR2: u64 = 0x3100;
+   |       ^^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+ --> tests/suites/isa/x86_64/simd/avx2/vpslldq.rs:7:7
+  |
+7 | const ALIGNED_ADDR: u64 = 0x3000;
+  |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR2` is never used
+  --> tests/suites/isa/x86_64/simd/avx2/vpsllw_vpslld_vpsllq.rs:23:7
+   |
+23 | const ALIGNED_ADDR2: u64 = 0x3100;
+   |       ^^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR2` is never used
+  --> tests/suites/isa/x86_64/simd/avx2/vpsraw_vpsrad.rs:23:7
+   |
+23 | const ALIGNED_ADDR2: u64 = 0x3100;
+   |       ^^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+ --> tests/suites/isa/x86_64/simd/avx2/vpsrldq.rs:7:7
+  |
+7 | const ALIGNED_ADDR: u64 = 0x3000;
+  |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR2` is never used
+  --> tests/suites/isa/x86_64/simd/avx2/vpsrlw_vpsrld_vpsrlq.rs:24:7
+   |
+24 | const ALIGNED_ADDR2: u64 = 0x3100;
+   |       ^^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR2` is never used
+  --> tests/suites/isa/x86_64/simd/avx2/vpsubb_vpsubw_vpsubd_vpsubq.rs:21:7
+   |
+21 | const ALIGNED_ADDR2: u64 = 0x3100;
+   |       ^^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+ --> tests/suites/isa/x86_64/simd/avx2/vpsubsb.rs:7:7
+  |
+7 | const ALIGNED_ADDR: u64 = 0x3000;
+  |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+ --> tests/suites/isa/x86_64/simd/avx2/vpsubsw.rs:7:7
+  |
+7 | const ALIGNED_ADDR: u64 = 0x3000;
+  |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+ --> tests/suites/isa/x86_64/simd/avx2/vpsubusb.rs:7:7
+  |
+7 | const ALIGNED_ADDR: u64 = 0x3000;
+  |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+ --> tests/suites/isa/x86_64/simd/avx2/vpsubusw.rs:7:7
+  |
+7 | const ALIGNED_ADDR: u64 = 0x3000;
+  |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR2` is never used
+  --> tests/suites/isa/x86_64/simd/avx2/vpunpckhbw_vpunpckhwd_vpunpckhdq_vpunpckhqdq.rs:28:7
+   |
+28 | const ALIGNED_ADDR2: u64 = 0x3100;
+   |       ^^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR2` is never used
+  --> tests/suites/isa/x86_64/simd/avx2/vpunpcklbw_vpunpcklwd_vpunpckldq_vpunpcklqdq.rs:28:7
+   |
+28 | const ALIGNED_ADDR2: u64 = 0x3100;
+   |       ^^^^^^^^^^^^^
+
+error: constant `DATA_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/avx512/kmov.rs:22:7
+   |
+22 | const DATA_ADDR: u64 = 0x2000;
+   |       ^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/avx512/vaddph_vsubph_vmulph_vdivph.rs:30:7
+   |
+30 | const ALIGNED_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+ --> tests/suites/isa/x86_64/simd/avx/vblendvpd.rs:8:7
+  |
+8 | const ALIGNED_ADDR: u64 = 0x3000;
+  |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/avx/vblendvps.rs:15:7
+   |
+15 | const ALIGNED_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+ --> tests/suites/isa/x86_64/simd/avx/vcomisd.rs:9:7
+  |
+9 | const ALIGNED_ADDR: u64 = 0x3000;
+  |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+ --> tests/suites/isa/x86_64/simd/avx/vcomiss.rs:9:7
+  |
+9 | const ALIGNED_ADDR: u64 = 0x3000;
+  |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+ --> tests/suites/isa/x86_64/simd/avx/vdppd.rs:7:7
+  |
+7 | const ALIGNED_ADDR: u64 = 0x3000;
+  |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/avx/vextractf128.rs:14:7
+   |
+14 | const ALIGNED_ADDR: u64 = 0x3000; // 32-byte aligned address for testing
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/avx/vfmadd132pd.rs:10:7
+   |
+10 | const ALIGNED_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/avx/vfmadd132ps.rs:10:7
+   |
+10 | const ALIGNED_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/avx/vfmadd213pd.rs:10:7
+   |
+10 | const ALIGNED_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/avx/vfmadd213ps.rs:10:7
+   |
+10 | const ALIGNED_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/avx/vfmadd231pd.rs:10:7
+   |
+10 | const ALIGNED_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/avx/vfmadd231ps.rs:10:7
+   |
+10 | const ALIGNED_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/avx/vfmsub132pd.rs:10:7
+   |
+10 | const ALIGNED_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/avx/vfmsub132ps.rs:10:7
+   |
+10 | const ALIGNED_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/avx/vfmsub213pd.rs:10:7
+   |
+10 | const ALIGNED_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/avx/vfmsub213ps.rs:10:7
+   |
+10 | const ALIGNED_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/avx/vfmsub231pd.rs:10:7
+   |
+10 | const ALIGNED_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/avx/vfmsub231ps.rs:10:7
+   |
+10 | const ALIGNED_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/avx/vfnmadd132pd.rs:10:7
+   |
+10 | const ALIGNED_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/avx/vfnmadd132ps.rs:10:7
+   |
+10 | const ALIGNED_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/avx/vfnmadd213pd.rs:10:7
+   |
+10 | const ALIGNED_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/avx/vfnmadd213ps.rs:10:7
+   |
+10 | const ALIGNED_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/avx/vfnmadd231pd.rs:10:7
+   |
+10 | const ALIGNED_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/avx/vfnmadd231ps.rs:10:7
+   |
+10 | const ALIGNED_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/avx/vfnmsub132pd.rs:10:7
+   |
+10 | const ALIGNED_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/avx/vfnmsub132ps.rs:10:7
+   |
+10 | const ALIGNED_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/avx/vfnmsub213pd.rs:10:7
+   |
+10 | const ALIGNED_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/avx/vfnmsub213ps.rs:10:7
+   |
+10 | const ALIGNED_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/avx/vfnmsub231pd.rs:10:7
+   |
+10 | const ALIGNED_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/avx/vfnmsub231ps.rs:10:7
+   |
+10 | const ALIGNED_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+ --> tests/suites/isa/x86_64/simd/avx/vmovddup.rs:7:7
+  |
+7 | const ALIGNED_ADDR: u64 = 0x3000;
+  |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+ --> tests/suites/isa/x86_64/simd/avx/vmovhlps.rs:7:7
+  |
+7 | const ALIGNED_ADDR: u64 = 0x3000;
+  |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+ --> tests/suites/isa/x86_64/simd/avx/vmovhpd.rs:7:7
+  |
+7 | const ALIGNED_ADDR: u64 = 0x3000;
+  |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+ --> tests/suites/isa/x86_64/simd/avx/vmovhps.rs:7:7
+  |
+7 | const ALIGNED_ADDR: u64 = 0x3000;
+  |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+ --> tests/suites/isa/x86_64/simd/avx/vmovlhps.rs:7:7
+  |
+7 | const ALIGNED_ADDR: u64 = 0x3000;
+  |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+ --> tests/suites/isa/x86_64/simd/avx/vmovlpd.rs:7:7
+  |
+7 | const ALIGNED_ADDR: u64 = 0x3000;
+  |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+ --> tests/suites/isa/x86_64/simd/avx/vmovlps.rs:7:7
+  |
+7 | const ALIGNED_ADDR: u64 = 0x3000;
+  |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/avx/vmovmskps_vmovmskpd.rs:28:7
+   |
+28 | const ALIGNED_ADDR: u64 = 0x3000; // 32-byte aligned address for testing
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+ --> tests/suites/isa/x86_64/simd/avx/vmovntdq.rs:7:7
+  |
+7 | const ALIGNED_ADDR: u64 = 0x3000;
+  |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+ --> tests/suites/isa/x86_64/simd/avx/vmovntpd.rs:7:7
+  |
+7 | const ALIGNED_ADDR: u64 = 0x3000;
+  |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+ --> tests/suites/isa/x86_64/simd/avx/vmovntps.rs:7:7
+  |
+7 | const ALIGNED_ADDR: u64 = 0x3000;
+  |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+ --> tests/suites/isa/x86_64/simd/avx/vmovsd.rs:7:7
+  |
+7 | const ALIGNED_ADDR: u64 = 0x3000;
+  |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+ --> tests/suites/isa/x86_64/simd/avx/vmovshdup.rs:7:7
+  |
+7 | const ALIGNED_ADDR: u64 = 0x3000;
+  |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+ --> tests/suites/isa/x86_64/simd/avx/vmovsldup.rs:7:7
+  |
+7 | const ALIGNED_ADDR: u64 = 0x3000;
+  |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+ --> tests/suites/isa/x86_64/simd/avx/vmovss.rs:7:7
+  |
+7 | const ALIGNED_ADDR: u64 = 0x3000;
+  |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/avx/vpermilpd.rs:17:7
+   |
+17 | const ALIGNED_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/avx/vpermilps.rs:17:7
+   |
+17 | const ALIGNED_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+ --> tests/suites/isa/x86_64/simd/avx/vroundpd.rs:9:7
+  |
+9 | const ALIGNED_ADDR: u64 = 0x3000;
+  |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+ --> tests/suites/isa/x86_64/simd/avx/vroundps.rs:9:7
+  |
+9 | const ALIGNED_ADDR: u64 = 0x3000;
+  |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+ --> tests/suites/isa/x86_64/simd/avx/vroundsd.rs:9:7
+  |
+9 | const ALIGNED_ADDR: u64 = 0x3000;
+  |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+ --> tests/suites/isa/x86_64/simd/avx/vroundss.rs:9:7
+  |
+9 | const ALIGNED_ADDR: u64 = 0x3000;
+  |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+ --> tests/suites/isa/x86_64/simd/avx/vucomisd.rs:9:7
+  |
+9 | const ALIGNED_ADDR: u64 = 0x3000;
+  |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+ --> tests/suites/isa/x86_64/simd/avx/vucomiss.rs:9:7
+  |
+9 | const ALIGNED_ADDR: u64 = 0x3000;
+  |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/fma/vfmadd132pd_vfmadd213pd_vfmadd231pd.rs:20:7
+   |
+20 | const ALIGNED_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/fma/vfmadd132ps_vfmadd213ps_vfmadd231ps.rs:20:7
+   |
+20 | const ALIGNED_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/fma/vfmadd132sd_vfmadd213sd_vfmadd231sd.rs:17:7
+   |
+17 | const ALIGNED_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/fma/vfmadd132ss_vfmadd213ss_vfmadd231ss.rs:17:7
+   |
+17 | const ALIGNED_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/fma/vfmaddsub_vfmsubadd.rs:42:7
+   |
+42 | const ALIGNED_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/fma/vfmsub_variants.rs:32:7
+   |
+32 | const ALIGNED_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/fma/vfnmadd_variants.rs:32:7
+   |
+32 | const ALIGNED_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/fma/vfnmsub_variants.rs:32:7
+   |
+32 | const ALIGNED_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/addps_addpd.rs:15:7
+   |
+15 | const ALIGNED_ADDR: u64 = 0x3000; // 16-byte aligned address for testing
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/addss_addsd.rs:16:7
+   |
+16 | const ALIGNED_ADDR: u64 = 0x3000; // 16-byte aligned address for testing
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/addsubps_addsubpd.rs:20:7
+   |
+20 | const ALIGNED_ADDR: u64 = 0x3000; // 16-byte aligned address for testing
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+ --> tests/suites/isa/x86_64/simd/sse/aesdec_aesdeclast.rs:8:7
+  |
+8 | const ALIGNED_ADDR: u64 = 0x3000;
+  |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+ --> tests/suites/isa/x86_64/simd/sse/aesenc_aesenclast.rs:8:7
+  |
+8 | const ALIGNED_ADDR: u64 = 0x3000;
+  |       ^^^^^^^^^^^^
+
+error: constant `DATA_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/aesimc_aeskeygenassist.rs:13:7
+   |
+13 | const DATA_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/blendps_blendpd.rs:18:7
+   |
+18 | const ALIGNED_ADDR: u64 = 0x3000; // 16-byte aligned address for testing
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/blendvps_blendvpd.rs:18:7
+   |
+18 | const ALIGNED_ADDR: u64 = 0x3000; // 16-byte aligned address for testing
+   |       ^^^^^^^^^^^^
+
+error: constant `ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/clflushopt.rs:22:7
+   |
+22 | const ADDR: u64 = 0x3000; // Address for testing
+   |       ^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/comiss_comisd.rs:19:7
+   |
+19 | const ALIGNED_ADDR: u64 = 0x3000; // 16-byte aligned address for testing
+   |       ^^^^^^^^^^^^
+
+error: constant `DATA_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/cvtpi2pd_cvtpd2pi.rs:19:7
+   |
+19 | const DATA_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^
+
+error: constant `DATA_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/cvtpi2ps_cvtps2pi.rs:20:7
+   |
+20 | const DATA_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^
+
+error: constant `DATA_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/cvttps2pi_cvttpd2pi.rs:19:7
+   |
+19 | const DATA_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^
+
+error: constant `DATA_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/cvttsd2si_cvttss2si.rs:20:7
+   |
+20 | const DATA_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/divps_divpd.rs:15:7
+   |
+15 | const ALIGNED_ADDR: u64 = 0x3000; // 16-byte aligned address for testing
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/divss_divsd.rs:16:7
+   |
+16 | const ALIGNED_ADDR: u64 = 0x3000; // 16-byte aligned address for testing
+   |       ^^^^^^^^^^^^
+
+error: constant `DATA_ADDR` is never used
+ --> tests/suites/isa/x86_64/simd/sse/extractps.rs:6:7
+  |
+6 | const DATA_ADDR: u64 = 0x3000;
+  |       ^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/haddps_haddpd.rs:18:7
+   |
+18 | const ALIGNED_ADDR: u64 = 0x3000; // 16-byte aligned address for testing
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/hsubps_hsubpd.rs:18:7
+   |
+18 | const ALIGNED_ADDR: u64 = 0x3000; // 16-byte aligned address for testing
+   |       ^^^^^^^^^^^^
+
+error: constant `DATA_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/insertps.rs:11:7
+   |
+11 | const DATA_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/lddqu.rs:13:7
+   |
+13 | const ALIGNED_ADDR: u64 = 0x3000; // 16-byte aligned address
+   |       ^^^^^^^^^^^^
+
+error: constant `UNALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/lddqu.rs:14:7
+   |
+14 | const UNALIGNED_ADDR: u64 = 0x3001; // Unaligned address
+   |       ^^^^^^^^^^^^^^
+
+error: constant `MXCSR_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/ldmxcsr_stmxcsr.rs:24:7
+   |
+24 | const MXCSR_ADDR: u64 = 0x3000; // Address for MXCSR save/restore
+   |       ^^^^^^^^^^
+
+error: constant `DEST_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/maskmovdqu.rs:20:7
+   |
+20 | const DEST_ADDR: u64 = 0x4000; // Destination address for masked store
+   |       ^^^^^^^^^
+
+error: constant `DATA_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/maskmovq_emms.rs:13:7
+   |
+13 | const DATA_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/maxps_maxpd.rs:20:7
+   |
+20 | const ALIGNED_ADDR: u64 = 0x3000; // 16-byte aligned address for testing
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/minps_minpd.rs:20:7
+   |
+20 | const ALIGNED_ADDR: u64 = 0x3000; // 16-byte aligned address for testing
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/movddup.rs:13:7
+   |
+13 | const ALIGNED_ADDR: u64 = 0x3000; // 16-byte aligned address for testing
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/movddup_extended.rs:13:7
+   |
+13 | const ALIGNED_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^^^^
+
+error: constant `DATA_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/movhps_movlps_movhpd_movlpd.rs:18:7
+   |
+18 | const DATA_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/movntdq.rs:16:7
+   |
+16 | const ALIGNED_ADDR: u64 = 0x3000; // 16-byte aligned address for testing
+   |       ^^^^^^^^^^^^
+
+error: constant `UNALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/movntdq.rs:17:7
+   |
+17 | const UNALIGNED_ADDR: u64 = 0x3001; // Unaligned address (should cause #GP)
+   |       ^^^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/movntdqa.rs:14:7
+   |
+14 | const ALIGNED_ADDR: u64 = 0x3000; // 16-byte aligned address
+   |       ^^^^^^^^^^^^
+
+error: constant `DEST_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/movnti.rs:17:7
+   |
+17 | const DEST_ADDR: u64 = 0x4000; // Destination address for testing
+   |       ^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/movntps_movntpd.rs:18:7
+   |
+18 | const ALIGNED_ADDR: u64 = 0x3000; // 16-byte aligned address for testing
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/movntq.rs:16:7
+   |
+16 | const ALIGNED_ADDR: u64 = 0x3000; // 8-byte aligned address for testing
+   |       ^^^^^^^^^^^^
+
+error: constant `ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/movntss_movntsd.rs:18:7
+   |
+18 | const ADDR: u64 = 0x3000; // Address for testing
+   |       ^^^^
+
+error: constant `DATA_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/movq_movq2dq_movdq2q.rs:19:7
+   |
+19 | const DATA_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/movshdup_movsldup.rs:18:7
+   |
+18 | const ALIGNED_ADDR: u64 = 0x3000; // 16-byte aligned address for testing
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/movsldup_movshdup_extended.rs:12:7
+   |
+12 | const ALIGNED_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^^^^
+
+error: constant `DATA_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/movss_movsd_scalar.rs:18:7
+   |
+18 | const DATA_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+ --> tests/suites/isa/x86_64/simd/sse/mpsadbw_extended.rs:8:7
+  |
+8 | const ALIGNED_ADDR: u64 = 0x3000;
+  |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/mulps_mulpd.rs:15:7
+   |
+15 | const ALIGNED_ADDR: u64 = 0x3000; // 16-byte aligned address for testing
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/mulss_mulsd.rs:16:7
+   |
+16 | const ALIGNED_ADDR: u64 = 0x3000; // 16-byte aligned address for testing
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/packusdw.rs:13:7
+   |
+13 | const ALIGNED_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^^^^
+
+error: constant `DATA_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/pclmulqdq.rs:11:7
+   |
+11 | const DATA_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/pcmpgtq.rs:16:7
+   |
+16 | const ALIGNED_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^^^^
+
+error: constant `DATA_ADDR` is never used
+ --> tests/suites/isa/x86_64/simd/sse/pextrb_pextrd_pextrq.rs:8:7
+  |
+8 | const DATA_ADDR: u64 = 0x3000;
+  |       ^^^^^^^^^
+
+error: constant `DATA_ADDR` is never used
+ --> tests/suites/isa/x86_64/simd/sse/pextrw.rs:7:7
+  |
+7 | const DATA_ADDR: u64 = 0x3000;
+  |       ^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+ --> tests/suites/isa/x86_64/simd/sse/phminposuw_extended.rs:8:7
+  |
+8 | const ALIGNED_ADDR: u64 = 0x3000;
+  |       ^^^^^^^^^^^^
+
+error: constant `DATA_ADDR` is never used
+ --> tests/suites/isa/x86_64/simd/sse/pinsrb_pinsrd_pinsrq.rs:8:7
+  |
+8 | const DATA_ADDR: u64 = 0x3000;
+  |       ^^^^^^^^^
+
+error: constant `DATA_ADDR` is never used
+ --> tests/suites/isa/x86_64/simd/sse/pinsrw.rs:6:7
+  |
+6 | const DATA_ADDR: u64 = 0x3000;
+  |       ^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+ --> tests/suites/isa/x86_64/simd/sse/pmaddubsw_extended.rs:8:7
+  |
+8 | const ALIGNED_ADDR: u64 = 0x3000;
+  |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/pmulhw.rs:15:7
+   |
+15 | const ALIGNED_ADDR: u64 = 0x3000; // 16-byte aligned address for testing
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/pmullq.rs:17:7
+   |
+17 | const ALIGNED_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^^^^
+
+error: constant `DATA_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/pmullw.rs:12:7
+   |
+12 | const DATA_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^
+
+error: constant `ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/prefetchnta_prefetcht0_prefetcht1_prefetcht2.rs:21:7
+   |
+21 | const ADDR: u64 = 0x3000; // Address for testing
+   |       ^^^^
+
+error: constant `DATA_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/pshufw.rs:11:7
+   |
+11 | const DATA_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/punpckhbw_punpckhwd_punpckhdq_punpckhqdq.rs:21:7
+   |
+21 | const ALIGNED_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/punpcklbw_punpcklwd_punpckldq_punpcklqdq.rs:21:7
+   |
+21 | const ALIGNED_ADDR: u64 = 0x3000;
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/rcpps.rs:19:7
+   |
+19 | const ALIGNED_ADDR: u64 = 0x3000; // 16-byte aligned address for testing
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/rcpss.rs:20:7
+   |
+20 | const ALIGNED_ADDR: u64 = 0x3000; // 16-byte aligned address for testing
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/roundps_roundpd.rs:23:7
+   |
+23 | const ALIGNED_ADDR: u64 = 0x3000; // 16-byte aligned address for testing
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/roundss_roundsd.rs:23:7
+   |
+23 | const ALIGNED_ADDR: u64 = 0x3000; // 16-byte aligned address for testing
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/rsqrtps.rs:19:7
+   |
+19 | const ALIGNED_ADDR: u64 = 0x3000; // 16-byte aligned address for testing
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/rsqrtss.rs:20:7
+   |
+20 | const ALIGNED_ADDR: u64 = 0x3000; // 16-byte aligned address for testing
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/sqrtps_sqrtpd.rs:15:7
+   |
+15 | const ALIGNED_ADDR: u64 = 0x3000; // 16-byte aligned address for testing
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/sqrtss_sqrtsd.rs:17:7
+   |
+17 | const ALIGNED_ADDR: u64 = 0x3000; // 16-byte aligned address for testing
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/subps_subpd.rs:15:7
+   |
+15 | const ALIGNED_ADDR: u64 = 0x3000; // 16-byte aligned address for testing
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/subss_subsd.rs:16:7
+   |
+16 | const ALIGNED_ADDR: u64 = 0x3000; // 16-byte aligned address for testing
+   |       ^^^^^^^^^^^^
+
+error: constant `ALIGNED_ADDR` is never used
+  --> tests/suites/isa/x86_64/simd/sse/ucomiss_ucomisd.rs:22:7
+   |
+22 | const ALIGNED_ADDR: u64 = 0x3000; // 16-byte aligned address for testing
+   |       ^^^^^^^^^^^^
+
+error: function `assert_missing_idt_ud` is never used
+  --> tests/suites/isa/x86_64/system/cet.rs:26:4
+   |
+26 | fn assert_missing_idt_ud(code: &[u8]) {
+   |    ^^^^^^^^^^^^^^^^^^^^^
+
+error: constant `USER_CS` is never used
+  --> tests/suites/isa/x86_64/system/mmu.rs:68:7
+   |
+68 | const USER_CS: u16 = 0x1B;
+   |       ^^^^^^^
+
+error: constant `USER_DS` is never used
+  --> tests/suites/isa/x86_64/system/mmu.rs:69:7
+   |
+69 | const USER_DS: u16 = 0x23;
+   |       ^^^^^^^
+
+error: constant `WRITE_THROUGH` is never used
+  --> tests/suites/isa/x86_64/system/mmu.rs:86:15
+   |
+86 |     pub const WRITE_THROUGH: u64 = 1 << 3;
+   |               ^^^^^^^^^^^^^
+
+error: constant `CACHE_DISABLE` is never used
+  --> tests/suites/isa/x86_64/system/mmu.rs:87:15
+   |
+87 |     pub const CACHE_DISABLE: u64 = 1 << 4;
+   |               ^^^^^^^^^^^^^
+
+error: constant `ACCESSED` is never used
+  --> tests/suites/isa/x86_64/system/mmu.rs:88:15
+   |
+88 |     pub const ACCESSED: u64 = 1 << 5;
+   |               ^^^^^^^^
+
+error: constant `DIRTY` is never used
+  --> tests/suites/isa/x86_64/system/mmu.rs:89:15
+   |
+89 |     pub const DIRTY: u64 = 1 << 6;
+   |               ^^^^^
+
+error: constant `GLOBAL` is never used
+  --> tests/suites/isa/x86_64/system/mmu.rs:91:15
+   |
+91 |     pub const GLOBAL: u64 = 1 << 8;
+   |               ^^^^^^
+
+error: constant `NO_EXECUTE` is never used
+  --> tests/suites/isa/x86_64/system/mmu.rs:92:15
+   |
+92 |     pub const NO_EXECUTE: u64 = 1 << 63;
+   |               ^^^^^^^^^^
+
+error: constant `US` is never used
+  --> tests/suites/isa/x86_64/system/mmu.rs:99:15
+   |
+99 |     pub const US: u64 = 1 << 2; // 0=supervisor, 1=user
+   |               ^^
+
+error: constant `CODE_VADDR` is never used
+  --> tests/suites/isa/x86_64/system/page_fault.rs:26:7
+   |
+26 | const CODE_VADDR: u64 = 0x10000;
+   |       ^^^^^^^^^^
+
+error: constant `STACK_VADDR` is never used
+  --> tests/suites/isa/x86_64/system/page_fault.rs:28:7
+   |
+28 | const STACK_VADDR: u64 = 0x20000;
+   |       ^^^^^^^^^^^
+
+error: constant `DATA_VADDR` is never used
+  --> tests/suites/isa/x86_64/system/page_fault.rs:30:7
+   |
+30 | const DATA_VADDR: u64 = 0x30000;
+   |       ^^^^^^^^^^
+
+error: constant `DATA_PADDR` is never used
+  --> tests/suites/isa/x86_64/system/page_fault.rs:31:7
+   |
+31 | const DATA_PADDR: u64 = 0x30000;
+   |       ^^^^^^^^^^
+
+error: constant `ACCESSED` is never used
+  --> tests/suites/isa/x86_64/system/page_fault.rs:48:15
+   |
+48 |     pub const ACCESSED: u64 = 1 << 5;
+   |               ^^^^^^^^
+
+error: constant `DIRTY` is never used
+  --> tests/suites/isa/x86_64/system/page_fault.rs:49:15
+   |
+49 |     pub const DIRTY: u64 = 1 << 6;
+   |               ^^^^^
+
+error: constant `NO_EXECUTE` is never used
+  --> tests/suites/isa/x86_64/system/page_fault.rs:51:15
+   |
+51 |     pub const NO_EXECUTE: u64 = 1 << 63;
+   |               ^^^^^^^^^^
+
+error: constant `RSVD` is never used
+  --> tests/suites/isa/x86_64/system/page_fault.rs:59:15
+   |
+59 |     pub const RSVD: u64 = 1 << 3; // Reserved bit violation
+   |               ^^^^
+
+error: constant `IA32_KERNEL_GS_BASE` is never used
+  --> tests/suites/isa/x86_64/system/swapgs.rs:27:7
+   |
+27 | const IA32_KERNEL_GS_BASE: u32 = 0xC0000102;
+   |       ^^^^^^^^^^^^^^^^^^^
+
+error: constant `LAPIC_BASE` is never used
+  --> tests/suites/isa/x86_64/system/lapic_integration.rs:10:7
+   |
+10 | const LAPIC_BASE: u64 = 0xFEE00000;
+   |       ^^^^^^^^^^
+
+error: function `test_movsxd_boundary_0x7FFFFFFE` should have a snake case name
+   --> tests/suites/isa/x86_64/data/conversion/movsxd.rs:354:4
+    |
+354 | fn test_movsxd_boundary_0x7FFFFFFE() {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_movsxd_boundary_0x7_ffffffe`
+    |
+    = note: `-D non-snake-case` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(non_snake_case)]`
+
+error: function `test_movsxd_sign_extension_pattern_0xFFFFFFFF` should have a snake case name
+   --> tests/suites/isa/x86_64/data/conversion/movsxd.rs:414:4
+    |
+414 | fn test_movsxd_sign_extension_pattern_0xFFFFFFFF() {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_movsxd_sign_extension_pattern_0x_ffffffff`
+
+error: comparison is useless due to type limits
+  --> tests/suites/isa/x86_64/miscellaneous/cpuid_extended.rs:32:9
+   |
+32 |         regs.rax & 0xFFFFFFFF >= 0,
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `-D unused-comparisons` implied by `-D warnings`
+   = help: to override `-D warnings` add `#[allow(unused_comparisons)]`
+
+error: function `test_vextracti128_xmm0_ymm1_imm_0xFF` should have a snake case name
+   --> tests/suites/isa/x86_64/simd/avx2/vextracti128.rs:408:4
+    |
+408 | fn test_vextracti128_xmm0_ymm1_imm_0xFF() {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_vextracti128_xmm0_ymm1_imm_0x_ff`
+
+error: function `test_vextracti128_xmm0_ymm1_imm_0xFE` should have a snake case name
+   --> tests/suites/isa/x86_64/simd/avx2/vextracti128.rs:419:4
+    |
+419 | fn test_vextracti128_xmm0_ymm1_imm_0xFE() {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_vextracti128_xmm0_ymm1_imm_0x_fe`
+
+error: function `test_vinserti128_ymm0_ymm1_xmm2_imm_0xFF` should have a snake case name
+   --> tests/suites/isa/x86_64/simd/avx2/vinserti128.rs:376:4
+    |
+376 | fn test_vinserti128_ymm0_ymm1_xmm2_imm_0xFF() {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_vinserti128_ymm0_ymm1_xmm2_imm_0x_ff`
+
+error: function `test_vinserti128_ymm0_ymm1_xmm2_imm_0xFE` should have a snake case name
+   --> tests/suites/isa/x86_64/simd/avx2/vinserti128.rs:387:4
+    |
+387 | fn test_vinserti128_ymm0_ymm1_xmm2_imm_0xFE() {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_vinserti128_ymm0_ymm1_xmm2_imm_0x_fe`
+
+error: function `test_vpblendd_ymm0_ymm1_ymm2_0xFF` should have a snake case name
+   --> tests/suites/isa/x86_64/simd/avx2/vpblendd.rs:208:4
+    |
+208 | fn test_vpblendd_ymm0_ymm1_ymm2_0xFF() {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_vpblendd_ymm0_ymm1_ymm2_0x_ff`
+
+error: function `test_vpblendd_ymm0_ymm1_ymm2_0xAA` should have a snake case name
+   --> tests/suites/isa/x86_64/simd/avx2/vpblendd.rs:219:4
+    |
+219 | fn test_vpblendd_ymm0_ymm1_ymm2_0xAA() {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_vpblendd_ymm0_ymm1_ymm2_0x_aa`
+
+error: function `test_vpblendd_ymm0_ymm1_ymm2_0x0F` should have a snake case name
+   --> tests/suites/isa/x86_64/simd/avx2/vpblendd.rs:241:4
+    |
+241 | fn test_vpblendd_ymm0_ymm1_ymm2_0x0F() {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_vpblendd_ymm0_ymm1_ymm2_0x0_f`
+
+error: function `test_vpblendd_ymm0_ymm1_ymm2_0xF0` should have a snake case name
+   --> tests/suites/isa/x86_64/simd/avx2/vpblendd.rs:252:4
+    |
+252 | fn test_vpblendd_ymm0_ymm1_ymm2_0xF0() {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_vpblendd_ymm0_ymm1_ymm2_0x_f0`
+
+error: function `test_vpblendd_ymm3_ymm4_ymm5_0x3C` should have a snake case name
+   --> tests/suites/isa/x86_64/simd/avx2/vpblendd.rs:263:4
+    |
+263 | fn test_vpblendd_ymm3_ymm4_ymm5_0x3C() {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_vpblendd_ymm3_ymm4_ymm5_0x3_c`
+
+error: function `test_vpblendd_ymm6_ymm7_ymm0_0xC3` should have a snake case name
+   --> tests/suites/isa/x86_64/simd/avx2/vpblendd.rs:273:4
+    |
+273 | fn test_vpblendd_ymm6_ymm7_ymm0_0xC3() {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_vpblendd_ymm6_ymm7_ymm0_0x_c3`
+
+error: function `test_vpblendd_ymm0_ymm1_mem_0xAA` should have a snake case name
+   --> tests/suites/isa/x86_64/simd/avx2/vpblendd.rs:317:4
+    |
+317 | fn test_vpblendd_ymm0_ymm1_mem_0xAA() {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_vpblendd_ymm0_ymm1_mem_0x_aa`
+
+error: function `test_vpblendd_ymm6_ymm7_mem_0x0F` should have a snake case name
+   --> tests/suites/isa/x86_64/simd/avx2/vpblendd.rs:358:4
+    |
+358 | fn test_vpblendd_ymm6_ymm7_mem_0x0F() {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_vpblendd_ymm6_ymm7_mem_0x0_f`
+
+error: function `test_vpblendd_ymm9_ymm10_mem_0xF0` should have a snake case name
+   --> tests/suites/isa/x86_64/simd/avx2/vpblendd.rs:378:4
+    |
+378 | fn test_vpblendd_ymm9_ymm10_mem_0xF0() {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_vpblendd_ymm9_ymm10_mem_0x_f0`
+
+error: function `test_vpblendd_ymm12_ymm13_mem_0x3C` should have a snake case name
+   --> tests/suites/isa/x86_64/simd/avx2/vpblendd.rs:398:4
+    |
+398 | fn test_vpblendd_ymm12_ymm13_mem_0x3C() {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_vpblendd_ymm12_ymm13_mem_0x3_c`
+
+error: function `test_vpermq_ymm0_ymm1_imm_0xC6` should have a snake case name
+   --> tests/suites/isa/x86_64/simd/avx2/vpermd_vpermq.rs:413:4
+    |
+413 | fn test_vpermq_ymm0_ymm1_imm_0xC6() {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_vpermq_ymm0_ymm1_imm_0x_c6`
+
+error: function `test_vpermq_ymm0_ymm1_imm_0xD8` should have a snake case name
+   --> tests/suites/isa/x86_64/simd/avx2/vpermd_vpermq.rs:424:4
+    |
+424 | fn test_vpermq_ymm0_ymm1_imm_0xD8() {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_vpermq_ymm0_ymm1_imm_0x_d8`
+
+error: function `test_vpshufd_ymm0_ymm1_imm_0x4B` should have a snake case name
+   --> tests/suites/isa/x86_64/simd/avx2/vpshufd.rs:347:4
+    |
+347 | fn test_vpshufd_ymm0_ymm1_imm_0x4B() {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_vpshufd_ymm0_ymm1_imm_0x4_b`
+
+error: function `test_vpshufd_ymm0_ymm1_imm_0x8D` should have a snake case name
+   --> tests/suites/isa/x86_64/simd/avx2/vpshufd.rs:369:4
+    |
+369 | fn test_vpshufd_ymm0_ymm1_imm_0x8D() {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_vpshufd_ymm0_ymm1_imm_0x8_d`
+
+error: function `test_vpshufd_ymm0_ymm1_imm_0xB1` should have a snake case name
+   --> tests/suites/isa/x86_64/simd/avx2/vpshufd.rs:391:4
+    |
+391 | fn test_vpshufd_ymm0_ymm1_imm_0xB1() {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_vpshufd_ymm0_ymm1_imm_0x_b1`
+
+error: function `test_vpshufd_ymm0_ymm1_imm_0xC6` should have a snake case name
+   --> tests/suites/isa/x86_64/simd/avx2/vpshufd.rs:402:4
+    |
+402 | fn test_vpshufd_ymm0_ymm1_imm_0xC6() {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_vpshufd_ymm0_ymm1_imm_0x_c6`
+
+error: function `test_vpshufd_ymm0_ymm1_imm_0xD8` should have a snake case name
+   --> tests/suites/isa/x86_64/simd/avx2/vpshufd.rs:413:4
+    |
+413 | fn test_vpshufd_ymm0_ymm1_imm_0xD8() {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_vpshufd_ymm0_ymm1_imm_0x_d8`
+
+error: function `test_vpshufd_ymm0_ymm1_imm_0xEE` should have a snake case name
+   --> tests/suites/isa/x86_64/simd/avx2/vpshufd.rs:439:4
+    |
+439 | fn test_vpshufd_ymm0_ymm1_imm_0xEE() {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_vpshufd_ymm0_ymm1_imm_0x_ee`
+
+error: function `test_vpshufd_ymm0_ymm1_imm_0xFA` should have a snake case name
+   --> tests/suites/isa/x86_64/simd/avx2/vpshufd.rs:461:4
+    |
+461 | fn test_vpshufd_ymm0_ymm1_imm_0xFA() {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_vpshufd_ymm0_ymm1_imm_0x_fa`
+
+error: function `test_vpshufhw_ymm0_ymm1_imm_0x4B` should have a snake case name
+   --> tests/suites/isa/x86_64/simd/avx2/vpshufhw.rs:346:4
+    |
+346 | fn test_vpshufhw_ymm0_ymm1_imm_0x4B() {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_vpshufhw_ymm0_ymm1_imm_0x4_b`
+
+error: function `test_vpshufhw_ymm0_ymm1_imm_0x8D` should have a snake case name
+   --> tests/suites/isa/x86_64/simd/avx2/vpshufhw.rs:368:4
+    |
+368 | fn test_vpshufhw_ymm0_ymm1_imm_0x8D() {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_vpshufhw_ymm0_ymm1_imm_0x8_d`
+
+error: function `test_vpshufhw_ymm0_ymm1_imm_0xB1` should have a snake case name
+   --> tests/suites/isa/x86_64/simd/avx2/vpshufhw.rs:390:4
+    |
+390 | fn test_vpshufhw_ymm0_ymm1_imm_0xB1() {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_vpshufhw_ymm0_ymm1_imm_0x_b1`
+
+error: function `test_vpshufhw_ymm0_ymm1_imm_0xC6` should have a snake case name
+   --> tests/suites/isa/x86_64/simd/avx2/vpshufhw.rs:401:4
+    |
+401 | fn test_vpshufhw_ymm0_ymm1_imm_0xC6() {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_vpshufhw_ymm0_ymm1_imm_0x_c6`
+
+error: function `test_vpshufhw_ymm0_ymm1_imm_0xD8` should have a snake case name
+   --> tests/suites/isa/x86_64/simd/avx2/vpshufhw.rs:412:4
+    |
+412 | fn test_vpshufhw_ymm0_ymm1_imm_0xD8() {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_vpshufhw_ymm0_ymm1_imm_0x_d8`
+
+error: function `test_vpshufhw_ymm0_ymm1_imm_0xEE` should have a snake case name
+   --> tests/suites/isa/x86_64/simd/avx2/vpshufhw.rs:438:4
+    |
+438 | fn test_vpshufhw_ymm0_ymm1_imm_0xEE() {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_vpshufhw_ymm0_ymm1_imm_0x_ee`
+
+error: function `test_vpshufhw_ymm0_ymm1_imm_0xFA` should have a snake case name
+   --> tests/suites/isa/x86_64/simd/avx2/vpshufhw.rs:460:4
+    |
+460 | fn test_vpshufhw_ymm0_ymm1_imm_0xFA() {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_vpshufhw_ymm0_ymm1_imm_0x_fa`
+
+error: function `test_vpshuflw_ymm0_ymm1_imm_0x4B` should have a snake case name
+   --> tests/suites/isa/x86_64/simd/avx2/vpshuflw.rs:346:4
+    |
+346 | fn test_vpshuflw_ymm0_ymm1_imm_0x4B() {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_vpshuflw_ymm0_ymm1_imm_0x4_b`
+
+error: function `test_vpshuflw_ymm0_ymm1_imm_0x8D` should have a snake case name
+   --> tests/suites/isa/x86_64/simd/avx2/vpshuflw.rs:368:4
+    |
+368 | fn test_vpshuflw_ymm0_ymm1_imm_0x8D() {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_vpshuflw_ymm0_ymm1_imm_0x8_d`
+
+error: function `test_vpshuflw_ymm0_ymm1_imm_0xB1` should have a snake case name
+   --> tests/suites/isa/x86_64/simd/avx2/vpshuflw.rs:390:4
+    |
+390 | fn test_vpshuflw_ymm0_ymm1_imm_0xB1() {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_vpshuflw_ymm0_ymm1_imm_0x_b1`
+
+error: function `test_vpshuflw_ymm0_ymm1_imm_0xC6` should have a snake case name
+   --> tests/suites/isa/x86_64/simd/avx2/vpshuflw.rs:401:4
+    |
+401 | fn test_vpshuflw_ymm0_ymm1_imm_0xC6() {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_vpshuflw_ymm0_ymm1_imm_0x_c6`
+
+error: function `test_vpshuflw_ymm0_ymm1_imm_0xD8` should have a snake case name
+   --> tests/suites/isa/x86_64/simd/avx2/vpshuflw.rs:412:4
+    |
+412 | fn test_vpshuflw_ymm0_ymm1_imm_0xD8() {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_vpshuflw_ymm0_ymm1_imm_0x_d8`
+
+error: function `test_vpshuflw_ymm0_ymm1_imm_0xEE` should have a snake case name
+   --> tests/suites/isa/x86_64/simd/avx2/vpshuflw.rs:438:4
+    |
+438 | fn test_vpshuflw_ymm0_ymm1_imm_0xEE() {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_vpshuflw_ymm0_ymm1_imm_0x_ee`
+
+error: function `test_vpshuflw_ymm0_ymm1_imm_0xFA` should have a snake case name
+   --> tests/suites/isa/x86_64/simd/avx2/vpshuflw.rs:460:4
+    |
+460 | fn test_vpshuflw_ymm0_ymm1_imm_0xFA() {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_vpshuflw_ymm0_ymm1_imm_0x_fa`
+
+error: function `test_rep_stosw_pattern_0xAAAA` should have a snake case name
+   --> tests/suites/isa/x86_64/strings/rep_stos.rs:891:4
+    |
+891 | fn test_rep_stosw_pattern_0xAAAA() {
+    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_rep_stosw_pattern_0x_aaaa`
+
+error: function `test_lidt_limit_0x07FF` should have a snake case name
+   --> tests/suites/isa/x86_64/system/lgdt_lidt.rs:554:4
+    |
+554 | fn test_lidt_limit_0x07FF() {
+    |    ^^^^^^^^^^^^^^^^^^^^^^ help: convert the identifier to snake case: `test_lidt_limit_0x07_ff`
+
+error: comparison is useless due to type limits
+   --> tests/suites/isa/x86_64/system/sldt.rs:285:13
+    |
+285 |     assert!(ldtr <= 0xFFFF);
+    |             ^^^^^^^^^^^^^^
+
+error: comparison is useless due to type limits
+   --> tests/suites/isa/x86_64/system/str.rs:283:13
+    |
+283 |     assert!(tr <= 0xFFFF);
+    |             ^^^^^^^^^^^^
+
+error: could not compile `rax` (test "x86_64") due to 944 previous errors

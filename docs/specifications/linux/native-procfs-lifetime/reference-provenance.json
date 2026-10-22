@@ -1,0 +1,27 @@
+{
+  "files": [
+    {
+      "path": "reference/proc.html",
+      "url": "https://docs.kernel.org/filesystems/proc.html",
+      "title": "The /proc Filesystem",
+      "issuing-organization": "Linux kernel project",
+      "revision": "Unversioned kernel documentation as retrieved",
+      "retrieved-utc": "2026-10-22T18:32:31.268430+00:00",
+      "bytes": 147701,
+      "sha256": "f1c9cfc8d9779e8bb339e9b91761036caf71d3e5a6eb5dda5c1c34e98500b5db"
+    }
+  ],
+  "existing-primary-source": {
+    "path": "docs/specifications/linux/kernel-6.19/fs/proc/base.c",
+    "provenance": "docs/specifications/linux/kernel-6.19.provenance.md",
+    "bytes": 98513,
+    "sha256": "f13f7adf038170dfa9b5f2bd077bda95307499bfb708440e9b9251a849d70732",
+    "contract-functions": [
+      "proc_pid_lookup",
+      "proc_task_lookup",
+      "pid_delete_dentry"
+    ]
+  },
+  "notices": "Imported bytes and embedded notices are unchanged. Existing kernel-source licensing/provenance remains in its owning tree.",
+  "redundant-retrieval": "A second download of the already vendored tagged base.c returned HTTP429. No duplicate source was created or substituted; the existing pinned source and its live contents were inspected."
+}

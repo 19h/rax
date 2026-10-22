@@ -1,0 +1,64 @@
+{
+  "state": "finished",
+  "steps": [
+    {
+      "name": "clippy-all-targets-strict",
+      "log": "procfs-clippy-v1.log",
+      "exit-code": 101,
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "clippy",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--all-targets",
+        "--features",
+        "x86_64-suite",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "bytes": 194102,
+      "sha256": "348037be68c2928255f6852622f7da9d51ceb882d82162c758999a5fa69dc834"
+    },
+    {
+      "name": "clippy-all-targets",
+      "log": "procfs-clippy-v2.log",
+      "exit-code": 0,
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "clippy",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--all-targets",
+        "--features",
+        "x86_64-suite"
+      ],
+      "bytes": 149,
+      "sha256": "1568c4aa49310332d8747782c1f16e15d29436eba2f7c1310e9672c4a20ba550"
+    },
+    {
+      "name": "clippy-library-strict",
+      "log": "procfs-clippy-lib-strict-v1.log",
+      "exit-code": 0,
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "clippy",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "bytes": 203,
+      "sha256": "c98022e89c8b9df594f8958bfadf8b9eba1e90e2794a780300925e06e65f355c"
+    }
+  ],
+  "strict-all-target-boundary": "The optional -D warnings variant fails on warnings in unchanged x86 instruction tests. Normal all-targets and strict production library pass; no source suppression or test assertion changes."
+}

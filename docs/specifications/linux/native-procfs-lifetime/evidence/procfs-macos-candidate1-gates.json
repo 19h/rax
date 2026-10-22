@@ -1,0 +1,130 @@
+{
+  "state": "finished",
+  "host": "macos",
+  "pid": 26538,
+  "steps": [
+    {
+      "name": "focus",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "procfs",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 167.15979229199002,
+      "log": "procfs-macos-candidate1-focus.log",
+      "bytes": 1240,
+      "sha256": "6502666a575ee334ae9e5e2184477af90a07bd65483faa727bd2d44a1ae080f0",
+      "results": [
+        "ok. 8 passed; 0 failed; 0 ignored; 0 measured; 8178 filtered out; finished in 0.03s"
+      ]
+    },
+    {
+      "name": "full",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 536.4099831249914,
+      "log": "procfs-macos-candidate1-full.log",
+      "bytes": 864559,
+      "sha256": "4fbed10f32d3e9b2e5d22ca24b6a89ae571bc82bf70ea207c502423350906428",
+      "results": [
+        "ok. 8184 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 536.14s"
+      ]
+    },
+    {
+      "name": "capi",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "-p",
+        "rax-capi",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 59.894324749999214,
+      "log": "procfs-macos-candidate1-capi.log",
+      "bytes": 14131,
+      "sha256": "9ca42642c4ade5accfedd919c4b10c42487739cd7a6d1e655ff485ab36bd1e93",
+      "results": [
+        "ok. 183 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 13.84s",
+        "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    {
+      "name": "integration",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--test",
+        "user_windows",
+        "--test",
+        "user_windows_memory",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 60.55086337501416,
+      "log": "procfs-macos-candidate1-integration.log",
+      "bytes": 35856,
+      "sha256": "b5fec34cd14626397443bf56957484e1e57b0b89cf7332081c410573436491b5",
+      "results": [
+        "ok. 544 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 57.99s",
+        "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    {
+      "name": "all-targets",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "check",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--all-targets"
+      ],
+      "exit-code": 0,
+      "seconds": 52.28412208304508,
+      "log": "procfs-macos-candidate1-all-targets.log",
+      "bytes": 149,
+      "sha256": "357ef9e759fcc2aaff648f2da8bd98d2436d12df04013706ab2ef11954865579",
+      "results": []
+    }
+  ],
+  "manifest-sha256": "b1c920a113cb4a6e35243e907bfe72751d4e6c0a6eef67afaafa14047d7b57cb",
+  "step": "all-targets",
+  "child": 81667,
+  "exit-code": 0,
+  "source-inputs": 29141,
+  "completed-utc": "2026-10-22T18:28:22.683023+00:00"
+}

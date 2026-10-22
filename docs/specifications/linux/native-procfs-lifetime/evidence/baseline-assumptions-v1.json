@@ -1,0 +1,45 @@
+{
+  "utc": "2026-10-22T17:49:14.414916+00:00",
+  "baseline": "e621a832adb9e9dcbe4173f8e467571f2e6b34c1",
+  "acceptance": [
+    "Reproduce exited guest TID host-proc fallback deterministically with an owned live native thread; preserve the original ENOENT assertions.",
+    "Remember precisely issued guest TIDs after exit/exec without claiming sparse gaps or unrelated foreign paths; reset forked-child ownership and preserve known child PID reuse.",
+    "Keep normal sequential-ID metadata compact; test merging, splitting, extreme boundaries and sparse clone3 identities.",
+    "Compile shared behavior on Windows/macOS/Linux and execute native Linux collision checks; exact red commits, RAX two-URL and paired Assist two-remote publication."
+  ],
+  "assumptions": [
+    {
+      "id": "LP-A1",
+      "assumption": "A missing proc entry for a retired guest thread must not resolve to an unrelated host thread with the same numeric ID.",
+      "basis": "Existing procfs lifetime test, failing Linux CI and resolver fallback trace.",
+      "dependent-result": "Lifetime ownership guard",
+      "stress-test": "Live host thread with same TID, bare directory/status/fd/task aliases",
+      "falsification-probe": "The guest opens the host-backed path after its matching guest thread exits",
+      "status": "retained pending controlled reproduction"
+    },
+    {
+      "id": "LP-A2",
+      "assumption": "Exact assigned-ID history must survive exec, reset in a forked child and yield to an explicitly reused owned child PID.",
+      "basis": "Current PID/TID allocation, clone3 sparse IDs and fork/exec lifecycle.",
+      "dependent-result": "History representation and lifecycle hooks",
+      "stress-test": "Sparse chosen IDs, reuse, fork reset, nonleader exec",
+      "falsification-probe": "Unissued IDs are claimed, old parent IDs remain owned by a new child, or a current child PID is hidden",
+      "status": "retained"
+    }
+  ],
+  "planned-owned": [
+    "src/user/linux/procfs.rs",
+    "src/user/linux/process.rs",
+    "src/user/linux/syscall/thread.rs",
+    "src/user/linux/syscall/child.rs",
+    "src/user/linux/tests/procfs.rs",
+    "new portable procfs lifetime tests and tests/mod.rs registration",
+    "new focused evidence/specification directory"
+  ],
+  "bounded-findings": [
+    {
+      "impact": "medium",
+      "finding": "Existing next_tid overflow/PID-domain behavior and potential cross-process ID collisions need separate review; do not broaden the allocation policy incidentally."
+    }
+  ]
+}

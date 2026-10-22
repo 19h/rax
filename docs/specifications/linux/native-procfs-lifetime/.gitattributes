@@ -1,0 +1,2 @@
+evidence/** -text -diff
+reference/** -text -diff

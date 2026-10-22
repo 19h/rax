@@ -60,6 +60,7 @@ mod posix_timers;
 mod priority;
 #[cfg(unix)]
 mod procfs;
+mod procfs_lifetime;
 #[cfg(unix)]
 mod procmem;
 #[cfg(unix)]

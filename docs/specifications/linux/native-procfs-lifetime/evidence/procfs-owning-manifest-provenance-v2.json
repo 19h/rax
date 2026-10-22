@@ -1,0 +1,8 @@
+{
+  "original-manifest": "procfs-owning-source-hashes-candidate1.json",
+  "original-sha256": "ca2aab09025683885b174c19e231869d70a5f7eea5dab0bb24d99ea2bbc2f221",
+  "corrected-manifest": "procfs-owning-source-hashes-candidate1-v2.json",
+  "reason": "The inherited provenance labels still named the PBI frame. All 3974 source paths, bytes and digests used by the running gates were current; v2 corrects only provenance labels. No source/helper row changes. Original receipt remains immutable.",
+  "source-rows-equal": true,
+  "helpers-equal": true
+}

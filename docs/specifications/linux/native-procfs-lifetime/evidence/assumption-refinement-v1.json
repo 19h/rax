@@ -1,0 +1,14 @@
+{
+  "revision": "LP-A2 implementation refinement",
+  "reason": "Exact identity history only inserts/merges and resets on fork; it does not remove individual IDs. Known live/linked process routes take priority, so range splitting is unnecessary and was not implemented.",
+  "stress-cases": [
+    "contiguous ranges and sparse bridge insertion",
+    "integer boundaries and duplicate insertion",
+    "reset to a forked-child leader",
+    "retired numeric and task aliases",
+    "live ID reuse",
+    "sparse clone3 IDs without claiming gaps",
+    "nonleader exec retaining old thread identities",
+    "known linked process numeric-root precedence"
+  ]
+}

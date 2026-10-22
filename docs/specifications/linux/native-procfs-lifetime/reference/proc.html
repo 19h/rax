@@ -1,0 +1,3097 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>The /proc Filesystem &#8212; The Linux Kernel  documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/sphinx_highlight.js"></script>
+    <link rel="shortcut icon" href="../_static/logo.svg"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="The QNX6 Filesystem" href="qnx6.html" />
+    <link rel="prev" title="Overlay Filesystem" href="overlayfs.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/logo.svg" alt="Logo"/>
+            </a></p>
+<h1 class="logo"><a href="../index.html">The Linux Kernel</a></h1>
+
+
+
+<p class="blurb">7.3.0</p>
+
+
+
+
+
+
+
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+<p>
+<h3 class="kernel-toc-contents">Contents</h3>
+<input type="checkbox" class="kernel-toc-toggle" id = "kernel-toc-toggle" checked>
+<label class="kernel-toc-title" for="kernel-toc-toggle"></label>
+
+<div class="kerneltoc" id="kerneltoc">
+<p class="caption" role="heading"><span class="caption-text">Working with the development community</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../process/development-process.html">Development process</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../process/submitting-patches.html">Submitting patches</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../process/code-of-conduct.html">Code of conduct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../maintainer/index.html">Maintainer handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">All development-process docs</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Internal API manuals</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../core-api/index.html">Core API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">Driver APIs</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../subsystem-apis.html">Subsystems</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../subsystem-apis.html#core-subsystems">Core subsystems</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../subsystem-apis.html#human-interfaces">Human interfaces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../subsystem-apis.html#networking-interfaces">Networking interfaces</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../subsystem-apis.html#storage-interfaces">Storage interfaces</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../block/index.html">Block</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../cdrom/index.html">CD-ROM</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../scsi/index.html">SCSI Subsystem</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../nvme/index.html">NVMe Subsystem</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../subsystem-apis.html#other-subsystems">Other subsystems</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../locking/index.html">Locking</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development tools and processes</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../process/license-rules.html">Licensing rules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">Writing documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev-tools/index.html">Development tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev-tools/testing-overview.html">Testing guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kernel-hacking/index.html">Hacking guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trace/index.html">Tracing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fault-injection/index.html">Fault injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../livepatch/index.html">Livepatching</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rust/index.html">Rust</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">User-oriented documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin-guide/index.html">Administration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kbuild/index.html">Build system</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../admin-guide/reporting-issues.html">Reporting issues</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tools/index.html">Userspace tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userspace-api/index.html">Userspace API</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Firmware-related documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../firmware-guide/index.html">Firmware</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devicetree/index.html">Firmware and Devicetree</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Architecture-specific documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../arch/index.html">CPU architectures</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Other documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html">Unsorted documentation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Translations</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/index.html">Translations</a></li>
+</ul>
+
+</div>
+
+<script type="text/javascript"> <!--
+  var sbar = document.getElementsByClassName("sphinxsidebar")[0];
+  let currents = document.getElementsByClassName("current")
+  if (currents.length) {
+    sbar.scrollTop = currents[currents.length - 1].offsetTop;
+  }
+  --> </script>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/filesystems/proc.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  
+
+
+
+<section id="the-proc-filesystem">
+<h1>The /proc Filesystem<a class="headerlink" href="#the-proc-filesystem" title="Permalink to this heading">¶</a></h1>
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p>/proc/sys</p></td>
+<td><p>Terrehon Bowden &lt;<a class="reference external" href="mailto:terrehon&#37;&#52;&#48;pacbell&#46;net">terrehon<span>&#64;</span>pacbell<span>&#46;</span>net</a>&gt;,
+Bodo Bauer &lt;<a class="reference external" href="mailto:bb&#37;&#52;&#48;ricochet&#46;net">bb<span>&#64;</span>ricochet<span>&#46;</span>net</a>&gt;</p></td>
+<td><p>October 7 1999</p></td>
+</tr>
+<tr class="row-even"><td><p>2.4.x update</p></td>
+<td><p>Jorge Nerin &lt;<a class="reference external" href="mailto:comandante&#37;&#52;&#48;zaralinux&#46;com">comandante<span>&#64;</span>zaralinux<span>&#46;</span>com</a>&gt;</p></td>
+<td><p>November 14 2000</p></td>
+</tr>
+<tr class="row-odd"><td><p>move /proc/sys</p></td>
+<td><p>Shen Feng &lt;<a class="reference external" href="mailto:shen&#37;&#52;&#48;cn&#46;fujitsu&#46;com">shen<span>&#64;</span>cn<span>&#46;</span>fujitsu<span>&#46;</span>com</a>&gt;</p></td>
+<td><p>April 1 2009</p></td>
+</tr>
+<tr class="row-even"><td><p>fixes/update part 1.1</p></td>
+<td><p>Stefani Seibold &lt;<a class="reference external" href="mailto:stefani&#37;&#52;&#48;seibold&#46;net">stefani<span>&#64;</span>seibold<span>&#46;</span>net</a>&gt;</p></td>
+<td><p>June 9 2009</p></td>
+</tr>
+</tbody>
+</table>
+<section id="preface">
+<h2>Preface<a class="headerlink" href="#preface" title="Permalink to this heading">¶</a></h2>
+<section id="introduction-credits">
+<h3>0.1 Introduction/Credits<a class="headerlink" href="#introduction-credits" title="Permalink to this heading">¶</a></h3>
+<p>We’d like  to  thank Alan Cox, Rik van Riel, and Alexey Kuznetsov and a lot of
+other people for help compiling this documentation. We’d also like to extend a
+special thank  you to Andi Kleen for documentation, which we relied on heavily
+to create  this  document,  as well as the additional information he provided.
+Thanks to  everybody  else  who contributed source or docs to the Linux kernel
+and helped create a great piece of software... :)</p>
+<p>The   latest   version    of   this   document   is    available   online   at
+<a class="reference external" href="https://www.kernel.org/doc/html/latest/filesystems/proc.html">https://www.kernel.org/doc/html/latest/filesystems/proc.html</a></p>
+</section>
+<section id="legal-stuff">
+<h3>0.2 Legal Stuff<a class="headerlink" href="#legal-stuff" title="Permalink to this heading">¶</a></h3>
+<p>We don’t  guarantee  the  correctness  of this document, and if you come to us
+complaining about  how  you  screwed  up  your  system  because  of  incorrect
+documentation, we won’t feel responsible...</p>
+</section>
+</section>
+<section id="chapter-1-collecting-system-information">
+<h2>Chapter 1: Collecting System Information<a class="headerlink" href="#chapter-1-collecting-system-information" title="Permalink to this heading">¶</a></h2>
+<section id="in-this-chapter">
+<h3>In This Chapter<a class="headerlink" href="#in-this-chapter" title="Permalink to this heading">¶</a></h3>
+<ul class="simple">
+<li><p>Investigating  the  properties  of  the  pseudo  file  system  /proc and its
+ability to provide information on the running Linux system</p></li>
+<li><p>Examining /proc’s structure</p></li>
+<li><p>Uncovering  various  information  about the kernel and the processes running
+on the system</p></li>
+</ul>
+<hr class="docutils" />
+<p>The proc  file  system acts as an interface to internal data structures in the
+kernel. It  can  be  used to obtain information about the system and to change
+certain kernel parameters at runtime (sysctl).</p>
+<p>First, we’ll  take  a  look  at the read-only parts of /proc. In Chapter 2, we
+show you how you can use /proc/sys to change settings.</p>
+</section>
+<section id="process-specific-subdirectories">
+<h3>1.1 Process-Specific Subdirectories<a class="headerlink" href="#process-specific-subdirectories" title="Permalink to this heading">¶</a></h3>
+<p>The directory  /proc  contains  (among other things) one subdirectory for each
+process running on the system, which is named after the process ID (PID).</p>
+<p>The link  ‘self’  points to  the process reading the file system. Each process
+subdirectory has the entries listed in Table 1-1.</p>
+<p>A process can read its own information from /proc/PID/* with no extra
+permissions. When reading /proc/PID/* information for other processes, reading
+process is required to have either CAP_SYS_PTRACE capability with
+PTRACE_MODE_READ access permissions, or, alternatively, CAP_PERFMON
+capability. This applies to all read-only information like <cite>maps</cite>, <cite>environ</cite>,
+<cite>pagemap</cite>, etc. The only exception is <cite>mem</cite> file due to its read-write nature,
+which requires CAP_SYS_PTRACE capabilities with more elevated
+PTRACE_MODE_ATTACH permissions; CAP_PERFMON capability does not grant access
+to /proc/PID/mem for other processes.</p>
+<p>Note that an open file descriptor to /proc/&lt;pid&gt; or to any of its
+contained files or subdirectories does not prevent &lt;pid&gt; from being reused
+for some other process in the event that &lt;pid&gt; exits. Operations on
+open /proc/&lt;pid&gt; file descriptors corresponding to dead processes
+never act on any new process that the kernel may, through chance, have
+also assigned the process ID &lt;pid&gt;. Instead, operations on these FDs
+usually fail with ESRCH.</p>
+<table class="docutils align-default" id="id9">
+<caption><span class="caption-text">Table 1-1: Process specific entries in /proc</span><a class="headerlink" href="#id9" title="Permalink to this table">¶</a></caption>
+<thead>
+<tr class="row-odd"><th class="head"><p>File</p></th>
+<th class="head"><p>Content</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>clear_refs</p></td>
+<td><p>Clears page referenced bits shown in smaps output</p></td>
+</tr>
+<tr class="row-odd"><td><p>cmdline</p></td>
+<td><p>Command line arguments</p></td>
+</tr>
+<tr class="row-even"><td><p>cpu</p></td>
+<td><p>Current and last cpu in which it was executed   (2.4)(smp)</p></td>
+</tr>
+<tr class="row-odd"><td><p>cwd</p></td>
+<td><p>Link to the current working directory</p></td>
+</tr>
+<tr class="row-even"><td><p>environ</p></td>
+<td><p>Values of environment variables</p></td>
+</tr>
+<tr class="row-odd"><td><p>exe</p></td>
+<td><p>Link to the executable of this process</p></td>
+</tr>
+<tr class="row-even"><td><p>fd</p></td>
+<td><p>Directory, which contains all file descriptors</p></td>
+</tr>
+<tr class="row-odd"><td><p>maps</p></td>
+<td><p>Memory maps to executables and library files    (2.4)</p></td>
+</tr>
+<tr class="row-even"><td><p>mem</p></td>
+<td><p>Memory held by this process</p></td>
+</tr>
+<tr class="row-odd"><td><p>root</p></td>
+<td><p>Link to the root directory of this process</p></td>
+</tr>
+<tr class="row-even"><td><p>stat</p></td>
+<td><p>Process status</p></td>
+</tr>
+<tr class="row-odd"><td><p>statm</p></td>
+<td><p>Process memory status information</p></td>
+</tr>
+<tr class="row-even"><td><p>status</p></td>
+<td><p>Process status in human readable form</p></td>
+</tr>
+<tr class="row-odd"><td><p>wchan</p></td>
+<td><p>Present with CONFIG_KALLSYMS=y: it shows the kernel function
+symbol the task is blocked in - or “0” if not blocked.</p></td>
+</tr>
+<tr class="row-even"><td><p>pagemap</p></td>
+<td><p>Page table</p></td>
+</tr>
+<tr class="row-odd"><td><p>stack</p></td>
+<td><p>Report full stack trace, enable via CONFIG_STACKTRACE</p></td>
+</tr>
+<tr class="row-even"><td><p>smaps</p></td>
+<td><p>An extension based on maps, showing the memory consumption of
+each mapping and flags associated with it</p></td>
+</tr>
+<tr class="row-odd"><td><p>smaps_rollup</p></td>
+<td><p>Accumulated smaps stats for all mappings of the process.  This
+can be derived from smaps, but is faster and more convenient</p></td>
+</tr>
+<tr class="row-even"><td><p>numa_maps</p></td>
+<td><p>An extension based on maps, showing the memory locality and
+binding policy as well as mem usage (in pages) of each mapping.</p></td>
+</tr>
+</tbody>
+</table>
+<p>For example, to get the status information of a process, all you have to do is
+read the file /proc/PID/status:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&gt;cat /proc/self/status
+Name:   cat
+State:  R (running)
+Tgid:   5452
+Pid:    5452
+PPid:   743
+TracerPid:      0                                             (2.4)
+Uid:    501     501     501     501
+Gid:    100     100     100     100
+FDSize: 256
+Groups: 100 14 16
+Kthread:    0
+VmPeak:     5004 kB
+VmSize:     5004 kB
+VmLck:         0 kB
+VmHWM:       476 kB
+VmRSS:       476 kB
+RssAnon:             352 kB
+RssFile:             120 kB
+RssShmem:              4 kB
+VmData:      156 kB
+VmStk:        88 kB
+VmExe:        68 kB
+VmLib:      1412 kB
+VmPTE:        20 kb
+VmSwap:        0 kB
+HugetlbPages:          0 kB
+CoreDumping:    0
+THP_enabled:    1
+Threads:        1
+SigQ:   0/28578
+SigPnd: 0000000000000000
+ShdPnd: 0000000000000000
+SigBlk: 0000000000000000
+SigIgn: 0000000000000000
+SigCgt: 0000000000000000
+CapInh: 00000000fffffeff
+CapPrm: 0000000000000000
+CapEff: 0000000000000000
+CapBnd: ffffffffffffffff
+CapAmb: 0000000000000000
+NoNewPrivs:     0
+Seccomp:        0
+Speculation_Store_Bypass:       thread vulnerable
+SpeculationIndirectBranch:      conditional enabled
+voluntary_ctxt_switches:        0
+nonvoluntary_ctxt_switches:     1
+</pre></div>
+</div>
+<p>This shows you nearly the same information you would get if you viewed it with
+the ps  command.  In  fact,  ps  uses  the  proc  file  system  to  obtain its
+information.  But you get a more detailed  view of the  process by reading the
+file /proc/PID/status. It fields are described in table 1-2.</p>
+<p>The  statm  file  contains  more  detailed  information about the process
+memory usage. Its seven fields are explained in Table 1-3.  The stat file
+contains detailed information about the process itself.  Its fields are
+explained in Table 1-4.</p>
+<p>(for SMP CONFIG users)</p>
+<p>For making accounting scalable, RSS related information are handled in an
+asynchronous manner and the value may not be very precise. To see a precise
+snapshot of a moment, you can see /proc/&lt;pid&gt;/smaps file and scan page table.
+It’s slow but very precise.</p>
+<table class="docutils align-default" id="id10">
+<caption><span class="caption-text">Table 1-2: Contents of the status fields (as of 4.19)</span><a class="headerlink" href="#id10" title="Permalink to this table">¶</a></caption>
+<thead>
+<tr class="row-odd"><th class="head"><p>Field</p></th>
+<th class="head"><p>Content</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Name</p></td>
+<td><p>filename of the executable</p></td>
+</tr>
+<tr class="row-odd"><td><p>Umask</p></td>
+<td><p>file mode creation mask</p></td>
+</tr>
+<tr class="row-even"><td><p>State</p></td>
+<td><p>state (R is running, S is sleeping, D is sleeping
+in an uninterruptible wait, Z is zombie,
+T is traced or stopped)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Tgid</p></td>
+<td><p>thread group ID</p></td>
+</tr>
+<tr class="row-even"><td><p>Ngid</p></td>
+<td><p>NUMA group ID (0 if none)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Pid</p></td>
+<td><p>process id</p></td>
+</tr>
+<tr class="row-even"><td><p>PPid</p></td>
+<td><p>process id of the parent process</p></td>
+</tr>
+<tr class="row-odd"><td><p>TracerPid</p></td>
+<td><p>PID of process tracing this process (0 if not, or
+the tracer is outside of the current pid namespace)</p></td>
+</tr>
+<tr class="row-even"><td><p>Uid</p></td>
+<td><p>Real, effective, saved set, and  file system UIDs</p></td>
+</tr>
+<tr class="row-odd"><td><p>Gid</p></td>
+<td><p>Real, effective, saved set, and  file system GIDs</p></td>
+</tr>
+<tr class="row-even"><td><p>FDSize</p></td>
+<td><p>number of file descriptor slots currently allocated</p></td>
+</tr>
+<tr class="row-odd"><td><p>Groups</p></td>
+<td><p>supplementary group list</p></td>
+</tr>
+<tr class="row-even"><td><p>NStgid</p></td>
+<td><p>descendant namespace thread group ID hierarchy</p></td>
+</tr>
+<tr class="row-odd"><td><p>NSpid</p></td>
+<td><p>descendant namespace process ID hierarchy</p></td>
+</tr>
+<tr class="row-even"><td><p>NSpgid</p></td>
+<td><p>descendant namespace process group ID hierarchy</p></td>
+</tr>
+<tr class="row-odd"><td><p>NSsid</p></td>
+<td><p>descendant namespace session ID hierarchy</p></td>
+</tr>
+<tr class="row-even"><td><p>Kthread</p></td>
+<td><p>kernel thread flag, 1 is yes, 0 is no</p></td>
+</tr>
+<tr class="row-odd"><td><p>VmPeak</p></td>
+<td><p>peak virtual memory size</p></td>
+</tr>
+<tr class="row-even"><td><p>VmSize</p></td>
+<td><p>total program size</p></td>
+</tr>
+<tr class="row-odd"><td><p>VmLck</p></td>
+<td><p>locked memory size</p></td>
+</tr>
+<tr class="row-even"><td><p>VmPin</p></td>
+<td><p>pinned memory size</p></td>
+</tr>
+<tr class="row-odd"><td><p>VmHWM</p></td>
+<td><p>peak resident set size (“high water mark”)</p></td>
+</tr>
+<tr class="row-even"><td><p>VmRSS</p></td>
+<td><p>size of memory portions. It contains the three
+following parts
+(VmRSS = RssAnon + RssFile + RssShmem)</p></td>
+</tr>
+<tr class="row-odd"><td><p>RssAnon</p></td>
+<td><p>size of resident anonymous memory</p></td>
+</tr>
+<tr class="row-even"><td><p>RssFile</p></td>
+<td><p>size of resident file mappings</p></td>
+</tr>
+<tr class="row-odd"><td><p>RssShmem</p></td>
+<td><p>size of resident shmem memory (includes SysV shm,
+mapping of tmpfs and shared anonymous mappings)</p></td>
+</tr>
+<tr class="row-even"><td><p>VmData</p></td>
+<td><p>size of private data segments</p></td>
+</tr>
+<tr class="row-odd"><td><p>VmStk</p></td>
+<td><p>size of stack segments</p></td>
+</tr>
+<tr class="row-even"><td><p>VmExe</p></td>
+<td><p>size of text segment</p></td>
+</tr>
+<tr class="row-odd"><td><p>VmLib</p></td>
+<td><p>size of shared library code</p></td>
+</tr>
+<tr class="row-even"><td><p>VmPTE</p></td>
+<td><p>size of page table entries</p></td>
+</tr>
+<tr class="row-odd"><td><p>VmSwap</p></td>
+<td><p>amount of swap used by anonymous private data
+(shmem swap usage is not included)</p></td>
+</tr>
+<tr class="row-even"><td><p>HugetlbPages</p></td>
+<td><p>size of hugetlb memory portions</p></td>
+</tr>
+<tr class="row-odd"><td><p>CoreDumping</p></td>
+<td><p>process’s memory is currently being dumped
+(killing the process may lead to a corrupted core)</p></td>
+</tr>
+<tr class="row-even"><td><p>THP_enabled</p></td>
+<td><p>process is allowed to use THP (returns 0 when
+PR_SET_THP_DISABLE is set on the process to disable
+THP completely, not just partially)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Threads</p></td>
+<td><p>number of threads</p></td>
+</tr>
+<tr class="row-even"><td><p>SigQ</p></td>
+<td><p>number of signals queued/max. number for queue</p></td>
+</tr>
+<tr class="row-odd"><td><p>SigPnd</p></td>
+<td><p>bitmap of pending signals for the thread</p></td>
+</tr>
+<tr class="row-even"><td><p>ShdPnd</p></td>
+<td><p>bitmap of shared pending signals for the process</p></td>
+</tr>
+<tr class="row-odd"><td><p>SigBlk</p></td>
+<td><p>bitmap of blocked signals</p></td>
+</tr>
+<tr class="row-even"><td><p>SigIgn</p></td>
+<td><p>bitmap of ignored signals</p></td>
+</tr>
+<tr class="row-odd"><td><p>SigCgt</p></td>
+<td><p>bitmap of caught signals</p></td>
+</tr>
+<tr class="row-even"><td><p>CapInh</p></td>
+<td><p>bitmap of inheritable capabilities</p></td>
+</tr>
+<tr class="row-odd"><td><p>CapPrm</p></td>
+<td><p>bitmap of permitted capabilities</p></td>
+</tr>
+<tr class="row-even"><td><p>CapEff</p></td>
+<td><p>bitmap of effective capabilities</p></td>
+</tr>
+<tr class="row-odd"><td><p>CapBnd</p></td>
+<td><p>bitmap of capabilities bounding set</p></td>
+</tr>
+<tr class="row-even"><td><p>CapAmb</p></td>
+<td><p>bitmap of ambient capabilities</p></td>
+</tr>
+<tr class="row-odd"><td><p>NoNewPrivs</p></td>
+<td><p>no_new_privs, like prctl(PR_GET_NO_NEW_PRIV, ...)</p></td>
+</tr>
+<tr class="row-even"><td><p>Seccomp</p></td>
+<td><p>seccomp mode, like prctl(PR_GET_SECCOMP, ...)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Speculation_Store_Bypass</p></td>
+<td><p>speculative store bypass mitigation status</p></td>
+</tr>
+<tr class="row-even"><td><p>SpeculationIndirectBranch</p></td>
+<td><p>indirect branch speculation mode</p></td>
+</tr>
+<tr class="row-odd"><td><p>Cpus_allowed</p></td>
+<td><p>mask of CPUs on which this process may run</p></td>
+</tr>
+<tr class="row-even"><td><p>Cpus_allowed_list</p></td>
+<td><p>Same as previous, but in “list format”</p></td>
+</tr>
+<tr class="row-odd"><td><p>Mems_allowed</p></td>
+<td><p>mask of memory nodes allowed to this process</p></td>
+</tr>
+<tr class="row-even"><td><p>Mems_allowed_list</p></td>
+<td><p>Same as previous, but in “list format”</p></td>
+</tr>
+<tr class="row-odd"><td><p>voluntary_ctxt_switches</p></td>
+<td><p>number of voluntary context switches</p></td>
+</tr>
+<tr class="row-even"><td><p>nonvoluntary_ctxt_switches</p></td>
+<td><p>number of non voluntary context switches</p></td>
+</tr>
+</tbody>
+</table>
+<table class="docutils align-default" id="id11">
+<caption><span class="caption-text">Table 1-3: Contents of the statm fields (as of 2.6.8-rc3)</span><a class="headerlink" href="#id11" title="Permalink to this table">¶</a></caption>
+<thead>
+<tr class="row-odd"><th class="head"><p>Field</p></th>
+<th class="head"><p>Content</p></th>
+<th class="head"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>size</p></td>
+<td><p>total program size (pages)</p></td>
+<td><p>(same as VmSize in status)</p></td>
+</tr>
+<tr class="row-odd"><td><p>resident</p></td>
+<td><p>size of memory portions (pages)</p></td>
+<td><p>(same as VmRSS in status)</p></td>
+</tr>
+<tr class="row-even"><td><p>shared</p></td>
+<td><p>number of pages that are shared</p></td>
+<td><p>(i.e. backed by a file, same
+as RssFile+RssShmem in status)</p></td>
+</tr>
+<tr class="row-odd"><td><p>trs</p></td>
+<td><p>number of pages that are ‘code’</p></td>
+<td><p>(not including libs; broken,
+includes data segment)</p></td>
+</tr>
+<tr class="row-even"><td><p>lrs</p></td>
+<td><p>number of pages of library</p></td>
+<td><p>(always 0 on 2.6)</p></td>
+</tr>
+<tr class="row-odd"><td><p>drs</p></td>
+<td><p>number of pages of data/stack</p></td>
+<td><p>(including libs; broken,
+includes library text)</p></td>
+</tr>
+<tr class="row-even"><td><p>dt</p></td>
+<td><p>number of dirty pages</p></td>
+<td><p>(always 0 on 2.6)</p></td>
+</tr>
+</tbody>
+</table>
+<table class="docutils align-default" id="id12">
+<caption><span class="caption-text">Table 1-4: Contents of the stat fields (as of 2.6.30-rc7)</span><a class="headerlink" href="#id12" title="Permalink to this table">¶</a></caption>
+<thead>
+<tr class="row-odd"><th class="head"><p>Field</p></th>
+<th class="head"><p>Content</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>pid</p></td>
+<td><p>process id</p></td>
+</tr>
+<tr class="row-odd"><td><p>tcomm</p></td>
+<td><p>filename of the executable</p></td>
+</tr>
+<tr class="row-even"><td><p>state</p></td>
+<td><p>state (R is running, S is sleeping, D is sleeping in an
+uninterruptible wait, Z is zombie, T is traced or stopped)</p></td>
+</tr>
+<tr class="row-odd"><td><p>ppid</p></td>
+<td><p>process id of the parent process</p></td>
+</tr>
+<tr class="row-even"><td><p>pgrp</p></td>
+<td><p>pgrp of the process</p></td>
+</tr>
+<tr class="row-odd"><td><p>sid</p></td>
+<td><p>session id</p></td>
+</tr>
+<tr class="row-even"><td><p>tty_nr</p></td>
+<td><p>tty the process uses</p></td>
+</tr>
+<tr class="row-odd"><td><p>tty_pgrp</p></td>
+<td><p>pgrp of the tty</p></td>
+</tr>
+<tr class="row-even"><td><p>flags</p></td>
+<td><p>task flags</p></td>
+</tr>
+<tr class="row-odd"><td><p>min_flt</p></td>
+<td><p>number of minor faults</p></td>
+</tr>
+<tr class="row-even"><td><p>cmin_flt</p></td>
+<td><p>number of minor faults with child’s</p></td>
+</tr>
+<tr class="row-odd"><td><p>maj_flt</p></td>
+<td><p>number of major faults</p></td>
+</tr>
+<tr class="row-even"><td><p>cmaj_flt</p></td>
+<td><p>number of major faults with child’s</p></td>
+</tr>
+<tr class="row-odd"><td><p>utime</p></td>
+<td><p>user mode jiffies</p></td>
+</tr>
+<tr class="row-even"><td><p>stime</p></td>
+<td><p>kernel mode jiffies</p></td>
+</tr>
+<tr class="row-odd"><td><p>cutime</p></td>
+<td><p>user mode jiffies with child’s</p></td>
+</tr>
+<tr class="row-even"><td><p>cstime</p></td>
+<td><p>kernel mode jiffies with child’s</p></td>
+</tr>
+<tr class="row-odd"><td><p>priority</p></td>
+<td><p>priority level</p></td>
+</tr>
+<tr class="row-even"><td><p>nice</p></td>
+<td><p>nice level</p></td>
+</tr>
+<tr class="row-odd"><td><p>num_threads</p></td>
+<td><p>number of threads</p></td>
+</tr>
+<tr class="row-even"><td><p>it_real_value</p></td>
+<td><p>(obsolete, always 0)</p></td>
+</tr>
+<tr class="row-odd"><td><p>start_time</p></td>
+<td><p>time the process started after system boot</p></td>
+</tr>
+<tr class="row-even"><td><p>vsize</p></td>
+<td><p>virtual memory size</p></td>
+</tr>
+<tr class="row-odd"><td><p>rss</p></td>
+<td><p>resident set memory size</p></td>
+</tr>
+<tr class="row-even"><td><p>rsslim</p></td>
+<td><p>current limit in bytes on the rss</p></td>
+</tr>
+<tr class="row-odd"><td><p>start_code</p></td>
+<td><p>address above which program text can run</p></td>
+</tr>
+<tr class="row-even"><td><p>end_code</p></td>
+<td><p>address below which program text can run</p></td>
+</tr>
+<tr class="row-odd"><td><p>start_stack</p></td>
+<td><p>address of the start of the main process stack</p></td>
+</tr>
+<tr class="row-even"><td><p>esp</p></td>
+<td><p>current value of ESP</p></td>
+</tr>
+<tr class="row-odd"><td><p>eip</p></td>
+<td><p>current value of EIP</p></td>
+</tr>
+<tr class="row-even"><td><p>pending</p></td>
+<td><p>bitmap of pending signals</p></td>
+</tr>
+<tr class="row-odd"><td><p>blocked</p></td>
+<td><p>bitmap of blocked signals</p></td>
+</tr>
+<tr class="row-even"><td><p>sigign</p></td>
+<td><p>bitmap of ignored signals</p></td>
+</tr>
+<tr class="row-odd"><td><p>sigcatch</p></td>
+<td><p>bitmap of caught signals</p></td>
+</tr>
+<tr class="row-even"><td><p>0</p></td>
+<td><p>(place holder, used to be the wchan address,
+use /proc/PID/wchan instead)</p></td>
+</tr>
+<tr class="row-odd"><td><p>0</p></td>
+<td><p>(place holder)</p></td>
+</tr>
+<tr class="row-even"><td><p>0</p></td>
+<td><p>(place holder)</p></td>
+</tr>
+<tr class="row-odd"><td><p>exit_signal</p></td>
+<td><p>signal to send to parent thread on exit</p></td>
+</tr>
+<tr class="row-even"><td><p>task_cpu</p></td>
+<td><p>which CPU the task is scheduled on</p></td>
+</tr>
+<tr class="row-odd"><td><p>rt_priority</p></td>
+<td><p>realtime priority</p></td>
+</tr>
+<tr class="row-even"><td><p>policy</p></td>
+<td><p>scheduling policy (man sched_setscheduler)</p></td>
+</tr>
+<tr class="row-odd"><td><p>blkio_ticks</p></td>
+<td><p>time spent waiting for block IO</p></td>
+</tr>
+<tr class="row-even"><td><p>gtime</p></td>
+<td><p>guest time of the task in jiffies</p></td>
+</tr>
+<tr class="row-odd"><td><p>cgtime</p></td>
+<td><p>guest time of the task children in jiffies</p></td>
+</tr>
+<tr class="row-even"><td><p>start_data</p></td>
+<td><p>address above which program data+bss is placed</p></td>
+</tr>
+<tr class="row-odd"><td><p>end_data</p></td>
+<td><p>address below which program data+bss is placed</p></td>
+</tr>
+<tr class="row-even"><td><p>start_brk</p></td>
+<td><p>address above which program heap can be expanded with <code class="xref c c-func broken_xref docutils literal notranslate"><span class="pre">brk()</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>arg_start</p></td>
+<td><p>address above which program command line is placed</p></td>
+</tr>
+<tr class="row-even"><td><p>arg_end</p></td>
+<td><p>address below which program command line is placed</p></td>
+</tr>
+<tr class="row-odd"><td><p>env_start</p></td>
+<td><p>address above which program environment is placed</p></td>
+</tr>
+<tr class="row-even"><td><p>env_end</p></td>
+<td><p>address below which program environment is placed</p></td>
+</tr>
+<tr class="row-odd"><td><p>exit_code</p></td>
+<td><p>the thread’s exit_code in the form reported by the waitpid
+system call</p></td>
+</tr>
+</tbody>
+</table>
+<p>The /proc/PID/maps file contains the currently mapped memory regions and
+their access permissions.</p>
+<p>The format is:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>address           perms offset  dev   inode      pathname
+
+08048000-08049000 r-xp 00000000 03:00 8312       /opt/test
+08049000-0804a000 rw-p 00001000 03:00 8312       /opt/test
+0804a000-0806b000 rw-p 00000000 00:00 0          [heap]
+a7cb1000-a7cb2000 ---p 00000000 00:00 0
+a7cb2000-a7eb2000 rw-p 00000000 00:00 0
+a7eb2000-a7eb3000 ---p 00000000 00:00 0
+a7eb3000-a7ed5000 rw-p 00000000 00:00 0
+a7ed5000-a8008000 r-xp 00000000 03:00 4222       /lib/libc.so.6
+a8008000-a800a000 r--p 00133000 03:00 4222       /lib/libc.so.6
+a800a000-a800b000 rw-p 00135000 03:00 4222       /lib/libc.so.6
+a800b000-a800e000 rw-p 00000000 00:00 0
+a800e000-a8022000 r-xp 00000000 03:00 14462      /lib/libpthread.so.0
+a8022000-a8023000 r--p 00013000 03:00 14462      /lib/libpthread.so.0
+a8023000-a8024000 rw-p 00014000 03:00 14462      /lib/libpthread.so.0
+a8024000-a8027000 rw-p 00000000 00:00 0
+a8027000-a8043000 r-xp 00000000 03:00 8317       /lib/ld-linux.so.2
+a8043000-a8044000 r--p 0001b000 03:00 8317       /lib/ld-linux.so.2
+a8044000-a8045000 rw-p 0001c000 03:00 8317       /lib/ld-linux.so.2
+aff35000-aff4a000 rw-p 00000000 00:00 0          [stack]
+ffffe000-fffff000 r-xp 00000000 00:00 0          [vdso]
+</pre></div>
+</div>
+<p>where “address” is the address space in the process that it occupies, “perms”
+is a set of permissions:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>r = read
+w = write
+x = execute
+s = shared
+p = private (copy on write)
+</pre></div>
+</div>
+<p>“offset” is the offset into the mapping, “dev” is the device (major:minor), and
+“inode” is the inode  on that device.  0 indicates that  no inode is associated
+with the memory region, as the case would be with BSS (uninitialized data).
+The “pathname” shows the name associated file for this mapping.  If the mapping
+is not associated with a file:</p>
+<blockquote>
+<div><table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p>[heap]</p></td>
+<td><p>the heap of the program</p></td>
+</tr>
+<tr class="row-even"><td><p>[stack]</p></td>
+<td><p>the stack of the main process</p></td>
+</tr>
+<tr class="row-odd"><td><p>[vdso]</p></td>
+<td><p>the “virtual dynamic shared object”,
+the kernel system call handler</p></td>
+</tr>
+<tr class="row-even"><td><p>[anon:&lt;name&gt;]</p></td>
+<td><p>a private anonymous mapping that has been
+named by userspace</p></td>
+</tr>
+<tr class="row-odd"><td><p>[anon_shmem:&lt;name&gt;]</p></td>
+<td><p>an anonymous shared memory mapping that has
+been named by userspace</p></td>
+</tr>
+</tbody>
+</table>
+<p>or if empty, the mapping is anonymous.</p>
+</div></blockquote>
+<p>Starting with 6.11 kernel, /proc/PID/maps provides an alternative
+ioctl()-based API that gives ability to flexibly and efficiently query and
+filter individual VMAs. This interface is binary and is meant for more
+efficient and easy programmatic use. <cite><code class="xref c c-struct broken_xref docutils literal notranslate"><span class="pre">struct</span> <span class="pre">procmap_query</span></code></cite>, defined in
+linux/fs.h UAPI header, serves as an input/output argument to the
+<cite>PROCMAP_QUERY</cite> ioctl() command. See comments in linus/fs.h UAPI header for
+details on query semantics, supported flags, data returned, and general API
+usage information.</p>
+<p>The /proc/PID/smaps is an extension based on maps, showing the memory
+consumption for each of the process’s mappings. For each mapping (aka Virtual
+Memory Area, or VMA) there is a series of lines such as the following:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>08048000-080bc000 r-xp 00000000 03:02 13130      /bin/bash
+
+Size:               1084 kB
+KernelPageSize:        4 kB
+MMUPageSize:           4 kB
+Rss:                 892 kB
+Pss:                 374 kB
+Pss_Dirty:             0 kB
+Shared_Clean:        892 kB
+Shared_Dirty:          0 kB
+Private_Clean:         0 kB
+Private_Dirty:         0 kB
+Referenced:          892 kB
+Anonymous:             0 kB
+KSM:                   0 kB
+LazyFree:              0 kB
+AnonHugePages:         0 kB
+FilePmdMapped:         0 kB
+ShmemPmdMapped:        0 kB
+Shared_Hugetlb:        0 kB
+Private_Hugetlb:       0 kB
+Swap:                  0 kB
+SwapPss:               0 kB
+Locked:                0 kB
+THPeligible:           0
+VmFlags: rd ex mr mw me dw
+</pre></div>
+</div>
+<p>The first of these lines shows the same information as is displayed for
+the mapping in /proc/PID/maps.  Following lines show the size of the
+mapping (size); the smallest possible page size allocated when backing a
+VMA (KernelPageSize), which is the granularity in which VMA modifications
+can be performed; the smallest possible page size that could be used by the
+MMU (MMUPageSize) when backing a VMA; the amount of the mapping that is
+currently resident in RAM (RSS); the process’s proportional share of this
+mapping (PSS); and the number of clean and dirty shared and private pages
+in the mapping.</p>
+<p>“KernelPageSize” always corresponds to “MMUPageSize”, except when a larger
+kernel page size is emulated on a system with a smaller page size used by the
+MMU, which is the case for some PPC64 setups with hugetlb.  Furthermore,
+“KernelPageSize” and “MMUPageSize” always correspond to the smallest
+possible granularity (fallback) that can be encountered in a VMA throughout
+its lifetime.  These values are not affected by Transparent Huge Pages
+being in effect, or any usage of larger MMU page sizes (either through
+architectural huge-page mappings or other explicit/implicit coalescing of
+virtual ranges performed by the MMU).  “AnonHugePages”, “ShmemPmdMapped” and
+“FilePmdMapped” provide insight into the usage of PMD-level architectural
+huge-page mappings.</p>
+<p>The “proportional set size” (PSS) of a process is the count of pages it has
+in memory, where each page is divided by the number of processes sharing it.
+So if a process has 1000 pages all to itself, and 1000 shared with one other
+process, its PSS will be 1500.  “Pss_Dirty” is the portion of PSS which
+consists of dirty pages.  (“Pss_Clean” is not included, but it can be
+calculated by subtracting “Pss_Dirty” from “Pss”.)</p>
+<p>Traditionally, a page is accounted as “private” if it is mapped exactly once,
+and a page is accounted as “shared” when mapped multiple times, even when
+mapped in the same process multiple times. Note that this accounting is
+independent of MAP_SHARED.</p>
+<p>In some kernel configurations, the semantics of pages part of a larger
+allocation (e.g., THP) can differ: a page is accounted as “private” if all
+pages part of the corresponding large allocation are <em>certainly</em> mapped in the
+same process, even if the page is mapped multiple times in that process. A
+page is accounted as “shared” if any page of the larger allocation
+is <em>maybe</em> mapped in a different process. In some cases, a large allocation
+might be treated as “maybe mapped by multiple processes” even though this
+is no longer the case.</p>
+<p>Some kernel configurations do not track the precise number of times a page part
+of a larger allocation is mapped. In this case, when calculating the PSS, the
+average number of mappings per page in this larger allocation might be used
+as an approximation for the number of mappings of a page. The PSS calculation
+will be imprecise in this case.</p>
+<p>“Referenced” indicates the amount of memory currently marked as referenced or
+accessed.</p>
+<p>“Anonymous” shows the amount of memory that does not belong to any file.  Even
+a mapping associated with a file may contain anonymous pages: when MAP_PRIVATE
+and a page is modified, the file page is replaced by a private anonymous copy.</p>
+<p>“KSM” reports how many of the pages are KSM pages. Note that KSM-placed zeropages
+are not included, only actual KSM pages.</p>
+<p>“LazyFree” shows the amount of memory which is marked by madvise(MADV_FREE).
+The memory isn’t freed immediately with <code class="xref c c-func broken_xref docutils literal notranslate"><span class="pre">madvise()</span></code>. It’s freed in memory
+pressure if the memory is clean. Please note that the printed value might
+be lower than the real value due to optimizations used in the current
+implementation. If this is not desirable please file a bug report.</p>
+<p>“AnonHugePages”, “ShmemPmdMapped” and “FilePmdMapped” show the amount of
+memory backed by Transparent Huge Pages that are currently mapped by
+architectural huge-page mappings at the PMD level. “AnonHugePages”
+corresponds to memory that does not belong to a file, “ShmemPmdMapped” to
+shared memory (shmem/tmpfs) and “FilePmdMapped” to file-backed memory
+(excluding shmem/tmpfs).</p>
+<p>There are no dedicated entries for Transparent Huge Pages (or similar concepts)
+that are not mapped by architectural huge-page mappings at the PMD level.</p>
+<p>“Shared_Hugetlb” and “Private_Hugetlb” show the amounts of memory backed by
+hugetlbfs page which is <em>not</em> counted in “RSS” or “PSS” field for historical
+reasons. And these are not included in {Shared,Private}_{Clean,Dirty} field.</p>
+<p>“Swap” shows how much would-be-anonymous memory is also used, but out on swap.</p>
+<p>For shmem mappings, “Swap” includes also the size of the mapped (and not
+replaced by copy-on-write) part of the underlying shmem object out on swap.
+“SwapPss” shows proportional swap share of this mapping. Unlike “Swap”, this
+does not take into account swapped out page of underlying shmem objects.
+“Locked” indicates whether the mapping is locked in memory or not.</p>
+<p>“THPeligible” indicates whether the mapping is eligible for allocating
+naturally aligned THP pages of any currently enabled size. 1 if true, 0
+otherwise.</p>
+<p>If both the kernel and the CPU support protection keys (pkeys),
+“ProtectionKey” indicates the memory protection key associated with the
+virtual memory area.</p>
+<p>“VmFlags” field deserves a separate description. This member represents the
+kernel flags associated with the particular virtual memory area in two letter
+encoded manner. The codes are the following:</p>
+<blockquote>
+<div><table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p>rd</p></td>
+<td><p>readable</p></td>
+</tr>
+<tr class="row-even"><td><p>wr</p></td>
+<td><p>writeable</p></td>
+</tr>
+<tr class="row-odd"><td><p>ex</p></td>
+<td><p>executable</p></td>
+</tr>
+<tr class="row-even"><td><p>sh</p></td>
+<td><p>shared</p></td>
+</tr>
+<tr class="row-odd"><td><p>mr</p></td>
+<td><p>may read</p></td>
+</tr>
+<tr class="row-even"><td><p>mw</p></td>
+<td><p>may write</p></td>
+</tr>
+<tr class="row-odd"><td><p>me</p></td>
+<td><p>may execute</p></td>
+</tr>
+<tr class="row-even"><td><p>ms</p></td>
+<td><p>may share</p></td>
+</tr>
+<tr class="row-odd"><td><p>gd</p></td>
+<td><p>stack segment growns down</p></td>
+</tr>
+<tr class="row-even"><td><p>pf</p></td>
+<td><p>pure PFN range</p></td>
+</tr>
+<tr class="row-odd"><td><p>lo</p></td>
+<td><p>pages are locked in memory</p></td>
+</tr>
+<tr class="row-even"><td><p>io</p></td>
+<td><p>memory mapped I/O area</p></td>
+</tr>
+<tr class="row-odd"><td><p>sr</p></td>
+<td><p>sequential read advise provided</p></td>
+</tr>
+<tr class="row-even"><td><p>rr</p></td>
+<td><p>random read advise provided</p></td>
+</tr>
+<tr class="row-odd"><td><p>dc</p></td>
+<td><p>do not copy area on fork</p></td>
+</tr>
+<tr class="row-even"><td><p>de</p></td>
+<td><p>do not expand area on remapping</p></td>
+</tr>
+<tr class="row-odd"><td><p>ac</p></td>
+<td><p>area is accountable</p></td>
+</tr>
+<tr class="row-even"><td><p>nr</p></td>
+<td><p>swap space is not reserved for the area</p></td>
+</tr>
+<tr class="row-odd"><td><p>ht</p></td>
+<td><p>area uses huge tlb pages</p></td>
+</tr>
+<tr class="row-even"><td><p>sf</p></td>
+<td><p>synchronous page fault</p></td>
+</tr>
+<tr class="row-odd"><td><p>ar</p></td>
+<td><p>architecture specific flag</p></td>
+</tr>
+<tr class="row-even"><td><p>wf</p></td>
+<td><p>wipe on fork</p></td>
+</tr>
+<tr class="row-odd"><td><p>dd</p></td>
+<td><p>do not include area into core dump</p></td>
+</tr>
+<tr class="row-even"><td><p>sd</p></td>
+<td><p>soft dirty flag</p></td>
+</tr>
+<tr class="row-odd"><td><p>mm</p></td>
+<td><p>mixed map area</p></td>
+</tr>
+<tr class="row-even"><td><p>hg</p></td>
+<td><p>huge page advise flag</p></td>
+</tr>
+<tr class="row-odd"><td><p>nh</p></td>
+<td><p>no huge page advise flag</p></td>
+</tr>
+<tr class="row-even"><td><p>mg</p></td>
+<td><p>mergeable advise flag</p></td>
+</tr>
+<tr class="row-odd"><td><p>bt</p></td>
+<td><p>arm64 BTI guarded page</p></td>
+</tr>
+<tr class="row-even"><td><p>mt</p></td>
+<td><p>arm64 MTE allocation tags are enabled</p></td>
+</tr>
+<tr class="row-odd"><td><p>um</p></td>
+<td><p>userfaultfd missing tracking</p></td>
+</tr>
+<tr class="row-even"><td><p>uw</p></td>
+<td><p>userfaultfd wr-protect tracking</p></td>
+</tr>
+<tr class="row-odd"><td><p>ui</p></td>
+<td><p>userfaultfd minor fault</p></td>
+</tr>
+<tr class="row-even"><td><p>ur</p></td>
+<td><p>userfaultfd read-write-protect tracking</p></td>
+</tr>
+<tr class="row-odd"><td><p>ss</p></td>
+<td><p>shadow/guarded control stack page</p></td>
+</tr>
+<tr class="row-even"><td><p>sl</p></td>
+<td><p>sealed</p></td>
+</tr>
+<tr class="row-odd"><td><p>lf</p></td>
+<td><p>lock on fault pages</p></td>
+</tr>
+<tr class="row-even"><td><p>dp</p></td>
+<td><p>always lazily freeable mapping</p></td>
+</tr>
+<tr class="row-odd"><td><p>gu</p></td>
+<td><p>maybe contains guard regions (if not set, definitely doesn’t)</p></td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+<p>Note that there is no guarantee that every flag and associated mnemonic will
+be present in all further kernel releases. Things get changed, the flags may
+be vanished or the reverse -- new added. Interpretation of their meaning
+might change in future as well. So each consumer of these flags has to
+follow each specific kernel version for the exact semantic.</p>
+<p>This file is only present if the CONFIG_MMU kernel configuration option is
+enabled.</p>
+<p>Note: reading /proc/PID/maps or /proc/PID/smaps is inherently racy (consistent
+output can be achieved only in the single read call).</p>
+<p>This typically manifests when doing partial reads of these files while the
+memory map is being modified.  Despite the races, we do provide the following
+guarantees:</p>
+<ol class="arabic simple">
+<li><p>The mapped addresses never go backwards, which implies no two
+regions will ever overlap.</p></li>
+<li><p>If there is something at a given vaddr during the entirety of the
+life of the smaps/maps walk, there will be some output for it.</p></li>
+</ol>
+<p>The /proc/PID/smaps_rollup file includes the same fields as /proc/PID/smaps,
+but their values are the sums of the corresponding values for all mappings of
+the process.  Additionally, it contains these fields:</p>
+<ul class="simple">
+<li><p>Pss_Anon</p></li>
+<li><p>Pss_File</p></li>
+<li><p>Pss_Shmem</p></li>
+</ul>
+<p>They represent the proportional shares of anonymous, file, and shmem pages, as
+described for smaps above.  These fields are omitted in smaps since each
+mapping identifies the type (anon, file, or shmem) of all pages it contains.
+Thus all information in smaps_rollup can be derived from smaps, but at a
+significantly higher cost.</p>
+<p>The /proc/PID/clear_refs is used to reset the PG_Referenced and ACCESSED/YOUNG
+bits on both physical and virtual pages associated with a process, and the
+soft-dirty bit on pte (see <a class="reference internal" href="../admin-guide/mm/soft-dirty.html"><span class="doc">Soft-Dirty PTEs</span></a>
+for details).
+To clear the bits for all the pages associated with the process:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&gt; echo 1 &gt; /proc/PID/clear_refs
+</pre></div>
+</div>
+<p>To clear the bits for the anonymous pages associated with the process:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&gt; echo 2 &gt; /proc/PID/clear_refs
+</pre></div>
+</div>
+<p>To clear the bits for the file mapped pages associated with the process:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&gt; echo 3 &gt; /proc/PID/clear_refs
+</pre></div>
+</div>
+<p>To clear the soft-dirty bit:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&gt; echo 4 &gt; /proc/PID/clear_refs
+</pre></div>
+</div>
+<p>To reset the peak resident set size (“high water mark”) to the process’s
+current value:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&gt; echo 5 &gt; /proc/PID/clear_refs
+</pre></div>
+</div>
+<p>Any other value written to /proc/PID/clear_refs will have no effect.</p>
+<p>The /proc/pid/pagemap gives the PFN, which can be used to find the pageflags
+using /proc/kpageflags and number of times a page is mapped using
+/proc/kpagecount. For detailed explanation, see
+<a class="reference internal" href="../admin-guide/mm/pagemap.html"><span class="doc">Examining Process Page Tables</span></a>.</p>
+<p>The /proc/pid/numa_maps is an extension based on maps, showing the memory
+locality and binding policy, as well as the memory usage (in pages) of
+each mapping. The output follows a general format where mapping details get
+summarized separated by blank spaces, one mapping per each file line:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>address   policy    mapping details
+
+00400000 default file=/usr/local/bin/app mapped=1 active=0 N3=1 kernelpagesize_kB=4
+00600000 default file=/usr/local/bin/app anon=1 dirty=1 N3=1 kernelpagesize_kB=4
+3206000000 default file=/lib64/ld-2.12.so mapped=26 mapmax=6 N0=24 N3=2 kernelpagesize_kB=4
+320621f000 default file=/lib64/ld-2.12.so anon=1 dirty=1 N3=1 kernelpagesize_kB=4
+3206220000 default file=/lib64/ld-2.12.so anon=1 dirty=1 N3=1 kernelpagesize_kB=4
+3206221000 default anon=1 dirty=1 N3=1 kernelpagesize_kB=4
+3206800000 default file=/lib64/libc-2.12.so mapped=59 mapmax=21 active=55 N0=41 N3=18 kernelpagesize_kB=4
+320698b000 default file=/lib64/libc-2.12.so
+3206b8a000 default file=/lib64/libc-2.12.so anon=2 dirty=2 N3=2 kernelpagesize_kB=4
+3206b8e000 default file=/lib64/libc-2.12.so anon=1 dirty=1 N3=1 kernelpagesize_kB=4
+3206b8f000 default anon=3 dirty=3 active=1 N3=3 kernelpagesize_kB=4
+7f4dc10a2000 default anon=3 dirty=3 N3=3 kernelpagesize_kB=4
+7f4dc10b4000 default anon=2 dirty=2 active=1 N3=2 kernelpagesize_kB=4
+7f4dc1200000 default file=/anon_hugepage\040(deleted) huge anon=1 dirty=1 N3=1 kernelpagesize_kB=2048
+7fff335f0000 default stack anon=3 dirty=3 N3=3 kernelpagesize_kB=4
+7fff3369d000 default mapped=1 mapmax=35 active=0 N3=1 kernelpagesize_kB=4
+</pre></div>
+</div>
+<p>Where:</p>
+<p>“address” is the starting address for the mapping;</p>
+<p>“policy” reports the NUMA memory policy set for the mapping (see <a class="reference internal" href="../admin-guide/mm/numa_memory_policy.html"><span class="doc">NUMA Memory Policy</span></a>);</p>
+<p>“mapping details” summarizes mapping data such as mapping type, page usage counters,
+node locality page counters (N0 == node0, N1 == node1, ...) and the kernel page
+size, in KB, that is backing the mapping up.</p>
+<p>Note that some kernel configurations do not track the precise number of times
+a page part of a larger allocation (e.g., THP) is mapped. In these
+configurations, “mapmax” might corresponds to the average number of mappings
+per page in such a larger allocation instead.</p>
+</section>
+<section id="kernel-data">
+<h3>1.2 Kernel data<a class="headerlink" href="#kernel-data" title="Permalink to this heading">¶</a></h3>
+<p>Similar to  the  process entries, the kernel data files give information about
+the running kernel. The files used to obtain this information are contained in
+/proc and  are  listed  in Table 1-5. Not all of these will be present in your
+system. It  depends  on the kernel configuration and the loaded modules, which
+files are there, and which are missing.</p>
+<table class="docutils align-default" id="id13">
+<caption><span class="caption-text">Table 1-5: Kernel info in /proc</span><a class="headerlink" href="#id13" title="Permalink to this table">¶</a></caption>
+<thead>
+<tr class="row-odd"><th class="head"><p>File</p></th>
+<th class="head"><p>Content</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>allocinfo</p></td>
+<td><p>Memory allocations profiling information</p></td>
+</tr>
+<tr class="row-odd"><td><p>apm</p></td>
+<td><p>Advanced power management info</p></td>
+</tr>
+<tr class="row-even"><td><p>bootconfig</p></td>
+<td><p>Kernel command line obtained from boot config,
+and, if there were kernel parameters from the
+boot loader, a “# Parameters from bootloader:”
+line followed by a line containing those
+parameters prefixed by “# “.                      (5.5)</p></td>
+</tr>
+<tr class="row-odd"><td><p>buddyinfo</p></td>
+<td><p>Kernel memory allocator information (see text)    (2.5)</p></td>
+</tr>
+<tr class="row-even"><td><p>bus</p></td>
+<td><p>Directory containing bus specific information</p></td>
+</tr>
+<tr class="row-odd"><td><p>cmdline</p></td>
+<td><p>Kernel command line, both from bootloader and embedded
+in the kernel image</p></td>
+</tr>
+<tr class="row-even"><td><p>cpuinfo</p></td>
+<td><p>Info about the CPU</p></td>
+</tr>
+<tr class="row-odd"><td><p>devices</p></td>
+<td><p>Available devices (block and character)</p></td>
+</tr>
+<tr class="row-even"><td><p>dma</p></td>
+<td><p>Used DMA channels</p></td>
+</tr>
+<tr class="row-odd"><td><p>filesystems</p></td>
+<td><p>Supported filesystems</p></td>
+</tr>
+<tr class="row-even"><td><p>driver</p></td>
+<td><p>Various drivers grouped here, currently rtc       (2.4)</p></td>
+</tr>
+<tr class="row-odd"><td><p>execdomains</p></td>
+<td><p>Execdomains, related to security                  (2.4)</p></td>
+</tr>
+<tr class="row-even"><td><p>fb</p></td>
+<td><p>Frame Buffer devices                              (2.4)</p></td>
+</tr>
+<tr class="row-odd"><td><p>fs</p></td>
+<td><p>File system parameters, currently nfs/exports     (2.4)</p></td>
+</tr>
+<tr class="row-even"><td><p>ide</p></td>
+<td><p>Directory containing info about the IDE subsystem</p></td>
+</tr>
+<tr class="row-odd"><td><p>interrupts</p></td>
+<td><p>Interrupt usage</p></td>
+</tr>
+<tr class="row-even"><td><p>iomem</p></td>
+<td><p>Memory map                                        (2.4)</p></td>
+</tr>
+<tr class="row-odd"><td><p>ioports</p></td>
+<td><p>I/O port usage</p></td>
+</tr>
+<tr class="row-even"><td><p>irq</p></td>
+<td><p>Masks for irq to cpu affinity                     (2.4)(smp?)</p></td>
+</tr>
+<tr class="row-odd"><td><p>isapnp</p></td>
+<td><p>ISA PnP (Plug&amp;Play) Info                          (2.4)</p></td>
+</tr>
+<tr class="row-even"><td><p>kcore</p></td>
+<td><p>Kernel core image (can be ELF or A.OUT(deprecated in 2.4))</p></td>
+</tr>
+<tr class="row-odd"><td><p>kmsg</p></td>
+<td><p>Kernel messages</p></td>
+</tr>
+<tr class="row-even"><td><p>ksyms</p></td>
+<td><p>Kernel symbol table</p></td>
+</tr>
+<tr class="row-odd"><td><p>loadavg</p></td>
+<td><dl class="simple">
+<dt>Load average of last 1, 5 &amp; 15 minutes;</dt><dd><p>number of processes currently runnable (running or on ready queue);
+total number of processes in system;
+last pid created.
+All fields are separated by one space except “number of
+processes currently runnable” and “total number of processes
+in system”, which are separated by a slash (‘/’). Example:
+0.61 0.61 0.55 3/828 22084</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="row-even"><td><p>locks</p></td>
+<td><p>Kernel locks</p></td>
+</tr>
+<tr class="row-odd"><td><p>meminfo</p></td>
+<td><p>Memory info</p></td>
+</tr>
+<tr class="row-even"><td><p>misc</p></td>
+<td><p>Miscellaneous</p></td>
+</tr>
+<tr class="row-odd"><td><p>modules</p></td>
+<td><p>List of loaded modules</p></td>
+</tr>
+<tr class="row-even"><td><p>mounts</p></td>
+<td><p>Mounted filesystems</p></td>
+</tr>
+<tr class="row-odd"><td><p>net</p></td>
+<td><p>Networking info (see text)</p></td>
+</tr>
+<tr class="row-even"><td><p>pagetypeinfo</p></td>
+<td><p>Additional page allocator information (see text)  (2.5)</p></td>
+</tr>
+<tr class="row-odd"><td><p>partitions</p></td>
+<td><p>Table of partitions known to the system</p></td>
+</tr>
+<tr class="row-even"><td><p>pci</p></td>
+<td><p>Deprecated info of PCI bus (new way -&gt; /proc/bus/pci/,
+decoupled by lspci                                (2.4)</p></td>
+</tr>
+<tr class="row-odd"><td><p>rtc</p></td>
+<td><p>Real time clock</p></td>
+</tr>
+<tr class="row-even"><td><p>scsi</p></td>
+<td><p>SCSI info (see text)</p></td>
+</tr>
+<tr class="row-odd"><td><p>slabinfo</p></td>
+<td><p>Slab pool info</p></td>
+</tr>
+<tr class="row-even"><td><p>softirqs</p></td>
+<td><p>softirq usage</p></td>
+</tr>
+<tr class="row-odd"><td><p>stat</p></td>
+<td><p>Overall statistics</p></td>
+</tr>
+<tr class="row-even"><td><p>swaps</p></td>
+<td><p>Swap space utilization</p></td>
+</tr>
+<tr class="row-odd"><td><p>sys</p></td>
+<td><p>See chapter 2</p></td>
+</tr>
+<tr class="row-even"><td><p>sysvipc</p></td>
+<td><p>Info of SysVIPC Resources (msg, sem, shm)         (2.4)</p></td>
+</tr>
+<tr class="row-odd"><td><p>tty</p></td>
+<td><p>Info of tty drivers</p></td>
+</tr>
+<tr class="row-even"><td><p>uptime</p></td>
+<td><p>Wall clock since boot, combined idle time of all cpus</p></td>
+</tr>
+<tr class="row-odd"><td><p>version</p></td>
+<td><p>Kernel version</p></td>
+</tr>
+<tr class="row-even"><td><p>video</p></td>
+<td><p>bttv info of video resources                      (2.4)</p></td>
+</tr>
+<tr class="row-odd"><td><p>vmallocinfo</p></td>
+<td><p>Show vmalloced areas</p></td>
+</tr>
+</tbody>
+</table>
+<p>You can,  for  example,  check  which interrupts are currently in use and what
+they are used for by looking in the file /proc/interrupts:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&gt; cat /proc/interrupts
+           CPU0
+  0:    8728810          XT-PIC  timer
+  1:        895          XT-PIC  keyboard
+  2:          0          XT-PIC  cascade
+  3:     531695          XT-PIC  aha152x
+  4:    2014133          XT-PIC  serial
+  5:      44401          XT-PIC  pcnet_cs
+  8:          2          XT-PIC  rtc
+ 11:          8          XT-PIC  i82365
+ 12:     182918          XT-PIC  PS/2 Mouse
+ 13:          1          XT-PIC  fpu
+ 14:    1232265          XT-PIC  ide0
+ 15:          7          XT-PIC  ide1
+NMI:          0
+</pre></div>
+</div>
+<p>In 2.4.* a couple of lines where added to this file LOC &amp; ERR (this time is the
+output of a SMP machine):</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&gt; cat /proc/interrupts
+
+           CPU0       CPU1
+  0:    1243498    1214548    IO-APIC-edge  timer
+  1:       8949       8958    IO-APIC-edge  keyboard
+  2:          0          0          XT-PIC  cascade
+  5:      11286      10161    IO-APIC-edge  soundblaster
+  8:          1          0    IO-APIC-edge  rtc
+  9:      27422      27407    IO-APIC-edge  3c503
+ 12:     113645     113873    IO-APIC-edge  PS/2 Mouse
+ 13:          0          0          XT-PIC  fpu
+ 14:      22491      24012    IO-APIC-edge  ide0
+ 15:       2183       2415    IO-APIC-edge  ide1
+ 17:      30564      30414   IO-APIC-level  eth0
+ 18:        177        164   IO-APIC-level  bttv
+NMI:    2457961    2457959
+LOC:    2457882    2457881
+ERR:       2155
+</pre></div>
+</div>
+<p>NMI is incremented in this case because every timer interrupt generates a NMI
+(Non Maskable Interrupt) which is used by the NMI Watchdog to detect lockups.</p>
+<p>LOC is the local interrupt counter of the internal APIC of every CPU.</p>
+<p>ERR is incremented in the case of errors in the IO-APIC bus (the bus that
+connects the CPUs in a SMP system. This means that an error has been detected,
+the IO-APIC automatically retry the transmission, so it should not be a big
+problem, but you should read the SMP-FAQ.</p>
+<p>In 2.6.2* /proc/interrupts was expanded again.  This time the goal was for
+/proc/interrupts to display every IRQ vector in use by the system, not
+just those considered ‘most important’.  The new vectors are:</p>
+<dl class="simple">
+<dt>THR</dt><dd><p>interrupt raised when a machine check threshold counter
+(typically counting ECC corrected errors of memory or cache) exceeds
+a configurable threshold.  Only available on some systems.</p>
+</dd>
+<dt>TRM</dt><dd><p>a thermal event interrupt occurs when a temperature threshold
+has been exceeded for the CPU.  This interrupt may also be generated
+when the temperature drops back to normal.</p>
+</dd>
+<dt>SPU</dt><dd><p>a spurious interrupt is some interrupt that was raised then lowered
+by some IO device before it could be fully processed by the APIC.  Hence
+the APIC sees the interrupt but does not know what device it came from.
+For this case the APIC will generate the interrupt with a IRQ vector
+of 0xff. This might also be generated by chipset bugs.</p>
+</dd>
+<dt>RES, CAL, TLB</dt><dd><p>rescheduling, call and TLB flush interrupts are
+sent from one CPU to another per the needs of the OS.  Typically,
+their statistics are used by kernel developers and interested users to
+determine the occurrence of interrupts of the given type.</p>
+</dd>
+</dl>
+<p>The above IRQ vectors are displayed only when relevant.  For example,
+the threshold vector does not exist on x86_64 platforms.  Others are
+suppressed when the system is a uniprocessor.  As of this writing, only
+i386 and x86_64 platforms support the new IRQ vector displays.</p>
+<p>Of some interest is the introduction of the /proc/irq directory to 2.4.
+It could be used to set IRQ to CPU affinity. This means that you can “hook” an
+IRQ to only one CPU, or to exclude a CPU of handling IRQs. The contents of the
+irq subdir is one subdir for each IRQ, and default_smp_affinity.</p>
+<p>For example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&gt; ls /proc/irq/
+0  10  12  14  16  18  2  4  6  8  default_smp_affinity
+1  11  13  15  17  19  3  5  7  9
+&gt; ls /proc/irq/0/
+smp_affinity
+</pre></div>
+</div>
+<p>smp_affinity is a bitmask, in which you can specify which CPUs can handle the
+IRQ. You can set it by doing:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&gt; echo 1 &gt; /proc/irq/10/smp_affinity
+</pre></div>
+</div>
+<p>This means that only the first CPU will handle the IRQ, but you can also echo
+5 which means that only the first and third CPU can handle the IRQ.</p>
+<p>The contents of each smp_affinity file is the same by default:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&gt; cat /proc/irq/0/smp_affinity
+ffffffff
+</pre></div>
+</div>
+<p>There is an alternate interface, smp_affinity_list which allows specifying
+a CPU range instead of a bitmask:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&gt; cat /proc/irq/0/smp_affinity_list
+1024-1031
+</pre></div>
+</div>
+<p>The default_smp_affinity mask applies to all non-active IRQs, which are the
+IRQs which have not yet been allocated/activated, and hence which lack a
+/proc/irq/[0-9]* directory.</p>
+<p>The node file on an SMP system shows the node to which the device using the IRQ
+reports itself as being attached. This hardware locality information does not
+include information about any possible driver locality preference.</p>
+<p>The way IRQs are routed is handled by the IO-APIC, and it’s Round Robin
+between all the CPUs which are allowed to handle it. As usual the kernel has
+more info than you and does a better job than you, so the defaults are the
+best choice for almost everyone.  [Note this applies only to those IO-APIC’s
+that support “Round Robin” interrupt distribution.]</p>
+<p>There are  three  more  important subdirectories in /proc: net, scsi, and sys.
+The general  rule  is  that  the  contents,  or  even  the  existence of these
+directories, depend  on your kernel configuration. If SCSI is not enabled, the
+directory scsi  may  not  exist. The same is true with the net, which is there
+only when networking support is present in the running kernel.</p>
+<p>The slabinfo  file  gives  information  about  memory usage at the slab level.
+Linux uses  slab  pools for memory management above page level in version 2.2.
+Commonly used  objects  have  their  own  slab  pool (such as network buffers,
+directory cache, and so on).</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&gt; cat /proc/buddyinfo
+
+Node 0, zone      DMA      0      4      5      4      4      3 ...
+Node 0, zone   Normal      1      0      0      1    101      8 ...
+Node 0, zone  HighMem      2      0      0      1      1      0 ...
+</pre></div>
+</div>
+<p>External fragmentation is a problem under some workloads, and buddyinfo is a
+useful tool for helping diagnose these problems.  Buddyinfo will give you a
+clue as to how big an area you can safely allocate, or why a previous
+allocation failed.</p>
+<p>Each column represents the number of pages of a certain order which are
+available.  In this case, there are 0 chunks of 2^0*PAGE_SIZE available in
+ZONE_DMA, 4 chunks of 2^1*PAGE_SIZE in ZONE_DMA, 101 chunks of 2^4*PAGE_SIZE
+available in ZONE_NORMAL, etc...</p>
+<p>More information relevant to external fragmentation can be found in
+pagetypeinfo:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&gt; cat /proc/pagetypeinfo
+Page block order: 9
+Pages per block:  512
+
+Free pages count per migrate type at order       0      1      2      3      4      5      6      7      8      9     10
+Node    0, zone      DMA, type    Unmovable      0      0      0      1      1      1      1      1      1      1      0
+Node    0, zone      DMA, type  Reclaimable      0      0      0      0      0      0      0      0      0      0      0
+Node    0, zone      DMA, type      Movable      1      1      2      1      2      1      1      0      1      0      2
+Node    0, zone      DMA, type      Reserve      0      0      0      0      0      0      0      0      0      1      0
+Node    0, zone      DMA, type      Isolate      0      0      0      0      0      0      0      0      0      0      0
+Node    0, zone    DMA32, type    Unmovable    103     54     77      1      1      1     11      8      7      1      9
+Node    0, zone    DMA32, type  Reclaimable      0      0      2      1      0      0      0      0      1      0      0
+Node    0, zone    DMA32, type      Movable    169    152    113     91     77     54     39     13      6      1    452
+Node    0, zone    DMA32, type      Reserve      1      2      2      2      2      0      1      1      1      1      0
+Node    0, zone    DMA32, type      Isolate      0      0      0      0      0      0      0      0      0      0      0
+
+Number of blocks type     Unmovable  Reclaimable      Movable      Reserve      Isolate
+Node 0, zone      DMA            2            0            5            1            0
+Node 0, zone    DMA32           41            6          967            2            0
+</pre></div>
+</div>
+<p>Fragmentation avoidance in the kernel works by grouping pages of different
+migrate types into the same contiguous regions of memory called page blocks.
+A page block is typically the size of the default hugepage size, e.g. 2MB on
+X86-64. By keeping pages grouped based on their ability to move, the kernel
+can reclaim pages within a page block to satisfy a high-order allocation.</p>
+<p>The pagetypinfo begins with information on the size of a page block. It
+then gives the same type of information as buddyinfo except broken down
+by migrate-type and finishes with details on how many page blocks of each
+type exist.</p>
+<p>If min_free_kbytes has been tuned correctly (recommendations made by hugeadm
+from libhugetlbfs <a class="reference external" href="https://github.com/libhugetlbfs/libhugetlbfs/">https://github.com/libhugetlbfs/libhugetlbfs/</a>), one can
+make an estimate of the likely number of huge pages that can be allocated
+at a given point in time. All the “Movable” blocks should be allocatable
+unless memory has been <code class="xref c c-func broken_xref docutils literal notranslate"><span class="pre">mlock()</span></code>’d. Some of the Reclaimable blocks should
+also be allocatable although a lot of filesystem metadata may have to be
+reclaimed to achieve this.</p>
+<section id="allocinfo">
+<h4>allocinfo<a class="headerlink" href="#allocinfo" title="Permalink to this heading">¶</a></h4>
+<p>Provides information about memory allocations at all locations in the code
+base. Each allocation in the code is identified by its source file, line
+number, module (if originates from a loadable module) and the function calling
+the allocation. The number of bytes allocated and number of calls at each
+location are reported. The first line indicates the version of the file, the
+second line is the header listing fields in the file.
+If file version is 2.0 or higher then each line may contain additional
+&lt;key&gt;:&lt;value&gt; pairs representing extra information about the call site.
+For example if the counters are not accurate, the line will be appended with
+“accurate:no” pair.</p>
+<p>Supported markers in v2:
+accurate:no</p>
+<blockquote>
+<div><p>Absolute values of the counters in this line are not accurate
+because of the failure to allocate memory to track some of the
+allocations made at this location.  Deltas in these counters are
+accurate, therefore counters can be used to track allocation size
+and count changes.</p>
+</div></blockquote>
+<p>Example output.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span> &gt; tail -n +3 /proc/allocinfo | sort -rn
+127664128    31168 mm/page_ext.c:270 func:alloc_page_ext
+ 56373248     4737 mm/slub.c:2259 func:alloc_slab_page
+ 14880768     3633 mm/readahead.c:247 func:page_cache_ra_unbounded
+ 14417920     3520 mm/mm_init.c:2530 func:alloc_large_system_hash
+ 13377536      234 block/blk-mq.c:3421 func:blk_mq_alloc_rqs
+ 11718656     2861 mm/filemap.c:1919 func:__filemap_get_folio
+  9192960     2800 kernel/fork.c:307 func:alloc_thread_stack_node
+  4206592        4 net/netfilter/nf_conntrack_core.c:2567 func:nf_ct_alloc_hashtable
+  4136960     1010 drivers/staging/ctagmod/ctagmod.c:20 [ctagmod] func:ctagmod_start
+  3940352      962 mm/memory.c:4214 func:alloc_anon_folio
+  2894464    22613 fs/kernfs/dir.c:615 func:__kernfs_new_node
+  ...
+</pre></div>
+</div>
+</section>
+<section id="meminfo">
+<h4>meminfo<a class="headerlink" href="#meminfo" title="Permalink to this heading">¶</a></h4>
+<p>Provides information about distribution and utilization of memory.  This
+varies by architecture and compile options.  Some of the counters reported
+here overlap.  The memory reported by the non overlapping counters may not
+add up to the overall memory usage and the difference for some workloads
+can be substantial.  In many cases there are other means to find out
+additional memory using subsystem specific interfaces, for instance
+/proc/net/sockstat for TCP memory allocations.</p>
+<p>Example output. You may not have all of these fields.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&gt; cat /proc/meminfo
+
+MemTotal:       32858820 kB
+MemFree:        21001236 kB
+MemAvailable:   27214312 kB
+Buffers:          581092 kB
+Cached:          5587612 kB
+SwapCached:            0 kB
+Active:          3237152 kB
+Inactive:        7586256 kB
+Active(anon):      94064 kB
+Inactive(anon):  4570616 kB
+Active(file):    3143088 kB
+Inactive(file):  3015640 kB
+Unevictable:           0 kB
+Mlocked:               0 kB
+SwapTotal:             0 kB
+SwapFree:              0 kB
+Zswap:              1904 kB
+Zswapped:           7792 kB
+Dirty:                12 kB
+Writeback:             0 kB
+AnonPages:       4654780 kB
+Mapped:           266244 kB
+Shmem:              9976 kB
+KReclaimable:     517708 kB
+Slab:             660044 kB
+SReclaimable:     517708 kB
+SUnreclaim:       142336 kB
+KernelStack:       11168 kB
+PageTables:        20540 kB
+SecPageTables:         0 kB
+NFS_Unstable:          0 kB
+Bounce:                0 kB
+WritebackTmp:          0 kB
+CommitLimit:    16429408 kB
+Committed_AS:    7715148 kB
+VmallocTotal:   34359738367 kB
+VmallocUsed:       40444 kB
+VmallocChunk:          0 kB
+Percpu:            29312 kB
+EarlyMemtestBad:       0 kB
+HardwareCorrupted:     0 kB
+AnonHugePages:   4149248 kB
+ShmemHugePages:        0 kB
+ShmemPmdMapped:        0 kB
+FileHugePages:         0 kB
+FilePmdMapped:         0 kB
+CmaTotal:              0 kB
+CmaFree:               0 kB
+Unaccepted:            0 kB
+Balloon:               0 kB
+GPUActive:             0 kB
+GPUReclaim:            0 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+Hugetlb:               0 kB
+DirectMap4k:      401152 kB
+DirectMap2M:    10008576 kB
+DirectMap1G:    24117248 kB
+</pre></div>
+</div>
+<dl>
+<dt>MemTotal</dt><dd><p>Total usable RAM (i.e. physical RAM minus a few reserved
+bits and the kernel binary code)</p>
+</dd>
+<dt>MemFree</dt><dd><p>Total free RAM. On highmem systems, the sum of LowFree+HighFree</p>
+</dd>
+<dt>MemAvailable</dt><dd><p>An estimate of how much memory is available for starting new
+applications, without swapping. Calculated from MemFree,
+SReclaimable, the size of the file LRU lists, and the low
+watermarks in each zone.
+The estimate takes into account that the system needs some
+page cache to function well, and that not all reclaimable
+slab will be reclaimable, due to items being in use. The
+impact of those factors will vary from system to system.</p>
+</dd>
+<dt>Buffers</dt><dd><p>Relatively temporary storage for raw disk blocks
+shouldn’t get tremendously large (20MB or so)</p>
+</dd>
+<dt>Cached</dt><dd><p>In-memory cache for files read from the disk (the
+pagecache) as well as tmpfs &amp; shmem.
+Doesn’t include SwapCached.</p>
+</dd>
+<dt>SwapCached</dt><dd><p>Memory that once was swapped out, is swapped back in but
+still also is in the swapfile (if memory is needed it
+doesn’t need to be swapped out AGAIN because it is already
+in the swapfile. This saves I/O)</p>
+</dd>
+<dt>Active</dt><dd><p>Memory that has been used more recently and usually not
+reclaimed unless absolutely necessary.</p>
+</dd>
+<dt>Inactive</dt><dd><p>Memory which has been less recently used.  It is more
+eligible to be reclaimed for other purposes</p>
+</dd>
+<dt>Unevictable</dt><dd><p>Memory allocated for userspace which cannot be reclaimed, such
+as mlocked pages, ramfs backing pages, secret memfd pages etc.</p>
+</dd>
+<dt>Mlocked</dt><dd><p>Memory locked with <code class="xref c c-func broken_xref docutils literal notranslate"><span class="pre">mlock()</span></code>.</p>
+</dd>
+<dt>HighTotal, HighFree</dt><dd><p>Highmem is all memory above ~860MB of physical memory.
+Highmem areas are for use by userspace programs, or
+for the pagecache.  The kernel must use tricks to access
+this memory, making it slower to access than lowmem.</p>
+</dd>
+<dt>LowTotal, LowFree</dt><dd><p>Lowmem is memory which can be used for everything that
+highmem can be used for, but it is also available for the
+kernel’s use for its own data structures.  Among many
+other things, it is where everything from the Slab is
+allocated.  Bad things happen when you’re out of lowmem.</p>
+</dd>
+<dt>SwapTotal</dt><dd><p>total amount of swap space available</p>
+</dd>
+<dt>SwapFree</dt><dd><p>Memory which has been evicted from RAM, and is temporarily
+on the disk</p>
+</dd>
+<dt>Zswap</dt><dd><p>Memory consumed by the zswap backend (compressed size)</p>
+</dd>
+<dt>Zswapped</dt><dd><p>Amount of anonymous memory stored in zswap (original size)</p>
+</dd>
+<dt>Dirty</dt><dd><p>Memory which is waiting to get written back to the disk</p>
+</dd>
+<dt>Writeback</dt><dd><p>Memory which is actively being written back to the disk</p>
+</dd>
+<dt>AnonPages</dt><dd><p>Non-file backed pages mapped into userspace page tables. Note that
+some kernel configurations might consider all pages part of a
+larger allocation (e.g., THP) as “mapped”, as soon as a single
+page is mapped.</p>
+</dd>
+<dt>Mapped</dt><dd><p>files which have been mmapped, such as libraries. Note that some
+kernel configurations might consider all pages part of a larger
+allocation (e.g., THP) as “mapped”, as soon as a single page is
+mapped.</p>
+</dd>
+<dt>Shmem</dt><dd><p>Total memory used by shared memory (shmem) and tmpfs</p>
+</dd>
+<dt>KReclaimable</dt><dd><p>Kernel allocations that the kernel will attempt to reclaim
+under memory pressure. Includes SReclaimable (below), and other
+direct allocations with a shrinker.</p>
+</dd>
+<dt>Slab</dt><dd><p>in-kernel data structures cache</p>
+</dd>
+<dt>SReclaimable</dt><dd><p>Part of Slab, that might be reclaimed, such as caches</p>
+</dd>
+<dt>SUnreclaim</dt><dd><p>Part of Slab, that cannot be reclaimed on memory pressure</p>
+</dd>
+<dt>KernelStack</dt><dd><p>Memory consumed by the kernel stacks of all tasks</p>
+</dd>
+<dt>PageTables</dt><dd><p>Memory consumed by userspace page tables</p>
+</dd>
+<dt>SecPageTables</dt><dd><p>Memory consumed by secondary page tables, this currently includes
+KVM mmu and IOMMU allocations on x86 and arm64.</p>
+</dd>
+<dt>NFS_Unstable</dt><dd><p>Always zero. Previously counted pages which had been written to
+the server, but has not been committed to stable storage.</p>
+</dd>
+<dt>Bounce</dt><dd><p>Always zero. Previously memory used for block device
+“bounce buffers”.</p>
+</dd>
+<dt>WritebackTmp</dt><dd><p>Always zero. Previously memory used by FUSE for temporary
+writeback buffers.</p>
+</dd>
+<dt>CommitLimit</dt><dd><p>Based on the overcommit ratio (‘vm.overcommit_ratio’),
+this is the total amount of  memory currently available to
+be allocated on the system. This limit is only adhered to
+if strict overcommit accounting is enabled (mode 2 in
+‘vm.overcommit_memory’).</p>
+<p>The CommitLimit is calculated with the following formula:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>CommitLimit = ([total RAM pages] - [total huge TLB pages]) *
+               overcommit_ratio / 100 + [total swap pages]
+</pre></div>
+</div>
+<p>For example, on a system with 1G of physical RAM and 7G
+of swap with a <cite>vm.overcommit_ratio</cite> of 30 it would
+yield a CommitLimit of 7.3G.</p>
+<p>For more details, see the memory overcommit documentation
+in mm/overcommit-accounting.</p>
+</dd>
+<dt>Committed_AS</dt><dd><p>The amount of memory presently allocated on the system.
+The committed memory is a sum of all of the memory which
+has been allocated by processes, even if it has not been
+“used” by them as of yet. A process which <code class="xref c c-func broken_xref docutils literal notranslate"><span class="pre">malloc()</span></code>’s 1G
+of memory, but only touches 300M of it will show up as
+using 1G. This 1G is memory which has been “committed” to
+by the VM and can be used at any time by the allocating
+application. With strict overcommit enabled on the system
+(mode 2 in ‘vm.overcommit_memory’), allocations which would
+exceed the CommitLimit (detailed above) will not be permitted.
+This is useful if one needs to guarantee that processes will
+not fail due to lack of memory once that memory has been
+successfully allocated.</p>
+</dd>
+<dt>VmallocTotal</dt><dd><p>total size of vmalloc virtual address space</p>
+</dd>
+<dt>VmallocUsed</dt><dd><p>amount of vmalloc area which is used</p>
+</dd>
+<dt>VmallocChunk</dt><dd><p>largest contiguous block of vmalloc area which is free</p>
+</dd>
+<dt>Percpu</dt><dd><p>Memory allocated to the percpu allocator used to back percpu
+allocations. This stat excludes the cost of metadata.</p>
+</dd>
+<dt>EarlyMemtestBad</dt><dd><p>The amount of RAM/memory in kB, that was identified as corrupted
+by early memtest. If memtest was not run, this field will not
+be displayed at all. Size is never rounded down to 0 kB.
+That means if 0 kB is reported, you can safely assume
+there was at least one pass of memtest and none of the passes
+found a single faulty byte of RAM.</p>
+</dd>
+<dt>HardwareCorrupted</dt><dd><p>The amount of RAM/memory in KB, the kernel identifies as
+corrupted.</p>
+</dd>
+<dt>AnonHugePages</dt><dd><p>Non-file backed huge pages mapped into userspace page tables</p>
+</dd>
+<dt>ShmemHugePages</dt><dd><p>Memory used by shared memory (shmem) and tmpfs allocated
+with huge pages</p>
+</dd>
+<dt>ShmemPmdMapped</dt><dd><p>Shared memory mapped into userspace with huge pages</p>
+</dd>
+<dt>FileHugePages</dt><dd><p>Memory used for filesystem data (page cache) allocated
+with huge pages</p>
+</dd>
+<dt>FilePmdMapped</dt><dd><p>Page cache mapped into userspace with huge pages</p>
+</dd>
+<dt>CmaTotal</dt><dd><p>Memory reserved for the Contiguous Memory Allocator (CMA)</p>
+</dd>
+<dt>CmaFree</dt><dd><p>Free remaining memory in the CMA reserves</p>
+</dd>
+<dt>Unaccepted</dt><dd><p>Memory that has not been accepted by the guest</p>
+</dd>
+<dt>Balloon</dt><dd><p>Memory returned to Host by VM Balloon Drivers</p>
+</dd>
+<dt>GPUActive</dt><dd><p>System memory allocated to active GPU objects</p>
+</dd>
+<dt>GPUReclaim</dt><dd><p>System memory stored in GPU pools for reuse. This memory is not
+counted in GPUActive. It is shrinker reclaimable memory kept in a reuse
+pool because it has non-standard page table attributes, like WC or UC.</p>
+</dd>
+<dt>HugePages_Total, HugePages_Free, HugePages_Rsvd, HugePages_Surp, Hugepagesize, Hugetlb</dt><dd><p>See <a class="reference internal" href="../admin-guide/mm/hugetlbpage.html"><span class="doc">HugeTLB Pages</span></a>.</p>
+</dd>
+<dt>DirectMap4k, DirectMap2M, DirectMap1G</dt><dd><p>Breakdown of page table sizes used in the kernel’s
+identity mapping of RAM</p>
+</dd>
+</dl>
+</section>
+<section id="vmallocinfo">
+<h4>vmallocinfo<a class="headerlink" href="#vmallocinfo" title="Permalink to this heading">¶</a></h4>
+<p>Provides information about vmalloced/vmaped areas. One line per area,
+containing the virtual address range of the area, size in bytes,
+caller information of the creator, and optional information depending
+on the kind of area:</p>
+<blockquote>
+<div><table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p>pages=nr</p></td>
+<td><p>number of pages</p></td>
+</tr>
+<tr class="row-even"><td><p>phys=addr</p></td>
+<td><p>if a physical address was specified</p></td>
+</tr>
+<tr class="row-odd"><td><p>ioremap</p></td>
+<td><p>I/O mapping (<a class="reference internal" href="../driver-api/device-io.html#c.ioremap" title="ioremap"><code class="xref c c-func docutils literal notranslate"><span class="pre">ioremap()</span></code></a> and friends)</p></td>
+</tr>
+<tr class="row-even"><td><p>vmalloc</p></td>
+<td><p><a class="reference internal" href="../core-api/mm-api.html#c.vmalloc" title="vmalloc"><code class="xref c c-func docutils literal notranslate"><span class="pre">vmalloc()</span></code></a> area</p></td>
+</tr>
+<tr class="row-odd"><td><p>vmap</p></td>
+<td><p><a class="reference internal" href="../core-api/mm-api.html#c.vmap" title="vmap"><code class="xref c c-func docutils literal notranslate"><span class="pre">vmap()</span></code></a>ed pages</p></td>
+</tr>
+<tr class="row-even"><td><p>user</p></td>
+<td><p>VM_USERMAP area</p></td>
+</tr>
+<tr class="row-odd"><td><p>vpages</p></td>
+<td><p>buffer for pages pointers was vmalloced (huge area)</p></td>
+</tr>
+<tr class="row-even"><td><p>N&lt;node&gt;=nr</p></td>
+<td><p>(Only on NUMA kernels)
+Number of pages allocated on memory node &lt;node&gt;</p></td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&gt; cat /proc/vmallocinfo
+0xffffc20000000000-0xffffc20000201000 2101248 alloc_large_system_hash+0x204 ...
+/0x2c0 pages=512 vmalloc N0=128 N1=128 N2=128 N3=128
+0xffffc20000201000-0xffffc20000302000 1052672 alloc_large_system_hash+0x204 ...
+/0x2c0 pages=256 vmalloc N0=64 N1=64 N2=64 N3=64
+0xffffc20000302000-0xffffc20000304000    8192 acpi_tb_verify_table+0x21/0x4f...
+phys=7fee8000 ioremap
+0xffffc20000304000-0xffffc20000307000   12288 acpi_tb_verify_table+0x21/0x4f...
+phys=7fee7000 ioremap
+0xffffc2000031d000-0xffffc2000031f000    8192 init_vdso_vars+0x112/0x210
+0xffffc2000031f000-0xffffc2000032b000   49152 cramfs_uncompress_init+0x2e ...
+/0x80 pages=11 vmalloc N0=3 N1=3 N2=2 N3=3
+0xffffc2000033a000-0xffffc2000033d000   12288 sys_swapon+0x640/0xac0      ...
+pages=2 vmalloc N1=2
+0xffffc20000347000-0xffffc2000034c000   20480 xt_alloc_table_info+0xfe ...
+/0x130 [x_tables] pages=4 vmalloc N0=4
+0xffffffffa0000000-0xffffffffa000f000   61440 sys_init_module+0xc27/0x1d00 ...
+pages=14 vmalloc N2=14
+0xffffffffa000f000-0xffffffffa0014000   20480 sys_init_module+0xc27/0x1d00 ...
+pages=4 vmalloc N1=4
+0xffffffffa0014000-0xffffffffa0017000   12288 sys_init_module+0xc27/0x1d00 ...
+pages=2 vmalloc N1=2
+0xffffffffa0017000-0xffffffffa0022000   45056 sys_init_module+0xc27/0x1d00 ...
+pages=10 vmalloc N0=10
+</pre></div>
+</div>
+</section>
+<section id="softirqs">
+<h4>softirqs<a class="headerlink" href="#softirqs" title="Permalink to this heading">¶</a></h4>
+<p>Provides counts of softirq handlers serviced since boot time, for each CPU.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&gt; cat /proc/softirqs
+              CPU0       CPU1       CPU2       CPU3
+    HI:          0          0          0          0
+TIMER:       27166      27120      27097      27034
+NET_TX:          0          0          0         17
+NET_RX:         42          0          0         39
+BLOCK:           0          0        107       1121
+TASKLET:         0          0          0        290
+SCHED:       27035      26983      26971      26746
+HRTIMER:         0          0          0          0
+    RCU:      1678       1769       2178       2250
+</pre></div>
+</div>
+</section>
+</section>
+<section id="networking-info-in-proc-net">
+<h3>1.3 Networking info in /proc/net<a class="headerlink" href="#networking-info-in-proc-net" title="Permalink to this heading">¶</a></h3>
+<p>The subdirectory  /proc/net  follows  the  usual  pattern. Table 1-8 shows the
+additional values  you  get  for  IP  version 6 if you configure the kernel to
+support this. Table 1-9 lists the files and their meaning.</p>
+<table class="docutils align-default" id="id14">
+<caption><span class="caption-text">Table 1-8: IPv6 info in /proc/net</span><a class="headerlink" href="#id14" title="Permalink to this table">¶</a></caption>
+<thead>
+<tr class="row-odd"><th class="head"><p>File</p></th>
+<th class="head"><p>Content</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>udp6</p></td>
+<td><p>UDP sockets (IPv6)</p></td>
+</tr>
+<tr class="row-odd"><td><p>tcp6</p></td>
+<td><p>TCP sockets (IPv6)</p></td>
+</tr>
+<tr class="row-even"><td><p>raw6</p></td>
+<td><p>Raw device statistics (IPv6)</p></td>
+</tr>
+<tr class="row-odd"><td><p>igmp6</p></td>
+<td><p>IP multicast addresses, which this host joined (IPv6)</p></td>
+</tr>
+<tr class="row-even"><td><p>if_inet6</p></td>
+<td><p>List of IPv6 interface addresses</p></td>
+</tr>
+<tr class="row-odd"><td><p>ipv6_route</p></td>
+<td><p>Kernel routing table for IPv6</p></td>
+</tr>
+<tr class="row-even"><td><p>rt6_stats</p></td>
+<td><p>Global IPv6 routing tables statistics</p></td>
+</tr>
+<tr class="row-odd"><td><p>sockstat6</p></td>
+<td><p>Socket statistics (IPv6)</p></td>
+</tr>
+<tr class="row-even"><td><p>snmp6</p></td>
+<td><p>Snmp data (IPv6)</p></td>
+</tr>
+</tbody>
+</table>
+<table class="docutils align-default" id="id15">
+<caption><span class="caption-text">Table 1-9: Network info in /proc/net</span><a class="headerlink" href="#id15" title="Permalink to this table">¶</a></caption>
+<thead>
+<tr class="row-odd"><th class="head"><p>File</p></th>
+<th class="head"><p>Content</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>arp</p></td>
+<td><p>Kernel  ARP table</p></td>
+</tr>
+<tr class="row-odd"><td><p>dev</p></td>
+<td><p>network devices with statistics</p></td>
+</tr>
+<tr class="row-even"><td><p>dev_mcast</p></td>
+<td><p>the Layer2 multicast groups a device is listening too
+(interface index, label, number of references, number of bound
+addresses).</p></td>
+</tr>
+<tr class="row-odd"><td><p>dev_stat</p></td>
+<td><p>network device status</p></td>
+</tr>
+<tr class="row-even"><td><p>ip_fwchains</p></td>
+<td><p>Firewall chain linkage</p></td>
+</tr>
+<tr class="row-odd"><td><p>ip_fwnames</p></td>
+<td><p>Firewall chain names</p></td>
+</tr>
+<tr class="row-even"><td><p>ip_masq</p></td>
+<td><p>Directory containing the masquerading tables</p></td>
+</tr>
+<tr class="row-odd"><td><p>ip_masquerade</p></td>
+<td><p>Major masquerading table</p></td>
+</tr>
+<tr class="row-even"><td><p>netstat</p></td>
+<td><p>Network statistics</p></td>
+</tr>
+<tr class="row-odd"><td><p>raw</p></td>
+<td><p>raw device statistics</p></td>
+</tr>
+<tr class="row-even"><td><p>route</p></td>
+<td><p>Kernel routing table</p></td>
+</tr>
+<tr class="row-odd"><td><p>rpc</p></td>
+<td><p>Directory containing rpc info</p></td>
+</tr>
+<tr class="row-even"><td><p>rt_cache</p></td>
+<td><p>Routing cache</p></td>
+</tr>
+<tr class="row-odd"><td><p>snmp</p></td>
+<td><p>SNMP data</p></td>
+</tr>
+<tr class="row-even"><td><p>sockstat</p></td>
+<td><p>Socket statistics</p></td>
+</tr>
+<tr class="row-odd"><td><p>softnet_stat</p></td>
+<td><p>Per-CPU incoming packets queues statistics of online CPUs</p></td>
+</tr>
+<tr class="row-even"><td><p>tcp</p></td>
+<td><p>TCP  sockets</p></td>
+</tr>
+<tr class="row-odd"><td><p>udp</p></td>
+<td><p>UDP sockets</p></td>
+</tr>
+<tr class="row-even"><td><p>unix</p></td>
+<td><p>UNIX domain sockets</p></td>
+</tr>
+<tr class="row-odd"><td><p>wireless</p></td>
+<td><p>Wireless interface data (Wavelan etc)</p></td>
+</tr>
+<tr class="row-even"><td><p>igmp</p></td>
+<td><p>IP multicast addresses, which this host joined</p></td>
+</tr>
+<tr class="row-odd"><td><p>psched</p></td>
+<td><p>Global packet scheduler parameters.</p></td>
+</tr>
+<tr class="row-even"><td><p>netlink</p></td>
+<td><p>List of PF_NETLINK sockets</p></td>
+</tr>
+<tr class="row-odd"><td><p>ip_mr_vifs</p></td>
+<td><p>List of multicast virtual interfaces</p></td>
+</tr>
+<tr class="row-even"><td><p>ip_mr_cache</p></td>
+<td><p>List of multicast routing cache</p></td>
+</tr>
+</tbody>
+</table>
+<p>You can  use  this  information  to see which network devices are available in
+your system and how much traffic was routed over those devices:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&gt; cat /proc/net/dev
+Inter-|Receive                                                   |[...
+ face |bytes    packets errs drop fifo frame compressed multicast|[...
+    lo:  908188   5596     0    0    0     0          0         0 [...
+  ppp0:15475140  20721   410    0    0   410          0         0 [...
+  eth0:  614530   7085     0    0    0     0          0         1 [...
+
+...] Transmit
+...] bytes    packets errs drop fifo colls carrier compressed
+...]  908188     5596    0    0    0     0       0          0
+...] 1375103    17405    0    0    0     0       0          0
+...] 1703981     5535    0    0    0     3       0          0
+</pre></div>
+</div>
+<p>In addition, each Channel Bond interface has its own directory.  For
+example, the bond0 device will have a directory called /proc/net/bond0/.
+It will contain information that is specific to that bond, such as the
+current slaves of the bond, the link status of the slaves, and how
+many times the slaves link has failed.</p>
+</section>
+<section id="scsi-info">
+<h3>1.4 SCSI info<a class="headerlink" href="#scsi-info" title="Permalink to this heading">¶</a></h3>
+<p>If you have a SCSI or ATA host adapter in your system, you’ll find a
+subdirectory named after the driver for this adapter in /proc/scsi.
+You’ll also see a list of all recognized SCSI devices in /proc/scsi:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&gt;cat /proc/scsi/scsi
+Attached devices:
+Host: scsi0 Channel: 00 Id: 00 Lun: 00
+  Vendor: IBM      Model: DGHS09U          Rev: 03E0
+  Type:   Direct-Access                    ANSI SCSI revision: 03
+Host: scsi0 Channel: 00 Id: 06 Lun: 00
+  Vendor: PIONEER  Model: CD-ROM DR-U06S   Rev: 1.04
+  Type:   CD-ROM                           ANSI SCSI revision: 02
+</pre></div>
+</div>
+<p>The directory  named  after  the driver has one file for each adapter found in
+the system.  These  files  contain information about the controller, including
+the used  IRQ  and  the  IO  address range. The amount of information shown is
+dependent on  the adapter you use. The example shows the output for an Adaptec
+AHA-2940 SCSI adapter:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&gt; cat /proc/scsi/aic7xxx/0
+
+Adaptec AIC7xxx driver version: 5.1.19/3.2.4
+Compile Options:
+  TCQ Enabled By Default : Disabled
+  AIC7XXX_PROC_STATS     : Disabled
+  AIC7XXX_RESET_DELAY    : 5
+Adapter Configuration:
+           SCSI Adapter: Adaptec AHA-294X Ultra SCSI host adapter
+                           Ultra Wide Controller
+    PCI MMAPed I/O Base: 0xeb001000
+ Adapter SEEPROM Config: SEEPROM found and used.
+      Adaptec SCSI BIOS: Enabled
+                    IRQ: 10
+                   SCBs: Active 0, Max Active 2,
+                         Allocated 15, HW 16, Page 255
+             Interrupts: 160328
+      BIOS Control Word: 0x18b6
+   Adapter Control Word: 0x005b
+   Extended Translation: Enabled
+Disconnect Enable Flags: 0xffff
+     Ultra Enable Flags: 0x0001
+ Tag Queue Enable Flags: 0x0000
+Ordered Queue Tag Flags: 0x0000
+Default Tag Queue Depth: 8
+    Tagged Queue By Device array for aic7xxx host instance 0:
+      {255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255}
+    Actual queue depth per device for aic7xxx host instance 0:
+      {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
+Statistics:
+(scsi0:0:0:0)
+  Device using Wide/Sync transfers at 40.0 MByte/sec, offset 8
+  Transinfo settings: current(12/8/1/0), goal(12/8/1/0), user(12/15/1/0)
+  Total transfers 160151 (74577 reads and 85574 writes)
+(scsi0:0:6:0)
+  Device using Narrow/Sync transfers at 5.0 MByte/sec, offset 15
+  Transinfo settings: current(50/15/0/0), goal(50/15/0/0), user(50/15/0/0)
+  Total transfers 0 (0 reads and 0 writes)
+</pre></div>
+</div>
+</section>
+<section id="parallel-port-info-in-proc-parport">
+<h3>1.5 Parallel port info in /proc/parport<a class="headerlink" href="#parallel-port-info-in-proc-parport" title="Permalink to this heading">¶</a></h3>
+<p>The directory  /proc/parport  contains information about the parallel ports of
+your system.  It  has  one  subdirectory  for  each port, named after the port
+number (0,1,2,...).</p>
+<p>These directories contain the four files shown in Table 1-10.</p>
+<table class="docutils align-default" id="id16">
+<caption><span class="caption-text">Table 1-10: Files in /proc/parport</span><a class="headerlink" href="#id16" title="Permalink to this table">¶</a></caption>
+<thead>
+<tr class="row-odd"><th class="head"><p>File</p></th>
+<th class="head"><p>Content</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>autoprobe</p></td>
+<td><p>Any IEEE-1284 device ID information that has been acquired.</p></td>
+</tr>
+<tr class="row-odd"><td><p>devices</p></td>
+<td><p>list of the device drivers using that port. A + will appear by the
+name of the device currently using the port (it might not appear
+against any).</p></td>
+</tr>
+<tr class="row-even"><td><p>hardware</p></td>
+<td><p>Parallel port’s base address, IRQ line and DMA channel.</p></td>
+</tr>
+<tr class="row-odd"><td><p>irq</p></td>
+<td><p>IRQ that parport is using for that port. This is in a separate
+file to allow you to alter it by writing a new value in (IRQ
+number or none).</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="tty-info-in-proc-tty">
+<h3>1.6 TTY info in /proc/tty<a class="headerlink" href="#tty-info-in-proc-tty" title="Permalink to this heading">¶</a></h3>
+<p>Information about  the  available  and actually used tty’s can be found in the
+directory /proc/tty. You’ll find  entries  for drivers and line disciplines in
+this directory, as shown in Table 1-11.</p>
+<table class="docutils align-default" id="id17">
+<caption><span class="caption-text">Table 1-11: Files in /proc/tty</span><a class="headerlink" href="#id17" title="Permalink to this table">¶</a></caption>
+<thead>
+<tr class="row-odd"><th class="head"><p>File</p></th>
+<th class="head"><p>Content</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>drivers</p></td>
+<td><p>list of drivers and their usage</p></td>
+</tr>
+<tr class="row-odd"><td><p>ldiscs</p></td>
+<td><p>registered line disciplines</p></td>
+</tr>
+<tr class="row-even"><td><p>driver/serial</p></td>
+<td><p>usage statistic and status of single tty lines</p></td>
+</tr>
+</tbody>
+</table>
+<p>To see  which  tty’s  are  currently in use, you can simply look into the file
+/proc/tty/drivers:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&gt; cat /proc/tty/drivers
+pty_slave            /dev/pts      136   0-255 pty:slave
+pty_master           /dev/ptm      128   0-255 pty:master
+pty_slave            /dev/ttyp       3   0-255 pty:slave
+pty_master           /dev/pty        2   0-255 pty:master
+serial               /dev/cua        5   64-67 serial:callout
+serial               /dev/ttyS       4   64-67 serial
+/dev/tty0            /dev/tty0       4       0 system:vtmaster
+/dev/ptmx            /dev/ptmx       5       2 system
+/dev/console         /dev/console    5       1 system:console
+/dev/tty             /dev/tty        5       0 system:/dev/tty
+unknown              /dev/tty        4    1-63 console
+</pre></div>
+</div>
+</section>
+<section id="miscellaneous-kernel-statistics-in-proc-stat">
+<h3>1.7 Miscellaneous kernel statistics in /proc/stat<a class="headerlink" href="#miscellaneous-kernel-statistics-in-proc-stat" title="Permalink to this heading">¶</a></h3>
+<p>Various pieces   of  information about  kernel activity  are  available in the
+/proc/stat file.  All  of  the numbers reported  in  this file are  aggregates
+since the system first booted.  For a quick look, simply cat the file:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&gt; cat /proc/stat
+cpu  237902850 368826709 106375398 1873517540 1135548 0 14507935 0 0 0
+cpu0 60045249 91891769 26331539 468411416 495718 0 5739640 0 0 0
+cpu1 59746288 91759249 26609887 468860630 312281 0 4384817 0 0 0
+cpu2 59489247 92985423 26904446 467808813 171668 0 2268998 0 0 0
+cpu3 58622065 92190267 26529524 468436680 155879 0 2114478 0 0 0
+intr 8688370575 8 3373 0 0 0 0 0 0 1 40791 0 0 353317 0 0 0 0 224789828 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 190974333 41958554 123983334 43 0 224593 0 0 0 &lt;more 0&#39;s deleted&gt;
+ctxt 22848221062
+btime 1605316999
+processes 746787147
+procs_running 2
+procs_blocked 0
+softirq 12121874454 100099120 3938138295 127375644 2795979 187870761 0 173808342 3072582055 52608 224184354
+</pre></div>
+</div>
+<p>The very first  “cpu” line aggregates the  numbers in all  of the other “cpuN”
+lines.  These numbers identify the amount of time the CPU has spent performing
+different kinds of work.  Time units are in USER_HZ (typically hundredths of a
+second).  The meanings of the columns are as follows, from left to right:</p>
+<ul>
+<li><p>user: normal processes executing in user mode</p></li>
+<li><p>nice: niced processes executing in user mode</p></li>
+<li><p>system: processes executing in kernel mode</p></li>
+<li><p>idle: twiddling thumbs</p></li>
+<li><p>iowait: In a word, iowait stands for waiting for I/O to complete. But there
+are several problems:</p>
+<ol class="arabic simple">
+<li><p>CPU will not wait for I/O to complete, iowait is the time that a task is
+waiting for I/O to complete. When CPU goes into idle state for
+outstanding task I/O, another task will be scheduled on this CPU.</p></li>
+<li><p>In a multi-core CPU, the task waiting for I/O to complete is not running
+on any CPU, so the iowait of each CPU is difficult to calculate.</p></li>
+<li><p>The value of iowait field in /proc/stat will decrease in certain
+conditions.</p></li>
+</ol>
+<p>So, the iowait is not reliable by reading from /proc/stat.</p>
+</li>
+<li><p>irq: servicing interrupts</p></li>
+<li><p>softirq: servicing softirqs</p></li>
+<li><p>steal: involuntary wait</p></li>
+<li><p>guest: running a normal guest</p></li>
+<li><p>guest_nice: running a niced guest</p></li>
+</ul>
+<p>The “intr” line gives counts of interrupts  serviced since boot time, for each
+of the  possible system interrupts.   The first  column  is the  total of  all
+interrupts serviced  including  unnumbered  architecture specific  interrupts;
+each  subsequent column is the  total for that particular numbered interrupt.
+Unnumbered interrupts are not shown, only summed into the total.</p>
+<p>The “ctxt” line gives the total number of context switches across all CPUs.</p>
+<p>The “btime” line gives  the time at which the  system booted, in seconds since
+the Unix epoch.</p>
+<p>The “processes” line gives the number  of processes and threads created, which
+includes (but  is not limited  to) those  created by  calls to the  fork() and
+clone() system calls.</p>
+<p>The “procs_running” line gives the total number of threads that are
+running or ready to run (i.e., the total number of runnable threads).</p>
+<p>The   “procs_blocked” line gives  the  number of  processes currently blocked,
+waiting for I/O to complete.</p>
+<p>The “softirq” line gives counts of softirqs serviced since boot time, for each
+of the possible system softirqs. The first column is the total of all
+softirqs serviced; each subsequent column is the total for that particular
+softirq.</p>
+</section>
+<section id="ext4-file-system-parameters">
+<h3>1.8 Ext4 file system parameters<a class="headerlink" href="#ext4-file-system-parameters" title="Permalink to this heading">¶</a></h3>
+<p>Information about mounted ext4 file systems can be found in
+/proc/fs/ext4.  Each mounted filesystem will have a directory in
+/proc/fs/ext4 based on its device name (i.e., /proc/fs/ext4/hdc or
+/proc/fs/ext4/sda9 or /proc/fs/ext4/dm-0).   The files in each per-device
+directory are shown in Table 1-12, below.</p>
+<table class="docutils align-default" id="id18">
+<caption><span class="caption-text">Table 1-12: Files in /proc/fs/ext4/&lt;devname&gt;</span><a class="headerlink" href="#id18" title="Permalink to this table">¶</a></caption>
+<tbody>
+<tr class="row-odd"><td><p>File</p></td>
+<td><p>Content</p></td>
+</tr>
+<tr class="row-even"><td><p>mb_groups</p></td>
+<td><p>details of multiblock allocator buddy cache of free blocks</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="proc-consoles">
+<h3>1.9 /proc/consoles<a class="headerlink" href="#proc-consoles" title="Permalink to this heading">¶</a></h3>
+<p>Shows registered system console lines.</p>
+<p>To see which character device lines are currently used for the system console
+/dev/console, you may simply look into the file /proc/consoles:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&gt; cat /proc/consoles
+tty0                 -WU (ECp)       4:7
+ttyS0                -W- (Ep)        4:64
+</pre></div>
+</div>
+<p>The columns are:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>device</p></th>
+<th class="head"><p>name of the device</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>operations</p></td>
+<td><ul class="simple">
+<li><p>R = can do read operations</p></li>
+<li><p>W = can do write operations</p></li>
+<li><p>U = can do unblank</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><p>flags</p></td>
+<td><ul class="simple">
+<li><p>E = it is enabled</p></li>
+<li><p>C = it is preferred console</p></li>
+<li><p>B = it is primary boot console</p></li>
+<li><p>p = it is used for printk buffer</p></li>
+<li><p>b = it is not a TTY but a Braille device</p></li>
+<li><p>a = it is safe to use when cpu is offline</p></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td><p>major:minor</p></td>
+<td><p>major and minor number of the device separated by a
+colon</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="summary">
+<h3>Summary<a class="headerlink" href="#summary" title="Permalink to this heading">¶</a></h3>
+<p>The /proc file system serves information about the running system. It not only
+allows access to process data but also allows you to request the kernel status
+by reading files in the hierarchy.</p>
+<p>The directory  structure  of /proc reflects the types of information and makes
+it easy, if not obvious, where to look for specific data.</p>
+</section>
+</section>
+<section id="chapter-2-modifying-system-parameters">
+<h2>Chapter 2: Modifying System Parameters<a class="headerlink" href="#chapter-2-modifying-system-parameters" title="Permalink to this heading">¶</a></h2>
+<section id="id1">
+<h3>In This Chapter<a class="headerlink" href="#id1" title="Permalink to this heading">¶</a></h3>
+<ul class="simple">
+<li><p>Modifying kernel parameters by writing into files found in /proc/sys</p></li>
+<li><p>Exploring the files which modify certain parameters</p></li>
+<li><p>Review of the /proc/sys file tree</p></li>
+</ul>
+<hr class="docutils" />
+<p>A very  interesting part of /proc is the directory /proc/sys. This is not only
+a source  of  information,  it also allows you to change parameters within the
+kernel. Be  very  careful  when attempting this. You can optimize your system,
+but you  can  also  cause  it  to  crash.  Never  alter kernel parameters on a
+production system.  Set  up  a  development machine and test to make sure that
+everything works  the  way  you want it to. You may have no alternative but to
+reboot the machine once an error has been made.</p>
+<p>To change  a  value,  simply  echo  the new value into the file.
+You need to be root to do this. You  can  create  your  own  boot script
+to perform this every time your system boots.</p>
+<p>The files  in /proc/sys can be used to fine tune and monitor miscellaneous and
+general things  in  the operation of the Linux kernel. Since some of the files
+can inadvertently  disrupt  your  system,  it  is  advisable  to  read  both
+documentation and  source  before actually making adjustments. In any case, be
+very careful  when  writing  to  any  of these files. The entries in /proc may
+change slightly between the 2.1.* and the 2.2 kernel, so if there is any doubt
+review the kernel documentation in the directory linux/Documentation.
+This chapter  is  heavily  based  on the documentation included in the pre 2.2
+kernels, and became part of it in version 2.2.1 of the Linux kernel.</p>
+<p>Please see: Documentation/admin-guide/sysctl/ directory for descriptions of
+these entries.</p>
+</section>
+<section id="id2">
+<h3>Summary<a class="headerlink" href="#id2" title="Permalink to this heading">¶</a></h3>
+<p>Certain aspects  of  kernel  behavior  can be modified at runtime, without the
+need to  recompile  the kernel, or even to reboot the system. The files in the
+/proc/sys tree  can  not only be read, but also modified. You can use the echo
+command to write value into these files, thereby changing the default settings
+of the kernel.</p>
+</section>
+</section>
+<section id="chapter-3-per-process-parameters">
+<h2>Chapter 3: Per-process Parameters<a class="headerlink" href="#chapter-3-per-process-parameters" title="Permalink to this heading">¶</a></h2>
+<section id="proc-pid-oom-adj-proc-pid-oom-score-adj-adjust-the-oom-killer-score">
+<h3>3.1 /proc/&lt;pid&gt;/oom_adj &amp; /proc/&lt;pid&gt;/oom_score_adj- Adjust the oom-killer score<a class="headerlink" href="#proc-pid-oom-adj-proc-pid-oom-score-adj-adjust-the-oom-killer-score" title="Permalink to this heading">¶</a></h3>
+<p>These files can be used to adjust the badness heuristic used to select which
+process gets killed in out of memory (oom) conditions.</p>
+<p>The badness heuristic assigns a value to each candidate task ranging from 0
+(never kill) to 1000 (always kill) to determine which process is targeted.  The
+units are roughly a proportion along that range of allowed memory the process
+may allocate from based on an estimation of its current memory and swap use.
+For example, if a task is using all allowed memory, its badness score will be
+1000.  If it is using half of its allowed memory, its score will be 500.</p>
+<p>The amount of “allowed” memory depends on the context in which the oom killer
+was called.  If it is due to the memory assigned to the allocating task’s cpuset
+being exhausted, the allowed memory represents the set of mems assigned to that
+cpuset.  If it is due to a mempolicy’s node(s) being exhausted, the allowed
+memory represents the set of mempolicy nodes.  If it is due to a memory
+limit (or swap limit) being reached, the allowed memory is that configured
+limit.  Finally, if it is due to the entire system being out of memory, the
+allowed memory represents all allocatable resources.</p>
+<p>The value of /proc/&lt;pid&gt;/oom_score_adj is added to the badness score before it
+is used to determine which task to kill.  Acceptable values range from -1000
+(OOM_SCORE_ADJ_MIN) to +1000 (OOM_SCORE_ADJ_MAX).  This allows userspace to
+polarize the preference for oom killing either by always preferring a certain
+task or completely disabling it.  The lowest possible value, -1000, is
+equivalent to disabling oom killing entirely for that task since it will always
+report a badness score of 0.</p>
+<p>Consequently, it is very simple for userspace to define the amount of memory to
+consider for each task.  Setting a /proc/&lt;pid&gt;/oom_score_adj value of +500, for
+example, is roughly equivalent to allowing the remainder of tasks sharing the
+same system, cpuset, mempolicy, or memory controller resources to use at least
+50% more memory.  A value of -500, on the other hand, would be roughly
+equivalent to discounting 50% of the task’s allowed memory from being considered
+as scoring against the task.</p>
+<p>For backwards compatibility with previous kernels, /proc/&lt;pid&gt;/oom_adj may also
+be used to tune the badness score.  Its acceptable values range from -16
+(OOM_ADJUST_MIN) to +15 (OOM_ADJUST_MAX) and a special value of -17
+(OOM_DISABLE) to disable oom killing entirely for that task.  Its value is
+scaled linearly with /proc/&lt;pid&gt;/oom_score_adj.</p>
+<p>The value of /proc/&lt;pid&gt;/oom_score_adj may be reduced no lower than the last
+value set by a CAP_SYS_RESOURCE process. To reduce the value any lower
+requires CAP_SYS_RESOURCE.</p>
+</section>
+<section id="proc-pid-oom-score-display-current-oom-killer-score">
+<h3>3.2 /proc/&lt;pid&gt;/oom_score - Display current oom-killer score<a class="headerlink" href="#proc-pid-oom-score-display-current-oom-killer-score" title="Permalink to this heading">¶</a></h3>
+<p>This file can be used to check the current score used by the oom-killer for
+any given &lt;pid&gt;. Use it together with /proc/&lt;pid&gt;/oom_score_adj to tune which
+process should be killed in an out-of-memory situation.</p>
+<p>Please note that the exported value includes oom_score_adj so it is
+effectively in range [0,2000].</p>
+</section>
+<section id="proc-pid-io-display-the-io-accounting-fields">
+<h3>3.3  /proc/&lt;pid&gt;/io - Display the IO accounting fields<a class="headerlink" href="#proc-pid-io-display-the-io-accounting-fields" title="Permalink to this heading">¶</a></h3>
+<p>This file contains IO statistics for each running process.</p>
+<section id="example">
+<h4>Example<a class="headerlink" href="#example" title="Permalink to this heading">¶</a></h4>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>test:/tmp # dd if=/dev/zero of=/tmp/test.dat &amp;
+[1] 3828
+
+test:/tmp # cat /proc/3828/io
+rchar: 323934931
+wchar: 323929600
+syscr: 632687
+syscw: 632675
+read_bytes: 0
+write_bytes: 323932160
+cancelled_write_bytes: 0
+</pre></div>
+</div>
+</section>
+<section id="description">
+<h4>Description<a class="headerlink" href="#description" title="Permalink to this heading">¶</a></h4>
+<section id="rchar">
+<h5>rchar<a class="headerlink" href="#rchar" title="Permalink to this heading">¶</a></h5>
+<p>I/O counter: chars read
+The number of bytes which this task has caused to be read from storage. This
+is simply the sum of bytes which this process passed to read() and <code class="xref c c-func broken_xref docutils literal notranslate"><span class="pre">pread()</span></code>.
+It includes things like tty IO and it is unaffected by whether or not actual
+physical disk IO was required (the read might have been satisfied from
+pagecache).</p>
+</section>
+<section id="wchar">
+<h5>wchar<a class="headerlink" href="#wchar" title="Permalink to this heading">¶</a></h5>
+<p>I/O counter: chars written
+The number of bytes which this task has caused, or shall cause to be written
+to disk. Similar caveats apply here as with rchar.</p>
+</section>
+<section id="syscr">
+<h5>syscr<a class="headerlink" href="#syscr" title="Permalink to this heading">¶</a></h5>
+<p>I/O counter: read syscalls
+Attempt to count the number of read I/O operations, i.e. syscalls like read()
+and <code class="xref c c-func broken_xref docutils literal notranslate"><span class="pre">pread()</span></code>.</p>
+</section>
+<section id="syscw">
+<h5>syscw<a class="headerlink" href="#syscw" title="Permalink to this heading">¶</a></h5>
+<p>I/O counter: write syscalls
+Attempt to count the number of write I/O operations, i.e. syscalls like
+write() and <code class="xref c c-func broken_xref docutils literal notranslate"><span class="pre">pwrite()</span></code>.</p>
+</section>
+<section id="read-bytes">
+<h5>read_bytes<a class="headerlink" href="#read-bytes" title="Permalink to this heading">¶</a></h5>
+<p>I/O counter: bytes read
+Attempt to count the number of bytes which this process really did cause to
+be fetched from the storage layer. Done at the <a class="reference internal" href="../core-api/kernel-api.html#c.submit_bio" title="submit_bio"><code class="xref c c-func docutils literal notranslate"><span class="pre">submit_bio()</span></code></a> level, so it is
+accurate for block-backed filesystems. &lt;please add status regarding NFS and
+CIFS at a later time&gt;</p>
+</section>
+<section id="write-bytes">
+<h5>write_bytes<a class="headerlink" href="#write-bytes" title="Permalink to this heading">¶</a></h5>
+<p>I/O counter: bytes written
+Attempt to count the number of bytes which this process caused to be sent to
+the storage layer. This is done at page-dirtying time.</p>
+</section>
+<section id="cancelled-write-bytes">
+<h5>cancelled_write_bytes<a class="headerlink" href="#cancelled-write-bytes" title="Permalink to this heading">¶</a></h5>
+<p>The big inaccuracy here is truncate. If a process writes 1MB to a file and
+then deletes the file, it will in fact perform no writeout. But it will have
+been accounted as having caused 1MB of write.
+In other words: The number of bytes which this process caused to not happen,
+by truncating pagecache. A task can cause “negative” IO too. If this task
+truncates some dirty pagecache, some IO which another task has been accounted
+for (in its write_bytes) will not be happening. We _could_ just subtract that
+from the truncating task’s write_bytes, but there is information loss in doing
+that.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>At its current implementation state, this is a bit racy on 32-bit machines:
+if process A reads process B’s /proc/pid/io while process B is updating one
+of those 64-bit counters, process A could see an intermediate result.</p>
+</div>
+<p>More information about this can be found within the taskstats documentation in
+Documentation/accounting.</p>
+</section>
+</section>
+</section>
+<section id="proc-pid-coredump-filter-core-dump-filtering-settings">
+<h3>3.4 /proc/&lt;pid&gt;/coredump_filter - Core dump filtering settings<a class="headerlink" href="#proc-pid-coredump-filter-core-dump-filtering-settings" title="Permalink to this heading">¶</a></h3>
+<p>When a process is dumped, all anonymous memory is written to a core file as
+long as the size of the core file isn’t limited. But sometimes we don’t want
+to dump some memory segments, for example, huge shared memory or DAX.
+Conversely, sometimes we want to save file-backed memory segments into a core
+file, not only the individual files.</p>
+<p>/proc/&lt;pid&gt;/coredump_filter allows you to customize which memory segments
+will be dumped when the &lt;pid&gt; process is dumped. coredump_filter is a bitmask
+of memory types. If a bit of the bitmask is set, memory segments of the
+corresponding memory type are dumped, otherwise they are not dumped.</p>
+<p>The following 9 memory types are supported:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>(bit 0) anonymous private memory</p></li>
+<li><p>(bit 1) anonymous shared memory</p></li>
+<li><p>(bit 2) file-backed private memory</p></li>
+<li><p>(bit 3) file-backed shared memory</p></li>
+<li><p>(bit 4) ELF header pages in file-backed private memory areas (it is
+effective only if the bit 2 is cleared)</p></li>
+<li><p>(bit 5) hugetlb private memory</p></li>
+<li><p>(bit 6) hugetlb shared memory</p></li>
+<li><p>(bit 7) DAX private memory</p></li>
+<li><p>(bit 8) DAX shared memory</p></li>
+</ul>
+<p>Note that MMIO pages such as frame buffer are never dumped and vDSO pages
+are always dumped regardless of the bitmask status.</p>
+<p>Note that bits 0-4 don’t affect hugetlb or DAX memory. hugetlb memory is
+only affected by bit 5-6, and DAX is only affected by bits 7-8.</p>
+</div></blockquote>
+<p>The default value of coredump_filter is 0x33; this means all anonymous memory
+segments, ELF header pages and hugetlb private memory are dumped.</p>
+<p>If you don’t want to dump all shared memory segments attached to pid 1234,
+write 0x31 to the process’s proc file:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>$ echo 0x31 &gt; /proc/1234/coredump_filter
+</pre></div>
+</div>
+<p>When a new process is created, the process inherits the bitmask status from its
+parent. It is useful to set up coredump_filter before the program runs.
+For example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>$ echo 0x7 &gt; /proc/self/coredump_filter
+$ ./some_program
+</pre></div>
+</div>
+</section>
+<section id="proc-pid-mountinfo-information-about-mounts">
+<h3>3.5     /proc/&lt;pid&gt;/mountinfo - Information about mounts<a class="headerlink" href="#proc-pid-mountinfo-information-about-mounts" title="Permalink to this heading">¶</a></h3>
+<p>This file contains lines of the form:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>36 35 98:0 /mnt1 /mnt2 rw,noatime master:1 - ext3 /dev/root rw,errors=continue
+(1)(2)(3)   (4)   (5)      (6)     (n…m) (m+1)(m+2) (m+3)         (m+4)
+
+(1)   mount ID:        unique identifier of the mount (may be reused after umount)
+(2)   parent ID:       ID of parent (or of self for the top of the mount tree)
+(3)   major:minor:     value of st_dev for files on filesystem
+(4)   root:            root of the mount within the filesystem
+(5)   mount point:     mount point relative to the process&#39;s root
+(6)   mount options:   per mount options
+(n…m) optional fields: zero or more fields of the form &quot;tag[:value]&quot;
+(m+1) separator:       marks the end of the optional fields
+(m+2) filesystem type: name of filesystem of the form &quot;type[.subtype]&quot;
+(m+3) mount source:    filesystem specific information or &quot;none&quot;
+(m+4) super options:   per super block options
+</pre></div>
+</div>
+<p>Parsers should ignore all unrecognised optional fields.  Currently the
+possible optional fields are:</p>
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p>shared:X</p></td>
+<td><p>mount is shared in peer group X</p></td>
+</tr>
+<tr class="row-even"><td><p>master:X</p></td>
+<td><p>mount is slave to peer group X</p></td>
+</tr>
+<tr class="row-odd"><td><p>propagate_from:X</p></td>
+<td><p>mount is slave and receives propagation from peer group X <a class="footnote-reference brackets" href="#id4" id="id3" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p>unbindable</p></td>
+<td><p>mount is unbindable</p></td>
+</tr>
+</tbody>
+</table>
+<aside class="footnote-list brackets">
+<aside class="footnote brackets" id="id4" role="note">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id3">1</a><span class="fn-bracket">]</span></span>
+<p>X is the closest dominant peer group under the process’s root.  If
+X is the immediate master of the mount, or if there’s no dominant peer
+group under the same root, then only the “master:X” field is present
+and not the “propagate_from:X” field.</p>
+</aside>
+</aside>
+<p>For more information on mount propagation see:</p>
+<blockquote>
+<div><p><a class="reference internal" href="sharedsubtree.html"><span class="doc">Shared Subtrees</span></a></p>
+</div></blockquote>
+</section>
+<section id="proc-pid-comm-proc-pid-task-tid-comm">
+<h3>3.6     /proc/&lt;pid&gt;/comm  &amp; /proc/&lt;pid&gt;/task/&lt;tid&gt;/comm<a class="headerlink" href="#proc-pid-comm-proc-pid-task-tid-comm" title="Permalink to this heading">¶</a></h3>
+<p>These files provide a method to access a task’s comm value. It also allows for
+a task to set its own or one of its thread siblings comm value. The comm value
+is limited in size compared to the cmdline value, so writing anything longer
+then the kernel’s TASK_COMM_LEN (currently 16 chars, including the NUL
+terminator) will result in a truncated comm value.</p>
+</section>
+<section id="proc-pid-task-tid-children-information-about-task-children">
+<h3>3.7     /proc/&lt;pid&gt;/task/&lt;tid&gt;/children - Information about task children<a class="headerlink" href="#proc-pid-task-tid-children-information-about-task-children" title="Permalink to this heading">¶</a></h3>
+<p>This file provides a fast way to retrieve first level children pids
+of a task pointed by &lt;pid&gt;/&lt;tid&gt; pair. The format is a space separated
+stream of pids.</p>
+<p>Note the “first level” here -- if a child has its own children they will
+not be listed here; one needs to read /proc/&lt;children-pid&gt;/task/&lt;tid&gt;/children
+to obtain the descendants.</p>
+<p>Since this interface is intended to be fast and cheap it doesn’t
+guarantee to provide precise results and some children might be
+skipped, especially if they’ve exited right after we printed their
+pids, so one needs to either stop or freeze processes being inspected
+if precise results are needed.</p>
+</section>
+<section id="proc-pid-fdinfo-fd-information-about-opened-file">
+<h3>3.8     /proc/&lt;pid&gt;/fdinfo/&lt;fd&gt; - Information about opened file<a class="headerlink" href="#proc-pid-fdinfo-fd-information-about-opened-file" title="Permalink to this heading">¶</a></h3>
+<p>This file provides information associated with an opened file. The regular
+files have at least four fields -- ‘pos’, ‘flags’, ‘mnt_id’ and ‘ino’.
+The ‘pos’ represents the current offset of the opened file in decimal
+form [see lseek(2) for details], ‘flags’ denotes the octal O_xxx mask the
+file has been created with [see open(2) for details] and ‘mnt_id’ represents
+mount ID of the file system containing the opened file [see 3.5
+/proc/&lt;pid&gt;/mountinfo for details]. ‘ino’ represents the inode number of
+the file.</p>
+<p>A typical output is:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>pos:    0
+flags:  0100002
+mnt_id: 19
+ino:    63107
+</pre></div>
+</div>
+<p>All locks associated with a file descriptor are shown in its fdinfo too:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>lock:       1: FLOCK  ADVISORY  WRITE 359 00:13:11691 0 EOF
+</pre></div>
+</div>
+<p>The files such as eventfd, fsnotify, signalfd, epoll among the regular pos/flags
+pair provide additional information particular to the objects they represent.</p>
+<section id="eventfd-files">
+<h4>Eventfd files<a class="headerlink" href="#eventfd-files" title="Permalink to this heading">¶</a></h4>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>pos:    0
+flags:  04002
+mnt_id: 9
+ino:    63107
+eventfd-count:  5a
+</pre></div>
+</div>
+<p>where ‘eventfd-count’ is hex value of a counter.</p>
+</section>
+<section id="signalfd-files">
+<h4>Signalfd files<a class="headerlink" href="#signalfd-files" title="Permalink to this heading">¶</a></h4>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>pos:    0
+flags:  04002
+mnt_id: 9
+ino:    63107
+sigmask:        0000000000000200
+</pre></div>
+</div>
+<p>where ‘sigmask’ is hex value of the signal mask associated
+with a file.</p>
+</section>
+<section id="epoll-files">
+<h4>Epoll files<a class="headerlink" href="#epoll-files" title="Permalink to this heading">¶</a></h4>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>pos:    0
+flags:  02
+mnt_id: 9
+ino:    63107
+tfd:        5 events:       1d data: ffffffffffffffff pos:0 ino:61af sdev:7
+</pre></div>
+</div>
+<p>where ‘tfd’ is a target file descriptor number in decimal form,
+‘events’ is events mask being watched and the ‘data’ is data
+associated with a target [see epoll(7) for more details].</p>
+<p>The ‘pos’ is current offset of the target file in decimal form
+[see lseek(2)], ‘ino’ and ‘sdev’ are inode and device numbers
+where target file resides, all in hex format.</p>
+</section>
+<section id="fsnotify-files">
+<h4>Fsnotify files<a class="headerlink" href="#fsnotify-files" title="Permalink to this heading">¶</a></h4>
+<p>For inotify files the format is the following:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>pos:    0
+flags:  02000000
+mnt_id: 9
+ino:    63107
+inotify wd:3 ino:9e7e sdev:800013 mask:800afce ignored_mask:0 fhandle-bytes:8 fhandle-type:1 f_handle:7e9e0000640d1b6d
+</pre></div>
+</div>
+<p>where ‘wd’ is a watch descriptor in decimal form, i.e. a target file
+descriptor number, ‘ino’ and ‘sdev’ are inode and device where the
+target file resides and the ‘mask’ is the mask of events, all in hex
+form [see inotify(7) for more details].</p>
+<p>If the kernel was built with exportfs support, the path to the target
+file is encoded as a file handle.  The file handle is provided by three
+fields ‘fhandle-bytes’, ‘fhandle-type’ and ‘f_handle’, all in hex
+format.</p>
+<p>If the kernel is built without exportfs support the file handle won’t be
+printed out.</p>
+<p>If there is no inotify mark attached yet the ‘inotify’ line will be omitted.</p>
+<p>For fanotify files the format is:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>pos:    0
+flags:  02
+mnt_id: 9
+ino:    63107
+fanotify flags:10 event-flags:0
+fanotify mnt_id:12 mflags:40 mask:38 ignored_mask:40000003
+fanotify ino:4f969 sdev:800013 mflags:0 mask:3b ignored_mask:40000000 fhandle-bytes:8 fhandle-type:1 f_handle:69f90400c275b5b4
+</pre></div>
+</div>
+<p>where fanotify ‘flags’ and ‘event-flags’ are values used in fanotify_init
+call, ‘mnt_id’ is the mount point identifier, ‘mflags’ is the value of
+flags associated with mark which are tracked separately from events
+mask. ‘ino’ and ‘sdev’ are target inode and device, ‘mask’ is the events
+mask and ‘ignored_mask’ is the mask of events which are to be ignored.
+All are in hex format. Incorporation of ‘mflags’, ‘mask’ and ‘ignored_mask’
+provide information about flags and mask used in fanotify_mark
+call [see fsnotify manpage for details].</p>
+<p>While the first three lines are mandatory and always printed, the rest is
+optional and may be omitted if no marks created yet.</p>
+</section>
+<section id="timerfd-files">
+<h4>Timerfd files<a class="headerlink" href="#timerfd-files" title="Permalink to this heading">¶</a></h4>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>pos:    0
+flags:  02
+mnt_id: 9
+ino:    63107
+clockid: 0
+ticks: 0
+settime flags: 01
+it_value: (0, 49406829)
+it_interval: (1, 0)
+</pre></div>
+</div>
+<p>where ‘clockid’ is the clock type and ‘ticks’ is the number of the timer expirations
+that have occurred [see timerfd_create(2) for details]. ‘settime flags’ are
+flags in octal form been used to setup the timer [see timerfd_settime(2) for
+details]. ‘it_value’ is remaining time until the timer expiration.
+‘it_interval’ is the interval for the timer. Note the timer might be set up
+with TIMER_ABSTIME option which will be shown in ‘settime flags’, but ‘it_value’
+still exhibits timer’s remaining time.</p>
+</section>
+<section id="dma-buffer-files">
+<h4>DMA Buffer files<a class="headerlink" href="#dma-buffer-files" title="Permalink to this heading">¶</a></h4>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>pos:    0
+flags:  04002
+mnt_id: 9
+ino:    63107
+size:   32768
+count:  2
+exp_name:  system-heap
+</pre></div>
+</div>
+<p>where ‘size’ is the size of the DMA buffer in bytes. ‘count’ is the file count of
+the DMA buffer file. ‘exp_name’ is the name of the DMA buffer exporter.</p>
+</section>
+<section id="vfio-device-files">
+<h4>VFIO Device files<a class="headerlink" href="#vfio-device-files" title="Permalink to this heading">¶</a></h4>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>pos:    0
+flags:  02000002
+mnt_id: 17
+ino:    5122
+vfio-device-syspath: /sys/devices/pci0000:e0/0000:e0:01.1/0000:e1:00.0/0000:e2:05.0/0000:e8:00.0
+</pre></div>
+</div>
+<p>where ‘vfio-device-syspath’ is the sysfs path corresponding to the VFIO device
+file.</p>
+</section>
+</section>
+<section id="proc-pid-map-files-information-about-memory-mapped-files">
+<h3>3.9     /proc/&lt;pid&gt;/map_files - Information about memory mapped files<a class="headerlink" href="#proc-pid-map-files-information-about-memory-mapped-files" title="Permalink to this heading">¶</a></h3>
+<p>This directory contains symbolic links which represent memory mapped files
+the process is maintaining.  Example output:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>| lr-------- 1 root root 64 Jan 27 11:24 333c600000-333c620000 -&gt; /usr/lib64/ld-2.18.so
+| lr-------- 1 root root 64 Jan 27 11:24 333c81f000-333c820000 -&gt; /usr/lib64/ld-2.18.so
+| lr-------- 1 root root 64 Jan 27 11:24 333c820000-333c821000 -&gt; /usr/lib64/ld-2.18.so
+| ...
+| lr-------- 1 root root 64 Jan 27 11:24 35d0421000-35d0422000 -&gt; /usr/lib64/libselinux.so.1
+| lr-------- 1 root root 64 Jan 27 11:24 400000-41a000 -&gt; /usr/bin/ls
+</pre></div>
+</div>
+<p>The name of a link represents the virtual memory bounds of a mapping, i.e.
+vm_area_struct::vm_start - vm_area_struct::vm_end.</p>
+<p>The main purpose of the map_files is to retrieve a set of memory mapped
+files in a fast way instead of parsing /proc/&lt;pid&gt;/maps or
+/proc/&lt;pid&gt;/smaps, both of which contain many more records.  At the same
+time one can open(2) mappings from the listings of two processes and
+comparing their inode numbers to figure out which anonymous memory areas
+are actually shared.</p>
+</section>
+<section id="proc-pid-timerslack-ns-task-timerslack-value">
+<h3>3.10    /proc/&lt;pid&gt;/timerslack_ns - Task timerslack value<a class="headerlink" href="#proc-pid-timerslack-ns-task-timerslack-value" title="Permalink to this heading">¶</a></h3>
+<p>This file provides the value of the task’s timerslack value in nanoseconds.
+This value specifies an amount of time that normal timers may be deferred
+in order to coalesce timers and avoid unnecessary wakeups.</p>
+<p>This allows a task’s interactivity vs power consumption tradeoff to be
+adjusted.</p>
+<p>Writing 0 to the file will set the task’s timerslack to the default value.</p>
+<p>Valid values are from 0 - ULLONG_MAX</p>
+<p>An application setting the value must have PTRACE_MODE_ATTACH_FSCREDS level
+permissions on the task specified to change its timerslack_ns value.</p>
+</section>
+<section id="proc-pid-patch-state-livepatch-patch-operation-state">
+<h3>3.11    /proc/&lt;pid&gt;/patch_state - Livepatch patch operation state<a class="headerlink" href="#proc-pid-patch-state-livepatch-patch-operation-state" title="Permalink to this heading">¶</a></h3>
+<p>When CONFIG_LIVEPATCH is enabled, this file displays the value of the
+patch state for the task.</p>
+<p>A value of ‘-1’ indicates that no patch is in transition.</p>
+<p>A value of ‘0’ indicates that a patch is in transition and the task is
+unpatched.  If the patch is being enabled, then the task hasn’t been
+patched yet.  If the patch is being disabled, then the task has already
+been unpatched.</p>
+<p>A value of ‘1’ indicates that a patch is in transition and the task is
+patched.  If the patch is being enabled, then the task has already been
+patched.  If the patch is being disabled, then the task hasn’t been
+unpatched yet.</p>
+</section>
+<section id="proc-pid-arch-status-task-architecture-specific-status">
+<h3>3.12 /proc/&lt;pid&gt;/arch_status - task architecture specific status<a class="headerlink" href="#proc-pid-arch-status-task-architecture-specific-status" title="Permalink to this heading">¶</a></h3>
+<p>When CONFIG_PROC_PID_ARCH_STATUS is enabled, this file displays the
+architecture specific status of the task.</p>
+<section id="id5">
+<h4>Example<a class="headerlink" href="#id5" title="Permalink to this heading">¶</a></h4>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>$ cat /proc/6753/arch_status
+AVX512_elapsed_ms:      8
+</pre></div>
+</div>
+</section>
+<section id="id6">
+<h4>Description<a class="headerlink" href="#id6" title="Permalink to this heading">¶</a></h4>
+</section>
+<section id="x86-specific-entries">
+<h4>x86 specific entries<a class="headerlink" href="#x86-specific-entries" title="Permalink to this heading">¶</a></h4>
+<section id="avx512-elapsed-ms">
+<h5>AVX512_elapsed_ms<a class="headerlink" href="#avx512-elapsed-ms" title="Permalink to this heading">¶</a></h5>
+<blockquote>
+<div><p>If AVX512 is supported on the machine, this entry shows the milliseconds
+elapsed since the last time AVX512 usage was recorded. The recording
+happens on a best effort basis when a task is scheduled out. This means
+that the value depends on two factors:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>The time which the task spent on the CPU without being scheduled
+out. With CPU isolation and a single runnable task this can take
+several seconds.</p></li>
+<li><p>The time since the task was scheduled out last. Depending on the
+reason for being scheduled out (time slice exhausted, syscall ...)
+this can be arbitrary long time.</p></li>
+</ol>
+</div></blockquote>
+<p>As a consequence the value cannot be considered precise and authoritative
+information. The application which uses this information has to be aware
+of the overall scenario on the system in order to determine whether a
+task is a real AVX512 user or not. Precise information can be obtained
+with performance counters.</p>
+<p>A special value of ‘-1’ indicates that no AVX512 usage was recorded, thus
+the task is unlikely an AVX512 user, but depends on the workload and the
+scheduling scenario, it also could be a false negative mentioned above.</p>
+</div></blockquote>
+</section>
+</section>
+</section>
+<section id="proc-pid-fd-list-of-symlinks-to-open-files">
+<h3>3.13 /proc/&lt;pid&gt;/fd - List of symlinks to open files<a class="headerlink" href="#proc-pid-fd-list-of-symlinks-to-open-files" title="Permalink to this heading">¶</a></h3>
+<p>This directory contains symbolic links which represent open files
+the process is maintaining.  Example output:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>lr-x------ 1 root root 64 Sep 20 17:53 0 -&gt; /dev/null
+l-wx------ 1 root root 64 Sep 20 17:53 1 -&gt; /dev/null
+lrwx------ 1 root root 64 Sep 20 17:53 10 -&gt; &#39;socket:[12539]&#39;
+lrwx------ 1 root root 64 Sep 20 17:53 11 -&gt; &#39;socket:[12540]&#39;
+lrwx------ 1 root root 64 Sep 20 17:53 12 -&gt; &#39;socket:[12542]&#39;
+</pre></div>
+</div>
+<p>The number of open files for the process is stored in ‘size’ member
+of <code class="xref c c-func broken_xref docutils literal notranslate"><span class="pre">stat()</span></code> output for /proc/&lt;pid&gt;/fd for fast access.
+-------------------------------------------------------</p>
+</section>
+<section id="proc-pid-ksm-stat-information-about-the-process-s-ksm-status">
+<h3>3.14 /proc/&lt;pid&gt;/ksm_stat - Information about the process’s ksm status<a class="headerlink" href="#proc-pid-ksm-stat-information-about-the-process-s-ksm-status" title="Permalink to this heading">¶</a></h3>
+<p>When CONFIG_KSM is enabled, each process has this file which displays
+the information of ksm merging status.</p>
+<section id="id7">
+<h4>Example<a class="headerlink" href="#id7" title="Permalink to this heading">¶</a></h4>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>/ # cat /proc/self/ksm_stat
+ksm_rmap_items 0
+ksm_zero_pages 0
+ksm_merging_pages 0
+ksm_process_profit 0
+ksm_merge_any: no
+ksm_mergeable: no
+</pre></div>
+</div>
+</section>
+<section id="id8">
+<h4>Description<a class="headerlink" href="#id8" title="Permalink to this heading">¶</a></h4>
+<section id="ksm-rmap-items">
+<h5>ksm_rmap_items<a class="headerlink" href="#ksm-rmap-items" title="Permalink to this heading">¶</a></h5>
+<p>The number of ksm_rmap_item structures in use.  The structure
+ksm_rmap_item stores the reverse mapping information for virtual
+addresses.  KSM will generate a ksm_rmap_item for each ksm-scanned page of
+the process.</p>
+</section>
+<section id="ksm-zero-pages">
+<h5>ksm_zero_pages<a class="headerlink" href="#ksm-zero-pages" title="Permalink to this heading">¶</a></h5>
+<p>When /sys/kernel/mm/ksm/use_zero_pages is enabled, it represent how many
+empty pages are merged with kernel zero pages by KSM.</p>
+</section>
+<section id="ksm-merging-pages">
+<h5>ksm_merging_pages<a class="headerlink" href="#ksm-merging-pages" title="Permalink to this heading">¶</a></h5>
+<p>It represents how many pages of this process are involved in KSM merging
+(not including ksm_zero_pages). It is the same with what
+/proc/&lt;pid&gt;/ksm_merging_pages shows.</p>
+</section>
+<section id="ksm-process-profit">
+<h5>ksm_process_profit<a class="headerlink" href="#ksm-process-profit" title="Permalink to this heading">¶</a></h5>
+<p>The profit that KSM brings (Saved bytes). KSM can save memory by merging
+identical pages, but also can consume additional memory, because it needs
+to generate a number of rmap_items to save each scanned page’s brief rmap
+information. Some of these pages may be merged, but some may not be abled
+to be merged after being checked several times, which are unprofitable
+memory consumed.</p>
+</section>
+<section id="ksm-merge-any">
+<h5>ksm_merge_any<a class="headerlink" href="#ksm-merge-any" title="Permalink to this heading">¶</a></h5>
+<p>It specifies whether the process’s ‘mm is added by <code class="xref c c-func broken_xref docutils literal notranslate"><span class="pre">prctl()</span></code> into the
+candidate list of KSM or not, and if KSM scanning is fully enabled at
+process level.</p>
+</section>
+<section id="ksm-mergeable">
+<h5>ksm_mergeable<a class="headerlink" href="#ksm-mergeable" title="Permalink to this heading">¶</a></h5>
+<p>It specifies whether any VMAs of the process’’s mms are currently
+applicable to KSM.</p>
+<p>More information about KSM can be found in
+<a class="reference internal" href="../admin-guide/mm/ksm.html"><span class="doc">Kernel Samepage Merging</span></a>.</p>
+</section>
+</section>
+</section>
+</section>
+<section id="chapter-4-configuring-procfs">
+<h2>Chapter 4: Configuring procfs<a class="headerlink" href="#chapter-4-configuring-procfs" title="Permalink to this heading">¶</a></h2>
+<section id="mount-options">
+<h3>4.1     Mount options<a class="headerlink" href="#mount-options" title="Permalink to this heading">¶</a></h3>
+<p>The following mount options are supported:</p>
+<blockquote>
+<div><table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p>hidepid=</p></td>
+<td><p>Set /proc/&lt;pid&gt;/ access mode.</p></td>
+</tr>
+<tr class="row-even"><td><p>gid=</p></td>
+<td><p>Set the group authorized to learn processes information.</p></td>
+</tr>
+<tr class="row-odd"><td><p>subset=</p></td>
+<td><p>Show only the specified subset of procfs.</p></td>
+</tr>
+<tr class="row-even"><td><p>pidns=</p></td>
+<td><p>Specify a the namespace used by this procfs.</p></td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+<p>hidepid=off or hidepid=0 means classic mode - everybody may access all
+/proc/&lt;pid&gt;/ directories (default).</p>
+<p>hidepid=noaccess or hidepid=1 means users may not access any /proc/&lt;pid&gt;/
+directories but their own.  Sensitive files like cmdline, sched*, status are now
+protected against other users.  This makes it impossible to learn whether any
+user runs specific program (given the program doesn’t reveal itself by its
+behaviour).  As an additional bonus, as /proc/&lt;pid&gt;/cmdline is unaccessible for
+other users, poorly written programs passing sensitive information via program
+arguments are now protected against local eavesdroppers.</p>
+<p>hidepid=invisible or hidepid=2 means hidepid=1 plus all /proc/&lt;pid&gt;/ will be
+fully invisible to other users.  It doesn’t mean that it hides a fact whether a
+process with a specific pid value exists (it can be learned by other means, e.g.
+by “kill -0 $PID”), but it hides process’s uid and gid, which may be learned by
+<code class="xref c c-func broken_xref docutils literal notranslate"><span class="pre">stat()</span></code>’ing /proc/&lt;pid&gt;/ otherwise.  It greatly complicates an intruder’s task of
+gathering information about running processes, whether some daemon runs with
+elevated privileges, whether other user runs some sensitive program, whether
+other users run any program at all, etc.</p>
+<p>hidepid=ptraceable or hidepid=4 means that procfs should only contain
+/proc/&lt;pid&gt;/ directories that the caller can ptrace.</p>
+<p>gid= defines a group authorized to learn processes information otherwise
+prohibited by hidepid=.  If you use some daemon like identd which needs to learn
+information about processes information, just add identd to this group.</p>
+<p>subset=pid hides all top level files and directories in the procfs that
+are not related to tasks. This option cannot be changed on an existing
+procfs instance because overmounts that existed before the change could
+otherwise remain reachable after the top level procfs entries are hidden.</p>
+<p>pidns= specifies a pid namespace (either as a string path to something like
+<cite>/proc/$pid/ns/pid</cite>, or a file descriptor when using <cite>FSCONFIG_SET_FD</cite>) that
+will be used by the procfs instance when translating pids. By default, procfs
+will use the calling process’s active pid namespace. Note that the pid
+namespace of an existing procfs instance cannot be modified (attempting to do
+so will give an <cite>-EBUSY</cite> error).</p>
+</section>
+<section id="mount-restrictions">
+<h3>4.2     Mount restrictions<a class="headerlink" href="#mount-restrictions" title="Permalink to this heading">¶</a></h3>
+<p>If user namespaces are in use, the kernel additionally checks the instances of
+procfs available to the mounter and will not allow procfs to be mounted if:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>This mount is not fully visible unless the new procfs is going to be
+mounted with subset=pid option.</p>
+<ol class="loweralpha simple">
+<li><p>Its root directory is not the root directory of the filesystem.</p></li>
+<li><p>If any file or non-empty procfs directory is hidden by another mount.</p></li>
+</ol>
+</li>
+<li><p>A new mount overrides the readonly option or any option from atime family.</p></li>
+</ol>
+</div></blockquote>
+</section>
+</section>
+<section id="chapter-5-filesystem-behavior">
+<h2>Chapter 5: Filesystem behavior<a class="headerlink" href="#chapter-5-filesystem-behavior" title="Permalink to this heading">¶</a></h2>
+<p>Originally, before the advent of pid namespace, procfs was a global file
+system. It means that there was only one procfs instance in the system.</p>
+<p>When pid namespace was added, a separate procfs instance was mounted in
+each pid namespace. So, procfs mount options are global among all
+mountpoints within the same namespace:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># grep ^proc /proc/mounts
+proc /proc proc rw,relatime,hidepid=2 0 0
+
+# strace -e mount mount -o hidepid=1 -t proc proc /tmp/proc
+mount(&quot;proc&quot;, &quot;/tmp/proc&quot;, &quot;proc&quot;, 0, &quot;hidepid=1&quot;) = 0
++++ exited with 0 +++
+
+# grep ^proc /proc/mounts
+proc /proc proc rw,relatime,hidepid=2 0 0
+proc /tmp/proc proc rw,relatime,hidepid=2 0 0
+</pre></div>
+</div>
+<p>and only after remounting procfs mount options will change at all
+mountpoints:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># mount -o remount,hidepid=1 -t proc proc /tmp/proc
+
+# grep ^proc /proc/mounts
+proc /proc proc rw,relatime,hidepid=1 0 0
+proc /tmp/proc proc rw,relatime,hidepid=1 0 0
+</pre></div>
+</div>
+<p>This behavior is different from the behavior of other filesystems.</p>
+<p>The new procfs behavior is more like other filesystems. Each procfs mount
+creates a new procfs instance. Mount options affect own procfs instance.
+It means that it became possible to have several procfs instances
+displaying tasks with different filtering options in one pid namespace:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># mount -o hidepid=invisible -t proc proc /proc
+# mount -o hidepid=noaccess -t proc proc /tmp/proc
+# grep ^proc /proc/mounts
+proc /proc proc rw,relatime,hidepid=invisible 0 0
+proc /tmp/proc proc rw,relatime,hidepid=noaccess 0 0
+</pre></div>
+</div>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+    <div class="footer">
+      &#169;The kernel development community.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 5.3.0</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="../_sources/filesystems/proc.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

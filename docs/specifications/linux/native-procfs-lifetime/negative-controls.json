@@ -1,0 +1,73 @@
+{
+  "state": "finished",
+  "checker-sha256": "95f4ec5222ca0c04fa6c59125bb033a2987ca293045db9f3400adb778c732894",
+  "controls": [
+    {
+      "name": "parent-exit",
+      "reindexed": true,
+      "result": "rejected"
+    },
+    {
+      "name": "full-count",
+      "reindexed": true,
+      "result": "rejected"
+    },
+    {
+      "name": "windows-failure-list",
+      "reindexed": true,
+      "result": "rejected"
+    },
+    {
+      "name": "test-image-stability",
+      "reindexed": true,
+      "result": "rejected"
+    },
+    {
+      "name": "owning-archive-stability",
+      "reindexed": true,
+      "result": "rejected"
+    },
+    {
+      "name": "source-parent",
+      "reindexed": true,
+      "result": "rejected"
+    },
+    {
+      "name": "owning-provenance",
+      "reindexed": true,
+      "result": "rejected"
+    },
+    {
+      "name": "-O",
+      "exit-code": 1,
+      "result": "rejected"
+    },
+    {
+      "name": "-OO",
+      "exit-code": 1,
+      "result": "rejected"
+    }
+  ],
+  "positive-before": {
+    "compiler-inputs": 29141,
+    "owning-inputs": 3974,
+    "focus": {
+      "linux": 9,
+      "macos": 8,
+      "windows": 6
+    },
+    "windows-full-failures": 5
+  },
+  "positive-after": {
+    "compiler-inputs": 29141,
+    "owning-inputs": 3974,
+    "focus": {
+      "linux": 9,
+      "macos": 8,
+      "windows": 6
+    },
+    "windows-full-failures": 5
+  },
+  "temporary": "/Users/int/.assist-native-display-policy-20261022/target/procfs-evidence-negative-v1",
+  "temporary-removed": true
+}

@@ -382,6 +382,9 @@ pub struct ProcState {
     pub exit: Option<ExitStatus>,
     /// Next thread ID to assign.
     pub next_tid: i32,
+    /// Exact issued thread IDs, retained after exit so procfs cannot name an
+    /// unrelated host task. Sequential IDs use one compact inclusive run.
+    pub procfs_thread_ids: super::procfs::ThreadIds,
     /// `personality(2)` value.
     pub persona: u32,
     /// `prctl(PR_SET_DUMPABLE)` value.
@@ -862,6 +865,7 @@ impl LinuxProcess {
             config,
             exit: None,
             next_tid: pid + 1,
+            procfs_thread_ids: super::procfs::ThreadIds::new(pid),
             persona: img.persona,
             dumpable: 1,
             pdeathsig: 0,
