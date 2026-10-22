@@ -1,0 +1,82 @@
+{
+  "state": "failed",
+  "pid": 9420,
+  "utc": "2026-10-22T17:16:53.189559+00:00",
+  "steps": [
+    {
+      "name": "focus",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "user::windows::wnf::",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 210.60738208302064,
+      "log": "wnf-live-native-candidate1-focus.log",
+      "bytes": 2893,
+      "sha256": "5ac3da611999ae6fb4753754de0b311e66b28ccd5792cf83a52a40e4982b5de0",
+      "results": [
+        "ok. 14 passed; 0 failed; 0 ignored; 0 measured; 7643 filtered out; finished in 0.54s"
+      ]
+    },
+    {
+      "name": "all-targets",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "check",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--all-targets"
+      ],
+      "exit-code": 0,
+      "seconds": 86.60570324998116,
+      "log": "wnf-live-native-candidate1-all-targets.log",
+      "bytes": 1005,
+      "sha256": "733f5b7a784e220c1322b5026b97e60a1d65703ed0bdda1a7db7889b283312c6",
+      "results": []
+    },
+    {
+      "name": "ci-runner",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tools/ci"
+      ],
+      "exit-code": 1,
+      "seconds": 0.13739745796192437,
+      "log": "wnf-live-native-candidate1-ci-runner.log",
+      "bytes": 956,
+      "sha256": "c8b770b3f82fbb4993a1fac84e4f6335640d602cc72efe9f04edff5983dfa563",
+      "results": []
+    }
+  ],
+  "retained-parent-image": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\wnf-live-parent-control-v1.exe",
+    "bytes": 564819456,
+    "sha256": "db6ee90bab2c4c94e35a612b52585d1f5696ff752dedea9fdd6b3347f0ff92b0"
+  },
+  "source-inputs": 29139,
+  "manifest": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\wnf-live-candidate1-source.json",
+    "bytes": 6872730,
+    "sha256": "b3972f8e469afcb552050835030e461319293433b3cf41abe555cf99c828d38f"
+  },
+  "disk-before": 38004961280,
+  "step": "ci-runner",
+  "child": 6580,
+  "exit-code": 1,
+  "error": "Traceback (most recent call last):\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-wnf-live-native-candidate1.py\", line 55, in <module>\n    run('ci-runner',[str(B/'python/python.exe'),'-B','-m','unittest','discover','-s','tools/ci']);verify()\n    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-wnf-live-native-candidate1.py\", line 26, in run\n    text=log.read_text(errors='replace');state['steps'].append({'name':name,'argv':args,'exit-code':code,'seconds':time.monotonic()-start,'log':log.name,**{k:v for k,v in identity(log).items() if k!='path'},'results':re.findall(r'test result: ([^\\r\\n]+)',text)});save();assert code==0,name\n                                                                                                                                                                                                                                                                                     ^^^^^^^\nAssertionError: ci-runner\n",
+  "completed-utc": "2026-10-22T17:22:56.581373+00:00"
+}

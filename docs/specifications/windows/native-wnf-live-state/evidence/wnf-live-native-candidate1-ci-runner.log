@@ -1,0 +1,20 @@
+E
+======================================================================
+ERROR: test_process_embedding (unittest.loader._FailedTest.test_process_embedding)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_process_embedding
+Traceback (most recent call last):
+  File "unittest\loader.py", line 426, in _find_test_path
+  File "unittest\loader.py", line 367, in _get_module_from_name
+  File "C:\Windows\Temp\assist-native-rax-20261010\src-display-candidate1\tools\ci\test_process_embedding.py", line 6, in <module>
+    from unittest.mock import patch
+  File "unittest\mock.py", line 27, in <module>
+  File "asyncio\__init__.py", line 45, in <module>
+  File "asyncio\windows_events.py", line 8, in <module>
+ModuleNotFoundError: No module named '_overlapped'
+
+
+----------------------------------------------------------------------
+Ran 1 test in 0.001s
+
+FAILED (errors=1)

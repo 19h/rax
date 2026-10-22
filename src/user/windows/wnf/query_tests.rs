@@ -85,6 +85,26 @@ fn query_provisioning_refuses_malformed_offsets_sid_extents_and_unknown_trailers
 
 #[test]
 fn query_capture_bounds_retries_and_never_imports_host_process_payload() {
+    // A native system state is a snapshot, not its historical value. Preserve
+    // arbitrary payloads and the full change-stamp domain without normalization.
+    for (stamp, payload) in [
+        (1, [1, 0, 0, 0, 0, 0, 0, 0]),
+        (4, [4, 0, 0, 0, 0, 0, 0, 0]),
+        (u32::MAX, [0xDE, 0xAD, 0xBE, 0xEF, 0x12, 0x34, 0x56, 0x78]),
+    ] {
+        let retained = capture(vec![definition(SYSTEM, 8)], 0, |_, bytes| {
+            bytes.copy_from_slice(&payload);
+            (STATUS_SUCCESS, stamp, payload.len())
+        })
+        .unwrap();
+        assert_eq!(
+            retained.get(SYSTEM).unwrap().1,
+            Record::Data(Data {
+                stamp,
+                bytes: Arc::from(payload)
+            })
+        );
+    }
     let mut calls = 0;
     let stable = capture(vec![definition(SYSTEM, 8)], 0, |_, bytes| {
         calls += 1;
@@ -196,28 +216,85 @@ fn query_catalog_rejects_duplicate_invalid_and_over_budget_data() {
 }
 
 #[cfg(windows)]
+fn independent_typed_system_state() -> Data {
+    use std::ffi::{c_char, c_void};
+    #[link(name = "kernel32")]
+    unsafe extern "system" {
+        fn GetModuleHandleW(name: *const u16) -> *mut c_void;
+        fn GetProcAddress(module: *mut c_void, name: *const c_char) -> *mut c_void;
+    }
+    #[repr(C, align(4))]
+    struct TypeId([u8; 16]);
+    let type_id = TypeId(hex("6364f948d652854e9c02f2c14e17264e").try_into().unwrap());
+    type Query = unsafe extern "system" fn(
+        *const u64,
+        *const TypeId,
+        *const c_void,
+        *mut u32,
+        *mut u8,
+        *mut u32,
+    ) -> i32;
+    let name: Vec<u16> = "ntdll.dll\0".encode_utf16().collect();
+    // SAFETY: fixed terminated names identify an already loaded system module;
+    // neither the borrowed module nor its export address is retained or closed.
+    let module = unsafe { GetModuleHandleW(name.as_ptr()) };
+    assert!(!module.is_null());
+    let address = unsafe { GetProcAddress(module, c"NtQueryWnfStateData".as_ptr()) };
+    assert!(!address.is_null());
+    // SAFETY: the independently declared fixed export uses the six-argument
+    // NTAPI prototype. All outputs and the aligned type GUID are local storage.
+    let query: Query = unsafe { std::mem::transmute(address) };
+    let mut stamp = 0;
+    let mut bytes = [0xA5; 8];
+    let mut length = bytes.len() as u32;
+    let status = unsafe {
+        query(
+            &SYSTEM,
+            &type_id,
+            std::ptr::null(),
+            &mut stamp,
+            bytes.as_mut_ptr(),
+            &mut length,
+        )
+    };
+    assert_eq!(status as u32, STATUS_SUCCESS);
+    assert_eq!(length, 8);
+    Data {
+        stamp,
+        bytes: Arc::from(bytes),
+    }
+}
+
+#[cfg(windows)]
 #[test]
 fn native_query_snapshot_captures_typed_state_and_initializes_private_process_state() {
-    let selected = super::snapshot().unwrap();
-    let q = selected.queries().unwrap();
-    let (definition, record) = q.get(SYSTEM).unwrap();
-    assert_eq!(definition.maximum, 8);
-    assert!(definition.type_id.is_some());
-    assert_eq!(
-        *record,
-        Record::Data(Data {
-            stamp: 1,
-            bytes: Arc::from([1, 0, 0, 0, 0, 0, 0, 0])
-        })
-    );
-    assert_eq!(
-        q.get(PROCESS).unwrap().1,
-        Record::Data(Data {
-            stamp: 0,
-            bytes: Arc::from([])
-        })
-    );
-    assert!(selected.primary_subject().is_some());
+    for attempt in 0..8 {
+        let before = independent_typed_system_state();
+        let selected = super::snapshot().unwrap();
+        let after = independent_typed_system_state();
+        if before != after {
+            continue;
+        }
+        let q = selected.queries().unwrap();
+        let (definition, record) = q.get(SYSTEM).unwrap();
+        assert_eq!(definition.maximum, 8);
+        assert_eq!(
+            definition.type_id,
+            Some(hex("6364f948d652854e9c02f2c14e17264e").try_into().unwrap())
+        );
+        assert_eq!(*record, Record::Data(before.clone()));
+        assert_eq!(
+            q.get(PROCESS).unwrap().1,
+            Record::Data(Data {
+                stamp: 0,
+                bytes: Arc::from([])
+            })
+        );
+        assert!(selected.primary_subject().is_some());
+        println!("wnf-native-system attempt={attempt} oracle={before:?}");
+        return;
+    }
+    panic!("native WNF system state changed across all eight snapshot intervals");
 }
 
 #[cfg(windows)]

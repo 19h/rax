@@ -1,0 +1,126 @@
+{
+  "state": "finished",
+  "resumed-from": "wnf-live-native-candidate1.json",
+  "source-inputs": 29139,
+  "manifest": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\wnf-live-candidate1-source.json",
+    "bytes": 6872730,
+    "sha256": "b3972f8e469afcb552050835030e461319293433b3cf41abe555cf99c828d38f"
+  },
+  "steps": [
+    {
+      "name": "focus",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "user::windows::wnf::",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 210.60738208302064,
+      "log": "wnf-live-native-candidate1-focus.log",
+      "bytes": 2893,
+      "sha256": "5ac3da611999ae6fb4753754de0b311e66b28ccd5792cf83a52a40e4982b5de0",
+      "results": [
+        "ok. 14 passed; 0 failed; 0 ignored; 0 measured; 7643 filtered out; finished in 0.54s"
+      ]
+    },
+    {
+      "name": "all-targets",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "check",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--all-targets"
+      ],
+      "exit-code": 0,
+      "seconds": 86.60570324998116,
+      "log": "wnf-live-native-candidate1-all-targets.log",
+      "bytes": 1005,
+      "sha256": "733f5b7a784e220c1322b5026b97e60a1d65703ed0bdda1a7db7889b283312c6",
+      "results": []
+    },
+    {
+      "name": "complete-python",
+      "argv": [
+        "C:\\Program Files\\Python314-arm64\\python.exe",
+        "-I",
+        "-B",
+        "-c",
+        "import _overlapped,sys; print(sys.version); print(_overlapped.__file__)"
+      ],
+      "exit-code": 0,
+      "seconds": 0.07197333296062425,
+      "log": "wnf-live-native-resume1-complete-python.log",
+      "bytes": 137,
+      "sha256": "d9896ebe515a0b6e30d725591d3d632a01aa0678d44a7904bb5a69a92dd60b6c"
+    },
+    {
+      "name": "ci-runner-complete",
+      "argv": [
+        "C:\\Program Files\\Python314-arm64\\python.exe",
+        "-I",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tools/ci"
+      ],
+      "exit-code": 0,
+      "seconds": 0.24414999998407438,
+      "log": "wnf-live-native-resume1-ci-runner-complete.log",
+      "bytes": 105,
+      "sha256": "354c3d828acda6a2a7353175af6f47b9a6ade35a84756ca5433e46f76b8d8b55"
+    }
+  ],
+  "failed-prerequisite": {
+    "name": "ci-runner",
+    "argv": [
+      "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+      "-B",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "tools/ci"
+    ],
+    "exit-code": 1,
+    "seconds": 0.13739745796192437,
+    "log": "wnf-live-native-candidate1-ci-runner.log",
+    "bytes": 956,
+    "sha256": "c8b770b3f82fbb4993a1fac84e4f6335640d602cc72efe9f04edff5983dfa563",
+    "results": []
+  },
+  "python-before": {
+    "path": "C:\\Program Files\\Python314-arm64\\python.exe",
+    "bytes": 105304,
+    "sha256": "a1e6e01470facf2b3dc10a2a8f771768992f75268baaec7fd709dd7af13dfe41"
+  },
+  "overlapped-before": {
+    "path": "C:\\Program Files\\Python314-arm64\\DLLs\\_overlapped.pyd",
+    "bytes": 55640,
+    "sha256": "756d9c2c88290044b9ae553dbfbbab7a3128dd04e7a49496051d6581b83c8e2b"
+  },
+  "scope": "Use the already installed complete interpreter; preserve the incomplete embedded-runtime failure. No runtime or system configuration change.",
+  "exit-code": 0,
+  "python-after": {
+    "path": "C:\\Program Files\\Python314-arm64\\python.exe",
+    "bytes": 105304,
+    "sha256": "a1e6e01470facf2b3dc10a2a8f771768992f75268baaec7fd709dd7af13dfe41"
+  },
+  "overlapped-after": {
+    "path": "C:\\Program Files\\Python314-arm64\\DLLs\\_overlapped.pyd",
+    "bytes": 55640,
+    "sha256": "756d9c2c88290044b9ae553dbfbbab7a3128dd04e7a49496051d6581b83c8e2b"
+  },
+  "completed-utc": "2026-10-22T17:26:22.334798+00:00"
+}

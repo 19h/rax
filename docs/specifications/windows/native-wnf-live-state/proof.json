@@ -1,0 +1,148 @@
+{
+  "schema": 1,
+  "files": [
+    {
+      "path": "evidence/baseline-assumptions-v1.json",
+      "bytes": 2229,
+      "sha256": "3fe3bf42b21176950c320b9efaf9d7c4cb86db433288f85277622d50b7d65463"
+    },
+    {
+      "path": "evidence/ci-coverage-plan-v1.json",
+      "bytes": 529,
+      "sha256": "761ddd37912013c6739f6c9a19c0066e7dc83cd16a2a3d455c73e98c09b98b15"
+    },
+    {
+      "path": "evidence/repeat-wnf-live-native-v2.py",
+      "bytes": 2841,
+      "sha256": "46b056c889a68515271e41abb82bc5151eb1460f68ca0092a7b5055e025c0c15"
+    },
+    {
+      "path": "evidence/resume-wnf-live-native-ci-v1.py",
+      "bytes": 2970,
+      "sha256": "0b3170168226678e94b6db279536f8ad2e3728532a5afdfadf554da9feec34d4"
+    },
+    {
+      "path": "evidence/run-wnf-live-native-candidate1.py",
+      "bytes": 5130,
+      "sha256": "c1cc6218b3f61bd0d585ba351a4fc5c475b1de41abc728b7383a5b419578c699"
+    },
+    {
+      "path": "evidence/run-wnf-live-parent-native-v1.py",
+      "bytes": 963,
+      "sha256": "3a0374af0d3dd9c40495a772e985ff408212a118deabb4e3ba7eab864c42d356"
+    },
+    {
+      "path": "evidence/wnf-evidence-stress-v1.json",
+      "bytes": 689,
+      "sha256": "f898ac81297d61fafed4de48e2d3dbe7b20ddf7662d37a48c03778ba06cc8dcb"
+    },
+    {
+      "path": "evidence/wnf-live-candidate1-overrides.tar.gz",
+      "bytes": 4085,
+      "sha256": "862774af1d150e4e7682b4d547dc8a6d6dc6033a67170d174012ab19402acc64"
+    },
+    {
+      "path": "evidence/wnf-live-candidate1-source.json",
+      "bytes": 6872730,
+      "sha256": "b3972f8e469afcb552050835030e461319293433b3cf41abe555cf99c828d38f"
+    },
+    {
+      "path": "evidence/wnf-live-clippy-v1.log",
+      "bytes": 203,
+      "sha256": "6791cd7f5fb0b8e3635f931b1a8143d4da1eac26225050e7a2750c24ec129140"
+    },
+    {
+      "path": "evidence/wnf-live-linux-all-targets-v1.log",
+      "bytes": 116,
+      "sha256": "c6cf8b8a25c826b51bcc6c46c8bfd0d35c411abd3aef7488f88038f49200174f"
+    },
+    {
+      "path": "evidence/wnf-live-linux-ci-runner-v1.log",
+      "bytes": 100,
+      "sha256": "6f283ee6225d2cef4c0127d95456a6f954c45141c92b97dd89016cb1c630e8f4"
+    },
+    {
+      "path": "evidence/wnf-live-linux-focus-v1.log",
+      "bytes": 1671,
+      "sha256": "446c4e9d09ec167cc5145217fe1a222561837bf1a54139c2f372e6edfd4731ca"
+    },
+    {
+      "path": "evidence/wnf-live-macos-all-targets-v1.log",
+      "bytes": 149,
+      "sha256": "9b2263cc46421e5a0b2947096fb0036531ef8cd0efefcae09efaba2a134e3902"
+    },
+    {
+      "path": "evidence/wnf-live-macos-ci-runner-v1.log",
+      "bytes": 100,
+      "sha256": "fe008aab760eb03ccac7578e2b84665b1b50b0d7f855b17a0c7a8d039435b658"
+    },
+    {
+      "path": "evidence/wnf-live-macos-module-v1.log",
+      "bytes": 1621,
+      "sha256": "ac416e83b4f9fdecaf1ba96bb558edbc30f009cf6821878ee8f96438d1d8a0f6"
+    },
+    {
+      "path": "evidence/wnf-live-native-candidate1-all-targets.log",
+      "bytes": 1005,
+      "sha256": "733f5b7a784e220c1322b5026b97e60a1d65703ed0bdda1a7db7889b283312c6"
+    },
+    {
+      "path": "evidence/wnf-live-native-candidate1-ci-runner.log",
+      "bytes": 956,
+      "sha256": "c8b770b3f82fbb4993a1fac84e4f6335640d602cc72efe9f04edff5983dfa563"
+    },
+    {
+      "path": "evidence/wnf-live-native-candidate1-focus.log",
+      "bytes": 2893,
+      "sha256": "5ac3da611999ae6fb4753754de0b311e66b28ccd5792cf83a52a40e4982b5de0"
+    },
+    {
+      "path": "evidence/wnf-live-native-candidate1-resume1.json",
+      "bytes": 4124,
+      "sha256": "bc5fc38efa7c8a55ea375b7e632aae2b833c61b9bfc0eeba1cb1c185f6773848"
+    },
+    {
+      "path": "evidence/wnf-live-native-candidate1.json",
+      "bytes": 3689,
+      "sha256": "d5894171af5d0b1f009a21e7113d1c18565ea5085bc1f12a4a68429f2e3cf39e"
+    },
+    {
+      "path": "evidence/wnf-live-native-repeat-v1-console.log",
+      "bytes": 220,
+      "sha256": "5101cf24ce3104fa17dd447a718e1e048918b9f9ead55e2f3bc5079acbb39669"
+    },
+    {
+      "path": "evidence/wnf-live-native-repeat-v2.json",
+      "bytes": 7331,
+      "sha256": "601cd696a28196799c6e2cb832f09d5dde44d4a0ce27e07d7e40954732042819"
+    },
+    {
+      "path": "evidence/wnf-live-native-resume1-ci-runner-complete.log",
+      "bytes": 105,
+      "sha256": "354c3d828acda6a2a7353175af6f47b9a6ade35a84756ca5433e46f76b8d8b55"
+    },
+    {
+      "path": "evidence/wnf-live-native-resume1-complete-python.log",
+      "bytes": 137,
+      "sha256": "d9896ebe515a0b6e30d725591d3d632a01aa0678d44a7904bb5a69a92dd60b6c"
+    },
+    {
+      "path": "evidence/wnf-live-parent-native-v1.json",
+      "bytes": 1257,
+      "sha256": "79c1094fad65b76d8e3ad0095eb191331fd8df7541029ab60991926fa7985fb9"
+    },
+    {
+      "path": "evidence/wnf-live-unix-gates-v1.json",
+      "bytes": 2136,
+      "sha256": "8be39236043ee1685d0a35d1287034f93c09dc4274898a892bc262588b4b9c4f"
+    },
+    {
+      "path": "evidence/wnf-python-substrate-v1.log",
+      "bytes": 623,
+      "sha256": "c8dc85974646ce1ee611e59cdf5472d662feb26a3f705d90f2f8f94f4c737a07"
+    }
+  ],
+  "scope": "Test/CI correction only. Parent unfiltered Windows receipt remains six failures; repaired focused native tests and repeated controls are recorded, not a new full-suite claim.",
+  "failed-prerequisite": "Incomplete embedded Python lacks _overlapped; installed complete Python passes the unchanged runner tests.",
+  "retained-next-use": "Existing in-worktree compiler caches for procfs/Windows lowerer/profile repairs and the recorded NtReadVirtualMemory frontier."
+}

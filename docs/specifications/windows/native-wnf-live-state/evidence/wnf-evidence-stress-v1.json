@@ -1,0 +1,40 @@
+{
+  "state": "finished",
+  "negative-cases": [
+    {
+      "case": "parent-must-fail",
+      "rejected": true
+    },
+    {
+      "case": "repeat-count",
+      "rejected": true
+    },
+    {
+      "case": "candidate-hash-stability",
+      "rejected": true
+    },
+    {
+      "case": "native-focus-must-pass",
+      "rejected": true
+    },
+    {
+      "case": "-O",
+      "rejected": true
+    },
+    {
+      "case": "-OO",
+      "rejected": true
+    }
+  ],
+  "restored-positive": {
+    "module-tests": {
+      "macos": 12,
+      "linux": 12,
+      "windows": 14
+    },
+    "native-repeat-runs": 12,
+    "parent-exit-code": 101,
+    "compiler-inputs": 29139
+  },
+  "temporary-removed": true
+}

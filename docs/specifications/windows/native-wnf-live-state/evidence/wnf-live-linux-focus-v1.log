@@ -1,0 +1,20 @@
+   Compiling rax v0.1.0 (/work/vendor/rax)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2m 32s
+     Running unittests src/lib.rs (target/linux/candidate1/debug/deps/rax-3e31f1d94bc1cdf9)
+
+running 12 tests
+test user::windows::wnf::query_tests::query_capture_bounds_retries_and_never_imports_host_process_payload ... ok
+test user::windows::wnf::query_tests::query_catalog_rejects_duplicate_invalid_and_over_budget_data ... ok
+test user::windows::wnf::query_tests::query_provisioning_parses_every_native_record_and_the_single_typed_tail ... ok
+test user::windows::wnf::query_tests::query_provisioning_refuses_malformed_offsets_sid_extents_and_unknown_trailers ... ok
+test user::windows::wnf::system_tests::native_system_wnf_actual_typed_descriptor_requires_selected_queries ... ok
+test user::windows::wnf::system_tests::native_system_wnf_permissions_match_3456_recorded_calls ... ok
+test user::windows::wnf::system_tests::native_system_wnf_query_admission_is_not_replaced_by_empty_data ... ok
+test user::windows::wnf::system_tests::native_system_wnf_unknown_descriptors_and_subjects_remain_unavailable ... ok
+test user::windows::wnf::tests::native_wnf_subscription_catalog_access_matches_all_72_process_name_calls ... ok
+test user::windows::wnf::tests::native_wnf_subscription_catalog_rejects_unmodeled_security_and_malformed_values ... ok
+test user::windows::wnf::tests::native_wnf_subscription_name_capture_replays_all_8192_domain_rows ... ok
+test user::windows::wnf::tests::primary_token_property_is_retained_independently_of_catalog_records ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 8162 filtered out; finished in 0.37s
+

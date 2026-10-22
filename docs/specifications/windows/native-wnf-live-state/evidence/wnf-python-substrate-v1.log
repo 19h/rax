@@ -1,0 +1,5 @@
+{"version": "3.14.0 (tags/v3.14.0:ebf955d, Oct  7 2025, 10:57:41) [MSC v.1944 64 bit (ARM64)]", "machine": "ARM64", "executable": "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe", "search-path": ["C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python314.zip", "C:\\Windows\\Temp\\assist-native-rax-20261010\\python"], "pyd": ["_bz2.pyd", "_ctypes.pyd", "_hashlib.pyd", "_lzma.pyd", "_socket.pyd", "_wmi.pyd", "_zstd.pyd"], "pth": {"python314._pth": "python314.zip\n.\n\n# Uncomment to run site.main() automatically\n#import site\n"}}
+python.exe 1 
+python3.exe 1 
+py.exe 0 C:\Windows\py.exe
+

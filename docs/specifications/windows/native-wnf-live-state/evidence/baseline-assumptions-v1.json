@@ -1,0 +1,38 @@
+{
+  "utc": "2026-10-22T17:09:43.898196+00:00",
+  "baseline": "d5d8ea486c1c4e1b8be8d80d0be7698fa7200b02",
+  "owned": [
+    "src/user/windows/wnf/query_tests.rs"
+  ],
+  "before": {
+    "bytes": 7603,
+    "sha256": "aeb5e8308e9e1f7f6554ee15dad7bfb4874375452cb67f5b468dd9586eade75c"
+  },
+  "acceptance": [
+    "Replace only historical native test constants with exact independent NtQueryWnfStateData observations; retain positive typed-data, metadata, process-private and primary-subject assertions.",
+    "Bound state-change retries without skipping tests or mutating host WNF state.",
+    "Exercise nonhistorical payloads and stamps in the portable capture contract.",
+    "Run focused native Windows tests with parent failure preserved, three-platform compile/check surfaces, red exact commits and paired two-remote publication."
+  ],
+  "assumptions": [
+    {
+      "id": "WNF-A1",
+      "assumption": "The selected well-known typed system state can change between capture runs.",
+      "basis": "Unchanged snapshot test observed stamp4/data4 while historical constant was stamp1/data1.",
+      "dependent-result": "Independent bracketed oracle expectation",
+      "stress-test": "State changes between independent before/after observations; finite retry exhaustion",
+      "falsification-probe": "Independent native calls establish a stable immutable state contract rather than current mutable state",
+      "status": "confirmed for observed failure"
+    },
+    {
+      "id": "WNF-A2",
+      "assumption": "A bounded interval with matching native stamp and bytes can validate the retained snapshot exactly.",
+      "basis": "Existing native double-observation capture contract; independent oracle will bracket full snapshot.",
+      "dependent-result": "Native test acceptance",
+      "stress-test": "Changed stamp with same bytes, changed bytes with same stamp, unstable interval",
+      "falsification-probe": "Bracket matches but captured record differs, or no stable interval appears in eight attempts",
+      "status": "retained"
+    }
+  ],
+  "scope": "Test-only correction. No native acquisition, guest model, ABI, permission, persisted state or package behavior change. Retain build caches for this concrete follow-up."
+}

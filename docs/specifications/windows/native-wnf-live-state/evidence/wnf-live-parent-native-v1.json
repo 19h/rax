@@ -1,0 +1,12 @@
+{
+  "state": "finished",
+  "parent": "d5d8ea486c1c4e1b8be8d80d0be7698fa7200b02",
+  "image": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\normal-candidate1\\debug\\deps\\rax-b799307a7949aa6b.exe",
+    "bytes": 564819456,
+    "sha256": "db6ee90bab2c4c94e35a612b52585d1f5696ff752dedea9fdd6b3347f0ff92b0"
+  },
+  "exit-code": 101,
+  "stdout": "\nrunning 1 test\ntest user::windows::wnf::query_tests::native_query_snapshot_captures_typed_state_and_initializes_private_process_state ... FAILED\n\nfailures:\n\nfailures:\n    user::windows::wnf::query_tests::native_query_snapshot_captures_typed_state_and_initializes_private_process_state\n\ntest result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 7656 filtered out; finished in 0.03s\n\n",
+  "stderr": "\nthread 'user::windows::wnf::query_tests::native_query_snapshot_captures_typed_state_and_initializes_private_process_state' (2484) panicked at src\\user\\windows\\wnf\\query_tests.rs:206:5:\nassertion `left == right` failed\n  left: Data(Data { stamp: 4, bytes: [4, 0, 0, 0, 0, 0, 0, 0] })\n right: Data(Data { stamp: 1, bytes: [1, 0, 0, 0, 0, 0, 0, 0] })\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n"
+}

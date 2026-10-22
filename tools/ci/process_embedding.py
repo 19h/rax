@@ -7,6 +7,7 @@ PowerShell where a later successful cargo invocation can replace LASTEXITCODE.
 import subprocess
 
 TARGETS = (
+    ("--lib", "user::windows::wnf::"),
     ("--lib", "user::windows::process"),
     ("--test", "user_windows_memory"),
     ("--lib", "user::mm::"),

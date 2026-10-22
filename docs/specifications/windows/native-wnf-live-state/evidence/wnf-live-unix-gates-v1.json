@@ -1,0 +1,73 @@
+{
+  "state": "finished",
+  "exit-code": 0,
+  "scope": "Observed native command exits were 0; summarized without rerunning the already passing gates.",
+  "steps": [
+    {
+      "host": "macos",
+      "name": "module",
+      "exit-code": 0,
+      "log": "wnf-live-macos-module-v1.log",
+      "bytes": 1621,
+      "sha256": "ac416e83b4f9fdecaf1ba96bb558edbc30f009cf6821878ee8f96438d1d8a0f6",
+      "results": [
+        "ok. 12 passed; 0 failed; 0 ignored; 0 measured; 8168 filtered out; finished in 0.27s"
+      ]
+    },
+    {
+      "host": "macos",
+      "name": "all-targets",
+      "exit-code": 0,
+      "log": "wnf-live-macos-all-targets-v1.log",
+      "bytes": 149,
+      "sha256": "9b2263cc46421e5a0b2947096fb0036531ef8cd0efefcae09efaba2a134e3902",
+      "results": []
+    },
+    {
+      "host": "macos",
+      "name": "ci-runner",
+      "exit-code": 0,
+      "log": "wnf-live-macos-ci-runner-v1.log",
+      "bytes": 100,
+      "sha256": "fe008aab760eb03ccac7578e2b84665b1b50b0d7f855b17a0c7a8d039435b658",
+      "results": []
+    },
+    {
+      "host": "linux",
+      "name": "module",
+      "exit-code": 0,
+      "log": "wnf-live-linux-focus-v1.log",
+      "bytes": 1671,
+      "sha256": "446c4e9d09ec167cc5145217fe1a222561837bf1a54139c2f372e6edfd4731ca",
+      "results": [
+        "ok. 12 passed; 0 failed; 0 ignored; 0 measured; 8162 filtered out; finished in 0.37s"
+      ]
+    },
+    {
+      "host": "linux",
+      "name": "all-targets",
+      "exit-code": 0,
+      "log": "wnf-live-linux-all-targets-v1.log",
+      "bytes": 116,
+      "sha256": "c6cf8b8a25c826b51bcc6c46c8bfd0d35c411abd3aef7488f88038f49200174f",
+      "results": []
+    },
+    {
+      "host": "linux",
+      "name": "ci-runner",
+      "exit-code": 0,
+      "log": "wnf-live-linux-ci-runner-v1.log",
+      "bytes": 100,
+      "sha256": "6f283ee6225d2cef4c0127d95456a6f954c45141c92b97dd89016cb1c630e8f4",
+      "results": []
+    },
+    {
+      "host": "macos",
+      "name": "clippy",
+      "exit-code": 0,
+      "log": "wnf-live-clippy-v1.log",
+      "bytes": 203,
+      "sha256": "6791cd7f5fb0b8e3635f931b1a8143d4da1eac26225050e7a2750c24ec129140"
+    }
+  ]
+}

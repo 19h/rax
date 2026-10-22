@@ -1,0 +1,103 @@
+{
+  "state": "finished",
+  "utc": "2026-10-22T17:23:03.512618+00:00",
+  "candidate-before": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\normal-candidate1\\debug\\deps\\rax-b799307a7949aa6b.exe",
+    "bytes": 564833280,
+    "sha256": "59019a0e77ba1a946a771e7a2cb5b068380b2872226e7b07f099ef5c2f04ec72"
+  },
+  "candidate-after": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\normal-candidate1\\debug\\deps\\rax-b799307a7949aa6b.exe",
+    "bytes": 564833280,
+    "sha256": "59019a0e77ba1a946a771e7a2cb5b068380b2872226e7b07f099ef5c2f04ec72"
+  },
+  "repeats": [
+    {
+      "attempt": 0,
+      "exit-code": 0,
+      "stdout": "\nrunning 1 test\ntest user::windows::wnf::query_tests::native_query_snapshot_captures_typed_state_and_initializes_private_process_state ... wnf-native-system attempt=0 oracle=Data { stamp: 4, bytes: [4, 0, 0, 0, 0, 0, 0, 0] }\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 7656 filtered out; finished in 0.03s\n\n",
+      "stderr": ""
+    },
+    {
+      "attempt": 1,
+      "exit-code": 0,
+      "stdout": "\nrunning 1 test\ntest user::windows::wnf::query_tests::native_query_snapshot_captures_typed_state_and_initializes_private_process_state ... wnf-native-system attempt=0 oracle=Data { stamp: 4, bytes: [4, 0, 0, 0, 0, 0, 0, 0] }\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 7656 filtered out; finished in 0.03s\n\n",
+      "stderr": ""
+    },
+    {
+      "attempt": 2,
+      "exit-code": 0,
+      "stdout": "\nrunning 1 test\ntest user::windows::wnf::query_tests::native_query_snapshot_captures_typed_state_and_initializes_private_process_state ... wnf-native-system attempt=0 oracle=Data { stamp: 4, bytes: [4, 0, 0, 0, 0, 0, 0, 0] }\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 7656 filtered out; finished in 0.03s\n\n",
+      "stderr": ""
+    },
+    {
+      "attempt": 3,
+      "exit-code": 0,
+      "stdout": "\nrunning 1 test\ntest user::windows::wnf::query_tests::native_query_snapshot_captures_typed_state_and_initializes_private_process_state ... wnf-native-system attempt=0 oracle=Data { stamp: 4, bytes: [4, 0, 0, 0, 0, 0, 0, 0] }\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 7656 filtered out; finished in 0.03s\n\n",
+      "stderr": ""
+    },
+    {
+      "attempt": 4,
+      "exit-code": 0,
+      "stdout": "\nrunning 1 test\ntest user::windows::wnf::query_tests::native_query_snapshot_captures_typed_state_and_initializes_private_process_state ... wnf-native-system attempt=0 oracle=Data { stamp: 4, bytes: [4, 0, 0, 0, 0, 0, 0, 0] }\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 7656 filtered out; finished in 0.03s\n\n",
+      "stderr": ""
+    },
+    {
+      "attempt": 5,
+      "exit-code": 0,
+      "stdout": "\nrunning 1 test\ntest user::windows::wnf::query_tests::native_query_snapshot_captures_typed_state_and_initializes_private_process_state ... wnf-native-system attempt=0 oracle=Data { stamp: 4, bytes: [4, 0, 0, 0, 0, 0, 0, 0] }\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 7656 filtered out; finished in 0.24s\n\n",
+      "stderr": ""
+    },
+    {
+      "attempt": 6,
+      "exit-code": 0,
+      "stdout": "\nrunning 1 test\ntest user::windows::wnf::query_tests::native_query_snapshot_captures_typed_state_and_initializes_private_process_state ... wnf-native-system attempt=0 oracle=Data { stamp: 4, bytes: [4, 0, 0, 0, 0, 0, 0, 0] }\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 7656 filtered out; finished in 0.28s\n\n",
+      "stderr": ""
+    },
+    {
+      "attempt": 7,
+      "exit-code": 0,
+      "stdout": "\nrunning 1 test\ntest user::windows::wnf::query_tests::native_query_snapshot_captures_typed_state_and_initializes_private_process_state ... wnf-native-system attempt=0 oracle=Data { stamp: 4, bytes: [4, 0, 0, 0, 0, 0, 0, 0] }\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 7656 filtered out; finished in 0.10s\n\n",
+      "stderr": ""
+    },
+    {
+      "attempt": 8,
+      "exit-code": 0,
+      "stdout": "\nrunning 1 test\ntest user::windows::wnf::query_tests::native_query_snapshot_captures_typed_state_and_initializes_private_process_state ... wnf-native-system attempt=0 oracle=Data { stamp: 4, bytes: [4, 0, 0, 0, 0, 0, 0, 0] }\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 7656 filtered out; finished in 0.03s\n\n",
+      "stderr": ""
+    },
+    {
+      "attempt": 9,
+      "exit-code": 0,
+      "stdout": "\nrunning 1 test\ntest user::windows::wnf::query_tests::native_query_snapshot_captures_typed_state_and_initializes_private_process_state ... wnf-native-system attempt=0 oracle=Data { stamp: 4, bytes: [4, 0, 0, 0, 0, 0, 0, 0] }\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 7656 filtered out; finished in 0.03s\n\n",
+      "stderr": ""
+    },
+    {
+      "attempt": 10,
+      "exit-code": 0,
+      "stdout": "\nrunning 1 test\ntest user::windows::wnf::query_tests::native_query_snapshot_captures_typed_state_and_initializes_private_process_state ... wnf-native-system attempt=0 oracle=Data { stamp: 4, bytes: [4, 0, 0, 0, 0, 0, 0, 0] }\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 7656 filtered out; finished in 0.03s\n\n",
+      "stderr": ""
+    },
+    {
+      "attempt": 11,
+      "exit-code": 0,
+      "stdout": "\nrunning 1 test\ntest user::windows::wnf::query_tests::native_query_snapshot_captures_typed_state_and_initializes_private_process_state ... wnf-native-system attempt=0 oracle=Data { stamp: 4, bytes: [4, 0, 0, 0, 0, 0, 0, 0] }\nok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 7656 filtered out; finished in 0.03s\n\n",
+      "stderr": ""
+    }
+  ],
+  "parent-before": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\wnf-live-parent-control-v1.exe",
+    "bytes": 564819456,
+    "sha256": "db6ee90bab2c4c94e35a612b52585d1f5696ff752dedea9fdd6b3347f0ff92b0"
+  },
+  "parent-after": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\wnf-live-parent-control-v1.exe",
+    "bytes": 564819456,
+    "sha256": "db6ee90bab2c4c94e35a612b52585d1f5696ff752dedea9fdd6b3347f0ff92b0"
+  },
+  "parent-result": {
+    "exit-code": 101,
+    "stdout": "\nrunning 1 test\ntest user::windows::wnf::query_tests::native_query_snapshot_captures_typed_state_and_initializes_private_process_state ... FAILED\n\nfailures:\n\nfailures:\n    user::windows::wnf::query_tests::native_query_snapshot_captures_typed_state_and_initializes_private_process_state\n\ntest result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 7656 filtered out; finished in 0.03s\n\n",
+    "stderr": "\nthread 'user::windows::wnf::query_tests::native_query_snapshot_captures_typed_state_and_initializes_private_process_state' (6092) panicked at src\\user\\windows\\wnf\\query_tests.rs:206:5:\nassertion `left == right` failed\n  left: Data(Data { stamp: 4, bytes: [4, 0, 0, 0, 0, 0, 0, 0] })\n right: Data(Data { stamp: 1, bytes: [1, 0, 0, 0, 0, 0, 0, 0] })\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n"
+  }
+}

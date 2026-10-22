@@ -1,0 +1,9 @@
+{
+  "owned-source-addition": "tools/ci/process_embedding.py",
+  "before": {
+    "bytes": 1061,
+    "sha256": "ea60e9ff36cc1bacc0c4df8be4ebd615fa3106fa0243987661278c9be0769c74"
+  },
+  "reason": "The existing native process CI filter excludes the sibling WNF module. Run WNF regressions first on all three configured CI hosts, before unrelated process/profile failures can stop the runner.",
+  "runner-tests": "Two existing subprocess-mock tests pass, retaining first/middle/last failure propagation and every declared command."
+}

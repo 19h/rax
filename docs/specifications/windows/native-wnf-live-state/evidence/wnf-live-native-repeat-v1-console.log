@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "C:\Mac\Home\Downloads\assist-native-allocate-ex-transfer-20261010-2154\repeat-wnf-live-native-v1.py", line 14, in <module>
+    assert match
+           ^^^^^
+AssertionError
