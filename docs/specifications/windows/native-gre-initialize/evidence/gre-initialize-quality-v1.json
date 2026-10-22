@@ -1,0 +1,70 @@
+{
+  "state": "finished",
+  "source-frame-sha256": "e2994771bbad47110bbe6c7ed3b9a2973711e2388f3cf7fa612169cdfa7ce122",
+  "steps": [
+    {
+      "name": "rustfmt",
+      "argv": [
+        "rustup",
+        "run",
+        "1.95.0",
+        "rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "--config",
+        "skip_children=true",
+        "src/user/windows/registry.rs",
+        "src/user/windows/registry/tree.rs",
+        "src/user/windows/registry/installed.rs",
+        "src/user/windows/process/sched/tests/services_tests/registry_tests.rs",
+        "src/user/windows/registry/gre_initialize_tests.rs",
+        "src/user/windows/registry/installed/gre_initialize_tests.rs",
+        "src/user/windows/process/sched/tests/services_tests/registry_tests/gre_initialize.rs"
+      ],
+      "exit-code": 0,
+      "log": "gre-initialize-rustfmt-v1.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "strict-lib-clippy",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "clippy",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit-code": 0,
+      "log": "gre-initialize-strict-lib-clippy-v1.log",
+      "bytes": 2158,
+      "sha256": "34535cfde72206b2cf397056bfc5f23e472bc009f2be68204756a0c89c0cba90"
+    },
+    {
+      "name": "all-target-clippy",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "clippy",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--all-targets",
+        "--features",
+        "x86_64-suite"
+      ],
+      "exit-code": 0,
+      "log": "gre-initialize-all-target-clippy-v1.log",
+      "bytes": 149,
+      "sha256": "9d2b3e93000c7f08d7bad6b4553c352a710e5f8d75b5ae620595327f57a10716"
+    }
+  ],
+  "exit-code": 0,
+  "owned-rust-files": 7
+}

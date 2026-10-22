@@ -1,0 +1,16 @@
+
+running 10 tests
+test user::windows::process::sched::tests::services_tests::registry_tests::gre_initialize::native_gre_initialize_registry_open_replays_native_read_grants_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::registry_tests::gre_initialize::native_gre_initialize_registry_preserves_existing_guest_read_only_policy_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::registry_tests::gre_initialize::native_gre_initialize_registry_values_and_relative_handles_survive_namespace_drop_all_abis ... ok
+test user::windows::registry::gre_initialize_tests::native_gre_initialize_registry_absence_is_confined_to_selected_root ... ok
+test user::windows::registry::gre_initialize_tests::native_gre_initialize_registry_present_tree_owns_raw_data_and_descendants ... ok
+test user::windows::registry::gre_initialize_tests::native_gre_initialize_registry_preserves_all_raw_values_and_complete_view_captures ... ok
+test user::windows::registry::gre_initialize_tests::native_gre_initialize_registry_selection_rejects_duplicates_and_excess_values ... ok
+test user::windows::registry::installed::gre_initialize_tests::installed_gre_initialize_registry_capture_distinguishes_root_absence_from_other_errors ... ok
+test user::windows::registry::installed::gre_initialize_tests::installed_gre_initialize_registry_present_capture_uses_controlled_read_only_native_subtree ... native controlled GRE initialization capture: 54 keys, 106 values, 4756 bytes
+ok
+test user::windows::registry::installed::gre_initialize_tests::installed_gre_initialize_registry_snapshot_matches_independent_native_presence_and_views ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 7675 filtered out; finished in 1.57s
+

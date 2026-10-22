@@ -1,0 +1,36 @@
+{
+  "root": "\\Registry\\Machine\\Software\\Microsoft\\Windows NT\\CurrentVersion\\GRE_Initialize",
+  "primary-api-references": [
+    {
+      "symbol": "RegOpenKeyExW",
+      "url": "https://learn.microsoft.com/en-us/windows/win32/api/winreg/nf-winreg-regopenkeyexw"
+    },
+    {
+      "symbol": "RegEnumValueW",
+      "url": "https://learn.microsoft.com/en-us/windows/win32/api/winreg/nf-winreg-regenumvaluew"
+    },
+    {
+      "symbol": "RegEnumKeyExW",
+      "url": "https://learn.microsoft.com/en-us/windows/win32/api/winreg/nf-winreg-regenumkeyexw"
+    }
+  ],
+  "behavior-source": "Original native probe and immutable full repeats, not an undocumented-kernel specification",
+  "kernel-profile": "Windows 11 ARM64 build 29683",
+  "execution-views": [
+    "arm64",
+    "x64",
+    "x86",
+    "x86-laa"
+  ],
+  "registry-views": [
+    0,
+    256,
+    512
+  ],
+  "keys-per-capture": 3,
+  "values-per-capture": 7,
+  "value-name-bytes": 180,
+  "raw-value-data-bytes": 142,
+  "path-bytes": 502,
+  "independent-x64-kernel": "unknown"
+}

@@ -1,0 +1,5 @@
+* -text
+native/** -diff
+evidence/** -diff
+validation/*.json -diff
+validation/*.log -diff

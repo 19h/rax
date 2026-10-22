@@ -1,0 +1,33 @@
+{
+  "state": "finished",
+  "removed-native-temporary-volume": "assist-native-gre-initialize-linux-tmp-20261022",
+  "active-volume-users": [],
+  "removed-native-probe-tree": "C:/Windows/Temp/assist-native-rax-20261010/src-display-candidate1/target/native-gre-initialize-v1-four-views",
+  "removed-negative-control-copy": true,
+  "retained": [
+    {
+      "path": "/Users/int/.assist-native-display-policy-20261022/target/candidate1",
+      "next-use": "Win32u service admission, initialization and remaining lowerer/profile validation"
+    },
+    {
+      "path": "/Users/int/.assist-native-display-policy-20261022/target/linux/candidate1",
+      "next-use": "Same shared semantics and full Linux validation for Win32u work"
+    },
+    {
+      "path": "/Users/int/.assist-native-display-policy-20261022/target/tool-cache",
+      "next-use": "Formatting next native producers and evidence scripts"
+    },
+    {
+      "path": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes",
+      "next-use": "Actual owning archive and C++ validation for Win32u work"
+    },
+    {
+      "path": "C:/Windows/Temp/assist-native-rax-20261010/src-display-candidate1/target/normal-candidate1",
+      "next-use": "Native Windows Win32u and lowerer/profile checks"
+    },
+    {
+      "path": "C:/Windows/Temp/assist-native-rax-20261010/assist/target/native-attributes",
+      "next-use": "Retained owning core/carrier, NtGdiInit2 before-regression and next ordinary process checks"
+    }
+  ]
+}

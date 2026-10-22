@@ -1,0 +1,37 @@
+{
+  "state": "finished",
+  "host": "macos",
+  "launcher-os": "posix",
+  "launcher-machine": "arm64",
+  "checker-before": {
+    "file": "check_evidence.py",
+    "bytes": 24467,
+    "sha256": "6135c28381f2a67e0f434663cd531889df8626b3e6280cef8e1ed09279e5b726"
+  },
+  "proof-before": {
+    "file": "proof.json",
+    "bytes": 73922,
+    "sha256": "5b674ce6eba1cba062fd8db32be0eeff8de1ee29fe0a47a639693d794d7e6247"
+  },
+  "argv": [
+    "/opt/homebrew/opt/python@3.15/bin/python3.15",
+    "-B",
+    "/Users/int/.assist-native-display-policy-20261022/docs/specifications/windows/native-gre-initialize/check_evidence.py"
+  ],
+  "exit-code": 0,
+  "log": {
+    "file": "gre-initialize-evidence-macos-final-v2.log",
+    "bytes": 755,
+    "sha256": "b01509f8244ecb57ce72fb0ab0da00dac9c71065b3a0d6583ac9a98536091ce6"
+  },
+  "checker-after": {
+    "file": "check_evidence.py",
+    "bytes": 24467,
+    "sha256": "6135c28381f2a67e0f434663cd531889df8626b3e6280cef8e1ed09279e5b726"
+  },
+  "proof-after": {
+    "file": "proof.json",
+    "bytes": 73922,
+    "sha256": "5b674ce6eba1cba062fd8db32be0eeff8de1ee29fe0a47a639693d794d7e6247"
+  }
+}

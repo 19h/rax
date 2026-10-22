@@ -1,0 +1,5 @@
+native-token-security-attributes-v4.cpp
+native-token-security-attributes-v4.cpp(99): error C2664: 'BOOL LookupPrivilegeValueW(LPCWSTR,LPCWSTR,PLUID)': cannot convert argument 2 from 'const char [15]' to 'LPCWSTR'
+native-token-security-attributes-v4.cpp(99): note: Types pointed to are unrelated; conversion requires reinterpret_cast, C-style cast or parenthesized function-style cast
+C:\Program Files (x86)\Windows Kits\10\\include\10.0.26100.0\\um\winbase.h(7423): note: see declaration of 'LookupPrivilegeValueW'
+native-token-security-attributes-v4.cpp(99): note: while trying to match the argument list '(nullptr, const char [15], LUID *)'

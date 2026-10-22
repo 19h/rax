@@ -1,0 +1,218 @@
+{
+  "state": "finished",
+  "steps": [
+    {
+      "profile": "arm64",
+      "exit-code": 0,
+      "log": {
+        "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-gre-repeat-v1-arm64.log",
+        "bytes": 51695,
+        "sha256": "684709b236d13fcaa7cfbb97aa84e855ec0d9e4c5cb51f0e404ecc68b7c5a8a1"
+      },
+      "executable-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-gre-initialize-v1-four-views\\target\\arm64\\probe.exe",
+        "bytes": 184832,
+        "sha256": "99ec950527930f5579a88b5237a977f143655266dc940f0a3cf2ebbe0288e1be"
+      },
+      "executable-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-gre-initialize-v1-four-views\\target\\arm64\\probe.exe",
+        "bytes": 184832,
+        "sha256": "99ec950527930f5579a88b5237a977f143655266dc940f0a3cf2ebbe0288e1be"
+      },
+      "read-tree-records-match": true,
+      "all-open-fields-match-except-opaque-handle-number": true,
+      "calls": 144
+    },
+    {
+      "profile": "x64",
+      "exit-code": 0,
+      "log": {
+        "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-gre-repeat-v1-x64.log",
+        "bytes": 51693,
+        "sha256": "f3a858e924bc5e277d2c2758b2df471a1eaa9f37d2944e0b5f40bdfa1b16b0c7"
+      },
+      "executable-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-gre-initialize-v1-four-views\\target\\x64\\probe.exe",
+        "bytes": 196608,
+        "sha256": "1edcfcfec8421c8d304f09a638a450f50c869e661ce509139608313b69cc36e0"
+      },
+      "executable-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-gre-initialize-v1-four-views\\target\\x64\\probe.exe",
+        "bytes": 196608,
+        "sha256": "1edcfcfec8421c8d304f09a638a450f50c869e661ce509139608313b69cc36e0"
+      },
+      "read-tree-records-match": true,
+      "all-open-fields-match-except-opaque-handle-number": true,
+      "calls": 144
+    },
+    {
+      "profile": "x86",
+      "exit-code": 0,
+      "log": {
+        "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-gre-repeat-v1-x86.log",
+        "bytes": 51693,
+        "sha256": "ce117cdc6ff85568cfa33f3b7a556312194f05bbe44f537998ca97fa2c94ebfa"
+      },
+      "executable-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-gre-initialize-v1-four-views\\target\\x86\\probe.exe",
+        "bytes": 153088,
+        "sha256": "4ed36a268f28e250ce1d0defd187fc57839ae836be34b60ab15a0989490aa9e4"
+      },
+      "executable-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-gre-initialize-v1-four-views\\target\\x86\\probe.exe",
+        "bytes": 153088,
+        "sha256": "4ed36a268f28e250ce1d0defd187fc57839ae836be34b60ab15a0989490aa9e4"
+      },
+      "read-tree-records-match": true,
+      "all-open-fields-match-except-opaque-handle-number": true,
+      "calls": 144
+    },
+    {
+      "profile": "x86-laa",
+      "exit-code": 0,
+      "log": {
+        "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-gre-repeat-v1-x86-laa.log",
+        "bytes": 51697,
+        "sha256": "c01365b09e012863e629bc38a7bfc780223d5bfab702ce58cbca6e1d18606920"
+      },
+      "executable-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-gre-initialize-v1-four-views\\target\\x86-laa\\probe.exe",
+        "bytes": 153088,
+        "sha256": "c18a1f12244ce087027c50204f5cbeb080d332abdffd0c880eb75bd10a659532"
+      },
+      "executable-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-gre-initialize-v1-four-views\\target\\x86-laa\\probe.exe",
+        "bytes": 153088,
+        "sha256": "c18a1f12244ce087027c50204f5cbeb080d332abdffd0c880eb75bd10a659532"
+      },
+      "read-tree-records-match": true,
+      "all-open-fields-match-except-opaque-handle-number": true,
+      "calls": 144
+    }
+  ],
+  "runtime-before": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e"
+    },
+    {
+      "path": "C:\\Windows\\System32\\KernelBase.dll",
+      "bytes": 7213728,
+      "sha256": "6b2fa508ac4f9bce5d7351676485d1dc5b5236cd9656034e2fec1eaba3b82bc9"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\KernelBase.dll",
+      "bytes": 3073488,
+      "sha256": "e9c414d7c6bd2c6fde608f31b2f31da3c2014c801b3764a30ee42abd1e9c2d58"
+    },
+    {
+      "path": "C:\\Windows\\System32\\kernel32.dll",
+      "bytes": 1500304,
+      "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\kernel32.dll",
+      "bytes": 696392,
+      "sha256": "9c9a0c54a79ea712bb533fcc79ba9935ed9f9d3f777fd65cf62d9cec6699b9df"
+    },
+    {
+      "path": "C:\\Windows\\System32\\msvcrt.dll",
+      "bytes": 1347856,
+      "sha256": "779eb5cb1ae357196254af9755307544a3dd20011c84768ae72f45d366f47148"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\msvcrt.dll",
+      "bytes": 810688,
+      "sha256": "67c03357458a951402cc1804e05d3301f011a59d352f684fbe283f546f8ae398"
+    },
+    {
+      "path": "C:\\Windows\\System32\\advapi32.dll",
+      "bytes": 1390176,
+      "sha256": "55574d41274e407861a51574fb76fe36f02a8809da67255d45081fb435fe5018"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\advapi32.dll",
+      "bytes": 546256,
+      "sha256": "da0199c2cdf861b489e1de2a2abb13092b6ed6dc36a28908aaafa8f878eb5413"
+    },
+    {
+      "path": "C:\\Windows\\System32\\sechost.dll",
+      "bytes": 982704,
+      "sha256": "e620b3d59f10fe71770968575fc0c2af0592ca1f451c62b596ed08857039354c"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\sechost.dll",
+      "bytes": 458992,
+      "sha256": "8f4db1e56339e0eda153aab01e7c2080b702c614f300b2472f6e49215b647bbd"
+    }
+  ],
+  "runtime-after": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e"
+    },
+    {
+      "path": "C:\\Windows\\System32\\KernelBase.dll",
+      "bytes": 7213728,
+      "sha256": "6b2fa508ac4f9bce5d7351676485d1dc5b5236cd9656034e2fec1eaba3b82bc9"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\KernelBase.dll",
+      "bytes": 3073488,
+      "sha256": "e9c414d7c6bd2c6fde608f31b2f31da3c2014c801b3764a30ee42abd1e9c2d58"
+    },
+    {
+      "path": "C:\\Windows\\System32\\kernel32.dll",
+      "bytes": 1500304,
+      "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\kernel32.dll",
+      "bytes": 696392,
+      "sha256": "9c9a0c54a79ea712bb533fcc79ba9935ed9f9d3f777fd65cf62d9cec6699b9df"
+    },
+    {
+      "path": "C:\\Windows\\System32\\msvcrt.dll",
+      "bytes": 1347856,
+      "sha256": "779eb5cb1ae357196254af9755307544a3dd20011c84768ae72f45d366f47148"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\msvcrt.dll",
+      "bytes": 810688,
+      "sha256": "67c03357458a951402cc1804e05d3301f011a59d352f684fbe283f546f8ae398"
+    },
+    {
+      "path": "C:\\Windows\\System32\\advapi32.dll",
+      "bytes": 1390176,
+      "sha256": "55574d41274e407861a51574fb76fe36f02a8809da67255d45081fb435fe5018"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\advapi32.dll",
+      "bytes": 546256,
+      "sha256": "da0199c2cdf861b489e1de2a2abb13092b6ed6dc36a28908aaafa8f878eb5413"
+    },
+    {
+      "path": "C:\\Windows\\System32\\sechost.dll",
+      "bytes": 982704,
+      "sha256": "e620b3d59f10fe71770968575fc0c2af0592ca1f451c62b596ed08857039354c"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\sechost.dll",
+      "bytes": 458992,
+      "sha256": "8f4db1e56339e0eda153aab01e7c2080b702c614f300b2472f6e49215b647bbd"
+    }
+  ],
+  "exit-code": 0
+}

@@ -1,0 +1,156 @@
+{
+  "state": "finished",
+  "host": "macos",
+  "pid": 67235,
+  "steps": [
+    {
+      "name": "ordinals",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "ntdll_ordinal",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 0.23696533299516886,
+      "log": "gre-initialize-macos-candidate1-retry-v4-ordinals.log",
+      "bytes": 892,
+      "sha256": "ed2570700307d844dc79d33c40fc63f5227b777bce37c63be4837876e3814404",
+      "results": [
+        "ok. 4 passed; 0 failed; 0 ignored; 0 measured; 8201 filtered out; finished in 0.03s"
+      ]
+    },
+    {
+      "name": "focus",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "gre_initialize",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 0.9752967090462334,
+      "log": "gre-initialize-macos-candidate1-retry-v4-focus.log",
+      "bytes": 1353,
+      "sha256": "2d4c13f1a8500fb6aabba09bd6cd29fb5e08b2e0e33ab0343153d2dcc4473d36",
+      "results": [
+        "ok. 7 passed; 0 failed; 0 ignored; 0 measured; 8198 filtered out; finished in 0.88s"
+      ]
+    },
+    {
+      "name": "full",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 643.6851446660003,
+      "log": "gre-initialize-macos-candidate1-retry-v4-full.log",
+      "bytes": 867702,
+      "sha256": "e66eb34404e7b33f06fe247923bf8d69f7c99b0bd1a90c9e0026c57a5e5363ec",
+      "results": [
+        "ok. 8203 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 643.59s"
+      ]
+    },
+    {
+      "name": "capi",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "-p",
+        "rax-capi",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 85.74916050001048,
+      "log": "gre-initialize-macos-candidate1-retry-v4-capi.log",
+      "bytes": 14131,
+      "sha256": "df5570de9e7dfa2236564e481dc724ee5279ba2994e267ccde229a3b9c1276f4",
+      "results": [
+        "ok. 183 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 18.03s",
+        "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    {
+      "name": "integration",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--test",
+        "user_windows",
+        "--test",
+        "user_windows_memory",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 82.58091908297502,
+      "log": "gre-initialize-macos-candidate1-retry-v4-integration.log",
+      "bytes": 35856,
+      "sha256": "5485d98d7acf0f094f0cb8cd8a4ad8b6e56cb06361feb945ae8e04052702a131",
+      "results": [
+        "ok. 544 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 78.88s",
+        "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    {
+      "name": "all-targets",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "check",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--all-targets"
+      ],
+      "exit-code": 0,
+      "seconds": 84.32615587499458,
+      "log": "gre-initialize-macos-candidate1-retry-v4-all-targets.log",
+      "bytes": 149,
+      "sha256": "9ca71141902ac6486b0d55d778949d9d347c0e5341ce54e3e3152cc5730f5ea4",
+      "results": []
+    }
+  ],
+  "manifest-sha256": "e2994771bbad47110bbe6c7ed3b9a2973711e2388f3cf7fa612169cdfa7ce122",
+  "supersedes": "gre-initialize-macos-candidate1-gates.json",
+  "reason": "Original Mac full run had five fork failures during the host resource outage. All five exact tests pass unchanged afterward; repeat the full suite with the same frozen source.",
+  "step": "all-targets",
+  "child": 84326,
+  "exit-code": 0,
+  "source-inputs": 29180,
+  "completed-utc": "2026-10-22T23:13:05.316086+00:00"
+}

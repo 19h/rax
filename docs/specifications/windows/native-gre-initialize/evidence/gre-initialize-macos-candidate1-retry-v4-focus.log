@@ -1,0 +1,14 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.05s
+     Running unittests src/lib.rs (target/candidate1/debug/deps/rax-dd79f0cd9ae9bb68)
+
+running 7 tests
+test user::windows::process::sched::tests::services_tests::registry_tests::gre_initialize::native_gre_initialize_registry_open_replays_native_read_grants_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::registry_tests::gre_initialize::native_gre_initialize_registry_preserves_existing_guest_read_only_policy_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::registry_tests::gre_initialize::native_gre_initialize_registry_values_and_relative_handles_survive_namespace_drop_all_abis ... ok
+test user::windows::registry::gre_initialize_tests::native_gre_initialize_registry_absence_is_confined_to_selected_root ... ok
+test user::windows::registry::gre_initialize_tests::native_gre_initialize_registry_present_tree_owns_raw_data_and_descendants ... ok
+test user::windows::registry::gre_initialize_tests::native_gre_initialize_registry_preserves_all_raw_values_and_complete_view_captures ... ok
+test user::windows::registry::gre_initialize_tests::native_gre_initialize_registry_selection_rejects_duplicates_and_excess_values ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 8198 filtered out; finished in 0.88s
+

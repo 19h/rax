@@ -1,0 +1,60 @@
+{
+  "schema": 1,
+  "proof": {
+    "file": "proof.json",
+    "bytes": 73922,
+    "sha256": "5b674ce6eba1cba062fd8db32be0eeff8de1ee29fe0a47a639693d794d7e6247"
+  },
+  "checker": {
+    "file": "check_evidence.py",
+    "bytes": 24467,
+    "sha256": "6135c28381f2a67e0f434663cd531889df8626b3e6280cef8e1ed09279e5b726"
+  },
+  "files": [
+    {
+      "file": "check_validation.py",
+      "bytes": 3799,
+      "sha256": "3bcf10f14518bfb5c86ee18ca12c268e5099ca8bd0a0dfb0f04a3eee77df39be"
+    },
+    {
+      "file": "gre-initialize-build-lifecycle-v1.json",
+      "bytes": 1555,
+      "sha256": "fbc1006eef1dab4c1ed07502150a18ddf11d5ed6637b07bc29fe062c361f2b91"
+    },
+    {
+      "file": "gre-initialize-evidence-linux-final-v2.json",
+      "bytes": 1400,
+      "sha256": "7554af613c68644ef3c39b8d55c7bc4bfbf36d38159af2d85f2af45e3efd659a"
+    },
+    {
+      "file": "gre-initialize-evidence-linux-final-v2.log",
+      "bytes": 755,
+      "sha256": "b01509f8244ecb57ce72fb0ab0da00dac9c71065b3a0d6583ac9a98536091ce6"
+    },
+    {
+      "file": "gre-initialize-evidence-macos-final-v2.json",
+      "bytes": 1120,
+      "sha256": "c5c29250b18bfdde81bc18217c92d77d98d8c9b4088376338ceee885e9aac8a8"
+    },
+    {
+      "file": "gre-initialize-evidence-macos-final-v2.log",
+      "bytes": 755,
+      "sha256": "b01509f8244ecb57ce72fb0ab0da00dac9c71065b3a0d6583ac9a98536091ce6"
+    },
+    {
+      "file": "gre-initialize-evidence-transfer-v2-source.json",
+      "bytes": 569,
+      "sha256": "617c67ae89a34e1d0570aecbb1a011f0ff83c376d89875466affb12aa0752472"
+    },
+    {
+      "file": "gre-initialize-evidence-windows-v2.json",
+      "bytes": 3793,
+      "sha256": "b218f3603536449e0b3b54381cc9d74bf99df974c71c4b3df7b78d11be434809"
+    },
+    {
+      "file": "gre-initialize-evidence-windows-v2.log",
+      "bytes": 788,
+      "sha256": "312cfc8787ba73110bef852561f7ff914c6a24ab3fd4ec3ad0d4aeb87a62e964"
+    }
+  ]
+}

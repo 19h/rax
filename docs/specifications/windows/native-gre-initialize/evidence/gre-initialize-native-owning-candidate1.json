@@ -1,0 +1,124 @@
+{
+  "state": "finished",
+  "pid": 9656,
+  "source-epoch": 1,
+  "utc": "2026-10-22T22:51:38.621436+00:00",
+  "steps": [
+    {
+      "name": "toolchain",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "--version"
+      ],
+      "exit-code": 0,
+      "seconds": 0.06515808298718184,
+      "log": "gre-initialize-native-owning-candidate1-toolchain.log",
+      "bytes": 36,
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5"
+    },
+    {
+      "name": "artifacts-before",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "build",
+        "--locked",
+        "--offline",
+        "--features",
+        "rax",
+        "--message-format=json"
+      ],
+      "exit-code": 0,
+      "seconds": 206.02227429201594,
+      "log": "gre-initialize-native-owning-candidate1-artifacts-before.log",
+      "bytes": 132536,
+      "sha256": "6591df03c4098d621481db1d890729fbd8890811e560b8c0ed3c6692a2d7e9f3"
+    },
+    {
+      "name": "archive-before",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\collect-gre-initialize-archives-candidate1.py",
+        "--host",
+        "windows",
+        "--source",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1",
+        "--manifest",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\gre-initialize-owning-source-hashes-candidate1.json",
+        "--messages",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\gre-initialize-native-owning-candidate1-artifacts-before.log",
+        "--output",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-gre-initialize-candidate1-pre-cpp-archives.json"
+      ],
+      "exit-code": 0,
+      "seconds": 7.659942291968036,
+      "log": "gre-initialize-native-owning-candidate1-archive-before.log",
+      "bytes": 182,
+      "sha256": "1a3d1b154e009c89b9bf0d25f1b7b8bc70cef0e31f9beedcc38dccc5bb350242"
+    },
+    {
+      "name": "cpp",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\helpers\\gre-initialize-owned-cpp-build-candidate1.py"
+      ],
+      "exit-code": 0,
+      "seconds": 74.95463991601719,
+      "log": "gre-initialize-native-owning-candidate1-cpp.log",
+      "bytes": 3705,
+      "sha256": "bf9eea3d6ae6bcea6bdc355eec180a2051e6f5613bde5ad3762f8b4c6b43581a"
+    },
+    {
+      "name": "artifacts-after",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "build",
+        "--locked",
+        "--offline",
+        "--features",
+        "rax",
+        "--message-format=json"
+      ],
+      "exit-code": 0,
+      "seconds": 0.6742102910066023,
+      "log": "gre-initialize-native-owning-candidate1-artifacts-after.log",
+      "bytes": 132251,
+      "sha256": "b5daac3f15b0d1dc9ae16a1d4102b0890660d1fd1e8b117985702a585e3c6b8b"
+    },
+    {
+      "name": "archive-after",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\collect-gre-initialize-archives-candidate1.py",
+        "--host",
+        "windows",
+        "--source",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1",
+        "--manifest",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\gre-initialize-owning-source-hashes-candidate1.json",
+        "--messages",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\gre-initialize-native-owning-candidate1-artifacts-after.log",
+        "--output",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-gre-initialize-candidate1-final-owning-archive-identities.json"
+      ],
+      "exit-code": 0,
+      "seconds": 8.209449540998321,
+      "log": "gre-initialize-native-owning-candidate1-archive-after.log",
+      "bytes": 182,
+      "sha256": "1a3d1b154e009c89b9bf0d25f1b7b8bc70cef0e31f9beedcc38dccc5bb350242"
+    }
+  ],
+  "junction": {
+    "before": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1",
+    "after": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1"
+  },
+  "current-step": "archive-after",
+  "child-pid": 4404,
+  "exit-code": 0,
+  "source-inputs": 3981,
+  "archive-identities-stable": true,
+  "scope": "Frozen gre-initialize lifetime source; retained Assist ABI184 linked consumers. Whole current-root ABI274 GUI/plugin/packages not claimed.",
+  "completed-utc": "2026-10-22T22:56:44.561426+00:00"
+}

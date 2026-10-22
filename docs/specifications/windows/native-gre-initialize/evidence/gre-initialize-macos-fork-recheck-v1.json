@@ -1,0 +1,51 @@
+{
+  "state": "finished",
+  "source-frame-sha256": "e2994771bbad47110bbe6c7ed3b9a2973711e2388f3cf7fa612169cdfa7ce122",
+  "test-image": "/Users/int/.assist-native-display-policy-20261022/target/candidate1/debug/deps/rax-dd79f0cd9ae9bb68",
+  "image-before": {
+    "bytes": 642897864,
+    "sha256": "525a8f097feb2992bd1d84ff6a083f6593b39bb83660fed8809852c766a7563e"
+  },
+  "steps": [
+    {
+      "name": "user::linux::tests::pidfd::a_host_watch_sees_another_process_end",
+      "exit-code": 0,
+      "log": "gre-initialize-macos-fork-recheck-v1-0.log",
+      "bytes": 192,
+      "sha256": "7d97443b81873317b7091593ebfd3a230d90231eb9da021d0e70ea4ddb364772"
+    },
+    {
+      "name": "user::linux::tests::pidfd::another_process_is_seen_through_the_host",
+      "exit-code": 0,
+      "log": "gre-initialize-macos-fork-recheck-v1-1.log",
+      "bytes": 195,
+      "sha256": "09e400b1ca76ad63352904861101c26c9bcfe2d44cf2657bfdbc7f053b7a1271"
+    },
+    {
+      "name": "user::linux::tests::ptrace_jobctl::sigstop_to_a_linked_process_goes_along_the_link",
+      "exit-code": 0,
+      "log": "gre-initialize-macos-fork-recheck-v1-2.log",
+      "bytes": 210,
+      "sha256": "ad5405e5936c7c53c0da0fd2be7e9cf7df85d93141bf8ae47fbadc9763f027e8"
+    },
+    {
+      "name": "user::mm::shared_words::tests::unix_mapping_remains_shared_after_fork",
+      "exit-code": 0,
+      "log": "gre-initialize-macos-fork-recheck-v1-3.log",
+      "bytes": 197,
+      "sha256": "67528a9a04c368be4f52ca9bbb78272ce5d77d019140e61f22a8fa6d26644a2a"
+    },
+    {
+      "name": "user::readiness::tests::unix_levels_survive_fork",
+      "exit-code": 0,
+      "log": "gre-initialize-macos-fork-recheck-v1-4.log",
+      "bytes": 176,
+      "sha256": "12af32b5c00be325baf7ac5a6db094cf1df26558bde18e4dc113e6ac198bfe92"
+    }
+  ],
+  "image-after": {
+    "bytes": 642897864,
+    "sha256": "525a8f097feb2992bd1d84ff6a083f6593b39bb83660fed8809852c766a7563e"
+  },
+  "exit-code": 0
+}

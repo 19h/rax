@@ -1,0 +1,12 @@
+   Compiling rax v0.1.0 (/work/vendor/rax)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2m 38s
+     Running unittests src/lib.rs (target/linux/candidate1/debug/deps/rax-3e31f1d94bc1cdf9)
+
+running 4 tests
+test user::windows::dll::threading::tests::native_semaphore_tests::native_semaphore_preserves_every_prior_ntdll_ordinal_and_trap_rva_all_abis ... ok
+test user::windows::dll::threading::tests::native_timer2_tests::native_timer2_arm_preserves_every_prior_ntdll_ordinal_and_trap_rva_all_abis ... ok
+test user::windows::dll::threading::tests::native_wait_tests::native_single_wait_preserves_prior_ntdll_ordinals_and_trap_rvas_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::read::native_read_virtual_memory_preserves_all_prior_ntdll_ordinals_and_trap_rvas_all_abis ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 8196 filtered out; finished in 0.03s
+

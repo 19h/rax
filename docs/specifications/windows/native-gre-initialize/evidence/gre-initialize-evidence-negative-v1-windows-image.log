@@ -1,0 +1,19 @@
+Traceback (most recent call last):
+  File "/Users/int/.assist-native-display-policy-20261022/docs/specifications/windows/native-gre-initialize/check_evidence.py", line 656, in <module>
+    main()
+    ~~~~^^
+  File "/Users/int/.assist-native-display-policy-20261022/docs/specifications/windows/native-gre-initialize/check_evidence.py", line 652, in main
+    print(json.dumps(check(args.evidence_dir, args.source_root), indent=2))
+                     ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/int/.assist-native-display-policy-20261022/docs/specifications/windows/native-gre-initialize/check_evidence.py", line 380, in check
+    require(
+    ~~~~~~~^
+        windows["test-image-before"] == windows["test-image-after"],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        "Windows exact test executable",
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/int/.assist-native-display-policy-20261022/docs/specifications/windows/native-gre-initialize/check_evidence.py", line 12, in require
+    raise ValueError(message)
+ValueError: Windows exact test executable

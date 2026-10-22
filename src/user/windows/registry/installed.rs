@@ -302,6 +302,9 @@ pub(crate) fn snapshot() -> io::Result<Registry> {
     let registry = registry.with_tree(root, selected)?;
     let root = super::TreeRoot::DisplayPolicy;
     let selected = tree::capture_root(&registry, root)?;
+    let registry = registry.with_tree(root, selected)?;
+    let root = super::TreeRoot::GreInitialize;
+    let selected = tree::capture_root(&registry, root)?;
     registry.with_tree(root, selected)
 }
 
@@ -344,3 +347,7 @@ mod error_message_instrument_tests;
 #[cfg(test)]
 #[path = "installed/display_policy_tests.rs"]
 mod display_policy_tests;
+
+#[cfg(test)]
+#[path = "installed/gre_initialize_tests.rs"]
+mod gre_initialize_tests;

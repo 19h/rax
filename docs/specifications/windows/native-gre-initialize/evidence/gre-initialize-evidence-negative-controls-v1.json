@@ -1,0 +1,129 @@
+{
+  "state": "finished",
+  "cases": [
+    {
+      "name": "baseline-positive",
+      "expected-rejection": null,
+      "exit-code": 0,
+      "log": "gre-initialize-evidence-negative-v1-baseline-positive.log",
+      "bytes": 755,
+      "sha256": "b01509f8244ecb57ce72fb0ab0da00dac9c71065b3a0d6583ac9a98536091ce6"
+    },
+    {
+      "name": "parent",
+      "expected-rejection": "parent/schema",
+      "exit-code": 1,
+      "log": "gre-initialize-evidence-negative-v1-parent.log",
+      "bytes": 997,
+      "sha256": "55f2add440e12639b56eca0998bcc528d612f0cf9f8f087ebcc8a3ccc14d41bb"
+    },
+    {
+      "name": "native-status",
+      "expected-rejection": "exact compiled fixture",
+      "exit-code": 1,
+      "log": "gre-initialize-evidence-negative-v1-native-status.log",
+      "bytes": 1119,
+      "sha256": "df25d10351e3d504cf5deee7d44a0973c11841a73158f36d059b3ee23a7ee4e5"
+    },
+    {
+      "name": "source-frame",
+      "expected-rejection": "compiler frame digest",
+      "exit-code": 1,
+      "log": "gre-initialize-evidence-negative-v1-source-frame.log",
+      "bytes": 1011,
+      "sha256": "410bfa4c34cf94288d85e7f1f083187a662e62ce090bc3273b206c8c76847b9d"
+    },
+    {
+      "name": "windows-failures",
+      "expected-rejection": "Windows exact remaining failures",
+      "exit-code": 1,
+      "log": "gre-initialize-evidence-negative-v1-windows-failures.log",
+      "bytes": 1149,
+      "sha256": "075f094e4a9cac9532a8d408ae45d78e0596ebbb0bd6d2b1bdafee7dbc323f26"
+    },
+    {
+      "name": "windows-image",
+      "expected-rejection": "Windows exact test executable",
+      "exit-code": 1,
+      "log": "gre-initialize-evidence-negative-v1-windows-image.log",
+      "bytes": 1118,
+      "sha256": "05753acb3d085594985d19adecc6b542b5021a0a084f18a136fa9c35bb15fecd"
+    },
+    {
+      "name": "owning-archive",
+      "expected-rejection": "actual owning archives stable",
+      "exit-code": 1,
+      "log": "gre-initialize-evidence-negative-v1-owning-archive.log",
+      "bytes": 1144,
+      "sha256": "9840b0c7ddc45fbce25851e4e7ca7a5abdac4c9d6361ca53076acb788c3aad52"
+    },
+    {
+      "name": "guest-completion",
+      "expected-rejection": "C API next frontier is not false guest exit",
+      "exit-code": 1,
+      "log": "gre-initialize-evidence-negative-v1-guest-completion.log",
+      "bytes": 1106,
+      "sha256": "498a31e9a9b814c93e360ae82c81fa6a0a5b905aa90762c5a41833bb94cf9ea3"
+    },
+    {
+      "name": "native-repeat",
+      "expected-rejection": "repeat native fields",
+      "exit-code": 1,
+      "log": "gre-initialize-evidence-negative-v1-native-repeat.log",
+      "bytes": 1175,
+      "sha256": "1c146254dd7680eacff3f6a910229a4da67a7da04df5434ad5a92324bdf3c22e"
+    },
+    {
+      "name": "quality-exit",
+      "expected-rejection": "formatter/Clippy result",
+      "exit-code": 1,
+      "log": "gre-initialize-evidence-negative-v1-quality-exit.log",
+      "bytes": 1086,
+      "sha256": "87d033dea258171338ecae702aac0855bf67ec2e04a1ebc8d6fbd130cd99b1e9"
+    },
+    {
+      "name": "retain-mac-failure",
+      "expected-rejection": "retained Mac failed run",
+      "exit-code": 1,
+      "log": "gre-initialize-evidence-negative-v1-retain-mac-failure.log",
+      "bytes": 1054,
+      "sha256": "4bf2d3c9e06adbee9a6ad82571c57b3373da74ab2382efd53b0ad9d48fc08a49"
+    },
+    {
+      "name": "parent-failure",
+      "expected-rejection": "compiled expected parent failure",
+      "exit-code": 1,
+      "log": "gre-initialize-evidence-negative-v1-parent-failure.log",
+      "bytes": 1129,
+      "sha256": "58c9c0ed56bf54d936b4a318128ece06e1c052a2cb7afd3909a425c9cd74655b"
+    },
+    {
+      "name": "optimized-python",
+      "expected-rejection": "optimized Python is not an evidence checker",
+      "exit-code": 1,
+      "log": "gre-initialize-evidence-negative-v1-optimized-python.log",
+      "bytes": 1013,
+      "sha256": "9233f4cabbe8d9fd092aeb180b62eff59dba0508dcf3a6401c3cb405d9a9abff"
+    },
+    {
+      "name": "double-optimized-python",
+      "expected-rejection": "optimized Python is not an evidence checker",
+      "exit-code": 1,
+      "log": "gre-initialize-evidence-negative-v1-double-optimized-python.log",
+      "bytes": 1013,
+      "sha256": "9233f4cabbe8d9fd092aeb180b62eff59dba0508dcf3a6401c3cb405d9a9abff"
+    },
+    {
+      "name": "restored-positive",
+      "expected-rejection": null,
+      "exit-code": 0,
+      "log": "gre-initialize-evidence-negative-v1-restored-positive.log",
+      "bytes": 755,
+      "sha256": "b01509f8244ecb57ce72fb0ab0da00dac9c71065b3a0d6583ac9a98536091ce6"
+    }
+  ],
+  "checker-sha256": "6135c28381f2a67e0f434663cd531889df8626b3e6280cef8e1ed09279e5b726",
+  "exit-code": 0,
+  "temporary-copy-removed": true,
+  "production-source-edits": 0
+}

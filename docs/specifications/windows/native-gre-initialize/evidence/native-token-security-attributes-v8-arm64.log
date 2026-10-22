@@ -1,0 +1,8 @@
+fixture type=1 set=C000000D exception=00000000 width=8 attribute-bytes=40 information-bytes=16 fqbn-bytes=24 octet-bytes=16
+fixture type=2 set=C000000D exception=00000000 width=8 attribute-bytes=40 information-bytes=16 fqbn-bytes=24 octet-bytes=16
+fixture type=3 set=C000000D exception=00000000 width=8 attribute-bytes=40 information-bytes=16 fqbn-bytes=24 octet-bytes=16
+fixture type=4 set=C000000D exception=00000000 width=8 attribute-bytes=40 information-bytes=16 fqbn-bytes=24 octet-bytes=16
+fixture type=5 set=C000000D exception=00000000 width=8 attribute-bytes=40 information-bytes=16 fqbn-bytes=24 octet-bytes=16
+fixture type=6 set=C000000D exception=00000000 width=8 attribute-bytes=40 information-bytes=16 fqbn-bytes=24 octet-bytes=16
+fixture type=16 set=C000000D exception=00000000 width=8 attribute-bytes=40 information-bytes=16 fqbn-bytes=24 octet-bytes=16
+complete cases=0 successful-types=0 primary-privileges-unchanged=1

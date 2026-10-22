@@ -1,0 +1,46 @@
+{
+  "state": "finished",
+  "discovery-only": true,
+  "root": "Software\\Microsoft\\Windows NT\\CurrentVersion\\GRE_Initialize",
+  "views": [
+    {
+      "view": 0,
+      "status": 0,
+      "children": 2,
+      "values": [
+        {
+          "name": "DisableRemoteFontBootCache",
+          "kind": 4,
+          "winreg-decoded-data": 0
+        }
+      ],
+      "last-write": 134368277015745084
+    },
+    {
+      "view": 256,
+      "status": 0,
+      "children": 2,
+      "values": [
+        {
+          "name": "DisableRemoteFontBootCache",
+          "kind": 4,
+          "winreg-decoded-data": 0
+        }
+      ],
+      "last-write": 134368277015745084
+    },
+    {
+      "view": 512,
+      "status": 0,
+      "children": 2,
+      "values": [
+        {
+          "name": "DisableRemoteFontBootCache",
+          "kind": 4,
+          "winreg-decoded-data": 0
+        }
+      ],
+      "last-write": 134368277015745084
+    }
+  ]
+}

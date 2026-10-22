@@ -1,0 +1,46 @@
+{
+  "base-rax": "a9ca828fa18ab92a8a3ed866da97f360030b079c",
+  "base-assist": "cf7ef63ce86ecd84d01f4571672f086fa4f1bbaf",
+  "owned-planned": [
+    "src/user/windows/registry.rs",
+    "src/user/windows/registry/tree.rs",
+    "src/user/windows/registry/installed.rs",
+    "src/user/windows/process/sched/tests/services_tests/registry_tests.rs",
+    "src/user/windows/registry/gre_initialize_tests.rs",
+    "src/user/windows/registry/installed/gre_initialize_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/registry_tests/gre_initialize.rs",
+    "docs/specifications/windows/native-gre-initialize/"
+  ],
+  "assumptions": [
+    {
+      "id": "GRE-A1",
+      "assumption": "The fixed GRE_Initialize root can use the existing bounded complete subtree capture without changing registry view policy",
+      "basis": "The ordinary guest requests this fixed native root; existing selected roots use immutable capture",
+      "dependent-result": "Root selection and shared guest lookup",
+      "stress-test": "Compare default/64/32 native views, raw values, descendants and absence",
+      "falsification-probe": "Native view differences or an incomplete/budget-exceeding root",
+      "status": "retained"
+    },
+    {
+      "id": "GRE-A2",
+      "assumption": "Only root ERROR_FILE_NOT_FOUND establishes known absence",
+      "basis": "Existing capture contract",
+      "dependent-result": "Fail-closed selected missing root",
+      "stress-test": "Access denied, missing descendant, changing enumeration and sibling/prefix names",
+      "falsification-probe": "Any acquisition error becomes a successful partial or absent snapshot",
+      "status": "retained"
+    }
+  ],
+  "boundaries": [
+    {
+      "impact": "high",
+      "item": "Whole process userland and foreign process ownership remain incomplete",
+      "blocks": "Whole goal completion"
+    },
+    {
+      "impact": "medium",
+      "item": "One ARM64 native kernel profile and existing lowerer/x64 profile failures",
+      "blocks": "Unqualified platform-wide claims"
+    }
+  ]
+}

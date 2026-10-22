@@ -1,0 +1,84 @@
+{
+  "state": "failed",
+  "host": "macos",
+  "pid": 19032,
+  "steps": [
+    {
+      "name": "ordinals",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "ntdll_ordinal",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 109.29911408299813,
+      "log": "gre-initialize-macos-candidate1-ordinals.log",
+      "bytes": 3508,
+      "sha256": "b0278985ed950f5f40c24b762a18b5b3a412766e17d3fc5f63980fd7a46f198e",
+      "results": [
+        "ok. 4 passed; 0 failed; 0 ignored; 0 measured; 8201 filtered out; finished in 0.01s"
+      ]
+    },
+    {
+      "name": "focus",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "gre_initialize",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 1.060597500007134,
+      "log": "gre-initialize-macos-candidate1-focus.log",
+      "bytes": 1353,
+      "sha256": "e0548c87f5bbcc9b27780245dd0eb62f7af15798ba2d62f6588db2c3e0f82ff7",
+      "results": [
+        "ok. 7 passed; 0 failed; 0 ignored; 0 measured; 8198 filtered out; finished in 0.88s"
+      ]
+    },
+    {
+      "name": "full",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 101,
+      "seconds": 487.7335235840292,
+      "log": "gre-initialize-macos-candidate1-full.log",
+      "bytes": 869165,
+      "sha256": "8d0af30a5ca8edc0511b5436b880109ddf6eb0a13be0bc78acf7c4d6d150b132",
+      "results": [
+        "FAILED. 8198 passed; 5 failed; 2 ignored; 0 measured; 0 filtered out; finished in 487.63s"
+      ]
+    }
+  ],
+  "manifest-sha256": "e2994771bbad47110bbe6c7ed3b9a2973711e2388f3cf7fa612169cdfa7ce122",
+  "step": "full",
+  "child": 25044,
+  "exit-code": 1,
+  "error": "Traceback (most recent call last):\n  File \"/Users/int/Library/Caches/assist-process-emulation/native-gre-initialize-20261022/run-gre-initialize-unix-candidate1.py\", line 166, in <module>\n    results = run(name, command)\n  File \"/Users/int/Library/Caches/assist-process-emulation/native-gre-initialize-20261022/run-gre-initialize-unix-candidate1.py\", line 137, in run\n    assert code == 0, name\n           ^^^^^^^^^\nAssertionError: full\n",
+  "completed-utc": "2026-10-22T22:53:34.020576+00:00"
+}

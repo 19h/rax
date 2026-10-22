@@ -1,0 +1,11 @@
+native-token-security-attributes-v7.cpp
+native-token-security-attributes-v7.cpp(125): error C2143: syntax error: missing ';' before '}'
+native-token-security-attributes-v7.cpp(125): error C2059: syntax error: ')'
+native-token-security-attributes-v7.cpp(132): error C2065: 'type': undeclared identifier
+native-token-security-attributes-v7.cpp(133): error C2065: 'type': undeclared identifier
+native-token-security-attributes-v7.cpp(133): error C2065: 'type': undeclared identifier
+native-token-security-attributes-v7.cpp(134): error C2065: 'type': undeclared identifier
+native-token-security-attributes-v7.cpp(134): error C2050: switch expression not integral
+native-token-security-attributes-v7.cpp(172): error C2065: 'type': undeclared identifier
+native-token-security-attributes-v7.cpp(187): error C2065: 'type': undeclared identifier
+native-token-security-attributes-v7.cpp(175): error C2044: continue statment not within a loop

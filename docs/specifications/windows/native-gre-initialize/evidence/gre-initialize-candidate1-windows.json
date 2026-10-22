@@ -1,0 +1,226 @@
+{
+  "state": "finished",
+  "pid": 5148,
+  "steps": [
+    {
+      "name": "toolchain",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "--version"
+      ],
+      "exit-code": 0,
+      "seconds": 0.07579637499293312,
+      "log": "gre-initialize-candidate1-toolchain.log",
+      "bytes": 36,
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5",
+      "results": []
+    },
+    {
+      "name": "test-build",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "exit-code": 0,
+      "seconds": 240.5706871250295,
+      "log": "gre-initialize-candidate1-test-build.log",
+      "bytes": 92179,
+      "sha256": "09f06b6878ac847cb0e11342b244a12595f05d7527e90571971293d4419930d3",
+      "results": []
+    },
+    {
+      "name": "ordinals",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\normal-candidate1\\debug\\deps\\rax-b799307a7949aa6b.exe",
+        "ntdll_ordinal",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 0.08041987498290837,
+      "log": "gre-initialize-candidate1-ordinals.log",
+      "bytes": 733,
+      "sha256": "129a64eca361c26ee905ac9b9a23c18f5772a5671a2d55e2f02bbef96ce33295",
+      "results": [
+        "ok. 4 passed; 0 failed; 0 ignored; 0 measured; 7681 filtered out; finished in 0.01s"
+      ]
+    },
+    {
+      "name": "focus",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\normal-candidate1\\debug\\deps\\rax-b799307a7949aa6b.exe",
+        "gre_initialize",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 1.5954216250102036,
+      "log": "gre-initialize-candidate1-focus.log",
+      "bytes": 1751,
+      "sha256": "3185122f2d44890ffc893d50c626c38e03ca6231e1d240d345e3aeea5e6db06a",
+      "results": [
+        "ok. 10 passed; 0 failed; 0 ignored; 0 measured; 7675 filtered out; finished in 1.57s"
+      ]
+    },
+    {
+      "name": "full",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\normal-candidate1\\debug\\deps\\rax-b799307a7949aa6b.exe",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 101,
+      "seconds": 1150.1799301669816,
+      "log": "gre-initialize-candidate1-full.log",
+      "bytes": 835864,
+      "sha256": "24d1633e0a4e25418cc93102bcd7e56739753a6735e3ec50c791305cef771d37",
+      "results": [
+        "FAILED. 7678 passed; 5 failed; 2 ignored; 0 measured; 0 filtered out; finished in 1150.07s"
+      ]
+    },
+    {
+      "name": "capi",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "-p",
+        "rax-capi",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 163.27309054101352,
+      "log": "gre-initialize-candidate1-capi.log",
+      "bytes": 14994,
+      "sha256": "3d46e03d63916992cbba18c3e665f51542aceba3768902b017e7fea68a4b0988",
+      "results": [
+        "ok. 183 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 15.78s",
+        "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    {
+      "name": "integration",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--test",
+        "user_windows",
+        "--test",
+        "user_windows_memory",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 7.196155874989927,
+      "log": "gre-initialize-candidate1-integration.log",
+      "bytes": 1794,
+      "sha256": "f0aba00f588f3b8df857c71711f59462f9ca468de02fe8ced2de51e236d6bd16",
+      "results": [
+        "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+        "ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    {
+      "name": "all-targets",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "check",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--all-targets"
+      ],
+      "exit-code": 0,
+      "seconds": 196.7139682500274,
+      "log": "gre-initialize-candidate1-all-targets.log",
+      "bytes": 1005,
+      "sha256": "b6fae2aaa37d2eb5e40cf2b2235a465f1f068a5b4a0226b7101745b46d6fd6fa",
+      "results": []
+    }
+  ],
+  "utc": "2026-10-22T22:44:15.929478+00:00",
+  "source-inputs": 29180,
+  "manifest": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\gre-initialize-candidate1-source.json",
+    "bytes": 6885413,
+    "sha256": "e2994771bbad47110bbe6c7ed3b9a2973711e2388f3cf7fa612169cdfa7ce122"
+  },
+  "dependency-cache-source": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\normal-candidate1",
+  "current-step": "all-targets",
+  "child-pid": 4828,
+  "build-environment": {
+    "CARGO_TARGET_DIR": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\normal-candidate1",
+    "TMPDIR": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\tmp",
+    "TMP": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\tmp",
+    "TEMP": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\tmp",
+    "CCACHE_DISABLE": "1",
+    "SCCACHE_DISABLE": "1"
+  },
+  "test-artifact": {
+    "reason": "compiler-artifact",
+    "package_id": "path+file:///C:/Windows/Temp/assist-native-rax-20261010/src-display-candidate1#rax@0.1.0",
+    "manifest_path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\Cargo.toml",
+    "target": {
+      "kind": [
+        "lib"
+      ],
+      "crate_types": [
+        "lib"
+      ],
+      "name": "rax",
+      "src_path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\src\\lib.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": true,
+      "test": true
+    },
+    "profile": {
+      "opt_level": "0",
+      "debuginfo": 2,
+      "debug_assertions": true,
+      "overflow_checks": true,
+      "test": true
+    },
+    "features": [],
+    "filenames": [
+      "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\normal-candidate1\\debug\\deps\\rax-b799307a7949aa6b.exe",
+      "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\normal-candidate1\\debug\\deps\\rax-b799307a7949aa6b.pdb"
+    ],
+    "executable": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\normal-candidate1\\debug\\deps\\rax-b799307a7949aa6b.exe",
+    "fresh": false
+  },
+  "test-image-before": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\normal-candidate1\\debug\\deps\\rax-b799307a7949aa6b.exe",
+    "bytes": 595873792,
+    "sha256": "0cfe6f11da7215c485df39caf4548755c068ab7e748cf58ac9e20fad720f77ee"
+  },
+  "exact-full-failures": [
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_imm_index_at_width_with_flags_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_all_ones_with_flags_as_movn_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_with_flags_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_with_flags_and_low_byte_index_guards",
+    "smir::lower::aarch64::tests::vector::lowers_vector_fp16_arithmetic_runtime"
+  ],
+  "test-image-after": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\normal-candidate1\\debug\\deps\\rax-b799307a7949aa6b.exe",
+    "bytes": 595873792,
+    "sha256": "0cfe6f11da7215c485df39caf4548755c068ab7e748cf58ac9e20fad720f77ee"
+  },
+  "exit-code": 0,
+  "scope": "Frozen GRE_Initialize selection source: native Windows ARM64 focused/full/CAPI/integration/all-target. Existing five lowerer failures are explicit; full suite is not green.",
+  "completed-utc": "2026-10-22T23:15:18.669915+00:00"
+}

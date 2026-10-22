@@ -1,0 +1,18 @@
+{
+  "archive": {
+    "file": "gre-initialize-evidence-transfer-v2.tar.gz",
+    "bytes": 4963009,
+    "sha256": "35f01b1da2bfa0b82c2fa790d6de3144cb11cbd3d2caef0a8227670bcf709b9a"
+  },
+  "checker": {
+    "file": "check_evidence.py",
+    "bytes": 24467,
+    "sha256": "6135c28381f2a67e0f434663cd531889df8626b3e6280cef8e1ed09279e5b726"
+  },
+  "proof": {
+    "file": "proof.json",
+    "bytes": 73922,
+    "sha256": "5b674ce6eba1cba062fd8db32be0eeff8de1ee29fe0a47a639693d794d7e6247"
+  },
+  "source-frame": "e2994771bbad47110bbe6c7ed3b9a2973711e2388f3cf7fa612169cdfa7ce122"
+}

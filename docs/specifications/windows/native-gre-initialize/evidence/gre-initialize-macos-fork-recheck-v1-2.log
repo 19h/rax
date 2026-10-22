@@ -1,0 +1,6 @@
+
+running 1 test
+test user::linux::tests::ptrace_jobctl::sigstop_to_a_linked_process_goes_along_the_link ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 8204 filtered out; finished in 0.00s
+

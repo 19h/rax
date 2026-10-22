@@ -1,0 +1,133 @@
+{
+  "state": "finished",
+  "host": "macos",
+  "pid": 62036,
+  "source-inputs": 3981,
+  "scope": "Retained Assist ABI184 linked consumers; no whole current root GUI/plugin/package claim.",
+  "steps": [
+    {
+      "gate": "prime-artifacts",
+      "cwd": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/rust/assist-rs",
+      "command": [
+        "cmake",
+        "-E",
+        "env",
+        "CARGO_TARGET_DIR=/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes/assist-rs-target",
+        "CARGO_PROFILE_RELEASE_STRIP=false",
+        "MACOSX_DEPLOYMENT_TARGET=10.15",
+        "ASSIST_RESOURCE_PYTHON=/opt/homebrew/Frameworks/Python.framework/Versions/3.15/bin/python3.15",
+        "CARGO_BUILD_JOBS=2",
+        "RUSTUP_TOOLCHAIN=1.95.0",
+        "/Users/int/.cargo/bin/cargo",
+        "build",
+        "--locked",
+        "--offline",
+        "--manifest-path",
+        "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/rust/assist-rs/Cargo.toml",
+        "--package",
+        "assist-rs",
+        "--target",
+        "aarch64-apple-darwin",
+        "--features",
+        "rax",
+        "--message-format=json"
+      ],
+      "exit-code": 0,
+      "seconds": 32.7982148330193,
+      "log": "macos-gre-initialize-candidate1-owning-v2-prime-artifacts.log",
+      "bytes": 137970,
+      "sha256": "83d4e9483db051bd9fd7a264b9695b06e9d63356cc5f799176a49bd7519e66e9"
+    },
+    {
+      "gate": "archives-before",
+      "command": [
+        "python3",
+        "-B",
+        "/Users/int/Library/Caches/assist-process-emulation/native-gre-initialize-20261022/collect-gre-initialize-archives-candidate1.py",
+        "--host",
+        "macos",
+        "--source",
+        "/Users/int/.assist-native-display-policy-20261022",
+        "--manifest",
+        "/Users/int/Library/Caches/assist-process-emulation/native-gre-initialize-20261022/gre-initialize-owning-source-hashes-candidate1.json",
+        "--messages",
+        "/Users/int/Library/Caches/assist-process-emulation/native-gre-initialize-20261022/macos-gre-initialize-candidate1-owning-v2-prime-artifacts.log",
+        "--output",
+        "/Users/int/Library/Caches/assist-process-emulation/native-gre-initialize-20261022/macos-gre-initialize-candidate1-archives-before.json"
+      ],
+      "exit-code": 0,
+      "seconds": 0.7874677089857869,
+      "log": "macos-gre-initialize-candidate1-owning-v2-archives-before.log",
+      "bytes": 180,
+      "sha256": "19dd31e5beab25b0562eecb5451a4d121efd8741b26302e27988b7b51938c34e"
+    },
+    {
+      "gate": "build",
+      "command": [
+        "cmake",
+        "--build",
+        "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes",
+        "--target",
+        "assist_idalib_cli",
+        "assist_mcp",
+        "assist_mcp_tool_manifest_tests",
+        "assist_rax_process_tests",
+        "assist_process_tool_tests",
+        "assist_process_tool_unavailable_tests",
+        "assist_e14_rax_abi_drift_tests",
+        "assist_rust_archive_link_tests",
+        "--parallel",
+        "2"
+      ],
+      "exit-code": 0,
+      "seconds": 32.149023583042435,
+      "log": "macos-gre-initialize-candidate1-owning-v2-build.log",
+      "bytes": 32919,
+      "sha256": "8e42a18a8b0e92d2de606a96e2d030ac902c2d97e3e3c7e191a33d9e982af0e6"
+    },
+    {
+      "gate": "ctest",
+      "command": [
+        "ctest",
+        "--test-dir",
+        "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes",
+        "--output-on-failure",
+        "-R",
+        "^(assist_rust_archive_link_tests|assist_rax_process_tests|assist_process_tool_tests|assist_process_tool_unavailable_tests|assist_e14_rax_abi_drift_tests|assist_mcp_tool_manifest_tests|assist_mcp_manifest_runtime_test)$"
+      ],
+      "exit-code": 0,
+      "seconds": 4.872805375023745,
+      "log": "macos-gre-initialize-candidate1-owning-v2-ctest.log",
+      "bytes": 1298,
+      "sha256": "bd35a12923abc75b46ce3a2f84e6ad8396b4a0120cca00cb0946cca5ecdde831"
+    },
+    {
+      "gate": "archives-after",
+      "command": [
+        "python3",
+        "-B",
+        "/Users/int/Library/Caches/assist-process-emulation/native-gre-initialize-20261022/collect-gre-initialize-archives-candidate1.py",
+        "--host",
+        "macos",
+        "--source",
+        "/Users/int/.assist-native-display-policy-20261022",
+        "--manifest",
+        "/Users/int/Library/Caches/assist-process-emulation/native-gre-initialize-20261022/gre-initialize-owning-source-hashes-candidate1.json",
+        "--messages",
+        "/Users/int/Library/Caches/assist-process-emulation/native-gre-initialize-20261022/macos-gre-initialize-candidate1-owning-v2-prime-artifacts.log",
+        "--output",
+        "/Users/int/Library/Caches/assist-process-emulation/native-gre-initialize-20261022/macos-gre-initialize-candidate1-archives-after.json"
+      ],
+      "exit-code": 0,
+      "seconds": 0.7930273749516346,
+      "log": "macos-gre-initialize-candidate1-owning-v2-archives-after.log",
+      "bytes": 180,
+      "sha256": "19dd31e5beab25b0562eecb5451a4d121efd8741b26302e27988b7b51938c34e"
+    }
+  ],
+  "current-step": "archives-after",
+  "child-pid": 63243,
+  "exit-code": 0,
+  "archive-identities-stable": true,
+  "completed-utc": "2026-10-22T22:52:50.814535+00:00"
+}

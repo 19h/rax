@@ -1,0 +1,33 @@
+{
+  "native-open-calls": 576,
+  "native-repeat-open-calls": 576,
+  "complete-tree-captures": 24,
+  "complete-tree-repeat-captures": 24,
+  "keys-per-tree": 3,
+  "values-per-tree": 7,
+  "name-and-data-bytes": 322,
+  "compiler-inputs": 29180,
+  "owning-consumer-hosts": 3,
+  "gates": {
+    "macos": {
+      "focus": 7,
+      "full-passed": 8203,
+      "full-failed": 0,
+      "full-ignored": 2
+    },
+    "linux": {
+      "focus": 7,
+      "full-passed": 8198,
+      "full-failed": 0,
+      "full-ignored": 2
+    },
+    "windows": {
+      "focus": 10,
+      "full-passed": 7678,
+      "full-failed": 5,
+      "full-ignored": 2
+    }
+  },
+  "next-boundary": "NtGdiInit2-corresponding Win32u leaf, no admitted service",
+  "independent-x64-kernel": "unknown"
+}

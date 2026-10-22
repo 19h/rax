@@ -1079,3 +1079,6 @@ mod error_message_instrument;
 
 #[path = "registry_tests/display_policy.rs"]
 mod display_policy;
+
+#[path = "registry_tests/gre_initialize.rs"]
+mod gre_initialize;

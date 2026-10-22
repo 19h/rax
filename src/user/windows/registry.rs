@@ -20,8 +20,8 @@ mod tree;
 #[cfg(test)]
 pub(crate) use tree::KeyTree as IfeoTree;
 pub(crate) use tree::{
-    DISPLAY_POLICY_KEY, ERROR_MESSAGE_INSTRUMENT_KEY, FILESYSTEM_KEY, IFEO_KEY, KeyTree, Lookup,
-    NLS_SORTING_VERSIONS_KEY, REDIRECTION_KEYS_KEY, SAFEBOOT_OPTION_KEY,
+    DISPLAY_POLICY_KEY, ERROR_MESSAGE_INSTRUMENT_KEY, FILESYSTEM_KEY, GRE_INITIALIZE_KEY, IFEO_KEY,
+    KeyTree, Lookup, NLS_SORTING_VERSIONS_KEY, REDIRECTION_KEYS_KEY, SAFEBOOT_OPTION_KEY,
     SAFER_CODE_IDENTIFIERS_KEY, SRP_DLL_KEY, TreeRoot,
 };
 #[path = "registry/user_policy.rs"]
@@ -268,3 +268,7 @@ mod error_message_instrument_tests;
 #[cfg(test)]
 #[path = "registry/display_policy_tests.rs"]
 mod display_policy_tests;
+
+#[cfg(test)]
+#[path = "registry/gre_initialize_tests.rs"]
+pub(crate) mod gre_initialize_tests;

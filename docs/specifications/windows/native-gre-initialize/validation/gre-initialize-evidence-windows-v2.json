@@ -1,0 +1,74 @@
+{
+  "state": "finished",
+  "os": "nt",
+  "machine": "ARM64",
+  "source-root": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1",
+  "utc": "2026-10-22T23:32:27.236682+00:00",
+  "driver-before": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-gre-evidence-windows-v2.py",
+    "bytes": 3817,
+    "sha256": "3aed2dc4442e9dcbef515cb69480fc11eadcfb331c5d034527c05c1d1934824f"
+  },
+  "metadata-before": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\gre-initialize-evidence-transfer-v2-source.json",
+    "bytes": 569,
+    "sha256": "617c67ae89a34e1d0570aecbb1a011f0ff83c376d89875466affb12aa0752472"
+  },
+  "archive-before": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\gre-initialize-evidence-transfer-v2.tar.gz",
+    "bytes": 4963009,
+    "sha256": "35f01b1da2bfa0b82c2fa790d6de3144cb11cbd3d2caef0a8227670bcf709b9a"
+  },
+  "checker-before": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\docs\\specifications\\windows\\native-gre-initialize\\check_evidence.py",
+    "bytes": 24467,
+    "sha256": "6135c28381f2a67e0f434663cd531889df8626b3e6280cef8e1ed09279e5b726"
+  },
+  "proof-before": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\docs\\specifications\\windows\\native-gre-initialize\\proof.json",
+    "bytes": 73922,
+    "sha256": "5b674ce6eba1cba062fd8db32be0eeff8de1ee29fe0a47a639693d794d7e6247"
+  },
+  "argv": [
+    "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+    "-B",
+    "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\docs\\specifications\\windows\\native-gre-initialize\\check_evidence.py",
+    "--evidence-dir",
+    "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\docs\\specifications\\windows\\native-gre-initialize",
+    "--source-root",
+    "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1"
+  ],
+  "log": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\gre-initialize-evidence-windows-v2.log",
+    "bytes": 788,
+    "sha256": "312cfc8787ba73110bef852561f7ff914c6a24ab3fd4ec3ad0d4aeb87a62e964"
+  },
+  "verifier-exit-code": 0,
+  "checker-after": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\docs\\specifications\\windows\\native-gre-initialize\\check_evidence.py",
+    "bytes": 24467,
+    "sha256": "6135c28381f2a67e0f434663cd531889df8626b3e6280cef8e1ed09279e5b726"
+  },
+  "proof-after": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\docs\\specifications\\windows\\native-gre-initialize\\proof.json",
+    "bytes": 73922,
+    "sha256": "5b674ce6eba1cba062fd8db32be0eeff8de1ee29fe0a47a639693d794d7e6247"
+  },
+  "driver-after": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-gre-evidence-windows-v2.py",
+    "bytes": 3817,
+    "sha256": "3aed2dc4442e9dcbef515cb69480fc11eadcfb331c5d034527c05c1d1934824f"
+  },
+  "metadata-after": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\gre-initialize-evidence-transfer-v2-source.json",
+    "bytes": 569,
+    "sha256": "617c67ae89a34e1d0570aecbb1a011f0ff83c376d89875466affb12aa0752472"
+  },
+  "archive-after": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\gre-initialize-evidence-transfer-v2.tar.gz",
+    "bytes": 4963009,
+    "sha256": "35f01b1da2bfa0b82c2fa790d6de3144cb11cbd3d2caef0a8227670bcf709b9a"
+  },
+  "exit-code": 0,
+  "completed-utc": "2026-10-22T23:32:40.537525+00:00"
+}

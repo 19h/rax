@@ -1,0 +1,6 @@
+{
+  "file": "native-gre-next-frontier-v4.rs",
+  "bytes": 9402,
+  "sha256": "f928834ccecc6fc4dfe55d756ab0881d431519f9fe76e518365fd8832d02bea3",
+  "extends-observer": "native-gre-next-frontier-v3.rs"
+}
