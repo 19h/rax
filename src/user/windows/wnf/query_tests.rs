@@ -120,6 +120,8 @@ fn query_capture_bounds_retries_and_never_imports_host_process_payload() {
             bytes: Arc::from([1, 0, 0, 0, 0, 0, 0, 0])
         })
     );
+    // Selection must not fabricate a private name absent from provisioning.
+    assert!(stable.get(PROCESS).is_none());
     let mut calls = 0;
     let changing = capture(vec![definition(SYSTEM, 8)], 0, |_, _| {
         calls += 1;
@@ -266,13 +268,63 @@ fn independent_typed_system_state() -> Data {
 }
 
 #[cfg(windows)]
+fn independent_private_provisioning() -> Option<Vec<u8>> {
+    use std::ffi::c_void;
+    #[link(name = "advapi32")]
+    unsafe extern "system" {
+        fn RegGetValueW(
+            key: *mut c_void,
+            subkey: *const u16,
+            value: *const u16,
+            flags: u32,
+            kind: *mut u32,
+            data: *mut c_void,
+            bytes: *mut u32,
+        ) -> i32;
+    }
+    let key: Vec<u16> = "SYSTEM\\CurrentControlSet\\Control\\Notifications\0"
+        .encode_utf16()
+        .collect();
+    let value: Vec<u16> = "41911A28A3BC10B5\0".encode_utf16().collect();
+    let mut data = vec![0; MAX_STATE_BYTES];
+    let mut bytes = data.len() as u32;
+    let mut kind = 0;
+    // SAFETY: predefined borrowed HKLM handle, fixed terminated native names,
+    // REG_BINARY-only read, and exclusive bounded output storage. RegGetValueW
+    // owns any internal subkey handle; no host registry or WNF state is changed.
+    let status = unsafe {
+        RegGetValueW(
+            (0x8000_0002u32 as i32 as isize) as *mut c_void,
+            key.as_ptr(),
+            value.as_ptr(),
+            8,
+            &mut kind,
+            data.as_mut_ptr().cast(),
+            &mut bytes,
+        )
+    };
+    match status {
+        0 => {
+            assert_eq!(kind, 3);
+            assert!(bytes as usize <= data.len());
+            data.truncate(bytes as usize);
+            Some(data)
+        }
+        2 => None,
+        other => panic!("independent private WNF provisioning read failed: {other}"),
+    }
+}
+
+#[cfg(windows)]
 #[test]
 fn native_query_snapshot_captures_typed_state_and_initializes_private_process_state() {
     for attempt in 0..8 {
+        let provisioning_before = independent_private_provisioning();
         let before = independent_typed_system_state();
         let selected = super::snapshot().unwrap();
         let after = independent_typed_system_state();
-        if before != after {
+        let provisioning_after = independent_private_provisioning();
+        if before != after || provisioning_before != provisioning_after {
             continue;
         }
         let q = selected.queries().unwrap();
@@ -283,18 +335,31 @@ fn native_query_snapshot_captures_typed_state_and_initializes_private_process_st
             Some(hex("6364f948d652854e9c02f2c14e17264e").try_into().unwrap())
         );
         assert_eq!(*record, Record::Data(before.clone()));
-        assert_eq!(
-            q.get(PROCESS).unwrap().1,
-            Record::Data(Data {
-                stamp: 0,
-                bytes: Arc::from([])
-            })
-        );
+        if provisioning_before.is_some() {
+            assert_eq!(
+                q.get(PROCESS)
+                    .expect("independently provisioned private WNF record is missing")
+                    .1,
+                Record::Data(Data {
+                    stamp: 0,
+                    bytes: Arc::from([])
+                })
+            );
+        } else {
+            assert!(
+                q.get(PROCESS).is_none(),
+                "unprovisioned private WNF record must not be fabricated"
+            );
+        }
         assert!(selected.primary_subject().is_some());
-        println!("wnf-native-system attempt={attempt} oracle={before:?}");
+        println!(
+            "wnf-native-system attempt={attempt} oracle={before:?} private-provisioned={} private-metadata-bytes={}",
+            provisioning_before.is_some(),
+            provisioning_before.as_ref().map_or(0, Vec::len)
+        );
         return;
     }
-    panic!("native WNF system state changed across all eight snapshot intervals");
+    panic!("native WNF state or provisioning changed across all eight snapshot intervals");
 }
 
 #[cfg(windows)]

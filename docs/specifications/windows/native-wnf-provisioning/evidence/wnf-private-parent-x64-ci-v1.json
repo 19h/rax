@@ -1,0 +1,11 @@
+{
+  "state": "finished",
+  "job-id": 120019284199,
+  "source-commit": "945ace5d5de706da96418c8b939ede07c0166ae1",
+  "conclusion": "failure",
+  "log": "wnf-private-parent-x64-ci-job-v1.log",
+  "bytes": 55410,
+  "sha256": "93707540549873684a20c2a86dd49128ea710aa210a05476156c68b07ee9ff48",
+  "failure": "Native WNF private q.get(PROCESS).unwrap at query_tests.rs:287; typed-system oracle assertions precede it.",
+  "native-provisioning-cause": "unknown until independent fixed registry oracle executes on x64 CI"
+}

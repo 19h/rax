@@ -1,0 +1,9 @@
+{
+  "observations": [
+    "Windows11 ARM64 build29683: fixed private REG_BINARY is72bytes and native private read returns status0, stamp0, zero bytes; source/hash receipts preserved.",
+    "Job120019284199 at exact945ace5d parent on WindowsServer2022 build20348 fails private-record unwrap after13passing WNF tests."
+  ],
+  "WP-A1-status": "retained pending independent x64 registry observation",
+  "WP-A2-status": "confirmed for recorded ARM64 brackets; other profiles remain under validation",
+  "source-policy": "One cfg(test) Rust file; production capture and guest initialization unchanged."
+}

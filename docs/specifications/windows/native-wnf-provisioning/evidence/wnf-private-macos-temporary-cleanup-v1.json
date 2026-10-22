@@ -1,0 +1,11 @@
+{
+  "state": "finished",
+  "removed": [
+    {
+      "path": "/Users/int/.assist-native-display-policy-20261022/t/rax-abstract-501",
+      "generated-content": [],
+      "ownership": "Private in-worktree TMPDIR used only by completed macOS gates; native registry/socket scratch; no active lsof users."
+    }
+  ],
+  "temporary-root": "Empty t/ retained for the next formatter/compiler step in this goal."
+}

@@ -1,0 +1,16 @@
+{
+  "files": [
+    {
+      "path": "reference/reggetvaluew.html",
+      "canonical-title": "RegGetValueW function (winreg.h)",
+      "issuing-organization": "Microsoft",
+      "revision": "Page last updated 2023-03-11; exact retrieved HTML retained",
+      "source-url": "https://learn.microsoft.com/en-us/windows/win32/api/winreg/nf-winreg-reggetvaluew",
+      "retrieved-utc": "2026-10-22T19:00:53.227102+00:00",
+      "bytes": 63315,
+      "sha256": "05965e81b1ddf95281d16b44d2c7f59734f73a713c24bf0f89f4f04fe3c892c2",
+      "contract-used": "REG_BINARY filter0x8, DWORD capacity in bytes, ERROR_SUCCESS on a returned value and ERROR_FILE_NOT_FOUND for an absent named value. Fixed predefined HKLM is permitted; Advapi32 owns the implementation."
+    }
+  ],
+  "preservation": "Imported bytes and embedded copyright/license notices remain unchanged."
+}

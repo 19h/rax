@@ -1,0 +1,195 @@
+{
+  "schema": 1,
+  "files": [
+    {
+      "path": "evidence/assumptions-observations-v1.json",
+      "bytes": 599,
+      "sha256": "84cc216c346d0b6956fc5b2ee399e17caf2874f6211c2bd3835bbb192db5da5d"
+    },
+    {
+      "path": "evidence/baseline-assumptions-v1.json",
+      "bytes": 2869,
+      "sha256": "f7e85a7db20f7905c8f5c8bd821c797b97fcbac03845f1933dbfa01c55a69572"
+    },
+    {
+      "path": "evidence/mutant-native-baseline-failures.json",
+      "bytes": 635,
+      "sha256": "9f679114d1dd64361640d4c11e5f124b248e159ad234777bb9b53855f848750b"
+    },
+    {
+      "path": "evidence/native-wnf-provisioning-probe-v1.json",
+      "bytes": 4156,
+      "sha256": "98d82b2b122f2bf8b14f810a5a796eb516e793b4bdd3663af89cc6f9fde539d5"
+    },
+    {
+      "path": "evidence/native-wnf-provisioning-probe-v1.log",
+      "bytes": 418,
+      "sha256": "617122fdfc229704d174387a810bcd41a466da437a1506fcea1867de07bb64c3"
+    },
+    {
+      "path": "evidence/native-wnf-provisioning-probe-v1.py",
+      "bytes": 3606,
+      "sha256": "240aa6ded0780eea1dde64d55b06852a3f5e7242f179bd13a6025cbf126897c8"
+    },
+    {
+      "path": "evidence/run-wnf-private-candidate1-windows.py",
+      "bytes": 9348,
+      "sha256": "dcc14b59209ee2b5db17c395511e8c0a955c99e4fdf5389b8e31b559501abc4f"
+    },
+    {
+      "path": "evidence/run-wnf-private-unix-candidate1.py",
+      "bytes": 5163,
+      "sha256": "c71d71245ea9f2b172951c3284d4e8aeb7a70636611d9a6dc2e30874ef56be93"
+    },
+    {
+      "path": "evidence/wnf-private-candidate1-all-targets.log",
+      "bytes": 1005,
+      "sha256": "24d53b5697fb17d9ce0217c70f4fca3a3b25d49b02304f772cf65fc01b8891b1"
+    },
+    {
+      "path": "evidence/wnf-private-candidate1-capi.log",
+      "bytes": 14799,
+      "sha256": "b804df813b89db91f3f9449ef7b6c8c78c1cc82e549bc1557afb790359130540"
+    },
+    {
+      "path": "evidence/wnf-private-candidate1-focus.log",
+      "bytes": 1841,
+      "sha256": "ee558dcd284e465e9db98514a658c65dbdc3edfb041cfe107603af4c45b8f197"
+    },
+    {
+      "path": "evidence/wnf-private-candidate1-full.log",
+      "bytes": 831984,
+      "sha256": "3f0f1273604ca7474f754412bfd845c91db2bb87366fd242d2f025d40e5adbc3"
+    },
+    {
+      "path": "evidence/wnf-private-candidate1-integration.log",
+      "bytes": 1702,
+      "sha256": "469779647d4069ed23e43cf3cc45330f29d9b1d28efc5f98c502d9c07bd616b9"
+    },
+    {
+      "path": "evidence/wnf-private-candidate1-overrides.tar.gz",
+      "bytes": 4167,
+      "sha256": "a9120e41674cb2dad4f82687eb1dbb26e0147bf301c5f7d0cf9f524b45639134"
+    },
+    {
+      "path": "evidence/wnf-private-candidate1-source.json",
+      "bytes": 6872737,
+      "sha256": "428ca4457fd11f9d67de0f6d21338f56d236ef804507323e812f9290439d7464"
+    },
+    {
+      "path": "evidence/wnf-private-candidate1-test-build.log",
+      "bytes": 92179,
+      "sha256": "d8bdc3eb903db437fbf03b8a1374b2926677429254b11eadd8e6edfca857ad3d"
+    },
+    {
+      "path": "evidence/wnf-private-candidate1-toolchain.log",
+      "bytes": 36,
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5"
+    },
+    {
+      "path": "evidence/wnf-private-candidate1-windows.json",
+      "bytes": 8115,
+      "sha256": "12e83ab3e0aee7c8e815279525a884bf23d5192255d24ceb7f56bf49eda20813"
+    },
+    {
+      "path": "evidence/wnf-private-clippy-v1.log",
+      "bytes": 149,
+      "sha256": "f66547bf784be3ccdbb074a9664f872333eb07a8e6c1078978028e0ba821b836"
+    },
+    {
+      "path": "evidence/wnf-private-linux-candidate1-all-targets.log",
+      "bytes": 116,
+      "sha256": "dcb3b9c3c6463e6eb1e53d77c7afc984a3156509f48fcaf86d12b0faede9f214"
+    },
+    {
+      "path": "evidence/wnf-private-linux-candidate1-capi.log",
+      "bytes": 13964,
+      "sha256": "7f377d04004bb286a2761ddf222b9140c0c5110b56ca6576c3f36168c4eee205"
+    },
+    {
+      "path": "evidence/wnf-private-linux-candidate1-focus.log",
+      "bytes": 1671,
+      "sha256": "0ea19aa73288dfc3afa31782736e9acb5c99f85c644155be425bdd285fdd61b5"
+    },
+    {
+      "path": "evidence/wnf-private-linux-candidate1-full.log",
+      "bytes": 864725,
+      "sha256": "b6e2cae7fb8c6f65437da0d420c8d2a8f7b14c0facb8e85799223f23e80eca86"
+    },
+    {
+      "path": "evidence/wnf-private-linux-candidate1-gates.json",
+      "bytes": 8679,
+      "sha256": "b8f82d642293ae375121e6ecb1fb361741281e33706057f4cbb58922eb13bbc8"
+    },
+    {
+      "path": "evidence/wnf-private-linux-candidate1-integration.log",
+      "bytes": 35793,
+      "sha256": "960bbe76295cfee9b03e33a8da6d33b41b0b1f2ecc843027d80934632a2c73d4"
+    },
+    {
+      "path": "evidence/wnf-private-linux-temporary-cleanup-v1.json",
+      "bytes": 551,
+      "sha256": "852e045f51350f62eb404df6206be4274e88972ca12581c29a4b4f1db097a77a"
+    },
+    {
+      "path": "evidence/wnf-private-macos-candidate1-all-targets.log",
+      "bytes": 149,
+      "sha256": "3d7f17a146e8315c487476f3550ab1ee8934b1a8be341b25794ff5e689e637b9"
+    },
+    {
+      "path": "evidence/wnf-private-macos-candidate1-capi.log",
+      "bytes": 13968,
+      "sha256": "44ab31944bfff70e9817d6a7bf7c4ec49c70e20170e0b21ede605732df7dbd04"
+    },
+    {
+      "path": "evidence/wnf-private-macos-candidate1-focus.log",
+      "bytes": 1698,
+      "sha256": "84f98341361578f1b59eb3450e43737a47b9310af63e87f68bed9541d0957b2d"
+    },
+    {
+      "path": "evidence/wnf-private-macos-candidate1-full.log",
+      "bytes": 864559,
+      "sha256": "ea476457e46c3287e32a8a3bf2539c90ecaec609f1a7f7e82051995a503f1ec8"
+    },
+    {
+      "path": "evidence/wnf-private-macos-candidate1-gates.json",
+      "bytes": 3522,
+      "sha256": "a7a6046de7f9951dedf61092d5a128d68db2154754379cf21153a0ffe041d64b"
+    },
+    {
+      "path": "evidence/wnf-private-macos-candidate1-integration.log",
+      "bytes": 35780,
+      "sha256": "abef9cbf4b7472ebeafb54b34401e7d99829bd8706053ab276c32b2d44e6c9b2"
+    },
+    {
+      "path": "evidence/wnf-private-macos-temporary-cleanup-v1.json",
+      "bytes": 405,
+      "sha256": "5dd808c8aeef634f510be067fcb02b75f1698dfce4d77df6d4820cc227d6db33"
+    },
+    {
+      "path": "evidence/wnf-private-parent-x64-ci-job-v1.log",
+      "bytes": 55410,
+      "sha256": "93707540549873684a20c2a86dd49128ea710aa210a05476156c68b07ee9ff48"
+    },
+    {
+      "path": "evidence/wnf-private-parent-x64-ci-v1.json",
+      "bytes": 513,
+      "sha256": "ed923c1fd34d8c7fa1c5fccee400b1317974648bee18a2ab30195872f1ef7948"
+    },
+    {
+      "path": "evidence/wnf-private-quality-v1.json",
+      "bytes": 698,
+      "sha256": "dc374b026fac311fc51d5b0374cd1158e737ae8c5cc0a2b4e2d3e34b7b64471e"
+    },
+    {
+      "path": "evidence/wnf-private-rustfmt-v1.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "evidence/wnf-private-source-audit-v1.json",
+      "bytes": 518,
+      "sha256": "68510f4980bb98cc28401e1285b7df0fa2985b0e64c2c2e569bdf5146e5c09e5"
+    }
+  ]
+}

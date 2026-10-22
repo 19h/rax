@@ -1,0 +1,130 @@
+{
+  "state": "finished",
+  "host": "macos",
+  "pid": 26076,
+  "steps": [
+    {
+      "name": "focus",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "user::windows::wnf::",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 89.94934466702398,
+      "log": "wnf-private-macos-candidate1-focus.log",
+      "bytes": 1698,
+      "sha256": "84f98341361578f1b59eb3450e43737a47b9310af63e87f68bed9541d0957b2d",
+      "results": [
+        "ok. 12 passed; 0 failed; 0 ignored; 0 measured; 8174 filtered out; finished in 0.23s"
+      ]
+    },
+    {
+      "name": "full",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 473.45026750001125,
+      "log": "wnf-private-macos-candidate1-full.log",
+      "bytes": 864559,
+      "sha256": "ea476457e46c3287e32a8a3bf2539c90ecaec609f1a7f7e82051995a503f1ec8",
+      "results": [
+        "ok. 8184 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 473.28s"
+      ]
+    },
+    {
+      "name": "capi",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "-p",
+        "rax-capi",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 14.180106083047576,
+      "log": "wnf-private-macos-candidate1-capi.log",
+      "bytes": 13968,
+      "sha256": "44ab31944bfff70e9817d6a7bf7c4ec49c70e20170e0b21ede605732df7dbd04",
+      "results": [
+        "ok. 183 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 13.82s",
+        "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    {
+      "name": "integration",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--test",
+        "user_windows",
+        "--test",
+        "user_windows_memory",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 57.23535816598451,
+      "log": "wnf-private-macos-candidate1-integration.log",
+      "bytes": 35780,
+      "sha256": "abef9cbf4b7472ebeafb54b34401e7d99829bd8706053ab276c32b2d44e6c9b2",
+      "results": [
+        "ok. 544 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 57.15s",
+        "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    {
+      "name": "all-targets",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "check",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--all-targets"
+      ],
+      "exit-code": 0,
+      "seconds": 47.09173212503083,
+      "log": "wnf-private-macos-candidate1-all-targets.log",
+      "bytes": 149,
+      "sha256": "3d7f17a146e8315c487476f3550ab1ee8934b1a8be341b25794ff5e689e637b9",
+      "results": []
+    }
+  ],
+  "manifest-sha256": "428ca4457fd11f9d67de0f6d21338f56d236ef804507323e812f9290439d7464",
+  "step": "all-targets",
+  "child": 41720,
+  "exit-code": 0,
+  "source-inputs": 29141,
+  "completed-utc": "2026-10-22T19:10:18.660150+00:00"
+}

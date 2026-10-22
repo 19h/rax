@@ -1,0 +1,31 @@
+{
+  "state": "finished",
+  "steps": [
+    {
+      "name": "rustfmt",
+      "argv": [
+        "rustup",
+        "run",
+        "1.95.0",
+        "rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "--config",
+        "skip_children=true",
+        "src/user/windows/wnf/query_tests.rs"
+      ],
+      "exit-code": 0,
+      "log": "wnf-private-rustfmt-v1.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "clippy",
+      "exit-code": 0,
+      "log": "wnf-private-clippy-v1.log",
+      "bytes": 149,
+      "sha256": "f66547bf784be3ccdbb074a9664f872333eb07a8e6c1078978028e0ba821b836"
+    }
+  ]
+}

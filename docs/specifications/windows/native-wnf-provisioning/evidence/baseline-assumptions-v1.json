@@ -1,0 +1,51 @@
+{
+  "baseline": "945ace5d5de706da96418c8b939ede07c0166ae1",
+  "acceptance": [
+    "Native WNF test independently checks fixed process-name registry provisioning before asserting presence; an absent provisioned name must remain absent, never fabricated.",
+    "If provisioned, preserve exact private-process initialization stamp0/empty payload and the typed-system native oracle.",
+    "Bracket registry and typed-state observations; explicit failure on unsupported native status or exhausted changes, no platform skip or host mutation.",
+    "Keep portable private payload-isolation coverage, validate Windows/macOS/Linux and publish exact red changesets and paired root pin."
+  ],
+  "assumptions": [
+    {
+      "id": "WP-A1",
+      "assumption": "The private WNF definition can be absent from a valid installed provisioning catalog.",
+      "basis": "x64 CI snapshot succeeds but q.get(PROCESS) is None; all captured definitions are retained by production capture. Fixed ARM64 fixture contains the name.",
+      "dependent-result": "Native test expectation derives from independently observed installed metadata.",
+      "stress-test": "Present and absent definition; deliberately dropped present record or fabricated absent record.",
+      "falsification-probe": "Independent RegGetValueW reports the private name present while production q.get is absent. That remains a test failure and requires acquisition investigation.",
+      "status": "retained"
+    },
+    {
+      "id": "WP-A2",
+      "assumption": "A stable raw registry-value bracket supplies the fixture-presence observation for the enclosed snapshot.",
+      "basis": "Fixed read-only RegGetValueW contract and existing bounded snapshots.",
+      "dependent-result": "Native consistency check and finite retry.",
+      "stress-test": "Changed bytes, missing/present transition, unexpected Win32 status, maximum64KiB record.",
+      "falsification-probe": "Native brackets match but selected presence differs, or all eight intervals change.",
+      "status": "retained"
+    }
+  ],
+  "planned-owned": [
+    "src/user/windows/wnf/query_tests.rs",
+    "new focused documentation/evidence directory"
+  ],
+  "remaining": [
+    {
+      "impact": "high",
+      "finding": "Five ARM64 lowerer failures and x64 profile/time failures remain independent full-goal blockers."
+    },
+    {
+      "impact": "high",
+      "finding": "NtReadVirtualMemory and wider native userland remain active work."
+    }
+  ],
+  "parent-failure-evidence": {
+    "path": "/Users/int/Library/Caches/assist-process-emulation/native-wnf-live-state-20261022/wnf-live-rax-ci-windows-job-v1.log",
+    "bytes": 54667,
+    "sha256": "06127cc022fcbab2920b1634ec532db55c70fec75521a23ef73162cf563af885",
+    "job-id": 119983098628,
+    "source-commit": "e621a832adb9e9dcbe4173f8e467571f2e6b34c1",
+    "source-unchanged-through-parent": true
+  }
+}

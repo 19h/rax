@@ -1,0 +1,17 @@
+{
+  "state": "finished",
+  "parent": "945ace5d5de706da96418c8b939ede07c0166ae1",
+  "compiler-inputs": 29141,
+  "inherited-inputs-matching-parent": 29140,
+  "overlay-members": 1,
+  "tracked-diff": [
+    "src/user/windows/wnf/query_tests.rs"
+  ],
+  "full-input-hashes-verified": true,
+  "production-source-diff": "None; only cfg(test) query_tests.rs changes.",
+  "public-capi-header": {
+    "bytes": 70196,
+    "sha256": "e8438269c7f9411da7c92dff70942dbb839570cda9a6ac1bec0b78ed731e829a"
+  },
+  "capi-header-diff": ""
+}

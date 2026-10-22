@@ -1,0 +1,17 @@
+{
+  "state": "finished",
+  "volume": [
+    {
+      "CreatedAt": "2026-10-22T20:58:34+02:00",
+      "Driver": "local",
+      "Labels": null,
+      "Mountpoint": "/var/lib/docker/volumes/assist-native-wnf-private-linux-tmp-20261022/_data",
+      "Name": "assist-native-wnf-private-linux-tmp-20261022",
+      "Options": null,
+      "Scope": "local"
+    }
+  ],
+  "no-container-users": true,
+  "remove-exit-code": 0,
+  "completed-use": "Full Linux library/CAPI/integration/all-target ladder; native temporary filesystem only, no source or dependencies."
+}

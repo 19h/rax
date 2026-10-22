@@ -1,0 +1,77 @@
+{
+  "state": "finished",
+  "checker-sha256": "678c3c5656ee540e8e3f00d109863bf0a7b48752feff40296195ed3bdc2f8744",
+  "controls": [
+    {
+      "name": "parent-commit",
+      "reindexed": true,
+      "result": "rejected"
+    },
+    {
+      "name": "registry-bracket",
+      "reindexed": true,
+      "result": "rejected"
+    },
+    {
+      "name": "private-state-stamp",
+      "reindexed": true,
+      "result": "rejected"
+    },
+    {
+      "name": "full-result-exit",
+      "reindexed": true,
+      "result": "rejected"
+    },
+    {
+      "name": "windows-failure-list",
+      "reindexed": true,
+      "result": "rejected"
+    },
+    {
+      "name": "test-image-stability",
+      "reindexed": true,
+      "result": "rejected"
+    },
+    {
+      "name": "source-parent",
+      "reindexed": true,
+      "result": "rejected"
+    },
+    {
+      "name": "-O",
+      "exit-code": 1,
+      "result": "rejected"
+    },
+    {
+      "name": "-OO",
+      "exit-code": 1,
+      "result": "rejected"
+    }
+  ],
+  "positive-before": {
+    "compiler-inputs": 29141,
+    "overlay-files": 1,
+    "native-private-provisioned": true,
+    "module-tests": {
+      "macos": 12,
+      "linux": 12,
+      "windows": 14
+    },
+    "windows-full-failures": 5,
+    "x64-independent-provisioning": "not yet observed"
+  },
+  "positive-after": {
+    "compiler-inputs": 29141,
+    "overlay-files": 1,
+    "native-private-provisioned": true,
+    "module-tests": {
+      "macos": 12,
+      "linux": 12,
+      "windows": 14
+    },
+    "windows-full-failures": 5,
+    "x64-independent-provisioning": "not yet observed"
+  },
+  "temporary": "/Users/int/.assist-native-display-policy-20261022/target/wnf-private-evidence-negative-v1",
+  "temporary-removed": true
+}
