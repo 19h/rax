@@ -1,0 +1,27 @@
+{
+  "signature": {
+    "path": "docs/specifications/windows/native-virtual-memory/phnt-ntmmapi.h",
+    "url": "https://raw.githubusercontent.com/winsiderss/phnt/53fbbdc5b5d2b08761db1c7b26bfa8c820924356/ntmmapi.h",
+    "bytes": 92011,
+    "sha256": "8acd89a95f890f929da824cc841383770a4f21f312bb04d0d12f03cb3a00e079",
+    "license": "../native-processor-features/phnt-LICENSE",
+    "symbol": "NtReadVirtualMemory"
+  },
+  "behavior": {
+    "source": "Original installed Windows NTDLL and kernel behavior; retained immutable producers, launch receipts and complete repeats.",
+    "kernel": "Windows 11 ARM64 build 29683",
+    "independent-kernels": 1,
+    "views": [
+      "arm64",
+      "x64",
+      "x86",
+      "x86-laa"
+    ],
+    "read-calls": 21140,
+    "read-repeat-calls": 21140,
+    "rtl-calls": 28,
+    "rtl-repeat-calls": 28,
+    "independent-x64-kernel": "unknown",
+    "kernel-copy-internals": "unknown"
+  }
+}

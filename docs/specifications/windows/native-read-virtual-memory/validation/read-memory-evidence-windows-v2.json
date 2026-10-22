@@ -1,0 +1,74 @@
+{
+  "state": "finished",
+  "os": "nt",
+  "machine": "ARM64",
+  "source-root": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1",
+  "utc": "2026-10-22T22:18:47.153927+00:00",
+  "driver-before": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-read-evidence-windows-v2.py",
+    "bytes": 3815,
+    "sha256": "7c5bd3aca46af1112464c9003464b2f00013a65ccfef76b713c191aee4f9baea"
+  },
+  "metadata-before": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\read-memory-evidence-transfer-v2-source.json",
+    "bytes": 567,
+    "sha256": "5cb64c9fdbd210412d7972a954c270ad395a1c3c6c57d548097efc9e46a8cfeb"
+  },
+  "archive-before": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\read-memory-evidence-transfer-v2.tar.gz",
+    "bytes": 13289914,
+    "sha256": "217b08e4bf881af98dc50ea5bbe550284292aeecef7d7ca8a44f027ce095ebf0"
+  },
+  "checker-before": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\docs\\specifications\\windows\\native-read-virtual-memory\\check_evidence.py",
+    "bytes": 27223,
+    "sha256": "9f97d03d1bceda29895ea20e828de607a346a5dc673d8adba4fd350425ebc0dc"
+  },
+  "proof-before": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\docs\\specifications\\windows\\native-read-virtual-memory\\proof.json",
+    "bytes": 80138,
+    "sha256": "c7546d22c877579eac58667cc64a900e142988f5060a022c25c610d41fee92d3"
+  },
+  "argv": [
+    "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+    "-B",
+    "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\docs\\specifications\\windows\\native-read-virtual-memory\\check_evidence.py",
+    "--evidence-dir",
+    "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\docs\\specifications\\windows\\native-read-virtual-memory",
+    "--source-root",
+    "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1"
+  ],
+  "log": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\read-memory-evidence-windows-v2.log",
+    "bytes": 598,
+    "sha256": "32de2c4e52587b311e860e9c778993378b8b9cdbb3de504dbf087b64cc84390e"
+  },
+  "verifier-exit-code": 0,
+  "checker-after": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\docs\\specifications\\windows\\native-read-virtual-memory\\check_evidence.py",
+    "bytes": 27223,
+    "sha256": "9f97d03d1bceda29895ea20e828de607a346a5dc673d8adba4fd350425ebc0dc"
+  },
+  "proof-after": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\docs\\specifications\\windows\\native-read-virtual-memory\\proof.json",
+    "bytes": 80138,
+    "sha256": "c7546d22c877579eac58667cc64a900e142988f5060a022c25c610d41fee92d3"
+  },
+  "driver-after": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-read-evidence-windows-v2.py",
+    "bytes": 3815,
+    "sha256": "7c5bd3aca46af1112464c9003464b2f00013a65ccfef76b713c191aee4f9baea"
+  },
+  "metadata-after": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\read-memory-evidence-transfer-v2-source.json",
+    "bytes": 567,
+    "sha256": "5cb64c9fdbd210412d7972a954c270ad395a1c3c6c57d548097efc9e46a8cfeb"
+  },
+  "archive-after": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\read-memory-evidence-transfer-v2.tar.gz",
+    "bytes": 13289914,
+    "sha256": "217b08e4bf881af98dc50ea5bbe550284292aeecef7d7ca8a44f027ce095ebf0"
+  },
+  "exit-code": 0,
+  "completed-utc": "2026-10-22T22:19:04.165683+00:00"
+}

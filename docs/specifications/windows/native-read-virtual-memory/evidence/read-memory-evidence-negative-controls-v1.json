@@ -1,0 +1,113 @@
+{
+  "state": "finished",
+  "cases": [
+    {
+      "name": "baseline-positive",
+      "expected-rejection": null,
+      "exit-code": 0,
+      "log": "read-memory-evidence-negative-v1-baseline-positive.log",
+      "bytes": 569,
+      "sha256": "0522029470aea852c9991cce666947c35ce96737b68530202eecc0859af45472"
+    },
+    {
+      "name": "parent",
+      "expected-rejection": "parent/schema",
+      "exit-code": 1,
+      "log": "read-memory-evidence-negative-v1-parent.log",
+      "bytes": 1017,
+      "sha256": "ed4981746b38405f3b79d36ef04f88acda06f29377f4847be9d6f74b0f7b7dde"
+    },
+    {
+      "name": "native-status",
+      "expected-rejection": "native fixture is exact compiled input:",
+      "exit-code": 1,
+      "log": "read-memory-evidence-negative-v1-native-status.log",
+      "bytes": 1294,
+      "sha256": "4693fb5b4d7adbc5cd7587b699506e77ce3a642dcf4f9de2f4b531ab0aaf6ae3"
+    },
+    {
+      "name": "source-frame",
+      "expected-rejection": "compiler frame digest",
+      "exit-code": 1,
+      "log": "read-memory-evidence-negative-v1-source-frame.log",
+      "bytes": 1039,
+      "sha256": "a81484cec654aeffd8174a92ae006a193d901feebcaef0a4ecce751e1efac23b"
+    },
+    {
+      "name": "windows-failures",
+      "expected-rejection": "Windows exact remaining failures",
+      "exit-code": 1,
+      "log": "read-memory-evidence-negative-v1-windows-failures.log",
+      "bytes": 1169,
+      "sha256": "6dc955bb923d355d472628670157e8c179969666024bf6803b7d6b65450aba6f"
+    },
+    {
+      "name": "windows-image",
+      "expected-rejection": "Windows exact test image",
+      "exit-code": 1,
+      "log": "read-memory-evidence-negative-v1-windows-image.log",
+      "bytes": 1123,
+      "sha256": "fb5d06697392d8c68227a9f8bfa6ce76806fec301e998170b78db40875077fba"
+    },
+    {
+      "name": "owning-archive",
+      "expected-rejection": "actual owning archives stable",
+      "exit-code": 1,
+      "log": "read-memory-evidence-negative-v1-owning-archive.log",
+      "bytes": 1164,
+      "sha256": "a02f70733b5ce6ad2dc0bb51fa784490d6784aed4475319979bff14ea36a67b0"
+    },
+    {
+      "name": "guest-completion",
+      "expected-rejection": "C API next frontier, not false guest exit",
+      "exit-code": 1,
+      "log": "read-memory-evidence-negative-v1-guest-completion.log",
+      "bytes": 1116,
+      "sha256": "6219e13cd3e58d708fba8da6210fd2326a158abbbf1a6429755f6e95edb3fc7c"
+    },
+    {
+      "name": "native-repeat",
+      "expected-rejection": "alignment repeat execution",
+      "exit-code": 1,
+      "log": "read-memory-evidence-negative-v1-native-repeat.log",
+      "bytes": 1073,
+      "sha256": "ab1df7e8a40d478c10e4a8ecf304b912f57ef4f2c57055d0061e4ede1aa77768"
+    },
+    {
+      "name": "quality-exit",
+      "expected-rejection": "formatter/Clippy exit",
+      "exit-code": 1,
+      "log": "read-memory-evidence-negative-v1-quality-exit.log",
+      "bytes": 994,
+      "sha256": "80b13bccd62b5fadf474c225c96b63a545e8c2faf1ac6669fdf69ec70756d98b"
+    },
+    {
+      "name": "optimized-python",
+      "expected-rejection": "optimized Python is not an evidence checker",
+      "exit-code": 1,
+      "log": "read-memory-evidence-negative-v1-optimized-python.log",
+      "bytes": 1033,
+      "sha256": "d81a28a0cf56a1e3a3098673fd67b9ccd2b7e697c0861cc794966870cc1e1686"
+    },
+    {
+      "name": "double-optimized-python",
+      "expected-rejection": "optimized Python is not an evidence checker",
+      "exit-code": 1,
+      "log": "read-memory-evidence-negative-v1-double-optimized-python.log",
+      "bytes": 1033,
+      "sha256": "d81a28a0cf56a1e3a3098673fd67b9ccd2b7e697c0861cc794966870cc1e1686"
+    },
+    {
+      "name": "restored-positive",
+      "expected-rejection": null,
+      "exit-code": 0,
+      "log": "read-memory-evidence-negative-v1-restored-positive.log",
+      "bytes": 569,
+      "sha256": "0522029470aea852c9991cce666947c35ce96737b68530202eecc0859af45472"
+    }
+  ],
+  "checker-sha256": "9f97d03d1bceda29895ea20e828de607a346a5dc673d8adba4fd350425ebc0dc",
+  "exit-code": 0,
+  "temporary-copy-removed": true,
+  "production-source-edits": 0
+}

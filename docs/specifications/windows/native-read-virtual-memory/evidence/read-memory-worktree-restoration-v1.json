@@ -1,0 +1,12 @@
+{
+  "state": "finished",
+  "baseline": "26ebabe4f8edefd87fc26630588cce0024b5bff8",
+  "restored-worktree": "/Users/int/.assist-native-display-policy-20261022",
+  "git-metadata": "/Users/int/hexrays/kvasir/.git/modules/vendor/rax/worktrees/-assist-native-display-policy-20261022",
+  "git-archive-entries": 32133,
+  "source-frame-sha256": "02b8f1cf7b693e6e379b2f8360e1dd9f646248f41dba8699d692209fc99f8303",
+  "verified-compiler-inputs": 29173,
+  "overlay-files": 40,
+  "cause-of-disappearance": "unknown",
+  "source-bytes": "Every frozen compiler input matches after reconstruction; no production edit."
+}

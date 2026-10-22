@@ -1,0 +1,14 @@
+{
+  "status": "reviewed",
+  "passed": 7373,
+  "failed": 5,
+  "ignored": 2,
+  "failures": [
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_imm_index_at_width_with_flags_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_all_ones_with_flags_as_movn_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_with_flags_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_with_flags_and_low_byte_index_guards",
+    "smir::lower::aarch64::tests::vector::lowers_vector_fp16_arithmetic_runtime"
+  ],
+  "sha256": "0b99e6bbb289b078201e38d62737cf6da290430309ce7a1c8979dcae76c6e54c"
+}

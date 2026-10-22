@@ -1,0 +1,21 @@
+   Compiling rax v0.1.0 (/Users/int/.assist-native-display-policy-20261022)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 24s
+     Running unittests src/lib.rs (target/candidate1/debug/deps/rax-dd79f0cd9ae9bb68)
+
+running 1 test
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::read::native_read_virtual_memory_self_copies_bytes_and_pointer_width_count_all_abis ... 
+thread 'user::windows::process::sched::tests::services_tests::virtual_memory_tests::read::native_read_virtual_memory_self_copies_bytes_and_pointer_width_count_all_abis' (36015757) panicked at src/user/windows/process/sched/tests/services_tests/virtual_memory_read_tests.rs:43:9:
+assertion `left == right` failed: x86
+  left: Fail("native NTDLL service NtReadVirtualMemory (0x23) at 0x12340000 is not implemented")
+ right: Continue
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+
+failures:
+
+failures:
+    user::windows::process::sched::tests::services_tests::virtual_memory_tests::read::native_read_virtual_memory_self_copies_bytes_and_pointer_width_count_all_abis
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 8186 filtered out; finished in 0.01s
+
+error: test failed, to rerun pass `--lib`

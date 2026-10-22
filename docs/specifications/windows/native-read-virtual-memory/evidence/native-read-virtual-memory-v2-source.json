@@ -1,0 +1,6 @@
+{
+  "file": "native-read-virtual-memory-v2.cpp",
+  "bytes": 9028,
+  "sha256": "43ec93719ab795cc47c7f6c43461edfeb32a2a620cf0296a6bc37abf095f9e0f",
+  "scope": "Original own-process extended self-copy/alias/chunk-boundary observations. Lossless 256-byte repeated-block patches retain every changed byte; no guest memory or foreign host process input."
+}

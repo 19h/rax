@@ -1,0 +1,6 @@
+{
+  "file": "native-read-virtual-memory-v1.cpp",
+  "bytes": 7985,
+  "sha256": "97d726e11a5d0f1fe4a54236923c4308f94e238426f214a2b0925a527b59d71e",
+  "scope": "Original owned self-process source/output/count pages, handle grants, independent changed-byte runs and post-call page protections; no foreign process or persistent host mutation."
+}

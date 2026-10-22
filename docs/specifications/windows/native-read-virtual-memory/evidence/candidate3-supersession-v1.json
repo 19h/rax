@@ -1,0 +1,49 @@
+{
+  "reason": "Candidate3 full runs superseded by required STATUS_PARTIAL_COPY -> ERROR_PARTIAL_COPY consumer correction; focused and ordinal gates already passed. Windows candidate2 continues independently.",
+  "actions": [
+    {
+      "host": "macos",
+      "pid": 52561,
+      "parent": 52557,
+      "command": "/Users/int/.assist-native-display-policy-20261022/target/candidate1/debug/deps/rax-dd79f0cd9ae9bb68 --nocapture --test-threads=1",
+      "signal": "SIGTERM",
+      "source-frame": "103ecfee7b5f6ba1c230ef250f77cbf1d047f4b6b96cf1054efa23e9901a16e2"
+    },
+    {
+      "host": "linux",
+      "container": "de5d45731517d5bcf8d9de10306e00756d4fbcd2f9aedc8a19fef41e28f8a651",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "owning-mounts": [
+        {
+          "Type": "bind",
+          "Source": "/Users/int/.assist-native-display-policy-20261022",
+          "Destination": "/work/vendor/rax",
+          "Mode": "",
+          "RW": true,
+          "Propagation": "rprivate"
+        },
+        {
+          "Type": "volume",
+          "Name": "assist-native-read-memory-linux-tmp-20261022",
+          "Source": "/var/lib/docker/volumes/assist-native-read-memory-linux-tmp-20261022/_data",
+          "Destination": "/work/vendor/rax/target/linux/tmp",
+          "Driver": "local",
+          "Mode": "z",
+          "RW": true,
+          "Propagation": ""
+        }
+      ],
+      "signal": "docker stop 5 seconds"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+Traceback (most recent call last):
+  File "/Users/int/.assist-native-display-policy-20261022/docs/specifications/windows/native-read-virtual-memory/check_evidence.py", line 736, in <module>
+    main()
+    ~~~~^^
+  File "/Users/int/.assist-native-display-policy-20261022/docs/specifications/windows/native-read-virtual-memory/check_evidence.py", line 732, in main
+    print(json.dumps(check(args.evidence_dir, args.source_root), indent=2))
+                     ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/int/.assist-native-display-policy-20261022/docs/specifications/windows/native-read-virtual-memory/check_evidence.py", line 602, in check
+    require(
+    ~~~~~~~^
+        before["archives"] == after["archives"] and len(before["archives"]) == 2,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        "actual owning archives stable",
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/int/.assist-native-display-policy-20261022/docs/specifications/windows/native-read-virtual-memory/check_evidence.py", line 17, in require
+    raise ValueError(message)
+ValueError: actual owning archives stable

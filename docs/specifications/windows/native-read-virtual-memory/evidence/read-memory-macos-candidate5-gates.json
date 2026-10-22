@@ -1,0 +1,154 @@
+{
+  "state": "finished",
+  "host": "macos",
+  "pid": 2444,
+  "steps": [
+    {
+      "name": "ordinals",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "ntdll_ordinal",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 90.18295566696906,
+      "log": "read-memory-macos-candidate5-ordinals.log",
+      "bytes": 969,
+      "sha256": "26bf330de1603dc9009aa90f76b2bbf802722d2e4196df3e769156e771c394b7",
+      "results": [
+        "ok. 4 passed; 0 failed; 0 ignored; 0 measured; 8194 filtered out; finished in 0.01s"
+      ]
+    },
+    {
+      "name": "focus",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "user::windows::process::sched::tests::services_tests::virtual_memory_tests::read::",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 10.728401875006966,
+      "log": "read-memory-macos-candidate5-focus.log",
+      "bytes": 2343,
+      "sha256": "e5290fbf7db69959b656e67c1bf6eaeef2e2bb7442bb5dcea6ba54ca7cd9000b",
+      "results": [
+        "ok. 12 passed; 0 failed; 0 ignored; 0 measured; 8186 filtered out; finished in 10.57s"
+      ]
+    },
+    {
+      "name": "full",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 495.6797290419927,
+      "log": "read-memory-macos-candidate5-full.log",
+      "bytes": 866624,
+      "sha256": "1a57f455f811162b5b20f4ce65089fb3c2ff4b48c7bf5552ca4f3bffd0168b51",
+      "results": [
+        "ok. 8196 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 495.57s"
+      ]
+    },
+    {
+      "name": "capi",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "-p",
+        "rax-capi",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 60.819353249971755,
+      "log": "read-memory-macos-candidate5-capi.log",
+      "bytes": 14131,
+      "sha256": "462e5b66522e3fa13e8a7551a3aa6dea4385ed49aca32a8fc9e982cb4c346437",
+      "results": [
+        "ok. 183 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 17.00s",
+        "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    {
+      "name": "integration",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--test",
+        "user_windows",
+        "--test",
+        "user_windows_memory",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 59.872124875022564,
+      "log": "read-memory-macos-candidate5-integration.log",
+      "bytes": 35856,
+      "sha256": "8164c1214872dfe97fed5d8469eff06008c11ad8e2d063625d1577edacf6402e",
+      "results": [
+        "ok. 544 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 57.17s",
+        "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    {
+      "name": "all-targets",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "check",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--all-targets"
+      ],
+      "exit-code": 0,
+      "seconds": 49.882641625008546,
+      "log": "read-memory-macos-candidate5-all-targets.log",
+      "bytes": 149,
+      "sha256": "0cde54eb244406cf32693644c258128f481f3a09d4c4b2fb60ac0686c3656725",
+      "results": []
+    }
+  ],
+  "manifest-sha256": "02b8f1cf7b693e6e379b2f8360e1dd9f646248f41dba8699d692209fc99f8303",
+  "step": "all-targets",
+  "child": 21295,
+  "exit-code": 0,
+  "source-inputs": 29173,
+  "completed-utc": "2026-10-22T21:35:09.264418+00:00"
+}

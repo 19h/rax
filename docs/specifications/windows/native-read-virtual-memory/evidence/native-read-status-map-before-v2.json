@@ -1,0 +1,56 @@
+{
+  "source": {
+    "file": "native-read-status-map-before-v1.rs",
+    "bytes": 232,
+    "sha256": "c324ff071376528d687bb841fe6916cb5050f16f6113245ed256f24fc339dec5"
+  },
+  "core-before": {
+    "path": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes/assist-rs-target/aarch64-apple-darwin/debug/deps/librax-c89758aa402dc84d.rlib",
+    "bytes": 400175520,
+    "sha256": "1a0cbc53c16ab3cd523562e92977ec789fc661deb1a2c7978795e967f5892fda"
+  },
+  "steps": [
+    {
+      "name": "build",
+      "argv": [
+        "rustup",
+        "run",
+        "1.95.0",
+        "rustc",
+        "--edition=2024",
+        "--target",
+        "aarch64-apple-darwin",
+        "--crate-name",
+        "read_status_before",
+        "/Users/int/.assist-native-display-policy-20261022/target/read-memory-status-map-v1/native-read-status-map-before-v1.rs",
+        "--extern",
+        "rax=/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes/assist-rs-target/aarch64-apple-darwin/debug/deps/librax-c89758aa402dc84d.rlib",
+        "-L",
+        "dependency=/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes/assist-rs-target/aarch64-apple-darwin/debug/deps",
+        "-L",
+        "dependency=/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes/assist-rs-target/debug/deps",
+        "-o",
+        "/Users/int/.assist-native-display-policy-20261022/target/read-memory-status-map-v1/before-v2"
+      ],
+      "exit-code": 0,
+      "log": "native-read-status-map-before-v2-build.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "execute",
+      "argv": [
+        "/Users/int/.assist-native-display-policy-20261022/target/read-memory-status-map-v1/before-v2"
+      ],
+      "exit-code": 101,
+      "log": "native-read-status-map-before-v2-execute.log",
+      "bytes": 358,
+      "sha256": "d500ef230cca8cc7e12b3e9e16474e68344e2bd384d41903388bab920dff3506"
+    }
+  ],
+  "core-after": {
+    "path": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes/assist-rs-target/aarch64-apple-darwin/debug/deps/librax-c89758aa402dc84d.rlib",
+    "bytes": 400175520,
+    "sha256": "1a0cbc53c16ab3cd523562e92977ec789fc661deb1a2c7978795e967f5892fda"
+  }
+}

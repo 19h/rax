@@ -1,0 +1,9 @@
+{
+  "scope-refinement": "Windows has three supported guest ABIs here (X86, X64, Arm64). The four native execution views are ARM64, x64, x86 and x86 large-address-aware. The initial acceptance wording calling them four ABIs was imprecise.",
+  "observations": [
+    "OpenProcess access0 returns Win32 error5 on the observed ARM64 host; access0x10,0x400,0x1000 self handles open. This is preserved, and a duplicate-own-handle control can measure an actual zero-access handle without changing token rights.",
+    "Zero length bypasses handle checks and publishes count0 when count pointer is valid.",
+    "A crossing source gives PARTIAL_COPY/count0 with no destination change; a crossing destination reports count4 despite no observed copied bytes. Do not equate reported count with a successful prefix copy."
+  ],
+  "status": "RM-A2 native partial-store assumption refined; complete four-view/guard/alias proof remains pending"
+}

@@ -18,6 +18,9 @@ mod region_information;
 #[path = "region_query_replay_tests.rs"]
 mod region_replay;
 
+#[path = "virtual_memory_read_tests.rs"]
+mod read;
+
 fn arguments(p: &mut Proc, t: &mut Thread, args: &[u64]) {
     let sp = t.cpu.sp();
     t.cpu.set_pc(0x1234_0004);

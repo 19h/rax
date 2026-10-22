@@ -1,0 +1,20 @@
+{
+  "scope": "Installed Windows 11 10.0.29683 on ARM64; x64/x86/x86-LAA are execution views on that kernel, not independent kernels.",
+  "calls": 11024,
+  "material-observations": [
+    "Optional SIZE_T publication is late, and may alias source or destination; WoW64 pre-reads a ULONG slot and suppresses publication after a failed read.",
+    "Source PAGE_GUARD is retained; a reached destination guard is consumed. Execute-only source pages can be read by the service.",
+    "A zero length ignores invalid/wrong-type/insufficient-access handles but still applies native extent and optional count checks.",
+    "A partial count can exceed bytes actually written: an 8-byte store across a boundary with four writable bytes returns PARTIAL_COPY/count4 without any destination byte change.",
+    "Large faulting copies publish completed fourteen-page blocks. Fully readable/writable overlapping copies expose a 65536-byte snapshot boundary.",
+    "Working-set captures retain the host's residency/prefetch observations. Exact host prefetch breadth is not a guest paging contract and is not normalized into byte/protection/status evidence."
+  ],
+  "assumptions": [
+    {"id":"RM-A1","status":"retained","assumption":"Current-process reads use actual guest mappings and existing process grants; no guest request selects host memory.","dependent-result":"service implementation","stress-test":"foreign process with valid read grant and armed count guard","falsification-probe":"foreign service completes or consumes the guard"},
+    {"id":"RM-A2","status":"revised","assumption":"Native copy stores and count/probe ordering must be derived from original NTDLL captures for each selected execution view.","dependent-result":"fault/alias behavior","stress-test":"all 11024 immutable calls plus native replay repeat","falsification-probe":"any status, destination byte or protection mismatch"}
+  ],
+  "bounded-scope": [
+    {"impact":"high","item":"Foreign-process virtual address-space ownership is not yet modeled by this group.","blocks-current-self-read":false,"behavior":"Explicit unsupported frontier before caller mutation; never host forwarding."},
+    {"impact":"medium","item":"The native corpus uses one ARM64 kernel build; independent x64 kernel behavior remains a distinct validation surface.","blocks-current-profile":false,"falsification-probe":"Run the native producer on an independent x64 kernel and replay all results without weakened assertions."}
+  ]
+}

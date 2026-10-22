@@ -1,0 +1,21 @@
+Traceback (most recent call last):
+  File "/Users/int/.assist-native-display-policy-20261022/docs/specifications/windows/native-read-virtual-memory/check_evidence.py", line 736, in <module>
+    main()
+    ~~~~^^
+  File "/Users/int/.assist-native-display-policy-20261022/docs/specifications/windows/native-read-virtual-memory/check_evidence.py", line 732, in main
+    print(json.dumps(check(args.evidence_dir, args.source_root), indent=2))
+                     ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/int/.assist-native-display-policy-20261022/docs/specifications/windows/native-read-virtual-memory/check_evidence.py", line 99, in check
+    require(
+    ~~~~~~~^
+        identity((directory / "native" / name).read_bytes())
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        == pair(compiler_rows[path]),
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        "native fixture is exact compiled input: " + name,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/int/.assist-native-display-policy-20261022/docs/specifications/windows/native-read-virtual-memory/check_evidence.py", line 17, in require
+    raise ValueError(message)
+ValueError: native fixture is exact compiled input: native-read-virtual-memory-v7-four-views-arm64.log

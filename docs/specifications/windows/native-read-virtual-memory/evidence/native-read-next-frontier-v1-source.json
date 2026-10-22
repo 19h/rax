@@ -1,0 +1,10 @@
+{
+  "file": "native-read-next-frontier-v1.rs",
+  "bytes": 1915,
+  "sha256": "fe5a8c9c81b99de56587d8d49338a561330545a45477f55d9e548b6ffbc31bba",
+  "derived-from": {
+    "file": "../native-process-basic-information-20261022/native-process-basic-next-read-20261022-v1.rs",
+    "sha256": "43284192b477fe9ca1424b5ecbdfec98a18956966dfaa4b23ee09f965ee1e5d3"
+  },
+  "scope": "Exact owning-core observer; labels are raw registers and memory snapshots, not a claim that the next frontier is a read-memory call."
+}

@@ -1,0 +1,79 @@
+{
+  "base": "26ebabe4f8edefd87fc26630588cce0024b5bff8",
+  "compiler-frame": {
+    "file": "read-memory-candidate5-source.json",
+    "sha256": "02b8f1cf7b693e6e379b2f8360e1dd9f646248f41dba8699d692209fc99f8303",
+    "files": 29173
+  },
+  "inherited-exact-inputs": 29133,
+  "changed-inherited-inputs": [
+    "src/user/windows/dll/mod.rs",
+    "src/user/windows/dll/native.rs",
+    "src/user/windows/dll/threading/native_semaphore_tests.rs",
+    "src/user/windows/dll/threading/native_timer2_tests.rs",
+    "src/user/windows/dll/threading/native_wait_tests.rs",
+    "src/user/windows/memory/region.rs",
+    "src/user/windows/nt.rs",
+    "src/user/windows/process/sched/tests/services_tests/virtual_memory_tests.rs"
+  ],
+  "added-inputs": [
+    "docs/specifications/windows/native-read-virtual-memory/native/native-read-virtual-memory-v1-four-views-arm64.log",
+    "docs/specifications/windows/native-read-virtual-memory/native/native-read-virtual-memory-v1-four-views-x64.log",
+    "docs/specifications/windows/native-read-virtual-memory/native/native-read-virtual-memory-v1-four-views-x86-laa.log",
+    "docs/specifications/windows/native-read-virtual-memory/native/native-read-virtual-memory-v1-four-views-x86.log",
+    "docs/specifications/windows/native-read-virtual-memory/native/native-read-virtual-memory-v2-four-views-arm64.log",
+    "docs/specifications/windows/native-read-virtual-memory/native/native-read-virtual-memory-v2-four-views-x64.log",
+    "docs/specifications/windows/native-read-virtual-memory/native/native-read-virtual-memory-v2-four-views-x86-laa.log",
+    "docs/specifications/windows/native-read-virtual-memory/native/native-read-virtual-memory-v2-four-views-x86.log",
+    "docs/specifications/windows/native-read-virtual-memory/native/native-read-virtual-memory-v3-four-views-arm64.log",
+    "docs/specifications/windows/native-read-virtual-memory/native/native-read-virtual-memory-v3-four-views-x64.log",
+    "docs/specifications/windows/native-read-virtual-memory/native/native-read-virtual-memory-v3-four-views-x86-laa.log",
+    "docs/specifications/windows/native-read-virtual-memory/native/native-read-virtual-memory-v3-four-views-x86.log",
+    "docs/specifications/windows/native-read-virtual-memory/native/native-read-virtual-memory-v4-four-views-arm64.log",
+    "docs/specifications/windows/native-read-virtual-memory/native/native-read-virtual-memory-v4-four-views-x64.log",
+    "docs/specifications/windows/native-read-virtual-memory/native/native-read-virtual-memory-v4-four-views-x86-laa.log",
+    "docs/specifications/windows/native-read-virtual-memory/native/native-read-virtual-memory-v4-four-views-x86.log",
+    "docs/specifications/windows/native-read-virtual-memory/native/native-read-virtual-memory-v5-four-views-arm64.log",
+    "docs/specifications/windows/native-read-virtual-memory/native/native-read-virtual-memory-v5-four-views-x64.log",
+    "docs/specifications/windows/native-read-virtual-memory/native/native-read-virtual-memory-v5-four-views-x86-laa.log",
+    "docs/specifications/windows/native-read-virtual-memory/native/native-read-virtual-memory-v5-four-views-x86.log",
+    "docs/specifications/windows/native-read-virtual-memory/native/native-read-virtual-memory-v6-four-views-arm64.log",
+    "docs/specifications/windows/native-read-virtual-memory/native/native-read-virtual-memory-v6-four-views-x64.log",
+    "docs/specifications/windows/native-read-virtual-memory/native/native-read-virtual-memory-v6-four-views-x86-laa.log",
+    "docs/specifications/windows/native-read-virtual-memory/native/native-read-virtual-memory-v6-four-views-x86.log",
+    "docs/specifications/windows/native-read-virtual-memory/native/native-read-virtual-memory-v7-four-views-arm64.log",
+    "docs/specifications/windows/native-read-virtual-memory/native/native-read-virtual-memory-v7-four-views-x64.log",
+    "docs/specifications/windows/native-read-virtual-memory/native/native-read-virtual-memory-v7-four-views-x86-laa.log",
+    "docs/specifications/windows/native-read-virtual-memory/native/native-read-virtual-memory-v7-four-views-x86.log",
+    "src/user/windows/dll/native/read_memory.rs",
+    "src/user/windows/process/sched/tests/services_tests/virtual_memory_read_leaf_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/virtual_memory_read_replay_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/virtual_memory_read_tests.rs"
+  ],
+  "owned-rust-paths": [
+    "src/user/windows/dll/mod.rs",
+    "src/user/windows/dll/native.rs",
+    "src/user/windows/memory/region.rs",
+    "src/user/windows/process/sched/tests/services_tests/virtual_memory_tests.rs",
+    "src/user/windows/dll/native/read_memory.rs",
+    "src/user/windows/process/sched/tests/services_tests/virtual_memory_read_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/virtual_memory_read_replay_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/virtual_memory_read_leaf_tests.rs",
+    "src/user/windows/dll/threading/native_wait_tests.rs",
+    "src/user/windows/dll/threading/native_semaphore_tests.rs",
+    "src/user/windows/dll/threading/native_timer2_tests.rs",
+    "src/user/windows/nt.rs"
+  ],
+  "capi-header": {
+    "bytes": 70196,
+    "sha256": "e8438269c7f9411da7c92dff70942dbb839570cda9a6ac1bec0b78ed731e829a",
+    "unchanged-from-parent": true
+  },
+  "native-contract": {
+    "read-calls": 21140,
+    "rtl-calls": 28,
+    "kernel-count": 1,
+    "execution-views": 4
+  },
+  "owning-scope": "Retained actual Assist ABI184 core/carrier consumers; current root ABI274 shipping CI remains separate."
+}

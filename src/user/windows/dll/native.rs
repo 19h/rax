@@ -28,6 +28,7 @@ mod process_set;
 mod process_tls;
 mod process_token;
 mod query;
+mod read_memory;
 mod registry;
 mod section_create;
 mod section_map;
@@ -417,6 +418,14 @@ pub(super) static TIMER2_EXPORTS: &[Export] = &[
 fn status_error(c: &mut Ctx) -> ApiResult {
     Flow::ret(u64::from(super::super::nt::status_to_error(c.u32(0)?)))
 }
+// Keep preceding synthetic PE ordinals and trap addresses unchanged.
+pub(super) static READ_MEMORY_EXPORTS: &[Export] = &[Export::func(
+    "NtReadVirtualMemory",
+    Stdcall,
+    &[Ptr, Ptr, Ptr, Ptr, Ptr],
+    read_memory::read,
+)];
+
 fn self_process(c: &Ctx, handle: u64) -> bool {
     handle == c.arch().ptr(u64::MAX)
 }

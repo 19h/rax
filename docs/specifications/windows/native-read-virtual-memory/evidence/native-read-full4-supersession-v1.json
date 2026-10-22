@@ -1,0 +1,80 @@
+{
+  "state": "finished",
+  "reason": "Candidate4 full run superseded by compiled source-alignment regression and complete sixteen-alignment native capture; candidate5 performs final full validation.",
+  "pid": 2172,
+  "verified-task-process": {
+    "ProcessId": 2172,
+    "ExecutablePath": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\normal-candidate1\\debug\\deps\\rax-b799307a7949aa6b.exe",
+    "CommandLine": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\normal-candidate1\\debug\\deps\\rax-b799307a7949aa6b.exe --nocapture --test-threads=1"
+  },
+  "source-frame": "757461bef7bb17dd3499c1e5228d9b563715c7ea8bffbaa1e210b30607e4c513",
+  "completed-steps-before-supersession": [
+    {
+      "name": "toolchain",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "--version"
+      ],
+      "exit-code": 0,
+      "seconds": 0.044758375035598874,
+      "log": "read-memory-candidate4-toolchain.log",
+      "bytes": 36,
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5",
+      "results": []
+    },
+    {
+      "name": "test-build",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "exit-code": 0,
+      "seconds": 239.6710995839676,
+      "log": "read-memory-candidate4-test-build.log",
+      "bytes": 92179,
+      "sha256": "baeae4b39079a1d2b0e24734ba4ad487ca1abde4a2f7e92e3918cf46c851fa86",
+      "results": []
+    },
+    {
+      "name": "ordinals",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\normal-candidate1\\debug\\deps\\rax-b799307a7949aa6b.exe",
+        "ntdll_ordinal",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 0.07145929202670231,
+      "log": "read-memory-candidate4-ordinals.log",
+      "bytes": 733,
+      "sha256": "b6705c9aa2d43ec6f45963046979be53eb6534f9f94957943c94a29d3df74f07",
+      "results": [
+        "ok. 4 passed; 0 failed; 0 ignored; 0 measured; 7669 filtered out; finished in 0.01s"
+      ]
+    },
+    {
+      "name": "focus",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\normal-candidate1\\debug\\deps\\rax-b799307a7949aa6b.exe",
+        "user::windows::process::sched::tests::services_tests::virtual_memory_tests::read::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 168.28661679202924,
+      "log": "read-memory-candidate4-focus.log",
+      "bytes": 2039,
+      "sha256": "2e5ee6f28d41187b25e54359688e3a8a62c255a790240a2a508e527e5c6d2778",
+      "results": [
+        "ok. 11 passed; 0 failed; 0 ignored; 0 measured; 7662 filtered out; finished in 168.26s"
+      ]
+    }
+  ],
+  "termination": "SIGTERM on exact task unit-test image only"
+}

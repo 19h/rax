@@ -1,0 +1,133 @@
+{
+  "state": "finished",
+  "host": "macos",
+  "pid": 6042,
+  "source-inputs": 3978,
+  "scope": "Retained Assist ABI184 linked consumers; no whole current root GUI/plugin/package claim.",
+  "steps": [
+    {
+      "gate": "prime-artifacts",
+      "cwd": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/rust/assist-rs",
+      "command": [
+        "cmake",
+        "-E",
+        "env",
+        "CARGO_TARGET_DIR=/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes/assist-rs-target",
+        "CARGO_PROFILE_RELEASE_STRIP=false",
+        "MACOSX_DEPLOYMENT_TARGET=10.15",
+        "ASSIST_RESOURCE_PYTHON=/opt/homebrew/Frameworks/Python.framework/Versions/3.15/bin/python3.15",
+        "CARGO_BUILD_JOBS=2",
+        "RUSTUP_TOOLCHAIN=1.95.0",
+        "/Users/int/.cargo/bin/cargo",
+        "build",
+        "--locked",
+        "--offline",
+        "--manifest-path",
+        "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/rust/assist-rs/Cargo.toml",
+        "--package",
+        "assist-rs",
+        "--target",
+        "aarch64-apple-darwin",
+        "--features",
+        "rax",
+        "--message-format=json"
+      ],
+      "exit-code": 0,
+      "seconds": 28.283875291992445,
+      "log": "macos-read-memory-candidate5-owning-v2-prime-artifacts.log",
+      "bytes": 137670,
+      "sha256": "92560b89ad6c1c421872bb244a265ca50cf1cdf2593125e6720aa0a8ea067faf"
+    },
+    {
+      "gate": "archives-before",
+      "command": [
+        "python3",
+        "-B",
+        "/Users/int/Library/Caches/assist-process-emulation/native-read-virtual-memory-20261022/collect-read-memory-archives-candidate5.py",
+        "--host",
+        "macos",
+        "--source",
+        "/Users/int/.assist-native-display-policy-20261022",
+        "--manifest",
+        "/Users/int/Library/Caches/assist-process-emulation/native-read-virtual-memory-20261022/read-memory-owning-source-hashes-candidate5.json",
+        "--messages",
+        "/Users/int/Library/Caches/assist-process-emulation/native-read-virtual-memory-20261022/macos-read-memory-candidate5-owning-v2-prime-artifacts.log",
+        "--output",
+        "/Users/int/Library/Caches/assist-process-emulation/native-read-virtual-memory-20261022/macos-read-memory-candidate5-archives-before.json"
+      ],
+      "exit-code": 0,
+      "seconds": 1.1567085839924403,
+      "log": "macos-read-memory-candidate5-owning-v2-archives-before.log",
+      "bytes": 180,
+      "sha256": "79905b84d2f7c5e0dd17f31333b586fb41c046c51a3d18415b26dabf74777c50"
+    },
+    {
+      "gate": "build",
+      "command": [
+        "cmake",
+        "--build",
+        "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes",
+        "--target",
+        "assist_idalib_cli",
+        "assist_mcp",
+        "assist_mcp_tool_manifest_tests",
+        "assist_rax_process_tests",
+        "assist_process_tool_tests",
+        "assist_process_tool_unavailable_tests",
+        "assist_e14_rax_abi_drift_tests",
+        "assist_rust_archive_link_tests",
+        "--parallel",
+        "2"
+      ],
+      "exit-code": 0,
+      "seconds": 24.343936833029147,
+      "log": "macos-read-memory-candidate5-owning-v2-build.log",
+      "bytes": 1403,
+      "sha256": "492970820f86165b2bee9fd2d9713328883024c4cd066e6371d2519c23485855"
+    },
+    {
+      "gate": "ctest",
+      "command": [
+        "ctest",
+        "--test-dir",
+        "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes",
+        "--output-on-failure",
+        "-R",
+        "^(assist_rust_archive_link_tests|assist_rax_process_tests|assist_process_tool_tests|assist_process_tool_unavailable_tests|assist_e14_rax_abi_drift_tests|assist_mcp_tool_manifest_tests|assist_mcp_manifest_runtime_test)$"
+      ],
+      "exit-code": 0,
+      "seconds": 5.9330682920408435,
+      "log": "macos-read-memory-candidate5-owning-v2-ctest.log",
+      "bytes": 1298,
+      "sha256": "2a524b0162ad9395af8348b9e16991f67cc3708d313cd2c9e279a16f44eea220"
+    },
+    {
+      "gate": "archives-after",
+      "command": [
+        "python3",
+        "-B",
+        "/Users/int/Library/Caches/assist-process-emulation/native-read-virtual-memory-20261022/collect-read-memory-archives-candidate5.py",
+        "--host",
+        "macos",
+        "--source",
+        "/Users/int/.assist-native-display-policy-20261022",
+        "--manifest",
+        "/Users/int/Library/Caches/assist-process-emulation/native-read-virtual-memory-20261022/read-memory-owning-source-hashes-candidate5.json",
+        "--messages",
+        "/Users/int/Library/Caches/assist-process-emulation/native-read-virtual-memory-20261022/macos-read-memory-candidate5-owning-v2-prime-artifacts.log",
+        "--output",
+        "/Users/int/Library/Caches/assist-process-emulation/native-read-virtual-memory-20261022/macos-read-memory-candidate5-archives-after.json"
+      ],
+      "exit-code": 0,
+      "seconds": 0.865871749992948,
+      "log": "macos-read-memory-candidate5-owning-v2-archives-after.log",
+      "bytes": 180,
+      "sha256": "79905b84d2f7c5e0dd17f31333b586fb41c046c51a3d18415b26dabf74777c50"
+    }
+  ],
+  "current-step": "archives-after",
+  "child-pid": 8406,
+  "exit-code": 0,
+  "archive-identities-stable": true,
+  "completed-utc": "2026-10-22T21:26:28.111194+00:00"
+}

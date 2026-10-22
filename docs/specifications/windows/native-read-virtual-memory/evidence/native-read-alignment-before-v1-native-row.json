@@ -1,0 +1,8 @@
+{
+  "producer": "native-read-virtual-memory-v6-four-views-arm64.log",
+  "native-row": 373,
+  "source-offset": 17,
+  "destination-prefix": 31,
+  "length": 512,
+  "expected-writable-bytes": "263748596a7b8c9daebfd0e1f2031425364758697a8b9cadbecfe0f1021324"
+}

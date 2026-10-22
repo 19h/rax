@@ -1,0 +1,37 @@
+{
+  "state": "failed",
+  "host": "macos",
+  "pid": 11756,
+  "steps": [
+    {
+      "name": "focus",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "user::windows::process::sched::tests::services_tests::virtual_memory_tests::read::",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 101,
+      "seconds": 157.057927417045,
+      "log": "read-memory-macos-candidate1-focus.log",
+      "bytes": 2965,
+      "sha256": "679acd2deeba177c0359d05436827e71c8f9c48d14cc13a974084253fed1e9a1",
+      "results": [
+        "FAILED. 6 passed; 2 failed; 0 ignored; 0 measured; 8186 filtered out; finished in 62.91s"
+      ]
+    }
+  ],
+  "manifest-sha256": "231442129cc8464368a1af3173b8234a5899fc163ab0e49499301c69ef8ecb59",
+  "step": "focus",
+  "child": 11803,
+  "exit-code": 1,
+  "error": "Traceback (most recent call last):\n  File \"/Users/int/Library/Caches/assist-process-emulation/native-read-virtual-memory-20261022/run-read-memory-unix-candidate1.py\", line 165, in <module>\n    results = run(name, command)\n  File \"/Users/int/Library/Caches/assist-process-emulation/native-read-virtual-memory-20261022/run-read-memory-unix-candidate1.py\", line 137, in run\n    assert code == 0, name\n           ^^^^^^^^^\nAssertionError: focus\n",
+  "completed-utc": "2026-10-22T20:15:39.669173+00:00"
+}

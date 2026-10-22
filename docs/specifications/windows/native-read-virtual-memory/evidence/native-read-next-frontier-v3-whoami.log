@@ -1,0 +1,8 @@
+terminal turn=2872 result=Complete(Internal("native NTDLL service NtOpenKey: Unimplemented(\"NtOpenKey: registry key outside selected runtime snapshot\")"))
+thread=8 pc=7FFF38A41134 sp=1A5E000 frames=0
+registers=[1A5E008, 20019, 1A5E020, 10, 1A5DBA0, 1A5E100, 1000100, 2119024]
+raw-arguments x0=1A5E008 x1=20019 x2=1A5E020 x3=10 x4=1A5DBA0
+argument2-memory=Ok([30, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+argument1-memory=Err(MemFault { addr: 20019, write: false })
+argument4-memory=Ok([C, 0, 0, 0, 0, 0, 0, 0])
+terminal-object-name root=0x0 utf16=[5C, 52, 65, 67, 69, 73, 74, 72, 79, 5C, 4D, 61, 63, 68, 69, 6E, 65, 5C, 53, 6F, 66, 74, 77, 61, 72, 65, 5C, 4D, 69, 63, 72, 6F, 73, 6F, 66, 74, 5C, 57, 69, 6E, 64, 6F, 77, 73, 20, 4E, 54, 5C, 43, 75, 72, 72, 65, 6E, 74, 56, 65, 72, 73, 69, 6F, 6E, 5C, 47, 52, 45, 5F, 49, 6E, 69, 74, 69, 61, 6C, 69, 7A, 65] decoded="\\Registry\\Machine\\Software\\Microsoft\\Windows NT\\CurrentVersion\\GRE_Initialize"

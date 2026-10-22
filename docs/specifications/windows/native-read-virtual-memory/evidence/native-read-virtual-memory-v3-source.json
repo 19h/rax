@@ -1,0 +1,6 @@
+{
+  "file": "native-read-virtual-memory-v3.cpp",
+  "bytes": 10952,
+  "sha256": "d89f57a914640e9ce3e785973ccc0dd16cccd1a52b94947a3727a01bf1fc835a",
+  "scope": "Original own-process copy threshold, large aliases and working-set residency observations. QueryWorkingSet observation precedes restore/readback; zero-initialized lazy arenas are never seeded before the measured read."
+}

@@ -1,0 +1,6 @@
+{
+  "file": "native-read-virtual-memory-v6.cpp",
+  "bytes": 10505,
+  "sha256": "d43f89d76e167a99ea48adad74cea3f9fc735c844d7218d2cd06faee0fdb7824",
+  "scope": "Independent source alignment falsification: repeat all destination-store boundaries with source offset17 instead of16. Original v4 bytes remain immutable."
+}

@@ -1,0 +1,6 @@
+{
+  "source": "native-read-virtual-memory-v4.cpp",
+  "bytes": 10505,
+  "sha256": "e1c7689fe43052de26fc706361937f708d47d0110fbc1f5a9a63c3d60f3b9da4",
+  "purpose": "Own-process destination fault store granularity; 21 prefixes by 29 lengths, four execution views. Derived new immutable producer from v3."
+}

@@ -1,0 +1,7 @@
+status=0x8000000d count=31 actual=[26, 37, 48, 59, 6A, 7B, 8C, 9D, AE, BF, D0, E1, F2, 3, 14, 25, 36, 47, 58, 69, 7A, 8B, 9C, AD, A5, A5, A5, A5, A5, A5, A5] native=[26, 37, 48, 59, 6A, 7B, 8C, 9D, AE, BF, D0, E1, F2, 3, 14, 25, 36, 47, 58, 69, 7A, 8B, 9C, AD, BE, CF, E0, F1, 2, 13, 24]
+
+thread 'main' (36562973) panicked at /Users/int/.assist-native-display-policy-20261022/target/read-memory-status-map-v1/native-read-alignment-before-v1.rs:67:5:
+assertion `left == right` failed
+  left: [38, 55, 72, 89, 106, 123, 140, 157, 174, 191, 208, 225, 242, 3, 20, 37, 54, 71, 88, 105, 122, 139, 156, 173, 165, 165, 165, 165, 165, 165, 165]
+ right: [38, 55, 72, 89, 106, 123, 140, 157, 174, 191, 208, 225, 242, 3, 20, 37, 54, 71, 88, 105, 122, 139, 156, 173, 190, 207, 224, 241, 2, 19, 36]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

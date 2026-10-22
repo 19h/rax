@@ -1,0 +1,19 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.10s
+     Running unittests src/lib.rs (target/candidate1/debug/deps/rax-dd79f0cd9ae9bb68)
+
+running 12 tests
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::read::native_read_virtual_memory_foreign_frontier_preserves_caller_state_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::read::native_read_virtual_memory_preserves_all_prior_ntdll_ordinals_and_trap_rvas_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::read::native_read_virtual_memory_self_copies_bytes_and_pointer_width_count_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::read::native_read_virtual_memory_source_fault_materializes_only_reached_guest_pages_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::read::native_read_virtual_memory_status_translation_matches_all_original_views ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::read::native_read_virtual_memory_uses_actual_protection_and_preserves_source_guards_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::read::replay::native_read_virtual_memory_replays_all_source_byte_alignments ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::read::replay::native_read_virtual_memory_replays_four_view_blocks_and_aliases ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::read::replay::native_read_virtual_memory_replays_four_view_destination_store_boundaries ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::read::replay::native_read_virtual_memory_replays_four_view_fault_and_grant_matrix ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::read::replay::native_read_virtual_memory_replays_four_view_large_aliases_and_lazy_pages ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::read::replay::native_read_virtual_memory_replays_shifted_source_boundaries ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 8186 filtered out; finished in 10.57s
+

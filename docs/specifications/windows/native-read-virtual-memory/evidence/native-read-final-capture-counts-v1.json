@@ -1,0 +1,17 @@
+{
+  "read-calls": 21140,
+  "rtl-calls": 28,
+  "read-repeated-calls": 21140,
+  "rtl-repeated-calls": 28,
+  "native-source-versions": [
+    1,
+    2,
+    3,
+    4,
+    6,
+    7
+  ],
+  "rtl-source-version": 5,
+  "kernel-count": 1,
+  "execution-views": 4
+}

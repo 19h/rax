@@ -1,0 +1,37 @@
+{
+  "state": "finished",
+  "host": "macos",
+  "launcher-os": "posix",
+  "launcher-machine": "arm64",
+  "checker-before": {
+    "file": "check_evidence.py",
+    "bytes": 27223,
+    "sha256": "9f97d03d1bceda29895ea20e828de607a346a5dc673d8adba4fd350425ebc0dc"
+  },
+  "proof-before": {
+    "file": "proof.json",
+    "bytes": 80138,
+    "sha256": "c7546d22c877579eac58667cc64a900e142988f5060a022c25c610d41fee92d3"
+  },
+  "argv": [
+    "/opt/homebrew/opt/python@3.15/bin/python3.15",
+    "-B",
+    "/Users/int/.assist-native-display-policy-20261022/docs/specifications/windows/native-read-virtual-memory/check_evidence.py"
+  ],
+  "exit-code": 0,
+  "log": {
+    "file": "read-memory-evidence-macos-final-v2.log",
+    "bytes": 569,
+    "sha256": "0522029470aea852c9991cce666947c35ce96737b68530202eecc0859af45472"
+  },
+  "checker-after": {
+    "file": "check_evidence.py",
+    "bytes": 27223,
+    "sha256": "9f97d03d1bceda29895ea20e828de607a346a5dc673d8adba4fd350425ebc0dc"
+  },
+  "proof-after": {
+    "file": "proof.json",
+    "bytes": 80138,
+    "sha256": "c7546d22c877579eac58667cc64a900e142988f5060a022c25c610d41fee92d3"
+  }
+}

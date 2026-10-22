@@ -1,0 +1,339 @@
+{
+  "state": "finished",
+  "utc": "2026-10-22T21:12:55.546898+00:00",
+  "steps": [
+    {
+      "version": 6,
+      "profile": "arm64",
+      "exit-code": 0,
+      "seconds": 4.442145917040762,
+      "log": "native-read-repeat-v3-producer6-arm64.log",
+      "bytes": 1096603,
+      "sha256": "f4ea78e64bba610659c0c4656589740f5419d779fe169553f61ea31ad2347f3a",
+      "calls": 609,
+      "complete-nonresidency-row-match": true,
+      "original-launch": {
+        "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-read-virtual-memory-v6-four-views-launch.json",
+        "bytes": 19443,
+        "sha256": "0371fd85838560227a5f7da2b59a311ad7e9d76828ec5a93e7aaf7c94d6e71fd"
+      },
+      "executable-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-read-virtual-memory-v6-four-views\\target\\arm64\\probe.exe",
+        "bytes": 163840,
+        "sha256": "4b3f6c9f0710b25db63859e362717c66a09ee878351e2fbd6717b1d1f96ee11c"
+      },
+      "executable-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-read-virtual-memory-v6-four-views\\target\\arm64\\probe.exe",
+        "bytes": 163840,
+        "sha256": "4b3f6c9f0710b25db63859e362717c66a09ee878351e2fbd6717b1d1f96ee11c"
+      },
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-read-virtual-memory-v6-four-views\\native-read-virtual-memory-v6.cpp",
+        "bytes": 10505,
+        "sha256": "d43f89d76e167a99ea48adad74cea3f9fc735c844d7218d2cd06faee0fdb7824"
+      }
+    },
+    {
+      "version": 6,
+      "profile": "x64",
+      "exit-code": 0,
+      "seconds": 3.681589875021018,
+      "log": "native-read-repeat-v3-producer6-x64.log",
+      "bytes": 1096601,
+      "sha256": "51eec1919592788c7dceef310c103c4cff867891283ca8a33fadd0acdbf79d78",
+      "calls": 609,
+      "complete-nonresidency-row-match": true,
+      "original-launch": {
+        "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-read-virtual-memory-v6-four-views-launch.json",
+        "bytes": 19443,
+        "sha256": "0371fd85838560227a5f7da2b59a311ad7e9d76828ec5a93e7aaf7c94d6e71fd"
+      },
+      "executable-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-read-virtual-memory-v6-four-views\\target\\x64\\probe.exe",
+        "bytes": 174592,
+        "sha256": "001f1654da0bf9ba1b10ebffa58f259db7a569222274b60b8862839ef41d3ffe"
+      },
+      "executable-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-read-virtual-memory-v6-four-views\\target\\x64\\probe.exe",
+        "bytes": 174592,
+        "sha256": "001f1654da0bf9ba1b10ebffa58f259db7a569222274b60b8862839ef41d3ffe"
+      },
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-read-virtual-memory-v6-four-views\\native-read-virtual-memory-v6.cpp",
+        "bytes": 10505,
+        "sha256": "d43f89d76e167a99ea48adad74cea3f9fc735c844d7218d2cd06faee0fdb7824"
+      }
+    },
+    {
+      "version": 6,
+      "profile": "x86",
+      "exit-code": 0,
+      "seconds": 6.775376333040185,
+      "log": "native-read-repeat-v3-producer6-x86.log",
+      "bytes": 1096601,
+      "sha256": "eedbf5ed9f4908086423780eeadaf1ac730563cca0df61cedbf2c1d6ea4c4135",
+      "calls": 609,
+      "complete-nonresidency-row-match": true,
+      "original-launch": {
+        "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-read-virtual-memory-v6-four-views-launch.json",
+        "bytes": 19443,
+        "sha256": "0371fd85838560227a5f7da2b59a311ad7e9d76828ec5a93e7aaf7c94d6e71fd"
+      },
+      "executable-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-read-virtual-memory-v6-four-views\\target\\x86\\probe.exe",
+        "bytes": 140288,
+        "sha256": "01dc23fa660ce8ac54943de143c5f42c241fce653cf51e043fb2151f6abb4566"
+      },
+      "executable-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-read-virtual-memory-v6-four-views\\target\\x86\\probe.exe",
+        "bytes": 140288,
+        "sha256": "01dc23fa660ce8ac54943de143c5f42c241fce653cf51e043fb2151f6abb4566"
+      },
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-read-virtual-memory-v6-four-views\\native-read-virtual-memory-v6.cpp",
+        "bytes": 10505,
+        "sha256": "d43f89d76e167a99ea48adad74cea3f9fc735c844d7218d2cd06faee0fdb7824"
+      }
+    },
+    {
+      "version": 6,
+      "profile": "x86-laa",
+      "exit-code": 0,
+      "seconds": 6.772114749997854,
+      "log": "native-read-repeat-v3-producer6-x86-laa.log",
+      "bytes": 1096605,
+      "sha256": "4eee2f24a40d893adc103c59ec4a90843c457127635772490c20523232b023f9",
+      "calls": 609,
+      "complete-nonresidency-row-match": true,
+      "original-launch": {
+        "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-read-virtual-memory-v6-four-views-launch.json",
+        "bytes": 19443,
+        "sha256": "0371fd85838560227a5f7da2b59a311ad7e9d76828ec5a93e7aaf7c94d6e71fd"
+      },
+      "executable-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-read-virtual-memory-v6-four-views\\target\\x86-laa\\probe.exe",
+        "bytes": 140288,
+        "sha256": "81db60001622c9ff2ddeadc18b65a90e5b0f660535c26adf5b063990bfa115f7"
+      },
+      "executable-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-read-virtual-memory-v6-four-views\\target\\x86-laa\\probe.exe",
+        "bytes": 140288,
+        "sha256": "81db60001622c9ff2ddeadc18b65a90e5b0f660535c26adf5b063990bfa115f7"
+      },
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-read-virtual-memory-v6-four-views\\native-read-virtual-memory-v6.cpp",
+        "bytes": 10505,
+        "sha256": "d43f89d76e167a99ea48adad74cea3f9fc735c844d7218d2cd06faee0fdb7824"
+      }
+    },
+    {
+      "version": 7,
+      "profile": "arm64",
+      "exit-code": 0,
+      "seconds": 12.247301583003718,
+      "log": "native-read-repeat-v3-producer7-arm64.log",
+      "bytes": 3776815,
+      "sha256": "7bfd723b3a2c2c52b21b3411a100d469daa0b382201b05ec8af11b814fd9582d",
+      "calls": 1920,
+      "complete-nonresidency-row-match": true,
+      "original-launch": {
+        "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-read-virtual-memory-v7-four-views-launch.json",
+        "bytes": 19443,
+        "sha256": "bfbc51adb7b2c66cb618ec0407b9d503abba0e653f58ec7c31d962b5848a0221"
+      },
+      "executable-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-read-virtual-memory-v7-four-views\\target\\arm64\\probe.exe",
+        "bytes": 163840,
+        "sha256": "c49cdcfe9a6802440af2dcd140596faddd0e152c77d9b297787d0d745aeabe0f"
+      },
+      "executable-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-read-virtual-memory-v7-four-views\\target\\arm64\\probe.exe",
+        "bytes": 163840,
+        "sha256": "c49cdcfe9a6802440af2dcd140596faddd0e152c77d9b297787d0d745aeabe0f"
+      },
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-read-virtual-memory-v7-four-views\\native-read-virtual-memory-v7.cpp",
+        "bytes": 10953,
+        "sha256": "af8b9d3fd9551cf4d99d603a6db6ce4be4394173b317f059fbd7f6b551bcb280"
+      }
+    },
+    {
+      "version": 7,
+      "profile": "x64",
+      "exit-code": 0,
+      "seconds": 11.569388708972838,
+      "log": "native-read-repeat-v3-producer7-x64.log",
+      "bytes": 3776813,
+      "sha256": "63689f961df924c3ac65cb8b82ead0c3b34fbc137f59abaf111a838e60808f6d",
+      "calls": 1920,
+      "complete-nonresidency-row-match": true,
+      "original-launch": {
+        "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-read-virtual-memory-v7-four-views-launch.json",
+        "bytes": 19443,
+        "sha256": "bfbc51adb7b2c66cb618ec0407b9d503abba0e653f58ec7c31d962b5848a0221"
+      },
+      "executable-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-read-virtual-memory-v7-four-views\\target\\x64\\probe.exe",
+        "bytes": 174080,
+        "sha256": "e5587684403bc168e0b9ca87bd3a77c923695b97745a820ce8607355617aa953"
+      },
+      "executable-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-read-virtual-memory-v7-four-views\\target\\x64\\probe.exe",
+        "bytes": 174080,
+        "sha256": "e5587684403bc168e0b9ca87bd3a77c923695b97745a820ce8607355617aa953"
+      },
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-read-virtual-memory-v7-four-views\\native-read-virtual-memory-v7.cpp",
+        "bytes": 10953,
+        "sha256": "af8b9d3fd9551cf4d99d603a6db6ce4be4394173b317f059fbd7f6b551bcb280"
+      }
+    },
+    {
+      "version": 7,
+      "profile": "x86",
+      "exit-code": 0,
+      "seconds": 22.97371554200072,
+      "log": "native-read-repeat-v3-producer7-x86.log",
+      "bytes": 3776813,
+      "sha256": "4b14575750e6b8d15720a8f59990c4bcba6e410ae00df879b5ef80a22fd75eb5",
+      "calls": 1920,
+      "complete-nonresidency-row-match": true,
+      "original-launch": {
+        "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-read-virtual-memory-v7-four-views-launch.json",
+        "bytes": 19443,
+        "sha256": "bfbc51adb7b2c66cb618ec0407b9d503abba0e653f58ec7c31d962b5848a0221"
+      },
+      "executable-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-read-virtual-memory-v7-four-views\\target\\x86\\probe.exe",
+        "bytes": 140288,
+        "sha256": "d45df904df5ab346d889fa799bc6321f21fcfb552b7f0cd6e4cd1d2e2c22c367"
+      },
+      "executable-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-read-virtual-memory-v7-four-views\\target\\x86\\probe.exe",
+        "bytes": 140288,
+        "sha256": "d45df904df5ab346d889fa799bc6321f21fcfb552b7f0cd6e4cd1d2e2c22c367"
+      },
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-read-virtual-memory-v7-four-views\\native-read-virtual-memory-v7.cpp",
+        "bytes": 10953,
+        "sha256": "af8b9d3fd9551cf4d99d603a6db6ce4be4394173b317f059fbd7f6b551bcb280"
+      }
+    },
+    {
+      "version": 7,
+      "profile": "x86-laa",
+      "exit-code": 0,
+      "seconds": 23.35549262497807,
+      "log": "native-read-repeat-v3-producer7-x86-laa.log",
+      "bytes": 3776817,
+      "sha256": "71078eefb3712629337582e1eeae5716ea0246ee8c03076479c2ab6b9956afb4",
+      "calls": 1920,
+      "complete-nonresidency-row-match": true,
+      "original-launch": {
+        "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-read-virtual-memory-v7-four-views-launch.json",
+        "bytes": 19443,
+        "sha256": "bfbc51adb7b2c66cb618ec0407b9d503abba0e653f58ec7c31d962b5848a0221"
+      },
+      "executable-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-read-virtual-memory-v7-four-views\\target\\x86-laa\\probe.exe",
+        "bytes": 140288,
+        "sha256": "28c7e95f8623acef8dabfc9ca55055e348d3999b2bac73e80afe9b67c689849e"
+      },
+      "executable-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-read-virtual-memory-v7-four-views\\target\\x86-laa\\probe.exe",
+        "bytes": 140288,
+        "sha256": "28c7e95f8623acef8dabfc9ca55055e348d3999b2bac73e80afe9b67c689849e"
+      },
+      "source": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-read-virtual-memory-v7-four-views\\native-read-virtual-memory-v7.cpp",
+        "bytes": 10953,
+        "sha256": "af8b9d3fd9551cf4d99d603a6db6ce4be4394173b317f059fbd7f6b551bcb280"
+      }
+    }
+  ],
+  "runtime-modules-before": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e"
+    },
+    {
+      "path": "C:\\Windows\\System32\\KernelBase.dll",
+      "bytes": 7213728,
+      "sha256": "6b2fa508ac4f9bce5d7351676485d1dc5b5236cd9656034e2fec1eaba3b82bc9"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\KernelBase.dll",
+      "bytes": 3073488,
+      "sha256": "e9c414d7c6bd2c6fde608f31b2f31da3c2014c801b3764a30ee42abd1e9c2d58"
+    },
+    {
+      "path": "C:\\Windows\\System32\\kernel32.dll",
+      "bytes": 1500304,
+      "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\kernel32.dll",
+      "bytes": 696392,
+      "sha256": "9c9a0c54a79ea712bb533fcc79ba9935ed9f9d3f777fd65cf62d9cec6699b9df"
+    },
+    {
+      "path": "C:\\Windows\\System32\\msvcrt.dll",
+      "bytes": 1347856,
+      "sha256": "779eb5cb1ae357196254af9755307544a3dd20011c84768ae72f45d366f47148"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\msvcrt.dll",
+      "bytes": 810688,
+      "sha256": "67c03357458a951402cc1804e05d3301f011a59d352f684fbe283f546f8ae398"
+    }
+  ],
+  "runtime-modules-after": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e"
+    },
+    {
+      "path": "C:\\Windows\\System32\\KernelBase.dll",
+      "bytes": 7213728,
+      "sha256": "6b2fa508ac4f9bce5d7351676485d1dc5b5236cd9656034e2fec1eaba3b82bc9"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\KernelBase.dll",
+      "bytes": 3073488,
+      "sha256": "e9c414d7c6bd2c6fde608f31b2f31da3c2014c801b3764a30ee42abd1e9c2d58"
+    },
+    {
+      "path": "C:\\Windows\\System32\\kernel32.dll",
+      "bytes": 1500304,
+      "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\kernel32.dll",
+      "bytes": 696392,
+      "sha256": "9c9a0c54a79ea712bb533fcc79ba9935ed9f9d3f777fd65cf62d9cec6699b9df"
+    },
+    {
+      "path": "C:\\Windows\\System32\\msvcrt.dll",
+      "bytes": 1347856,
+      "sha256": "779eb5cb1ae357196254af9755307544a3dd20011c84768ae72f45d366f47148"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\msvcrt.dll",
+      "bytes": 810688,
+      "sha256": "67c03357458a951402cc1804e05d3301f011a59d352f684fbe283f546f8ae398"
+    }
+  ],
+  "exit-code": 0
+}

@@ -74,6 +74,13 @@ pub(crate) struct AllocationRegionInfo {
 }
 
 impl VirtualMemory {
+    /// Actual page state for kernel-mediated guest access. Reported image
+    /// protection is query metadata and must not authorize a memory access.
+    pub(crate) fn page_state(&self, address: u64) -> Option<PageState> {
+        let allocation = self.allocation(address)?;
+        Some(allocation.state((address - allocation.base) / PAGE_SIZE))
+    }
+
     /// `VirtualQuery` of `addr`: the run of pages with identical state
     /// starting at `addr`'s page, or the free range containing it.
     pub fn query(&self, addr: u64) -> Option<RegionInfo> {

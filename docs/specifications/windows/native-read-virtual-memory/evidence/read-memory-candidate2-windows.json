@@ -1,0 +1,140 @@
+{
+  "state": "failed",
+  "pid": 4396,
+  "steps": [
+    {
+      "name": "toolchain",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "--version"
+      ],
+      "exit-code": 0,
+      "seconds": 0.03164337499765679,
+      "log": "read-memory-candidate2-toolchain.log",
+      "bytes": 36,
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5",
+      "results": []
+    },
+    {
+      "name": "test-build",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "exit-code": 0,
+      "seconds": 214.44187466602307,
+      "log": "read-memory-candidate2-test-build.log",
+      "bytes": 92179,
+      "sha256": "959a74149d1221f25a61ee141cc60c4d56f4509db0ff8861d3ac433ccea5c28a",
+      "results": []
+    },
+    {
+      "name": "focus",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\normal-candidate1\\debug\\deps\\rax-b799307a7949aa6b.exe",
+        "user::windows::process::sched::tests::services_tests::virtual_memory_tests::read::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 162.01693099999102,
+      "log": "read-memory-candidate2-focus.log",
+      "bytes": 1691,
+      "sha256": "29f39682f04bf9278655235ff0af1d3b9f45bf3223b6e45a445ad8aba4b2a846",
+      "results": [
+        "ok. 9 passed; 0 failed; 0 ignored; 0 measured; 7662 filtered out; finished in 161.94s"
+      ]
+    },
+    {
+      "name": "full",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\normal-candidate1\\debug\\deps\\rax-b799307a7949aa6b.exe",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 101,
+      "seconds": 1276.297432499996,
+      "log": "read-memory-candidate2-full.log",
+      "bytes": 850950,
+      "sha256": "0406950df404495917cb5e2e2b0d27bdfd380e45191f809cb913ecdcbb406622",
+      "results": [
+        "FAILED. 7661 passed; 8 failed; 2 ignored; 0 measured; 0 filtered out; finished in 1276.21s"
+      ]
+    }
+  ],
+  "utc": "2026-10-22T20:19:21.172323+00:00",
+  "source-inputs": 29161,
+  "manifest": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\read-memory-candidate2-source.json",
+    "bytes": 6883956,
+    "sha256": "c6f269d084f9391ff8913de2c0a19cfbdc95de5412ecf1abe2bab9d979282f46"
+  },
+  "dependency-cache-source": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\normal-candidate1",
+  "current-step": "full",
+  "child-pid": 5708,
+  "build-environment": {
+    "CARGO_TARGET_DIR": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\normal-candidate1",
+    "TMPDIR": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\tmp",
+    "TMP": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\tmp",
+    "TEMP": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\tmp",
+    "CCACHE_DISABLE": "1",
+    "SCCACHE_DISABLE": "1"
+  },
+  "test-artifact": {
+    "reason": "compiler-artifact",
+    "package_id": "path+file:///C:/Windows/Temp/assist-native-rax-20261010/src-display-candidate1#rax@0.1.0",
+    "manifest_path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\Cargo.toml",
+    "target": {
+      "kind": [
+        "lib"
+      ],
+      "crate_types": [
+        "lib"
+      ],
+      "name": "rax",
+      "src_path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\src\\lib.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": true,
+      "test": true
+    },
+    "profile": {
+      "opt_level": "0",
+      "debuginfo": 2,
+      "debug_assertions": true,
+      "overflow_checks": true,
+      "test": true
+    },
+    "features": [],
+    "filenames": [
+      "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\normal-candidate1\\debug\\deps\\rax-b799307a7949aa6b.exe",
+      "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\normal-candidate1\\debug\\deps\\rax-b799307a7949aa6b.pdb"
+    ],
+    "executable": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\normal-candidate1\\debug\\deps\\rax-b799307a7949aa6b.exe",
+    "fresh": false
+  },
+  "test-image-before": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\normal-candidate1\\debug\\deps\\rax-b799307a7949aa6b.exe",
+    "bytes": 575788032,
+    "sha256": "8f9932734ea7e39f1e2c45c388c956a6946972012e5a81fdd81e4d54b8edf9f3"
+  },
+  "exact-full-failures": [
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_imm_index_at_width_with_flags_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_all_ones_with_flags_as_movn_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_with_flags_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_with_flags_and_low_byte_index_guards",
+    "smir::lower::aarch64::tests::vector::lowers_vector_fp16_arithmetic_runtime",
+    "user::windows::dll::threading::tests::native_semaphore_tests::native_semaphore_preserves_every_prior_ntdll_ordinal_and_trap_rva_all_abis",
+    "user::windows::dll::threading::tests::native_timer2_tests::native_timer2_arm_preserves_every_prior_ntdll_ordinal_and_trap_rva_all_abis",
+    "user::windows::dll::threading::tests::native_wait_tests::native_single_wait_preserves_prior_ntdll_ordinals_and_trap_rvas_all_abis"
+  ],
+  "exit-code": 1,
+  "error": "Traceback (most recent call last):\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-read-memory-candidate2-windows.py\", line 259, in <module>\n    assert state[\"steps\"][-1][\"exit-code\"] == 101 and failures == existing\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+  "completed-utc": "2026-10-22T20:47:35.475404+00:00"
+}

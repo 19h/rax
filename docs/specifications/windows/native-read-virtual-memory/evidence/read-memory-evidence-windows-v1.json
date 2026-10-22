@@ -1,0 +1,10 @@
+{
+  "state": "failed",
+  "os": "nt",
+  "machine": "ARM64",
+  "source-root": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1",
+  "utc": "2026-10-22T22:16:49.830692+00:00",
+  "error": "Traceback (most recent call last):\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-read-evidence-windows-v1.py\", line 47, in <module>\n    state[field + \"-before\"] = identity(D / name)\n                               ~~~~~~~~^^^^^^^^^^\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-read-evidence-windows-v1.py\", line 23, in identity\n    raw = path.read_bytes()\n  File \"pathlib\\__init__.py\", line 782, in read_bytes\n  File \"pathlib\\__init__.py\", line 776, in open\nFileNotFoundError: [Errno 2] No such file or directory: 'C:\\\\Mac\\\\Home\\\\.assist-native-display-policy-20261022\\\\docs\\\\specifications\\\\windows\\\\native-read-virtual-memory\\\\check_evidence.py'\n",
+  "exit-code": 1,
+  "completed-utc": "2026-10-22T22:16:49.834603+00:00"
+}

@@ -1,0 +1,7 @@
+terminal turn=2872 result=Complete(Internal("native NTDLL service NtOpenKey: Unimplemented(\"NtOpenKey: registry key outside selected runtime snapshot\")"))
+thread=8 pc=7FFF38A41134 sp=1A5E000 frames=0
+registers=[1A5E008, 20019, 1A5E020, 10, 1A5DBA0, 1A5E100, 1000100, 2119024]
+raw-arguments x0=1A5E008 x1=20019 x2=1A5E020 x3=10 x4=1A5DBA0
+argument2-memory=Ok([30, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+argument1-memory=Err(MemFault { addr: 20019, write: false })
+argument4-memory=Ok([C, 0, 0, 0, 0, 0, 0, 0])

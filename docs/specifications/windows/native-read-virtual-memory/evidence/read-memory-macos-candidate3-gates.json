@@ -1,0 +1,82 @@
+{
+  "state": "failed",
+  "host": "macos",
+  "pid": 44639,
+  "steps": [
+    {
+      "name": "ordinals",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "ntdll_ordinal",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 108.22725395899033,
+      "log": "read-memory-macos-candidate3-ordinals.log",
+      "bytes": 969,
+      "sha256": "e1bbf2fb961e52bef9f3d93d2e611eec203d1aa761ac01330e47ecd9d20af0e5",
+      "results": [
+        "ok. 4 passed; 0 failed; 0 ignored; 0 measured; 8191 filtered out; finished in 0.01s"
+      ]
+    },
+    {
+      "name": "focus",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "user::windows::process::sched::tests::services_tests::virtual_memory_tests::read::",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 112.34470491600223,
+      "log": "read-memory-macos-candidate3-focus.log",
+      "bytes": 1848,
+      "sha256": "5a8995c3ef40a720d667fcd6338e8fec5da8781b77b2b9b72e69675fd1a78434",
+      "results": [
+        "ok. 9 passed; 0 failed; 0 ignored; 0 measured; 8186 filtered out; finished in 112.19s"
+      ]
+    },
+    {
+      "name": "full",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 101,
+      "seconds": 294.61405404197285,
+      "log": "read-memory-macos-candidate3-full.log",
+      "bytes": 809437,
+      "sha256": "3c8d51cd8db6f69aea6237f9b3cc695caa23adad10275724a8fa364de8303f2a",
+      "results": []
+    }
+  ],
+  "manifest-sha256": "103ecfee7b5f6ba1c230ef250f77cbf1d047f4b6b96cf1054efa23e9901a16e2",
+  "step": "full",
+  "child": 52557,
+  "exit-code": 1,
+  "error": "Traceback (most recent call last):\n  File \"/Users/int/Library/Caches/assist-process-emulation/native-read-virtual-memory-20261022/run-read-memory-unix-candidate3.py\", line 166, in <module>\n    results = run(name, command)\n  File \"/Users/int/Library/Caches/assist-process-emulation/native-read-virtual-memory-20261022/run-read-memory-unix-candidate3.py\", line 137, in run\n    assert code == 0, name\n           ^^^^^^^^^\nAssertionError: full\n",
+  "completed-utc": "2026-10-22T20:48:43.119230+00:00"
+}

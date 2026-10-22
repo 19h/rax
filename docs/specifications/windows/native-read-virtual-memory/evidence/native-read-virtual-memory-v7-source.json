@@ -1,0 +1,6 @@
+{
+  "file": "native-read-virtual-memory-v7.cpp",
+  "bytes": 10953,
+  "sha256": "af8b9d3fd9551cf4d99d603a6db6ce4be4394173b317f059fbd7f6b551bcb280",
+  "scope": "All sixteen source byte alignments, two byte patterns, twelve destination fault prefixes and five lengths straddling the observed pool/mapped-copy boundary; 1920 calls per view."
+}

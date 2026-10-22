@@ -1,0 +1,6 @@
+{
+  "file": "native-read-virtual-memory-v5.cpp",
+  "bytes": 886,
+  "sha256": "b917c4fa08d09fdc211ec44d93b75071e175990569754045ed7049a0e71ac006",
+  "scope": "Independent original installed RtlNtStatusToDosError mappings for statuses produced by NtReadVirtualMemory, four execution views."
+}

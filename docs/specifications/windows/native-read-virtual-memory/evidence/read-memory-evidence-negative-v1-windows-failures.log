@@ -1,0 +1,19 @@
+Traceback (most recent call last):
+  File "/Users/int/.assist-native-display-policy-20261022/docs/specifications/windows/native-read-virtual-memory/check_evidence.py", line 736, in <module>
+    main()
+    ~~~~^^
+  File "/Users/int/.assist-native-display-policy-20261022/docs/specifications/windows/native-read-virtual-memory/check_evidence.py", line 732, in main
+    print(json.dumps(check(args.evidence_dir, args.source_root), indent=2))
+                     ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/int/.assist-native-display-policy-20261022/docs/specifications/windows/native-read-virtual-memory/check_evidence.py", line 532, in check
+    require(
+    ~~~~~~~^
+        len(failures) == 5 and set(windows["exact-full-failures"]) == failures,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        "Windows exact remaining failures",
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/int/.assist-native-display-policy-20261022/docs/specifications/windows/native-read-virtual-memory/check_evidence.py", line 17, in require
+    raise ValueError(message)
+ValueError: Windows exact remaining failures

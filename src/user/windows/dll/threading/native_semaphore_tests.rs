@@ -93,6 +93,7 @@ fn native_semaphore_preserves_every_prior_ntdll_ordinal_and_trap_rva_all_abis() 
         "NtQuerySemaphore",
         "NtSetTimer2",
         "NtCancelTimer2",
+        "NtReadVirtualMemory",
     ];
     let current = dll::find("ntdll.dll").unwrap();
     let prior: Vec<Export> = current
@@ -120,7 +121,7 @@ fn native_semaphore_preserves_every_prior_ntdll_ordinal_and_trap_rva_all_abis() 
         let before = builtin::build(&previous, arch, 0, &[]);
         let after = builtin::build(current, arch, 0, &[]);
         assert_eq!(after.ordinal_base, before.ordinal_base);
-        assert_eq!(after.symbols.len(), before.symbols.len() + 6);
+        assert_eq!(after.symbols.len(), before.symbols.len() + 7);
         assert_eq!(
             &after.symbols[..before.symbols.len()],
             before.symbols.as_slice()

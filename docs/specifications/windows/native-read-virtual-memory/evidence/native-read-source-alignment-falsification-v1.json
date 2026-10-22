@@ -1,0 +1,279 @@
+{
+  "rows": 609,
+  "scope": "Diagnostic model compared with independent v6 native capture; compiled Rust replay remains required.",
+  "discrepancies": [
+    {
+      "prefix": 31,
+      "length": 512,
+      "byte-offset": 24,
+      "count-model": 31,
+      "count-native": 31
+    },
+    {
+      "prefix": 31,
+      "length": 513,
+      "byte-offset": 24,
+      "count-model": 31,
+      "count-native": 31
+    },
+    {
+      "prefix": 31,
+      "length": 1024,
+      "byte-offset": 24,
+      "count-model": 31,
+      "count-native": 31
+    },
+    {
+      "prefix": 31,
+      "length": 4096,
+      "byte-offset": 24,
+      "count-model": 31,
+      "count-native": 31
+    },
+    {
+      "prefix": 32,
+      "length": 512,
+      "byte-offset": 31,
+      "count-model": 32,
+      "count-native": 32
+    },
+    {
+      "prefix": 32,
+      "length": 513,
+      "byte-offset": 31,
+      "count-model": 32,
+      "count-native": 32
+    },
+    {
+      "prefix": 32,
+      "length": 1024,
+      "byte-offset": 31,
+      "count-model": 32,
+      "count-native": 32
+    },
+    {
+      "prefix": 32,
+      "length": 4096,
+      "byte-offset": 31,
+      "count-model": 32,
+      "count-native": 32
+    },
+    {
+      "prefix": 33,
+      "length": 512,
+      "byte-offset": 31,
+      "count-model": 33,
+      "count-native": 33
+    },
+    {
+      "prefix": 33,
+      "length": 513,
+      "byte-offset": 31,
+      "count-model": 33,
+      "count-native": 33
+    },
+    {
+      "prefix": 33,
+      "length": 1024,
+      "byte-offset": 31,
+      "count-model": 33,
+      "count-native": 33
+    },
+    {
+      "prefix": 33,
+      "length": 4096,
+      "byte-offset": 31,
+      "count-model": 33,
+      "count-native": 33
+    },
+    {
+      "prefix": 63,
+      "length": 129,
+      "byte-offset": 56,
+      "count-model": 63,
+      "count-native": 63
+    },
+    {
+      "prefix": 63,
+      "length": 255,
+      "byte-offset": 56,
+      "count-model": 63,
+      "count-native": 63
+    },
+    {
+      "prefix": 63,
+      "length": 256,
+      "byte-offset": 56,
+      "count-model": 63,
+      "count-native": 63
+    },
+    {
+      "prefix": 63,
+      "length": 257,
+      "byte-offset": 56,
+      "count-model": 63,
+      "count-native": 63
+    },
+    {
+      "prefix": 63,
+      "length": 511,
+      "byte-offset": 56,
+      "count-model": 63,
+      "count-native": 63
+    },
+    {
+      "prefix": 64,
+      "length": 129,
+      "byte-offset": 63,
+      "count-model": 64,
+      "count-native": 64
+    },
+    {
+      "prefix": 64,
+      "length": 255,
+      "byte-offset": 63,
+      "count-model": 64,
+      "count-native": 64
+    },
+    {
+      "prefix": 64,
+      "length": 256,
+      "byte-offset": 63,
+      "count-model": 64,
+      "count-native": 64
+    },
+    {
+      "prefix": 64,
+      "length": 257,
+      "byte-offset": 63,
+      "count-model": 64,
+      "count-native": 64
+    },
+    {
+      "prefix": 64,
+      "length": 511,
+      "byte-offset": 63,
+      "count-model": 64,
+      "count-native": 64
+    },
+    {
+      "prefix": 65,
+      "length": 129,
+      "byte-offset": 63,
+      "count-model": 65,
+      "count-native": 65
+    },
+    {
+      "prefix": 65,
+      "length": 255,
+      "byte-offset": 63,
+      "count-model": 65,
+      "count-native": 65
+    },
+    {
+      "prefix": 65,
+      "length": 256,
+      "byte-offset": 63,
+      "count-model": 65,
+      "count-native": 65
+    },
+    {
+      "prefix": 65,
+      "length": 257,
+      "byte-offset": 63,
+      "count-model": 65,
+      "count-native": 65
+    },
+    {
+      "prefix": 65,
+      "length": 511,
+      "byte-offset": 63,
+      "count-model": 65,
+      "count-native": 65
+    },
+    {
+      "prefix": 127,
+      "length": 255,
+      "byte-offset": 120,
+      "count-model": 127,
+      "count-native": 127
+    },
+    {
+      "prefix": 127,
+      "length": 256,
+      "byte-offset": 120,
+      "count-model": 127,
+      "count-native": 127
+    },
+    {
+      "prefix": 127,
+      "length": 257,
+      "byte-offset": 120,
+      "count-model": 127,
+      "count-native": 127
+    },
+    {
+      "prefix": 127,
+      "length": 511,
+      "byte-offset": 120,
+      "count-model": 127,
+      "count-native": 127
+    },
+    {
+      "prefix": 128,
+      "length": 255,
+      "byte-offset": 127,
+      "count-model": 128,
+      "count-native": 128
+    },
+    {
+      "prefix": 128,
+      "length": 256,
+      "byte-offset": 127,
+      "count-model": 128,
+      "count-native": 128
+    },
+    {
+      "prefix": 128,
+      "length": 257,
+      "byte-offset": 127,
+      "count-model": 128,
+      "count-native": 128
+    },
+    {
+      "prefix": 128,
+      "length": 511,
+      "byte-offset": 127,
+      "count-model": 128,
+      "count-native": 128
+    },
+    {
+      "prefix": 129,
+      "length": 255,
+      "byte-offset": 127,
+      "count-model": 129,
+      "count-native": 129
+    },
+    {
+      "prefix": 129,
+      "length": 256,
+      "byte-offset": 127,
+      "count-model": 129,
+      "count-native": 129
+    },
+    {
+      "prefix": 129,
+      "length": 257,
+      "byte-offset": 127,
+      "count-model": 129,
+      "count-native": 129
+    },
+    {
+      "prefix": 129,
+      "length": 511,
+      "byte-offset": 127,
+      "count-model": 129,
+      "count-native": 129
+    }
+  ]
+}

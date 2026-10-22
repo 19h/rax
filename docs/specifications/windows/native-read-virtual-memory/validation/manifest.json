@@ -1,0 +1,65 @@
+{
+  "schema": 1,
+  "proof": {
+    "file": "proof.json",
+    "bytes": 80138,
+    "sha256": "c7546d22c877579eac58667cc64a900e142988f5060a022c25c610d41fee92d3"
+  },
+  "checker": {
+    "file": "check_evidence.py",
+    "bytes": 27223,
+    "sha256": "9f97d03d1bceda29895ea20e828de607a346a5dc673d8adba4fd350425ebc0dc"
+  },
+  "files": [
+    {
+      "file": "check_validation.py",
+      "bytes": 3769,
+      "sha256": "9dfc9e548593fc59976435e84f5acb5402eca08578ec6187425a283be3c6b912"
+    },
+    {
+      "file": "read-memory-build-lifecycle-v1.json",
+      "bytes": 1199,
+      "sha256": "52d2365a0ce30821a0cc54c93685af7c662ebd7cf44925ec0edbee4131351a6c"
+    },
+    {
+      "file": "read-memory-evidence-linux-final-v2.json",
+      "bytes": 1402,
+      "sha256": "376ae2e0fd0d27394d233d2c24485cae5eba2829518d77e1ee82a9a300d6f131"
+    },
+    {
+      "file": "read-memory-evidence-linux-final-v2.log",
+      "bytes": 569,
+      "sha256": "0522029470aea852c9991cce666947c35ce96737b68530202eecc0859af45472"
+    },
+    {
+      "file": "read-memory-evidence-macos-final-v2.json",
+      "bytes": 1122,
+      "sha256": "a2bbee15d0a7b37c69424acc19819cfe70a4b2e1e09ab1207af694e8873c9c91"
+    },
+    {
+      "file": "read-memory-evidence-macos-final-v2.log",
+      "bytes": 569,
+      "sha256": "0522029470aea852c9991cce666947c35ce96737b68530202eecc0859af45472"
+    },
+    {
+      "file": "read-memory-evidence-transfer-v2-source.json",
+      "bytes": 567,
+      "sha256": "5cb64c9fdbd210412d7972a954c270ad395a1c3c6c57d548097efc9e46a8cfeb"
+    },
+    {
+      "file": "read-memory-evidence-windows-v2.json",
+      "bytes": 3812,
+      "sha256": "12601b873cbdc061adb06d738895e3156f1bc2bb34e1b98438d0fc4a28992bf6"
+    },
+    {
+      "file": "read-memory-evidence-windows-v2.log",
+      "bytes": 598,
+      "sha256": "32de2c4e52587b311e860e9c778993378b8b9cdbb3de504dbf087b64cc84390e"
+    },
+    {
+      "file": "run-read-evidence-unix-v2.py",
+      "bytes": 2209,
+      "sha256": "ec4ae65ce838f821186452d16ad52d41043c2618cc0aad1fda5cd281c197744c"
+    }
+  ]
+}

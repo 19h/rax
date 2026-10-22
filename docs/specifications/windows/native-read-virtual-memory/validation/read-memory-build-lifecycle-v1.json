@@ -1,0 +1,28 @@
+{
+  "state": "finished",
+  "removed-temporary-volume": "assist-native-read-memory-linux-tmp-20261022",
+  "active-volume-users": [],
+  "negative-temporary-copy-removed": true,
+  "retained": [
+    {
+      "path": "/Users/int/.assist-native-display-policy-20261022/target/linux/candidate1",
+      "next-use": "GRE_Initialize snapshot and remaining process/lowerer validation"
+    },
+    {
+      "path": "/Users/int/.assist-native-display-policy-20261022/target/tool-cache",
+      "next-use": "Formatting the next native snapshot producer and validation scripts"
+    },
+    {
+      "path": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes",
+      "next-use": "Actual owning core/carrier and C++ checks for the next registry frontier"
+    },
+    {
+      "path": "C:/Windows/Temp/assist-native-rax-20261010/src-display-candidate1/target/normal-candidate1",
+      "next-use": "Native Windows next registry and lowerer tests"
+    },
+    {
+      "path": "C:/Windows/Temp/assist-native-rax-20261010/assist/target/native-attributes",
+      "next-use": "Actual owning Windows archive and ordinary process checks"
+    }
+  ]
+}

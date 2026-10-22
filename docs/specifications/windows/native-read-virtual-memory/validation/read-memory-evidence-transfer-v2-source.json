@@ -1,0 +1,18 @@
+{
+  "archive": {
+    "file": "read-memory-evidence-transfer-v2.tar.gz",
+    "bytes": 13289914,
+    "sha256": "217b08e4bf881af98dc50ea5bbe550284292aeecef7d7ca8a44f027ce095ebf0"
+  },
+  "checker": {
+    "file": "check_evidence.py",
+    "bytes": 27223,
+    "sha256": "9f97d03d1bceda29895ea20e828de607a346a5dc673d8adba4fd350425ebc0dc"
+  },
+  "proof": {
+    "file": "proof.json",
+    "bytes": 80138,
+    "sha256": "c7546d22c877579eac58667cc64a900e142988f5060a022c25c610d41fee92d3"
+  },
+  "source-frame": "02b8f1cf7b693e6e379b2f8360e1dd9f646248f41dba8699d692209fc99f8303"
+}

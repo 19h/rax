@@ -1,0 +1,12 @@
+   Compiling rax v0.1.0 (/Users/int/.assist-native-display-policy-20261022)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 48s
+     Running unittests src/lib.rs (target/candidate1/debug/deps/rax-dd79f0cd9ae9bb68)
+
+running 4 tests
+test user::windows::dll::threading::tests::native_semaphore_tests::native_semaphore_preserves_every_prior_ntdll_ordinal_and_trap_rva_all_abis ... ok
+test user::windows::dll::threading::tests::native_timer2_tests::native_timer2_arm_preserves_every_prior_ntdll_ordinal_and_trap_rva_all_abis ... ok
+test user::windows::dll::threading::tests::native_wait_tests::native_single_wait_preserves_prior_ntdll_ordinals_and_trap_rvas_all_abis ... ok
+test user::windows::process::sched::tests::services_tests::virtual_memory_tests::read::native_read_virtual_memory_preserves_all_prior_ntdll_ordinals_and_trap_rvas_all_abis ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 8191 filtered out; finished in 0.01s
+

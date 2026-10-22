@@ -1,0 +1,114 @@
+{
+  "state": "failed",
+  "pid": 7904,
+  "steps": [
+    {
+      "name": "toolchain",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "--version"
+      ],
+      "exit-code": 0,
+      "seconds": 0.029887249984312803,
+      "log": "read-memory-candidate1-toolchain.log",
+      "bytes": 36,
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5",
+      "results": []
+    },
+    {
+      "name": "test-build",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "exit-code": 0,
+      "seconds": 223.4284224169678,
+      "log": "read-memory-candidate1-test-build.log",
+      "bytes": 92179,
+      "sha256": "42a34b6024dd16cc88da1791519f4547165a58fc518da67c4339f51474f5e2ea",
+      "results": []
+    },
+    {
+      "name": "focus",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\normal-candidate1\\debug\\deps\\rax-b799307a7949aa6b.exe",
+        "user::windows::process::sched::tests::services_tests::virtual_memory_tests::read::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 101,
+      "seconds": 95.35646245797398,
+      "log": "read-memory-candidate1-focus.log",
+      "bytes": 2860,
+      "sha256": "f90adf1a2f136f8c396173999955673f15c9badd3a8aca9af8725c8b40a62e4e",
+      "results": [
+        "FAILED. 7 passed; 2 failed; 0 ignored; 0 measured; 7662 filtered out; finished in 95.25s"
+      ]
+    }
+  ],
+  "utc": "2026-10-22T20:12:56.753151+00:00",
+  "source-inputs": 29161,
+  "manifest": {
+    "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\read-memory-candidate1-source.json",
+    "bytes": 6883956,
+    "sha256": "231442129cc8464368a1af3173b8234a5899fc163ab0e49499301c69ef8ecb59"
+  },
+  "dependency-cache-source": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\normal-candidate1",
+  "current-step": "focus",
+  "child-pid": 9128,
+  "build-environment": {
+    "CARGO_TARGET_DIR": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\normal-candidate1",
+    "TMPDIR": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\tmp",
+    "TMP": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\tmp",
+    "TEMP": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\tmp",
+    "CCACHE_DISABLE": "1",
+    "SCCACHE_DISABLE": "1"
+  },
+  "test-artifact": {
+    "reason": "compiler-artifact",
+    "package_id": "path+file:///C:/Windows/Temp/assist-native-rax-20261010/src-display-candidate1#rax@0.1.0",
+    "manifest_path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\Cargo.toml",
+    "target": {
+      "kind": [
+        "lib"
+      ],
+      "crate_types": [
+        "lib"
+      ],
+      "name": "rax",
+      "src_path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\src\\lib.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": true,
+      "test": true
+    },
+    "profile": {
+      "opt_level": "0",
+      "debuginfo": 2,
+      "debug_assertions": true,
+      "overflow_checks": true,
+      "test": true
+    },
+    "features": [],
+    "filenames": [
+      "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\normal-candidate1\\debug\\deps\\rax-b799307a7949aa6b.exe",
+      "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\normal-candidate1\\debug\\deps\\rax-b799307a7949aa6b.pdb"
+    ],
+    "executable": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\normal-candidate1\\debug\\deps\\rax-b799307a7949aa6b.exe",
+    "fresh": false
+  },
+  "test-image-before": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\normal-candidate1\\debug\\deps\\rax-b799307a7949aa6b.exe",
+    "bytes": 575773696,
+    "sha256": "0faecf5cf6061ac79f2eda84449bf4e80ae10ae17eaeb3f301697745909fb8c9"
+  },
+  "exit-code": 1,
+  "error": "Traceback (most recent call last):\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-read-memory-candidate1-windows.py\", line 239, in <module>\n    content = run(\n        \"focus\",\n    ...<5 lines>...\n        ],\n    )\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-read-memory-candidate1-windows.py\", line 94, in run\n    assert state[\"steps\"][-1][\"exit-code\"] == 0, name\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: focus\n",
+  "completed-utc": "2026-10-22T20:18:35.535825+00:00"
+}

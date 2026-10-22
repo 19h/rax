@@ -1,0 +1,60 @@
+{
+  "state": "failed",
+  "host": "macos",
+  "pid": 16421,
+  "steps": [
+    {
+      "name": "focus",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "user::windows::process::sched::tests::services_tests::virtual_memory_tests::read::",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 197.62710725003853,
+      "log": "read-memory-macos-candidate2-focus.log",
+      "bytes": 1746,
+      "sha256": "67b126f7aabe93764d9dfda7c559d04d499643a243f2720f6ec4f56a1ab2c0e4",
+      "results": [
+        "ok. 8 passed; 0 failed; 0 ignored; 0 measured; 8186 filtered out; finished in 107.21s"
+      ]
+    },
+    {
+      "name": "full",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 101,
+      "seconds": 579.6093131249654,
+      "log": "read-memory-macos-candidate2-full.log",
+      "bytes": 883500,
+      "sha256": "be1db0607735c89c55a865faffe92a054d1655a65e68b23ee02f08b1c130afcf",
+      "results": [
+        "FAILED. 8189 passed; 3 failed; 2 ignored; 0 measured; 0 filtered out; finished in 579.39s"
+      ]
+    }
+  ],
+  "manifest-sha256": "c6f269d084f9391ff8913de2c0a19cfbdc95de5412ecf1abe2bab9d979282f46",
+  "step": "full",
+  "child": 19532,
+  "exit-code": 1,
+  "error": "Traceback (most recent call last):\n  File \"/Users/int/Library/Caches/assist-process-emulation/native-read-virtual-memory-20261022/run-read-memory-unix-candidate2.py\", line 165, in <module>\n    results = run(name, command)\n  File \"/Users/int/Library/Caches/assist-process-emulation/native-read-virtual-memory-20261022/run-read-memory-unix-candidate2.py\", line 137, in run\n    assert code == 0, name\n           ^^^^^^^^^\nAssertionError: full\n",
+  "completed-utc": "2026-10-22T20:31:20.925830+00:00"
+}

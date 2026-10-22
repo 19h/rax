@@ -1,0 +1,15 @@
+{
+  "parent": "26ebabe4f8edefd87fc26630588cce0024b5bff8",
+  "exit-code": 101,
+  "source": {
+    "file": "native-read-parent-test-overlay-v1.rs",
+    "sha256": "1129332add58938ef56f7246a9aa8b11fb574ea244e48addf348aec61f8fac9b",
+    "bytes": 1667
+  },
+  "log": {
+    "file": "native-read-parent-regression-v1.log",
+    "bytes": 1269,
+    "sha256": "23c3620f416ce4a8e6105c9d2a8612e86840515e36392132f279c12080a17735"
+  },
+  "observed": "Real x86 kernel service dispatch returns Fail: NtReadVirtualMemory (0x23) is not implemented."
+}

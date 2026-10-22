@@ -1,0 +1,7 @@
+status=0x8000000d observed-dos-error=317 expected-native=299
+
+thread 'main' (36396252) panicked at /Users/int/.assist-native-display-policy-20261022/target/read-memory-status-map-v1/native-read-status-map-before-v1.rs:5:5:
+assertion `left == right` failed
+  left: 317
+ right: 299
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

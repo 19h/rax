@@ -1,0 +1,57 @@
+{
+  "source": {
+    "file": "native-read-alignment-before-v1.rs",
+    "bytes": 2443,
+    "sha256": "ada0fe16ed766aff5df5f7c01896873a3560d551adf5054eaca3ab9fd36256aa"
+  },
+  "core-before": {
+    "path": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes/assist-rs-target/aarch64-apple-darwin/debug/deps/librax-c89758aa402dc84d.rlib",
+    "bytes": 400337160,
+    "sha256": "0e280e7d9de1054bb334253ba08cb6c7c8ed7fe1af87bdbd75ced7542f353f6f"
+  },
+  "steps": [
+    {
+      "name": "build",
+      "argv": [
+        "rustup",
+        "run",
+        "1.95.0",
+        "rustc",
+        "--edition=2024",
+        "--target",
+        "aarch64-apple-darwin",
+        "--crate-name",
+        "read_alignment_before",
+        "/Users/int/.assist-native-display-policy-20261022/target/read-memory-status-map-v1/native-read-alignment-before-v1.rs",
+        "--extern",
+        "rax=/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes/assist-rs-target/aarch64-apple-darwin/debug/deps/librax-c89758aa402dc84d.rlib",
+        "-L",
+        "dependency=/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes/assist-rs-target/aarch64-apple-darwin/debug/deps",
+        "-L",
+        "dependency=/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes/assist-rs-target/debug/deps",
+        "-o",
+        "/Users/int/.assist-native-display-policy-20261022/target/read-memory-status-map-v1/alignment-before-v1"
+      ],
+      "exit-code": 0,
+      "log": "native-read-alignment-before-v1-build.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "execute",
+      "argv": [
+        "/Users/int/.assist-native-display-policy-20261022/target/read-memory-status-map-v1/alignment-before-v1",
+        "/Users/int/.assist-native-display-policy-20261022/tests/fixtures/user/windows/bin/arm64/smoke.exe"
+      ],
+      "exit-code": 101,
+      "log": "native-read-alignment-before-v1-execute.log",
+      "bytes": 863,
+      "sha256": "75b9b10b93a91da72887c97d7fcfc519655c3578d0b94b5fcf28b5dde761e282"
+    }
+  ],
+  "core-after": {
+    "path": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes/assist-rs-target/aarch64-apple-darwin/debug/deps/librax-c89758aa402dc84d.rlib",
+    "bytes": 400337160,
+    "sha256": "0e280e7d9de1054bb334253ba08cb6c7c8ed7fe1af87bdbd75ced7542f353f6f"
+  }
+}

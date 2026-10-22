@@ -45,7 +45,7 @@ fn native_timer2_arm_preserves_every_prior_ntdll_ordinal_and_trap_rva_all_abis()
     use crate::user::windows::dll::{self, BuiltinDll};
     use crate::user::windows::hle::{Export, Item};
     use crate::user::windows::loader::builtin;
-    let names = ["NtSetTimer2", "NtCancelTimer2"];
+    let names = ["NtSetTimer2", "NtCancelTimer2", "NtReadVirtualMemory"];
     let current = dll::find("ntdll.dll").unwrap();
     let prior: Vec<Export> = current
         .exports
@@ -72,7 +72,7 @@ fn native_timer2_arm_preserves_every_prior_ntdll_ordinal_and_trap_rva_all_abis()
         let before = builtin::build(&previous, arch, 0, &[]);
         let after = builtin::build(current, arch, 0, &[]);
         assert_eq!(after.ordinal_base, before.ordinal_base);
-        assert_eq!(after.symbols.len(), before.symbols.len() + 2);
+        assert_eq!(after.symbols.len(), before.symbols.len() + 3);
         assert_eq!(
             &after.symbols[..before.symbols.len()],
             before.symbols.as_slice()

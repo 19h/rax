@@ -1,0 +1,64 @@
+{
+  "state": "finished",
+  "active-probe-processes": [],
+  "directories": [
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-read-virtual-memory-v6-four-views",
+      "files": 9,
+      "bytes": 982605,
+      "generated-ownership": "Original launch source and four final executable hashes match; no active executable in exact subtree.",
+      "executables-before-deletion": [
+        {
+          "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-read-virtual-memory-v6-four-views\\target\\arm64\\probe.exe",
+          "bytes": 163840,
+          "sha256": "4b3f6c9f0710b25db63859e362717c66a09ee878351e2fbd6717b1d1f96ee11c"
+        },
+        {
+          "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-read-virtual-memory-v6-four-views\\target\\x64\\probe.exe",
+          "bytes": 174592,
+          "sha256": "001f1654da0bf9ba1b10ebffa58f259db7a569222274b60b8862839ef41d3ffe"
+        },
+        {
+          "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-read-virtual-memory-v6-four-views\\target\\x86\\probe.exe",
+          "bytes": 140288,
+          "sha256": "01dc23fa660ce8ac54943de143c5f42c241fce653cf51e043fb2151f6abb4566"
+        },
+        {
+          "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-read-virtual-memory-v6-four-views\\target\\x86-laa\\probe.exe",
+          "bytes": 140288,
+          "sha256": "81db60001622c9ff2ddeadc18b65a90e5b0f660535c26adf5b063990bfa115f7"
+        }
+      ],
+      "removed": true
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-read-virtual-memory-v7-four-views",
+      "files": 9,
+      "bytes": 982435,
+      "generated-ownership": "Original launch source and four final executable hashes match; no active executable in exact subtree.",
+      "executables-before-deletion": [
+        {
+          "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-read-virtual-memory-v7-four-views\\target\\arm64\\probe.exe",
+          "bytes": 163840,
+          "sha256": "c49cdcfe9a6802440af2dcd140596faddd0e152c77d9b297787d0d745aeabe0f"
+        },
+        {
+          "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-read-virtual-memory-v7-four-views\\target\\x64\\probe.exe",
+          "bytes": 174080,
+          "sha256": "e5587684403bc168e0b9ca87bd3a77c923695b97745a820ce8607355617aa953"
+        },
+        {
+          "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-read-virtual-memory-v7-four-views\\target\\x86\\probe.exe",
+          "bytes": 140288,
+          "sha256": "d45df904df5ab346d889fa799bc6321f21fcfb552b7f0cd6e4cd1d2e2c22c367"
+        },
+        {
+          "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-read-virtual-memory-v7-four-views\\target\\x86-laa\\probe.exe",
+          "bytes": 140288,
+          "sha256": "28c7e95f8623acef8dabfc9ca55055e348d3999b2bac73e80afe9b67c689849e"
+        }
+      ],
+      "removed": true
+    }
+  ]
+}

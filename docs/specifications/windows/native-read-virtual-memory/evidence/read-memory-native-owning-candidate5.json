@@ -1,0 +1,124 @@
+{
+  "state": "finished",
+  "pid": 9876,
+  "source-epoch": 1,
+  "utc": "2026-10-22T21:25:26.680727+00:00",
+  "steps": [
+    {
+      "name": "toolchain",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "--version"
+      ],
+      "exit-code": 0,
+      "seconds": 0.04777683300198987,
+      "log": "read-memory-native-owning-candidate5-toolchain.log",
+      "bytes": 36,
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5"
+    },
+    {
+      "name": "artifacts-before",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "build",
+        "--locked",
+        "--offline",
+        "--features",
+        "rax",
+        "--message-format=json"
+      ],
+      "exit-code": 0,
+      "seconds": 186.8116109999828,
+      "log": "read-memory-native-owning-candidate5-artifacts-before.log",
+      "bytes": 132536,
+      "sha256": "6e43a2f6f0064505121a0b5d5b3ade7a0d3ee849382f8b4bd69a180b3aa51c2f"
+    },
+    {
+      "name": "archive-before",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\collect-read-memory-archives-candidate5.py",
+        "--host",
+        "windows",
+        "--source",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1",
+        "--manifest",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\read-memory-owning-source-hashes-candidate5.json",
+        "--messages",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\read-memory-native-owning-candidate5-artifacts-before.log",
+        "--output",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-read-memory-candidate5-pre-cpp-archives.json"
+      ],
+      "exit-code": 0,
+      "seconds": 7.099706375040114,
+      "log": "read-memory-native-owning-candidate5-archive-before.log",
+      "bytes": 182,
+      "sha256": "89be1cb79bf00440db4aff32ad678234266ae61e1b28d37d9317158a37779043"
+    },
+    {
+      "name": "cpp",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\helpers\\read-memory-owned-cpp-build-candidate5.py"
+      ],
+      "exit-code": 0,
+      "seconds": 72.05546895804582,
+      "log": "read-memory-native-owning-candidate5-cpp.log",
+      "bytes": 3705,
+      "sha256": "2112efee4be1864a3f340156587e6fd92e57aaacc4dee4c0d0e877996cdcc85f"
+    },
+    {
+      "name": "artifacts-after",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "build",
+        "--locked",
+        "--offline",
+        "--features",
+        "rax",
+        "--message-format=json"
+      ],
+      "exit-code": 0,
+      "seconds": 0.7890095840557478,
+      "log": "read-memory-native-owning-candidate5-artifacts-after.log",
+      "bytes": 132251,
+      "sha256": "581c1511ac5691c87a01b21b684f5783b0824ee6c691ab108f84a11c7321b03a"
+    },
+    {
+      "name": "archive-after",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\collect-read-memory-archives-candidate5.py",
+        "--host",
+        "windows",
+        "--source",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1",
+        "--manifest",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\read-memory-owning-source-hashes-candidate5.json",
+        "--messages",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\read-memory-native-owning-candidate5-artifacts-after.log",
+        "--output",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-read-memory-candidate5-final-owning-archive-identities.json"
+      ],
+      "exit-code": 0,
+      "seconds": 7.635687042027712,
+      "log": "read-memory-native-owning-candidate5-archive-after.log",
+      "bytes": 182,
+      "sha256": "89be1cb79bf00440db4aff32ad678234266ae61e1b28d37d9317158a37779043"
+    }
+  ],
+  "junction": {
+    "before": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1",
+    "after": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1"
+  },
+  "current-step": "archive-after",
+  "child-pid": 5220,
+  "exit-code": 0,
+  "source-inputs": 3978,
+  "archive-identities-stable": true,
+  "scope": "Frozen read-memory lifetime source; retained Assist ABI184 linked consumers. Whole current-root ABI274 GUI/plugin/packages not claimed.",
+  "completed-utc": "2026-10-22T21:30:45.971013+00:00"
+}

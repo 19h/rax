@@ -1,0 +1,49 @@
+{
+  "baseline": "26ebabe4f8edefd87fc26630588cce0024b5bff8",
+  "acceptance": [
+    "Measure installed NtReadVirtualMemory on controlled own-process buffers, including zero length, rights/type validation, return-count probes, guard/noaccess regions, partial copy and aliases before implementation.",
+    "Implement the verified current virtual-process behavior through shared guest memory only; no host process reads from guest-selected inputs, and foreign-process frontiers remain explicit.",
+    "Wire the NTDLL entry for all four Windows guest ABIs; preserve exact native status/store/guard behavior and pointer widths.",
+    "Replay original native observations on Windows/macOS/Linux and prove actual owning Rust/C++ callers, installed smoke/whoami progress, source frames and linear exact red publication."
+  ],
+  "assumptions": [
+    {
+      "id": "RM-A1",
+      "assumption": "The recorded current-process read can use the guest virtual address space and existing process-handle grants.",
+      "basis": "Owning whoami frontier is NtReadVirtualMemory with handle -1 and an eight-byte read of guest PEB image-base storage.",
+      "dependent-result": "Self-process implementation and ownership boundary.",
+      "stress-test": "Pseudo process/thread, valid owned process handles, insufficient grants, foreign process and wrong types.",
+      "falsification-probe": "Native handle/access ordering or source address ownership differs from this model.",
+      "status": "retained"
+    },
+    {
+      "id": "RM-A2",
+      "assumption": "Fault, partial-copy, alias and returned-length ordering must be derived independently for native and WoW64 views.",
+      "basis": "Other NT services have measured cross-ABI probe/store differences.",
+      "dependent-result": "Exact fault/partial-copy contract and tests.",
+      "stress-test": "NULL, misaligned, guard/noaccess and cross-page source/destination/count; zero/huge/overflowing extents; overlapping ranges.",
+      "falsification-probe": "Original native capture disagrees with a proposed status or byte/guard observation.",
+      "status": "retained"
+    }
+  ],
+  "planned-owned": [
+    "src/user/windows/dll/native.rs",
+    "new native virtual-memory read semantic module",
+    "owning service and installed-leaf tests",
+    "new focused native evidence/specification directory"
+  ],
+  "boundaries": [
+    {
+      "impact": "high",
+      "finding": "Foreign virtual-process address spaces and wider userland remain separate explicit frontiers; do not synthesize success or forward guest-selected reads into a host process."
+    },
+    {
+      "impact": "high",
+      "finding": "WNF x64 provisioning CI remains queued; retain and collect its independent result during this work."
+    },
+    {
+      "impact": "medium",
+      "finding": "Five established ARM64 lowerer failures and x64 profile/time failures remain active goal work."
+    }
+  ]
+}

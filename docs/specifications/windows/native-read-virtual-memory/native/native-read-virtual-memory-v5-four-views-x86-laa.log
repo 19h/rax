@@ -1,0 +1,9 @@
+META profile=x86-laa pointer=4
+{"id":0,"status":0,"dos-error":0,"last-error":305419896}
+{"id":1,"status":2147483661,"dos-error":299,"last-error":305419896}
+{"id":2,"status":2147483649,"dos-error":2147483649,"last-error":305419896}
+{"id":3,"status":3221225477,"dos-error":998,"last-error":305419896}
+{"id":4,"status":3221225506,"dos-error":5,"last-error":305419896}
+{"id":5,"status":3221225508,"dos-error":6,"last-error":305419896}
+{"id":6,"status":3221225480,"dos-error":6,"last-error":305419896}
+END calls=7 all-returned=1

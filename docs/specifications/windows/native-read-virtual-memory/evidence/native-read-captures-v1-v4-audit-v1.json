@@ -1,0 +1,153 @@
+{
+  "calls": 11024,
+  "audits": [
+    {
+      "version": 1,
+      "calls-per-view": 1528,
+      "capture-scope": "ARM64 Windows 11 build29683 kernel; x64 and x86 are execution views, not independent kernels",
+      "within-pointer-width-whole-row-equality": true,
+      "source-modules-executable-stable": true,
+      "logs": [
+        {
+          "profile": "arm64",
+          "calls": 1528,
+          "log": "native-read-virtual-memory-v1-four-views-arm64.log",
+          "sha256": "8a392599c233d8f030ffad1c12e3e9224c554aabad76a2e5ec3c3424143ac56f",
+          "bytes": 434197
+        },
+        {
+          "profile": "x64",
+          "calls": 1528,
+          "log": "native-read-virtual-memory-v1-four-views-x64.log",
+          "sha256": "8db0ce731302e509e6165fd439b9c03c6886f7a434f44c42716a962578e7508e",
+          "bytes": 434195
+        },
+        {
+          "profile": "x86",
+          "calls": 1528,
+          "log": "native-read-virtual-memory-v1-four-views-x86.log",
+          "sha256": "62cb80a38aa844be8e2497409cfc2df9c8a0e0629490c2e5ebb33e7c8d720e5d",
+          "bytes": 439988
+        },
+        {
+          "profile": "x86-laa",
+          "calls": 1528,
+          "log": "native-read-virtual-memory-v1-four-views-x86-laa.log",
+          "sha256": "a41629e8d616addcb703859e20fe108b780876d8a7db4d71be8e5feacc3d7291",
+          "bytes": 439992
+        }
+      ]
+    },
+    {
+      "version": 2,
+      "calls-per-view": 520,
+      "capture-scope": "ARM64 Windows 11 build29683 kernel; x64 and x86 are execution views, not independent kernels",
+      "within-pointer-width-whole-row-equality": true,
+      "source-modules-executable-stable": true,
+      "logs": [
+        {
+          "profile": "arm64",
+          "calls": 520,
+          "log": "native-read-virtual-memory-v2-four-views-arm64.log",
+          "sha256": "0166b7d42beb2e69c56f2e06aa752dce07b1bb4ddb8190f9084111c28b917443",
+          "bytes": 927049
+        },
+        {
+          "profile": "x64",
+          "calls": 520,
+          "log": "native-read-virtual-memory-v2-four-views-x64.log",
+          "sha256": "620c157b6d2a9d08daa3f6f5f69d318f753bd97b9f0fc2b0159d0fde1b7d6cce",
+          "bytes": 927047
+        },
+        {
+          "profile": "x86",
+          "calls": 520,
+          "log": "native-read-virtual-memory-v2-four-views-x86.log",
+          "sha256": "b94516a629e42276cdc9fd02621a164f32600901e282762937b5ba8ed060672a",
+          "bytes": 927047
+        },
+        {
+          "profile": "x86-laa",
+          "calls": 520,
+          "log": "native-read-virtual-memory-v2-four-views-x86-laa.log",
+          "sha256": "c7c8fd197d372612b7e84ce43791dc3a21a5a9e6569f56269bcd99db3bde0bd2",
+          "bytes": 927051
+        }
+      ]
+    },
+    {
+      "version": 3,
+      "calls-per-view": 99,
+      "capture-scope": "ARM64 Windows 11 build29683 kernel; x64 and x86 are execution views, not independent kernels",
+      "within-pointer-width-whole-row-equality": true,
+      "source-modules-executable-stable": true,
+      "logs": [
+        {
+          "profile": "arm64",
+          "calls": 99,
+          "log": "native-read-virtual-memory-v3-four-views-arm64.log",
+          "sha256": "6307507efddb67e1ba6168505d154806c704624dbac1817d5d2b2e365c667d30",
+          "bytes": 238917
+        },
+        {
+          "profile": "x64",
+          "calls": 99,
+          "log": "native-read-virtual-memory-v3-four-views-x64.log",
+          "sha256": "08f8e6f05fdcac46825d803ef0fd37a90c5da1ebab12de5934f304071561c99f",
+          "bytes": 238915
+        },
+        {
+          "profile": "x86",
+          "calls": 99,
+          "log": "native-read-virtual-memory-v3-four-views-x86.log",
+          "sha256": "2c40f338cbaab644d6320f34b714a1544ecff8056b75b03f188e4fadb11f9fad",
+          "bytes": 238915
+        },
+        {
+          "profile": "x86-laa",
+          "calls": 99,
+          "log": "native-read-virtual-memory-v3-four-views-x86-laa.log",
+          "sha256": "2d1de9539a3201f92c31a24800e567dfda7e4acbf18e4cdcb08e939735ee7e27",
+          "bytes": 238919
+        }
+      ]
+    },
+    {
+      "version": 4,
+      "calls-per-view": 609,
+      "capture-scope": "ARM64 Windows 11 build29683 kernel; x64 and x86 are execution views, not independent kernels",
+      "within-pointer-width-whole-row-equality": true,
+      "source-modules-executable-stable": true,
+      "logs": [
+        {
+          "profile": "arm64",
+          "calls": 609,
+          "log": "native-read-virtual-memory-v4-four-views-arm64.log",
+          "sha256": "4b5fdbee7a860c13fe8cd0d568459ec537160d8c9daca01b465440f4065d3d19",
+          "bytes": 1096603
+        },
+        {
+          "profile": "x64",
+          "calls": 609,
+          "log": "native-read-virtual-memory-v4-four-views-x64.log",
+          "sha256": "8e5f14f3320d0d72acc44325d8e0684523b8802839e72e0e87a369e4a2d46fef",
+          "bytes": 1096601
+        },
+        {
+          "profile": "x86",
+          "calls": 609,
+          "log": "native-read-virtual-memory-v4-four-views-x86.log",
+          "sha256": "b2b3c1e6fad8cf3975efc6521ca39582b495667e53caf5cfe29c13a509cb46d2",
+          "bytes": 1096601
+        },
+        {
+          "profile": "x86-laa",
+          "calls": 609,
+          "log": "native-read-virtual-memory-v4-four-views-x86-laa.log",
+          "sha256": "5201bfa0d9d37bca8a5b4e1c9d4b5423d0c8374600e5c7364636500f59fb2c75",
+          "bytes": 1096605
+        }
+      ]
+    }
+  ]
+}

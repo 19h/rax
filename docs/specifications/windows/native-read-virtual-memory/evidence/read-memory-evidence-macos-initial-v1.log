@@ -1,0 +1,29 @@
+{
+  "native-calls": 21140,
+  "native-repeat-calls": 21140,
+  "rtl-calls": 28,
+  "rtl-repeat-calls": 28,
+  "compiler-inputs": 29173,
+  "gates": {
+    "macos": {
+      "focus": 12,
+      "full-passed": 8196,
+      "full-failed": 0,
+      "full-ignored": 2
+    },
+    "linux": {
+      "focus": 12,
+      "full-passed": 8191,
+      "full-failed": 0,
+      "full-ignored": 2
+    },
+    "windows": {
+      "focus": 13,
+      "full-passed": 7668,
+      "full-failed": 5,
+      "full-ignored": 2
+    }
+  },
+  "owning-consumer-hosts": 3,
+  "independent-x64-kernel": "unknown"
+}

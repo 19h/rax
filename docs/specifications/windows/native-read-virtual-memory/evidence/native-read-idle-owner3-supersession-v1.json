@@ -1,0 +1,18 @@
+{
+  "state": "finished",
+  "superseded": "candidate3 idle owner only; candidate4 owns final validation",
+  "pid": 3188,
+  "verified-command": {
+    "ProcessId": 3188,
+    "ExecutablePath": "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+    "CommandLine": "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe  -B C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-read-memory-native-owning-candidate3.py"
+  },
+  "prior-state": {
+    "state": "waiting-for-focus",
+    "pid": 3188,
+    "source-epoch": 1,
+    "utc": "2026-10-22T20:40:59.555951+00:00",
+    "steps": []
+  },
+  "terminated": true
+}
