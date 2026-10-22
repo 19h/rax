@@ -1,0 +1,133 @@
+{
+  "state": "finished",
+  "host": "macos",
+  "pid": 29004,
+  "source-inputs": 3962,
+  "scope": "Retained Assist ABI184 linked consumers; no whole current root GUI/plugin/package claim.",
+  "steps": [
+    {
+      "gate": "prime-artifacts",
+      "cwd": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/rust/assist-rs",
+      "command": [
+        "cmake",
+        "-E",
+        "env",
+        "CARGO_TARGET_DIR=/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes/assist-rs-target",
+        "CARGO_PROFILE_RELEASE_STRIP=false",
+        "MACOSX_DEPLOYMENT_TARGET=10.15",
+        "ASSIST_RESOURCE_PYTHON=/opt/homebrew/Frameworks/Python.framework/Versions/3.15/bin/python3.15",
+        "CARGO_BUILD_JOBS=2",
+        "RUSTUP_TOOLCHAIN=1.95.0",
+        "/Users/int/.cargo/bin/cargo",
+        "build",
+        "--locked",
+        "--offline",
+        "--manifest-path",
+        "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/rust/assist-rs/Cargo.toml",
+        "--package",
+        "assist-rs",
+        "--target",
+        "aarch64-apple-darwin",
+        "--features",
+        "rax",
+        "--message-format=json"
+      ],
+      "exit-code": 0,
+      "seconds": 61.700355542008765,
+      "log": "macos-eri-candidate1-owning-prime-artifacts.log",
+      "bytes": 137970,
+      "sha256": "a8fd72dd89bd6ab2478111ca801a9d09d9718779eb46126eba4f3137051c8caf"
+    },
+    {
+      "gate": "archives-before",
+      "command": [
+        "python3",
+        "-B",
+        "/Users/int/Library/Caches/assist-process-emulation/native-error-message-instrument-20261021/collect-alpc-archives-candidate2.py",
+        "--host",
+        "macos",
+        "--source",
+        "/Users/int/.assist-native-error-message-instrument-20261021",
+        "--manifest",
+        "/Users/int/Library/Caches/assist-process-emulation/native-error-message-instrument-20261021/eri-owning-source-hashes-candidate1.json",
+        "--messages",
+        "/Users/int/Library/Caches/assist-process-emulation/native-error-message-instrument-20261021/macos-eri-candidate1-owning-prime-artifacts.log",
+        "--output",
+        "/Users/int/Library/Caches/assist-process-emulation/native-error-message-instrument-20261021/macos-eri-candidate1-archives-before.json"
+      ],
+      "exit-code": 0,
+      "seconds": 0.8013816250022501,
+      "log": "macos-eri-candidate1-owning-archives-before.log",
+      "bytes": 180,
+      "sha256": "a2c6b69c90b9eeba5c246400500d2000344ea1e76329a2a09e4dffa6c80b3b30"
+    },
+    {
+      "gate": "build",
+      "command": [
+        "cmake",
+        "--build",
+        "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes",
+        "--target",
+        "assist_idalib_cli",
+        "assist_mcp",
+        "assist_mcp_tool_manifest_tests",
+        "assist_rax_process_tests",
+        "assist_process_tool_tests",
+        "assist_process_tool_unavailable_tests",
+        "assist_e14_rax_abi_drift_tests",
+        "assist_rust_archive_link_tests",
+        "--parallel",
+        "2"
+      ],
+      "exit-code": 0,
+      "seconds": 17.372960250009783,
+      "log": "macos-eri-candidate1-owning-build.log",
+      "bytes": 32919,
+      "sha256": "c4014e3811bc2018efced58024a545b8a48ffedd7e9ac64df4a842b32094cc59"
+    },
+    {
+      "gate": "ctest",
+      "command": [
+        "ctest",
+        "--test-dir",
+        "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes",
+        "--output-on-failure",
+        "-R",
+        "^(assist_rust_archive_link_tests|assist_rax_process_tests|assist_process_tool_tests|assist_process_tool_unavailable_tests|assist_e14_rax_abi_drift_tests|assist_mcp_tool_manifest_tests|assist_mcp_manifest_runtime_test)$"
+      ],
+      "exit-code": 0,
+      "seconds": 5.716361792001408,
+      "log": "macos-eri-candidate1-owning-ctest.log",
+      "bytes": 1298,
+      "sha256": "e3ae86d31dd269dd5978fc9056d5099edc1fb7fbb3f9c816c641aa8e32b97201"
+    },
+    {
+      "gate": "archives-after",
+      "command": [
+        "python3",
+        "-B",
+        "/Users/int/Library/Caches/assist-process-emulation/native-error-message-instrument-20261021/collect-alpc-archives-candidate2.py",
+        "--host",
+        "macos",
+        "--source",
+        "/Users/int/.assist-native-error-message-instrument-20261021",
+        "--manifest",
+        "/Users/int/Library/Caches/assist-process-emulation/native-error-message-instrument-20261021/eri-owning-source-hashes-candidate1.json",
+        "--messages",
+        "/Users/int/Library/Caches/assist-process-emulation/native-error-message-instrument-20261021/macos-eri-candidate1-owning-prime-artifacts.log",
+        "--output",
+        "/Users/int/Library/Caches/assist-process-emulation/native-error-message-instrument-20261021/macos-eri-candidate1-archives-after.json"
+      ],
+      "exit-code": 0,
+      "seconds": 0.891817124967929,
+      "log": "macos-eri-candidate1-owning-archives-after.log",
+      "bytes": 180,
+      "sha256": "a2c6b69c90b9eeba5c246400500d2000344ea1e76329a2a09e4dffa6c80b3b30"
+    }
+  ],
+  "current-step": "archives-after",
+  "child-pid": 30753,
+  "exit-code": 0,
+  "archive-identities-stable": true,
+  "completed-utc": "2026-10-22T11:22:27.300900+00:00"
+}

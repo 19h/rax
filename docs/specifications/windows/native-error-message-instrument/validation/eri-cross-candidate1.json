@@ -1,0 +1,53 @@
+{
+  "state": "finished",
+  "pid": 50179,
+  "source-ledger-sha256": "c487efef544b8a75cc678d5781e460583c3a34870fb728bb937dc1ea35ba72b1",
+  "targets": [
+    {
+      "target": "aarch64-pc-windows-msvc",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "xwin",
+        "check",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "--target",
+        "aarch64-pc-windows-msvc"
+      ],
+      "exit-code": 0,
+      "log": "eri-cross-aarch64-candidate1.log",
+      "bytes": 1235,
+      "sha256": "07d6bf1095c674557b6fb162a16e9812a39302256d7851a2b7819092c321f94f",
+      "clean-log": "eri-cross-aarch64-candidate1-clean.log",
+      "primary-package-cleaned": true
+    },
+    {
+      "target": "x86_64-pc-windows-msvc",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "xwin",
+        "check",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "--target",
+        "x86_64-pc-windows-msvc"
+      ],
+      "exit-code": 0,
+      "log": "eri-cross-x64-candidate1.log",
+      "bytes": 1235,
+      "sha256": "daf33a0e30a2314a4fa0ddf8436125fe99308ce53b28680640189c1c448ff4ae",
+      "clean-log": "eri-cross-x64-candidate1-clean.log",
+      "primary-package-cleaned": true
+    }
+  ],
+  "target": "x86_64-pc-windows-msvc",
+  "child-pid": 50587,
+  "exit-code": 0,
+  "completed-utc": "2026-10-22T11:26:54.143577+00:00"
+}

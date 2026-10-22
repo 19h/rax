@@ -1,0 +1,113 @@
+{
+  "utc": "2026-10-22T12:01:32.743699+00:00",
+  "state": "finished",
+  "pid": 1808,
+  "free-before": 44318720,
+  "files": [
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate1\\target\\normal-candidate1\\debug\\librax.rlib",
+      "before": {
+        "bytes": 511445340,
+        "sha256": "38cffb61e70d70f017ad1b948fa7fd83d960321bbd81329830c50b5f770ad576"
+      },
+      "physical-before": 511445340,
+      "compact-exit-code": 0,
+      "log": "eri-retired-libraries-compression-v1-0.log",
+      "after": {
+        "bytes": 511445340,
+        "sha256": "38cffb61e70d70f017ad1b948fa7fd83d960321bbd81329830c50b5f770ad576"
+      },
+      "physical-after": 206577664
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate1\\target\\normal-candidate1\\debug\\deps\\librax.rlib",
+      "before": {
+        "bytes": 45827944,
+        "sha256": "a0074b228e1a9232a2f27463b359f1dff6bc533461bb152bb832f489b3433182"
+      },
+      "physical-before": 45827944,
+      "compact-exit-code": 0,
+      "log": "eri-retired-libraries-compression-v1-1.log",
+      "after": {
+        "bytes": 45827944,
+        "sha256": "a0074b228e1a9232a2f27463b359f1dff6bc533461bb152bb832f489b3433182"
+      },
+      "physical-after": 18780160
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate1\\target\\normal-candidate1\\debug\\deps\\rax.lib",
+      "before": {
+        "bytes": 586445368,
+        "sha256": "587af2fe65d85e24133ce1fd1f6c1e97f1286b943e1238b244b7a8d4e81dba6a"
+      },
+      "physical-before": 586445368,
+      "compact-exit-code": 0,
+      "log": "eri-retired-libraries-compression-v1-2.log",
+      "after": {
+        "bytes": 586445368,
+        "sha256": "587af2fe65d85e24133ce1fd1f6c1e97f1286b943e1238b244b7a8d4e81dba6a"
+      },
+      "physical-after": 237056000
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate2\\target\\normal-candidate2\\debug\\librax.rlib",
+      "before": {
+        "bytes": 511695084,
+        "sha256": "48527d3e5eb99cf77dd6eb2d3d512b5bb41e9e4b0af75d44625d7c6fcaf53e67"
+      },
+      "physical-before": 511695084,
+      "compact-exit-code": 0,
+      "log": "eri-retired-libraries-compression-v1-3.log",
+      "after": {
+        "bytes": 511695084,
+        "sha256": "48527d3e5eb99cf77dd6eb2d3d512b5bb41e9e4b0af75d44625d7c6fcaf53e67"
+      },
+      "physical-after": 206667776
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate2\\target\\normal-candidate2\\debug\\deps\\librax.rlib",
+      "before": {
+        "bytes": 45827944,
+        "sha256": "d0738e248e8eef057b60453360811f39110b5ccf905a856007423bad14f4fc1d"
+      },
+      "physical-before": 45827944,
+      "compact-exit-code": 0,
+      "log": "eri-retired-libraries-compression-v1-4.log",
+      "after": {
+        "bytes": 45827944,
+        "sha256": "d0738e248e8eef057b60453360811f39110b5ccf905a856007423bad14f4fc1d"
+      },
+      "physical-after": 18780160
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate2\\target\\normal-candidate2\\debug\\deps\\rax.lib",
+      "before": {
+        "bytes": 586695100,
+        "sha256": "7cdd6976ce20925c1fb78b1b1682ef79ad581b4204bc64740addfb1277c327fb"
+      },
+      "physical-before": 586695100,
+      "compact-exit-code": 0,
+      "log": "eri-retired-libraries-compression-v1-5.log",
+      "after": {
+        "bytes": 586695100,
+        "sha256": "7cdd6976ce20925c1fb78b1b1682ef79ad581b4204bc64740addfb1277c327fb"
+      },
+      "physical-after": 237064192
+    }
+  ],
+  "scope": "NTFS lossless compression of exact idle old task-owned standalone library files. Keep paths, logical bytes and SHA256 unchanged. No source, active output, Defender setting or user build altered.",
+  "hardlink-aliases": [
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate1\\target\\normal-candidate1\\debug\\deps\\librax-b6577df3fbefbea4.rlib",
+      "same-file-as": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate1\\target\\normal-candidate1\\debug\\librax.rlib"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate2\\target\\normal-candidate2\\debug\\deps\\librax-b6577df3fbefbea4.rlib",
+      "same-file-as": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate2\\target\\normal-candidate2\\debug\\librax.rlib"
+    }
+  ],
+  "current-file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate2\\target\\normal-candidate2\\debug\\deps\\rax.lib",
+  "free-after": 1407025152,
+  "physical-before": 2287936780,
+  "physical-after": 924925952
+}

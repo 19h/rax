@@ -1,0 +1,12 @@
+{
+  "state": "failed",
+  "pid": 4108,
+  "steps": [],
+  "utc": "2026-10-21T20:14:46.671679+00:00",
+  "disk-before": {
+    "free-bytes": 1683341312
+  },
+  "exit-code": 1,
+  "error": "Traceback (most recent call last):\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-eri-native-red1.py\", line 154, in <module>\n    assert item.isfile() and item.name in overrides\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+  "completed-utc": "2026-10-21T20:14:57.754364+00:00"
+}

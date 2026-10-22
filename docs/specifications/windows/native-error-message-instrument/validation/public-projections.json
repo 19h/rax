@@ -1,0 +1,76 @@
+{
+  "files": [
+    {
+      "path": "eri-native-owning-candidate1-artifacts-after.log",
+      "kind": "cargo-artifact-only",
+      "original": {
+        "bytes": 132251,
+        "sha256": "fcc83185c406f32375293df134412cc28f3ff6d6c37bb2387a94420641c71609"
+      },
+      "published": {
+        "bytes": 117653,
+        "sha256": "ca60091d48145d80b3372a66ecd473d2b97dbdd8251d14fa0efb04a1e69e97d5"
+      }
+    },
+    {
+      "path": "eri-native-owning-candidate1-artifacts-before.log",
+      "kind": "cargo-artifact-only",
+      "original": {
+        "bytes": 132536,
+        "sha256": "3856ccbf6179d682df6e7d53a7395b88beb834bfd6d77a574cf3fcc99ba2f60e"
+      },
+      "published": {
+        "bytes": 117656,
+        "sha256": "62ab4f09b58df30ffbb1e28dadfea7c8a33c6bc69d3ec93cef8a612ab2d42fbf"
+      }
+    },
+    {
+      "path": "linux-eri-candidate1-owning-artifacts.log",
+      "kind": "cargo-artifact-only",
+      "original": {
+        "bytes": 174086,
+        "sha256": "9823dcb003068a2426c28ba7b82d16a3ec7de6b16bc53a1c0ce6da71e5935280"
+      },
+      "published": {
+        "bytes": 167252,
+        "sha256": "40bddd9010ee341dc52b025ea9cf29718129c7ce1e6ad57910f3240bf42dedaf"
+      }
+    },
+    {
+      "path": "linux-eri-candidate1-owning-shipping.log",
+      "kind": "cargo-artifact-only",
+      "original": {
+        "bytes": 174435,
+        "sha256": "6335a506e005ffb5fb3524701f4bf12ca9ad0ac9e48caf846b0cac32340f12c9"
+      },
+      "published": {
+        "bytes": 167258,
+        "sha256": "2510082ac08582f49379ed2029c20181cbc6a227c98bb01cb11a52729e2ce1d6"
+      }
+    },
+    {
+      "path": "macos-eri-candidate1-owning-build.log",
+      "kind": "private-build-transcript-withheld",
+      "original": {
+        "bytes": 32919,
+        "sha256": "c4014e3811bc2018efced58024a545b8a48ffedd7e9ac64df4a842b32094cc59"
+      },
+      "published": {
+        "bytes": 102,
+        "sha256": "9d11adebfdf4b96ed4e054bf1ab1bbe7ebd6aac767e895e0715e03e97f279aa2"
+      }
+    },
+    {
+      "path": "macos-eri-candidate1-owning-prime-artifacts.log",
+      "kind": "cargo-artifact-only",
+      "original": {
+        "bytes": 137970,
+        "sha256": "a8fd72dd89bd6ab2478111ca801a9d09d9718779eb46126eba4f3137051c8caf"
+      },
+      "published": {
+        "bytes": 128746,
+        "sha256": "54d45aef5233279e11e06f5a3f240dac5c92bd15d64ba5c854dcf7829bff7f48"
+      }
+    }
+  ]
+}

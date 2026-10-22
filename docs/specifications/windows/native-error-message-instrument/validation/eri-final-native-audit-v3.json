@@ -1,0 +1,160 @@
+{
+  "state": "verified",
+  "utc": "2026-10-22T12:23:51.018847+00:00",
+  "runtime-module-union": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e"
+    },
+    {
+      "path": "C:\\Windows\\System32\\KernelBase.dll",
+      "bytes": 7213728,
+      "sha256": "6b2fa508ac4f9bce5d7351676485d1dc5b5236cd9656034e2fec1eaba3b82bc9"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\KernelBase.dll",
+      "bytes": 3073488,
+      "sha256": "e9c414d7c6bd2c6fde608f31b2f31da3c2014c801b3764a30ee42abd1e9c2d58"
+    },
+    {
+      "path": "C:\\Windows\\System32\\kernel32.dll",
+      "bytes": 1500304,
+      "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\kernel32.dll",
+      "bytes": 696392,
+      "sha256": "9c9a0c54a79ea712bb533fcc79ba9935ed9f9d3f777fd65cf62d9cec6699b9df"
+    },
+    {
+      "path": "C:\\Windows\\System32\\msvcrt.dll",
+      "bytes": 1347856,
+      "sha256": "779eb5cb1ae357196254af9755307544a3dd20011c84768ae72f45d366f47148"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\msvcrt.dll",
+      "bytes": 810688,
+      "sha256": "67c03357458a951402cc1804e05d3301f011a59d352f684fbe283f546f8ae398"
+    },
+    {
+      "path": "C:\\Windows\\System32\\version.dll",
+      "bytes": 73200,
+      "sha256": "d30c2a9c9d81982b112c5a60878f3579ddb3db3a09443147c63f10bc749aaab2"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\version.dll",
+      "bytes": 29208,
+      "sha256": "688ea4248da1e28bd77be9ae1088954a11cec3302c25af8aade47bae14f3ada8"
+    }
+  ],
+  "native-producer": [
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-error-message-instrument-20261021-v1-four-views\\native-error-message-instrument-20261021-v1.cpp",
+      "bytes": 3034,
+      "sha256": "3983e87dfefee7df62551f4269a04b5c2d1f2df4682749dac8d0af562b4896e8"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-error-message-instrument-20261021-v1-four-views\\target\\arm64\\probe.exe",
+      "bytes": 154624,
+      "sha256": "187bfd6359602d26e859afdd0969c8b4d43154e23dba8018b76165c31d9a3a62"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-error-message-instrument-20261021-v1-four-views\\target\\x64\\probe.exe",
+      "bytes": 164864,
+      "sha256": "a76c5ca2ce4de61fd05fb0d303fa111d462c2c0bcd25e8abfc93c4e3b5bd04a2"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-error-message-instrument-20261021-v1-four-views\\target\\x86\\probe.exe",
+      "bytes": 125440,
+      "sha256": "205f7e64442cf37ff7d69e3951fb3ad3b367d24d91608d51af38265e675d45a4"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-error-message-instrument-20261021-v1-four-views\\target\\x86-laa\\probe.exe",
+      "bytes": 125440,
+      "sha256": "9e135ed784de28a6150c14a467211b2063ba18b89136afea973a9773f13a8d84"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-error-message-instrument-20261022-v2-four-views\\native-error-message-instrument-20261022-v2.cpp",
+      "bytes": 3290,
+      "sha256": "2fa21a0158480836f10ecb3764a424e627f954ea3305dafafd2915bdb12770ed"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-error-message-instrument-20261022-v2-four-views\\target\\arm64\\probe.exe",
+      "bytes": 153600,
+      "sha256": "cefaa53284a2147f5fe3433c0bffe4bd580b820daae060200114809ffccf9048"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-error-message-instrument-20261022-v2-four-views\\target\\x64\\probe.exe",
+      "bytes": 163840,
+      "sha256": "0da4402ac634d97710fef4aaabe05d3287e575d5a1874c04843238fd72df01f6"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-error-message-instrument-20261022-v2-four-views\\target\\x86\\probe.exe",
+      "bytes": 125440,
+      "sha256": "4115fd0ee7d75c7723d47dd1ea6d8d9a19d7158a215b0991bc3503ce0af60c4d"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\probe-src-native-error-message-instrument-20261022-v2-four-views\\target\\x86-laa\\probe.exe",
+      "bytes": 125440,
+      "sha256": "f0236c165137d3fb6f7df89415be1b61a5bf4834b5095f1fe70230ed4d4f296d"
+    }
+  ],
+  "owning-core-and-callers": [
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\debug\\deps\\librax-934115059aa64c85.rlib",
+      "bytes": 511553626,
+      "sha256": "496c06becd809cba6274c8f475c684cb75c8d396dbf6b3ee71a014fbddd60732"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\eri-ordinary-owner-candidate1.exe",
+      "bytes": 27253248,
+      "sha256": "5403b8a45696a7b217a411305d9ad79aca739d0a58e4a26533b41dfa366ddb22"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\debug\\assist_rs.lib",
+      "bytes": 860966146,
+      "sha256": "5a2c7b49ce0674eed339fa8e76fc0b005ef6189f6c46e62a7e9f31cff27144b5"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\cpp\\eri-owning-capi-candidate1.exe",
+      "bytes": 32820224,
+      "sha256": "e13eec3205b897b296fe5e12dd1b91799e0788549b5b6b13a36ea5c01d269be1"
+    }
+  ],
+  "retained-current-artifacts": [
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-eri-candidate1\\target\\retained-owning-candidate1\\core.rlib",
+      "bytes": 511553626,
+      "sha256": "496c06becd809cba6274c8f475c684cb75c8d396dbf6b3ee71a014fbddd60732"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-eri-candidate1\\target\\retained-owning-candidate1\\carrier.lib",
+      "bytes": 860966146,
+      "sha256": "5a2c7b49ce0674eed339fa8e76fc0b005ef6189f6c46e62a7e9f31cff27144b5"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-eri-candidate1\\target\\retained-owning-candidate1\\ordinary.exe",
+      "bytes": 27253248,
+      "sha256": "5403b8a45696a7b217a411305d9ad79aca739d0a58e4a26533b41dfa366ddb22"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-eri-candidate1\\target\\retained-owning-candidate1\\capi.exe",
+      "bytes": 32820224,
+      "sha256": "e13eec3205b897b296fe5e12dd1b91799e0788549b5b6b13a36ea5c01d269be1"
+    }
+  ],
+  "test-image": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-eri-candidate1\\target\\normal-candidate2\\debug\\deps\\rax-b799307a7949aa6b.exe",
+    "bytes": 548538368,
+    "sha256": "7c03675931dbe5b89406c98b8404d56d42b0f52c121f2d8e76a2892c5b836e11"
+  },
+  "windows-build": 29683,
+  "exit-code": 0,
+  "scope": "Ten runtime DLLs across two native producers and actual owning callers; two producer sources, eight executed probe images, four current owning artifacts, four separately retained compressed byte copies, and the full native unit image rehashed. No whole-current-root package claim."
+}

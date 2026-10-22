@@ -14,6 +14,8 @@ pub(crate) const FILESYSTEM_KEY: &str =
     "\\Registry\\Machine\\System\\CurrentControlSet\\Control\\FileSystem";
 pub(crate) const NLS_SORTING_VERSIONS_KEY: &str =
     "\\Registry\\Machine\\System\\CurrentControlSet\\Control\\Nls\\Sorting\\Versions";
+pub(crate) const ERROR_MESSAGE_INSTRUMENT_KEY: &str =
+    "\\Registry\\Machine\\System\\CurrentControlSet\\Control\\Error Message Instrument";
 pub(super) const MAX_TREE_KEYS: usize = 1024;
 pub(super) const MAX_TREE_DEPTH: usize = 32;
 pub(super) const MAX_COMPONENT_UNITS: usize = 255;
@@ -34,6 +36,7 @@ pub(crate) enum TreeRoot {
     SaferCodeIdentifiers,
     FileSystem,
     NlsSortingVersions,
+    ErrorMessageInstrument,
 }
 impl TreeRoot {
     pub(crate) fn path(self) -> &'static str {
@@ -45,6 +48,7 @@ impl TreeRoot {
             Self::SaferCodeIdentifiers => SAFER_CODE_IDENTIFIERS_KEY,
             Self::FileSystem => FILESYSTEM_KEY,
             Self::NlsSortingVersions => NLS_SORTING_VERSIONS_KEY,
+            Self::ErrorMessageInstrument => ERROR_MESSAGE_INSTRUMENT_KEY,
         }
     }
 }

@@ -1,0 +1,9 @@
+{
+  "state": "failed",
+  "pid": 5208,
+  "steps": [],
+  "utc": "2026-10-21T20:18:22.299926+00:00",
+  "exit-code": 1,
+  "error": "Traceback (most recent call last):\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-eri-candidate1.py\", line 138, in <module>\n    assert result[\"state\"] != \"failed\", result.get(\"error\", \"red setup failed\")\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Traceback (most recent call last):\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-eri-native-red2.py\", line 193, in <module>\n    content = run(\n        \"test-build\",\n    ...<9 lines>...\n        ],\n    )\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-eri-native-red2.py\", line 94, in run\n    assert state[\"steps\"][-1][\"exit-code\"] == 0, name\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: test-build\n\n",
+  "completed-utc": "2026-10-21T20:18:43.987732+00:00"
+}

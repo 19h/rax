@@ -1,0 +1,7 @@
+{
+  "path": "/Users/int/Library/Caches/assist-process-emulation/native-error-message-instrument-20261021/eri-owning-capi.cpp",
+  "bytes": 3573,
+  "sha256": "706cb2a46c143a557f3c565792d954c40e596ddbd767a2138a9d2303e94261e3",
+  "source-parent": "process-mitigation-owning-capi.cpp",
+  "scope": "Unchanged ordinary caller source; versioned for the ERI final actual-owning artifacts and independent outcome classification."
+}

@@ -1,0 +1,45 @@
+{
+  "attempts": [
+    {
+      "name": "native-red1",
+      "classification": "materialization setup failure, no test execution",
+      "evidence": "eri-native-red1.json",
+      "detail": "Initial source ledger followed16 initrd symlinks instead of retaining their link text; strict archive type check rejected it. Corrected immutable red2 source was tested."
+    },
+    {
+      "name": "native-red2-initial",
+      "classification": "link setup failure, no test execution",
+      "evidence": "eri-native-red2.json",
+      "detail": "LNK1180 disk exhaustion; same source resumed after byte-preserving compression and produces the intended0-pass/1-fail baseline."
+    },
+    {
+      "name": "macos-initial-full",
+      "classification": "two inherited socket tests fail with long TMPDIR",
+      "evidence": "eri-macos-candidate1-gates.json",
+      "detail": "Unchanged frozen source passes full retry with short TMPDIR; original failure retained."
+    },
+    {
+      "name": "native-integration-initial",
+      "classification": "PDB link setup failure under disk pressure",
+      "evidence": "eri-candidate1-windows-retry1.json",
+      "detail": "Unfiltered library and CAPI already completed. New receipt carries their exact classified steps and resumes only unfinished gates after storage recovery/failed-PDB removal; jobs1."
+    },
+    {
+      "name": "retention-first-copy",
+      "classification": "partial compressed carrier copy exhausted disk space",
+      "evidence": "eri-retention-inspection-v2.json",
+      "detail": "Complete core preserved; only verified incomplete carrier removed. Retired task PDB cleanup and lossless old library compression restore capacity; retry independently verifies four retained copies."
+    },
+    {
+      "name": "audit-v2",
+      "classification": "early audit correctly rejected unfinished observer gate",
+      "evidence": "eri-final-native-audit-v2.json",
+      "detail": "Separate v3 audit verifies all artifacts after final receipt is terminal."
+    },
+    {
+      "name": "packager-v1",
+      "classification": "ambiguous inherited collector basename rejected",
+      "detail": "Task-local Q collector was used by recorded macOS/Linux commands; unrelated older transfer-directory file was preserved. Explicit selection is documented."
+    }
+  ]
+}

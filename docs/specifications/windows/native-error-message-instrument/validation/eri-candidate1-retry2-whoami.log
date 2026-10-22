@@ -1,0 +1,1 @@
+program=C:\Windows\System32\whoami.exe terminal-call=2832 result=Complete(Internal("native NTDLL service NtOpenKey: Unimplemented(\"NtOpenKey: registry key outside selected runtime snapshot\")"))

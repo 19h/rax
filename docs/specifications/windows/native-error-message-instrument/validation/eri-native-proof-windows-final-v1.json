@@ -1,0 +1,8 @@
+{
+  "state": "verified",
+  "native-open-observations": 864,
+  "native-executables": 8,
+  "unique-live-inputs": 18,
+  "source-inputs": 28816,
+  "scope": "Four execution views on one ARM64 kernel; source-specific observed absence, not universal absence or independent physical x64 validation."
+}

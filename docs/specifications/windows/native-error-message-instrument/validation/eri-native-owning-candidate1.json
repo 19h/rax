@@ -1,0 +1,124 @@
+{
+  "state": "finished",
+  "pid": 7836,
+  "source-epoch": 1,
+  "utc": "2026-10-22T11:22:40.218553+00:00",
+  "steps": [
+    {
+      "name": "toolchain",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "--version"
+      ],
+      "exit-code": 0,
+      "seconds": 0.042014500009827316,
+      "log": "eri-native-owning-candidate1-toolchain.log",
+      "bytes": 36,
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5"
+    },
+    {
+      "name": "artifacts-before",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "build",
+        "--locked",
+        "--offline",
+        "--features",
+        "rax",
+        "--message-format=json"
+      ],
+      "exit-code": 0,
+      "seconds": 385.1284254170023,
+      "log": "eri-native-owning-candidate1-artifacts-before.log",
+      "bytes": 132536,
+      "sha256": "3856ccbf6179d682df6e7d53a7395b88beb834bfd6d77a574cf3fcc99ba2f60e"
+    },
+    {
+      "name": "archive-before",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\collect-eri-archives-candidate1.py",
+        "--host",
+        "windows",
+        "--source",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-eri-candidate1",
+        "--manifest",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\eri-owning-source-hashes-candidate1.json",
+        "--messages",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\eri-native-owning-candidate1-artifacts-before.log",
+        "--output",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-eri-candidate1-pre-cpp-archives.json"
+      ],
+      "exit-code": 0,
+      "seconds": 7.892807791009545,
+      "log": "eri-native-owning-candidate1-archive-before.log",
+      "bytes": 182,
+      "sha256": "afa653333bc6e6a9e7d4bae5810c1ab10990838eb423aaadefe4e6a6c931f924"
+    },
+    {
+      "name": "cpp",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\helpers\\eri-owned-cpp-build-candidate1.py"
+      ],
+      "exit-code": 0,
+      "seconds": 98.15024662500946,
+      "log": "eri-native-owning-candidate1-cpp.log",
+      "bytes": 3705,
+      "sha256": "6df4af8b0846948918ed8f0d509e56f6af87579a5a1426399b4d0ea507bbb9d9"
+    },
+    {
+      "name": "artifacts-after",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "build",
+        "--locked",
+        "--offline",
+        "--features",
+        "rax",
+        "--message-format=json"
+      ],
+      "exit-code": 0,
+      "seconds": 0.8329726250376552,
+      "log": "eri-native-owning-candidate1-artifacts-after.log",
+      "bytes": 132251,
+      "sha256": "fcc83185c406f32375293df134412cc28f3ff6d6c37bb2387a94420641c71609"
+    },
+    {
+      "name": "archive-after",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\collect-eri-archives-candidate1.py",
+        "--host",
+        "windows",
+        "--source",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-eri-candidate1",
+        "--manifest",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\eri-owning-source-hashes-candidate1.json",
+        "--messages",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\eri-native-owning-candidate1-artifacts-after.log",
+        "--output",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-eri-candidate1-final-owning-archive-identities.json"
+      ],
+      "exit-code": 0,
+      "seconds": 23.397781792038586,
+      "log": "eri-native-owning-candidate1-archive-after.log",
+      "bytes": 182,
+      "sha256": "afa653333bc6e6a9e7d4bae5810c1ab10990838eb423aaadefe4e6a6c931f924"
+    }
+  ],
+  "junction": {
+    "before": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate2",
+    "after": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-eri-candidate1"
+  },
+  "current-step": "archive-after",
+  "child-pid": 9836,
+  "exit-code": 0,
+  "source-inputs": 3962,
+  "archive-identities-stable": true,
+  "scope": "Frozen alpc source; retained Assist ABI184 linked consumers. Whole current-root ABI274 GUI/plugin/packages not claimed.",
+  "completed-utc": "2026-10-22T11:42:35.436675+00:00"
+}

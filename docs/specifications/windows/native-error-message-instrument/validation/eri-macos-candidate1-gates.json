@@ -1,0 +1,60 @@
+{
+  "state": "failed",
+  "source-epoch": 1,
+  "host": "macos",
+  "driver-pid": 32573,
+  "steps": [
+    {
+      "name": "focus",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "native_error_message_instrument",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 88.84216829098295,
+      "log": "eri-macos-candidate1-focus.log",
+      "bytes": 1237,
+      "sha256": "7001f6ffaa2485ffc6e975792503a160a66078bc2b69d5c1d62c890213d5890a",
+      "results": [
+        "ok. 4 passed; 0 failed; 0 ignored; 0 measured; 8170 filtered out; finished in 0.20s"
+      ]
+    },
+    {
+      "name": "full",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 101,
+      "seconds": 445.9609068330028,
+      "log": "eri-macos-candidate1-full.log",
+      "bytes": 864210,
+      "sha256": "4778f86f093f76540795f0792ab891ddba8ddd0232b8f48f377dce7f38b77e01",
+      "results": [
+        "FAILED. 8170 passed; 2 failed; 2 ignored; 0 measured; 0 filtered out; finished in 441.78s"
+      ]
+    }
+  ],
+  "current-step": "full",
+  "child-pid": 33766,
+  "exit-code": 1,
+  "error": "Traceback (most recent call last):\n  File \"/Users/int/Library/Caches/assist-process-emulation/native-error-message-instrument-20261021/run-eri-unix-candidate1.py\", line 139, in <module>\n    assert code == 0, name\n           ^^^^^^^^^\nAssertionError: full\n",
+  "completed-utc": "2026-10-21T20:27:21.801086+00:00"
+}

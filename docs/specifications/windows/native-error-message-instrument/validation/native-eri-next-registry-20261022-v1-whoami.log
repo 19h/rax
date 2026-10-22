@@ -1,0 +1,7 @@
+terminal turn=2832 result=Complete(Internal("native NTDLL service NtOpenKey: Unimplemented(\"NtOpenKey: registry key outside selected runtime snapshot\")"))
+thread=8 pc=7FFF38A41134 sp=1A5DF30 frames=0
+registers=[1A5DF38, 20019, 1A5DF80, 1A5E1C0, 2104820, 3BD0DD0, 0, 656B614D00656761]
+object-attributes=1A5DF80 raw=Ok([30, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, B0, DF, A5, 1, 0, 0, 0, 0, 40, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+registry desired=20019 root=0 root-kind=None flags=240
+name-header=1A5DFB0 raw=Ok([7A, 0, 7C, 0, 0, 0, 0, 0, 60, D, BD, 3, 0, 0, 0, 0])
+key length-bytes=122 maximum-bytes=124 buffer=3BD0D60 units=[5C, 52, 65, 67, 69, 73, 74, 72, 79, 5C, 4D, 61, 63, 68, 69, 6E, 65, 5C, 53, 6F, 66, 74, 77, 61, 72, 65, 5C, 50, 6F, 6C, 69, 63, 69, 65, 73, 5C, 4D, 69, 63, 72, 6F, 73, 6F, 66, 74, 5C, 57, 69, 6E, 64, 6F, 77, 73, 5C, 44, 69, 73, 70, 6C, 61, 79] utf16=Ok("\\Registry\\Machine\\Software\\Policies\\Microsoft\\Windows\\Display")

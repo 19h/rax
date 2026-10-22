@@ -1,0 +1,6 @@
+{
+  "state": "failed",
+  "utc": "2026-10-22T12:12:06.789271+00:00",
+  "exit-code": 1,
+  "error": "Traceback (most recent call last):\n  File \"C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\audit-eri-final-native-v2.py\", line 44, in <module>\n    assert all(\n           ~~~^\n        x[\"state\"] == \"finished\" and x[\"exit-code\"] == 0\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n        for x in [native, ordinary, capi, gates]\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\nAssertionError\n"
+}

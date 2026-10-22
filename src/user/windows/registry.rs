@@ -20,8 +20,9 @@ mod tree;
 #[cfg(test)]
 pub(crate) use tree::KeyTree as IfeoTree;
 pub(crate) use tree::{
-    FILESYSTEM_KEY, IFEO_KEY, KeyTree, Lookup, NLS_SORTING_VERSIONS_KEY, REDIRECTION_KEYS_KEY,
-    SAFEBOOT_OPTION_KEY, SAFER_CODE_IDENTIFIERS_KEY, SRP_DLL_KEY, TreeRoot,
+    ERROR_MESSAGE_INSTRUMENT_KEY, FILESYSTEM_KEY, IFEO_KEY, KeyTree, Lookup,
+    NLS_SORTING_VERSIONS_KEY, REDIRECTION_KEYS_KEY, SAFEBOOT_OPTION_KEY,
+    SAFER_CODE_IDENTIFIERS_KEY, SRP_DLL_KEY, TreeRoot,
 };
 #[path = "registry/user_policy.rs"]
 mod user_policy;
@@ -259,3 +260,7 @@ mod filesystem_tests;
 #[cfg(test)]
 #[path = "registry/nls_sorting_tests.rs"]
 mod nls_sorting_tests;
+
+#[cfg(test)]
+#[path = "registry/error_message_instrument_tests.rs"]
+mod error_message_instrument_tests;

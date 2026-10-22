@@ -1,0 +1,6 @@
+{
+  "name": "collect-alpc-archives-candidate2.py",
+  "selected-path": "/Users/int/Library/Caches/assist-process-emulation/native-error-message-instrument-20261021/collect-alpc-archives-candidate2.py",
+  "selected-sha256": "7c03ea4a121f28e4ef2014146e33f786a0dbc50be43fd4ca95e8595810ba5441",
+  "scope": "macOS/Linux recorded command uses the task-local collector with an inherited basename. The different transfer-directory file belongs to the preceding ALPC group and was not modified."
+}

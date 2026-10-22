@@ -296,6 +296,9 @@ pub(crate) fn snapshot() -> io::Result<Registry> {
     let registry = registry.with_tree(root, selected)?;
     let root = super::TreeRoot::NlsSortingVersions;
     let selected = tree::capture_root(&registry, root)?;
+    let registry = registry.with_tree(root, selected)?;
+    let root = super::TreeRoot::ErrorMessageInstrument;
+    let selected = tree::capture_root(&registry, root)?;
     registry.with_tree(root, selected)
 }
 
@@ -330,3 +333,7 @@ mod filesystem_tests;
 #[cfg(test)]
 #[path = "installed/nls_sorting_tests.rs"]
 mod nls_sorting_tests;
+
+#[cfg(test)]
+#[path = "installed/error_message_instrument_tests.rs"]
+mod error_message_instrument_tests;

@@ -1073,3 +1073,6 @@ mod filesystem_registry;
 
 #[path = "nls_sorting_registry_tests.rs"]
 mod nls_sorting_registry;
+
+#[path = "registry_tests/error_message_instrument.rs"]
+mod error_message_instrument;

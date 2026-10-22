@@ -1,0 +1,43 @@
+{
+  "utc": "2026-10-22T12:00:29.563500+00:00",
+  "free-bytes": 44322816,
+  "retired-libraries": [
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate1\\target\\normal-candidate1\\debug\\librax.rlib",
+      "bytes": 511445340
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate1\\target\\normal-candidate1\\debug\\deps\\librax-b6577df3fbefbea4.rlib",
+      "bytes": 511445340
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate1\\target\\normal-candidate1\\debug\\deps\\librax.rlib",
+      "bytes": 45827944
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate1\\target\\normal-candidate1\\debug\\deps\\rax.lib",
+      "bytes": 586445368
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate2\\target\\normal-candidate2\\debug\\librax.rlib",
+      "bytes": 511695084
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate2\\target\\normal-candidate2\\debug\\deps\\librax-b6577df3fbefbea4.rlib",
+      "bytes": 511695084
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate2\\target\\normal-candidate2\\debug\\deps\\librax.rlib",
+      "bytes": 45827944
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate2\\target\\normal-candidate2\\debug\\deps\\rax.lib",
+      "bytes": 586695100
+    }
+  ],
+  "failed-pdb": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-eri-candidate1\\target\\normal-candidate2\\debug\\deps\\rax.pdb",
+    "bytes": 83725459,
+    "attributes": 32
+  }
+}

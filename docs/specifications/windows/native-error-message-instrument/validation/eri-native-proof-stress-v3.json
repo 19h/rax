@@ -1,0 +1,74 @@
+{
+  "state": "finished",
+  "utc": "2026-10-22T11:35:39.207321+00:00",
+  "script-sha256": "8ef449b8c1b4a65c27cd1aa10769cab16cb61a90e7afd6c2279a56f5c80ff17b",
+  "checker-sha256": "182320bc50972e66824a5ec637716ebaff59ee33cd88f0104801dca2645a9566",
+  "cases": [
+    {
+      "case": "wrong-root-status",
+      "rejected": true,
+      "reason": "native fixed-root absence",
+      "positive-before": {
+        "state": "verified",
+        "native-open-observations": 864,
+        "native-executables": 8,
+        "unique-live-inputs": 18,
+        "source-inputs": 0,
+        "scope": "Four execution views on one ARM64 kernel; source-specific observed absence, not universal absence or independent physical x64 validation."
+      },
+      "fresh-restore": {
+        "state": "verified",
+        "native-open-observations": 864,
+        "native-executables": 8,
+        "unique-live-inputs": 18,
+        "source-inputs": 0,
+        "scope": "Four execution views on one ARM64 kernel; source-specific observed absence, not universal absence or independent physical x64 validation."
+      },
+      "scope": "All four execution-view logs changed; stage hashes repaired; original evidence untouched."
+    },
+    {
+      "case": "nonzero-failed-handle",
+      "rejected": true,
+      "reason": "failure output handle",
+      "positive-before": {
+        "state": "verified",
+        "native-open-observations": 864,
+        "native-executables": 8,
+        "unique-live-inputs": 18,
+        "source-inputs": 0,
+        "scope": "Four execution views on one ARM64 kernel; source-specific observed absence, not universal absence or independent physical x64 validation."
+      },
+      "fresh-restore": {
+        "state": "verified",
+        "native-open-observations": 864,
+        "native-executables": 8,
+        "unique-live-inputs": 18,
+        "source-inputs": 0,
+        "scope": "Four execution views on one ARM64 kernel; source-specific observed absence, not universal absence or independent physical x64 validation."
+      },
+      "scope": "All four execution-view logs changed; stage hashes repaired; original evidence untouched."
+    },
+    {
+      "case": "changed-last-error",
+      "rejected": true,
+      "reason": "LastError preservation",
+      "positive-before": {
+        "state": "verified",
+        "native-open-observations": 864,
+        "native-executables": 8,
+        "unique-live-inputs": 18,
+        "source-inputs": 0,
+        "scope": "Four execution views on one ARM64 kernel; source-specific observed absence, not universal absence or independent physical x64 validation."
+      },
+      "fresh-restore": {
+        "state": "verified",
+        "native-open-observations": 864,
+        "native-executables": 8,
+        "unique-live-inputs": 18,
+        "source-inputs": 0,
+        "scope": "Four execution views on one ARM64 kernel; source-specific observed absence, not universal absence or independent physical x64 validation."
+      },
+      "scope": "All four execution-view logs changed; stage hashes repaired; original evidence untouched."
+    }
+  ]
+}

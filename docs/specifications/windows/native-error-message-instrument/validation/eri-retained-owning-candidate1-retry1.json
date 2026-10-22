@@ -1,0 +1,36 @@
+{
+  "state": "finished",
+  "exit-code": 0,
+  "utc": "2026-10-22T11:56:51.974148+00:00",
+  "files": [
+    {
+      "role": "core",
+      "source": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\debug\\deps\\librax-934115059aa64c85.rlib",
+      "retained": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-eri-candidate1\\target\\retained-owning-candidate1\\core.rlib",
+      "bytes": 511553626,
+      "sha256": "496c06becd809cba6274c8f475c684cb75c8d396dbf6b3ee71a014fbddd60732"
+    },
+    {
+      "role": "carrier",
+      "source": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\debug\\assist_rs.lib",
+      "retained": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-eri-candidate1\\target\\retained-owning-candidate1\\carrier.lib",
+      "bytes": 860966146,
+      "sha256": "5a2c7b49ce0674eed339fa8e76fc0b005ef6189f6c46e62a7e9f31cff27144b5"
+    },
+    {
+      "role": "ordinary",
+      "source": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\eri-ordinary-owner-candidate1.exe",
+      "retained": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-eri-candidate1\\target\\retained-owning-candidate1\\ordinary.exe",
+      "bytes": 27253248,
+      "sha256": "5403b8a45696a7b217a411305d9ad79aca739d0a58e4a26533b41dfa366ddb22"
+    },
+    {
+      "role": "capi",
+      "source": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\cpp\\eri-owning-capi-candidate1.exe",
+      "retained": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-eri-candidate1\\target\\retained-owning-candidate1\\capi.exe",
+      "bytes": 32820224,
+      "sha256": "e13eec3205b897b296fe5e12dd1b91799e0788549b5b6b13a36ea5c01d269be1"
+    }
+  ],
+  "scope": "Four separate retained byte copies of the actual selected owning core, Assist carrier and two exercised ordinary-program callers. Source identities unchanged; no hardlinks."
+}

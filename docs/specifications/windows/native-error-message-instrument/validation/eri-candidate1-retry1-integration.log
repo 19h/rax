@@ -1,0 +1,27 @@
+warning: "stdcall" is not a supported ABI for the current target
+  --> vendor\vm-memory\src\mmap\windows.rs:22:1
+   |
+22 | / extern "stdcall" {
+23 | |     pub fn VirtualAlloc(
+24 | |         lpAddress: *mut c_void,
+25 | |         dwSize: size_t,
+...  |
+49 | |     pub fn CloseHandle(hObject: RawHandle) -> u32; // BOOL
+50 | | }
+   | |_^
+   |
+   = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!
+   = note: for more information, see issue #137018 <https://github.com/rust-lang/rust/issues/137018>
+   = help: if you need `extern "stdcall"` on win32 and `extern "C"` everywhere else, use `extern "system"`
+   = note: `#[warn(unsupported_calling_conventions)]` (part of `#[warn(future_incompatible)]`) on by default
+
+warning: `vm-memory` (lib) generated 1 warning
+   Compiling rax v0.1.0 (C:\Windows\Temp\assist-native-rax-20261010\src-eri-candidate1)
+error: linking with `link.exe` failed: exit code: 1318
+  |
+  = note: "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\HostARM64\\ARM64\\link.exe" "/NOLOGO" "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-eri-candidate1\\target\\normal-candidate2\\debug\\deps\\rustcaeYBii\\symbols.o" "<17 object files omitted>" "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-eri-candidate1\\target\\normal-candidate2\\debug\\deps/{libtracing_subscriber-685dc02915f27ac9,libsmallvec-8e344e819c733d01,libsharded_slab-7a2008cd9dd8829f,liblazy_static-2cf0e44be89e00ff,libmatchers-2fa0dfd397483b76,libregex_automata-23d34afdbdae0f62,libregex_syntax-97323d6145378ec5,libnu_ansi_term-08f27c30fd55429d,libthread_local-294dfd6234307967,libtracing_log-81f129afc7d6195d,librax-b6577df3fbefbea4,libbincode-390b45752ed3b7fb,libzstd-8c9c7617241439e2,libzstd_safe-f28abb5a4fe7f1e9,libzstd_sys-e3d33ebbe22f0568,libgetrandom-1c1ca01b74677f78,libcfg_if-bd9b37e0fcd73fa0,libtoml-19b3ca2cf28f3238,libtoml_writer-6a245f0e3572e7a0,libwinnow-f85462f305068151,libtoml_parser-f9bd538d8a86bd35,libwinnow-0f50fbff9cc0005e,libserde_spanned-43a31802901d1234,libtoml_datetime-a25f6fe2e35c8838,libserde_json-51133d8839e87d53,libmemchr-79282d19a0c32c66,libitoa-44d13dfbbb3a1bc0,libzmij-19395de9452c26a5,liblinux_loader-1f53705ba8944ec8,libgoblin-133d8ac4e0306d37,libplain-127a7055c962ad7e,liblog-a8f4843462d3e0ed,libscroll-4084667557ad0787,libbitflags-4bfec726c06abbe5,libserde-a92dcbe8c911ba9c,libserde_core-5f4f2826ba69fc09,libtracing-9b47460a04eb3bc6,libpin_project_lite-85a7839836d8e2e8,libtracing_core-87ae151ca0a71dc6,libonce_cell-1804678f6d1e135b,libvm_memory-0d6137a334e2a735,libthiserror-9201ab52612f2215,libwinapi-7d1bb1d5a8ccf171,liblibc-ba25a10d36687d7b,libclap-f0e88c73e6552646,libclap_builder-aa12ca69317bdc7f,libstrsim-787f051cd40b5bd6,libanstream-abf092ab957624fc,libanstyle_query-7df5b05ebe32fd1e,libis_terminal_polyfill-3c293cff49517343,libanstyle_wincon-b8bce53b8f3bb588,libonce_cell_polyfill-c8ee1d6325365957,libwindows_sys-97c9d20f486c11ff,libwindows_link-90252b3cbb54c40c,libcolorchoice-051f796f12a45e00,libanstyle_parse-c15734cb2435c9f4,libutf8parse-1731586f448419b1,libclap_lex-02b88ba7322149b9,libanstyle-677e6005b393be28}.rlib" "<sysroot>\\lib\\rustlib\\aarch64-pc-windows-msvc\\lib/{libstd-*,libpanic_unwind-*,libcfg_if-*,libwindows_link-*,librustc_demangle-*,libstd_detect-*,libhashbrown-*,librustc_std_workspace_alloc-*,libunwind-*,librustc_std_workspace_core-*,liballoc-*,libcore-*,libcompiler_builtins-*}.rlib" "kernel32.lib" "ntdll.lib" "kernel32.lib" "ntdll.lib" "kernel32.lib" "ntdll.lib" "kernel32.lib" "ntdll.lib" "kernel32.lib" "ntdll.lib" "kernel32.lib" "ntdll.lib" "kernel32.lib" "ntdll.lib" "advapi32.lib" "ntdll.lib" "kernel32.lib" "ntdll.lib" "kernel32.lib" "advapi32.lib" "kernel32.lib" "advapi32.lib" "kernel32.lib" "kernel32.lib" "legacy_stdio_definitions.lib" "kernel32.lib" "kernel32.lib" "kernel32.lib" "ntdll.lib" "userenv.lib" "ws2_32.lib" "dbghelp.lib" "/defaultlib:msvcrt" "/NXCOMPAT" "/LIBPATH:C:\\Windows\\Temp\\assist-native-rax-20261010\\src-eri-candidate1\\target\\normal-candidate2\\debug\\build\\zstd-sys-93af8f4d968366d3\\out" "/OUT:C:\\Windows\\Temp\\assist-native-rax-20261010\\src-eri-candidate1\\target\\normal-candidate2\\debug\\deps\\rax.exe" "/OPT:REF,NOICF" "/DEBUG" "/PDBALTPATH:%_PDB%" "/NATVIS:<sysroot>\\lib\\rustlib\\etc\\intrinsic.natvis" "/NATVIS:<sysroot>\\lib\\rustlib\\etc\\liballoc.natvis" "/NATVIS:<sysroot>\\lib\\rustlib\\etc\\libcore.natvis" "/NATVIS:<sysroot>\\lib\\rustlib\\etc\\libstd.natvis"
+  = note: some arguments are omitted. use `--verbose` to show all linker arguments
+  = note: LINK : fatal error LNK1318: Unexpected PDB error; LIMIT (12) 'C:\Windows\Temp\assist-native-rax-20261010\src-eri-candidate1\target\normal-candidate2\debug\deps\rax.pdb'
+          
+
+error: could not compile `rax` (bin "rax") due to 1 previous error

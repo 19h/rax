@@ -1,0 +1,13 @@
+
+running 7 tests
+test user::windows::process::sched::tests::services_tests::registry_tests::error_message_instrument::native_error_message_instrument_registry_open_replays_all_execution_views ... ok
+test user::windows::registry::error_message_instrument_tests::native_error_message_instrument_registry_absence_is_confined_to_selected_root ... ok
+test user::windows::registry::error_message_instrument_tests::native_error_message_instrument_registry_present_tree_owns_raw_data_and_descendants ... ok
+test user::windows::registry::error_message_instrument_tests::native_error_message_instrument_registry_selection_rejects_duplicates_and_excess_values ... ok
+test user::windows::registry::installed::error_message_instrument_tests::installed_error_message_instrument_registry_capture_distinguishes_root_absence_from_other_errors ... ok
+test user::windows::registry::installed::error_message_instrument_tests::installed_error_message_instrument_registry_present_capture_uses_controlled_read_only_native_subtree ... native controlled Error Message Instrument capture: 54 keys, 106 values, 4756 bytes
+ok
+test user::windows::registry::installed::error_message_instrument_tests::installed_error_message_instrument_registry_snapshot_matches_independent_native_presence_and_views ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 7641 filtered out; finished in 0.29s
+

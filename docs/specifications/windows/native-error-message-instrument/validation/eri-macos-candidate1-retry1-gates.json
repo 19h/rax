@@ -1,0 +1,130 @@
+{
+  "state": "finished",
+  "source-epoch": 1,
+  "host": "macos",
+  "driver-pid": 26386,
+  "steps": [
+    {
+      "name": "focus",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "native_error_message_instrument",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 2.1751954169594683,
+      "log": "eri-macos-candidate1-retry1-focus.log",
+      "bytes": 914,
+      "sha256": "fb8c491c5e29122441a48b90d24bd39e1fd4fa972d47e5398d40ab1ed71d5c12",
+      "results": [
+        "ok. 4 passed; 0 failed; 0 ignored; 0 measured; 8170 filtered out; finished in 0.27s"
+      ]
+    },
+    {
+      "name": "full",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 516.3594999579946,
+      "log": "eri-macos-candidate1-retry1-full.log",
+      "bytes": 862930,
+      "sha256": "3e8a0aba0b96e2e5bf96a071018e1ccecf37d09515ba24ac10fa87cb6022bba0",
+      "results": [
+        "ok. 8172 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 513.28s"
+      ]
+    },
+    {
+      "name": "capi",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "-p",
+        "rax-capi",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 108.59976966696559,
+      "log": "eri-macos-candidate1-retry1-capi.log",
+      "bytes": 14151,
+      "sha256": "d9a56f24e561be536809ca31682a3892dfb4f2bc15eb22f563958bd701b3df0e",
+      "results": [
+        "ok. 183 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 20.36s",
+        "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    {
+      "name": "integration",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--test",
+        "user_windows",
+        "--test",
+        "user_windows_memory",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 73.78475245903246,
+      "log": "eri-macos-candidate1-retry1-integration.log",
+      "bytes": 35866,
+      "sha256": "c2fd91c88cd80327790343a8ff6ab5437e593f32536722e5bac36fdcc77cb57b",
+      "results": [
+        "ok. 544 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 65.27s",
+        "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    {
+      "name": "all-targets",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "check",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--all-targets"
+      ],
+      "exit-code": 0,
+      "seconds": 78.97949729202082,
+      "log": "eri-macos-candidate1-retry1-all-targets.log",
+      "bytes": 395,
+      "sha256": "e1df43811195c1972c3194ad5967fb74a2938fe96c7b8c080b3c550d434cce53",
+      "results": []
+    }
+  ],
+  "current-step": "all-targets",
+  "child-pid": 56020,
+  "exit-code": 0,
+  "post-source-inputs": 28816,
+  "completed-utc": "2026-10-22T11:31:24.902077+00:00"
+}

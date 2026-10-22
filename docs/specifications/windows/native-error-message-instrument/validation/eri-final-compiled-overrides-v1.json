@@ -1,0 +1,162 @@
+{
+  "utc": "2026-10-22T11:31:43.202953+00:00",
+  "base": "b40dc96e98355fdcb35292654a108ea73ab3842e",
+  "archive": "eri-final-compiled-overrides-v1.tar.gz",
+  "bytes": 23356,
+  "sha256": "4f2c86f7214f50728e5abbdb9fb8fea74057e5408167cdbc9c4ea9ed070ccd2b",
+  "source-ledger": "eri-candidate1-source.json",
+  "source-ledger-sha256": "c487efef544b8a75cc678d5781e460583c3a34870fb728bb937dc1ea35ba72b1",
+  "overrides": [
+    {
+      "path": "docs/specifications/windows/native-error-message-instrument/native/native-error-message-instrument-20261021-v1-four-views-arm64-after.log",
+      "kind": "file",
+      "bytes": 313,
+      "sha256": "ac418d0be687a9e8c91d9d0e36c0b17fd67968125702afeddc574d65168991e2"
+    },
+    {
+      "path": "docs/specifications/windows/native-error-message-instrument/native/native-error-message-instrument-20261021-v1-four-views-arm64-before.log",
+      "kind": "file",
+      "bytes": 313,
+      "sha256": "ac418d0be687a9e8c91d9d0e36c0b17fd67968125702afeddc574d65168991e2"
+    },
+    {
+      "path": "docs/specifications/windows/native-error-message-instrument/native/native-error-message-instrument-20261021-v1-four-views-arm64-build.log",
+      "kind": "file",
+      "bytes": 49,
+      "sha256": "00e595e8ee99133e1e6a802100f702e2fa7f8ddef9e33b08c3bf578a2d0b6a13"
+    },
+    {
+      "path": "docs/specifications/windows/native-error-message-instrument/native/native-error-message-instrument-20261021-v1-four-views-arm64.log",
+      "kind": "file",
+      "bytes": 9174,
+      "sha256": "dd46fda3f18bda2a367332f8bfb1561089184aa2c78101c082b13177ab8021c4"
+    },
+    {
+      "path": "docs/specifications/windows/native-error-message-instrument/native/native-error-message-instrument-20261021-v1-four-views-launch.json",
+      "kind": "file",
+      "bytes": 19603,
+      "sha256": "23c99b336a189edfad86fffc0173b9043b96d92bc2a15a7ad89e80bfe92365ad"
+    },
+    {
+      "path": "docs/specifications/windows/native-error-message-instrument/native/native-error-message-instrument-20261021-v1-four-views-x64-after.log",
+      "kind": "file",
+      "bytes": 309,
+      "sha256": "e06bcbef16399683eac904646fb83fe7450ad2d40cc8a71958baf03ace77623c"
+    },
+    {
+      "path": "docs/specifications/windows/native-error-message-instrument/native/native-error-message-instrument-20261021-v1-four-views-x64-before.log",
+      "kind": "file",
+      "bytes": 309,
+      "sha256": "e06bcbef16399683eac904646fb83fe7450ad2d40cc8a71958baf03ace77623c"
+    },
+    {
+      "path": "docs/specifications/windows/native-error-message-instrument/native/native-error-message-instrument-20261021-v1-four-views-x64-build.log",
+      "kind": "file",
+      "bytes": 49,
+      "sha256": "00e595e8ee99133e1e6a802100f702e2fa7f8ddef9e33b08c3bf578a2d0b6a13"
+    },
+    {
+      "path": "docs/specifications/windows/native-error-message-instrument/native/native-error-message-instrument-20261021-v1-four-views-x64.log",
+      "kind": "file",
+      "bytes": 9172,
+      "sha256": "77096547da7585701bab2cacbe3014ac4a08384e6d7214bd64e2532cd2ee9927"
+    },
+    {
+      "path": "docs/specifications/windows/native-error-message-instrument/native/native-error-message-instrument-20261021-v1-four-views-x86-after.log",
+      "kind": "file",
+      "bytes": 308,
+      "sha256": "8c98d4737bc07bf493c7b8d580415595f98d5a7470408076e95d684ce43fac6f"
+    },
+    {
+      "path": "docs/specifications/windows/native-error-message-instrument/native/native-error-message-instrument-20261021-v1-four-views-x86-before.log",
+      "kind": "file",
+      "bytes": 308,
+      "sha256": "8c98d4737bc07bf493c7b8d580415595f98d5a7470408076e95d684ce43fac6f"
+    },
+    {
+      "path": "docs/specifications/windows/native-error-message-instrument/native/native-error-message-instrument-20261021-v1-four-views-x86-build.log",
+      "kind": "file",
+      "bytes": 49,
+      "sha256": "00e595e8ee99133e1e6a802100f702e2fa7f8ddef9e33b08c3bf578a2d0b6a13"
+    },
+    {
+      "path": "docs/specifications/windows/native-error-message-instrument/native/native-error-message-instrument-20261021-v1-four-views-x86-laa-after.log",
+      "kind": "file",
+      "bytes": 315,
+      "sha256": "c4115ccae18116b2c8c01b2a3b1d06f7e8dd4bf35783238c0f3d8f402ac167b2"
+    },
+    {
+      "path": "docs/specifications/windows/native-error-message-instrument/native/native-error-message-instrument-20261021-v1-four-views-x86-laa-before.log",
+      "kind": "file",
+      "bytes": 315,
+      "sha256": "c4115ccae18116b2c8c01b2a3b1d06f7e8dd4bf35783238c0f3d8f402ac167b2"
+    },
+    {
+      "path": "docs/specifications/windows/native-error-message-instrument/native/native-error-message-instrument-20261021-v1-four-views-x86-laa-build.log",
+      "kind": "file",
+      "bytes": 49,
+      "sha256": "00e595e8ee99133e1e6a802100f702e2fa7f8ddef9e33b08c3bf578a2d0b6a13"
+    },
+    {
+      "path": "docs/specifications/windows/native-error-message-instrument/native/native-error-message-instrument-20261021-v1-four-views-x86-laa.log",
+      "kind": "file",
+      "bytes": 9176,
+      "sha256": "dc4405e7c8c5bef2bb92cc8dac93ed694255613be50154766eb2d2d432da345f"
+    },
+    {
+      "path": "docs/specifications/windows/native-error-message-instrument/native/native-error-message-instrument-20261021-v1-four-views-x86.log",
+      "kind": "file",
+      "bytes": 9172,
+      "sha256": "185fa3d9c78e0254e8815ec2787f61772835cfe4cc66aa0ec817aa3d113983ab"
+    },
+    {
+      "path": "docs/specifications/windows/native-error-message-instrument/native/native-error-message-instrument-20261021-v1.cpp",
+      "kind": "file",
+      "bytes": 3034,
+      "sha256": "3983e87dfefee7df62551f4269a04b5c2d1f2df4682749dac8d0af562b4896e8"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/registry_tests.rs",
+      "kind": "file",
+      "bytes": 38962,
+      "sha256": "065dfbc8e0193bd56700e15eb2c3019f9d98bf9194de9e91fffa20476db15936"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/registry_tests/error_message_instrument.rs",
+      "kind": "file",
+      "bytes": 3758,
+      "sha256": "e30e6b10bfc4e0a173b856b98bd4db8c2812018bf40836963a9803d9e4b9f362"
+    },
+    {
+      "path": "src/user/windows/registry.rs",
+      "kind": "file",
+      "bytes": 8584,
+      "sha256": "676f19ecb1adc5f5681481166d2434f3c79249198549a105826a4bcad1f31799"
+    },
+    {
+      "path": "src/user/windows/registry/error_message_instrument_tests.rs",
+      "kind": "file",
+      "bytes": 4010,
+      "sha256": "6ed984a622974c81558e7c062a81b9a06efbfcc280c5754c02fd94c56bd928fa"
+    },
+    {
+      "path": "src/user/windows/registry/installed.rs",
+      "kind": "file",
+      "bytes": 10942,
+      "sha256": "369db323015dddcc01c1aa9f3fee90de08a1c741b4211922baf9218f310c77ed"
+    },
+    {
+      "path": "src/user/windows/registry/installed/error_message_instrument_tests.rs",
+      "kind": "file",
+      "bytes": 5285,
+      "sha256": "13279613ef02c63eb03c798097571cde40556ac90550d1fe4553c95333e47f70"
+    },
+    {
+      "path": "src/user/windows/registry/tree.rs",
+      "kind": "file",
+      "bytes": 9074,
+      "sha256": "ef6405876d74ff12a06f90564a4dee25f7a3b690a04e1c14e8dc1f0ffb796e64"
+    }
+  ],
+  "scope": "Published Git baseline plus these source/data members reconstructs all final frozen inputs; the larger native development materialization is not republished."
+}

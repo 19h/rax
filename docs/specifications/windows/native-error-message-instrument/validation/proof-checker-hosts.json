@@ -1,0 +1,28 @@
+{
+  "state": "verified",
+  "complete-gates": [
+    {
+      "host": "macos",
+      "log": "eri-complete-gates-macos-final-v1.log",
+      "bytes": 1065,
+      "sha256": "09597baeb0daf3ce97cd7d168c16d64af0cceab6cacd6d84207587f3e2a34ff6"
+    },
+    {
+      "host": "linux",
+      "log": "eri-complete-gates-linux-final-v1.log",
+      "bytes": 1065,
+      "sha256": "09597baeb0daf3ce97cd7d168c16d64af0cceab6cacd6d84207587f3e2a34ff6"
+    },
+    {
+      "host": "windows",
+      "log": "eri-complete-gates-windows-final-v1.log",
+      "bytes": 1117,
+      "sha256": "43bacaea1975978c6461783d961a4b27c6f3e29c11c1f8a08ef46ad805faed83"
+    }
+  ],
+  "source-inputs": 28816,
+  "native-observations": 864,
+  "native-live-inputs": 18,
+  "checker-sha256": "17175d5f1473e611060b38c76f1a4e158a017080fedf45f31a7276c751fdbc02",
+  "native-checker-sha256": "182320bc50972e66824a5ec637716ebaff59ee33cd88f0104801dca2645a9566"
+}

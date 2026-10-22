@@ -1,0 +1,42 @@
+{
+  "state": "verified",
+  "utc": "2026-10-22T11:32:20.453734+00:00",
+  "source-ledger-sha256": "c487efef544b8a75cc678d5781e460583c3a34870fb728bb937dc1ea35ba72b1",
+  "cases": [
+    {
+      "host": "macos",
+      "test": "user::darwin::runtime_files::tests::native_runtime_executes_system_programs_in_a_closed_process",
+      "program-cases": [
+        "/usr/bin/true",
+        "/usr/bin/printf"
+      ],
+      "full-suite": {
+        "log": "eri-macos-candidate1-retry1-full.log",
+        "bytes": 862930,
+        "sha256": "3e8a0aba0b96e2e5bf96a071018e1ccecf37d09515ba24ac10fa87cb6022bba0",
+        "results": [
+          "ok. 8172 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 513.28s"
+        ]
+      },
+      "scope": "Existing test code was inspected: each native installed-runtime case must exit0 with exact expected output and real loader/cache admission; this record extracts current evidence without rerunning tests or claiming arbitrary-program completeness."
+    },
+    {
+      "host": "linux",
+      "test": "user::linux::runtime_files::tests::native_runtime_executes_installed_dynamic_programs_without_a_sysroot",
+      "program-cases": [
+        "/bin/true",
+        "/usr/bin/printf",
+        "/usr/bin/printf with LD_PRELOAD=libm.so.6"
+      ],
+      "full-suite": {
+        "log": "eri-linux-candidate1-full.log",
+        "bytes": 862999,
+        "sha256": "b3eb079896e8cf6acf676f11e7eac4e2156c66ec8b6113c64f1e0a7b84befe56",
+        "results": [
+          "ok. 8166 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 692.69s"
+        ]
+      },
+      "scope": "Existing test code was inspected: each native installed-runtime case must exit0 with exact expected output and real loader/cache admission; this record extracts current evidence without rerunning tests or claiming arbitrary-program completeness."
+    }
+  ]
+}

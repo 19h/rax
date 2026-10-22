@@ -1,0 +1,14 @@
+   Compiling vm-memory v0.17.1 (/work/vendor/rax/vendor/vm-memory)
+   Compiling linux-loader v0.13.2 (https://github.com/19h/linux-loader?rev=f745b555942c4e840a784bca61e6f3976d101960#f745b555)
+   Compiling rax v0.1.0 (/work/vendor/rax)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2m 10s
+     Running unittests src/lib.rs (target/linux/eri-candidate1/debug/deps/rax-3e31f1d94bc1cdf9)
+
+running 4 tests
+test user::windows::process::sched::tests::services_tests::registry_tests::error_message_instrument::native_error_message_instrument_registry_open_replays_all_execution_views ... ok
+test user::windows::registry::error_message_instrument_tests::native_error_message_instrument_registry_absence_is_confined_to_selected_root ... ok
+test user::windows::registry::error_message_instrument_tests::native_error_message_instrument_registry_present_tree_owns_raw_data_and_descendants ... ok
+test user::windows::registry::error_message_instrument_tests::native_error_message_instrument_registry_selection_rejects_duplicates_and_excess_values ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 8164 filtered out; finished in 0.32s
+

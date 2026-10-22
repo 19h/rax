@@ -1,0 +1,188 @@
+{
+  "state": "finished",
+  "utc": "2026-10-22T11:54:45.992206+00:00",
+  "free-before": 615251968,
+  "retired-process-inspection": "",
+  "deleted": [
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-eri-candidate1\\target\\retained-owning-candidate1\\carrier.lib",
+      "bytes": 658505728,
+      "sha256": "9b1e99eca397390a02ae1fe9f208c45be8db7097a081caae85a3af3d00ca7ddf",
+      "reason": "incomplete byte copy from failed retention"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate1\\target\\normal-candidate1\\debug\\rax.pdb",
+      "bytes": 142798848,
+      "sha256": "261b2a0e05dda1966c72f14aa4ffb17362934ba88d48c3da16d0cf9f81138944",
+      "reason": "retired standalone debugger symbols, not a source/executed image or archive"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate1\\target\\normal-candidate1\\debug\\rax_isa_oracle.pdb",
+      "bytes": 102748160,
+      "sha256": "c44446c7df4d0b2440c1b635057ceaa73c578dcf869bcda357b11f8f734d578a",
+      "reason": "retired standalone debugger symbols, not a source/executed image or archive"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate1\\target\\normal-candidate1\\debug\\rax_user.pdb",
+      "bytes": 1363968,
+      "sha256": "bbd283429f17171326792cfbbc231c92d8b2b23bfe16ec9b41f99772dce54419",
+      "reason": "retired standalone debugger symbols, not a source/executed image or archive"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate1\\target\\normal-candidate1\\debug\\deps\\rax-24d49cb87dffa633.pdb",
+      "bytes": 174231552,
+      "sha256": "f69548a949f1da627dd4efa66a69b0ef7fc33c85a46b319a25b4e20589a552b4",
+      "reason": "retired standalone debugger symbols, not a source/executed image or archive"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate1\\target\\normal-candidate1\\debug\\deps\\rax-b799307a7949aa6b.pdb",
+      "bytes": 325849088,
+      "sha256": "d45e8fd8feff40a0181d0558bb54a33e55aacd401e39aaf4e8216f6f3f1937a4",
+      "reason": "retired standalone debugger symbols, not a source/executed image or archive"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate1\\target\\normal-candidate1\\debug\\deps\\rax.pdb",
+      "bytes": 142798848,
+      "sha256": "261b2a0e05dda1966c72f14aa4ffb17362934ba88d48c3da16d0cf9f81138944",
+      "reason": "retired standalone debugger symbols, not a source/executed image or archive"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate1\\target\\normal-candidate1\\debug\\deps\\rax_isa_oracle.pdb",
+      "bytes": 102748160,
+      "sha256": "c44446c7df4d0b2440c1b635057ceaa73c578dcf869bcda357b11f8f734d578a",
+      "reason": "retired standalone debugger symbols, not a source/executed image or archive"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate1\\target\\normal-candidate1\\debug\\deps\\rax_user.pdb",
+      "bytes": 1363968,
+      "sha256": "bbd283429f17171326792cfbbc231c92d8b2b23bfe16ec9b41f99772dce54419",
+      "reason": "retired standalone debugger symbols, not a source/executed image or archive"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate1\\target\\normal-candidate1\\debug\\deps\\user_windows-e7d78e1ede169446.pdb",
+      "bytes": 3026944,
+      "sha256": "815c990914e89c6ae46a98a043d727810f24c78eb0715029dcf8cbca0a114bab",
+      "reason": "retired standalone debugger symbols, not a source/executed image or archive"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate1\\target\\normal-candidate1\\debug\\deps\\user_windows_memory-184b1c8bfebf3d24.pdb",
+      "bytes": 4149248,
+      "sha256": "24d39d991ab4e57d1a77c9d8b03b456d22f7377dc27086dea9855b1c44a1c77d",
+      "reason": "retired standalone debugger symbols, not a source/executed image or archive"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate2\\target\\normal-candidate2\\debug\\rax.pdb",
+      "bytes": 142790656,
+      "sha256": "ab1368e49a4e38e4ceddbe496a293c83651ebd9fb0c92242ef9d7af92546024b",
+      "reason": "retired standalone debugger symbols, not a source/executed image or archive"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate2\\target\\normal-candidate2\\debug\\rax_isa_oracle.pdb",
+      "bytes": 102748160,
+      "sha256": "d7cfff0d8b0ac43345229cd63bcda6f3d39b976464b50cf21422a15206a70f54",
+      "reason": "retired standalone debugger symbols, not a source/executed image or archive"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate2\\target\\normal-candidate2\\debug\\rax_user.pdb",
+      "bytes": 1363968,
+      "sha256": "db312ab2daf037a30e643c7ae2bca741fa9557c692ba31d01046876364854741",
+      "reason": "retired standalone debugger symbols, not a source/executed image or archive"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate2\\target\\normal-candidate2\\debug\\deps\\rax-24d49cb87dffa633.pdb",
+      "bytes": 174231552,
+      "sha256": "b0ba5be301a3b9d0d3a19c53eaa42bea50798aa3cc8420238bad8e9592a1b2a0",
+      "reason": "retired standalone debugger symbols, not a source/executed image or archive"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate2\\target\\normal-candidate2\\debug\\deps\\rax-b799307a7949aa6b.pdb",
+      "bytes": 325906432,
+      "sha256": "dd88a89d3298c74a692ef07880b2cc69ed9c5d3fc02315c0a5d40f902c00515e",
+      "reason": "retired standalone debugger symbols, not a source/executed image or archive"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate2\\target\\normal-candidate2\\debug\\deps\\rax.pdb",
+      "bytes": 142790656,
+      "sha256": "ab1368e49a4e38e4ceddbe496a293c83651ebd9fb0c92242ef9d7af92546024b",
+      "reason": "retired standalone debugger symbols, not a source/executed image or archive"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate2\\target\\normal-candidate2\\debug\\deps\\rax_isa_oracle.pdb",
+      "bytes": 102748160,
+      "sha256": "d7cfff0d8b0ac43345229cd63bcda6f3d39b976464b50cf21422a15206a70f54",
+      "reason": "retired standalone debugger symbols, not a source/executed image or archive"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate2\\target\\normal-candidate2\\debug\\deps\\rax_user.pdb",
+      "bytes": 1363968,
+      "sha256": "db312ab2daf037a30e643c7ae2bca741fa9557c692ba31d01046876364854741",
+      "reason": "retired standalone debugger symbols, not a source/executed image or archive"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate2\\target\\normal-candidate2\\debug\\deps\\user_windows-e7d78e1ede169446.pdb",
+      "bytes": 3026944,
+      "sha256": "50b3b3597231676d636d4010dc0384aa1eaedbbaf70dad660112764f1f7b36c6",
+      "reason": "retired standalone debugger symbols, not a source/executed image or archive"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate2\\target\\normal-candidate2\\debug\\deps\\user_windows_memory-184b1c8bfebf3d24.pdb",
+      "bytes": 4149248,
+      "sha256": "f8a2af36f3bd3e660040bd5c8842577d3c3049cb440f55fbef9f6cb80aa3b362",
+      "reason": "retired standalone debugger symbols, not a source/executed image or archive"
+    }
+  ],
+  "scope": "Only exact retired ALPC standalone PDB files and a verified incomplete ERI carrier retention copy; preserve all source, live archives, executables, retained complete files and current ERI symbols.",
+  "free-after": 3046219776,
+  "preserved-byte-identities": [
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate1\\target\\retained-owning-candidate1\\core.rlib",
+      "bytes": 511390456,
+      "sha256": "e96a9e6f3a91f21e94dc6843b0ff334547cb4f33ee86a5319e12f2550d295d4b"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate1\\target\\retained-owning-candidate1\\carrier.lib",
+      "bytes": 860804200,
+      "sha256": "e0109cfd0da2afafaaba8408ec12ffc88a749c704019f7159d1ada736dbcdaa3"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate1\\target\\retained-owning-candidate1\\ordinary.exe",
+      "bytes": 27252736,
+      "sha256": "dbf37872bcd284b220f9810c4fb9ab2503b35263a254785551bd80da3c04b4b3"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate1\\target\\retained-owning-candidate1\\capi.exe",
+      "bytes": 32820736,
+      "sha256": "8d61811066faa59388a39c307f6b4c4fd57dfae60cf67b42248a7eccee1b0c33"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate2\\target\\retained-owning-candidate2\\core.rlib",
+      "bytes": 511102428,
+      "sha256": "c9b7b6c87e4dd4a8493b51feb250777a6e16bd5be5d9da81a9902b4d475d7476"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate2\\target\\retained-owning-candidate2\\carrier.lib",
+      "bytes": 860516160,
+      "sha256": "9b9060cf4591e09c4006e7eeb4d62b0fcbf51ecc67bb9df8059cc91951412d08"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate2\\target\\retained-owning-candidate2\\ordinary.exe",
+      "bytes": 27252224,
+      "sha256": "10187e8a80b911a7742bfa58bbca3eebbbfdc38764a6283c0be710713e8f4bfe"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate2\\target\\retained-owning-candidate2\\capi.exe",
+      "bytes": 32820736,
+      "sha256": "e749579cf42292b3d6134a67eb6f1553f6f61a9d1ed6cb2d584cbb6ccf77a784"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\debug\\assist_rs.lib",
+      "bytes": 860966146,
+      "sha256": "5a2c7b49ce0674eed339fa8e76fc0b005ef6189f6c46e62a7e9f31cff27144b5"
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\debug\\deps\\librax-934115059aa64c85.rlib",
+      "bytes": 511553626,
+      "sha256": "496c06becd809cba6274c8f475c684cb75c8d396dbf6b3ee71a014fbddd60732"
+    }
+  ]
+}
