@@ -1,0 +1,7 @@
+terminal turn=2867 result=Complete(Internal("native NTDLL service NtReadVirtualMemory (0x3f) at 0x7fff38a41430 is not implemented"))
+thread=8 pc=7FFF38A41434 sp=1A5DBA0 frames=0
+registers=[FFFFFFFFFFFFFFFF, 7FFDF010, 1A5DBA8, 8, 1A5DBA0, 2, 1000100, 2119024]
+read-virtual-memory handle=FFFFFFFFFFFFFFFF base=7FFDF010 output=1A5DBA8 length-bytes=8 returned-length=1A5DBA0
+output-before=Ok([0, 0, 0, 0, 0, 0, 0, 0])
+input-before=Ok([0, 0, 0, 40, 1, 0, 0, 0])
+returned-before=Ok([0, 0, 0, 0, 0, 0, 0, 0])

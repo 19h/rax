@@ -1,0 +1,133 @@
+{
+  "state": "finished",
+  "host": "macos",
+  "pid": 11808,
+  "source-inputs": 3972,
+  "scope": "Retained Assist ABI184 linked consumers; no whole current root GUI/plugin/package claim.",
+  "steps": [
+    {
+      "gate": "prime-artifacts",
+      "cwd": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/rust/assist-rs",
+      "command": [
+        "cmake",
+        "-E",
+        "env",
+        "CARGO_TARGET_DIR=/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes/assist-rs-target",
+        "CARGO_PROFILE_RELEASE_STRIP=false",
+        "MACOSX_DEPLOYMENT_TARGET=10.15",
+        "ASSIST_RESOURCE_PYTHON=/opt/homebrew/Frameworks/Python.framework/Versions/3.15/bin/python3.15",
+        "CARGO_BUILD_JOBS=2",
+        "RUSTUP_TOOLCHAIN=1.95.0",
+        "/Users/int/.cargo/bin/cargo",
+        "build",
+        "--locked",
+        "--offline",
+        "--manifest-path",
+        "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/rust/assist-rs/Cargo.toml",
+        "--package",
+        "assist-rs",
+        "--target",
+        "aarch64-apple-darwin",
+        "--features",
+        "rax",
+        "--message-format=json"
+      ],
+      "exit-code": 0,
+      "seconds": 25.332062917004805,
+      "log": "macos-process-basic-candidate1-owning-v2-prime-artifacts.log",
+      "bytes": 137670,
+      "sha256": "4fef0e8fe9c43f8e78dc20e52da2247cca7ba9d965f710b9197adcde1f774d86"
+    },
+    {
+      "gate": "archives-before",
+      "command": [
+        "python3",
+        "-B",
+        "/Users/int/Library/Caches/assist-process-emulation/native-process-basic-information-20261022/collect-process-basic-archives-candidate1.py",
+        "--host",
+        "macos",
+        "--source",
+        "/Users/int/.assist-native-display-policy-20261022",
+        "--manifest",
+        "/Users/int/Library/Caches/assist-process-emulation/native-process-basic-information-20261022/process-basic-owning-source-hashes-candidate1.json",
+        "--messages",
+        "/Users/int/Library/Caches/assist-process-emulation/native-process-basic-information-20261022/macos-process-basic-candidate1-owning-v2-prime-artifacts.log",
+        "--output",
+        "/Users/int/Library/Caches/assist-process-emulation/native-process-basic-information-20261022/macos-process-basic-candidate1-archives-before.json"
+      ],
+      "exit-code": 0,
+      "seconds": 0.8022021669894457,
+      "log": "macos-process-basic-candidate1-owning-v2-archives-before.log",
+      "bytes": 180,
+      "sha256": "a3df0e5a1234287a1fbb0bc7929ee011aa0e985abbb8e1e1c456906499249525"
+    },
+    {
+      "gate": "build",
+      "command": [
+        "cmake",
+        "--build",
+        "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes",
+        "--target",
+        "assist_idalib_cli",
+        "assist_mcp",
+        "assist_mcp_tool_manifest_tests",
+        "assist_rax_process_tests",
+        "assist_process_tool_tests",
+        "assist_process_tool_unavailable_tests",
+        "assist_e14_rax_abi_drift_tests",
+        "assist_rust_archive_link_tests",
+        "--parallel",
+        "2"
+      ],
+      "exit-code": 0,
+      "seconds": 16.392652833019383,
+      "log": "macos-process-basic-candidate1-owning-v2-build.log",
+      "bytes": 1403,
+      "sha256": "32bdc6d6a9d632f9a4d2128da5be750de12ad2458fe27cc90b17917a95fcacc9"
+    },
+    {
+      "gate": "ctest",
+      "command": [
+        "ctest",
+        "--test-dir",
+        "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes",
+        "--output-on-failure",
+        "-R",
+        "^(assist_rust_archive_link_tests|assist_rax_process_tests|assist_process_tool_tests|assist_process_tool_unavailable_tests|assist_e14_rax_abi_drift_tests|assist_mcp_tool_manifest_tests|assist_mcp_manifest_runtime_test)$"
+      ],
+      "exit-code": 0,
+      "seconds": 5.464766291959677,
+      "log": "macos-process-basic-candidate1-owning-v2-ctest.log",
+      "bytes": 1298,
+      "sha256": "a491a39e20c9c2caf9d06701c1d4b575c858d2daae8ce0fc6f083e3039ae9589"
+    },
+    {
+      "gate": "archives-after",
+      "command": [
+        "python3",
+        "-B",
+        "/Users/int/Library/Caches/assist-process-emulation/native-process-basic-information-20261022/collect-process-basic-archives-candidate1.py",
+        "--host",
+        "macos",
+        "--source",
+        "/Users/int/.assist-native-display-policy-20261022",
+        "--manifest",
+        "/Users/int/Library/Caches/assist-process-emulation/native-process-basic-information-20261022/process-basic-owning-source-hashes-candidate1.json",
+        "--messages",
+        "/Users/int/Library/Caches/assist-process-emulation/native-process-basic-information-20261022/macos-process-basic-candidate1-owning-v2-prime-artifacts.log",
+        "--output",
+        "/Users/int/Library/Caches/assist-process-emulation/native-process-basic-information-20261022/macos-process-basic-candidate1-archives-after.json"
+      ],
+      "exit-code": 0,
+      "seconds": 0.8101649589953013,
+      "log": "macos-process-basic-candidate1-owning-v2-archives-after.log",
+      "bytes": 180,
+      "sha256": "a3df0e5a1234287a1fbb0bc7929ee011aa0e985abbb8e1e1c456906499249525"
+    }
+  ],
+  "current-step": "archives-after",
+  "child-pid": 12557,
+  "exit-code": 0,
+  "archive-identities-stable": true,
+  "completed-utc": "2026-10-22T16:21:56.433926+00:00"
+}

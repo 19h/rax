@@ -157,7 +157,7 @@ fn native_process_cookie_checks_exact_length_alignment_and_handle_write_grants_a
             assert_eq!(t.cpu.gpr(0), u64::from(STATUS_INVALID_HANDLE));
             assert_eq!(p.space.bytes(scratch, 128).unwrap(), [0xA5; 128]);
         }
-        for class in [0, 1, u32::MAX] {
+        for class in [1, u32::MAX] {
             let (mut process, mut t, scratch) = setup(arch);
             let p = process.state_mut();
             arguments(
@@ -465,3 +465,6 @@ fn run_to_return(p: &mut Proc, t: &mut Thread, resume: u64, name: &str) -> u64 {
 
 #[path = "process_mitigation_tests.rs"]
 mod process_mitigation;
+
+#[path = "process_query_tests/basic_information.rs"]
+mod basic_information;

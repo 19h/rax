@@ -1,0 +1,20 @@
+{
+  "state": "finished",
+  "parent": "79a5e8a0e379f309dcc1e4e29fb8177d05cb3e1d",
+  "parent-tracked-inputs": 29132,
+  "compiler-inputs": 29139,
+  "overlay-members": 10,
+  "tracked-diff": [
+    "src/user/windows/dll/native.rs",
+    "src/user/windows/dll/native/process_query.rs",
+    "src/user/windows/process/sched/tests/services_tests/process_query_tests.rs"
+  ],
+  "full-input-hashes-verified": true,
+  "symlink-text-inputs": 16,
+  "public-capi-header": {
+    "bytes": 70196,
+    "sha256": "e8438269c7f9411da7c92dff70942dbb839570cda9a6ac1bec0b78ed731e829a"
+  },
+  "capi-header-diff": "",
+  "preparation-repair": "Earlier ad-hoc audit followed symlink targets rather than hashing recorded link text; this audit matches the frozen frame semantics."
+}

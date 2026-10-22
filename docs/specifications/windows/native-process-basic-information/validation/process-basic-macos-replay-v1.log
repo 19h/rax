@@ -1,0 +1,24 @@
+   Compiling vm-memory v0.17.1 (/Users/int/.assist-native-display-policy-20261022/vendor/vm-memory)
+   Compiling linux-loader v0.13.2 (https://github.com/19h/linux-loader?rev=f745b555942c4e840a784bca61e6f3976d101960#f745b555)
+   Compiling rax v0.1.0 (/Users/int/.assist-native-display-policy-20261022)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 48s
+     Running unittests src/lib.rs (target/candidate1/debug/deps/rax-285dead330a8c242)
+
+running 2 tests
+test user::windows::process::sched::tests::services_tests::process_query_tests::basic_information::native_process_basic_information_self_preserves_virtual_identity_and_layouts ... ok
+
+thread 'user::windows::process::sched::tests::services_tests::process_query_tests::basic_information::replay::native_process_basic_information_replays_19852_captured_calls' (34040050) panicked at src/user/windows/process/sched/tests/services_tests/process_query_tests/basic_information/replay.rs:305:9:
+assertion `left == right` failed: out-head: x86 line 3922
+  left: [165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 32, 0, 0, 0, 0, 0, 0, 0, 0, 240, 253, 127, 0, 0, 0, 0, 165, 165, 165, 165, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165]
+ right: [165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 32, 0, 0, 0, 0, 0, 0, 0, 0, 240, 253, 127, 0, 0, 0, 0, 165, 165, 165, 165, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165, 165]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test user::windows::process::sched::tests::services_tests::process_query_tests::basic_information::replay::native_process_basic_information_replays_19852_captured_calls ... FAILED
+
+failures:
+
+failures:
+    user::windows::process::sched::tests::services_tests::process_query_tests::basic_information::replay::native_process_basic_information_replays_19852_captured_calls
+
+test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 10359 filtered out; finished in 1.16s
+
+error: test failed, to rerun pass `--lib`

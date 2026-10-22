@@ -1,0 +1,7 @@
+
+running 2 tests
+test user::windows::process::sched::tests::services_tests::process_query_tests::basic_information::native_process_basic_information_self_preserves_virtual_identity_and_layouts ... ok
+test user::windows::process::sched::tests::services_tests::process_query_tests::basic_information::replay::native_process_basic_information_replays_19852_captured_calls ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 7655 filtered out; finished in 4.45s
+

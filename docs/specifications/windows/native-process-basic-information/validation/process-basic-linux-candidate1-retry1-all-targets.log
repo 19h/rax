@@ -1,0 +1,5 @@
+    Checking zstd-sys v2.1.0+zstd.1.5.7
+    Checking zstd-safe v7.3.0
+    Checking zstd v0.13.3
+    Checking rax v0.1.0 (/work/vendor/rax)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1m 55s

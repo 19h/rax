@@ -20,6 +20,7 @@ mod named_object;
 mod nls;
 mod object_create;
 mod performance_counter;
+mod process_basic;
 mod process_console;
 mod process_mitigation;
 mod process_query;

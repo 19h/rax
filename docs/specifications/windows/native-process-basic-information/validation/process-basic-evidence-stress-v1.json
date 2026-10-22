@@ -1,0 +1,46 @@
+{
+  "state": "finished",
+  "negative-cases": [
+    {
+      "case": "changed-status-digest",
+      "rejected": true,
+      "exception": "AssertionError"
+    },
+    {
+      "case": "escaped-exception-reindexed",
+      "rejected": true,
+      "exception": "AssertionError"
+    },
+    {
+      "case": "LastError-reindexed",
+      "rejected": true,
+      "exception": "AssertionError"
+    },
+    {
+      "case": "duplicate-fault-pair-reindexed",
+      "rejected": true,
+      "exception": "AssertionError"
+    },
+    {
+      "case": "unbalanced-handles-reindexed",
+      "rejected": true,
+      "exception": "AssertionError"
+    },
+    {
+      "case": "changed-source-after-reindexed",
+      "rejected": true,
+      "exception": "AssertionError"
+    },
+    {
+      "case": "wrong-native-width-reindexed",
+      "rejected": true,
+      "exception": "AssertionError"
+    }
+  ],
+  "restored-positive": {
+    "native-calls": 20504,
+    "replayed-v6-calls": 19852,
+    "live-native": false
+  },
+  "temporary-removed": true
+}

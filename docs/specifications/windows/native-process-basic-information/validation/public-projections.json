@@ -1,0 +1,76 @@
+{
+  "files": [
+    {
+      "path": "linux-process-basic-candidate1-owning-v2-artifacts.log",
+      "kind": "cargo-artifact-only",
+      "original": {
+        "bytes": 174086,
+        "sha256": "89cad60e53da9dd7ba57a0a6726d7838b166ac7a1047334f28f0a6dc434449df"
+      },
+      "published": {
+        "bytes": 167252,
+        "sha256": "b4e0f7ba6631cdff9ad9b3350b4f153ac2f5c8b586f23434c9f36e43d47b1290"
+      }
+    },
+    {
+      "path": "linux-process-basic-candidate1-owning-v2-shipping.log",
+      "kind": "cargo-artifact-only",
+      "original": {
+        "bytes": 174239,
+        "sha256": "2159c9187765dcbc8ba691822567882daf49444441005274f9f0f5390d989ded"
+      },
+      "published": {
+        "bytes": 167255,
+        "sha256": "0b0d8df11b3040e342ec6310a26764be783c8c5458b79443a0d4fc60015f1724"
+      }
+    },
+    {
+      "path": "macos-process-basic-candidate1-owning-v2-build.log",
+      "kind": "private-build-transcript-withheld",
+      "original": {
+        "bytes": 1403,
+        "sha256": "32bdc6d6a9d632f9a4d2128da5be750de12ad2458fe27cc90b17917a95fcacc9"
+      },
+      "published": {
+        "bytes": 102,
+        "sha256": "9d11adebfdf4b96ed4e054bf1ab1bbe7ebd6aac767e895e0715e03e97f279aa2"
+      }
+    },
+    {
+      "path": "macos-process-basic-candidate1-owning-v2-prime-artifacts.log",
+      "kind": "cargo-artifact-only",
+      "original": {
+        "bytes": 137670,
+        "sha256": "4fef0e8fe9c43f8e78dc20e52da2247cca7ba9d965f710b9197adcde1f774d86"
+      },
+      "published": {
+        "bytes": 128743,
+        "sha256": "a1a40af54df70b67322e280b1aca24e17c4f363151dd6eb78b74fab32cdbf669"
+      }
+    },
+    {
+      "path": "process-basic-native-owning-candidate1-artifacts-after.log",
+      "kind": "cargo-artifact-only",
+      "original": {
+        "bytes": 132251,
+        "sha256": "caa5c27159ecda01d6d3db962f8d4a6b7a11c03fe2fe97644808dd792f96b3a7"
+      },
+      "published": {
+        "bytes": 117653,
+        "sha256": "402eb1cfc286db10bed499484530484a3011ad3c1e256c6efcc4023b23bd9a00"
+      }
+    },
+    {
+      "path": "process-basic-native-owning-candidate1-artifacts-before.log",
+      "kind": "cargo-artifact-only",
+      "original": {
+        "bytes": 132536,
+        "sha256": "9e3e287c66b5e9e587084128c8c0afb380b0b0ae89a30f7940f667a5ea0dd6c5"
+      },
+      "published": {
+        "bytes": 117656,
+        "sha256": "7125bdedcc836586aafabcbd411351c40e5f79aeece7f8f7f9dac8257d421b4a"
+      }
+    }
+  ]
+}

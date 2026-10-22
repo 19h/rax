@@ -1,0 +1,24 @@
+[
+  {
+    "options": [],
+    "exit-code": 0,
+    "stdout": "{\"live-native\": false, \"native-calls\": 20504, \"replayed-v6-calls\": 19852}\n",
+    "stderr": ""
+  },
+  {
+    "options": [
+      "-O"
+    ],
+    "exit-code": 1,
+    "stdout": "",
+    "stderr": "Traceback (most recent call last):\n  File \"/Users/int/.assist-native-display-policy-20261022/docs/specifications/windows/native-process-basic-information/check_native_evidence.py\", line 110, in <module>\n    check(Path(__file__).resolve().parent, args.live_native), sort_keys=True\n    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/int/.assist-native-display-policy-20261022/docs/specifications/windows/native-process-basic-information/check_native_evidence.py\", line 22, in check\n    raise RuntimeError(\"Evidence checks require Python assertions; omit -O/-OO\")\nRuntimeError: Evidence checks require Python assertions; omit -O/-OO\n"
+  },
+  {
+    "options": [
+      "-OO"
+    ],
+    "exit-code": 1,
+    "stdout": "",
+    "stderr": "Traceback (most recent call last):\n  File \"/Users/int/.assist-native-display-policy-20261022/docs/specifications/windows/native-process-basic-information/check_native_evidence.py\", line 110, in <module>\n    check(Path(__file__).resolve().parent, args.live_native), sort_keys=True\n    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/int/.assist-native-display-policy-20261022/docs/specifications/windows/native-process-basic-information/check_native_evidence.py\", line 22, in check\n    raise RuntimeError(\"Evidence checks require Python assertions; omit -O/-OO\")\nRuntimeError: Evidence checks require Python assertions; omit -O/-OO\n"
+  }
+]

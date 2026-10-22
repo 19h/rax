@@ -1,0 +1,6 @@
+{
+  "file": "native-process-basic-next-read-20261022-v1.rs",
+  "bytes": 1944,
+  "sha256": "43284192b477fe9ca1424b5ecbdfec98a18956966dfaa4b23ee09f965ee1e5d3",
+  "scope": "Bounded read-only diagnostic of current NtReadVirtualMemory frontier through selected actual owning core; no implementation change."
+}

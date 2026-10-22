@@ -1,0 +1,124 @@
+{
+  "state": "finished",
+  "pid": 5748,
+  "source-epoch": 1,
+  "utc": "2026-10-22T16:22:41.959069+00:00",
+  "steps": [
+    {
+      "name": "toolchain",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "--version"
+      ],
+      "exit-code": 0,
+      "seconds": 0.15713399997912347,
+      "log": "process-basic-native-owning-candidate1-toolchain.log",
+      "bytes": 36,
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5"
+    },
+    {
+      "name": "artifacts-before",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "build",
+        "--locked",
+        "--offline",
+        "--features",
+        "rax",
+        "--message-format=json"
+      ],
+      "exit-code": 0,
+      "seconds": 197.3348622500198,
+      "log": "process-basic-native-owning-candidate1-artifacts-before.log",
+      "bytes": 132536,
+      "sha256": "9e3e287c66b5e9e587084128c8c0afb380b0b0ae89a30f7940f667a5ea0dd6c5"
+    },
+    {
+      "name": "archive-before",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\collect-process-basic-archives-candidate1.py",
+        "--host",
+        "windows",
+        "--source",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1",
+        "--manifest",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\process-basic-owning-source-hashes-candidate1.json",
+        "--messages",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\process-basic-native-owning-candidate1-artifacts-before.log",
+        "--output",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-process-basic-candidate1-pre-cpp-archives.json"
+      ],
+      "exit-code": 0,
+      "seconds": 7.864447374944575,
+      "log": "process-basic-native-owning-candidate1-archive-before.log",
+      "bytes": 182,
+      "sha256": "aade1f644d4cf752b4e51d2beebb3096bb02b80cb5f50dfa0b7c0d0d01f12bac"
+    },
+    {
+      "name": "cpp",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\helpers\\process-basic-owned-cpp-build-candidate1.py"
+      ],
+      "exit-code": 0,
+      "seconds": 75.42023762501776,
+      "log": "process-basic-native-owning-candidate1-cpp.log",
+      "bytes": 3705,
+      "sha256": "210f0ef7f94e858321ec920ecca1b9ab8fe798e8fad8916f0d5b0765bbe65763"
+    },
+    {
+      "name": "artifacts-after",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "build",
+        "--locked",
+        "--offline",
+        "--features",
+        "rax",
+        "--message-format=json"
+      ],
+      "exit-code": 0,
+      "seconds": 0.5656756249954924,
+      "log": "process-basic-native-owning-candidate1-artifacts-after.log",
+      "bytes": 132251,
+      "sha256": "caa5c27159ecda01d6d3db962f8d4a6b7a11c03fe2fe97644808dd792f96b3a7"
+    },
+    {
+      "name": "archive-after",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\collect-process-basic-archives-candidate1.py",
+        "--host",
+        "windows",
+        "--source",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1",
+        "--manifest",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\process-basic-owning-source-hashes-candidate1.json",
+        "--messages",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\process-basic-native-owning-candidate1-artifacts-after.log",
+        "--output",
+        "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-process-basic-candidate1-final-owning-archive-identities.json"
+      ],
+      "exit-code": 0,
+      "seconds": 7.240388665988576,
+      "log": "process-basic-native-owning-candidate1-archive-after.log",
+      "bytes": 182,
+      "sha256": "aade1f644d4cf752b4e51d2beebb3096bb02b80cb5f50dfa0b7c0d0d01f12bac"
+    }
+  ],
+  "junction": {
+    "before": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1",
+    "after": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1"
+  },
+  "current-step": "archive-after",
+  "child-pid": 9564,
+  "exit-code": 0,
+  "source-inputs": 3972,
+  "archive-identities-stable": true,
+  "scope": "Frozen Display policy source; retained Assist ABI184 linked consumers. Whole current-root ABI274 GUI/plugin/packages not claimed.",
+  "completed-utc": "2026-10-22T16:29:44.403729+00:00"
+}

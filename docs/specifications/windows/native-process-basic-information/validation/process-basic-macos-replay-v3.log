@@ -1,0 +1,10 @@
+   Compiling rax v0.1.0 (/Users/int/.assist-native-display-policy-20261022)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 31.74s
+     Running unittests src/lib.rs (target/candidate1/debug/deps/rax-661af32418e51237)
+
+running 2 tests
+test user::windows::process::sched::tests::services_tests::process_query_tests::basic_information::native_process_basic_information_self_preserves_virtual_identity_and_layouts ... ok
+test user::windows::process::sched::tests::services_tests::process_query_tests::basic_information::replay::native_process_basic_information_replays_19852_captured_calls ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 8178 filtered out; finished in 1.68s
+

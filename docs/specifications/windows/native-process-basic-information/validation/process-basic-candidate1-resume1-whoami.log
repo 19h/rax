@@ -1,0 +1,1 @@
+program=C:\Windows\System32\whoami.exe terminal-call=2867 result=Complete(Internal("native NTDLL service NtReadVirtualMemory (0x3f) at 0x7fff38a41430 is not implemented"))

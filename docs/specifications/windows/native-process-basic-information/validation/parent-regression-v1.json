@@ -1,0 +1,17 @@
+{
+  "utc": "2026-10-22T15:59:18.001095+00:00",
+  "parent": "79a5e8a0e379f309dcc1e4e29fb8177d05cb3e1d",
+  "test-overlay": [
+    "src/user/windows/process/sched/tests/services_tests/process_query_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/process_query_tests/basic_information.rs"
+  ],
+  "result": {
+    "pass": 0,
+    "fail": 1,
+    "ignored": 0,
+    "filtered": 8178,
+    "exit-code": 101
+  },
+  "reason": "Published parent does not implement process-information class0",
+  "log-sha256": "09bf10cfbf95ec8f449efc240387aadaff31750464b36c55f75a6a221b17077c"
+}

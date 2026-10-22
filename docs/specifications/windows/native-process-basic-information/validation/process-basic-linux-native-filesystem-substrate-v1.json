@@ -1,0 +1,7 @@
+{
+  "root": "/work/vendor/rax",
+  "temp": "/work/vendor/rax/target/linux/tmp",
+  "mountinfo": [
+    "476 475 0:38 /docker/volumes/assist-native-pbi-linux-tmp-20261022/_data /work/vendor/rax/target/linux/tmp rw,noatime master:66 - btrfs /dev/vdb1 rw,nodatasum,nodatacow,ssd,discard,space_cache=v2,subvolid=256,subvol=/docker"
+  ]
+}

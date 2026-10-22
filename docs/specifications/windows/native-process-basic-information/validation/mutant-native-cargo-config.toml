@@ -1,0 +1,10 @@
+[source.crates-io]
+replace-with = "vendored-sources"
+
+[source."git+https://github.com/19h/linux-loader?rev=f745b555942c4e840a784bca61e6f3976d101960"]
+git = "https://github.com/19h/linux-loader"
+rev = "f745b555942c4e840a784bca61e6f3976d101960"
+replace-with = "vendored-sources"
+
+[source.vendored-sources]
+directory = "C:/Windows/Temp/assist-native-rax-20261010/dependencies"

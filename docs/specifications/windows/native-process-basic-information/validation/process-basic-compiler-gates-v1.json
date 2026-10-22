@@ -1,0 +1,52 @@
+{
+  "state": "finished",
+  "pid": 21467,
+  "source-ledger-sha256": "2ad4e1a2835144663d553c6ce25b7dd7df2f5a7dcc9817d18fec2973b2f3519a",
+  "steps": [
+    {
+      "name": "format",
+      "argv": [
+        "rustfmt",
+        "+1.95.0",
+        "--edition",
+        "2024",
+        "--config",
+        "skip_children=true",
+        "--check",
+        "src/user/windows/dll/native.rs",
+        "src/user/windows/dll/native/process_query.rs",
+        "src/user/windows/dll/native/process_basic.rs",
+        "src/user/windows/process/sched/tests/services_tests/process_query_tests.rs",
+        "src/user/windows/process/sched/tests/services_tests/process_query_tests/basic_information.rs",
+        "src/user/windows/process/sched/tests/services_tests/process_query_tests/basic_information/replay.rs"
+      ],
+      "exit-code": 0,
+      "log": "process-basic-compiler-format-v1.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "seconds": 1.8205351249780506
+    },
+    {
+      "name": "clippy",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "clippy",
+        "--locked",
+        "--offline",
+        "--all-targets",
+        "--features",
+        "x86_64-suite"
+      ],
+      "exit-code": 0,
+      "log": "process-basic-compiler-clippy-v1.log",
+      "bytes": 149,
+      "sha256": "3496045b8dc7ac6a0fad8794277b65fc0fbdb0c0dec41adb2453006e69579c76",
+      "seconds": 76.93101345794275
+    }
+  ],
+  "current": "clippy",
+  "child_pid": 22225,
+  "exit_code": 0,
+  "completed-utc": "2026-10-22T16:31:58.582840+00:00"
+}

@@ -1,0 +1,126 @@
+{
+  "state": "finished",
+  "image-sha256": "6f86f327d9343a2bf4fcf1249c65a549969c4307972bf408ce50409cb3b61681",
+  "cases": [
+    {
+      "name": "user::linux::fs::xattr::tests::values_round_trip_under_every_name",
+      "exit-code": 0,
+      "seconds": 0.02988097700290382,
+      "stdout": "\nrunning 1 test\ntest user::linux::fs::xattr::tests::values_round_trip_under_every_name ... ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 8173 filtered out; finished in 0.01s\n\n",
+      "stderr": ""
+    },
+    {
+      "name": "user::linux::tests::nodes::mknodat_checks_the_type_then_the_name_then_the_privilege",
+      "exit-code": 0,
+      "seconds": 0.05648981299600564,
+      "stdout": "\nrunning 1 test\ntest user::linux::tests::nodes::mknodat_checks_the_type_then_the_name_then_the_privilege ... ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 8173 filtered out; finished in 0.04s\n\n",
+      "stderr": ""
+    },
+    {
+      "name": "user::linux::tests::xattr::setxattr_checks_flags_then_name_then_value_then_path",
+      "exit-code": 0,
+      "seconds": 0.05704252401483245,
+      "stdout": "\nrunning 1 test\ntest user::linux::tests::xattr::setxattr_checks_flags_then_name_then_value_then_path ... ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 8173 filtered out; finished in 0.04s\n\n",
+      "stderr": ""
+    },
+    {
+      "name": "user::supplied_fs::tests::selected_roots_are_lazy_read_only_and_preserved_by_extensions",
+      "exit-code": 0,
+      "seconds": 0.03740034601651132,
+      "stdout": "\nrunning 1 test\ntest user::supplied_fs::tests::selected_roots_are_lazy_read_only_and_preserved_by_extensions ... ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 8173 filtered out; finished in 0.02s\n\n",
+      "stderr": ""
+    },
+    {
+      "name": "user::windows::process::sched::tests::services_tests::file_attributes_tests::native_file_attributes_returns_mapped_metadata_and_preserves_padding",
+      "exit-code": 0,
+      "seconds": 0.11133178402087651,
+      "stdout": "\nrunning 1 test\ntest user::windows::process::sched::tests::services_tests::file_attributes_tests::native_file_attributes_returns_mapped_metadata_and_preserves_padding ... ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 8173 filtered out; finished in 0.09s\n\n",
+      "stderr": ""
+    },
+    {
+      "name": "user::windows::process::sched::tests::services_tests::file_attributes_tests::semantics::native_file_attributes_empty_name_queries_retained_file_after_path_replacement",
+      "exit-code": 0,
+      "seconds": 0.09698188200127333,
+      "stdout": "\nrunning 1 test\ntest user::windows::process::sched::tests::services_tests::file_attributes_tests::semantics::native_file_attributes_empty_name_queries_retained_file_after_path_replacement ... ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 8173 filtered out; finished in 0.08s\n\n",
+      "stderr": ""
+    },
+    {
+      "name": "user::windows::process::sched::tests::services_tests::file_attributes_tests::semantics::native_file_attributes_mapped_root_alias_is_not_a_guest_reparse_component",
+      "exit-code": 0,
+      "seconds": 0.09812405399861746,
+      "stdout": "\nrunning 1 test\ntest user::windows::process::sched::tests::services_tests::file_attributes_tests::semantics::native_file_attributes_mapped_root_alias_is_not_a_guest_reparse_component ... ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 8173 filtered out; finished in 0.08s\n\n",
+      "stderr": ""
+    },
+    {
+      "name": "user::windows::process::sched::tests::services_tests::file_attributes_tests::semantics::native_file_attributes_preserves_nt_spelling_and_distinguishes_absence",
+      "exit-code": 0,
+      "seconds": 0.10691043001133949,
+      "stdout": "\nrunning 1 test\ntest user::windows::process::sched::tests::services_tests::file_attributes_tests::semantics::native_file_attributes_preserves_nt_spelling_and_distinguishes_absence ... ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 8173 filtered out; finished in 0.09s\n\n",
+      "stderr": ""
+    },
+    {
+      "name": "user::windows::process::sched::tests::services_tests::file_attributes_tests::semantics::native_file_attributes_root_handles_retain_identity_and_native_name_rules",
+      "exit-code": 0,
+      "seconds": 0.11489909299416468,
+      "stdout": "\nrunning 1 test\ntest user::windows::process::sched::tests::services_tests::file_attributes_tests::semantics::native_file_attributes_root_handles_retain_identity_and_native_name_rules ... ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 8173 filtered out; finished in 0.10s\n\n",
+      "stderr": ""
+    },
+    {
+      "name": "user::windows::process::sched::tests::services_tests::file_attributes_tests::semantics::native_file_attributes_selected_runtime_does_not_grant_general_host_access",
+      "exit-code": 0,
+      "seconds": 0.10747159898164682,
+      "stdout": "\nrunning 1 test\ntest user::windows::process::sched::tests::services_tests::file_attributes_tests::semantics::native_file_attributes_selected_runtime_does_not_grant_general_host_access ... ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 8173 filtered out; finished in 0.09s\n\n",
+      "stderr": ""
+    },
+    {
+      "name": "user::windows::process::sched::tests::services_tests::file_attributes_tests::validation::native_file_attributes_flags_security_and_qos_match_captured_statuses",
+      "exit-code": 0,
+      "seconds": 1.23129528699792,
+      "stdout": "\nrunning 1 test\ntest user::windows::process::sched::tests::services_tests::file_attributes_tests::validation::native_file_attributes_flags_security_and_qos_match_captured_statuses ... ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 8173 filtered out; finished in 1.21s\n\n",
+      "stderr": ""
+    },
+    {
+      "name": "user::windows::process::sched::tests::services_tests::file_attributes_tests::validation::native_file_attributes_output_aliases_preserve_captured_inputs_and_tail",
+      "exit-code": 0,
+      "seconds": 0.16608858900144696,
+      "stdout": "\nrunning 1 test\ntest user::windows::process::sched::tests::services_tests::file_attributes_tests::validation::native_file_attributes_output_aliases_preserve_captured_inputs_and_tail ... ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 8173 filtered out; finished in 0.15s\n\n",
+      "stderr": ""
+    },
+    {
+      "name": "user::windows::process::sched::tests::services_tests::file_attributes_tests::validation::native_file_attributes_output_boundaries_match_native_and_wow_records",
+      "exit-code": 0,
+      "seconds": 0.2111110550176818,
+      "stdout": "\nrunning 1 test\ntest user::windows::process::sched::tests::services_tests::file_attributes_tests::validation::native_file_attributes_output_boundaries_match_native_and_wow_records ... ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 8173 filtered out; finished in 0.19s\n\n",
+      "stderr": ""
+    },
+    {
+      "name": "user::windows::process::sched::tests::services_tests::file_attributes_tests::validation::native_file_attributes_wow_outputs_accept_every_byte_alignment",
+      "exit-code": 0,
+      "seconds": 0.25886478400207125,
+      "stdout": "\nrunning 1 test\ntest user::windows::process::sched::tests::services_tests::file_attributes_tests::validation::native_file_attributes_wow_outputs_accept_every_byte_alignment ... ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 8173 filtered out; finished in 0.24s\n\n",
+      "stderr": ""
+    },
+    {
+      "name": "user::windows::process::sched::tests::services_tests::file_open_tests::boundaries::native_file_open_retained_directory_no_reparse_applies_to_each_child_component",
+      "exit-code": 0,
+      "seconds": 0.10287024400895461,
+      "stdout": "\nrunning 1 test\ntest user::windows::process::sched::tests::services_tests::file_open_tests::boundaries::native_file_open_retained_directory_no_reparse_applies_to_each_child_component ... ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 8173 filtered out; finished in 0.09s\n\n",
+      "stderr": ""
+    },
+    {
+      "name": "user::windows::process::sched::tests::services_tests::file_open_tests::boundaries::native_file_open_retained_read_execute_handle_can_query_attributes_after_replacement",
+      "exit-code": 0,
+      "seconds": 0.10105177701916546,
+      "stdout": "\nrunning 1 test\ntest user::windows::process::sched::tests::services_tests::file_open_tests::boundaries::native_file_open_retained_read_execute_handle_can_query_attributes_after_replacement ... ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 8173 filtered out; finished in 0.08s\n\n",
+      "stderr": ""
+    },
+    {
+      "name": "user::windows::process::sched::tests::services_tests::file_open_tests::native_file_open_retained_directory_resolves_children_after_rename_and_replacement",
+      "exit-code": 0,
+      "seconds": 0.10441970900865272,
+      "stdout": "\nrunning 1 test\ntest user::windows::process::sched::tests::services_tests::file_open_tests::native_file_open_retained_directory_resolves_children_after_rename_and_replacement ... ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 8173 filtered out; finished in 0.09s\n\n",
+      "stderr": ""
+    }
+  ],
+  "temp": "/work/vendor/rax/target/linux/tmp"
+}

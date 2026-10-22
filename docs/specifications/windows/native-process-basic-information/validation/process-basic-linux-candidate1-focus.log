@@ -1,0 +1,13 @@
+   Compiling zstd-sys v2.1.0+zstd.1.5.7
+   Compiling zstd-safe v7.3.0
+   Compiling zstd v0.13.3
+   Compiling rax v0.1.0 (/work/vendor/rax)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2m 47s
+     Running unittests src/lib.rs (target/linux/candidate1/debug/deps/rax-3e31f1d94bc1cdf9)
+
+running 2 tests
+test user::windows::process::sched::tests::services_tests::process_query_tests::basic_information::native_process_basic_information_self_preserves_virtual_identity_and_layouts ... ok
+test user::windows::process::sched::tests::services_tests::process_query_tests::basic_information::replay::native_process_basic_information_replays_19852_captured_calls ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 8172 filtered out; finished in 2.52s
+

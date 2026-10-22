@@ -1,0 +1,21 @@
+   Compiling rax v0.1.0 (/Users/int/.assist-native-display-policy-20261022)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 34s
+     Running unittests src/lib.rs (target/candidate1/debug/deps/rax-dd79f0cd9ae9bb68)
+
+running 1 test
+test user::windows::process::sched::tests::services_tests::process_query_tests::basic_information::native_process_basic_information_self_preserves_virtual_identity_and_layouts ... 
+thread 'user::windows::process::sched::tests::services_tests::process_query_tests::basic_information::native_process_basic_information_self_preserves_virtual_identity_and_layouts' (33717275) panicked at src/user/windows/process/sched/tests/services_tests/process_query_tests/basic_information.rs:24:13:
+assertion `left == right` failed
+  left: Fail("native NTDLL service NtQueryInformationProcess: Unimplemented(\"NtQueryInformationProcess: NtQueryInformationProcess class 0\")")
+ right: Continue
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+
+failures:
+
+failures:
+    user::windows::process::sched::tests::services_tests::process_query_tests::basic_information::native_process_basic_information_self_preserves_virtual_identity_and_layouts
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 8178 filtered out; finished in 0.01s
+
+error: test failed, to rerun pass `--lib`

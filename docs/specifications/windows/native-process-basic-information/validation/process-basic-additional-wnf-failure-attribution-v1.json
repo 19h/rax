@@ -1,0 +1,33 @@
+{
+  "state": "finished",
+  "scope": "Attribution of the additional full-suite WNF failure, not a repair or green-suite claim.",
+  "unchanged-inputs": [
+    {
+      "path": "src/user/windows/wnf/query_tests.rs",
+      "bytes": 7603,
+      "sha256": "aeb5e8308e9e1f7f6554ee15dad7bfb4874375452cb67f5b468dd9586eade75c",
+      "identical-to-published-parent": true
+    },
+    {
+      "path": "src/user/windows/wnf.rs",
+      "bytes": 1585,
+      "sha256": "8fe24c4db849394ff56ee1644a604c1770d71bbd8d1b55660bd422daf7e51c5c",
+      "identical-to-published-parent": true
+    },
+    {
+      "path": "src/user/windows/wnf/installed_query.rs",
+      "bytes": 3693,
+      "sha256": "f5736cf1a3b0b27e43aad305f846bf82e8255c1c680f011bbc21ba2bd5e3b94f",
+      "identical-to-published-parent": true
+    },
+    {
+      "path": "src/user/windows/wnf/query.rs",
+      "bytes": 8945,
+      "sha256": "f43fc9c6d92fa35eaf2e6204b8cc59fafbdd8844aef2f0730acee5429574c9a1",
+      "identical-to-published-parent": true
+    }
+  ],
+  "observed": "The native snapshot test asserts stamp1/value1 for selected system state 0x0280032EA3BC0875; the captured failure contains stamp4/value4.",
+  "cause-boundary": "The asserted constant differs from current captured native state. The actor that changed that host state is unknown. ProcessBasicInformation dispatch is not called by this snapshot code.",
+  "next-use": "Separate WNF live-state validation changeset after current group publication; keep current failure visible."
+}

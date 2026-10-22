@@ -1,0 +1,39 @@
+{
+  "utc": "2026-10-22T14:59:40.728395+00:00",
+  "baseline": "79a5e8a0e379f309dcc1e4e29fb8177d05cb3e1d",
+  "worktree": "/Users/int/.assist-native-display-policy-20261022",
+  "acceptance": [
+    "Native ProcessBasicInformation class0 layouts/lengths/probe/access ordering measured on four Windows execution views",
+    "Guest self-process fields reflect virtual PID/PEB, one-CPU topology and modeled parent; no guest host-kernel forwarding",
+    "Positive/failure/boundary/replay tests and actual owning callers on Windows; macOS/Linux shared builds and runtime regressions",
+    "Exact red commits, RAX two-URL publication, paired Assist gitlink/ABI anchor/focused engineering record and both remotes; preserve global full-userland scope"
+  ],
+  "assumptions": [
+    {
+      "id": "PBI-A1",
+      "assumption": "The new process query must report the existing virtual process identity and one-CPU topology, rather than copy native host identity/affinity.",
+      "basis": "Proc.pid/peb; topology.rs group contract; standalone root parent comment.",
+      "dependent-result": "ProcessBasicInformation field projection",
+      "stress-test": "All three guest ABIs, real self handles and pseudo-handle; compare PEB/PID/topology consistency",
+      "falsification-probe": "Independent guest queries disagree on identity/topology or native fault observations contradict proposed adapter",
+      "status": "retained"
+    },
+    {
+      "id": "PBI-A2",
+      "assumption": "One ARM64 kernel supplies only four execution views, not independent native x64-kernel coverage.",
+      "basis": "Current Windows VM; existing oracle architecture",
+      "dependent-result": "Validation boundary",
+      "stress-test": "Native ARM64/x64/WoW64/LAA captures",
+      "falsification-probe": "An independently validated physical x64 kernel capture supplies additional coverage",
+      "status": "confirmed"
+    }
+  ],
+  "owned-source-plan": [
+    "src/user/windows/dll/native/process_query.rs",
+    "src/user/windows/dll/native.rs",
+    "src/user/windows/dll/native/process_basic.rs",
+    "src/user/windows/process/sched/tests/services_tests/process_query_tests.rs",
+    "new focused scheduler replay tests and native-process-basic-information evidence directory"
+  ],
+  "retained-cache-next-use": "Reuse existing in-tree standalone and actual owning caches; native producer output under current Windows source target."
+}

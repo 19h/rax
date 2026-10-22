@@ -1,0 +1,6 @@
+api-open program=C:\Windows\Temp\assist-native-rax-20261010\src-display-candidate1\tests\fixtures\user\windows\bin\arm64\smoke.exe modules=4
+api-progress program=C:\Windows\Temp\assist-native-rax-20261010\src-display-candidate1\tests\fixtures\user\windows\bin\arm64\smoke.exe attempt=0 reason=4 turns=975 elapsed-us=4265032
+api-result {"diagnostic":"exited with status 0 (0x0)","elapsed-us":4265032,"exit-code":0,"native-runtime":true,"program":"C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\tests\\fixtures\\user\\windows\\bin\\arm64\\smoke.exe","reason":4,"slice-instructions":4096,"stderr-hex":"","stdout-hex":"","turns-started":975}
+api-open program=C:\Windows\System32\whoami.exe modules=21
+api-progress program=C:\Windows\System32\whoami.exe attempt=0 reason=5 turns=2868 elapsed-us=12992265
+api-result {"diagnostic":"emulator failure: native NTDLL service NtReadVirtualMemory (0x3f) at 0x7fff38a41430 is not implemented","elapsed-us":12992265,"exit-code":0,"native-runtime":true,"program":"C:\\Windows\\System32\\whoami.exe","reason":5,"slice-instructions":4096,"stderr-hex":"","stdout-hex":"","turns-started":2868}
