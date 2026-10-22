@@ -1,0 +1,162 @@
+{
+  "base-git": "39c678a46b069dba9a036524f2e38b096f043dbd",
+  "source-ledger": "display-candidate1-source.json",
+  "source-ledger-sha256": "adca08b61b12d0ee15cc47764db0bda05387444bbc7e05349044dd7762b58650",
+  "archive": "display-final-compiled-overrides-v1.tar.gz",
+  "bytes": 23908,
+  "sha256": "88d9128db8e55ad787fe41df141e8e67b5d0b72c54f0e8601d52e01d1a2cccb1",
+  "overrides": [
+    {
+      "path": "docs/specifications/windows/native-display-policy/native/native-display-policy-20261022-v1-four-views-arm64-after.log",
+      "kind": "file",
+      "bytes": 303,
+      "sha256": "73590f7a41dac384f6405c768a387f70be7d2bbfd3c989b5c87636d048eaf532"
+    },
+    {
+      "path": "docs/specifications/windows/native-display-policy/native/native-display-policy-20261022-v1-four-views-arm64-before.log",
+      "kind": "file",
+      "bytes": 303,
+      "sha256": "73590f7a41dac384f6405c768a387f70be7d2bbfd3c989b5c87636d048eaf532"
+    },
+    {
+      "path": "docs/specifications/windows/native-display-policy/native/native-display-policy-20261022-v1-four-views-arm64-build.log",
+      "kind": "file",
+      "bytes": 39,
+      "sha256": "46ce8fb2d9e753f134f813f78ee88053a1beab1af2abd89a87034806d86490cb"
+    },
+    {
+      "path": "docs/specifications/windows/native-display-policy/native/native-display-policy-20261022-v1-four-views-arm64.log",
+      "kind": "file",
+      "bytes": 18247,
+      "sha256": "93066b8ad820913ad4ae456f674d4a4e4bd6e6aaa13358e874ee04c57d9fae7d"
+    },
+    {
+      "path": "docs/specifications/windows/native-display-policy/native/native-display-policy-20261022-v1-four-views-launch.json",
+      "kind": "file",
+      "bytes": 19038,
+      "sha256": "979a7596c3301625438303ef726f15d2d6714e3637526d41ff3b5ab3106c089f"
+    },
+    {
+      "path": "docs/specifications/windows/native-display-policy/native/native-display-policy-20261022-v1-four-views-x64-after.log",
+      "kind": "file",
+      "bytes": 299,
+      "sha256": "3ef88418356da6698ec083f48fcf83a3640b9f561e7c345b13e0d8062417a7f7"
+    },
+    {
+      "path": "docs/specifications/windows/native-display-policy/native/native-display-policy-20261022-v1-four-views-x64-before.log",
+      "kind": "file",
+      "bytes": 299,
+      "sha256": "3ef88418356da6698ec083f48fcf83a3640b9f561e7c345b13e0d8062417a7f7"
+    },
+    {
+      "path": "docs/specifications/windows/native-display-policy/native/native-display-policy-20261022-v1-four-views-x64-build.log",
+      "kind": "file",
+      "bytes": 39,
+      "sha256": "46ce8fb2d9e753f134f813f78ee88053a1beab1af2abd89a87034806d86490cb"
+    },
+    {
+      "path": "docs/specifications/windows/native-display-policy/native/native-display-policy-20261022-v1-four-views-x64.log",
+      "kind": "file",
+      "bytes": 18245,
+      "sha256": "9d50fd29d59c0e6cb8acf2c46095fdb526d555eadeac9c3c2464ed9008f85db0"
+    },
+    {
+      "path": "docs/specifications/windows/native-display-policy/native/native-display-policy-20261022-v1-four-views-x86-after.log",
+      "kind": "file",
+      "bytes": 298,
+      "sha256": "4720613f9d65bac7e3934e87c89a3898750a74743e40116c13d298649a0e1335"
+    },
+    {
+      "path": "docs/specifications/windows/native-display-policy/native/native-display-policy-20261022-v1-four-views-x86-before.log",
+      "kind": "file",
+      "bytes": 298,
+      "sha256": "4720613f9d65bac7e3934e87c89a3898750a74743e40116c13d298649a0e1335"
+    },
+    {
+      "path": "docs/specifications/windows/native-display-policy/native/native-display-policy-20261022-v1-four-views-x86-build.log",
+      "kind": "file",
+      "bytes": 39,
+      "sha256": "46ce8fb2d9e753f134f813f78ee88053a1beab1af2abd89a87034806d86490cb"
+    },
+    {
+      "path": "docs/specifications/windows/native-display-policy/native/native-display-policy-20261022-v1-four-views-x86-laa-after.log",
+      "kind": "file",
+      "bytes": 305,
+      "sha256": "c34b46164d250b84b83c1746d10e350011316e2d29ceafa2a0c60040bc971f27"
+    },
+    {
+      "path": "docs/specifications/windows/native-display-policy/native/native-display-policy-20261022-v1-four-views-x86-laa-before.log",
+      "kind": "file",
+      "bytes": 305,
+      "sha256": "c34b46164d250b84b83c1746d10e350011316e2d29ceafa2a0c60040bc971f27"
+    },
+    {
+      "path": "docs/specifications/windows/native-display-policy/native/native-display-policy-20261022-v1-four-views-x86-laa-build.log",
+      "kind": "file",
+      "bytes": 39,
+      "sha256": "46ce8fb2d9e753f134f813f78ee88053a1beab1af2abd89a87034806d86490cb"
+    },
+    {
+      "path": "docs/specifications/windows/native-display-policy/native/native-display-policy-20261022-v1-four-views-x86-laa.log",
+      "kind": "file",
+      "bytes": 18249,
+      "sha256": "02eb6094740b5daf8106e553b854b7c89d24ec920d6d0cfd92e64f217e6bf399"
+    },
+    {
+      "path": "docs/specifications/windows/native-display-policy/native/native-display-policy-20261022-v1-four-views-x86.log",
+      "kind": "file",
+      "bytes": 18245,
+      "sha256": "a375ed0bf8ed7042f923c06c55ade72cc389bd699d2ad5bc4cf6bb69165e17c4"
+    },
+    {
+      "path": "docs/specifications/windows/native-display-policy/native/native-display-policy-20261022-v1.cpp",
+      "kind": "file",
+      "bytes": 3018,
+      "sha256": "6f63bc81e5059de282993fcc424ce7e8db24a3924a5b395410fe485260705a03"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/registry_tests.rs",
+      "kind": "file",
+      "bytes": 39028,
+      "sha256": "5ff059cf06fcf0da6812fdb326be1f83ec371099f68680bbf472a53e059b1f83"
+    },
+    {
+      "path": "src/user/windows/process/sched/tests/services_tests/registry_tests/display_policy.rs",
+      "kind": "file",
+      "bytes": 3640,
+      "sha256": "c066adbc486d166e97926577abb73391e06de8a36ddde2467d6fbd33b6e437d2"
+    },
+    {
+      "path": "src/user/windows/registry.rs",
+      "kind": "file",
+      "bytes": 8689,
+      "sha256": "c9aecfeb3e801cd2ab55bea388e136a93d5aae59b426a5facf490e81a5761a4a"
+    },
+    {
+      "path": "src/user/windows/registry/display_policy_tests.rs",
+      "kind": "file",
+      "bytes": 3841,
+      "sha256": "6334747717b8f6a03f8d67811f0f2832ae6c420bca1a03eca8523bda2b93dcee"
+    },
+    {
+      "path": "src/user/windows/registry/installed.rs",
+      "kind": "file",
+      "bytes": 11188,
+      "sha256": "d0a4f070d5e6d50b24575c6156dfefc02a3f7244ef9de938cd02ba96c8f9625c"
+    },
+    {
+      "path": "src/user/windows/registry/installed/display_policy_tests.rs",
+      "kind": "file",
+      "bytes": 5191,
+      "sha256": "4dc38802853ea46217e8c06961bcb3e1cabe3d65c498b496839568632286d8f6"
+    },
+    {
+      "path": "src/user/windows/registry/tree.rs",
+      "kind": "file",
+      "bytes": 9268,
+      "sha256": "47b0dffa97316112704211699e7c3a6652080725c60a43ba11512be4369a2291"
+    }
+  ],
+  "source-inputs": 29015,
+  "scope": "Reconstruct exact frozen compiler envelope using the public Git baseline and these individually hashed member bytes. Development materialization archive is not republished."
+}

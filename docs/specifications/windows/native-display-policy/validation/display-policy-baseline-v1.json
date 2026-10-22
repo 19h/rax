@@ -1,0 +1,9 @@
+{
+  "utc": "2026-10-22T12:35:59.489442+00:00",
+  "base": "39c678a46b069dba9a036524f2e38b096f043dbd",
+  "worktree": "/Users/int/.assist-native-display-policy-20261022",
+  "files": 28994,
+  "independent-cow-file-inodes": 28978,
+  "clean": true,
+  "scope": "Independent APFS clonefile data extents; no source hardlinks to the published worktree and no unrelated build targets copied."
+}

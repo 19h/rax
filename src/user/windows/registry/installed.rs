@@ -299,6 +299,9 @@ pub(crate) fn snapshot() -> io::Result<Registry> {
     let registry = registry.with_tree(root, selected)?;
     let root = super::TreeRoot::ErrorMessageInstrument;
     let selected = tree::capture_root(&registry, root)?;
+    let registry = registry.with_tree(root, selected)?;
+    let root = super::TreeRoot::DisplayPolicy;
+    let selected = tree::capture_root(&registry, root)?;
     registry.with_tree(root, selected)
 }
 
@@ -337,3 +340,7 @@ mod nls_sorting_tests;
 #[cfg(test)]
 #[path = "installed/error_message_instrument_tests.rs"]
 mod error_message_instrument_tests;
+
+#[cfg(test)]
+#[path = "installed/display_policy_tests.rs"]
+mod display_policy_tests;

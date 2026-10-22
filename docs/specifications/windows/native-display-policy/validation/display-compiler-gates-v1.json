@@ -1,0 +1,53 @@
+{
+  "state": "finished",
+  "pid": 66125,
+  "source-ledger-sha256": "adca08b61b12d0ee15cc47764db0bda05387444bbc7e05349044dd7762b58650",
+  "steps": [
+    {
+      "name": "format",
+      "argv": [
+        "rustfmt",
+        "+1.95.0",
+        "--edition",
+        "2024",
+        "--config",
+        "skip_children=true",
+        "--check",
+        "src/user/windows/registry.rs",
+        "src/user/windows/registry/tree.rs",
+        "src/user/windows/registry/installed.rs",
+        "src/user/windows/registry/display_policy_tests.rs",
+        "src/user/windows/registry/installed/display_policy_tests.rs",
+        "src/user/windows/process/sched/tests/services_tests/registry_tests.rs",
+        "src/user/windows/process/sched/tests/services_tests/registry_tests/display_policy.rs"
+      ],
+      "exit-code": 0,
+      "log": "display-compiler-format-v1.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "seconds": 1.5834542920347303
+    },
+    {
+      "name": "clippy",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "clippy",
+        "--locked",
+        "--offline",
+        "--all-targets",
+        "--features",
+        "x86_64-suite"
+      ],
+      "exit-code": 0,
+      "log": "display-compiler-clippy-v1.log",
+      "bytes": 149,
+      "sha256": "48454f11c088abf382ceacec6cc7c1de2a8d2fac5b8aef6f719973200840cf21",
+      "seconds": 74.60997774999123
+    }
+  ],
+  "current": "clippy",
+  "child_pid": 66210,
+  "exit_code": 0,
+  "completed-utc": "2026-10-22T13:48:45.713059+00:00"
+}

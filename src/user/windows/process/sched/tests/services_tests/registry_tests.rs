@@ -1076,3 +1076,6 @@ mod nls_sorting_registry;
 
 #[path = "registry_tests/error_message_instrument.rs"]
 mod error_message_instrument;
+
+#[path = "registry_tests/display_policy.rs"]
+mod display_policy;

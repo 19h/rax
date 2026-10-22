@@ -1,0 +1,101 @@
+{
+  "files": [
+    {
+      "old": "/Users/int/Library/Caches/assist-process-emulation/io-completion-create-20261011/macos-owning-build/generated/static-text/assist_static_text_resources.hpp",
+      "new": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes/linux-inputs/generated/assist_static_text_resources.hpp",
+      "bytes": 18698,
+      "sha256": "5852509b1de6d03bfb00116b57598199bdff0fccc29eea89d274e3c0c9ee7b0d"
+    },
+    {
+      "old": "/Users/int/Library/Caches/assist-process-emulation/io-completion-create-20261011/macos-owning-build/generated/static-text/static_text_stats.json",
+      "new": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes/linux-inputs/generated/static_text_stats.json",
+      "bytes": 41020,
+      "sha256": "454613796acd80deed994e0699f5f82be35118c46fa1e1d60388202e4de96215"
+    },
+    {
+      "old": "/Users/int/Library/Caches/assist-process-emulation/io-completion-create-20261011/macos-owning-build/generated/static-text/prompts.cpp",
+      "new": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes/linux-inputs/generated/prompts.cpp",
+      "bytes": 92412,
+      "sha256": "d31671c7b1ac399754c32ede6f329d5fa5389530a824e2a16f9067cf48b1a4b5"
+    },
+    {
+      "old": "/Users/int/Library/Caches/assist-process-emulation/io-completion-create-20261011/macos-owning-build/generated/static-text/manifest_keys.cpp",
+      "new": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes/linux-inputs/generated/manifest_keys.cpp",
+      "bytes": 427,
+      "sha256": "bfddf504f0c504a9f6ccf0f3d92ec0955bd8b18a2e098213c67339e45a540d79"
+    },
+    {
+      "old": "/Users/int/Library/Caches/assist-process-emulation/io-completion-create-20261011/macos-owning-build/generated/static-text/manifest.cpp",
+      "new": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes/linux-inputs/generated/manifest.cpp",
+      "bytes": 420471,
+      "sha256": "fd3d8563c7327b4db958b969662d2f34194bb2ae6fde41e01e32107e255ea85a"
+    },
+    {
+      "old": "/Users/int/Library/Caches/assist-process-emulation/io-completion-create-20261011/macos-owning-build/generated/static-text/metadata.cpp",
+      "new": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes/linux-inputs/generated/metadata.cpp",
+      "bytes": 1056903,
+      "sha256": "978ece0ff0e1b9f2546186753c06f20eb67f147b9d6233857a7e30b418c23190"
+    },
+    {
+      "old": "/Users/int/Library/Caches/assist-process-emulation/io-completion-create-20261011/macos-owning-build/generated/static-text/scripts_keys.cpp",
+      "new": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes/linux-inputs/generated/scripts_keys.cpp",
+      "bytes": 725,
+      "sha256": "1ca8d13a0fa912c4c85ea690835a11f8c8193792589cf3fa69099b68eeedd587"
+    },
+    {
+      "old": "/Users/int/Library/Caches/assist-process-emulation/io-completion-create-20261011/macos-owning-build/generated/static-text/prompts_keys.cpp",
+      "new": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes/linux-inputs/generated/prompts_keys.cpp",
+      "bytes": 716,
+      "sha256": "cb7ca3298a8a9026e33c985d05579ea534254b8bec4a01ecea83153ed42379e8"
+    },
+    {
+      "old": "/Users/int/Library/Caches/assist-process-emulation/io-completion-create-20261011/macos-owning-build/generated/static-text/scripts.cpp",
+      "new": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes/linux-inputs/generated/scripts.cpp",
+      "bytes": 172347,
+      "sha256": "f694a303b1f671ee5419f8a29c4597063a8ced59d36409da3f3364048060d1f7"
+    },
+    {
+      "old": "/Users/int/Library/Caches/assist-process-emulation/io-completion-create-20261011/macos-owning-build/generated/static-text/metadata_keys.cpp",
+      "new": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes/linux-inputs/generated/metadata_keys.cpp",
+      "bytes": 100622,
+      "sha256": "f738e9dc382e6f0ec89c8a5683b51ef201d25f044338392a6f03404ad6130984"
+    },
+    {
+      "old": "/Users/int/Library/Caches/assist-process-emulation/io-completion-create-20261011/macos-owning-build/_deps/monocypher-src/src/monocypher.h",
+      "new": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes/linux-inputs/monocypher/monocypher.h",
+      "bytes": 12177,
+      "sha256": "fcaf6ed771358bb4f40fba016f6518ae86ec02b1b877d2cc35ad92d3a26fd7b3"
+    },
+    {
+      "old": "/Users/int/Library/Caches/assist-process-emulation/io-completion-create-20261011/macos-owning-build/_deps/monocypher-src/src/monocypher.c",
+      "new": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes/linux-inputs/monocypher/monocypher.c",
+      "bytes": 102582,
+      "sha256": "f1f838cdd483bdebe0df0ff5c5ed60535e496f769c6a2f933ac4c0b114207123"
+    },
+    {
+      "old": "/Users/int/Library/Caches/assist-process-emulation/io-completion-create-20261011/macos-owning-build/_deps/monocypher-src/src/optional/monocypher-ed25519.h",
+      "new": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes/linux-inputs/monocypher/optional/monocypher-ed25519.h",
+      "bytes": 5451,
+      "sha256": "3a3035181f991a158d0e1c7567258f0bae8ba0f1f23c5512b4a1db1b3c9730ce"
+    },
+    {
+      "old": "/Users/int/Library/Caches/assist-process-emulation/io-completion-create-20261011/macos-owning-build/_deps/monocypher-src/src/optional/monocypher-ed25519.c",
+      "new": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes/linux-inputs/monocypher/optional/monocypher-ed25519.c",
+      "bytes": 16526,
+      "sha256": "ce0d2f8e32ca8f66398ba5b3456cc74327c3eff14e7b950ce7d57be9025cc453"
+    },
+    {
+      "old": "/Users/int/Library/Caches/assist-process-emulation/io-completion-create-20261011/macos-owning-build/_deps/json-src/single_include/nlohmann/json.hpp",
+      "new": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes/linux-inputs/json/nlohmann/json.hpp",
+      "bytes": 919975,
+      "sha256": "9bea4c8066ef4a1c206b2be5a36302f8926f7fdc6087af5d20b417d0cf103ea6"
+    },
+    {
+      "old": "/Users/int/Library/Caches/assist-process-emulation/io-completion-create-20261011/macos-owning-build/_deps/json-src/single_include/nlohmann/json_fwd.hpp",
+      "new": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes/linux-inputs/json/nlohmann/json_fwd.hpp",
+      "bytes": 6340,
+      "sha256": "5cefbba751baf5243033fd894c70be9b37103d64b3d3a959e4173197d71137b9"
+    }
+  ],
+  "scope": "Immutable generated C++ inputs and dependency sources copied into actual owning worktree"
+}

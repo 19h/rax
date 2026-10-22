@@ -1,0 +1,23 @@
+{
+  "base": "39c678a46b069dba9a036524f2e38b096f043dbd",
+  "baseline-reproduction": {
+    "receipt": "eri-owning-capi-candidate1.json",
+    "bytes": 12101,
+    "sha256": "e9ac5c8dec246f890d9bb2c68447de942340ec9602dd20ab581fce36080c3143",
+    "diagnostic": "native-eri-next-registry-20261022-v1.json",
+    "terminal-rust-index": 2832,
+    "capi-turns": 2833,
+    "path": "\\Registry\\Machine\\Software\\Policies\\Microsoft\\Windows\\Display"
+  },
+  "assumptions": [
+    {
+      "id": "DP-A1",
+      "assumption": "The fixed Display policy root must be captured as present or genuinely absent, with other acquisition errors retained.",
+      "basis": "Both owning callers stop at the exact root;576native observations include attributes0x240 and all return C0000034.",
+      "dependent-result": "Bounded immutable selection of this root, not permanent absence.",
+      "stress-test": "Present controlled/synthetic trees, scope boundaries, view/grant replay, duplicate/budget rejection.",
+      "falsification-probe": "A successful native root open must be captured; denial or enumeration failures cannot become absence.",
+      "status": "retained"
+    }
+  ]
+}

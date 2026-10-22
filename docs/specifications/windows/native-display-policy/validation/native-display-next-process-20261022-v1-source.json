@@ -1,0 +1,6 @@
+{
+  "path": "/Users/int/Library/Caches/assist-process-emulation/native-display-policy-20261022/native-display-next-process-20261022-v1.rs",
+  "bytes": 1790,
+  "sha256": "9711384bf2ac1fd66aad874ab335bd9f141065e04fa30cee46f06d015d7a3526",
+  "scope": "Bounded read-only process-information frontier observer for actual owning core; no implementation change."
+}

@@ -1,0 +1,11 @@
+{
+  "utc": "2026-10-22T13:34:17.726524+00:00",
+  "root": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current",
+  "root-head": "e2fc5b483be7cad2dae17d889690cc398973c5e8",
+  "abi": 184,
+  "old-task-symlink": "/Users/int/.assist-native-error-message-instrument-20261021",
+  "new-task-symlink": "/Users/int/.assist-native-display-policy-20261022",
+  "source-inputs": 3969,
+  "build-root": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes",
+  "next-use": "Display actual owning archives and linked consumers"
+}

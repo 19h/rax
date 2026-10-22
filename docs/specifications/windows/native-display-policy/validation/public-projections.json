@@ -1,0 +1,76 @@
+{
+  "files": [
+    {
+      "path": "display-native-owning-candidate1-artifacts-after.log",
+      "kind": "cargo-artifact-only",
+      "original": {
+        "bytes": 132251,
+        "sha256": "6e0b95f250895a4e08e0cb0bd5f3104d304da505996d57b476d2400de71b308b"
+      },
+      "published": {
+        "bytes": 117653,
+        "sha256": "9da50eecaffd92990bb097d03447388d82969b9db4ded69e6bb67b533db6a3e7"
+      }
+    },
+    {
+      "path": "display-native-owning-candidate1-artifacts-before.log",
+      "kind": "cargo-artifact-only",
+      "original": {
+        "bytes": 132536,
+        "sha256": "d4a5179b116378a4f8ad24e749396b9b5d88e86cf93e83337bc8499b1d9737c7"
+      },
+      "published": {
+        "bytes": 117656,
+        "sha256": "af6b61cd8049aa1a94d7cb43e90105efb00fe435023af850c9ef83b83a1be931"
+      }
+    },
+    {
+      "path": "linux-display-candidate1-owning-artifacts.log",
+      "kind": "cargo-artifact-only",
+      "original": {
+        "bytes": 174086,
+        "sha256": "9a9e452f86b1e730aefca7501b1e3cd2fa83b41ac898888bd1fb61d9545d81e0"
+      },
+      "published": {
+        "bytes": 167252,
+        "sha256": "452658407053f42d90d823a0c767086a4c3ea7e8fe5e5e0bc31f45fe97f3d5af"
+      }
+    },
+    {
+      "path": "linux-display-candidate1-owning-shipping.log",
+      "kind": "cargo-artifact-only",
+      "original": {
+        "bytes": 174239,
+        "sha256": "9bdd282b4500c96d3b9efc5a8a4a7047687e41e24525a3f2272878df3f2244b2"
+      },
+      "published": {
+        "bytes": 167255,
+        "sha256": "c20a5cee8b59bdbfc887ab948a987f2477ebb4c2b852f52710f7d64242ba7eac"
+      }
+    },
+    {
+      "path": "macos-display-candidate1-owning-build.log",
+      "kind": "private-build-transcript-withheld",
+      "original": {
+        "bytes": 1403,
+        "sha256": "ec931de96ff40580a2b13e92c9e7a6d69f52cdabc27c738f7068300ee40c1f67"
+      },
+      "published": {
+        "bytes": 102,
+        "sha256": "9d11adebfdf4b96ed4e054bf1ab1bbe7ebd6aac767e895e0715e03e97f279aa2"
+      }
+    },
+    {
+      "path": "macos-display-candidate1-owning-prime-artifacts.log",
+      "kind": "cargo-artifact-only",
+      "original": {
+        "bytes": 137670,
+        "sha256": "58b26f57c23a4dfa08f2a97c020231b02a7645ba137a666545b4585fd1874121"
+      },
+      "published": {
+        "bytes": 128743,
+        "sha256": "152561ca814214689e98dda03607100f39715933939e2b7956460ef0ad2ff773"
+      }
+    }
+  ]
+}

@@ -1,0 +1,181 @@
+{
+  "previous-attempt": "v1 rejected a generated target/tmp directory before any deletion; members independently inspected in display-build-members-v1.json",
+  "state": "finished",
+  "utc": "2026-10-22T13:25:48.271401+00:00",
+  "deleted": [
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate1\\target\\normal-candidate1",
+      "resolved": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate1\\target\\normal-candidate1",
+      "bytes": 2811849048,
+      "files": 1655
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate1\\target\\retained-owning-candidate1",
+      "resolved": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate1\\target\\retained-owning-candidate1",
+      "bytes": 1432268128,
+      "files": 4
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate2\\target\\normal-candidate2",
+      "resolved": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate2\\target\\normal-candidate2",
+      "bytes": 2813144152,
+      "files": 1655
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate2\\target\\retained-owning-candidate2",
+      "resolved": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-alpc-candidate2\\target\\retained-owning-candidate2",
+      "bytes": 1431691548,
+      "files": 4
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-continue-epoch1\\target\\retained-owning-epoch1",
+      "resolved": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-continue-epoch1\\target\\retained-owning-epoch1",
+      "bytes": 1394402562,
+      "files": 3
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-continue-epoch3\\target\\retained-owning-epoch3",
+      "resolved": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-continue-epoch3\\target\\retained-owning-epoch3",
+      "bytes": 1426027850,
+      "files": 4
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-current-el-candidate1\\target\\normal-candidate1",
+      "resolved": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-current-el-candidate1\\target\\normal-candidate1",
+      "bytes": 2115817716,
+      "files": 1642
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-current-el-candidate1\\target\\retained-owning-candidate1",
+      "resolved": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-current-el-candidate1\\target\\retained-owning-candidate1",
+      "bytes": 1433039730,
+      "files": 4
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-eri-red2\\target\\normal-candidate2",
+      "resolved": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-eri-red2\\target\\normal-candidate2",
+      "bytes": 1200578622,
+      "files": 1208
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-attributes-epoch1\\target\\retained-owning-epoch1",
+      "resolved": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-attributes-epoch1\\target\\retained-owning-epoch1",
+      "bytes": 1431718480,
+      "files": 4
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-attributes-epoch3\\target\\retained-owning-epoch3",
+      "resolved": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-attributes-epoch3\\target\\retained-owning-epoch3",
+      "bytes": 1430049640,
+      "files": 4
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-open-epoch2\\target\\normal",
+      "resolved": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-open-epoch2\\target\\normal",
+      "bytes": 1601196451,
+      "files": 1648
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-open-epoch2\\target\\retained-owning-epoch2",
+      "resolved": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-open-epoch2\\target\\retained-owning-epoch2",
+      "bytes": 1430680846,
+      "files": 4
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-open-epoch2\\target\\retained-rejected-full-epoch2",
+      "resolved": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-open-epoch2\\target\\retained-rejected-full-epoch2",
+      "bytes": 544195584,
+      "files": 1
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-section-candidate1\\target\\normal-candidate1",
+      "resolved": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-section-candidate1\\target\\normal-candidate1",
+      "bytes": 2113443158,
+      "files": 1642
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-section-candidate1\\target\\retained-owning-candidate1",
+      "resolved": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-file-section-candidate1\\target\\retained-owning-candidate1",
+      "bytes": 1431004702,
+      "files": 4
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1",
+      "resolved": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\normal-candidate1",
+      "bytes": 2115095144,
+      "files": 1642
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\retained-owning-candidate1",
+      "resolved": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-candidate1\\target\\retained-owning-candidate1",
+      "bytes": 1432832882,
+      "files": 4
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-red3\\target\\normal-red1",
+      "resolved": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-nls-sorting-red3\\target\\normal-red1",
+      "bytes": 546047488,
+      "files": 1
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate1\\target\\normal-candidate1",
+      "resolved": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate1\\target\\normal-candidate1",
+      "bytes": 326099207,
+      "files": 1204
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\normal-candidate2",
+      "resolved": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\normal-candidate2",
+      "bytes": 2125702138,
+      "files": 1646
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\retained-owning-candidate2",
+      "resolved": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-process-mitigation-candidate2\\target\\retained-owning-candidate2",
+      "bytes": 1432219618,
+      "files": 4
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-region-epoch1\\target\\retained-owning-epoch1",
+      "resolved": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-region-epoch1\\target\\retained-owning-epoch1",
+      "bytes": 1426036142,
+      "files": 4
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-session-alias-epoch1\\target\\retained-owning-epoch1",
+      "resolved": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-session-alias-epoch1\\target\\retained-owning-epoch1",
+      "bytes": 1426228930,
+      "files": 4
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1",
+      "resolved": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\normal-candidate1",
+      "bytes": 2115966991,
+      "files": 1642
+    },
+    {
+      "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\retained-owning-candidate1",
+      "resolved": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\retained-owning-candidate1",
+      "bytes": 1432550054,
+      "files": 4
+    }
+  ],
+  "moved": [
+    {
+      "old": "src-eri-candidate1/target/normal-candidate2",
+      "new": "src-display-candidate1/target/normal-candidate1",
+      "reason": "Current Display build target must be inside its exact source tree",
+      "method": "same-volume directory rename"
+    }
+  ],
+  "free-before": 550952960,
+  "processes": [
+    {
+      "ProcessId": 8088,
+      "Name": "python.exe",
+      "CommandLine": "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe  -B C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\display-abandoned-build-cleanup-v2.py"
+    }
+  ],
+  "current": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-volume-query-candidate1\\target\\retained-owning-candidate1",
+  "free-after": 26005729280
+}

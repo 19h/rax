@@ -1,0 +1,48 @@
+{
+  "state": "finished",
+  "checker-sha256": "3b9fb1744d092d28369b5bfaa6475c69f283272e5ab4f348dea63362cd9b08b8",
+  "negative-cases": [
+    {
+      "case": "all statuses repaired to success",
+      "result": "rejected",
+      "diagnostic": "native absence status"
+    },
+    {
+      "case": "failed handle became nonzero",
+      "result": "rejected",
+      "diagnostic": "failed native handle"
+    },
+    {
+      "case": "LastError changed",
+      "result": "rejected",
+      "diagnostic": "native LastError"
+    },
+    {
+      "case": "profile pointer width changed",
+      "result": "rejected",
+      "diagnostic": "profile"
+    },
+    {
+      "case": "duplicate native case",
+      "result": "rejected",
+      "diagnostic": "duplicate native case"
+    },
+    {
+      "case": "handle count leak",
+      "result": "rejected",
+      "diagnostic": "native handle leak"
+    },
+    {
+      "case": "attribute matrix changed",
+      "result": "rejected",
+      "diagnostic": "native matrix"
+    },
+    {
+      "case": "compiler archive member changed with repaired archive hash",
+      "result": "rejected",
+      "diagnostic": "compiler member bytes"
+    }
+  ],
+  "fresh-positive": "passed",
+  "temporary-fixture-removed": true
+}

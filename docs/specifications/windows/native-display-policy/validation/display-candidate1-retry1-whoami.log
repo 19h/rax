@@ -1,0 +1,1 @@
+program=C:\Windows\System32\whoami.exe terminal-call=2866 result=Complete(Internal("native NTDLL service NtQueryInformationProcess: Unimplemented(\"NtQueryInformationProcess: NtQueryInformationProcess class 0\")"))
