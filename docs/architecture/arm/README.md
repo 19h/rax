@@ -104,6 +104,13 @@ without changing FAR. With these checks enabled, memory instructions use
 the direct execution path; register-only regions remain eligible for native
 execution.
 
+Native lift windows use instruction-fetch permissions and instruction byte
+order. Cached regions revalidate both execute permissions and their physical
+source frames before entry; a denial or remap returns to direct execution at
+the current PC. Missing physical backing after a successful translation is
+reported as an external abort, preserving the virtual fault address and
+read/write/fetch intent.
+
 ## Generated A64 corpus configuration
 
 The generated allocated-encoding smoke tests enable `ArmFeatures::PACA`, as do

@@ -10,6 +10,8 @@ mod data;
 #[cfg(all(test, feature = "smir-jit", target_arch = "aarch64"))]
 mod jit_comparisons;
 #[cfg(all(test, feature = "smir-jit", target_arch = "aarch64"))]
+mod jit_fetch;
+#[cfg(all(test, feature = "smir-jit", target_arch = "aarch64"))]
 mod jit_permissions;
 #[cfg(all(test, feature = "smir-jit", target_arch = "aarch64"))]
 mod jit_resize;

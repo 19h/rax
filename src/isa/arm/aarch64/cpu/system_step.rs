@@ -284,7 +284,7 @@ impl AArch64Cpu {
         let mut bytes = Vec::with_capacity(max);
         let mut a = entry;
         while bytes.len() + 4 <= max {
-            match self.mem_read_u32(a) {
+            match self.read_instruction_word(a) {
                 Ok(w) => {
                     bytes.extend_from_slice(&w.to_le_bytes());
                     a = a.wrapping_add(4);

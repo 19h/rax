@@ -244,7 +244,9 @@
         "tests/suites/isa/arm/mmu_contract.rs",
         "/tmp/rax-arm-mmu-red.log",
         "/tmp/rax-arm-mmu-final.log",
-        "/tmp/rax-arm-audit-after-mmu.log"
+        "/tmp/rax-arm-audit-after-mmu.log",
+        "src/isa/arm/aarch64/cpu/tests/jit_fetch.rs",
+        "/tmp/rax-arm-jit-fetch-green.log"
       ],
       "remaining_validation": [
         "native EL1 / QEMU system comparison"
@@ -414,7 +416,9 @@
       "status": "locally_validated",
       "evidence": [
         "tests/suites/isa/arm/mmu_contract.rs::cpu_preserves_instruction_fetch_fault_classification",
-        "/tmp/rax-arm-fetch-red.log"
+        "/tmp/rax-arm-fetch-red.log",
+        "src/isa/arm/aarch64/cpu/tests/jit_fetch.rs",
+        "/tmp/rax-arm-jit-fetch-green.log"
       ]
     },
     {
@@ -448,6 +452,58 @@
         "/tmp/rax-x86-paging-linux-boot-parent.json",
         "/tmp/rax-x86-paging-linux-boot-current-final.log",
         "/tmp/rax-x86-paging-linux-boot-current-final.json"
+      ]
+    },
+    {
+      "id": "A-JIT-FETCH",
+      "area": "A64 fetch and physical faults",
+      "finding": "Native lift windows read code through data permissions and followed data byte order.",
+      "status": "locally_validated",
+      "evidence": [
+        "src/isa/arm/aarch64/cpu/tests/jit_fetch.rs",
+        "tests/suites/isa/arm/mmu_contract/data_access.rs",
+        "/tmp/rax-arm-jit-fetch-all-red.log",
+        "/tmp/rax-arm-physical-fault-red.log",
+        "/tmp/rax-arm-jit-fetch-green.log"
+      ]
+    },
+    {
+      "id": "A-JIT-SOURCE",
+      "area": "A64 fetch and physical faults",
+      "finding": "Cached AArch64 native regions ignored execute-permission changes and physical source remaps.",
+      "status": "locally_validated",
+      "evidence": [
+        "src/isa/arm/aarch64/cpu/tests/jit_fetch.rs",
+        "tests/suites/isa/arm/mmu_contract/data_access.rs",
+        "/tmp/rax-arm-jit-fetch-all-red.log",
+        "/tmp/rax-arm-physical-fault-red.log",
+        "/tmp/rax-arm-jit-fetch-green.log"
+      ]
+    },
+    {
+      "id": "A-PHYS-FETCH",
+      "area": "A64 fetch and physical faults",
+      "finding": "Backing fetch errors carried data-read intent and physical addresses instead of the virtual instruction PC.",
+      "status": "locally_validated",
+      "evidence": [
+        "src/isa/arm/aarch64/cpu/tests/jit_fetch.rs",
+        "tests/suites/isa/arm/mmu_contract/data_access.rs",
+        "/tmp/rax-arm-jit-fetch-all-red.log",
+        "/tmp/rax-arm-physical-fault-red.log",
+        "/tmp/rax-arm-jit-fetch-green.log"
+      ]
+    },
+    {
+      "id": "A-PHYS-CLASS",
+      "area": "A64 fetch and physical faults",
+      "finding": "Missing physical backing after successful translation was classified as another translation fault rather than external abort.",
+      "status": "locally_validated",
+      "evidence": [
+        "src/isa/arm/aarch64/cpu/tests/jit_fetch.rs",
+        "tests/suites/isa/arm/mmu_contract/data_access.rs",
+        "/tmp/rax-arm-jit-fetch-all-red.log",
+        "/tmp/rax-arm-physical-fault-red.log",
+        "/tmp/rax-arm-jit-fetch-green.log"
       ]
     }
   ],
@@ -903,6 +959,92 @@
           "impact": "medium",
           "item": "Native source-page checks conservatively defer a region containing an inaccessible untaken page to direct execution.",
           "blocks": false
+        }
+      ]
+    },
+    {
+      "id": "aarch64-native-fetch-and-physical-faults",
+      "baseline": "f8acd4f130c18df34f730d9256ed5c515fec34a8",
+      "status": "locally_validated",
+      "scope": [
+        "Instruction-permission fetches and little-endian instruction words for native lift windows",
+        "Virtual/physical source-frame bindings and execution permission checks before cached native entry",
+        "Precise fallback for remapped or inaccessible source pages",
+        "Virtual addresses and explicit fetch/read/write intent in physical backing errors",
+        "External aborts for missing physical targets after translation"
+      ],
+      "primary_source": "docs/architecture/arm/asl/arm_defs.asl: instruction fetch, AArch64.TranslateAddress and AArch64.Abort; ArmMemory::fetch_u32 instruction-byte-order contract",
+      "baseline_results": {
+        "native_fetch": {
+          "passed": 1,
+          "failed": 6
+        },
+        "physical_fault_class": {
+          "passed": 27,
+          "failed": 1
+        }
+      },
+      "validation": {
+        "host": "aarch64-apple-darwin",
+        "native_fetch": {
+          "passed": 7,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 10400
+        },
+        "contracts": {
+          "passed": 28,
+          "failed": 0,
+          "ignored": 0
+        },
+        "arm_aggregate": {
+          "passed": 46850,
+          "failed": 0,
+          "ignored": 0
+        },
+        "aarch64_smir_programs": {
+          "passed": 75,
+          "failed": 0,
+          "ignored": 0
+        },
+        "user_linux": {
+          "passed": 42,
+          "failed": 0,
+          "ignored": 1
+        },
+        "library": {
+          "passed": 10405,
+          "failed": 0,
+          "ignored": 2,
+          "filtered": 0,
+          "test_threads": 4
+        },
+        "all_targets_build": "passed",
+        "format": "passed",
+        "not_run": [
+          "Native EL1 hardware oracle",
+          "QEMU system oracle",
+          "x86-host execution of AArch64 guests"
+        ],
+        "logs": [
+          "/tmp/rax-arm-jit-fetch-all-red.log",
+          "/tmp/rax-arm-physical-fault-red.log",
+          "/tmp/rax-arm-jit-fetch-green.log",
+          "/tmp/rax-arm-jit-fetch-integration.log",
+          "/tmp/rax-arm-jit-fetch-library.log",
+          "/tmp/rax-arm-jit-fetch-build.log"
+        ]
+      },
+      "bounded_scope": [
+        {
+          "impact": "medium",
+          "item": "Source bindings conservatively cover the complete bounded lift window, including bytes that may be on an untaken path; denial or remapping defers to direct execution.",
+          "blocks": false
+        },
+        {
+          "impact": "high",
+          "item": "Cross-vCPU instruction-cache synchronization remains part of the pending scheduling/SMP work.",
+          "blocks": "Concurrent multi-vCPU completion."
         }
       ]
     }

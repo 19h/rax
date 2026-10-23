@@ -39,6 +39,20 @@ impl AArch64Cpu {
     // Memory Access
     // =========================================================================
 
+    /// Fetch an aligned A64 instruction independently of data byte order.
+    pub(crate) fn read_instruction_word(&self, va: u64) -> Result<u32, ArmError> {
+        let pa = self.translate_address(va, false, true)?;
+        self.memory.fetch_u32(pa).map_err(|error| {
+            self.physical_memory_error(
+                error,
+                va,
+                pa,
+                4,
+                crate::isa::arm::common::cpu::AccessType::InstructionFetch,
+            )
+        })
+    }
+
     /// Read byte from memory (with MMU translation).
     pub fn mem_read_u8(&self, va: u64) -> Result<u8, ArmError> {
         self.read_data_value(va, 1, self.current_el > 0)

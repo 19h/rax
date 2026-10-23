@@ -7,34 +7,8 @@ use crate::isa::arm::aarch64::cpu::AArch64Cpu;
 use crate::isa::arm::aarch64::mmu::MemoryType;
 use crate::isa::arm::aarch64::sctlr;
 use crate::isa::arm::common::cpu::{AccessType, ArmError, MemoryFaultInfo, MemoryFaultType};
-use crate::isa::arm::common::memory::MemoryError;
 
 impl AArch64Cpu {
-    fn data_memory_error(
-        &self,
-        error: MemoryError,
-        va: u64,
-        pa: u64,
-        width: usize,
-        write: bool,
-    ) -> ArmError {
-        let mut error = ArmError::from(error);
-        if let ArmError::MemoryError(info) = &mut error {
-            let offset = info
-                .address
-                .checked_sub(pa)
-                .filter(|offset| *offset < width as u64)
-                .unwrap_or(0);
-            info.address = va.wrapping_add(offset);
-            info.access = if write {
-                AccessType::Write
-            } else {
-                AccessType::Read
-            };
-        }
-        error
-    }
-
     fn check_data_alignment(
         &self,
         va: u64,
@@ -72,7 +46,7 @@ impl AArch64Cpu {
                 ));
             }
         };
-        result.map_err(|error| self.data_memory_error(error, va, pa, width, false))
+        result.map_err(|error| self.physical_memory_error(error, va, pa, width, AccessType::Read))
     }
 
     pub(super) fn read_data_value(
@@ -117,7 +91,7 @@ impl AArch64Cpu {
             self.memory
                 .read(mapping.pa, &mut bytes[done..done + count])
                 .map_err(|error| {
-                    self.data_memory_error(error, current, mapping.pa, count, false)
+                    self.physical_memory_error(error, current, mapping.pa, count, AccessType::Read)
                 })?;
             done += count;
         }
@@ -142,7 +116,8 @@ impl AArch64Cpu {
                 ));
             }
         };
-        result.map_err(|error| self.data_memory_error(error, va, pa, width, true))?;
+        result
+            .map_err(|error| self.physical_memory_error(error, va, pa, width, AccessType::Write))?;
         #[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
         self.note_data_write(va, width);
         Ok(())
@@ -200,7 +175,9 @@ impl AArch64Cpu {
             // later range faults. This is not an atomic transaction primitive.
             self.memory
                 .write(mapping.pa, &bytes[done..done + count])
-                .map_err(|error| self.data_memory_error(error, current, mapping.pa, count, true))?;
+                .map_err(|error| {
+                    self.physical_memory_error(error, current, mapping.pa, count, AccessType::Write)
+                })?;
             #[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
             self.note_data_write(current, count);
             done += count;

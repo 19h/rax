@@ -311,6 +311,7 @@ fn physical_backing_faults_preserve_virtual_address_and_access_intent() {
             panic!("physical backing must fault");
         };
         assert_eq!(info.address, 0x1200);
+        assert_eq!(info.fault_type, MemoryFaultType::External);
         assert_eq!(
             info.access,
             if write_access {

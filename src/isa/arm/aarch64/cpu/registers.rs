@@ -887,6 +887,13 @@ impl AArch64Cpu {
         {
             return false;
         }
+        // A denied or remapped source page might be on an untaken path.
+        // Interpret from the entry PC to preserve precise fault delivery.
+        for &(va, pa) in &region.source_pages {
+            if self.translate_address(va, false, true).ok() != Some(pa) {
+                return false;
+            }
+        }
         let mut gr = self.jit_marshal_to();
         gr.ctx = self as *mut AArch64Cpu as u64; // mutable ctx for the store helper
         if region.uses_fp {
@@ -922,6 +929,11 @@ impl AArch64Cpu {
         let bytes = self.jit_read_window(entry, WINDOW);
         if bytes.len() < 4 {
             return None;
+        }
+        let last_byte = entry.checked_add(bytes.len() as u64 - 1)?;
+        let mut source_pages = Vec::new();
+        for page in ((entry & !0xfff)..=(last_byte & !0xfff)).step_by(4096) {
+            source_pages.push((page, self.translate_address(page, false, true).ok()?));
         }
 
         struct Win {
@@ -1004,6 +1016,7 @@ impl AArch64Cpu {
             entry_offset: res.entry_offset,
             uses_fp,
             uses_memory,
+            source_pages,
         })
     }
 }

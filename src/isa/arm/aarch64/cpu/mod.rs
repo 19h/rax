@@ -402,6 +402,8 @@ pub(crate) struct JitRegion {
     uses_fp: bool,
     /// Memory regions require interpreter SP checks when SA/SA0 is enabled.
     uses_memory: bool,
+    /// Virtual/physical 4 KiB source-frame bindings for the lift window.
+    source_pages: Vec<(u64, u64)>,
 }
 
 /// Per-CPU JIT tier state.

@@ -160,8 +160,7 @@ impl AArch64Cpu {
 
     /// Fetch instruction at PC.
     pub(crate) fn fetch_instruction(&self) -> Result<u32, ArmError> {
-        let pa = self.translate_address(self.pc, false, true)?;
-        self.memory.fetch_u32(pa).map_err(|e| e.into())
+        self.read_instruction_word(self.pc)
     }
 
     /// Execute one instruction.
