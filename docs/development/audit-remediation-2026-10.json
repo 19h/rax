@@ -31,8 +31,18 @@
       "id": "X-FP",
       "area": "x86 scalar SSE",
       "finding": "Some paths do not apply guest rounding/DAZ to results; MXCSR sticky flags omitted",
-      "status": "pending",
-      "evidence": []
+      "status": "locally_validated",
+      "evidence": [
+        "tests/suites/isa/x86_64/simd/sse_fp_contract.rs",
+        "src/isa/x86_64/execute/simd/fp_arithmetic.rs",
+        "/tmp/rax-sse-fp-final-parent-red.log",
+        "/tmp/rax-sse-fp-final-host.log",
+        "/tmp/rax-sse-fp-final-rosetta-x86.log",
+        "/tmp/rax-sse-fp-original-audit-green.log"
+      ],
+      "remaining_validation": [
+        "Physical Intel hardware oracle for the expanded contract matrix"
+      ]
     },
     {
       "id": "X-NX",
@@ -1325,6 +1335,124 @@
         "baseline_failure_log": "/tmp/rax-x86-priv-rosetta-atomic-focused.log",
         "limit": "Full Rosetta library includes four independently reproduced pre-existing Darwin host-interface failures recorded separately."
       }
+    },
+    {
+      "id": "legacy-sse-fp-controls",
+      "baseline": "79f85d50a59dc5247082945f22077027be02c226",
+      "status": "locally_validated",
+      "scope": [
+        "Legacy SSE ADD/SUB/MUL/DIV/SQRT/MIN/MAX, scalar and packed binary32/binary64",
+        "Guest MXCSR rounding, DAZ, FTZ and sticky exception flags",
+        "Complete operand fetch before floating-point state commit",
+        "Unmasked pre-computation priority and precise destination/RIP preservation",
+        "Preserve host floating-point environment and legacy upper-lane merge behavior",
+        "Route active CPU decoder and duplicate helper entry points through the same shared evaluator"
+      ],
+      "primary_source": "docs/specifications/x86_64/325462-sdm-vol-1-2abcd-3abcd-4-1.pdf: Vol. 1 sections 4.9 and 11.5, Vol. 2 legacy SSE arithmetic instruction descriptions; supplied audit fp_full.rs and native/QEMU outputs.",
+      "assumptions": [
+        {
+          "assumption": "The selected fixtures enable the legacy SSE execution profile (CR0.EM=0, CR0.TS=0, CR4.OSFXSR=1).",
+          "dependent_result": "Arithmetic, operand/FP fault ordering and exception delivery.",
+          "stress_test": "All four scalar/packed forms, memory/register sources, both signs/precisions, all rounding modes, DAZ/FTZ, NaNs, overflow/underflow and CR4.OSXMMEXCPT enabled/disabled.",
+          "falsification_probe": "A fixture does not satisfy this profile or changes unrelated admission behavior."
+        }
+      ],
+      "baseline_results": {
+        "final_contracts": {
+          "passed": 1,
+          "failed": 10
+        },
+        "audit_cases": {
+          "passed": 0,
+          "failed": 3
+        }
+      },
+      "validation": {
+        "host_contracts": {
+          "passed": 11,
+          "failed": 0,
+          "ignored": 0
+        },
+        "rosetta_x86_aggregate": {
+          "passed": 28558,
+          "failed": 0,
+          "ignored": 3,
+          "filtered": 0,
+          "host_mxcsr_contract": "executed and passed"
+        },
+        "c_api": {
+          "passed": 183,
+          "failed": 0,
+          "ignored": 0
+        },
+        "all_targets_build": "passed",
+        "format": "passed",
+        "logs": [
+          "/tmp/rax-sse-fp-final-parent-red.log",
+          "/tmp/rax-sse-fp-final-green.log",
+          "/tmp/rax-sse-fp-final-host.log",
+          "/tmp/rax-sse-fp-final-rosetta-library.log",
+          "/tmp/rax-sse-fp-final-rosetta-x86.log",
+          "/tmp/rax-sse-fp-final-capi.log",
+          "/tmp/rax-sse-fp-final-build.log",
+          "/tmp/rax-sse-fp-final-fmt.log",
+          "/tmp/rax-sse-fp-original-audit-green.log"
+        ],
+        "host_library": {
+          "passed": 10414,
+          "failed": 0,
+          "ignored": 2,
+          "filtered": 0,
+          "test_threads": 4
+        },
+        "host_x86_aggregate": {
+          "passed": 28557,
+          "failed": 0,
+          "ignored": 3,
+          "filtered": 0
+        },
+        "oracle_api": {
+          "passed": 81,
+          "failed": 0
+        },
+        "x86_to_aarch64_native": {
+          "passed": 31,
+          "failed": 0
+        },
+        "ci_actions": {
+          "passed": 12,
+          "failed": 0
+        },
+        "unimplemented_manifests": {
+          "passed": 2,
+          "failed": 0
+        },
+        "source_inventory": {
+          "passed": 2,
+          "failed": 0
+        },
+        "rosetta_library": {
+          "passed": 11405,
+          "failed": 4,
+          "ignored": 2,
+          "filtered": 0,
+          "test_threads": 4,
+          "failure_classification": "Same four Darwin host-interface failures previously reproduced in isolated 0c4ea9b5 parent; no SSE regression failed."
+        },
+        "original_audit": "Recompiled the unchanged fp_full.rs for x86_64-apple-darwin and ran under Rosetta. All three native/rax result and MXCSR pairs match; host_after remains 0x1f80 in every case."
+      },
+      "bounded_scope": [
+        {
+          "impact": "medium",
+          "item": "This group covers legacy SSE arithmetic; VEX/EVEX direct paths and other FP instruction families have separate control/admission rules.",
+          "blocks": false
+        },
+        {
+          "impact": "medium",
+          "item": "Physical Intel hardware execution is unavailable; emitted x86 code and host-MXCSR preservation are exercised under Rosetta.",
+          "blocks": false
+        }
+      ]
     }
   ]
 }

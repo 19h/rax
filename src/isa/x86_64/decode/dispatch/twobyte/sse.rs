@@ -10,29 +10,6 @@ use crate::isa::x86_64::flags;
 
 const CR4_OSXSAVE: u64 = 1 << 18;
 
-// x86 MIN/MAX semantics differ from IEEE/Rust `f32::min`/`f32::max`.
-// SDM: MIN returns `(dst < src) ? dst : src` and MAX returns `(dst > src) ? dst : src`.
-// The comparison is FALSE whenever either operand is NaN (unordered) or on a
-// signed-zero tie, so the SECOND operand (`src`) is returned in those cases. This
-// is unlike Rust's `min`/`max`, which return the non-NaN operand. KVM (hardware)
-// follows the SDM, so we must too.
-#[inline(always)]
-fn x86_min_f32(dst: f32, src: f32) -> f32 {
-    if dst < src { dst } else { src }
-}
-#[inline(always)]
-fn x86_max_f32(dst: f32, src: f32) -> f32 {
-    if dst > src { dst } else { src }
-}
-#[inline(always)]
-fn x86_min_f64(dst: f64, src: f64) -> f64 {
-    if dst < src { dst } else { src }
-}
-#[inline(always)]
-fn x86_max_f64(dst: f64, src: f64) -> f64 {
-    if dst > src { dst } else { src }
-}
-
 impl X86_64Vcpu {
     #[inline(always)]
     fn require_cr4_osxsave_for_ud(&mut self) -> Result<bool> {
@@ -47,66 +24,7 @@ impl X86_64Vcpu {
         &mut self,
         ctx: &mut InsnContext,
     ) -> Result<Option<VcpuExit>> {
-        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
-        let xmm_dst = reg as usize;
-
-        if ctx.rep_prefix == Some(0xF3) {
-            // ADDSS - scalar single
-            let src = if is_memory {
-                f32::from_bits(self.read_mem(addr, 4)? as u32)
-            } else {
-                f32::from_bits(self.regs.xmm[rm as usize][0] as u32)
-            };
-            let dst = f32::from_bits(self.regs.xmm[xmm_dst][0] as u32);
-            let result = dst + src;
-            self.regs.xmm[xmm_dst][0] =
-                (self.regs.xmm[xmm_dst][0] & !0xFFFFFFFF) | result.to_bits() as u64;
-        } else if ctx.rep_prefix == Some(0xF2) {
-            // ADDSD - scalar double
-            let src = if is_memory {
-                f64::from_bits(self.read_mem(addr, 8)?)
-            } else {
-                f64::from_bits(self.regs.xmm[rm as usize][0])
-            };
-            let dst = f64::from_bits(self.regs.xmm[xmm_dst][0]);
-            self.regs.xmm[xmm_dst][0] = (dst + src).to_bits();
-        } else if ctx.operand_size_override {
-            // ADDPD - packed double (2 x f64)
-            use crate::isa::x86_64::simd_native;
-
-            let src: simd_native::Xmm = if is_memory {
-                [self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?]
-            } else {
-                [self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1]]
-            };
-
-            let mut dst: simd_native::Xmm = [self.regs.xmm[xmm_dst][0], self.regs.xmm[xmm_dst][1]];
-
-            simd_native::addpd_xmm(&mut dst, &src);
-
-            self.regs.xmm[xmm_dst][0] = dst[0];
-            self.regs.xmm[xmm_dst][1] = dst[1];
-        } else {
-            // ADDPS - packed single (4 x f32)
-            // Use native SIMD passthrough when available
-            use crate::isa::x86_64::simd_native;
-
-            let src: simd_native::Xmm = if is_memory {
-                [self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?]
-            } else {
-                [self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1]]
-            };
-
-            let mut dst: simd_native::Xmm = [self.regs.xmm[xmm_dst][0], self.regs.xmm[xmm_dst][1]];
-
-            // Native SSE if available, scalar fallback otherwise
-            simd_native::addps_xmm(&mut dst, &src);
-
-            self.regs.xmm[xmm_dst][0] = dst[0];
-            self.regs.xmm[xmm_dst][1] = dst[1];
-        }
-        self.regs.rip += ctx.cursor as u64;
-        Ok(None)
+        execute::simd::sse_add(self, ctx)
     }
 
     /// SSE packed single/double subtract (0x5C)
@@ -114,61 +32,7 @@ impl X86_64Vcpu {
         &mut self,
         ctx: &mut InsnContext,
     ) -> Result<Option<VcpuExit>> {
-        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
-        let xmm_dst = reg as usize;
-
-        if ctx.rep_prefix == Some(0xF3) {
-            let src = if is_memory {
-                f32::from_bits(self.read_mem(addr, 4)? as u32)
-            } else {
-                f32::from_bits(self.regs.xmm[rm as usize][0] as u32)
-            };
-            let dst = f32::from_bits(self.regs.xmm[xmm_dst][0] as u32);
-            self.regs.xmm[xmm_dst][0] =
-                (self.regs.xmm[xmm_dst][0] & !0xFFFFFFFF) | (dst - src).to_bits() as u64;
-        } else if ctx.rep_prefix == Some(0xF2) {
-            let src = if is_memory {
-                f64::from_bits(self.read_mem(addr, 8)?)
-            } else {
-                f64::from_bits(self.regs.xmm[rm as usize][0])
-            };
-            let dst = f64::from_bits(self.regs.xmm[xmm_dst][0]);
-            self.regs.xmm[xmm_dst][0] = (dst - src).to_bits();
-        } else if ctx.operand_size_override {
-            // SUBPD - packed double (2 x f64)
-            use crate::isa::x86_64::simd_native;
-
-            let src: simd_native::Xmm = if is_memory {
-                [self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?]
-            } else {
-                [self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1]]
-            };
-
-            let mut dst: simd_native::Xmm = [self.regs.xmm[xmm_dst][0], self.regs.xmm[xmm_dst][1]];
-
-            simd_native::subpd_xmm(&mut dst, &src);
-
-            self.regs.xmm[xmm_dst][0] = dst[0];
-            self.regs.xmm[xmm_dst][1] = dst[1];
-        } else {
-            // SUBPS - packed single (4 x f32)
-            use crate::isa::x86_64::simd_native;
-
-            let src: simd_native::Xmm = if is_memory {
-                [self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?]
-            } else {
-                [self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1]]
-            };
-
-            let mut dst: simd_native::Xmm = [self.regs.xmm[xmm_dst][0], self.regs.xmm[xmm_dst][1]];
-
-            simd_native::subps_xmm(&mut dst, &src);
-
-            self.regs.xmm[xmm_dst][0] = dst[0];
-            self.regs.xmm[xmm_dst][1] = dst[1];
-        }
-        self.regs.rip += ctx.cursor as u64;
-        Ok(None)
+        execute::simd::sse_sub(self, ctx)
     }
 
     /// SSE packed single/double multiply (0x59)
@@ -176,61 +40,7 @@ impl X86_64Vcpu {
         &mut self,
         ctx: &mut InsnContext,
     ) -> Result<Option<VcpuExit>> {
-        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
-        let xmm_dst = reg as usize;
-
-        if ctx.rep_prefix == Some(0xF3) {
-            let src = if is_memory {
-                f32::from_bits(self.read_mem(addr, 4)? as u32)
-            } else {
-                f32::from_bits(self.regs.xmm[rm as usize][0] as u32)
-            };
-            let dst = f32::from_bits(self.regs.xmm[xmm_dst][0] as u32);
-            self.regs.xmm[xmm_dst][0] =
-                (self.regs.xmm[xmm_dst][0] & !0xFFFFFFFF) | (dst * src).to_bits() as u64;
-        } else if ctx.rep_prefix == Some(0xF2) {
-            let src = if is_memory {
-                f64::from_bits(self.read_mem(addr, 8)?)
-            } else {
-                f64::from_bits(self.regs.xmm[rm as usize][0])
-            };
-            let dst = f64::from_bits(self.regs.xmm[xmm_dst][0]);
-            self.regs.xmm[xmm_dst][0] = (dst * src).to_bits();
-        } else if ctx.operand_size_override {
-            // MULPD - packed double (2 x f64)
-            use crate::isa::x86_64::simd_native;
-
-            let src: simd_native::Xmm = if is_memory {
-                [self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?]
-            } else {
-                [self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1]]
-            };
-
-            let mut dst: simd_native::Xmm = [self.regs.xmm[xmm_dst][0], self.regs.xmm[xmm_dst][1]];
-
-            simd_native::mulpd_xmm(&mut dst, &src);
-
-            self.regs.xmm[xmm_dst][0] = dst[0];
-            self.regs.xmm[xmm_dst][1] = dst[1];
-        } else {
-            // MULPS - packed single (4 x f32)
-            use crate::isa::x86_64::simd_native;
-
-            let src: simd_native::Xmm = if is_memory {
-                [self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?]
-            } else {
-                [self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1]]
-            };
-
-            let mut dst: simd_native::Xmm = [self.regs.xmm[xmm_dst][0], self.regs.xmm[xmm_dst][1]];
-
-            simd_native::mulps_xmm(&mut dst, &src);
-
-            self.regs.xmm[xmm_dst][0] = dst[0];
-            self.regs.xmm[xmm_dst][1] = dst[1];
-        }
-        self.regs.rip += ctx.cursor as u64;
-        Ok(None)
+        execute::simd::sse_mul(self, ctx)
     }
 
     /// SSE packed single/double divide (0x5E)
@@ -238,61 +48,7 @@ impl X86_64Vcpu {
         &mut self,
         ctx: &mut InsnContext,
     ) -> Result<Option<VcpuExit>> {
-        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
-        let xmm_dst = reg as usize;
-
-        if ctx.rep_prefix == Some(0xF3) {
-            let src = if is_memory {
-                f32::from_bits(self.read_mem(addr, 4)? as u32)
-            } else {
-                f32::from_bits(self.regs.xmm[rm as usize][0] as u32)
-            };
-            let dst = f32::from_bits(self.regs.xmm[xmm_dst][0] as u32);
-            self.regs.xmm[xmm_dst][0] =
-                (self.regs.xmm[xmm_dst][0] & !0xFFFFFFFF) | (dst / src).to_bits() as u64;
-        } else if ctx.rep_prefix == Some(0xF2) {
-            let src = if is_memory {
-                f64::from_bits(self.read_mem(addr, 8)?)
-            } else {
-                f64::from_bits(self.regs.xmm[rm as usize][0])
-            };
-            let dst = f64::from_bits(self.regs.xmm[xmm_dst][0]);
-            self.regs.xmm[xmm_dst][0] = (dst / src).to_bits();
-        } else if ctx.operand_size_override {
-            // DIVPD - packed double (2 x f64)
-            use crate::isa::x86_64::simd_native;
-
-            let src: simd_native::Xmm = if is_memory {
-                [self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?]
-            } else {
-                [self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1]]
-            };
-
-            let mut dst: simd_native::Xmm = [self.regs.xmm[xmm_dst][0], self.regs.xmm[xmm_dst][1]];
-
-            simd_native::divpd_xmm(&mut dst, &src);
-
-            self.regs.xmm[xmm_dst][0] = dst[0];
-            self.regs.xmm[xmm_dst][1] = dst[1];
-        } else {
-            // DIVPS - packed single (4 x f32)
-            use crate::isa::x86_64::simd_native;
-
-            let src: simd_native::Xmm = if is_memory {
-                [self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?]
-            } else {
-                [self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1]]
-            };
-
-            let mut dst: simd_native::Xmm = [self.regs.xmm[xmm_dst][0], self.regs.xmm[xmm_dst][1]];
-
-            simd_native::divps_xmm(&mut dst, &src);
-
-            self.regs.xmm[xmm_dst][0] = dst[0];
-            self.regs.xmm[xmm_dst][1] = dst[1];
-        }
-        self.regs.rip += ctx.cursor as u64;
-        Ok(None)
+        execute::simd::sse_div(self, ctx)
     }
 
     /// SSE packed single/double sqrt (0x51)
@@ -300,47 +56,7 @@ impl X86_64Vcpu {
         &mut self,
         ctx: &mut InsnContext,
     ) -> Result<Option<VcpuExit>> {
-        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
-        let xmm_dst = reg as usize;
-
-        if ctx.rep_prefix == Some(0xF3) {
-            let src = if is_memory {
-                f32::from_bits(self.read_mem(addr, 4)? as u32)
-            } else {
-                f32::from_bits(self.regs.xmm[rm as usize][0] as u32)
-            };
-            self.regs.xmm[xmm_dst][0] =
-                (self.regs.xmm[xmm_dst][0] & !0xFFFFFFFF) | src.sqrt().to_bits() as u64;
-        } else if ctx.rep_prefix == Some(0xF2) {
-            let src = if is_memory {
-                f64::from_bits(self.read_mem(addr, 8)?)
-            } else {
-                f64::from_bits(self.regs.xmm[rm as usize][0])
-            };
-            self.regs.xmm[xmm_dst][0] = src.sqrt().to_bits();
-        } else if ctx.operand_size_override {
-            let (src_lo, src_hi) = if is_memory {
-                (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
-            } else {
-                (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
-            };
-            self.regs.xmm[xmm_dst][0] = f64::from_bits(src_lo).sqrt().to_bits();
-            self.regs.xmm[xmm_dst][1] = f64::from_bits(src_hi).sqrt().to_bits();
-        } else {
-            let (src_lo, src_hi) = if is_memory {
-                (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
-            } else {
-                (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
-            };
-            let r0 = f32::from_bits(src_lo as u32).sqrt();
-            let r1 = f32::from_bits((src_lo >> 32) as u32).sqrt();
-            let r2 = f32::from_bits(src_hi as u32).sqrt();
-            let r3 = f32::from_bits((src_hi >> 32) as u32).sqrt();
-            self.regs.xmm[xmm_dst][0] = r0.to_bits() as u64 | ((r1.to_bits() as u64) << 32);
-            self.regs.xmm[xmm_dst][1] = r2.to_bits() as u64 | ((r3.to_bits() as u64) << 32);
-        }
-        self.regs.rip += ctx.cursor as u64;
-        Ok(None)
+        execute::simd::sse_sqrt(self, ctx)
     }
 
     /// SSE reciprocal square root (0x52)
@@ -408,64 +124,7 @@ impl X86_64Vcpu {
         &mut self,
         ctx: &mut InsnContext,
     ) -> Result<Option<VcpuExit>> {
-        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
-        let xmm_dst = reg as usize;
-
-        if ctx.rep_prefix == Some(0xF3) {
-            let src = if is_memory {
-                f32::from_bits(self.read_mem(addr, 4)? as u32)
-            } else {
-                f32::from_bits(self.regs.xmm[rm as usize][0] as u32)
-            };
-            let dst = f32::from_bits(self.regs.xmm[xmm_dst][0] as u32);
-            self.regs.xmm[xmm_dst][0] =
-                (self.regs.xmm[xmm_dst][0] & !0xFFFFFFFF) | x86_min_f32(dst, src).to_bits() as u64;
-        } else if ctx.rep_prefix == Some(0xF2) {
-            let src = if is_memory {
-                f64::from_bits(self.read_mem(addr, 8)?)
-            } else {
-                f64::from_bits(self.regs.xmm[rm as usize][0])
-            };
-            let dst = f64::from_bits(self.regs.xmm[xmm_dst][0]);
-            self.regs.xmm[xmm_dst][0] = x86_min_f64(dst, src).to_bits();
-        } else if ctx.operand_size_override {
-            let (src_lo, src_hi) = if is_memory {
-                (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
-            } else {
-                (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
-            };
-            self.regs.xmm[xmm_dst][0] = x86_min_f64(
-                f64::from_bits(self.regs.xmm[xmm_dst][0]),
-                f64::from_bits(src_lo),
-            )
-            .to_bits();
-            self.regs.xmm[xmm_dst][1] = x86_min_f64(
-                f64::from_bits(self.regs.xmm[xmm_dst][1]),
-                f64::from_bits(src_hi),
-            )
-            .to_bits();
-        } else {
-            let (src_lo, src_hi) = if is_memory {
-                (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
-            } else {
-                (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
-            };
-            let (dst_lo, dst_hi) = (self.regs.xmm[xmm_dst][0], self.regs.xmm[xmm_dst][1]);
-            let r0 = x86_min_f32(f32::from_bits(dst_lo as u32), f32::from_bits(src_lo as u32));
-            let r1 = x86_min_f32(
-                f32::from_bits((dst_lo >> 32) as u32),
-                f32::from_bits((src_lo >> 32) as u32),
-            );
-            let r2 = x86_min_f32(f32::from_bits(dst_hi as u32), f32::from_bits(src_hi as u32));
-            let r3 = x86_min_f32(
-                f32::from_bits((dst_hi >> 32) as u32),
-                f32::from_bits((src_hi >> 32) as u32),
-            );
-            self.regs.xmm[xmm_dst][0] = r0.to_bits() as u64 | ((r1.to_bits() as u64) << 32);
-            self.regs.xmm[xmm_dst][1] = r2.to_bits() as u64 | ((r3.to_bits() as u64) << 32);
-        }
-        self.regs.rip += ctx.cursor as u64;
-        Ok(None)
+        execute::simd::sse_min(self, ctx)
     }
 
     /// SSE packed single/double max (0x5F)
@@ -473,64 +132,7 @@ impl X86_64Vcpu {
         &mut self,
         ctx: &mut InsnContext,
     ) -> Result<Option<VcpuExit>> {
-        let (reg, rm, is_memory, addr, _) = self.decode_modrm(ctx)?;
-        let xmm_dst = reg as usize;
-
-        if ctx.rep_prefix == Some(0xF3) {
-            let src = if is_memory {
-                f32::from_bits(self.read_mem(addr, 4)? as u32)
-            } else {
-                f32::from_bits(self.regs.xmm[rm as usize][0] as u32)
-            };
-            let dst = f32::from_bits(self.regs.xmm[xmm_dst][0] as u32);
-            self.regs.xmm[xmm_dst][0] =
-                (self.regs.xmm[xmm_dst][0] & !0xFFFFFFFF) | x86_max_f32(dst, src).to_bits() as u64;
-        } else if ctx.rep_prefix == Some(0xF2) {
-            let src = if is_memory {
-                f64::from_bits(self.read_mem(addr, 8)?)
-            } else {
-                f64::from_bits(self.regs.xmm[rm as usize][0])
-            };
-            let dst = f64::from_bits(self.regs.xmm[xmm_dst][0]);
-            self.regs.xmm[xmm_dst][0] = x86_max_f64(dst, src).to_bits();
-        } else if ctx.operand_size_override {
-            let (src_lo, src_hi) = if is_memory {
-                (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
-            } else {
-                (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
-            };
-            self.regs.xmm[xmm_dst][0] = x86_max_f64(
-                f64::from_bits(self.regs.xmm[xmm_dst][0]),
-                f64::from_bits(src_lo),
-            )
-            .to_bits();
-            self.regs.xmm[xmm_dst][1] = x86_max_f64(
-                f64::from_bits(self.regs.xmm[xmm_dst][1]),
-                f64::from_bits(src_hi),
-            )
-            .to_bits();
-        } else {
-            let (src_lo, src_hi) = if is_memory {
-                (self.read_mem(addr, 8)?, self.read_mem(addr + 8, 8)?)
-            } else {
-                (self.regs.xmm[rm as usize][0], self.regs.xmm[rm as usize][1])
-            };
-            let (dst_lo, dst_hi) = (self.regs.xmm[xmm_dst][0], self.regs.xmm[xmm_dst][1]);
-            let r0 = x86_max_f32(f32::from_bits(dst_lo as u32), f32::from_bits(src_lo as u32));
-            let r1 = x86_max_f32(
-                f32::from_bits((dst_lo >> 32) as u32),
-                f32::from_bits((src_lo >> 32) as u32),
-            );
-            let r2 = x86_max_f32(f32::from_bits(dst_hi as u32), f32::from_bits(src_hi as u32));
-            let r3 = x86_max_f32(
-                f32::from_bits((dst_hi >> 32) as u32),
-                f32::from_bits((src_hi >> 32) as u32),
-            );
-            self.regs.xmm[xmm_dst][0] = r0.to_bits() as u64 | ((r1.to_bits() as u64) << 32);
-            self.regs.xmm[xmm_dst][1] = r2.to_bits() as u64 | ((r3.to_bits() as u64) << 32);
-        }
-        self.regs.rip += ctx.cursor as u64;
-        Ok(None)
+        execute::simd::sse_max(self, ctx)
     }
 
     /// SSE UNPCKLPS/UNPCKLPD (0x14) - unpack and interleave low

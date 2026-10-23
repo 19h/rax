@@ -2,6 +2,9 @@
 //!
 //! This module provides the interpreter for executing SMIR code.
 
+mod x86_simd_arithmetic;
+pub(crate) use x86_simd_arithmetic::X86SimdArithmetic;
+
 use std::cmp::Ordering;
 use std::collections::HashMap;
 

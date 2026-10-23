@@ -7,6 +7,9 @@
 #[path = "../../../support/x86_64/common/mod.rs"]
 mod common;
 
+#[path = "simd/sse_fp_contract.rs"]
+mod sse_fp_contract;
+
 // Arithmetic
 #[path = "integer/arithmetic/aaa_aas.rs"]
 mod x86_64_arithmetic_aaa_aas;

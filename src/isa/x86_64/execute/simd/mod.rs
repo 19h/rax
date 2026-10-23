@@ -32,6 +32,7 @@ mod avx512_pair_intersect;
 mod avx512_sat_convert;
 mod compare;
 mod convert;
+mod fp_arithmetic;
 mod gfni;
 mod minmax;
 mod mmx_xmm_transfer;

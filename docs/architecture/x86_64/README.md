@@ -77,6 +77,10 @@ environment/state images, and RFLAGS updates. Shared data semantics live in
 every transcendental result identical to every hardware implementation,
 and direct-vs-SMIR agreement is not an independent oracle for their shared code.
 
+Legacy SSE ADD, SUB, MUL, DIV, SQRT, MIN and MAX use the guest MXCSR for binary32/binary64 scalar and packed arithmetic. Rounding, DAZ/FTZ and sticky status are evaluated without changing the host floating-point environment. Source faults precede FP state updates; an unmasked FP exception preserves the destination and faulting RIP. Scalar forms retain the other XMM bits.
+
+The active two-byte decoder and helper entry points share `src/isa/x86_64/execute/simd/fp_arithmetic.rs`, which uses the integer-based FP evaluators shared with SMIR. The fixed-value and fault-order contracts are in `tests/suites/isa/x86_64/simd/sse_fp_contract.rs`.
+
 ## Linux user mode and compatibility tasks
 
 The default-off user-mode engine path runs at CPL 3 and translates through
