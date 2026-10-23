@@ -170,8 +170,7 @@ fn resolve_new_value(insn: DecodedInsn, producers: &[u8]) -> DecodedInsn {
         // New-value compound compare-and-jump (`_jumpnv`): `src1` is the `Ns8`
         // producer index (`Ns8 >> 1` = back-distance among the packet's GPR
         // producers, identical to a new-value store). Rewrite `src1` to the
-        // resolved producer register and clear the `new_value` flag so the
-        // executor reads the (already-committed-in-flight) GPR directly.
+        // resolved producer register while retaining its .new read mode.
         DecodedInsn::CompoundCmpJump {
             kind,
             src1,
@@ -193,7 +192,7 @@ fn resolve_new_value(insn: DecodedInsn, producers: &[u8]) -> DecodedInsn {
                 src2,
                 write_pred,
                 sense,
-                new_value: false,
+                new_value: true,
                 offset,
             }
         }

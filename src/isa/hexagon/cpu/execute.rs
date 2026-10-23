@@ -406,7 +406,7 @@ impl HexagonVcpu {
                     new_r[30] = Some(fp);
                     new_r[31] = Some(lr);
                 }
-                new_r[base as usize] = Some(addr.wrapping_add(8));
+                new_r[29] = Some(addr.wrapping_add(8));
             }
             DecodedInsn::DeallocReturn {
                 base,
@@ -436,7 +436,7 @@ impl HexagonVcpu {
                     new_r[30] = Some(fp);
                     new_r[31] = Some(lr);
                 }
-                new_r[base as usize] = Some(addr.wrapping_add(8));
+                new_r[29] = Some(addr.wrapping_add(8));
                 self.set_branch(branch, lr & !0x3, false)?;
             }
             DecodedInsn::Jump { offset } => {
@@ -511,14 +511,17 @@ impl HexagonVcpu {
                 src2,
                 write_pred,
                 sense,
-                new_value: _,
+                new_value,
                 offset,
             } => {
                 use crate::isa::hexagon::decode::CmpJumpKind;
-                // `src1` is already resolved to a real GPR by resolve_new_value
-                // for the `_jumpnv` forms; read it as an in-flight value so a
-                // same-packet producer is seen.
-                let a = self.read_reg_with_new(src1, new_r);
+                // Resolution preserves the read mode: ordinary compares read
+                // packet-old inputs; only `_jumpnv` reads an in-flight GPR.
+                let a = if new_value {
+                    self.read_reg_with_new(src1, new_r)
+                } else {
+                    self.regs.r[src1 as usize]
+                };
                 let result = match kind {
                     CmpJumpKind::Eq => a == self.regs.r[src2 as usize],
                     CmpJumpKind::Gt => (a as i32) > (self.regs.r[src2 as usize] as i32),

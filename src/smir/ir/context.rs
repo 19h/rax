@@ -799,6 +799,12 @@ impl HexagonRegState {
 
     pub fn set_r(&mut self, n: u8, val: u32) {
         self.r[n as usize & 0x1F] = val;
+        match n & 0x1f {
+            29 => self.sp = val,
+            30 => self.fp = val,
+            31 => self.lr = val,
+            _ => {}
+        }
     }
 
     pub fn get_v(&self, n: u8) -> VecValue {
@@ -1154,9 +1160,9 @@ impl SmirContext {
                 HexagonReg::P(n) => hex.p[n as usize] = value as u8,
                 HexagonReg::Pc => hex.pc = value as u32,
                 HexagonReg::Gp => hex.gp = value as u32,
-                HexagonReg::Lr => hex.lr = value as u32,
-                HexagonReg::Sp => hex.sp = value as u32,
-                HexagonReg::Fp => hex.fp = value as u32,
+                HexagonReg::Lr => hex.set_r(31, value as u32),
+                HexagonReg::Sp => hex.set_r(29, value as u32),
+                HexagonReg::Fp => hex.set_r(30, value as u32),
                 HexagonReg::Lc0 => hex.lc[0] = value as u32,
                 HexagonReg::Lc1 => hex.lc[1] = value as u32,
                 HexagonReg::Sa0 => hex.sa[0] = value as u32,

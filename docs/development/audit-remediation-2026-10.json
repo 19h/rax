@@ -344,7 +344,12 @@
       "area": "Hexagon",
       "finding": "An earlier store remains in memory when a later store in the packet faults",
       "status": "pending",
-      "evidence": []
+      "evidence": [
+        "/tmp/rax-hexagon-commit/contracts.rs",
+        "/tmp/rax-hexagon-commit/parent-red.log",
+        "/tmp/rax-hexagon-commit/mmio.enc"
+      ],
+      "baseline": "Six contracts fail against the GPR-group source image: direct/lifted RAM rollback, lifted GPR rollback, direct USR rollback, .new producer continuity over MMIO read, and an MMIO write escaping a later-faulting packet."
     },
     {
       "id": "H-PC",
@@ -621,12 +626,20 @@
       "id": "H-GPR-OLD",
       "area": "Hexagon SMIR",
       "finding": "Sequential lifted GPR writes replace packet-old source values; a legal two-register swap duplicates one value",
-      "status": "pending",
+      "status": "locally_validated",
       "evidence": [
         "/tmp/rax-hexagon-alignment/adjacent_contracts.rs",
-        "/tmp/rax-hexagon-alignment/adjacent-red.log"
+        "/tmp/rax-hexagon-alignment/adjacent-red.log",
+        "src/smir/lift/hexagon/packet_registers.rs",
+        "src/smir/lift/hexagon/register_operands.rs",
+        "tests/suites/machine/hexagon_baremetal/packet_registers.rs",
+        "/tmp/rax-hexagon-registers/parent-red.log",
+        "/tmp/rax-hexagon-registers/final-integration.log"
       ],
-      "baseline": "Direct CPU swaps R24/R25; O0 SMIR produces R25=0x22 instead of 0x11. Fixed LLVM 23 V68 encodings 0x70794018/0x7078c019."
+      "baseline": "Direct CPU swaps R24/R25; O0 SMIR produces R25=0x22 instead of 0x11. Fixed LLVM 23 V68 encodings 0x70794018/0x7078c019.",
+      "remaining_validation": [
+        "Independent QEMU / physical Hexagon execution"
+      ]
     },
     {
       "id": "H-EA32",
@@ -710,6 +723,81 @@
         "/tmp/rax-hexagon-oracle-packet/expanded-integration.log"
       ],
       "baseline": "0 passed / 1 failed; fixed words 0x00004000/0x9181c203, ISA V68, PC 0x1000."
+    },
+    {
+      "id": "H-CMP-OLD",
+      "area": "Hexagon scalar execution",
+      "finding": "Ordinary compound compare-jumps read an in-flight GPR instead of its packet-old value.",
+      "status": "locally_validated",
+      "evidence": [
+        "tests/suites/machine/hexagon_baremetal/packet_registers.rs",
+        "/tmp/rax-hexagon-registers/parent-red.log",
+        "/tmp/rax-hexagon-registers/final-integration.log"
+      ],
+      "remaining_validation": [
+        "Independent QEMU / physical Hexagon execution"
+      ]
+    },
+    {
+      "id": "H-FRAME",
+      "area": "Hexagon frame deallocation",
+      "finding": "Direct deallocation updates the encoded base instead of SP; lifted raw deallocation omits the encoded destination load and can reuse a clobbered base.",
+      "status": "locally_validated",
+      "evidence": [
+        "tests/suites/machine/hexagon_baremetal/packet_registers.rs",
+        "/tmp/rax-hexagon-registers/parent-red.log",
+        "/tmp/rax-hexagon-registers/final-integration.log"
+      ],
+      "remaining_validation": [
+        "Independent QEMU / physical Hexagon execution"
+      ]
+    },
+    {
+      "id": "H-GPR-ALIASES",
+      "area": "Hexagon SMIR context",
+      "finding": "Public SP/FP/LR register writes and corresponding R29/R30/R31 writes leave the other alias stale.",
+      "status": "locally_validated",
+      "evidence": [
+        "tests/suites/machine/hexagon_baremetal/packet_registers.rs",
+        "/tmp/rax-hexagon-registers/parent-red.log",
+        "/tmp/rax-hexagon-registers/final-integration.log"
+      ],
+      "remaining_validation": [
+        "Independent QEMU / physical Hexagon execution"
+      ]
+    },
+    {
+      "id": "H-MMIO-NEW",
+      "area": "Hexagon packet commit",
+      "finding": "GPR producer indices are discarded when a packet suspends for an MMIO read, so a legal later .new store resolves to R0.",
+      "status": "pending",
+      "evidence": [
+        "/tmp/rax-hexagon-commit/contracts.rs",
+        "/tmp/rax-hexagon-commit/parent-red.log"
+      ],
+      "primary_source": "V68 sections 3.3.1/3.3.2; fixed LLVM 23 V68 encodings in /tmp/rax-hexagon-commit/mmio.enc."
+    },
+    {
+      "id": "H-MMIO-COMMIT",
+      "area": "Hexagon packet commit",
+      "finding": "A dual-store packet emits an MMIO write exit before detecting an unmapped later store.",
+      "status": "pending",
+      "evidence": [
+        "/tmp/rax-hexagon-commit/contracts.rs",
+        "/tmp/rax-hexagon-commit/parent-red.log"
+      ],
+      "primary_source": "V68 sections 3.3.1/3.3.2; fixed LLVM 23 V68 encodings in /tmp/rax-hexagon-commit/mmio.enc."
+    },
+    {
+      "id": "H-USR-COMMIT",
+      "area": "Hexagon packet commit",
+      "finding": "A saturating instruction sets USR.OVF before a later packet fault, and the sticky control-state change survives the fault.",
+      "status": "pending",
+      "evidence": [
+        "/tmp/rax-hexagon-commit/contracts.rs",
+        "/tmp/rax-hexagon-commit/parent-red.log"
+      ],
+      "primary_source": "V68 sections 3.3.1/3.3.2; fixed LLVM 23 V68 encodings in /tmp/rax-hexagon-commit/mmio.enc."
     }
   ],
   "decisions": {
@@ -2292,6 +2380,125 @@
         {
           "impact": "low",
           "item": "The pass is O(n) in instruction IR size, adding two pure operations and two SSA temporaries per represented scalar memory operand. Direct CPU performance is unchanged.",
+          "blocks": false
+        }
+      ]
+    },
+    {
+      "id": "hexagon-packet-register-views",
+      "baseline": "a8fc4fe2b1035ebddb612988412e887c575f66be",
+      "status": "locally_validated",
+      "scope": [
+        "Retain packet-old scalar inputs and latest SSA outputs for explicit .new consumers",
+        "Merge represented predicated writes, reject ambiguous duplicate writes",
+        "Freeze overlapping combine sources and memory address inputs",
+        "Preserve ordinary versus .new compound compare modes in direct execution",
+        "Canonicalize lifted SP/FP/LR GPRs and synchronize public context aliases",
+        "Load raw deallocation pairs from one saved EA, update SP, and return through loaded high word"
+      ],
+      "primary_source": "docs/architecture/hexagon/80-N2040-46_REV_B_Hexagon_V68_Programmers_Reference_Manual.txt: sections 3.3.1, 3.3.2, 3.3.5 and deallocframe/dealloc_return instruction definitions; tools/hexagon/qemu/imported/ldst.idef:149-164; fixed LLVM 23 V68 encodings.",
+      "assumptions": [
+        {
+          "assumption": "Legal packets read ordinary scalar operands at packet entry; .new applies only to the marked operand role.",
+          "dependent_result": "GPR swap, arithmetic, old-address/new-payload alias and fused compare behavior.",
+          "stress_test": "Distinct values, same-register old/new roles, opaque scalar instructions, mutually exclusive conditional writes, packet boundaries, all 32 GPRs and O0/O1/O2.",
+          "falsification_probe": "An ordinary source sees an earlier write, a .new operand sees old state, or a cancelled writer replaces an executed writer."
+        },
+        {
+          "assumption": "Deallocation uses the encoded old base and default frame unscramble key; raw forms write their encoded pair and always update SP.",
+          "dependent_result": "Frame data, stack pointer and computed return target.",
+          "stress_test": "Overlapping FP/base, non-FP raw base, distinct old LR, predicated true/false return, live branch target under O0/O1/O2.",
+          "falsification_probe": "Base is incremented instead of SP, destination data is omitted, cancelled effects occur, or branch uses old LR."
+        },
+        {
+          "assumption": "Alias coherence is exercised through SmirContext read/write APIs; lifted machine words use canonical R29/R30/R31.",
+          "dependent_result": "Public register facade and production lifted aliases.",
+          "stress_test": "Bidirectional writes to each SP/FP/LR alias plus frame execution.",
+          "falsification_probe": "An alias retains a stale value after its peer is written."
+        }
+      ],
+      "baseline_results": {
+        "contracts": {
+          "passed": 5,
+          "failed": 10
+        },
+        "basis": "Final 15-contract pre-change standalone matrix. Three additional raw frame return contracts were added after implementation and are final-behavior checks, not claimed red regressions."
+      },
+      "affected_planes": {
+        "direct": "Ordinary compare mode and SP deallocation corrections; fixed-state controls for packet reads.",
+        "smir": "Packet-old snapshots, latest SSA producer values, conditional merges, alias-safe operands and extracted frame helper; O0/O1/O2 execution.",
+        "oracle": "Shared packet IR carries corrected register views; existing packet/oracle suite passes.",
+        "c_api": "Shared engine and lifting; no ABI change.",
+        "native": "No new admission or physical target execution."
+      },
+      "validation": {
+        "contracts": {
+          "passed": 18,
+          "failed": 0
+        },
+        "bare_metal": {
+          "passed": 110,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0
+        },
+        "smir_consistency": {
+          "passed": 313,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0
+        },
+        "oracle": {
+          "passed": 95,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0
+        },
+        "logs": [
+          "/tmp/rax-hexagon-registers/parent-red.log",
+          "/tmp/rax-hexagon-registers/final-integration.log",
+          "/tmp/rax-hexagon-registers/final-capi.log",
+          "/tmp/rax-hexagon-registers/final-library.log",
+          "/tmp/rax-hexagon-registers/final-build.log",
+          "/tmp/rax-hexagon-registers/final-clippy.log",
+          "/tmp/rax-hexagon-registers/final-fmt.log"
+        ],
+        "c_api": {
+          "passed": 185,
+          "failed": 0,
+          "ignored": 0
+        },
+        "all_targets_build": "passed",
+        "format": "passed",
+        "library": {
+          "passed": 10418,
+          "failed": 0,
+          "ignored": 2,
+          "filtered": 0,
+          "test_threads": 12,
+          "elapsed_seconds": 461.06
+        },
+        "clippy_all_targets": "passed"
+      },
+      "bounded_scope": [
+        {
+          "impact": "high",
+          "item": "H-COMMIT packet memory/control rollback and MMIO continuation remain pending; restored GPR views do not establish fault atomicity.",
+          "blocks": "Complete packet execution fidelity."
+        },
+        {
+          "impact": "medium",
+          "item": "Opaque predicate/new-value modes and invalid packets remain constrained by existing admission. Duplicate nonconditional GPR writes and unrepresented .new producers return Unsupported.",
+          "blocks": false
+        },
+        {
+          "impact": "medium",
+          "item": "Frame unscramble keys beyond the existing default configuration and independent physical/QEMU execution are unrun.",
+          "blocks": false
+        },
+        {
+          "impact": "low",
+          "item": "For n instruction IR operations, rewriting is O(n+32) time and O(n+32) space per word; accepted ordinary packets contain at most four words. Single-word packets without prior outputs bypass packet-view copies.",
           "blocks": false
         }
       ]

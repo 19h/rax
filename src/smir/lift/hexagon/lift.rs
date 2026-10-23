@@ -1651,9 +1651,9 @@ impl HexagonLifter {
                 // SP = SP - framesize - 8
                 // mem[SP+framesize] = LR:FP
                 // FP = SP + framesize
-                let sp = VReg::Arch(ArchReg::Hexagon(HexagonReg::Sp));
-                let fp = VReg::Arch(ArchReg::Hexagon(HexagonReg::Fp));
-                let lr = VReg::Arch(ArchReg::Hexagon(HexagonReg::Lr));
+                let sp = self.hex_reg(29);
+                let fp = self.hex_reg(30);
+                let lr = self.hex_reg(31);
 
                 let total_size = *size + 8;
 
@@ -1700,93 +1700,10 @@ impl HexagonLifter {
                 ControlFlow::Fallthrough
             }
 
-            DecodedInsn::DeallocFrame {
-                base,
-                dst: _,
-                update_lr_fp,
-            } => {
-                let sp = VReg::Arch(ArchReg::Hexagon(HexagonReg::Sp));
-                let fp = VReg::Arch(ArchReg::Hexagon(HexagonReg::Fp));
-                let lr = VReg::Arch(ArchReg::Hexagon(HexagonReg::Lr));
-
-                if *update_lr_fp {
-                    // Load FP from [base]
-                    push_op!(OpKind::Load {
-                        dst: fp,
-                        addr: Address::Direct(self.hex_reg(*base)),
-                        width: MemWidth::B4,
-                        sign: SignExtend::Zero,
-                    });
-
-                    // Load LR from [base + 4]
-                    push_op!(OpKind::Load {
-                        dst: lr,
-                        addr: Address::BaseOffset {
-                            base: self.hex_reg(*base),
-                            offset: 4,
-                            disp_size: DispSize::Auto,
-                        },
-                        width: MemWidth::B4,
-                        sign: SignExtend::Zero,
-                    });
-                }
-
-                // SP = base + 8
-                push_op!(OpKind::Add {
-                    dst: sp,
-                    src1: self.hex_reg(*base),
-                    src2: SrcOperand::Imm(8),
-                    width: OpWidth::W32,
-                    flags: FlagUpdate::None,
-                });
-
-                ControlFlow::Fallthrough
+            DecodedInsn::DeallocFrame { .. } | DecodedInsn::DeallocReturn { .. } => {
+                return self.lift_deallocation(insn, addr, ctx);
             }
 
-            DecodedInsn::DeallocReturn {
-                base,
-                dst: _,
-                pred: _,
-                update_lr_fp,
-            } => {
-                let sp = VReg::Arch(ArchReg::Hexagon(HexagonReg::Sp));
-                let fp = VReg::Arch(ArchReg::Hexagon(HexagonReg::Fp));
-                let lr = VReg::Arch(ArchReg::Hexagon(HexagonReg::Lr));
-
-                if *update_lr_fp {
-                    push_op!(OpKind::Load {
-                        dst: fp,
-                        addr: Address::Direct(self.hex_reg(*base)),
-                        width: MemWidth::B4,
-                        sign: SignExtend::Zero,
-                    });
-
-                    push_op!(OpKind::Load {
-                        dst: lr,
-                        addr: Address::BaseOffset {
-                            base: self.hex_reg(*base),
-                            offset: 4,
-                            disp_size: DispSize::Auto,
-                        },
-                        width: MemWidth::B4,
-                        sign: SignExtend::Zero,
-                    });
-                }
-
-                push_op!(OpKind::Add {
-                    dst: sp,
-                    src1: self.hex_reg(*base),
-                    src2: SrcOperand::Imm(8),
-                    width: OpWidth::W32,
-                    flags: FlagUpdate::None,
-                });
-
-                ControlFlow::Return
-            }
-
-            // ================================================================
-            // System
-            // ================================================================
             DecodedInsn::Trap0 => {
                 push_op!(OpKind::Swi { imm: 0 });
                 ControlFlow::Syscall

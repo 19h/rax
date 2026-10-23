@@ -30,9 +30,12 @@ use crate::isa::hexagon::opcode::{DecodedOp, Opcode, decode_word};
 mod addresses;
 mod alignment;
 mod emit;
+mod frames;
 pub use emit::*;
 mod helpers;
 mod packet_predicates;
+mod packet_registers;
+mod register_operands;
 pub use helpers::*;
 mod lift;
 pub use lift::*;
@@ -84,6 +87,7 @@ pub struct HexagonLifter {
     /// this. Updated at every packet boundary alongside `packet_producers`.
     packet_start_pc: GuestAddr,
     packet_predicates: packet_predicates::PacketPredicates,
+    packet_registers: packet_registers::PacketRegisters,
 }
 
 impl SmirLifter for HexagonLifter {
@@ -130,6 +134,7 @@ impl SmirLifter for HexagonLifter {
         if self.prev_word_ended_packet {
             self.packet_producers.clear();
             self.packet_predicates = Default::default();
+            self.packet_registers = Default::default();
             self.packet_start_pc = addr;
         }
         let parse = (word >> 14) & 0x3;
@@ -164,7 +169,8 @@ impl SmirLifter for HexagonLifter {
             self.pending_hist = None;
         }
 
-        let (ops, mut control_flow) = result?;
+        let (mut ops, mut control_flow) = result?;
+        self.rewrite_register_operands(&insn, &mut ops, addr, ctx)?;
         alignment_prefix.extend(self.normalize_memory_addresses(ops, ctx));
         for (index, op) in alignment_prefix.iter_mut().enumerate() {
             op.id = OpId(index as u16);
@@ -194,6 +200,10 @@ impl SmirLifter for HexagonLifter {
         if let Some(n) = produced {
             self.packet_producers.push(n);
         }
+
+        let ops = self
+            .packet_registers
+            .rewrite(ops, addr, ctx, self.prev_word_ended_packet)?;
 
         let mut branch_targets = Vec::new();
         match &control_flow {

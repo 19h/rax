@@ -49,17 +49,7 @@ impl HexagonLifter {
         let mut normalized = Vec::with_capacity(operations.len());
         let mut id = 0;
         for mut operation in operations {
-            let address = match &mut operation.kind {
-                OpKind::Load { addr, .. }
-                | OpKind::Store { addr, .. }
-                | OpKind::PredLoad { addr, .. }
-                | OpKind::PredStore { addr, .. }
-                | OpKind::LoadPair { addr, .. }
-                | OpKind::StorePair { addr, .. }
-                | OpKind::LoadExclusive { addr, .. }
-                | OpKind::StoreExclusive { addr, .. } => Some(addr),
-                _ => None,
-            };
+            let address = memory_address_mut(&mut operation.kind);
             if let Some(address) = address {
                 let effective = self.emit_address32(
                     &mut normalized,
@@ -75,5 +65,19 @@ impl HexagonLifter {
             normalized.push(operation);
         }
         normalized
+    }
+}
+
+pub(super) fn memory_address_mut(operation: &mut OpKind) -> Option<&mut Address> {
+    match operation {
+        OpKind::Load { addr, .. }
+        | OpKind::Store { addr, .. }
+        | OpKind::PredLoad { addr, .. }
+        | OpKind::PredStore { addr, .. }
+        | OpKind::LoadPair { addr, .. }
+        | OpKind::StorePair { addr, .. }
+        | OpKind::LoadExclusive { addr, .. }
+        | OpKind::StoreExclusive { addr, .. } => Some(addr),
+        _ => None,
     }
 }

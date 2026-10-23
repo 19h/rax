@@ -1,3 +1,6 @@
+#[path = "packet_registers.rs"]
+mod packet_registers;
+
 #[path = "packet_addresses.rs"]
 mod packet_addresses;
 
