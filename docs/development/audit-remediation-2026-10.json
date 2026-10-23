@@ -660,7 +660,21 @@
         "all_targets_build": "passed",
         "c_api_check": "passed; no-default-features",
         "format": "passed",
-        "library": "running on the frozen group source with 4 test threads",
+        "library": {
+          "prior_run": {
+            "passed": 10395,
+            "failed": 1,
+            "ignored": 2,
+            "log": "/tmp/rax-arm-sp-library.log"
+          },
+          "diagnosis": "Legacy LDRAA test assumed unconditional SP alignment with SA clear; fixture corrected to exercise both control settings.",
+          "corrected_memory_module": {
+            "passed": 31,
+            "failed": 0,
+            "log": "/tmp/rax-arm-sp-legacy-tests.log"
+          },
+          "full_rerun": "pending with subsequent paging validation"
+        },
         "logs": [
           "/tmp/rax-arm-sp-integration.log",
           "/tmp/rax-arm-sp-native.log",

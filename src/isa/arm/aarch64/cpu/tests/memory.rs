@@ -362,15 +362,31 @@ fn test_ldraa_ldrab_offsets_and_writeback() {
 }
 
 #[test]
-fn test_ldraa_needs_feat_pauth_and_an_aligned_sp() {
+fn test_ldraa_requires_pauth_and_observes_sp_alignment_control() {
     let mut cpu = create_test_cpu();
     cpu.write_memory(0, &0xf8200420u32.to_le_bytes()).unwrap();
     cpu.set_x(1, 0x2000);
     assert!(matches!(cpu.step(), Err(ArmError::UndefinedInstruction(_))));
-    let mut cpu = pauth_cpu();
-    cpu.write_memory(0, &0xf82017e6u32.to_le_bytes()).unwrap(); // ldraa x6, [sp, #8]
-    cpu.set_current_sp(0x5004);
-    assert!(matches!(cpu.step(), Err(ArmError::MemoryError(_))));
+    for enabled in [false, true] {
+        let mut cpu = pauth_cpu();
+        cpu.write_memory(0, &0xf82017e6u32.to_le_bytes()).unwrap(); // LDRAA X6,[SP,#8]
+        cpu.write_memory(0x500c, &0x1122334455667788u64.to_le_bytes())
+            .unwrap();
+        cpu.set_current_sp(0x5004);
+        cpu.sysregs.el1.sctlr = if enabled { sctlr::SA } else { 0 };
+        let result = cpu.step();
+        if enabled {
+            assert!(matches!(result, Err(ArmError::MemoryError(info))
+                if info.fault_type == MemoryFaultType::SpAlignment));
+            assert_eq!(cpu.get_pc(), 0);
+            assert_eq!(cpu.get_x(6), 0);
+        } else {
+            result.unwrap();
+            assert_eq!(cpu.get_pc(), 4);
+            assert_eq!(cpu.get_x(6), 0x1122334455667788);
+        }
+        assert_eq!(cpu.current_sp(), 0x5004);
+    }
 }
 // -------------------------------------------------------------------------
 // Top Byte Ignore (AArch64.AddrTop, TCR_EL1.{TBI0, TBID0})
