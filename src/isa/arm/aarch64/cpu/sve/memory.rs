@@ -67,20 +67,11 @@ impl AArch64Cpu {
         let pred = self.sve_p[pg];
         let is_store = (insn >> 30) & 1 == 1;
         let base = if rn == 31 {
-            let sp = self.current_sp();
-            if sp & 0xF != 0 {
-                return Err(ArmError::MemoryError(MemoryFaultInfo {
-                    address: sp,
-                    access: if is_store {
-                        crate::isa::arm::common::cpu::AccessType::Write
-                    } else {
-                        crate::isa::arm::common::cpu::AccessType::Read
-                    },
-                    fault_type: MemoryFaultType::Alignment,
-                    stage2: false,
-                }));
-            }
-            sp
+            self.checked_sp(if is_store {
+                crate::isa::arm::common::cpu::AccessType::Write
+            } else {
+                crate::isa::arm::common::cpu::AccessType::Read
+            })?
         } else {
             self.get_x(rn)
         };

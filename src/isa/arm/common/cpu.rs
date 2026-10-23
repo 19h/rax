@@ -418,6 +418,8 @@ pub enum MemoryFaultType {
     Lockdown,
     /// Synchronous external abort.
     SyncExternal,
+    /// AArch64 stack-pointer alignment fault (ESR.EC = 0x26).
+    SpAlignment,
 }
 
 /// Debug event types.

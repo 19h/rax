@@ -353,20 +353,11 @@ impl AArch64Cpu {
         let rn = ((insn >> 5) & 0x1F) as u8;
         let rt = (insn & 0x1F) as u8;
         let base = if rn == 31 {
-            let sp = self.current_sp();
-            if sp & 0xf != 0 {
-                return Err(ArmError::MemoryError(MemoryFaultInfo {
-                    address: sp,
-                    access: if opc == 0 {
-                        crate::isa::arm::common::cpu::AccessType::Write
-                    } else {
-                        crate::isa::arm::common::cpu::AccessType::Read
-                    },
-                    fault_type: MemoryFaultType::Alignment,
-                    stage2: false,
-                }));
-            }
-            sp
+            self.checked_sp(if opc == 0 {
+                crate::isa::arm::common::cpu::AccessType::Write
+            } else {
+                crate::isa::arm::common::cpu::AccessType::Read
+            })?
         } else {
             self.get_x(rn)
         };
@@ -859,16 +850,7 @@ impl AArch64Cpu {
         access: crate::isa::arm::common::cpu::AccessType,
     ) -> Result<(u64, bool, u64), ArmError> {
         let base = if rn == 31 {
-            let sp = self.current_sp();
-            if sp & 0xF != 0 {
-                return Err(ArmError::MemoryError(MemoryFaultInfo {
-                    address: sp,
-                    access,
-                    fault_type: MemoryFaultType::Alignment,
-                    stage2: false,
-                }));
-            }
-            sp
+            self.checked_sp(access)?
         } else {
             self.get_x(rn)
         };

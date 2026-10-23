@@ -133,8 +133,17 @@
       "id": "A-SP",
       "area": "A64 memory",
       "finding": "Raises an SP-alignment fault with SCTLR.SA/SA0=0",
-      "status": "pending",
-      "evidence": []
+      "status": "locally_validated",
+      "evidence": [
+        "tests/suites/isa/arm/mmu_contract/stack_alignment.rs",
+        "src/isa/arm/aarch64/cpu/memory/alignment.rs",
+        "/tmp/rax-arm-sp-red.log",
+        "/tmp/rax-arm-sp-integration.log",
+        "/tmp/rax-arm-sp-native.log"
+      ],
+      "remaining_validation": [
+        "Native EL1 / QEMU system comparison"
+      ]
     },
     {
       "id": "A-APTABLE",
@@ -556,7 +565,14 @@
         },
         "all_targets_build": "passed",
         "format": "passed",
-        "library": "running with 4 test threads",
+        "library": {
+          "passed": 10393,
+          "failed": 0,
+          "ignored": 2,
+          "filtered": 0,
+          "test_threads": 4,
+          "log": "/tmp/rax-arm-data-library.log"
+        },
         "artifact_isolation": "An intermediate run reused a parent rlib in a shared target directory. Discarded; current-source integration validation uses the independent repository target directory.",
         "not_run": [
           "Native EL1 hardware oracle",
@@ -590,6 +606,79 @@
         {
           "impact": "medium",
           "item": "Preserve scalar MMIO transaction width within one mapping; split only at actual mapping boundaries.",
+          "blocks": false
+        }
+      ]
+    },
+    {
+      "id": "aarch64-stack-alignment-controls",
+      "baseline": "13340ac18f85cf86b5ec3e828d60a9eb3cd4070e",
+      "status": "locally_validated",
+      "scope": [
+        "SA0 at EL0 and SA at EL1/EL2/EL3",
+        "Shared SP checks for scalar, SIMD, pair, atomic, ordered and SVE memory paths",
+        "Dedicated SP-alignment fault kind and ESR EC 0x26, preserving FAR",
+        "Linux user fault classification",
+        "Cached native region guards and policy-sensitive cache keys"
+      ],
+      "primary_source": "docs/architecture/arm/asl/arm_defs.asl: CheckSPAlignment, AArch64.SPAlignmentFault, ExceptionSyndrome",
+      "baseline_results": {
+        "contracts": {
+          "passed": 1,
+          "failed": 2
+        },
+        "log": "/tmp/rax-arm-sp-red.log"
+      },
+      "validation": {
+        "contracts": {
+          "passed": 28,
+          "failed": 0,
+          "ignored": 0,
+          "matrix": "23 memory encodings, EL0/EL1, all SA/SA0 combinations, aligned/unaligned SP"
+        },
+        "memory_unit_and_native": {
+          "passed": 5,
+          "failed": 0,
+          "filtered": 10393,
+          "note": "Includes all EL register-bank controls, native cache transitions, register-only native execution and prior scalar helper regressions."
+        },
+        "arm_aggregate": {
+          "passed": 46850,
+          "failed": 0,
+          "ignored": 0
+        },
+        "aarch64_smir_programs": {
+          "passed": 75,
+          "failed": 0,
+          "ignored": 0
+        },
+        "user_linux": {
+          "passed": 42,
+          "failed": 0,
+          "ignored": 1
+        },
+        "all_targets_build": "passed",
+        "c_api_check": "passed; no-default-features",
+        "format": "passed",
+        "library": "running on the frozen group source with 4 test threads",
+        "logs": [
+          "/tmp/rax-arm-sp-integration.log",
+          "/tmp/rax-arm-sp-native.log",
+          "/tmp/rax-arm-sp-library.log",
+          "/tmp/rax-arm-sp-build.log",
+          "/tmp/rax-arm-sp-capi.log"
+        ],
+        "not_run": [
+          "Native EL1 hardware oracle",
+          "QEMU system oracle",
+          "C API runtime suite"
+        ]
+      },
+      "api": "Adds MemoryFaultType::SpAlignment; preserves C ABI layouts.",
+      "bounded_scope": [
+        {
+          "impact": "medium",
+          "item": "Memory regions defer to the interpreter while SA/SA0 checks are enabled because current native IR lacks per-instruction stack checks. Register-only regions still execute natively.",
           "blocks": false
         }
       ]

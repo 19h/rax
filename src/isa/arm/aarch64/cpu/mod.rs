@@ -400,6 +400,8 @@ pub(crate) struct JitRegion {
     /// trampoline that additionally marshals V0-V31 + FPCR/FPSR. Integer-only
     /// regions use the cheaper GPR-only trampoline.
     uses_fp: bool,
+    /// Memory regions require interpreter SP checks when SA/SA0 is enabled.
+    uses_memory: bool,
 }
 
 /// Per-CPU JIT tier state.

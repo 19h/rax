@@ -193,6 +193,10 @@ impl AArch64Cpu {
 
         match err {
             ArmError::MemoryError(info) => {
+                if info.fault_type == MemoryFaultType::SpAlignment {
+                    self.enter_sync_exception(SyndromeRegister::sp_alignment(), None)?;
+                    return Ok(CpuExit::Continue);
+                }
                 let level = self
                     .last_fault_level
                     .load(std::sync::atomic::Ordering::Relaxed);
@@ -261,7 +265,7 @@ impl AArch64Cpu {
         }
     }
 
-    /// Cache-key discriminator: TTBR0 frame, EL, MMU enable, and FPEN.
+    /// Cache-key discriminator: TTBR0 frame, EL, MMU enable, FPEN and SP policy.
     /// FPEN occupies two of the unused low frame bits; changing FP access
     /// cannot reuse a region or ineligibility memo from a different policy.
     #[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
@@ -270,6 +274,7 @@ impl AArch64Cpu {
             | (self.current_el as u64)
             | (((self.sysregs.el1.sctlr & 1) as u64) << 2)
             | (((self.sysregs.el1.cpacr >> 20) & 0x3) << 3)
+            | ((self.sp_alignment_enabled() as u64) << 5)
     }
 
     /// Read up to `max` bytes of guest instruction stream from `entry`, stopping

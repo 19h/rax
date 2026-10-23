@@ -309,7 +309,9 @@ impl A64UserCpu {
                         MemoryFaultType::Permission | MemoryFaultType::AccessFlag => {
                             AccessFaultKind::Permission
                         }
-                        MemoryFaultType::Alignment => AccessFaultKind::Alignment,
+                        MemoryFaultType::Alignment | MemoryFaultType::SpAlignment => {
+                            AccessFaultKind::Alignment
+                        }
                         _ => AccessFaultKind::Bus,
                     };
                     self.cpu.set_pc(pc);

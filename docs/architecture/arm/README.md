@@ -98,7 +98,11 @@ Scalar data accesses translate each block/page range separately, including
 noncontiguous mappings and permission checks after a boundary crossing.
 SCTLR.A checks precede translation; Device mappings require natural alignment.
 An ordinary unaligned store may complete an earlier range before a later
-range faults.
+range faults. Stack-base alignment checks follow SCTLR.SA at EL1 and above
+and SCTLR.SA0 at EL0, and deliver the dedicated SP-alignment exception
+without changing FAR. With these checks enabled, memory instructions use
+the direct execution path; register-only regions remain eligible for native
+execution.
 
 ## Generated A64 corpus configuration
 

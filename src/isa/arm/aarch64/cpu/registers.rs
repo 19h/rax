@@ -882,7 +882,9 @@ impl AArch64Cpu {
     /// be interpreted. Callers then resume at the unchanged guest PC.
     #[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
     pub(crate) fn jit_run_region(&mut self, region: &JitRegion) -> bool {
-        if region.uses_fp && !self.jit_fp_access_permitted() {
+        if (region.uses_fp && !self.jit_fp_access_permitted())
+            || (region.uses_memory && self.sp_alignment_enabled())
+        {
             return false;
         }
         let mut gr = self.jit_marshal_to();
@@ -969,7 +971,15 @@ impl AArch64Cpu {
             return None;
         }
 
-        let allow_mem = self.jit.mem;
+        // The current IR does not encode instruction-level SP alignment checks.
+        // Keep memory instructions in the interpreter while SA/SA0 is enabled.
+        let allow_mem = self.jit.mem && !self.sp_alignment_enabled();
+        let uses_memory = func.blocks.iter().any(|block| {
+            block
+                .ops
+                .iter()
+                .any(|op| op.kind.reads_memory() || op.kind.writes_memory())
+        });
         if !is_aarch64_native_clobber_safe_excluding(&func, &exits, allow_mem) {
             return None;
         }
@@ -993,6 +1003,7 @@ impl AArch64Cpu {
             exec,
             entry_offset: res.entry_offset,
             uses_fp,
+            uses_memory,
         })
     }
 }

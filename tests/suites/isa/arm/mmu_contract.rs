@@ -4,6 +4,8 @@
 
 #[path = "mmu_contract/data_access.rs"]
 mod data_access;
+#[path = "mmu_contract/stack_alignment.rs"]
+mod stack_alignment;
 
 use rax::isa::arm::aarch64::mmu::{Mmu, MmuConfig, TranslationFaultType, TranslationGranule};
 use rax::isa::arm::common::cpu::{AccessType, MemoryFaultType};
