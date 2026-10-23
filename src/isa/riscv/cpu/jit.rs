@@ -863,7 +863,7 @@ unsafe fn jit_atomic_rmw_impl(
         .read(addr, &mut bytes[..size as usize])
         .is_err()
     {
-        context.record_fault(cause::LOAD_ACCESS_FAULT, addr);
+        context.record_fault(cause::STORE_ACCESS_FAULT, addr);
         return RiscVAtomicResult::default();
     }
     let bits = size * 8;
@@ -935,7 +935,7 @@ unsafe fn jit_compare_and_swap_impl(
         .read(addr, &mut bytes[..size as usize])
         .is_err()
     {
-        context.record_fault(cause::LOAD_ACCESS_FAULT, addr);
+        context.record_fault(cause::STORE_ACCESS_FAULT, addr);
         return RiscVAtomicCasResult::default();
     }
     let mask = if size == 8 {
@@ -997,7 +997,7 @@ unsafe fn jit_compare_and_swap_pair_impl(
     }
     let mut bytes = [0u8; 16];
     if unsafe { context.memory() }.read(addr, &mut bytes).is_err() {
-        context.record_fault(cause::LOAD_ACCESS_FAULT, addr);
+        context.record_fault(cause::STORE_ACCESS_FAULT, addr);
         return RiscVAtomicCasResult::default();
     }
     let old = [

@@ -1,0 +1,369 @@
+{
+  "baseline": "2ca3e35c54bcf4b64be63f524505a1a3e6b69b8b",
+  "audit": "RAX Implementation, Correctness, and Oracle Analysis, 2026-10-23",
+  "scheduler_default": "deterministic",
+  "recording": "explicit",
+  "checkpoint_v7": "reject",
+  "assumptions": [
+    {
+      "id": "A1",
+      "assumption": "Audit findings apply to the pinned baseline.",
+      "probe": "Verify HEAD and tracked diff before each semantic group.",
+      "status": "confirmed"
+    },
+    {
+      "id": "A2",
+      "assumption": "Architectural expectations require the selected profile.",
+      "probe": "Check encodings and control state against pinned specifications and negative controls.",
+      "status": "retained"
+    }
+  ],
+  "findings": [
+    {
+      "id": "X-FP",
+      "area": "x86 scalar SSE",
+      "finding": "Some paths do not apply guest rounding/DAZ to results; MXCSR sticky flags omitted",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "X-NX",
+      "area": "x86 paging",
+      "finding": "A NOP on an NX page executes through system-mode CPU.step",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "X-WP",
+      "area": "x86 paging",
+      "finding": "Rejects an R/W=0 write that should be allowed at CPL0 with CR0.WP=0",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "X-TLB",
+      "area": "x86 paging",
+      "finding": "TLB-hit path does not revalidate current access/CPL conditions",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "X-AD",
+      "area": "x86 paging",
+      "finding": "Page-table accessed/dirty bits are not updated after accesses/writes",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "X-FALLBACK",
+      "area": "x86 paging",
+      "finding": "Linux direct-map fallback converts a non-present #PF into a successful RAM mapping; source inspection also shows protection/reserved faults entering the same branch",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "X-RSVD",
+      "area": "x86 paging",
+      "finding": "Accepts a reserved PML4 PS bit",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "X-SMAP",
+      "area": "x86 privilege",
+      "finding": "A supervisor read accesses a user page with SMAP=1 and AC=0",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "X-PKRU",
+      "area": "x86 privilege",
+      "finding": "Reads a user-key page after WRPKRU disables access for key 1",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "X-PRIV",
+      "area": "x86 privileged instructions",
+      "finding": "CPL3 INVD/WBINVD advance instead of raising #GP(0)",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "A-PAGE",
+      "area": "A64 memory",
+      "finding": "A cross-page LDR does not translate the second VA, changing both data and fault behavior",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "A-ALIGN",
+      "area": "A64 memory",
+      "finding": "Allows an ordinary unaligned LDR with SCTLR.A=1",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "A-SP",
+      "area": "A64 memory",
+      "finding": "Raises an SP-alignment fault with SCTLR.SA/SA0=0",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "A-APTABLE",
+      "area": "A64 MMU",
+      "finding": "OR-based handling reverses APTable[0]'s EL0 access restriction",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "A-DESC",
+      "area": "A64 MMU",
+      "finding": "Treats reserved L3 descriptor `01` as a page",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "A-EL1X",
+      "area": "A64 MMU",
+      "finding": "Allows an EL1 instruction fetch from an EL0-writable page",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "A-PA",
+      "area": "A64 MMU",
+      "finding": "Accepts an output address exceeding configured PA width; CPU configuration also has limited TCR.IPS handling",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "A32-FP",
+      "area": "A32 VFP",
+      "finding": "Incorrect FPSCR behavior for infinity/NaN/division by zero, and incorrect rounding/FZ handling",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "R-AMO",
+      "area": "RISC-V",
+      "finding": "Failed AMOADD.W read produces load access fault (5), rather than store/AMO access fault (7)",
+      "status": "locally_validated",
+      "evidence": [
+        "src/isa/riscv/cpu/atomics/tests.rs",
+        "/tmp/rax-atomic-red.log",
+        "/tmp/rax-atomic-regressions.log",
+        "/tmp/rax-atomic-final-tests.log"
+      ],
+      "remaining_validation": [
+        "native x86-64 host"
+      ]
+    },
+    {
+      "id": "H-PRED",
+      "area": "Hexagon",
+      "finding": "Multiple compare writes to one predicate in a packet retain the last value instead of applying auto-AND",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "H-ALIGN",
+      "area": "Hexagon",
+      "finding": "Executes an unaligned scalar word load as a normal load",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "H-COMMIT",
+      "area": "Hexagon",
+      "finding": "An earlier store remains in memory when a later store in the packet faults",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "H-PC",
+      "area": "Hexagon",
+      "finding": "A later PC-relative jump in a packet uses the instruction PC instead of the packet PC",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "C-PCI",
+      "area": "Checkpoint",
+      "finding": "`pci_devices=true` becomes false after a configuration round trip",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "C-STATE",
+      "area": "Checkpoint",
+      "finding": "Serialized/restored device set is limited to PIC/PIT/16550/LAPIC",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "C-SMP",
+      "area": "System runtime",
+      "finding": "Creates multiple vCPUs, but the main execution loop runs only vCPU 0",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "C-HVF",
+      "area": "Intel Mac HVF",
+      "finding": "MMIO write data is a four-byte zero placeholder; read width is fixed; some CR/XSETBV exits only advance RIP",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "independent-oracles",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "bounded-proofs",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "x86-legacy-paging",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "arm32-lpae",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "riscv-privileged-linux",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "scalable-vectors",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "cortex-m-fpu",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "cortex-r-platform",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "device-capabilities",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "deterministic-concurrent-scheduling",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": "record-replay",
+      "status": "pending",
+      "evidence": []
+    }
+  ],
+  "decisions": {
+    "scheduling_modes": [
+      "deterministic",
+      "concurrent"
+    ],
+    "default_scheduling": "deterministic",
+    "quantum_retirement_units": 1000,
+    "deterministic_backends": [
+      "emulator",
+      "kvm",
+      "hvf-x86_64",
+      "hvf-aarch64"
+    ],
+    "record_replay": "explicit, deterministic only, includes external events and entropy",
+    "incomplete_v7_checkpoints": "reject",
+    "proofs": "complete existing bounded SMIR/SBPF families",
+    "publication": "commit completed semantic groups through red; no push",
+    "group_workflow": [
+      "validate owned changes",
+      "git add -- <explicit owned paths>",
+      "red -m --staged --run <same explicit owned paths>",
+      "verify actual commit and worktree"
+    ]
+  },
+  "quality_gates": [
+    "primary-source expectations",
+    "red-green regressions",
+    "affected execution planes",
+    "explicit oracle execution and skips",
+    "public ABI compatibility",
+    "owned worktree boundaries"
+  ],
+  "groups": [
+    {
+      "id": "riscv-atomic-fault-classification",
+      "scope": "Read-phase AMO and AMOCAS access faults in direct and production native paths. Shared-memory atomicity and privileged paging remain separate pending work.",
+      "primary_source": "docs/specifications/riscv/riscv/riscv-privileged.txt: Machine Cause table, Machine ISA 1.13",
+      "status": "locally_validated",
+      "baseline": "/tmp/rax-atomic-red.log",
+      "expected_baseline": "2 failed / 4 passed: AMO and AMOCAS report 5 instead of 7",
+      "affected_planes": {
+        "direct": "modified",
+        "native_runtime": "modified",
+        "smir": "atomic IR already identifies the operation; existing lift suites will be rerun",
+        "c_api": "uses corrected core; no ABI layout change"
+      },
+      "validation": {
+        "host": "aarch64-apple-darwin",
+        "toolchain": "stable rustc 1.98.1",
+        "build": {
+          "command": "cargo +stable build --locked --offline --no-default-features --features smir-jit --all-targets",
+          "status": "passed"
+        },
+        "format": {
+          "command": "cargo +stable fmt --all --check",
+          "status": "passed"
+        },
+        "atomic_regressions": {
+          "passed": 7,
+          "failed": 0,
+          "native_modes": [
+            "O0",
+            "O1",
+            "O2"
+          ],
+          "native_fallbacks": 0
+        },
+        "riscv_smir_lift": {
+          "passed": 13,
+          "failed": 0
+        },
+        "riscv_smir_aarch64_jit": {
+          "passed": 26,
+          "failed": 0
+        },
+        "library": {
+          "passed": 10391,
+          "failed": 0,
+          "ignored": 2,
+          "filtered": 0,
+          "log": "/tmp/rax-atomic-final-tests.log"
+        },
+        "not_run": [
+          "native x86-64 JIT",
+          "KVM",
+          "full external QEMU differential campaign"
+        ],
+        "commands": [
+          "cargo +stable test --locked --offline --no-default-features --lib isa::riscv::cpu::atomics::tests",
+          "cargo +stable test --locked --offline --no-default-features --features smir-jit --lib --test riscv_smir_lift --test riscv_smir_aarch64_jit -- --test-threads=1"
+        ]
+      }
+    }
+  ]
+}
