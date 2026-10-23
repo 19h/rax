@@ -632,12 +632,17 @@
       "id": "H-EA32",
       "area": "Hexagon SMIR",
       "finding": "An aligned effective address wraps to 32 bits in the direct CPU but retains a 64-bit carry in the lifted memory operation",
-      "status": "pending",
+      "status": "locally_validated",
       "evidence": [
-        "/tmp/rax-hexagon-alignment/adjacent_contracts.rs",
-        "/tmp/rax-hexagon-alignment/adjacent-red.log"
+        "src/smir/lift/hexagon/addresses.rs",
+        "tests/suites/machine/hexagon_baremetal/packet_addresses.rs",
+        "/tmp/rax-hexagon-ea32/parent-red.log",
+        "/tmp/rax-hexagon-ea32/first-integration.log"
       ],
-      "baseline": "R1=0xfffffff0; memw(R1+#32) reads mapped 0x10 directly, while O0 SMIR faults at 0x100000010. Alignment guard itself correctly uses the 32-bit address."
+      "baseline": "R1=0xfffffff0; memw(R1+#32) reads mapped 0x10 directly, while O0 SMIR faults at 0x100000010. Alignment guard itself correctly uses the 32-bit address.",
+      "remaining_validation": [
+        "Independent QEMU / physical Hexagon execution"
+      ]
     },
     {
       "id": "H-EXT-SCALE",
@@ -2182,6 +2187,111 @@
         {
           "impact": "low",
           "item": "Lifting is O(w+m) time and O(m) result space for w packet words and m emitted operations; accepted ordinary packets contain at most four words.",
+          "blocks": false
+        }
+      ]
+    },
+    {
+      "id": "hexagon-scalar-effective-address-width",
+      "baseline": "88b5672b1a60f12855dbcfd8d43270155d47e656",
+      "status": "locally_validated",
+      "scope": [
+        "Materialize modulo-2^32 effective addresses explicitly before scalar load/store, predicated, pair and exclusive memory operations",
+        "Share the same address materialization with the existing alignment prefix",
+        "Preserve architecture-neutral interpreter/lowerer address semantics and existing native admission",
+        "Strengthen flat-memory fixtures with distinct nonzero low-address data and the configured GP value"
+      ],
+      "primary_source": "docs/architecture/hexagon/80-N2040-46_REV_B_Hexagon_V68_Programmers_Reference_Manual.txt: section 5.1.1 (32-bit byte-addressable memory space), register/address arithmetic definitions; fixed LLVM 23 V68 encodings for base+immediate, scaled-index, GP and RMW forms.",
+      "assumptions": [
+        {
+          "assumption": "Scalar effective addresses use the selected Hexagon 32-bit address space; the emitted generic IR must express that width explicitly.",
+          "dependent_result": "Carry truncation and underflow fault addresses are consistent across direct execution and optimized interpretation.",
+          "stress_test": "Patterned memory distinguishes wrong addresses, omitted stores, width/sign errors and overwritten neighboring bytes. Byte/half/word/double loads/stores, register-scaled indexing, GP-relative access, RMW, false/true predicates, underflow faults, and O0/O1/O2.",
+          "falsification_probe": "A memory access retains a carry above bit 31, reports a 64-bit underflow address, clobbers a source register, or touches memory on a cancelled predicate."
+        }
+      ],
+      "baseline_results": {
+        "contracts": {
+          "passed": 0,
+          "failed": 14
+        },
+        "basis": "The complete 14-test standalone matrix links the oracle-packet-group parent; direct checks complete before the failing lifted assertions. Tests use the same strengthened fixtures and fixed encodings as the final integration suite."
+      },
+      "affected_planes": {
+        "direct": "Existing 32-bit address behavior supplies independent fixed-state controls; no CPU implementation changes.",
+        "smir": "Explicit Lea plus And(0xffffffff) before each represented scalar memory operand; existing alignment barrier uses the same emitter. Optimized O0/O1/O2 execution checks actual results and fault addresses.",
+        "oracle": "Corrected addresses are represented in the published IR, with operation IDs renumbered by the existing word/packet adapters.",
+        "c_api": "Corrected shared lifting/analysis; no ABI change.",
+        "native": "No new admission. The width is represented by existing IR operations instead of hidden interpreter context behavior."
+      },
+      "validation": {
+        "contracts": {
+          "passed": 14,
+          "failed": 0
+        },
+        "bare_metal": {
+          "passed": 92,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0
+        },
+        "smir_consistency": {
+          "passed": 313,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0
+        },
+        "oracle": {
+          "passed": 95,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0
+        },
+        "c_api": {
+          "passed": 185,
+          "failed": 0,
+          "ignored": 0
+        },
+        "logs": [
+          "/tmp/rax-hexagon-ea32/parent-red.log",
+          "/tmp/rax-hexagon-ea32/first-integration.log",
+          "/tmp/rax-hexagon-ea32/final-library.log",
+          "/tmp/rax-hexagon-ea32/final-capi.log",
+          "/tmp/rax-hexagon-ea32/final-build.log",
+          "/tmp/rax-hexagon-ea32/final-clippy.log",
+          "/tmp/rax-hexagon-ea32/final-fmt.log"
+        ],
+        "library": {
+          "passed": 10418,
+          "failed": 0,
+          "ignored": 2,
+          "filtered": 0,
+          "test_threads": 12,
+          "elapsed_seconds": 316.28
+        },
+        "all_targets_build": "passed",
+        "clippy_all_targets": "passed",
+        "format": "passed"
+      },
+      "bounded_scope": [
+        {
+          "impact": "high",
+          "item": "Packet-old GPR reads H-GPR-OLD and full packet rollback H-COMMIT remain pending.",
+          "blocks": "Complete Hexagon packet execution fidelity."
+        },
+        {
+          "impact": "medium",
+          "item": "This group covers the represented scalar memory operands; it does not establish HVX vector span behavior at the address-space boundary or reserved/illegal packet behavior.",
+          "blocks": false
+        },
+        {
+          "impact": "medium",
+          "item": "Direct controls cover the existing software LE/BE configurations; optimized generic SMIR data execution is checked in its existing little-endian profile. Independent physical Hexagon and QEMU execution are unrun.",
+          "blocks": false
+        },
+        {
+          "impact": "low",
+          "item": "The pass is O(n) in instruction IR size, adding two pure operations and two SSA temporaries per represented scalar memory operand. Direct CPU performance is unchanged.",
           "blocks": false
         }
       ]

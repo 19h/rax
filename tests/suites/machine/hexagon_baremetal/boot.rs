@@ -1,3 +1,6 @@
+#[path = "packet_addresses.rs"]
+mod packet_addresses;
+
 #[path = "../../../support/hexagon_memory.rs"]
 mod packet_memory;
 

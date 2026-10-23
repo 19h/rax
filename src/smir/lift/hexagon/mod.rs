@@ -27,6 +27,7 @@ use crate::isa::hexagon::decode::{
 use crate::isa::hexagon::opcode::{DecodedOp, Opcode, decode_word};
 
 // ---- module tree (auto-split) ----
+mod addresses;
 mod alignment;
 mod emit;
 pub use emit::*;
@@ -164,7 +165,7 @@ impl SmirLifter for HexagonLifter {
         }
 
         let (ops, mut control_flow) = result?;
-        alignment_prefix.extend(ops);
+        alignment_prefix.extend(self.normalize_memory_addresses(ops, ctx));
         for (index, op) in alignment_prefix.iter_mut().enumerate() {
             op.id = OpId(index as u16);
         }

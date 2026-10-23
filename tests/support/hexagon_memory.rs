@@ -6,6 +6,8 @@ use rax::vm::vcpu::{CpuState, HexagonRegisters, VCpu};
 use std::sync::Arc;
 use vm_memory::{Bytes, GuestAddress, GuestMemoryMmap};
 
+pub(crate) const LOW_MEMORY: [u8; 8] = [0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32, 0x10];
+
 #[path = "hexagon.rs"]
 mod lifter_stack;
 
@@ -37,6 +39,7 @@ pub(crate) fn machine(
     memory
         .write_slice(&[0xa5; 32], GuestAddress(0x2000))
         .unwrap();
+    memory.write_slice(&LOW_MEMORY, GuestAddress(0x10)).unwrap();
     let mut regs = HexagonRegisters::default();
     regs.set_pc(pc);
     regs.r[1] = address;
@@ -95,8 +98,13 @@ pub(crate) fn lifted(
                 registers.p[n as usize] as u64,
             );
         }
+        state.write_arch_reg(
+            ArchReg::Hexagon(HexagonReg::Gp),
+            u64::from(registers.c[11] & !0x3f),
+        );
         let mut memory = rax::smir::FlatMemory::new(0x4000);
         memory.write(0x2000, &[0xa5; 32]).unwrap();
+        memory.write(0x10, &LOW_MEMORY).unwrap();
         let result = rax::smir::SmirInterpreter::new().execute_block(
             &mut state,
             &mut memory,

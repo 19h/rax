@@ -33,29 +33,8 @@ impl HexagonLifter {
             .emit_postinc_load_ea(&mut operations, &mut id, address, context, &operand.address)
             .unwrap_or_else(|| self.hex_addr(&operand.address, context));
         context.extended_imm = saved_extender;
-        let wide = context.alloc_vreg();
-        operations.push(SmirOp::new(
-            OpId(id),
-            address,
-            OpKind::Lea {
-                dst: wide,
-                addr: effective,
-            },
-        ));
-        id += 1;
-        let effective32 = context.alloc_vreg();
-        operations.push(SmirOp::new(
-            OpId(id),
-            address,
-            OpKind::And {
-                dst: effective32,
-                src1: wide,
-                src2: SrcOperand::Imm(u32::MAX as i64),
-                width: OpWidth::W64,
-                flags: FlagUpdate::None,
-            },
-        ));
-        id += 1;
+        let effective32 =
+            self.emit_address32(&mut operations, &mut id, address, context, effective);
         let condition = operand.predicate.map(|predicate| {
             self.emit_pred_truth(
                 &mut operations,
