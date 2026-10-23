@@ -643,10 +643,13 @@
       "id": "H-EXT-SCALE",
       "area": "Hexagon decoder",
       "finding": "Constant-extended native-width scalar offsets are scaled after extension; LLVM memw(R1+##2) decodes offset 8 instead of 2",
-      "status": "pending",
+      "status": "locally_validated",
       "evidence": [
-        "/tmp/rax-hexagon-alignment/adjacent_contracts.rs",
-        "/tmp/rax-hexagon-alignment/adjacent-red.log"
+        "tests/suites/machine/hexagon_baremetal/packet_extended.rs",
+        "src/isa/hexagon/decode/memory.rs",
+        "src/smir/lift/hexagon/mod.rs",
+        "/tmp/rax-hexagon-extended/parent-red.log",
+        "/tmp/rax-hexagon-extended/final-integration-expanded.log"
       ],
       "primary_source": "V68 Programmer Reference section 10.9: scaled immediates are not scaled by the processor when extended."
     },
@@ -680,12 +683,26 @@
       "id": "H-EXT-LEAK",
       "area": "Hexagon SMIR",
       "finding": "An absolute load leaves its constant extender live in LiftContext; the next packet changes r4=#1 into r4=#0x2001",
-      "status": "pending",
+      "status": "locally_validated",
       "evidence": [
-        "/tmp/rax-hexagon-extended/contracts.rs",
-        "/tmp/rax-hexagon-extended/parent-red.log"
+        "tests/suites/machine/hexagon_baremetal/packet_extended.rs",
+        "src/isa/hexagon/decode/memory.rs",
+        "src/smir/lift/hexagon/mod.rs",
+        "/tmp/rax-hexagon-extended/parent-red.log",
+        "/tmp/rax-hexagon-extended/final-integration-expanded.log"
       ],
       "baseline": "Direct execution of immext + memw(##0x2010), then r4=#1, yields r4=1; O0 SMIR yields 8193. Fixed LLVM V68 words 0x00004080/0x4980c203/0x7800c024."
+    },
+    {
+      "id": "H-ORACLE-PACKET",
+      "area": "Hexagon oracle",
+      "finding": "A two-word extended memory packet decodes two instructions but publishes SMIR for the first extender only; bytes_consumed=4 and ops=[] omit the load",
+      "status": "pending",
+      "evidence": [
+        "/tmp/rax-hexagon-oracle-packet/repro.rs",
+        "/tmp/rax-hexagon-oracle-packet/parent-red.log"
+      ],
+      "baseline": "0 passed / 1 failed; fixed words 0x00004000/0x9181c203, ISA V68, PC 0x1000."
     }
   ],
   "decisions": {
@@ -1945,6 +1962,113 @@
         {
           "impact": "low",
           "item": "Slot selection is O(1); oracle instruction canonicalization takes O(n) time and O(n) bytes for n packet bytes.",
+          "blocks": false
+        }
+      ]
+    },
+    {
+      "id": "hexagon-extended-memory-operands",
+      "baseline": "3ff5899ca9ef5ea2f94d06bf54ab7de2d32cba77",
+      "status": "locally_validated",
+      "scope": [
+        "Decode constant-extended signed scalar memory offsets as complete byte offsets, preserving scaling for non-extended operands",
+        "Apply the rule to ordinary loads/stores, high-half stores, new-value stores, FIFO and unpack forms",
+        "Consume a pending extender after every non-extender instruction, including absolute and cancelled accesses",
+        "Move the touched scalar memory operand group into a 1348-line module and share existing test fixtures"
+      ],
+      "primary_source": "docs/architecture/hexagon/80-N2040-46_REV_B_Hexagon_V68_Programmers_Reference_Manual.txt: section 10.9, Encoding 32-bit immediate operands: scaled immediates are not scaled by the processor when extended; upper 26 and lower 6 immediate bits form the complete byte value. Section 5.1.3 and fixed LLVM 23 V68 encodings.",
+      "assumptions": [
+        {
+          "assumption": "The fixed instructions are eligible for constant extension and the extender belongs to the immediately following instruction.",
+          "dependent_result": "Byte offsets, precise alignment addresses and next-packet literals.",
+          "stress_test": "Byte controls, half/word/double loads and stores, signed loads, high-half stores, FIFO/unpack, new-value producer, non-extended scaled controls, negative and high immediate bits, unaligned reads/writes, absolute load/store and cancelled load followed by r4=#1; O0/O1/O2.",
+          "falsification_probe": "A fixed word disassembles differently, an opcode does not permit extension, or an extender survives its consumer."
+        }
+      ],
+      "baseline_results": {
+        "initial_contracts": {
+          "passed": 0,
+          "failed": 3,
+          "filtered": 14
+        },
+        "basis": "The three initial standalone tests link the pre-change engine: repeated offset scaling, missed unscaled alignment fault, and extender leakage after an absolute load all reproduce. The final 18-case suite adds validation beyond those three parent tests."
+      },
+      "affected_planes": {
+        "direct": "Shared decoded addresses are corrected; existing alignment/MMIO routing observes the intended byte address.",
+        "smir": "Shared decoder correction plus bounded extender lifetime; existing conditional alignment guards remain in force.",
+        "oracle": "The shared ordinary decoder receives the corrected operands; whole-packet IR generation remains H-ORACLE-PACKET.",
+        "c_api": "Corrected engine behavior and existing typed-fault ABI; no layout or status changes.",
+        "native": "No new native Hexagon memory admission."
+      },
+      "validation": {
+        "contracts": {
+          "passed": 18,
+          "failed": 0
+        },
+        "bare_metal": {
+          "passed": 78,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0
+        },
+        "smir_consistency": {
+          "passed": 313,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0
+        },
+        "oracle": {
+          "passed": 82,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0
+        },
+        "c_api": {
+          "passed": 185,
+          "failed": 0,
+          "ignored": 0
+        },
+        "extraction": "Compared all 63 moved memory helper functions with the parent after formatting/visibility normalization. Exactly load_io, store_io, store_io_high, store_new_io and addr_io_n change semantics.",
+        "logs": [
+          "/tmp/rax-hexagon-extended/parent-red.log",
+          "/tmp/rax-hexagon-extended/final-integration-expanded.log",
+          "/tmp/rax-hexagon-extended/final-library.log",
+          "/tmp/rax-hexagon-extended/final-capi.log",
+          "/tmp/rax-hexagon-extended/final-build.log",
+          "/tmp/rax-hexagon-extended/final-clippy.log",
+          "/tmp/rax-hexagon-extended/final-fmt.log"
+        ],
+        "library": {
+          "passed": 10418,
+          "failed": 0,
+          "ignored": 2,
+          "filtered": 0,
+          "test_threads": 12,
+          "elapsed_seconds": 247.89
+        },
+        "all_targets_build": "passed",
+        "clippy_all_targets": "passed",
+        "format": "passed"
+      },
+      "bounded_scope": [
+        {
+          "impact": "high",
+          "item": "Whole-packet oracle IR omission H-ORACLE-PACKET, packet commit H-COMMIT, lifted GPR source H-GPR-OLD and effective address width H-EA32 remain pending.",
+          "blocks": "Complete Hexagon fidelity."
+        },
+        {
+          "impact": "medium",
+          "item": "The direct execution matrix covers both byte orders; generic SMIR memory execution is checked in its existing little-endian profile.",
+          "blocks": false
+        },
+        {
+          "impact": "medium",
+          "item": "Independent physical Hexagon and QEMU execution are unrun.",
+          "blocks": false
+        },
+        {
+          "impact": "low",
+          "item": "Offset decoding and extender consumption remain O(1) time/space per instruction.",
           "blocks": false
         }
       ]

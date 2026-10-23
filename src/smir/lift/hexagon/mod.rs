@@ -151,6 +151,14 @@ impl SmirLifter for HexagonLifter {
         let mut alignment_prefix = self.alignment_prefix(&insn, addr, ctx);
         let result = self.lift_insn_inner(&insn, addr, ctx);
 
+        // An extender belongs to the immediately following instruction only.
+        // Some decoded operands (notably absolute addresses) are already fully
+        // extended and do not call extend_imm during lowering. Consume their
+        // pending extender as well, including at packet boundaries.
+        if !matches!(insn, DecodedInsn::ImmExt { .. }) {
+            ctx.extended_imm = None;
+        }
+
         if had_pending && self.pending_hist.is_some() {
             self.pending_hist = None;
         }

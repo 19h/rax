@@ -1,3 +1,9 @@
+#[path = "../../../support/hexagon_memory.rs"]
+mod packet_memory;
+
+#[path = "packet_extended.rs"]
+mod packet_extended;
+
 #[path = "packet_duplex.rs"]
 mod packet_duplex;
 
