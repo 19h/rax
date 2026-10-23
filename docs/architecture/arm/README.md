@@ -94,6 +94,12 @@ remove permissions, and EL1 instruction fetches reject pages that remain
 writable by EL0. Stage-2 descriptor helpers do not establish complete
 two-stage translation support.
 
+Scalar data accesses translate each block/page range separately, including
+noncontiguous mappings and permission checks after a boundary crossing.
+SCTLR.A checks precede translation; Device mappings require natural alignment.
+An ordinary unaligned store may complete an earlier range before a later
+range faults.
+
 ## Generated A64 corpus configuration
 
 The generated allocated-encoding smoke tests enable `ArmFeatures::PACA`, as do

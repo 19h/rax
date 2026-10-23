@@ -1,6 +1,7 @@
 //! Load/store, exclusive, atomic, and address-translation execution
 
 mod fault;
+mod range;
 
 use crate::isa::arm::aarch64::cpu::*;
 use std::collections::HashSet;
@@ -39,70 +40,45 @@ impl AArch64Cpu {
 
     /// Read byte from memory (with MMU translation).
     pub fn mem_read_u8(&self, va: u64) -> Result<u8, ArmError> {
-        let pa = self.translate_address(va, false, false)?;
-        self.memory.read_u8(pa).map_err(|e| e.into())
+        self.read_data_value(va, 1, self.current_el > 0)
+            .map(|value| value as u8)
     }
 
     /// Read halfword from memory.
     pub fn mem_read_u16(&self, va: u64) -> Result<u16, ArmError> {
-        let pa = self.translate_address(va, false, false)?;
-        self.memory.read_u16(pa).map_err(|e| e.into())
+        self.read_data_value(va, 2, self.current_el > 0)
+            .map(|value| value as u16)
     }
 
     /// Read word from memory.
     pub fn mem_read_u32(&self, va: u64) -> Result<u32, ArmError> {
-        let pa = self.translate_address(va, false, false)?;
-        self.memory.read_u32(pa).map_err(|e| e.into())
+        self.read_data_value(va, 4, self.current_el > 0)
+            .map(|value| value as u32)
     }
 
     /// Read doubleword from memory.
     pub fn mem_read_u64(&self, va: u64) -> Result<u64, ArmError> {
-        let pa = self.translate_address(va, false, false)?;
-        self.memory.read_u64(pa).map_err(|e| e.into())
+        self.read_data_value(va, 8, self.current_el > 0)
     }
 
     /// Write byte to memory.
     pub fn mem_write_u8(&mut self, va: u64, value: u8) -> Result<(), ArmError> {
-        let pa = self.translate_address(va, true, false)?;
-        self.memory
-            .write_u8(pa, value)
-            .map_err(|e| -> ArmError { e.into() })?;
-        #[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
-        self.jit_note_write(self.effective_data_address(va, self.current_el));
-        Ok(())
+        self.write_data_value(va, value as u64, 1, self.current_el > 0)
     }
 
     /// Write halfword to memory.
     pub fn mem_write_u16(&mut self, va: u64, value: u16) -> Result<(), ArmError> {
-        let pa = self.translate_address(va, true, false)?;
-        self.memory
-            .write_u16(pa, value)
-            .map_err(|e| -> ArmError { e.into() })?;
-        #[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
-        self.jit_note_write(self.effective_data_address(va, self.current_el));
-        Ok(())
+        self.write_data_value(va, value as u64, 2, self.current_el > 0)
     }
 
     /// Write word to memory.
     pub fn mem_write_u32(&mut self, va: u64, value: u32) -> Result<(), ArmError> {
-        let pa = self.translate_address(va, true, false)?;
-        self.memory
-            .write_u32(pa, value)
-            .map_err(|e| -> ArmError { e.into() })?;
-        #[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
-        self.jit_note_write(self.effective_data_address(va, self.current_el));
-        Ok(())
+        self.write_data_value(va, value as u64, 4, self.current_el > 0)
     }
 
     /// Write doubleword to memory.
     pub fn mem_write_u64(&mut self, va: u64, value: u64) -> Result<(), ArmError> {
-        let pa = self.translate_address(va, true, false)?;
-        self.memory
-            .write_u64(pa, value)
-            .map_err(|e| -> ArmError { e.into() })?;
-        #[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
-        self.jit_note_write(self.effective_data_address(va, self.current_el));
-        Ok(())
+        self.write_data_value(va, value, 8, self.current_el > 0)
     }
 
     /// Translate virtual address to physical address, using the privilege level
@@ -194,6 +170,17 @@ impl AArch64Cpu {
         is_execute: bool,
         privileged: bool,
     ) -> Result<u64, ArmError> {
+        self.translate_address_span(va, is_write, is_execute, privileged)
+            .map(|(descriptor, _)| descriptor.pa)
+    }
+
+    fn translate_address_span(
+        &self,
+        va: u64,
+        is_write: bool,
+        is_execute: bool,
+        privileged: bool,
+    ) -> Result<(crate::isa::arm::aarch64::mmu::AddressDescriptor, u64), ArmError> {
         // Check alignment for execute
         if is_execute && (va & 3) != 0 {
             return Err(ArmError::MemoryError(MemoryFaultInfo {
@@ -217,7 +204,7 @@ impl AArch64Cpu {
         };
 
         // Use MMU if enabled
-        match self.mmu.translate(
+        match self.mmu.translate_with_span(
             va,
             self.memory.as_ref(),
             is_write,
@@ -225,7 +212,7 @@ impl AArch64Cpu {
             privileged,
             self.current_el,
         ) {
-            Ok(desc) => Ok(desc.pa),
+            Ok(mapping) => Ok(mapping),
             Err(fault) => {
                 let access = if is_execute {
                     crate::isa::arm::common::cpu::AccessType::InstructionFetch
@@ -242,23 +229,22 @@ impl AArch64Cpu {
     /// Read a doubleword through unprivileged access translation. See
     /// [`Self::translate_address_unprivileged`]. (#39)
     pub(crate) fn mem_read_u64_unprivileged(&self, va: u64) -> Result<u64, ArmError> {
-        let pa = self.translate_address_unprivileged(va, false, false)?;
-        self.memory.read_u64(pa).map_err(|e| e.into())
+        self.read_data_value(va, 8, self.current_el > 0 && self.uao && self.has_uao_ext())
     }
 
     pub(crate) fn mem_read_u8_unprivileged(&self, va: u64) -> Result<u8, ArmError> {
-        let pa = self.translate_address_unprivileged(va, false, false)?;
-        self.memory.read_u8(pa).map_err(|e| e.into())
+        self.read_data_value(va, 1, self.current_el > 0 && self.uao && self.has_uao_ext())
+            .map(|value| value as u8)
     }
 
     pub(crate) fn mem_read_u16_unprivileged(&self, va: u64) -> Result<u16, ArmError> {
-        let pa = self.translate_address_unprivileged(va, false, false)?;
-        self.memory.read_u16(pa).map_err(|e| e.into())
+        self.read_data_value(va, 2, self.current_el > 0 && self.uao && self.has_uao_ext())
+            .map(|value| value as u16)
     }
 
     pub(crate) fn mem_read_u32_unprivileged(&self, va: u64) -> Result<u32, ArmError> {
-        let pa = self.translate_address_unprivileged(va, false, false)?;
-        self.memory.read_u32(pa).map_err(|e| e.into())
+        self.read_data_value(va, 4, self.current_el > 0 && self.uao && self.has_uao_ext())
+            .map(|value| value as u32)
     }
 
     /// Write a doubleword through unprivileged access translation. See
@@ -268,23 +254,21 @@ impl AArch64Cpu {
         va: u64,
         value: u64,
     ) -> Result<(), ArmError> {
-        let pa = self.translate_address_unprivileged(va, true, false)?;
-        self.memory
-            .write_u64(pa, value)
-            .map_err(|e| -> ArmError { e.into() })?;
-        #[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
-        self.jit_note_write(self.effective_data_address(va, self.current_el));
-        Ok(())
+        self.write_data_value(
+            va,
+            value,
+            8,
+            self.current_el > 0 && self.uao && self.has_uao_ext(),
+        )
     }
 
     pub(crate) fn mem_write_u8_unprivileged(&mut self, va: u64, value: u8) -> Result<(), ArmError> {
-        let pa = self.translate_address_unprivileged(va, true, false)?;
-        self.memory
-            .write_u8(pa, value)
-            .map_err(|e| -> ArmError { e.into() })?;
-        #[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
-        self.jit_note_write(self.effective_data_address(va, self.current_el));
-        Ok(())
+        self.write_data_value(
+            va,
+            value as u64,
+            1,
+            self.current_el > 0 && self.uao && self.has_uao_ext(),
+        )
     }
 
     pub(crate) fn mem_write_u16_unprivileged(
@@ -292,13 +276,12 @@ impl AArch64Cpu {
         va: u64,
         value: u16,
     ) -> Result<(), ArmError> {
-        let pa = self.translate_address_unprivileged(va, true, false)?;
-        self.memory
-            .write_u16(pa, value)
-            .map_err(|e| -> ArmError { e.into() })?;
-        #[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
-        self.jit_note_write(self.effective_data_address(va, self.current_el));
-        Ok(())
+        self.write_data_value(
+            va,
+            value as u64,
+            2,
+            self.current_el > 0 && self.uao && self.has_uao_ext(),
+        )
     }
 
     pub(crate) fn mem_write_u32_unprivileged(
@@ -306,13 +289,12 @@ impl AArch64Cpu {
         va: u64,
         value: u32,
     ) -> Result<(), ArmError> {
-        let pa = self.translate_address_unprivileged(va, true, false)?;
-        self.memory
-            .write_u32(pa, value)
-            .map_err(|e| -> ArmError { e.into() })?;
-        #[cfg(all(feature = "smir-jit", target_arch = "aarch64"))]
-        self.jit_note_write(self.effective_data_address(va, self.current_el));
-        Ok(())
+        self.write_data_value(
+            va,
+            value as u64,
+            4,
+            self.current_el > 0 && self.uao && self.has_uao_ext(),
+        )
     }
 
     /// Execute load/store instruction.

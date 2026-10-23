@@ -497,14 +497,31 @@ impl Mmu {
         privileged: bool,
         el: u8,
     ) -> Result<AddressDescriptor, TranslationFault> {
+        self.translate_with_span(va, memory, is_write, is_execute, privileged, el)
+            .map(|(descriptor, _)| descriptor)
+    }
+
+    /// Internal range access also needs the block/page span of this mapping.
+    pub(crate) fn translate_with_span(
+        &self,
+        va: u64,
+        memory: &dyn ArmMemory,
+        is_write: bool,
+        is_execute: bool,
+        privileged: bool,
+        el: u8,
+    ) -> Result<(AddressDescriptor, u64), TranslationFault> {
         if !self.config.enabled {
             // MMU disabled - identity map
-            return Ok(AddressDescriptor {
-                pa: va,
-                attributes: MemoryAttributes::default(),
-                contiguous: false,
-                gp: false,
-            });
+            return Ok((
+                AddressDescriptor {
+                    pa: va,
+                    attributes: MemoryAttributes::default(),
+                    contiguous: false,
+                    gp: false,
+                },
+                self.config.tg0.page_size(),
+            ));
         }
 
         // Determine which TTBR to use based on VA
@@ -627,12 +644,16 @@ impl Mmu {
                 // Decode memory attributes
                 let attributes = self.decode_attributes(&entry);
 
-                return Ok(AddressDescriptor {
-                    pa,
-                    attributes,
-                    contiguous: entry.contiguous(),
-                    gp: entry.gp(),
-                });
+                let span = 1u64 << (page_bits + (3 - level as u32) * bits_per_level);
+                return Ok((
+                    AddressDescriptor {
+                        pa,
+                        attributes,
+                        contiguous: entry.contiguous(),
+                        gp: entry.gp(),
+                    },
+                    span,
+                ));
             }
         }
     }

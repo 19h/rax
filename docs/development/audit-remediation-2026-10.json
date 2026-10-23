@@ -9,13 +9,21 @@
       "id": "A1",
       "assumption": "Audit findings apply to the pinned baseline.",
       "probe": "Verify HEAD and tracked diff before each semantic group.",
-      "status": "confirmed"
+      "status": "confirmed",
+      "basis": "Audit identifies the pinned repository revision; each group records its parent.",
+      "dependent_result": "Reproduction and group attribution.",
+      "stress_test": "Compare the corrected regression target with an isolated parent source tree.",
+      "falsification_probe": "Parent target passes a claimed regression or the tracked diff contains unowned edits."
     },
     {
       "id": "A2",
       "assumption": "Architectural expectations require the selected profile.",
       "probe": "Check encodings and control state against pinned specifications and negative controls.",
-      "status": "retained"
+      "status": "retained",
+      "basis": "Pinned local ISA specifications and explicit control-state fixtures.",
+      "dependent_result": "Fault class, priority, and access behavior.",
+      "stress_test": "Granule, width, byte order, permissions, and enabled/disabled controls.",
+      "falsification_probe": "A fixture violates the selected profile or an independent primary-source rule contradicts the assertion."
     }
   ],
   "findings": [
@@ -93,15 +101,33 @@
       "id": "A-PAGE",
       "area": "A64 memory",
       "finding": "A cross-page LDR does not translate the second VA, changing both data and fault behavior",
-      "status": "pending",
-      "evidence": []
+      "status": "locally_validated",
+      "evidence": [
+        "tests/suites/isa/arm/mmu_contract/data_access.rs",
+        "src/isa/arm/aarch64/cpu/memory/range/tests.rs",
+        "/tmp/rax-arm-data-parent-red.log",
+        "/tmp/rax-arm-data-final-integration-current.log",
+        "/tmp/rax-arm-data-native.log"
+      ],
+      "remaining_validation": [
+        "Native EL1 / QEMU system comparison"
+      ]
     },
     {
       "id": "A-ALIGN",
       "area": "A64 memory",
       "finding": "Allows an ordinary unaligned LDR with SCTLR.A=1",
-      "status": "pending",
-      "evidence": []
+      "status": "locally_validated",
+      "evidence": [
+        "tests/suites/isa/arm/mmu_contract/data_access.rs",
+        "src/isa/arm/aarch64/cpu/memory/range/tests.rs",
+        "/tmp/rax-arm-data-parent-red.log",
+        "/tmp/rax-arm-data-final-integration-current.log",
+        "/tmp/rax-arm-data-native.log"
+      ],
+      "remaining_validation": [
+        "Native EL1 / QEMU system comparison"
+      ]
     },
     {
       "id": "A-SP",
@@ -486,6 +512,86 @@
         "Physical profile capped at 48 bits",
         "Complete VHE and stage-2 translation remain outside this group",
         "Page-crossing, data/SP alignment, and AArch32 FP findings remain pending"
+      ]
+    },
+    {
+      "id": "aarch64-scalar-memory-ranges",
+      "baseline": "0c4ea9b59090f9c9102626b5c8f516ec1560dfa9",
+      "status": "locally_validated",
+      "scope": [
+        "Scalar 1/2/4/8-byte access helpers, privileged and unprivileged",
+        "Separate translation and permissions for each crossed mapping",
+        "SCTLR.A alignment before translation and Device natural alignment",
+        "Backend fault virtual addresses and read/write intent",
+        "Production native helper success and fault exit"
+      ],
+      "primary_source": "docs/architecture/arm/asl/arm_defs.asl: Mem[], AArch64.CheckAlignment, AArch64.TranslateAddress",
+      "baseline_results": {
+        "parent_contracts": "Independent target: 14 passed, 11 failed; /tmp/rax-arm-data-parent-isolated-red.log",
+        "original_audit": "Cross-page value/fault and MMU-disabled SCTLR.A failures reproduced using the frozen pre-group executable",
+        "initial_fixture_error": "Four initial failures used virtual CPU APIs to seed physical RAM. Corrected before the isolated-parent baseline."
+      },
+      "validation": {
+        "host": "aarch64-apple-darwin",
+        "contracts": {
+          "passed": 25,
+          "failed": 0,
+          "ignored": 0
+        },
+        "production_native": {
+          "passed": 2,
+          "failed": 0,
+          "filtered": 10393,
+          "note": "Native regions compiled and executed; expected fault exits re-enter the direct interpreter at the faulting PC."
+        },
+        "arm_aggregate": {
+          "passed": 46850,
+          "failed": 0,
+          "ignored": 0
+        },
+        "aarch64_smir_programs": {
+          "passed": 75,
+          "failed": 0,
+          "ignored": 0
+        },
+        "all_targets_build": "passed",
+        "format": "passed",
+        "library": "running with 4 test threads",
+        "artifact_isolation": "An intermediate run reused a parent rlib in a shared target directory. Discarded; current-source integration validation uses the independent repository target directory.",
+        "not_run": [
+          "Native EL1 hardware oracle",
+          "QEMU system oracle"
+        ],
+        "logs": [
+          "/tmp/rax-arm-data-parent-red.log",
+          "/tmp/rax-arm-data-priority-red.log",
+          "/tmp/rax-arm-data-final-integration-current.log",
+          "/tmp/rax-arm-data-native.log",
+          "/tmp/rax-arm-data-library.log",
+          "/tmp/rax-arm-data-build.log",
+          "/tmp/rax-arm-data-parent-isolated-red.log"
+        ],
+        "ci_actions_pinned": {
+          "passed": 12,
+          "failed": 0
+        }
+      },
+      "limitations": [
+        "SP alignment controls and SP exception classification remain pending separately",
+        "Vector/exclusive paths that bypass scalar helpers require separate handling",
+        "Ordinary cross-mapping stores may partially complete before a later fault"
+      ],
+      "bounded_scope": [
+        {
+          "impact": "high",
+          "item": "Vector/exclusive bypass paths do not inherit scalar range behavior.",
+          "blocks": "Full memory-model completion; not the reproduced scalar LDR fix."
+        },
+        {
+          "impact": "medium",
+          "item": "Preserve scalar MMIO transaction width within one mapping; split only at actual mapping boundaries.",
+          "blocks": false
+        }
       ]
     }
   ]

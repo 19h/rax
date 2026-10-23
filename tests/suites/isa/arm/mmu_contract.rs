@@ -2,6 +2,9 @@
 //! (docs/architecture/arm/asl/arm_defs.asl), including hierarchical AP polarity,
 //! descriptor legality, and output-address-size faults.
 
+#[path = "mmu_contract/data_access.rs"]
+mod data_access;
+
 use rax::isa::arm::aarch64::mmu::{Mmu, MmuConfig, TranslationFaultType, TranslationGranule};
 use rax::isa::arm::common::cpu::{AccessType, MemoryFaultType};
 use rax::isa::arm::common::memory::ArmMemory;
