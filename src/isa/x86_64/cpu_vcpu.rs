@@ -29,6 +29,7 @@ impl VCpu for X86_64Vcpu {
         };
         self.regs = state.regs.clone();
         self.sregs = state.sregs.clone();
+        self.mmu.set_data_access_state(self.regs.rflags, self.pkru);
         // `state.regs.rflags` is the architectural value (`get_state`
         // materializes pending flags); flags still derived lazily from an
         // earlier ALU result would otherwise override it. A snapshot restore
@@ -65,6 +66,7 @@ impl VCpu for X86_64Vcpu {
             crate::vm::vcpu::MemAccess::Write => crate::isa::x86_64::mmu::AccessType::Write,
             crate::vm::vcpu::MemAccess::Exec => crate::isa::x86_64::mmu::AccessType::Execute,
         };
+        self.mmu.set_data_access_state(self.regs.rflags, self.pkru);
         self.mmu.translate(vaddr, at, &self.sregs)
     }
 

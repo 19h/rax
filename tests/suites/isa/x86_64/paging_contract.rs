@@ -308,3 +308,9 @@ fn address_width_and_large_page_alignment_reserved_bits_fault() {
         }
     }
 }
+
+#[path = "paging_protection.rs"]
+mod protection;
+
+#[path = "paging_protection_mmu.rs"]
+mod protection_mmu;

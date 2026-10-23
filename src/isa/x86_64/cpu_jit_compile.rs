@@ -44,6 +44,9 @@ impl X86_64Vcpu {
         use crate::smir::optimize::{OptLevel, optimize_function};
         use std::collections::HashMap;
 
+        if self.jit_requires_protected_paging_fallback() {
+            return Ok(None);
+        }
         let entry = self.regs.rip;
 
         // Snapshot the largest readable prefix of a bounded guest-code window.

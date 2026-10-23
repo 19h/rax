@@ -34,7 +34,9 @@ impl Mmu {
             });
         }
         let user = sregs.cs.selector & 3 == 3;
-        let denied = (user && !mapping.user)
+        let protection = self.protection_error_flags(access, sregs, mapping);
+        let denied = protection != 0
+            || (user && !mapping.user)
             || (matches!(access, AccessType::Write)
                 && !mapping.writable
                 && (user || sregs.cr0 & cr0::WP != 0))
@@ -42,7 +44,7 @@ impl Mmu {
         if denied {
             return Err(Error::PageFault {
                 vaddr,
-                error_code: bits | 1,
+                error_code: bits | 1 | protection,
             });
         }
         Ok(())
@@ -127,6 +129,7 @@ impl Mmu {
                     writable,
                     user,
                     no_execute,
+                    protection_key: ((entry >> 59) & 15) as u8,
                 };
                 self.check_paging_access(vaddr, access, sregs, &mapping)?;
                 if matches!(access, AccessType::Write) && entry & flags::DIRTY == 0 {

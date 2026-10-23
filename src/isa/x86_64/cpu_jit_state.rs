@@ -184,9 +184,20 @@ impl JitRegion {
 }
 
 impl X86_64Vcpu {
+    /// Memory helper callbacks do not carry live native AC/PKRU changes.
+    /// Protected system paging therefore stays at direct instruction boundaries.
+    pub(super) fn jit_requires_protected_paging_fallback(&self) -> bool {
+        self.sregs.cr0 & (1 << 31) != 0
+            && !self.mmu.has_flat_translation()
+            && self.sregs.cr4 & ((1 << 21) | (1 << 22)) != 0
+    }
+
     /// A denied page may belong to an untaken branch. Defer to the interpreter
     /// rather than injecting a speculative fetch fault for the whole region.
     pub(super) fn jit_source_pages_accessible(&mut self, region: &JitRegion) -> bool {
+        if self.jit_requires_protected_paging_fallback() {
+            return false;
+        }
         region.source_pages.iter().all(|&page| {
             self.mmu
                 .translate(

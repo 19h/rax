@@ -486,6 +486,7 @@ impl X86_64Vcpu {
         source: EventSource,
         software_fault_rip: Option<u64>,
     ) -> Result<()> {
+        self.mmu.set_data_access_state(self.regs.rflags, self.pkru);
         // User mode: report the event to the embedder instead of vectoring
         // through the IDT. Software interrupts arrive with RIP already past
         // the instruction and `software_fault_rip` naming it; exceptions

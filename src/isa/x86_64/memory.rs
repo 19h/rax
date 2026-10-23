@@ -17,6 +17,7 @@ use super::linear::crossing_next;
 #[path = "memory_fault.rs"]
 mod fault;
 mod paging;
+mod protection;
 
 #[cfg(feature = "profiling")]
 use crate::observability::profiling;
@@ -379,6 +380,8 @@ struct TlbEntry {
     writable: bool,
     user: bool,
     no_execute: bool,
+    /// Protection key from the leaf paging entry (bits 62:59).
+    protection_key: u8,
     /// Valid bit
     valid: bool,
 }
@@ -394,6 +397,7 @@ impl Default for TlbEntry {
             writable: false,
             user: false,
             no_execute: false,
+            protection_key: 0,
         }
     }
 }
@@ -415,6 +419,8 @@ pub struct Mmu {
     tlb: [TlbEntry; TLB_SIZE],
     /// Cached CR3 for detecting context switches
     cached_cr3: u64,
+    /// Derived AC/PKRU and explicit/implicit access context.
+    protection: protection::ProtectionState,
     /// Bitmap tracking pages that have been executed from (code pages).
     /// Used for self-modifying code detection: writes to code pages
     /// require decode cache invalidation.
@@ -496,6 +502,7 @@ impl Mmu {
             memory,
             tlb: [TlbEntry::default(); TLB_SIZE],
             cached_cr3: 0,
+            protection: Default::default(),
             code_page_bitmap: Box::new([0u8; CODE_PAGE_BITMAP_SIZE]),
             smc_dirty_pages: Vec::new(),
             lapic: RefCell::new(InlineLapic::new()),
@@ -1012,7 +1019,9 @@ impl Mmu {
     ) -> bool {
         let mut supervisor_sregs = sregs.clone();
         supervisor_sregs.cs.selector &= !3;
-        self.range_is_plain_ram(vaddr, len, AccessType::Read, &supervisor_sregs)
+        self.implicit_system_access(|mmu| {
+            mmu.range_is_plain_ram(vaddr, len, AccessType::Read, &supervisor_sregs)
+        })
     }
 
     /// Write-specific wrapper for native speculative-access admission. This
@@ -1222,7 +1231,7 @@ impl Mmu {
         // Create a temporary sregs with CPL=0 (supervisor)
         let mut supervisor_sregs = sregs.clone();
         supervisor_sregs.cs.selector &= !0x3; // Clear CPL bits to 0
-        self.read(vaddr, buf, &supervisor_sregs)
+        self.implicit_system_access(|mmu| mmu.read(vaddr, buf, &supervisor_sregs))
     }
 
     /// Read a u64 from guest memory with supervisor privilege.
@@ -1246,7 +1255,7 @@ impl Mmu {
         }
         let mut supervisor_sregs = sregs.clone();
         supervisor_sregs.cs.selector &= !0x3;
-        self.write(vaddr, buf, &supervisor_sregs)
+        self.implicit_system_access(|mmu| mmu.write(vaddr, buf, &supervisor_sregs))
     }
 
     /// Write a u64 to guest memory with supervisor privilege.

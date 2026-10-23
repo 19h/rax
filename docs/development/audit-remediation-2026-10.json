@@ -150,15 +150,37 @@
       "id": "X-SMAP",
       "area": "x86 privilege",
       "finding": "A supervisor read accesses a user page with SMAP=1 and AC=0",
-      "status": "pending",
-      "evidence": []
+      "status": "locally_validated",
+      "evidence": [
+        "src/isa/x86_64/memory/protection.rs",
+        "tests/suites/isa/x86_64/paging_protection.rs",
+        "tests/suites/isa/x86_64/paging_protection_mmu.rs",
+        "src/isa/x86_64/cpu_jit_paging_tests.rs",
+        "/tmp/rax-x86-protection/parent-red.log",
+        "/tmp/rax-x86-protection/third-integration.log"
+      ],
+      "remaining_validation": [
+        "Broader Rosetta library completion",
+        "Independent privileged x86 hardware or QEMU-system oracle"
+      ]
     },
     {
       "id": "X-PKRU",
       "area": "x86 privilege",
       "finding": "Reads a user-key page after WRPKRU disables access for key 1",
-      "status": "pending",
-      "evidence": []
+      "status": "locally_validated",
+      "evidence": [
+        "src/isa/x86_64/memory/protection.rs",
+        "tests/suites/isa/x86_64/paging_protection.rs",
+        "tests/suites/isa/x86_64/paging_protection_mmu.rs",
+        "src/isa/x86_64/cpu_jit_paging_tests.rs",
+        "/tmp/rax-x86-protection/parent-red.log",
+        "/tmp/rax-x86-protection/third-integration.log"
+      ],
+      "remaining_validation": [
+        "Broader Rosetta library completion",
+        "Independent privileged x86 hardware or QEMU-system oracle"
+      ]
     },
     {
       "id": "X-PRIV",
@@ -877,6 +899,21 @@
         "tests/suites/machine/hexagon_baremetal/packet_commit.rs",
         "/tmp/rax-hexagon-commit/direct-parent-red.log",
         "/tmp/rax-hexagon-commit/final-integration.log"
+      ]
+    },
+    {
+      "id": "X-SMEP",
+      "area": "x86 injected-state hardening",
+      "finding": "Externally injected CR4.SMEP was ignored for supervisor instruction fetches, including a read-warmed TLB entry. SMEP is not advertised and guest MOV-to-CR4 still rejects enabling it.",
+      "status": "locally_validated",
+      "evidence": [
+        "tests/suites/isa/x86_64/paging_protection.rs",
+        "/tmp/rax-x86-protection/parent-red.log",
+        "/tmp/rax-x86-protection/first-contracts.log"
+      ],
+      "remaining_validation": [
+        "Broader Rosetta library completion",
+        "Independent privileged x86 hardware or QEMU-system oracle"
       ]
     }
   ],
@@ -3090,6 +3127,152 @@
         {
           "impact": "low",
           "item": "All significands/intermediates are bounded by u128. Binary64 fused addition uses exact alignment when representable and guarded sticky-bit alignment otherwise; no host floating arithmetic or runtime performance claim.",
+          "blocks": false
+        }
+      ]
+    },
+    {
+      "id": "x86-smap-pkru-smep",
+      "baseline": "f492e880d449eca762bc35195062711f79767f88",
+      "status": "locally_validated",
+      "scope": [
+        "Retain the leaf protection key across TLB fills; recheck dynamic SMAP/AC, PKRU AD/WD and SMEP on walks and hits",
+        "Apply PKRU to effective user pages for both supervisor and user accesses, preserve supervisor CR0.WP write-disable behavior and exclude instruction fetch",
+        "Represent explicit/implicit supervisor data accesses; AC cannot bypass SMAP for implicit system-structure accesses",
+        "Set #PF.PK from key rights even when another permission predicate also denies access; retain nonpresence/reserved priority and precise fault addresses",
+        "Refresh derived MMU AC/PKRU state on CPU steps, state restoration, translation, reset and event delivery",
+        "Reject native region compilation and cached entry while protected system paging needs live AC/PKRU state unavailable in memory callbacks; resume in direct execution at the current frontier"
+      ],
+      "primary_source": "docs/specifications/x86_64/325462-sdm-vol-1-2abcd-3abcd-4-1.pdf: Intel SDM revision 086, Vol.3A 5.6.1, 5.6.2 and 5.7; local extraction /tmp/rax-x86-protection/sdm.txt. In particular, implicit supervisor data accesses to user pages remain forbidden under SMAP even with AC=1, and supervisor PKRU.WD is bypassed only when CR0.WP=0.",
+      "assumptions": [
+        {
+          "assumption": "The currently represented system paging profile is four-level long-mode translation.",
+          "dependent_result": "Leaf key bits and all dynamic permission predicates follow the selected profile.",
+          "stress_test": "Three page sizes, all 16 keys and CPL0-3, AC/SMAP/PKE/WP, AD/WD, read/write/fetch, cold/warm translations: 147456 cases.",
+          "falsification_probe": "Any matrix access differs from the independently encoded SDM predicates; legacy/PAE remain separate pending profiles."
+        },
+        {
+          "assumption": "The CPU refreshes derived protection context before an external execution/translation/event boundary.",
+          "dependent_result": "WRPKRU, external state restoration and flags changes affect subsequent accesses immediately.",
+          "stress_test": "Raw WRPKRU then load, warmed translation, public CPU control cases, implicit access failures followed by explicit accesses.",
+          "falsification_probe": "A previous AC/PKRU value permits an access or a failed implicit operation leaks its access classification."
+        },
+        {
+          "assumption": "Native callbacks cannot enforce state changes they do not receive, so this protected paging profile must reject before native entry.",
+          "dependent_result": "Direct execution supplies the precise protected-memory behavior without stale native state.",
+          "stress_test": "New compilation, previously cached region, exact unchanged frontier, interpreter completion and re-enabling the same cache after controls clear.",
+          "falsification_probe": "Protected code executes a native region or repeated rejection prevents interpreter progress."
+        }
+      ],
+      "baseline_results": {
+        "public_cpu_contracts": {
+          "passed": 3,
+          "failed": 4
+        },
+        "basis": "Seven public-API contracts link the saved parent product rlib: four protection regressions fail; AC/PKE and unadvertised-SMEP controls pass. Seven added MMU matrix/boundary tests use the new context API and are final-only checks; native admission checks are separately added."
+      },
+      "affected_planes": {
+        "direct_mmu": "Shared walk/hit predicates and derived access context; CPU execution, state/PKRU restore, reset, explicit translation and event delivery synchronize it.",
+        "native": "Protected paging fails new and cached admission on both host lowerers. CR writes already terminate at a next-instruction frontier. Nonpaging state-backed PKRU instructions retain their existing native profile.",
+        "smir": "Generic flat IR memory does not supply system page translation. CPU-backed native protected paging rejects rather than admitting stale AC/PKRU state.",
+        "backend_machine": "Software CPU behavior changes; KVM/HVF hardware execution and platform/MMIO wiring are unchanged and not established by these tests.",
+        "oracle_abi": "No instruction encodings, static effect schemas, public register state layouts or C ABI changes. Mmu gains an explicit Rust context setter.",
+        "profile": "SMAP/PKE are advertised. SMEP enforcement is limited to externally injected state; CPUID and CR4_SUPPORTED_MASK remain unchanged and MOV-to-CR4 still rejects enabling SMEP."
+      },
+      "validation": {
+        "status": "passed_for_represented_portable_scope",
+        "permission_matrix_cases": 147456,
+        "paging": {
+          "passed": 24,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0
+        },
+        "logs": [
+          "/tmp/rax-x86-protection/parent-red.log",
+          "/tmp/rax-x86-protection/first-contracts.log",
+          "/tmp/rax-x86-protection/final-integration.log",
+          "/tmp/rax-x86-protection/library.log",
+          "/tmp/rax-x86-protection/capi.log",
+          "/tmp/rax-x86-protection/build.log",
+          "/tmp/rax-x86-protection/clippy.log",
+          "/tmp/rax-x86-protection/fmt.log",
+          "/tmp/rax-x86-protection/doc.log",
+          "/tmp/rax-x86-protection/profile-control-fixture-mismatch.log",
+          "/tmp/rax-x86-protection/final-validated-integration.log",
+          "/tmp/rax-x86-protection/rosetta-paging.log",
+          "/tmp/rax-x86-protection/rosetta-validated-paging.log",
+          "/tmp/rax-x86-protection/rosetta-library.log"
+        ],
+        "fixture_correction": "The SMEP guest-write control originally expected a raw GeneralProtection error. Direct MOV-to-CR injects vector 13; with no installed IDT, the fixture triple-faults. The final control checks vector 13 delivery and unchanged control/PC state. The original fixture mismatch is retained in profile-control-fixture-mismatch.log.",
+        "x86_64": {
+          "passed": 28557,
+          "failed": 0,
+          "ignored": 3,
+          "filtered": 0
+        },
+        "library": {
+          "passed": 10420,
+          "failed": 0,
+          "ignored": 2,
+          "filtered": 0,
+          "elapsed_seconds": 312.99,
+          "test_threads": 12
+        },
+        "c_api": {
+          "passed": 185,
+          "failed": 0,
+          "ignored": 0
+        },
+        "rosetta_paging": {
+          "passed": 24,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0
+        },
+        "rosetta_new_native_cache_checks": {
+          "passed": 2,
+          "failed": 0,
+          "basis": "Both cases passed in the ongoing full library run; no filtered-only run is claimed."
+        },
+        "rosetta_library": {
+          "status": "in_progress",
+          "log": "/tmp/rax-x86-protection/rosetta-library.log",
+          "note": "The broader host run continues after this group commit. Four previously reproduced Darwin/Rosetta host failures remain separately registered."
+        },
+        "all_targets_build": "passed",
+        "clippy_all_targets": "passed",
+        "format": "passed",
+        "doctests": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 5
+        }
+      },
+      "bounded_scope": [
+        {
+          "impact": "high",
+          "item": "Legacy/PAE paging, complete checkpoint/scheduling work and remaining architecture/platform findings stay pending.",
+          "blocks": "Complete remediation plan."
+        },
+        {
+          "impact": "medium",
+          "item": "Protected system paging intentionally executes through software instruction boundaries until native memory callbacks carry live AC/PKRU state. This may reduce native execution coverage; no performance claim is made.",
+          "blocks": false
+        },
+        {
+          "impact": "medium",
+          "item": "Software tests implement verified primary-source predicates; no physical privileged x86 or independent QEMU-system run has yet established equivalence.",
+          "blocks": false
+        },
+        {
+          "impact": "low",
+          "item": "Permission checks use fixed-width masks and constant work per translated chunk; key metadata adds one byte before structure padding. No whole-VM performance estimate is inferred.",
+          "blocks": false
+        },
+        {
+          "impact": "low",
+          "item": "SMEP is not an advertised guest capability. Its predicate supplies externally injected-state consistency only; the explicit guest enablement rejection is retained.",
           "blocks": false
         }
       ]

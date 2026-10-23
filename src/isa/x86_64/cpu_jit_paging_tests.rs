@@ -79,3 +79,36 @@ fn read_only_source_pages_remain_executable_by_cached_native_regions() {
     assert!(matches!(cpu.run().unwrap(), VcpuExit::Hlt));
     assert_eq!(cpu.regs.rax, 2);
 }
+
+#[test]
+fn protected_paging_rejects_new_and_cached_native_regions_at_the_current_frontier() {
+    for control in [1_u64 << 21, 1 << 22, (1 << 21) | (1 << 22)] {
+        let (mut cpu, _) = cached_cpu();
+        let key = (ENTRY, cpu.jit_mode_tag());
+        let region = cpu.jit_cache.get(&key).unwrap().as_ref().unwrap().clone();
+        cpu.sregs.cr4 |= control;
+        let before = cpu.get_state().unwrap();
+        assert!(!cpu.jit_source_pages_accessible(&region));
+        assert!(cpu.jit_compile_region().unwrap().is_none());
+        assert!(!cpu.jit_try_block().unwrap());
+        assert_eq!(
+            format!("{:?}", cpu.get_state().unwrap()),
+            format!("{before:?}")
+        );
+        assert!(matches!(cpu.run().unwrap(), VcpuExit::Hlt));
+        assert_eq!(cpu.regs.rax, 2);
+    }
+}
+
+#[test]
+fn disabling_protected_paging_controls_reenables_the_same_cached_region() {
+    let (mut cpu, _) = cached_cpu();
+    let key = (ENTRY, cpu.jit_mode_tag());
+    let region = cpu.jit_cache.get(&key).unwrap().as_ref().unwrap().clone();
+    cpu.sregs.cr4 |= (1 << 21) | (1 << 22);
+    assert!(!cpu.jit_source_pages_accessible(&region));
+    cpu.sregs.cr4 &= !((1 << 21) | (1 << 22));
+    assert!(cpu.jit_source_pages_accessible(&region));
+    assert!(cpu.jit_try_block().unwrap());
+    assert_eq!(cpu.regs.rax, 2);
+}

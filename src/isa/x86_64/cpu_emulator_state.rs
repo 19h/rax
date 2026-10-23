@@ -98,6 +98,7 @@ impl X86_64Vcpu {
         self.pat = state.pat;
         self.umwait_control = state.umwait_control;
         self.pkru = state.pkru;
+        self.mmu.set_data_access_state(self.regs.rflags, self.pkru);
         self.mxcsr = state.mxcsr;
         self.halted = state.halted;
         self.interrupt_inhibit = state.interrupt_inhibit;

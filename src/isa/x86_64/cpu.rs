@@ -1649,6 +1649,7 @@ impl X86_64Vcpu {
 
     #[inline]
     fn step_inner(&mut self) -> Result<Option<VcpuExit>> {
+        self.mmu.set_data_access_state(self.regs.rflags, self.pkru);
         // Retired-instruction counter. Plain add - no atomics on the hot path
         // (published to the global counter at run() yield boundaries).
         self.insn_count = self.insn_count.wrapping_add(1);
@@ -3136,6 +3137,7 @@ impl X86_64Vcpu {
         self.pat = execute::system::IA32_PAT_RESET;
         self.umwait_control = 0;
         self.pkru = 0;
+        self.mmu.set_data_access_state(self.regs.rflags, self.pkru);
         self.xcr0 = 1;
         self.xgetbv1_value = 0;
         self.decode_cache.iter_mut().for_each(|e| {
