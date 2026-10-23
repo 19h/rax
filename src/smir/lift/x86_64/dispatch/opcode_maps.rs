@@ -6,12 +6,12 @@ use std::collections::{HashMap, HashSet};
 use crate::smir::ir::flags::{FlagSet, FlagUpdate};
 use crate::smir::ir::memory::MemoryError;
 use crate::smir::ir::ops::{
-    OpKind, SmirOp, X86AdxKind, X86AluEncoding, X86BlsKind, X86CacheControlKind, X86CountKind,
-    X86FastSystemTransferKind, X86FastSystemTransferOp, X86MsrOp, X86OpHint, X86RepMode,
-    X86SsePrefix, X86StringKind, X86ThreeDNowKind, X86VecAlign, X86VecMap,
-    X86X87ArithmeticDestination, X86X87ArithmeticSource, X86X87CompareSource, X86X87Constant,
-    X86X87ControlKind, X86X87DataKind, X86X87EnvWidth, X86X87FloatWidth, X86X87IntWidth,
-    X86XSaveKind,
+    OpKind, SmirOp, X86AdxKind, X86AluEncoding, X86BlsKind, X86CacheControlKind,
+    X86CacheMaintenanceKind, X86CountKind, X86FastSystemTransferKind, X86FastSystemTransferOp,
+    X86MsrOp, X86OpHint, X86RepMode, X86SsePrefix, X86StringKind, X86ThreeDNowKind, X86VecAlign,
+    X86VecMap, X86X87ArithmeticDestination, X86X87ArithmeticSource, X86X87CompareSource,
+    X86X87Constant, X86X87ControlKind, X86X87DataKind, X86X87EnvWidth, X86X87FloatWidth,
+    X86X87IntWidth, X86XSaveKind,
 };
 use crate::smir::ir::types::*;
 use crate::smir::ir::{
@@ -449,8 +449,8 @@ impl X86_64Lifter {
                 ))
             }
 
-            // Cache-maintenance instructions modeled as no-ops by the base
-            // emulator profile.
+            // Cache maintenance must retain its potentially faulting privilege
+            // check through optimization. F3 0F 09 is the enumerated WBNOINVD.
             0x08 | 0x09 => {
                 if prefix2.lock {
                     return Err(LiftError::InvalidEncoding {
@@ -458,10 +458,23 @@ impl X86_64Lifter {
                         bytes: vec![opcode2],
                     });
                 }
-                Ok(LiftResult::fallthrough(
-                    self.rex2_apx_guard_ops(&prefix2, pc),
-                    prefix2.cursor,
-                ))
+                let kind = if opcode2 == 0x08 {
+                    X86CacheMaintenanceKind::Invd
+                } else if prefix2.rep_prefix == Some(0xf3) {
+                    X86CacheMaintenanceKind::Wbnoinvd
+                } else {
+                    X86CacheMaintenanceKind::Wbinvd
+                };
+                let mut ops = self.rex2_apx_guard_ops(&prefix2, pc);
+                ops.push(SmirOp::new(
+                    OpId(ops.len() as u16),
+                    pc,
+                    OpKind::X86CacheMaintenance {
+                        kind,
+                        next_pc: pc.wrapping_add(prefix2.cursor as u64),
+                    },
+                ));
+                Ok(LiftResult::fallthrough(ops, prefix2.cursor))
             }
 
             // 3DNow! uses the final imm8 after ModR/M and any displacement as

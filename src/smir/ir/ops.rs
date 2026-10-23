@@ -83,13 +83,8 @@ impl SmirOp {
 // x86 Encoding Hints
 // ============================================================================
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum X86CacheControlKind {
-    Cldemote,
-    Clflush,
-    Clflushopt,
-    Clwb,
-}
+mod x86_cache_types;
+pub use x86_cache_types::{X86CacheControlKind, X86CacheMaintenanceKind};
 
 /// Architectural XSAVE-family save form. The form determines standard versus
 /// compacted layout and which init/modified optimizations may be applied.
@@ -4133,6 +4128,13 @@ pub enum OpKind {
     /// architecture context rather than a scalar VReg, so this operation has
     /// no explicit operands but is stateful and potentially faulting.
     X86Clts,
+
+    /// INVD/WBINVD/WBNOINVD retain their dynamic privilege fault and ordering
+    /// boundary. Native execution resumes at next_pc after a permitted operation.
+    X86CacheMaintenance {
+        kind: X86CacheMaintenanceKind,
+        next_pc: u64,
+    },
 
     /// RDMSR/WRMSR. Selector, values, and destinations are the fixed implicit
     /// ECX/EDX:EAX registers; privilege and MSR-specific validation remain

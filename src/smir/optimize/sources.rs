@@ -1778,6 +1778,7 @@ impl OpKind {
             | OpKind::X86Cli { .. }
             | OpKind::X86Sti { .. }
             | OpKind::X86Clts
+            | OpKind::X86CacheMaintenance { .. }
             | OpKind::X86ReadControl { .. }
             | OpKind::X86Smsw(X86SmswOp {
                 target: X86SmswTarget::Register { .. },

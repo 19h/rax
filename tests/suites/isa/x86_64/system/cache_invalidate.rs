@@ -378,3 +378,6 @@ fn test_tlb_and_cache_management() {
     let (mut vcpu, _) = setup_vm(&code, None);
     let _ = run_until_hlt(&mut vcpu);
 }
+
+#[path = "cache_invalidate/privilege.rs"]
+mod privilege;

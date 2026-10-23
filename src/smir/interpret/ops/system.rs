@@ -206,6 +206,24 @@ impl SmirInterpreter {
                 // Simplified: no-op
             }
 
+            OpKind::X86CacheMaintenance { .. } => {
+                let ArchRegState::X86_64(x86) = &ctx.arch_regs else {
+                    ctx.request_exit(ExitReason::Undefined {
+                        addr: op.guest_pc,
+                        opcode: 0,
+                    });
+                    return Ok(());
+                };
+                if x86.cr0 & 1 != 0 && x86.cpl != 0 {
+                    ctx.request_exit(ExitReason::GeneralProtection {
+                        addr: op.guest_pc,
+                        error_code: 0,
+                    });
+                    return Ok(());
+                }
+                std::sync::atomic::fence(std::sync::atomic::Ordering::SeqCst);
+            }
+
             OpKind::X86Clts => {
                 let ArchRegState::X86_64(x86) = &mut ctx.arch_regs else {
                     ctx.request_exit(ExitReason::Undefined {

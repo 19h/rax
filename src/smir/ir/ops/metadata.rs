@@ -80,6 +80,7 @@ impl OpKind {
                 | OpKind::X86XGetBv { .. }
                 | OpKind::X86XSetBv { .. }
                 | OpKind::X86Clts
+                | OpKind::X86CacheMaintenance { .. }
                 | OpKind::X86Msr(..)
                 | OpKind::X86ReadControl { .. }
                 | OpKind::X86Smsw(..)
@@ -690,6 +691,7 @@ impl OpKind {
             | OpKind::X86XRstor { .. }
             | OpKind::X86XSetBv { .. }
             | OpKind::X86Clts
+            | OpKind::X86CacheMaintenance { .. }
             | OpKind::X86Smsw(X86SmswOp {
                 target: X86SmswTarget::Memory { .. },
                 ..
@@ -794,6 +796,7 @@ impl OpKind {
                     | OpKind::X86XGetBv { .. }
                     | OpKind::X86XSetBv { .. }
                     | OpKind::X86Clts
+                | OpKind::X86CacheMaintenance { .. }
                     | OpKind::X86Msr(..)
                     | OpKind::X86ReadControl { .. }
                     | OpKind::X86Smsw(..)

@@ -140,7 +140,7 @@ fn jit_verify_accepts_rex2_reserved_nop_with_apx_enabled() {
 }
 
 #[test]
-fn jit_rex2_no_effect_families_match_direct_and_continue_in_one_region() {
+fn jit_rex2_no_effect_families_match_direct_across_cache_serialization_exits() {
     let memory = memory_with_bytes(NO_EFFECT_CODE);
     let mut direct = test_vcpu(memory.clone());
     let mut native = test_vcpu(memory);
@@ -155,11 +155,19 @@ fn jit_rex2_no_effect_families_match_direct_and_continue_in_one_region() {
     }
     assert_eq!(direct.regs.rip, NO_EFFECT_HLT_PC);
 
-    let region = native
-        .jit_compile_region()
-        .expect("compile every REX2 no-effect family")
-        .expect("all dynamically guarded no-effect families must be native eligible");
-    native.jit_run_region_native(&region);
+    let mut native_slices = 0;
+    while native.regs.rip != NO_EFFECT_HLT_PC {
+        assert!(native_slices < 3, "native sequence did not reach HLT");
+        let region = native
+            .jit_compile_region()
+            .expect("compile REX2 sequence")
+            .expect("dynamically guarded sequence must be native eligible");
+        native.jit_run_region_native(&region);
+        native_slices += 1;
+    }
+    // INVD and WBINVD each return at the next guest instruction; the final
+    // slice executes the remaining hints and the ADD up to the HLT frontier.
+    assert_eq!(native_slices, 3);
 
     assert_eq!(register_image(&native), register_image(&direct));
     assert_eq!(native.regs.rip, NO_EFFECT_HLT_PC);

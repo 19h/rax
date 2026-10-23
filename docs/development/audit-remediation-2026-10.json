@@ -154,8 +154,17 @@
       "id": "X-PRIV",
       "area": "x86 privileged instructions",
       "finding": "CPL3 INVD/WBINVD advance instead of raising #GP(0)",
-      "status": "pending",
-      "evidence": []
+      "status": "locally_validated",
+      "evidence": [
+        "tests/suites/isa/x86_64/system/cache_invalidate/privilege.rs",
+        "src/smir/lift/x86_64/tests/cache_maintenance.rs",
+        "src/isa/x86_64/cpu_jit_cache_maintenance_tests.rs",
+        "/tmp/rax-x86-priv-final-integration.log",
+        "/tmp/rax-x86-priv-rosetta-library-final.log"
+      ],
+      "remaining_validation": [
+        "Privileged physical x86 hardware oracle"
+      ]
     },
     {
       "id": "A-PAGE",
@@ -505,6 +514,42 @@
         "/tmp/rax-arm-physical-fault-red.log",
         "/tmp/rax-arm-jit-fetch-green.log"
       ]
+    },
+    {
+      "id": "C-DARWIN-TIMER-ROSETTA",
+      "area": "Darwin host timer",
+      "finding": "Under Rosetta, timer-slop probes return None or differ from exact nanosecond assertions; two tests fail on both the isolated parent and current source.",
+      "status": "pending",
+      "evidence": [
+        "/tmp/rax-rosetta-parent-host-failures.log",
+        "/tmp/rax-rosetta-parent-host-failures.json",
+        "/tmp/rax-x86-priv-rosetta-library-final.log"
+      ],
+      "cause": "unknown"
+    },
+    {
+      "id": "C-DARWIN-RUNTIME-ROSETTA",
+      "area": "Darwin runtime provisioning",
+      "finding": "The x86-64 closed-process system-program test cannot load libSystem.B.dylib because no x86 dyld cache is available; parent and current source fail identically.",
+      "status": "pending",
+      "evidence": [
+        "/tmp/rax-rosetta-parent-host-failures.log",
+        "/tmp/rax-rosetta-parent-host-failures.json",
+        "/tmp/rax-x86-priv-rosetta-library-final.log"
+      ],
+      "cause": "unknown"
+    },
+    {
+      "id": "C-THREAD-CLOCK-ROSETTA",
+      "area": "Host thread clock",
+      "finding": "Under Rosetta, the thread CPU-clock worker reports no clock advance; parent and current source fail identically.",
+      "status": "pending",
+      "evidence": [
+        "/tmp/rax-rosetta-parent-host-failures.log",
+        "/tmp/rax-rosetta-parent-host-failures.json",
+        "/tmp/rax-x86-priv-rosetta-library-final.log"
+      ],
+      "cause": "unknown"
     }
   ],
   "decisions": {
@@ -1045,6 +1090,133 @@
           "impact": "high",
           "item": "Cross-vCPU instruction-cache synchronization remains part of the pending scheduling/SMP work.",
           "blocks": "Concurrent multi-vCPU completion."
+        }
+      ]
+    },
+    {
+      "id": "x86-cache-maintenance-privilege",
+      "baseline": "9f66702d5998cc5976ff9382acda71ae3a1f4957",
+      "status": "locally_validated",
+      "scope": [
+        "CPL and VM86 checks before direct INVD/WBINVD/WBNOINVD completion",
+        "Stateful SMIR operation retained through O0/O1/O2 and public oracle JSON",
+        "Guarded native x86 privilege handoff and serializing slice exit without host cache invalidation",
+        "Fail-closed AArch64 native admission and legacy x86 mode fallback",
+        "Extract bounded region compilation without changing other admission or lowering behavior"
+      ],
+      "primary_source": "docs/specifications/x86_64/325462-sdm-vol-1-2abcd-3abcd-4-1.pdf: INVD, WBINVD, WBNOINVD; Intel SDM Vol. 3A Serializing Instructions",
+      "assumptions": [
+        {
+          "id": "X-CACHE-MODEL",
+          "assumption": "Guest data writes have no deferred dirty-cache-line state.",
+          "dependent_result": "Successful cache maintenance preserves architectural data and register state; fences and WB serialization remain observable.",
+          "stress_test": "Prior store survives a later privilege fault; following store does not occur; native success exits before following guest MOV.",
+          "falsification_probe": "A future memory backend adds dirty data-cache state requiring distinct invalidation and writeback actions."
+        }
+      ],
+      "baseline_results": {
+        "direct": {
+          "passed": 3,
+          "failed": 1
+        },
+        "smir": {
+          "passed": 1,
+          "failed": 1
+        },
+        "native_legacy_mode": {
+          "passed": 1,
+          "failed": 1
+        }
+      },
+      "validation": {
+        "host": "aarch64-apple-darwin",
+        "library": {
+          "passed": 10414,
+          "failed": 0,
+          "ignored": 2,
+          "filtered": 0,
+          "test_threads": 4
+        },
+        "x86_aggregate": {
+          "passed": 28546,
+          "failed": 0,
+          "ignored": 3,
+          "filtered": 0
+        },
+        "oracle_api": {
+          "passed": 81,
+          "failed": 0,
+          "ignored": 0
+        },
+        "x86_to_aarch64_native": {
+          "passed": 31,
+          "failed": 0,
+          "ignored": 0
+        },
+        "ci_actions": {
+          "passed": 12,
+          "failed": 0
+        },
+        "unimplemented_manifests": {
+          "passed": 2,
+          "failed": 0
+        },
+        "source_inventory": {
+          "passed": 2,
+          "failed": 0
+        },
+        "c_api": {
+          "passed": 183,
+          "failed": 0,
+          "ignored": 0,
+          "scope": "Cache semantics before behavior-preserving region-compilation extraction; no C API layout/header changes."
+        },
+        "all_targets_build": "passed",
+        "format": "passed",
+        "x86_execution_environment": "x86_64-apple-darwin under Rosetta; emitted x86 instructions executed, physical Intel hardware oracle not run",
+        "x86_library": {
+          "passed": 11405,
+          "failed": 4,
+          "ignored": 2,
+          "filtered": 0,
+          "test_threads": 4,
+          "failure_classification": "All four reproduced in isolated 0c4ea9b5 parent; related source files byte-identical. No new cache/paging test failed.",
+          "baseline_failure_results": "/tmp/rax-rosetta-parent-host-failures.json"
+        },
+        "original_audit": "CPL3 INVD/WBINVD now attempt vector 13 delivery at unchanged RIP=0x6000. The supplied fixture has no IDT, so delivery ends in a triple fault. A separate valid-IDT regression verifies vector 13, error code 0 and saved faulting RIP. SMAP and PKRU still reproduce and remain pending.",
+        "regression_assertion_updates": [
+          "Four old SMIR assertions required privileged cache instructions to disappear as no-ops. Updated coverage retains every REX2 payload and checks the APX guard before the stateful operation.",
+          "The native REX2 sequence now requires exactly three slices, including two cache-operation exits.",
+          "Atomic callback RAM-image fixtures were corrected in a separate semantic commit to account for architectural paging A/D writes."
+        ],
+        "logs": [
+          "/tmp/rax-x86-priv-direct-red.log",
+          "/tmp/rax-x86-priv-smir-red.log",
+          "/tmp/rax-x86-priv-cpu-red.log",
+          "/tmp/rax-x86-priv-final-integration.log",
+          "/tmp/rax-x86-priv-final-build.log",
+          "/tmp/rax-x86-priv-final-fmt.log",
+          "/tmp/rax-x86-priv-rosetta-library-final.log",
+          "/tmp/rax-rosetta-parent-host-failures.log",
+          "/tmp/rax-x86-audit-protection-after-cache.log",
+          "/tmp/rax-audit-capi-tests.log"
+        ]
+      },
+      "bounded_scope": [
+        {
+          "impact": "medium",
+          "item": "No guest dirty data-cache hierarchy is modeled. Cache-maintenance success cannot establish physical cache writeback/invalidation fidelity.",
+          "blocks": false
+        },
+        {
+          "impact": "medium",
+          "item": "x86 cache operations defer to interpretation on AArch64 native backends and in non-long-mode x86 VCPU regions.",
+          "blocks": false
+        },
+        {
+          "impact": "high",
+          "item": "SMAP, PKRU, complete checkpoint/scheduling and remaining ledger groups remain pending.",
+          "blocks": "Full audit remediation"
         }
       ]
     }

@@ -25,8 +25,6 @@ fn every_rex2_no_effect_family_retains_one_dynamic_apx_guard() {
         &[0xD5, 0x00, 0x90][..],         // NOP
         &[0xF3, 0xD5, 0x00, 0x90],       // PAUSE
         &[0xD5, 0x00, 0x9B],             // FWAIT
-        &[0xD5, 0x80, 0x08],             // INVD
-        &[0xD5, 0x80, 0x09],             // WBINVD
         &[0xD5, 0x80, 0x1C, 0xC0],       // CLDEMOTE register hint
         &[0xD5, 0x00, 0xC6, 0xF8, 0x42], // XABORT outside RTM
         &[0xD5, 0x80, 0x01, 0xC1],       // VMCALL hint
@@ -58,8 +56,6 @@ fn ignored_rex2_payload_space_retains_exactly_one_apx_guard() {
     }
 
     for payload in 0x80_u8..=0xFF {
-        assert_only_apx_guard(&[0xD5, payload, 0x08]);
-        assert_only_apx_guard(&[0xD5, payload, 0x09]);
         assert_only_apx_guard(&[0xD5, payload, 0x01, 0xC1]);
         assert_only_apx_guard(&[0xD5, payload, 0x1C, 0xC0]);
     }
@@ -100,8 +96,6 @@ fn legacy_no_effect_forms_remain_operation_free() {
         &[0x90][..],
         &[0xF3, 0x90],
         &[0x9B],
-        &[0x0F, 0x08],
-        &[0x0F, 0x09],
         &[0x0F, 0x1C, 0xC0],
         &[0xC6, 0xF8, 0x42],
         &[0x0F, 0x01, 0xC1],

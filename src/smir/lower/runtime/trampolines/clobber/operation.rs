@@ -518,6 +518,11 @@ pub(super) fn operation_is_clobber_safe(
     if matches!(op.kind, OpKind::X86XGetBv { .. }) && !x86_xgetbv_shape_valid(&op.kind) {
         return false;
     }
+    if matches!(op.kind, OpKind::X86CacheMaintenance { .. })
+        && !crate::smir::lower::x86_64::x86_cache_maintenance_shape_valid(op)
+    {
+        return false;
+    }
     if matches!(op.kind, OpKind::X86Clts) && !x86_clts_shape_valid(&op.kind) {
         return false;
     }

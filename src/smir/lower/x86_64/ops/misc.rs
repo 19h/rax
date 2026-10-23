@@ -129,6 +129,7 @@ impl X86_64Lowerer {
             OpKind::X86Cpuid { .. } => self.emit_x86_cpuid(op)?,
 
             OpKind::X86Clts => self.emit_x86_clts(op)?,
+            OpKind::X86CacheMaintenance { .. } => self.emit_x86_cache_maintenance(op)?,
 
             OpKind::X86StoreMxcsr { .. } => self.emit_x86_store_mxcsr(op)?,
 

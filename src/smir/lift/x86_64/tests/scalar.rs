@@ -2713,8 +2713,6 @@ fn lift_xlat_models_index_width_segment_and_invalid_lock() {
 #[test]
 fn lift_nop_cache_and_prefetch_hints_consume_complete_encodings() {
     for bytes in [
-        &[0x0F, 0x08][..],
-        &[0x0F, 0x09][..],
         &[0x0F, 0x1A, 0xC0][..],
         &[0x0F, 0x1B, 0xC0][..],
         &[0xF3, 0x0F, 0x1E, 0xFA][..], // ENDBR64

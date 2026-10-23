@@ -44,6 +44,8 @@ mod bswap;
 #[cfg(test)]
 mod byte_xchg;
 #[cfg(test)]
+mod cache_maintenance;
+#[cfg(test)]
 mod callout;
 #[cfg(test)]
 mod clac_stac;

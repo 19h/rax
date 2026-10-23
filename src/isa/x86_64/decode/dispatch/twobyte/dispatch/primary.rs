@@ -57,17 +57,7 @@ impl X86_64Vcpu {
             0x05 => execute::system::syscall(self, ctx),
             0x06 => execute::system::clts(self, ctx),
             0x07 => execute::system::sysret(self, ctx),
-            // INVD/WBINVD - cache invalidation (NOP in emulator)
-            0x08 => {
-                // INVD - Invalidate internal caches
-                self.regs.rip += ctx.cursor as u64;
-                Ok(None)
-            }
-            0x09 => {
-                // WBINVD - Write back and invalidate caches
-                self.regs.rip += ctx.cursor as u64;
-                Ok(None)
-            }
+            0x08 | 0x09 => execute::system::cache_maintenance(self, ctx),
             // UD2 - Undefined Instruction (intentional #UD exception)
             0x0B => {
                 // Inject #UD so the guest's own handler runs. The kernel encodes

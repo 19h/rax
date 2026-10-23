@@ -2828,6 +2828,9 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             src_high,
         } => op_json!("x86_xsetbv", selector, src_low, src_high),
         OpKind::X86Clts => op_json!("x86_clts"),
+        OpKind::X86CacheMaintenance { kind, next_pc } => {
+            json!({"opcode":"x86_cache_maintenance","kind":kind.mnemonic(),"next_pc":hex_u64(*next_pc)})
+        }
         OpKind::X86Msr(X86MsrOp {
             eax,
             ecx,

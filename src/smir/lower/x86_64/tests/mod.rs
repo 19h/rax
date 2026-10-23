@@ -17,6 +17,7 @@ mod apx;
 mod atomic_rmw;
 #[cfg(all(test, feature = "smir-jit"))]
 mod bit_offset;
+mod cache_maintenance;
 #[cfg(test)]
 mod call_helpers;
 #[cfg(test)]

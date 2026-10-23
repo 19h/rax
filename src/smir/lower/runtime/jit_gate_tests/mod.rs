@@ -24,6 +24,7 @@ mod bit_offset;
 mod bswap_undefined;
 #[cfg(test)]
 mod byte_xchg;
+mod cache_maintenance;
 #[cfg(test)]
 mod cli;
 #[cfg(test)]

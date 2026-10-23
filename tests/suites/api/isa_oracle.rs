@@ -6,6 +6,8 @@ use rax::oracle::{
 
 #[path = "isa_oracle_arm.rs"]
 mod arm;
+#[path = "isa_oracle_cache_maintenance.rs"]
+mod cache_maintenance;
 #[path = "isa_oracle_fma.rs"]
 mod fma;
 #[path = "isa_oracle_int3.rs"]
