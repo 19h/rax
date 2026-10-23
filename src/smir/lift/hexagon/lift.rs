@@ -2638,10 +2638,8 @@ impl HexagonLifter {
                 new_value: false,
                 offset,
             } => {
-                // Hexagon PC-relative branch targets are computed relative to the
-                // instruction PC unless a constant extender is present; `_jumpnv`
-                // packets put the branch after its producer, so packet PC and
-                // instruction PC differ in the common two-word form.
+                // The packet-start PC is the base even when the branch follows
+                // its new-value producer in the packet.
                 let target = self.pcrel_target(ctx, addr, *offset);
                 let fallthrough = addr + 4;
 

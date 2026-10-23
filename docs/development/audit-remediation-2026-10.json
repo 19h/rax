@@ -323,8 +323,17 @@
       "id": "H-PC",
       "area": "Hexagon",
       "finding": "A later PC-relative jump in a packet uses the instruction PC instead of the packet PC",
-      "status": "pending",
-      "evidence": []
+      "status": "locally_validated",
+      "evidence": [
+        "tests/suites/machine/hexagon_baremetal/packet_control.rs",
+        "tests/suites/smir/lift/hexagon.rs",
+        "/tmp/rax-hexagon-control-parent-red.log",
+        "/tmp/rax-hexagon-control-smir-full.log",
+        "/tmp/rax-hexagon-control-library.log"
+      ],
+      "remaining_validation": [
+        "Independent QEMU / physical Hexagon oracle"
+      ]
     },
     {
       "id": "C-PCI",
@@ -1219,6 +1228,103 @@
           "blocks": "Full audit remediation"
         }
       ]
+    },
+    {
+      "id": "hexagon-packet-relative-control-flow",
+      "baseline": "d05c1aeedc8d30b1c49cd8f7655a7400cee14abe",
+      "status": "locally_validated",
+      "scope": [
+        "Packet-start PC for ordinary and extended direct/lifted branches, calls, compare-jumps and loop targets",
+        "Architectural 32-bit target wraparound",
+        "Extract decoded instruction execution with unchanged non-control dispatch",
+        "Portable Hexagon SMIR consistency suite and corrected packet-relative golden assertion"
+      ],
+      "primary_source": "docs/architecture/hexagon/80-N2040-46_REV_B_Hexagon_V68_Programmers_Reference_Manual.txt: section 3.3.2 Sequencing semantics (page 50), PC-relative instruction descriptions; LLVM 23.0.0git hexagonv68 fixed encodings.",
+      "baseline_results": {
+        "passed": 1,
+        "failed": 4,
+        "basis": "Standalone contracts linked against 9f66702d parent library; Hexagon direct/lifter sources are identical between that parent and this group baseline."
+      },
+      "validation": {
+        "host": "aarch64-apple-darwin",
+        "bare_metal": {
+          "passed": 20,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0,
+          "new_contracts": 5
+        },
+        "smir_consistency": {
+          "passed": 313,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0,
+          "tool_skip_messages": 0,
+          "unlifted_messages": 0,
+          "assembler": "LLVM 23.0.0git /Users/int/local/bin/llvm-mc"
+        },
+        "library": {
+          "passed": 10414,
+          "failed": 0,
+          "ignored": 2,
+          "filtered": 0,
+          "test_threads": 4
+        },
+        "all_targets_build": "passed",
+        "format": "passed",
+        "not_run": [
+          "QEMU Hexagon control-flow/scalar/float/HVX/memory differential binaries are Linux-gated and execute zero tests on macOS.",
+          "Physical Hexagon hardware oracle."
+        ],
+        "logs": [
+          "/tmp/rax-hexagon-control-parent-red.log",
+          "/tmp/rax-hexagon-control-integration.log",
+          "/tmp/rax-hexagon-control-smir-full.log",
+          "/tmp/rax-hexagon-control-library.log",
+          "/tmp/rax-hexagon-control-build.log",
+          "/tmp/rax-hexagon-control-fmt.log"
+        ]
+      },
+      "assumptions": [
+        {
+          "assumption": "V68 scalar control-flow addresses wrap to 32 bits and every instruction in a packet reads its packet-start PC.",
+          "dependent_result": "Direct and lifted target calculations.",
+          "stress_test": "Branches at each legal packet word position, the 32-bit boundary, fixed extended encodings and single-word negative controls.",
+          "falsification_probe": "V68 primary descriptions or independent fixed-encoding execution contradict the expected targets."
+        }
+      ],
+      "bounded_scope": [
+        {
+          "impact": "high",
+          "item": "The former local-consistency suite encoded the same wrong branch-word base as the CPU and lifter. Its corrected golden assertion and independent fixed-byte contracts are distinct from implementation-to-implementation agreement.",
+          "blocks": false
+        },
+        {
+          "impact": "high",
+          "item": "Predicate auto-AND, scalar alignment and packet memory commit findings remain pending.",
+          "blocks": "Complete Hexagon packet correctness."
+        }
+      ]
+    },
+    {
+      "id": "x86-atomic-test-paging-status",
+      "baseline": "9f66702d5998cc5976ff9382acda71ae3a1f4957",
+      "commit": "e00db0e228bc23f34d805623ed1e9db251813bfc",
+      "status": "locally_validated",
+      "scope": [
+        "Allow only monotonic architectural paging A/D status writes in rejected atomic-callback fixture comparisons",
+        "Require exact table A and leaf A/D writes for successful cross-page atomic transactions"
+      ],
+      "baseline_results": {
+        "passed": 14,
+        "failed": 2
+      },
+      "validation": {
+        "x86_library_log": "/tmp/rax-x86-priv-rosetta-library-final.log",
+        "affected_atomic_tests": "passed",
+        "baseline_failure_log": "/tmp/rax-x86-priv-rosetta-atomic-focused.log",
+        "limit": "Full Rosetta library includes four independently reproduced pre-existing Darwin host-interface failures recorded separately."
+      }
     }
   ]
 }

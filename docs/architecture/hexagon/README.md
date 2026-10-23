@@ -71,6 +71,10 @@ The packet model includes work for:
 - control-flow effects at packet boundaries;
 - exception/fault behavior without leaking partial architectural commits.
 
+PC-relative branch, call, and loop targets use the packet-start address in both direct execution and SMIR, including ordinary and constant-extended encodings. Target arithmetic wraps in the 32-bit address space. Decoded instruction execution lives in `src/isa/hexagon/cpu/execute.rs`.
+
+The `hexagon_bare_metal` target contains fixed-encoding packet-PC and wraparound contracts. The `hexagon_smir_lift` consistency target runs on hosts with `llvm-mc`; it compares local CPU and lifted execution and does not establish an independent hardware-oracle result. The QEMU differential targets retain their Linux requirement.
+
 Tests must cover packet combinations, not only isolated instructions, because forwarding and commit behavior are relational properties.
 
 ## Scalar execution

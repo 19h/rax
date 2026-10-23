@@ -1,3 +1,6 @@
+#[path = "packet_control.rs"]
+mod packet_control;
+
 use std::sync::Arc;
 
 use vm_memory::{Bytes, GuestAddress, GuestMemoryMmap};

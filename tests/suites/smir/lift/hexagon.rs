@@ -3,15 +3,13 @@
 //! For each instruction we lift the Hexagon machine word(s) to SMIR ops, execute
 //! them on the `SmirInterpreter` from a seeded register state, and compare the
 //! resulting GPR / predicate / USR state against rax's Hexagon interpreter
-//! (`HexagonVcpu`, itself differentially verified against qemu-hexagon at 0
-//! divergence). A match proves the lift is semantically correct for that op;
-//! an instruction whose lift returns `Unsupported` is reported as an
-//! (unimplemented) lift gap, not a divergence.
+//! (`HexagonVcpu`). This checks consistency between two local execution paths;
+//! shared architectural defects require independent specification or oracle
+//! checks. An instruction whose lift returns `Unsupported` is reported as an
+//! unimplemented lift gap, not as executed semantic coverage.
 //!
 //! This needs no external toolchain except `llvm-mc` to assemble the test words
 //! (self-skips if unavailable), mirroring the differential test harnesses.
-
-#![cfg(target_os = "linux")]
 
 use std::collections::HashMap;
 use std::io::{Read, Write};
@@ -1513,7 +1511,7 @@ fn cf_cmpjump_nv() {
 }
 
 #[test]
-fn cf_cmpjump_nv_target_is_branch_word_relative() {
+fn cf_cmpjump_nv_target_is_packet_relative() {
     let asms = vec!["{ r0 = r4; if (cmp.eq(r0.new,r1)) jump:nt #0x10 }".to_string()];
     let words_per = match assemble(&asms) {
         Some(w) => w,
@@ -1538,7 +1536,7 @@ fn cf_cmpjump_nv_target_is_branch_word_relative() {
     let (lnext, _) = lift_and_run_cf(words, &st)
         .expect("lift must run jumpnv packet")
         .expect("jumpnv packet must lift");
-    let expected = CODE_ADDR as u64 + 4 + 0x10;
+    let expected = CODE_ADDR as u64 + 0x10;
     assert_eq!(inext, expected, "interpreter branch target");
     assert_eq!(lnext, expected, "SMIR branch target");
 }

@@ -273,21 +273,18 @@ impl HexagonLifter {
         }
     }
 
-    /// Hexagon PC-relative control-flow offsets are already decoded, including
-    /// constant extenders. The extender only changes the architectural base:
-    /// extended branches use packet PC, ordinary branches use instruction PC.
+    /// V68 section 3.3.2: every instruction in a packet reads the packet-start
+    /// PC. Constant extenders change the offset, never the base. Addresses wrap
+    /// in the architectural 32-bit address space.
     pub(crate) fn pcrel_target(
         &self,
         ctx: &mut LiftContext,
-        addr: GuestAddr,
+        _addr: GuestAddr,
         offset: i32,
     ) -> GuestAddr {
-        let base = if ctx.take_extended_imm().is_some() {
-            self.packet_start_pc
-        } else {
-            addr
-        };
-        base.wrapping_add(offset as i64 as u64) & !0x3
+        ctx.take_extended_imm();
+        let packet_pc = self.packet_start_pc as u32;
+        u64::from(packet_pc.wrapping_add(offset as u32) & !0x3)
     }
 
     /// TEST/AUDIT probe: re-scan the full Hexagon opcode table and report which
