@@ -11,6 +11,17 @@ impl HexagonLifter {
         context: &mut LiftContext,
         address: Address,
     ) -> VReg {
+        // GpRel hides its architecture-specific input from generic address
+        // metadata. Expose GP so packet-old read rewriting and optimization
+        // preserve the actual address dependency.
+        let address = match address {
+            Address::GpRel { offset } => Address::BaseOffset {
+                base: VReg::Arch(ArchReg::Hexagon(HexagonReg::Gp)),
+                offset: i64::from(offset),
+                disp_size: DispSize::Auto,
+            },
+            other => other,
+        };
         let wide = context.alloc_vreg();
         operations.push(SmirOp::new(
             OpId(*id),

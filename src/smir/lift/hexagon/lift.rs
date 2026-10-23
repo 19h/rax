@@ -1709,22 +1709,8 @@ impl HexagonLifter {
                 ControlFlow::Syscall
             }
 
-            DecodedInsn::TfrCrR { dst, src } => {
-                // Transfer from control register to general register
-                push_op!(OpKind::ReadSysReg {
-                    dst: self.hex_reg(*dst),
-                    reg: *src as u32,
-                });
-                ControlFlow::Fallthrough
-            }
-
-            DecodedInsn::TfrRrCr { dst, src } => {
-                // Transfer from general register to control register
-                push_op!(OpKind::WriteSysReg {
-                    reg: *dst as u32,
-                    src: self.hex_reg(*src),
-                });
-                ControlFlow::Fallthrough
+            DecodedInsn::TfrCrR { .. } | DecodedInsn::TfrRrCr { .. } => {
+                return self.lift_control_transfer(insn, addr, ctx);
             }
 
             // Control-register PAIR transfers.

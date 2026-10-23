@@ -160,7 +160,6 @@
         "/tmp/rax-x86-protection/third-integration.log"
       ],
       "remaining_validation": [
-        "Broader Rosetta library completion",
         "Independent privileged x86 hardware or QEMU-system oracle"
       ]
     },
@@ -178,7 +177,6 @@
         "/tmp/rax-x86-protection/third-integration.log"
       ],
       "remaining_validation": [
-        "Broader Rosetta library completion",
         "Independent privileged x86 hardware or QEMU-system oracle"
       ]
     },
@@ -408,10 +406,13 @@
         "tests/suites/smir/lift/hexagon.rs",
         "/tmp/rax-hexagon-control-parent-red.log",
         "/tmp/rax-hexagon-control-smir-full.log",
-        "/tmp/rax-hexagon-control-library.log"
+        "/tmp/rax-hexagon-control-library.log",
+        "tests/suites/machine/hexagon_baremetal/packet_controls.rs",
+        "/tmp/rax-hexagon-controls/final-parent-red.log",
+        "/tmp/rax-hexagon-controls/final-complete-integration.log"
       ],
       "remaining_validation": [
-        "Independent QEMU / physical Hexagon oracle"
+        "Independent QEMU or physical Hexagon comparison for the represented ordinary packet profile"
       ]
     },
     {
@@ -883,11 +884,13 @@
       "evidence": [
         "tests/suites/machine/hexagon_baremetal/packet_commit.rs",
         "/tmp/rax-hexagon-commit/direct-parent-red.log",
-        "/tmp/rax-hexagon-commit/final-integration.log"
+        "/tmp/rax-hexagon-commit/final-integration.log",
+        "tests/suites/machine/hexagon_baremetal/packet_controls.rs",
+        "/tmp/rax-hexagon-controls/final-parent-red.log",
+        "/tmp/rax-hexagon-controls/final-complete-integration.log"
       ],
       "remaining_validation": [
-        "SMIR same-packet old control-register read views",
-        "Independent QEMU / physical Hexagon execution"
+        "Independent QEMU or physical Hexagon comparison for the represented ordinary packet profile"
       ]
     },
     {
@@ -912,8 +915,24 @@
         "/tmp/rax-x86-protection/first-contracts.log"
       ],
       "remaining_validation": [
-        "Broader Rosetta library completion",
         "Independent privileged x86 hardware or QEMU-system oracle"
+      ]
+    },
+    {
+      "id": "H-CREG-SMIR",
+      "area": "Hexagon scalar control transfers",
+      "finding": "Single control-register transfers reach generic ReadSysReg/WriteSysReg stubs, returning zero or silently dropping writes; masked GP dependencies and old modifier/start views are absent from packet rewriting.",
+      "status": "locally_validated",
+      "evidence": [
+        "src/smir/lift/hexagon/control_transfers.rs",
+        "src/smir/lift/hexagon/packet_registers.rs",
+        "src/smir/lift/hexagon/addresses.rs",
+        "tests/suites/machine/hexagon_baremetal/packet_controls.rs",
+        "tests/suites/api/isa_oracle_hexagon_packet.rs",
+        "/tmp/rax-hexagon-controls/final-parent-red.log"
+      ],
+      "remaining_validation": [
+        "Independent QEMU or physical Hexagon comparison; unrepresented controls explicitly defer"
       ]
     }
   ],
@@ -3236,9 +3255,20 @@
           "basis": "Both cases passed in the ongoing full library run; no filtered-only run is claimed."
         },
         "rosetta_library": {
-          "status": "in_progress",
+          "status": "completed_with_preexisting_host_failures",
+          "passed": 11411,
+          "failed": 4,
+          "ignored": 2,
+          "filtered": 0,
+          "elapsed_seconds": 496.89,
           "log": "/tmp/rax-x86-protection/rosetta-library.log",
-          "note": "The broader host run continues after this group commit. Four previously reproduced Darwin/Rosetta host failures remain separately registered."
+          "failures": [
+            "user::darwin::syscall::mach::timer::tests::the_host_computes_the_slop",
+            "user::darwin::syscall::mach::timer::tests::concurrent_host_timer_probes_keep_their_own_deadlines",
+            "user::clock::tests::native_thread_clock_excludes_another_threads_work",
+            "user::darwin::runtime_files::tests::native_runtime_executes_system_programs_in_a_closed_process"
+          ],
+          "basis": "These four failures were separately reproduced on the earlier parent and remain registered host limitations; the new protection/cache cases pass."
         },
         "all_targets_build": "passed",
         "clippy_all_targets": "passed",
@@ -3273,6 +3303,146 @@
         {
           "impact": "low",
           "item": "SMEP is not an advertised guest capability. Its predicate supplies externally injected-state consistency only; the explicit guest enablement rejection is retained.",
+          "blocks": false
+        }
+      ]
+    },
+    {
+      "id": "hexagon-control-transfers-and-packet-views",
+      "baseline": "5d654c1c17b983855742497ad342f3f4c8f5e104",
+      "status": "locally_validated",
+      "scope": [
+        "Replace single-control generic system stubs with explicit value transfers for SA0/LC0/SA1/LC1/M0/M1/USR/GP/CS0/CS1, packed P3:0 and packet-PC reads",
+        "Preserve read-only PC writes as no-ops and mask GP low six bits",
+        "Reject reserved or unrepresented controls before publishing any IR, including static and seeded oracle paths",
+        "Retain packet-old GP/M0/M1/CS0/CS1 operands while committing their new values; preserve control/register state after late faults",
+        "Expose GP-relative address dependence explicitly in Hexagon EA32 IR so rewriting and optimization see it",
+        "Preserve old predicates after packed transfers; reject packed transfers as .new producers with an exact admission reason; retain valid compare producers and reset the rule at the next packet"
+      ],
+      "primary_source": {
+        "manual": "docs/architecture/hexagon/80-N2040-46_REV_B_Hexagon_V68_Programmers_Reference_Manual.txt: 2.2.1/2.2.3, 3.3.1/3.3.5/3.3.6, 6.1.4 and User control register transfer (printed page 221)",
+        "encoding_tool": "/Users/int/local/bin/llvm-mc, LLVM 23, -triple=hexagon -mcpu=hexagonv68 -show-encoding",
+        "artifacts": [
+          "/tmp/rax-hexagon-controls/legal.s",
+          "/tmp/rax-hexagon-controls/legal.enc",
+          "/tmp/rax-hexagon-controls/transfers.s",
+          "/tmp/rax-hexagon-controls/transfers.enc",
+          "/tmp/rax-hexagon-controls/second-bank.s",
+          "/tmp/rax-hexagon-controls/second-bank.enc",
+          "/tmp/rax-hexagon-controls/new-valid.s",
+          "/tmp/rax-hexagon-controls/new-valid.enc"
+        ],
+        "limits": "LLVM rejects PC writes as read-only; that raw encoding is a hand-encoded no-effect control using the manual rule. It also rejects mixed scalar control moves sharing slot 3 and packed-transfer .new consumers; no architectural behavior is inferred for those illegal/undefined packets."
+      },
+      "assumptions": [
+        {
+          "assumption": "Modeled scalar controls use the existing 32-bit architectural fields, while PC denotes the packet address and is read-only.",
+          "dependent_result": "Explicit IR transfers replace fabricated zero/no-effect behavior without adding new register state or ABI layouts.",
+          "stress_test": "All represented scalar controls, packed predicate bytes, GP masking, PC read/write and USR saturation before/after a packet boundary.",
+          "falsification_probe": "A represented value differs from direct execution or an unrepresented control produces any IR."
+        },
+        {
+          "assumption": "Valid packets read entry GP/M/CS values and retain their staged control writes until commit.",
+          "dependent_result": "An early control write cannot redirect another instruction in the same packet.",
+          "stress_test": "GP loads/stores, both modifier/start banks, circular wrap, valid old/invalid new address and invalid old/valid new address, O0/O1/O2.",
+          "falsification_probe": "A same-packet address uses a new control value or a fault publishes the control write."
+        },
+        {
+          "assumption": "Only valid scalar-predicate producers are eligible for .new use.",
+          "dependent_result": "Adding packed P3:0 value transfers must not invent a valid producer.",
+          "stress_test": "LLVM rejects packed-transfer plus .new but accepts compare plus .new; the exact IR admission error is asserted, normal old consumers work, and a later packet resets eligibility.",
+          "falsification_probe": "A wrong opcode or unrelated unsupported path makes the negative test pass, or an ordinary/later compare packet rejects."
+        }
+      ],
+      "baseline_results": {
+        "machine_word_contracts": {
+          "passed": 4,
+          "failed": 16
+        },
+        "basis": "All final 20 machine-word contracts link the saved 5d654c1c product rlib. Tests stop at the first failed member of an internal matrix. The passing controls cover read-only PC, late-fault rollback and valid compare producers."
+      },
+      "affected_planes": {
+        "direct": "Existing CPU behavior supplies controls; no direct CPU code changes. Legal packet shapes and bit-level expectations are independently anchored by the primary manual and LLVM encodings.",
+        "smir": "Explicit scalar transfers, visible GP address inputs, five additional retained control views and packed-predicate producer eligibility. The GPR-only indexing API remains separate to preserve .new producer/address roles.",
+        "optimizer": "O0/O1/O2 execute identical old-input/new-output and rollback contracts; packet boundary metadata remains the commit frontier.",
+        "oracle": "Public static IR exposes GP dependencies and transfers; seeded effects commit GP after loading through its entry value. Unrepresented/invalid packets expose an error without partial IR. Seeded execution is shared IR, not an independent oracle.",
+        "native": "Packet boundaries remain outside native admission; no native control-transfer execution is claimed.",
+        "backend_abi": "No public state-layout, memory backend or C ABI changes; existing checkpoint/platform work remains separate."
+      },
+      "validation": {
+        "machine_word_contracts": {
+          "passed": 20,
+          "failed": 0
+        },
+        "oracle_contracts": {
+          "passed": 4,
+          "failed": 0
+        },
+        "bare_metal": {
+          "passed": 175,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0
+        },
+        "smir_consistency": {
+          "passed": 313,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0
+        },
+        "oracle": {
+          "passed": 100,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0
+        },
+        "library": {
+          "passed": 10420,
+          "failed": 0,
+          "ignored": 2,
+          "filtered": 0,
+          "elapsed_seconds": 246.99,
+          "test_threads": 12
+        },
+        "c_api": {
+          "passed": 185,
+          "failed": 0,
+          "ignored": 0
+        },
+        "all_targets_build": "passed",
+        "clippy_all_targets": "passed",
+        "format": "passed",
+        "doctests": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 5
+        },
+        "logs": [
+          "/tmp/rax-hexagon-controls/final-parent-red.log",
+          "/tmp/rax-hexagon-controls/final-complete-integration.log",
+          "/tmp/rax-hexagon-controls/final-library.log",
+          "/tmp/rax-hexagon-controls/final-capi.log",
+          "/tmp/rax-hexagon-controls/final-build.log",
+          "/tmp/rax-hexagon-controls/final-clippy.log",
+          "/tmp/rax-hexagon-controls/final-fmt.log",
+          "/tmp/rax-hexagon-controls/final-doc.log"
+        ],
+        "intermediate_notes": "The first library run was stopped after the packed-producer admission rule changed; only final-library.log is final evidence. The first transfer implementation exposed the GP metadata gap (3/5 initial contracts passed); explicit GP address inputs resolve it. The final .new rejection checks the exact reason and the LLVM-anchored consumer encoding, excluding unrelated fallback."
+      },
+      "bounded_scope": [
+        {
+          "impact": "high",
+          "item": "H-MMIO-ORDER, complete checkpoint/scheduling work, A32 residual profiles and remaining architecture/platform findings stay pending.",
+          "blocks": "Complete remediation plan."
+        },
+        {
+          "impact": "medium",
+          "item": "Unmodeled controls (including UGP/cycle profiles), unsupported control pairs, hardware-loop/duplex packet IR and physical/QEMU hardware equivalence are not established; unrepresented scalar controls now explicitly defer.",
+          "blocks": false
+        },
+        {
+          "impact": "low",
+          "item": "Transfer work is bounded by four predicate bytes; packet-view scanning is O(operations+37), with old/new snapshots allocated only for overwritten represented registers. No runtime performance claim.",
           "blocks": false
         }
       ]

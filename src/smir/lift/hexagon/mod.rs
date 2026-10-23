@@ -32,6 +32,7 @@ mod alignment;
 mod emit;
 mod frames;
 pub use emit::*;
+mod control_transfers;
 mod helpers;
 mod packet_predicates;
 mod packet_registers;

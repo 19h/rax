@@ -1,3 +1,6 @@
+#[path = "packet_controls.rs"]
+mod packet_controls;
+
 #[path = "packet_ir.rs"]
 mod packet_ir;
 

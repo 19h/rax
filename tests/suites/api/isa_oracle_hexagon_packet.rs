@@ -200,3 +200,78 @@ fn public_packet_ir_exposes_ordered_commit_boundaries() {
     assert_eq!(operations.first().unwrap()["memory"]["writes"], false);
     assert_eq!(operations.last().unwrap()["memory"]["writes"], true);
 }
+
+#[test]
+fn scalar_control_transfers_expose_register_effects_instead_of_system_stubs() {
+    let value = packet(&[0x6220c00b]);
+    let operations = value["smir"]["ops"].as_array().unwrap();
+    assert!(
+        operations
+            .iter()
+            .any(|op| op["opcode"] == "mov" && op["kind"]["dst"]["name"] == "gp")
+    );
+    assert!(
+        !operations
+            .iter()
+            .any(|op| op["opcode"] == "write_sysreg" || op["opcode"] == "read_sysreg")
+    );
+    let value = packet(&[0x6220400b, 0x4980c001]);
+    assert!(
+        value["smir"]["ops"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|op| op["opcode"] == "lea" && op["kind"]["addr"]["base"]["name"] == "gp")
+    );
+}
+
+#[test]
+fn seeded_control_transfer_packet_reads_old_gp_and_reports_committed_gp() {
+    use rax::oracle::{OracleMemorySeed, OracleSeed, decode_to_json_with_seed};
+    let words = [0x6220400b_u32, 0x4980c001];
+    let code: Vec<_> = words.iter().flat_map(|word| word.to_le_bytes()).collect();
+    let value = lifter_stack::run_on_large_lifter_stack("Hexagon control oracle", || {
+        decode_to_json_with_seed(
+            &code,
+            &OracleOptions {
+                isa: OracleIsa::Hexagon,
+                pc: 0x1000,
+                ..Default::default()
+            },
+            Some(&OracleSeed {
+                regs: vec![
+                    ("r0".into(), 0x3000),
+                    ("r1".into(), 0),
+                    ("gp".into(), 0x2000),
+                ],
+                memory: vec![OracleMemorySeed {
+                    addr: 0x2000,
+                    bytes: vec![0xa5; 4],
+                }],
+                memory_size: Some(0x4000),
+            }),
+        )
+        .unwrap()
+    });
+    assert_eq!(
+        value["side_effects"]["changed_regs"]["r1"]["after"],
+        "0xa5a5a5a5"
+    );
+    assert_eq!(
+        value["side_effects"]["changed_regs"]["gp"]["after"],
+        "0x3000"
+    );
+}
+
+#[test]
+fn unrepresented_control_register_has_no_complete_or_partial_ir() {
+    assert_rejected(&packet(&[0x6a0ac001]), "control-register read C10");
+}
+
+#[test]
+fn packed_predicate_transfer_does_not_admit_a_new_consumer_or_partial_ir() {
+    assert_rejected(
+        &packet(&[0x62204004, 0x4382c001]),
+        "packed predicate control write is not a .new producer",
+    );
+}

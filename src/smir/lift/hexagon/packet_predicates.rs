@@ -7,6 +7,7 @@ use crate::isa::hexagon::decode::PredCond;
 pub(super) struct PacketPredicates {
     old: Option<[VReg; 4]>,
     new: [Option<VReg>; 4],
+    packed_control_write: [bool; 4],
 }
 
 fn predicate(register: VReg) -> Option<usize> {
@@ -80,6 +81,14 @@ impl PacketPredicates {
         address: GuestAddr,
         context: &mut LiftContext,
     ) -> Result<Vec<SmirOp>, LiftError> {
+        if let Some(index) = new_source(insn)
+            && self.packed_control_write[index]
+        {
+            return Err(LiftError::Unsupported {
+                addr: address,
+                mnemonic: "packed predicate control write is not a .new producer".into(),
+            });
+        }
         let mut reads = [false; 4];
         let mut writes = [false; 4];
         for op in &operations {
@@ -133,6 +142,8 @@ impl PacketPredicates {
         }
         for index in 0..4 {
             if writes[index] {
+                self.packed_control_write[index] =
+                    matches!(insn, DecodedInsn::TfrRrCr { dst: 4, .. });
                 let computed = context.alloc_vreg();
                 copy(&mut result, address, computed, architectural(index));
                 self.new[index] = Some(if let Some(previous) = self.new[index] {
