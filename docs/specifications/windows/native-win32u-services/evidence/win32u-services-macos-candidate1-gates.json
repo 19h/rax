@@ -1,0 +1,84 @@
+{
+  "state": "failed",
+  "host": "macos",
+  "pid": 48476,
+  "steps": [
+    {
+      "name": "ordinals",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "ntdll_ordinal",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 0.14628049999009818,
+      "log": "win32u-services-macos-candidate1-ordinals.log",
+      "bytes": 892,
+      "sha256": "9615da73c69cdaba8defe220cb6d326ca2a590adbbd0a958410453e332009185",
+      "results": [
+        "ok. 4 passed; 0 failed; 0 ignored; 0 measured; 8205 filtered out; finished in 0.00s"
+      ]
+    },
+    {
+      "name": "focus",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "win32u",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 0.1328463749960065,
+      "log": "win32u-services-macos-candidate1-focus.log",
+      "bytes": 909,
+      "sha256": "1adb704e33c47597768a4bb15adec48ee10682377e0603b1dd900422d7d72ac0",
+      "results": [
+        "ok. 4 passed; 0 failed; 0 ignored; 0 measured; 8205 filtered out; finished in 0.05s"
+      ]
+    },
+    {
+      "name": "full",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 101,
+      "seconds": 477.3987280409783,
+      "log": "win32u-services-macos-candidate1-full.log",
+      "bytes": 869055,
+      "sha256": "0a32cf7f81e44d4196583abfa29ba1b09e080edc17d13c0f73b6d27a12d50e7a",
+      "results": [
+        "FAILED. 8205 passed; 2 failed; 2 ignored; 0 measured; 0 filtered out; finished in 460.67s"
+      ]
+    }
+  ],
+  "manifest-sha256": "6140e8121129bbd12c871dac8525834b68aacff0b9484b027054ec0b58e45a62",
+  "step": "full",
+  "child": 48738,
+  "exit-code": 1,
+  "error": "Traceback (most recent call last):\n  File \"/Users/int/Library/Caches/assist-process-emulation/native-win32u-services-20261023/run-win32u-services-unix-candidate1.py\", line 166, in <module>\n    results = run(name, command)\n  File \"/Users/int/Library/Caches/assist-process-emulation/native-win32u-services-20261023/run-win32u-services-unix-candidate1.py\", line 137, in run\n    assert code == 0, name\n           ^^^^^^^^^\nAssertionError: full\n",
+  "completed-utc": "2026-10-23T00:29:10.598244+00:00"
+}

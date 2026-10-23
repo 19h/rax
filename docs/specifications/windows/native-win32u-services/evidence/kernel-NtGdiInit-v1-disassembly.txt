@@ -1,0 +1,64 @@
+	hint	#27
+	stp	x19, x20, [sp, #-16]!
+	stp	x29, x30, [sp, #-16]!
+	mov	x29, sp
+	adrp	x8, #958464
+	ldr	x8, [x8, #896]
+	blr	x8
+	cbz	x0, #24
+	ldr	x8, [x0]
+	cbnz	x8, #16
+	mov	x19, #0                         // =0x0
+	mov	x20, #80                        // =0x50
+	b	#16
+	add	x20, x0, #80
+	mov	x19, x0
+	cbz	x20, #12
+	mov	x0, x20
+	bl	#-1323716
+	ldr	w9, [x19, #276]
+	tbnz	w9, #8, #16
+	mov	w8, #288                        // =0x120
+	orr	w8, w9, w8
+	str	w8, [x19, #276]
+	cbz	x20, #12
+	mov	x0, x20
+	bl	#-1323108
+	mov	w0, #1                          // =0x1
+	ldp	x29, x30, [sp], #16
+	ldp	x19, x20, [sp], #16
+	hint	#31
+	ret
+	udf	#0
+	hint	#27
+	stp	x19, x20, [sp, #-32]!
+	stp	x21, x22, [sp, #16]
+	stp	x29, x30, [sp, #-32]!
+	mov	x29, sp
+	adrp	x8, #958464
+	ldr	x8, [x8, #312]
+	str	w3, [sp, #16]
+	mov	x21, x1
+	mov	x22, x0
+	str	x21, [sp, #24]
+	mov	w20, w2
+	blr	x8
+	ldr	w9, [x21, #60]
+	mov	x8, x0
+	mov	w0, #0                          // =0x0
+	cmp	w9, #20
+	b.ne	#116
+	ldr	w10, [x21, #24]
+	ldr	w9, #132
+	tst	w10, w9
+	b.ne	#100
+	ldr	x19, [x8, #88]
+	mov	w8, #48                         // =0x30
+	strb	w8, [sp, #19]
+	ldr	x8, [x21, #112]
+	add	x0, sp, #24
+	ldr	w21, [sp, #16]
+	str	w21, [x8, w20, uxtw #2]
+	bl	#-1337796
+	ldr	x8, [x22]
+	ldr	x8, [x8, #1800]

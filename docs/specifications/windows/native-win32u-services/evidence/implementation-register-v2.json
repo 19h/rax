@@ -1,0 +1,78 @@
+{
+  "baseline": "2ca3e35c54bcf4b64be63f524505a1a3e6b69b8b",
+  "owned-production-files": [
+    "src/user/windows/loader/mod.rs",
+    "src/user/windows/loader/services.rs",
+    "src/user/windows/dll/mod.rs",
+    "src/user/windows/dll/win32u.rs",
+    "src/user/windows/process/mod.rs",
+    "src/user/windows/process/start.rs",
+    "src/user/windows/process/gdi.rs",
+    "src/user/windows/process/services.rs",
+    "src/user/windows/process/sched/tests/services_tests.rs",
+    "src/user/windows/process/sched/tests/services_tests/win32u_tests.rs",
+    "src/user/windows/process/sched.rs",
+    "src/user/windows/dll/crt/startup/storage.rs",
+    "src/user/windows/process/sched/tests/services_tests/win32u_leaf_tests.rs"
+  ],
+  "assumptions": [
+    {
+      "id": "A1",
+      "assumption": "The trapped service corresponds to NtGdiInit2 in the selected installed Win32u image",
+      "basis": "GRE v4 observer: ARM64 service 0x12fd; matching eight bytes at RVA 0xbfd0",
+      "dependent-result": "next service investigation",
+      "stress-test": "full stub, export and caller correspondence across native architecture views",
+      "falsification-probe": "different selected export RVA/stub number or backing image identity",
+      "status": "retained"
+    },
+    {
+      "id": "A2",
+      "assumption": "Prior GRE owning core is unchanged and suitable as before-regression",
+      "basis": "published GRE checkpoint and preserved core identities",
+      "dependent-result": "new observer attribution",
+      "stress-test": "rehash sources and owning core before and after",
+      "falsification-probe": "any size/hash mismatch",
+      "status": "retained"
+    },
+    {
+      "id": "A3",
+      "assumption": "NtGdiInit2 has zero arguments and returns a pointer-width opaque process value",
+      "basis": "x86 RET zero, ARM64 caller STR X0; 32 successful USER-initialized calls each in four views; kernel win32kbase implementation",
+      "dependent-result": "guest leaf ABI and state lifetime",
+      "stress-test": "x86 truncation, x64/ARM64 upper bits, main/worker repetitions, independent processes",
+      "falsification-probe": "stack cleanup other than zero or differing within-process return",
+      "status": "confirmed"
+    },
+    {
+      "id": "A4",
+      "assumption": "The serial kernel leaf flags and opaque-cookie semantics can be modeled with private guest process state before later GDI operations are implemented",
+      "basis": "captured exact kernel NtGdiInit2 code; all later unimplemented calls remain explicit failures",
+      "dependent-result": "bounded initial GDI leaf support",
+      "stress-test": "repeated calls, preserved unrelated flags, separate processes/seeds; no host cookie/pointer copied",
+      "falsification-probe": "native leaf writes externally visible buffers or returns varying value under captured precondition",
+      "status": "retained"
+    }
+  ],
+  "scope": "Read-only native Win32u/caller investigation; no production changes yet; arbitrary guest PE cannot admit services; return contract unknown.",
+  "change-planes": {
+    "Windows loader and kernel entry": "selected installed Win32u table; preserve NTDLL path; initialize only its validated x86 transition slot",
+    "Windows process state": "guest-owned opaque GDI cookie and flags; no native host pointer/GDI object forwarding",
+    "Windows service model": "zero-argument pointer-width NtGdiInit2; same register/stack continuation adapter",
+    "platforms": "shared model compiled and tested on Windows/macOS/Linux; actual installed runtime tested native Windows; host Windows native calls confined to producers",
+    "CAPI SDK packages prompts Assist UI": "unchanged contracts; rebuild retained owning consumers to prove linkage; pair vendored pin/ABI anchor/engineering record after RAX commit"
+  },
+  "scope-expansion": [
+    {
+      "impact": "high",
+      "evidence": "uninitialized native first call crashes C000041D in four views; initialized controls succeed",
+      "item": "USER initialization and callback setup are separate kernel-entry state; no claim of full GDI support",
+      "blocks": "whole-goal completion; does not establish native cookie transfer policy"
+    },
+    {
+      "impact": "medium",
+      "evidence": "x64 view on ARM64 uses ARM64EC wrapper rather than direct x64 SYSCALL leaf",
+      "item": "independent native x64-kernel proof remains unknown",
+      "blocks": "whole-goal platform completeness"
+    }
+  ]
+}

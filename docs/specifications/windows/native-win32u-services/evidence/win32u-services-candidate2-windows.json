@@ -1,0 +1,228 @@
+{
+  "state": "finished",
+  "pid": 5496,
+  "steps": [
+    {
+      "name": "toolchain",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "--version"
+      ],
+      "exit-code": 0,
+      "seconds": 0.10153191699646413,
+      "log": "win32u-services-candidate2-toolchain.log",
+      "bytes": 36,
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5",
+      "results": []
+    },
+    {
+      "name": "test-build",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "exit-code": 0,
+      "seconds": 0.5068602079991251,
+      "log": "win32u-services-candidate2-test-build.log",
+      "bytes": 92085,
+      "sha256": "2769a1c23fd17e84a16e210d975e34de9c876b3135a7bf1faa85de2c4e7de8c4",
+      "results": []
+    },
+    {
+      "name": "ordinals",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\normal-candidate1\\debug\\deps\\rax-b799307a7949aa6b.exe",
+        "ntdll_ordinal",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 0.10506058402825147,
+      "log": "win32u-services-candidate2-ordinals.log",
+      "bytes": 733,
+      "sha256": "a7a9949cdb9f8a17fd9fb3c8014487482d1e0b470ce8a7cd05bc40020d857030",
+      "results": [
+        "ok. 4 passed; 0 failed; 0 ignored; 0 measured; 7687 filtered out; finished in 0.02s"
+      ]
+    },
+    {
+      "name": "focus",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\normal-candidate1\\debug\\deps\\rax-b799307a7949aa6b.exe",
+        "win32u",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 2.3999047079705633,
+      "log": "win32u-services-candidate2-focus.log",
+      "bytes": 1048,
+      "sha256": "40c60b24c8482ffc19eba269cd288fd3489c96f6f88b0473828a2672ae333716",
+      "results": [
+        "ok. 6 passed; 0 failed; 0 ignored; 0 measured; 7685 filtered out; finished in 2.31s"
+      ]
+    },
+    {
+      "name": "full",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\normal-candidate1\\debug\\deps\\rax-b799307a7949aa6b.exe",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 101,
+      "seconds": 1557.8021047919756,
+      "log": "win32u-services-candidate2-full.log",
+      "bytes": 836796,
+      "sha256": "fa7fde4dbdfe533e1f636358ee741f510ae3e718531657ab029d833290375713",
+      "results": [
+        "FAILED. 7684 passed; 5 failed; 2 ignored; 0 measured; 0 filtered out; finished in 1557.47s"
+      ]
+    },
+    {
+      "name": "capi",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "-p",
+        "rax-capi",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 196.67427787499037,
+      "log": "win32u-services-candidate2-capi.log",
+      "bytes": 14994,
+      "sha256": "4430368b8123d157f487d562cbd9c778e0ac8e185d6d001e8660ddb789b4839b",
+      "results": [
+        "ok. 183 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 20.95s",
+        "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    {
+      "name": "integration",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--test",
+        "user_windows",
+        "--test",
+        "user_windows_memory",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 7.760478417039849,
+      "log": "win32u-services-candidate2-integration.log",
+      "bytes": 1794,
+      "sha256": "8bdd11bcada2c35c332a90869edaf6addddefc12f0af10e1b181d84224edf3ba",
+      "results": [
+        "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+        "ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    {
+      "name": "all-targets",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "check",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--all-targets"
+      ],
+      "exit-code": 0,
+      "seconds": 206.72489312500693,
+      "log": "win32u-services-candidate2-all-targets.log",
+      "bytes": 1005,
+      "sha256": "bfc89b83de26a97595faf2f81a339c1ae63ee3aa5af1e89ece663874150d42f7",
+      "results": []
+    }
+  ],
+  "utc": "2026-10-23T01:01:18.305609+00:00",
+  "supersedes": "win32u-services-candidate1-windows.json",
+  "recovery": "Host sharing disabled during source verification after focused tests. Candidate1 already materialized; verify unchanged source locally, reuse compatible native target, and rerun all gates through local transfer files. Original partial receipt retained.",
+  "source-inputs": 29182,
+  "manifest": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\win32u-validation-recovery-v2\\transfer\\win32u-services-candidate1-source.json",
+    "bytes": 6884605,
+    "sha256": "6140e8121129bbd12c871dac8525834b68aacff0b9484b027054ec0b58e45a62"
+  },
+  "dependency-cache-source": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\normal-candidate1",
+  "current-step": "all-targets",
+  "child-pid": 7044,
+  "build-environment": {
+    "CARGO_TARGET_DIR": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\normal-candidate1",
+    "TMPDIR": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\tmp",
+    "TMP": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\tmp",
+    "TEMP": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\tmp",
+    "CCACHE_DISABLE": "1",
+    "SCCACHE_DISABLE": "1"
+  },
+  "test-artifact": {
+    "reason": "compiler-artifact",
+    "package_id": "path+file:///C:/Windows/Temp/assist-native-rax-20261010/src-display-candidate1#rax@0.1.0",
+    "manifest_path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\Cargo.toml",
+    "target": {
+      "kind": [
+        "lib"
+      ],
+      "crate_types": [
+        "lib"
+      ],
+      "name": "rax",
+      "src_path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\src\\lib.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": true,
+      "test": true
+    },
+    "profile": {
+      "opt_level": "0",
+      "debuginfo": 2,
+      "debug_assertions": true,
+      "overflow_checks": true,
+      "test": true
+    },
+    "features": [],
+    "filenames": [
+      "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\normal-candidate1\\debug\\deps\\rax-b799307a7949aa6b.exe",
+      "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\normal-candidate1\\debug\\deps\\rax-b799307a7949aa6b.pdb"
+    ],
+    "executable": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\normal-candidate1\\debug\\deps\\rax-b799307a7949aa6b.exe",
+    "fresh": true
+  },
+  "test-image-before": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\normal-candidate1\\debug\\deps\\rax-b799307a7949aa6b.exe",
+    "bytes": 595739648,
+    "sha256": "25ad01cb2c1ece351cde68cfe43ffcf608a03685f0436caa6711ae4f0c903ecb"
+  },
+  "exact-full-failures": [
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_imm_index_at_width_with_flags_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_all_ones_with_flags_as_movn_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_with_flags_sets_carry",
+    "smir::lower::aarch64::tests::bit::lowers_bzhi_x_with_flags_and_low_byte_index_guards",
+    "smir::lower::aarch64::tests::vector::lowers_vector_fp16_arithmetic_runtime"
+  ],
+  "test-image-after": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\normal-candidate1\\debug\\deps\\rax-b799307a7949aa6b.exe",
+    "bytes": 595739648,
+    "sha256": "25ad01cb2c1ece351cde68cfe43ffcf608a03685f0436caa6711ae4f0c903ecb"
+  },
+  "exit-code": 0,
+  "scope": "Frozen selected Win32u service admission source: native Windows ARM64 focused/full/CAPI/integration/all-target. Existing five lowerer failures are explicit; full suite is not green.",
+  "completed-utc": "2026-10-23T01:35:55.155344+00:00"
+}

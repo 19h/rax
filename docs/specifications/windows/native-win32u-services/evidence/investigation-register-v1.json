@@ -1,0 +1,25 @@
+{
+  "baseline": "2ca3e35c54bcf4b64be63f524505a1a3e6b69b8b",
+  "owned-production-files": [],
+  "assumptions": [
+    {
+      "id": "A1",
+      "assumption": "The trapped service corresponds to NtGdiInit2 in the selected installed Win32u image",
+      "basis": "GRE v4 observer: ARM64 service 0x12fd; matching eight bytes at RVA 0xbfd0",
+      "dependent-result": "next service investigation",
+      "stress-test": "full stub, export and caller correspondence across native architecture views",
+      "falsification-probe": "different selected export RVA/stub number or backing image identity",
+      "status": "retained"
+    },
+    {
+      "id": "A2",
+      "assumption": "Prior GRE owning core is unchanged and suitable as before-regression",
+      "basis": "published GRE checkpoint and preserved core identities",
+      "dependent-result": "new observer attribution",
+      "stress-test": "rehash sources and owning core before and after",
+      "falsification-probe": "any size/hash mismatch",
+      "status": "retained"
+    }
+  ],
+  "scope": "Read-only native Win32u/caller investigation; no production changes yet; arbitrary guest PE cannot admit services; return contract unknown."
+}

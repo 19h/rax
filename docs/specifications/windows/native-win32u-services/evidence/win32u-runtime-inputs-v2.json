@@ -1,0 +1,158 @@
+{
+  "state": "finished",
+  "exit-code": 0,
+  "utc": "2026-10-23T01:01:18.806840+00:00",
+  "path-source": {
+    "file": "win32u-runtime-paths-v1.json",
+    "bytes": 1855,
+    "sha256": "41a320240c67bae0787d930a78cefc090ebb8a256f24257dd851854b4e78d06e"
+  },
+  "runtime-inputs": [
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\advapi32.dll",
+      "bytes": 1390176,
+      "sha256": "55574d41274e407861a51574fb76fe36f02a8809da67255d45081fb435fe5018"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\authz.dll",
+      "bytes": 552960,
+      "sha256": "b41ade886dcfd24b4fddef948f04e1153dca483db8421ca36defb8c3bae54167"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\ETW.dll",
+      "bytes": 307728,
+      "sha256": "a935159c98a26eebf4b6d5f9b3ad8e3adf549641f8020d089c7d9c8e82f7051e"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\gdi32.dll",
+      "bytes": 462600,
+      "sha256": "55a43a68318f896557d8433d1094b0acce8c9ec05b7085bbce558fefa280d42a"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\gdi32full.dll",
+      "bytes": 1893296,
+      "sha256": "3f73ffd0d20b492cfc3302c7ba193138a96d6161c2bea0b6b6c559f104f7f70e"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\kernel32.dll",
+      "bytes": 1500304,
+      "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\KernelBase.dll",
+      "bytes": 7213728,
+      "sha256": "6b2fa508ac4f9bce5d7351676485d1dc5b5236cd9656034e2fec1eaba3b82bc9"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\msvcp_win.dll",
+      "bytes": 1279224,
+      "sha256": "1424a6c4065b41ced5d137131b97fe563a848ac66b286a5895e80cccd2e7969d"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\msvcrt.dll",
+      "bytes": 1347856,
+      "sha256": "779eb5cb1ae357196254af9755307544a3dd20011c84768ae72f45d366f47148"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\netutils.dll",
+      "bytes": 90240,
+      "sha256": "dffb104efda2a7eb194d32d6bc246e8283a19648b7bd72d9c309d9ac5a9d72cf"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\rpcrt4.dll",
+      "bytes": 2186248,
+      "sha256": "e4fd9ff555bcdf4ef1d4970feb4eec4889cab1adaa39848d043fd45e83fb3b0b"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\sechost.dll",
+      "bytes": 982704,
+      "sha256": "e620b3d59f10fe71770968575fc0c2af0592ca1f451c62b596ed08857039354c"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\sspicli.dll",
+      "bytes": 521472,
+      "sha256": "c52cffe95aaca5af51fc6a87496e078bcc4a63578b77a9d43c9758317af6a29b"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\ucrtbase.dll",
+      "bytes": 2260040,
+      "sha256": "d0c03ee466babee46e4c46ef18c88965cd1de29acbdd623cfd625efa4da8d13e"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\user32.dll",
+      "bytes": 2799192,
+      "sha256": "bd104076063e3bc8ce65fb744a947f533b8ac6bc737c999b1d7beacbc1b6b058"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\version.dll",
+      "bytes": 73200,
+      "sha256": "d30c2a9c9d81982b112c5a60878f3579ddb3db3a09443147c63f10bc749aaab2"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\win32u.dll",
+      "bytes": 387768,
+      "sha256": "e2aa1e93f5e45377922bf6e5525d9fc37a60494da1d602033974883987e9c7d4"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\wkscli.dll",
+      "bytes": 195592,
+      "sha256": "425f2253df4ab6879355efcf43cc194d3979272ff7907dfe6646fbd662cd1670"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\ws2_32.dll",
+      "bytes": 884632,
+      "sha256": "6926b64bd7a14c813c419e263dfa6bf6ff81ead446b8f98709eb227a960bb232"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\gdi32.dll",
+      "bytes": 160416,
+      "sha256": "e1b13f557255c4568a68ab85736c3f9461e1e8a162936fcce3437eaafbed9f8a"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\gdi32full.dll",
+      "bytes": 954272,
+      "sha256": "0ea5a50fd5653f6c88fa657a3aec92dde0bfaa106c14df4d928886b85cd7d099"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\kernel32.dll",
+      "bytes": 696392,
+      "sha256": "9c9a0c54a79ea712bb533fcc79ba9935ed9f9d3f777fd65cf62d9cec6699b9df"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\KernelBase.dll",
+      "bytes": 3073488,
+      "sha256": "e9c414d7c6bd2c6fde608f31b2f31da3c2014c801b3764a30ee42abd1e9c2d58"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\msvcrt.dll",
+      "bytes": 810688,
+      "sha256": "67c03357458a951402cc1804e05d3301f011a59d352f684fbe283f546f8ae398"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\user32.dll",
+      "bytes": 2039408,
+      "sha256": "f32a037264cb173501c4ba0c3fff25cd274e154e59be85c06a75a02f89a8e64b"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\version.dll",
+      "bytes": 29208,
+      "sha256": "688ea4248da1e28bd77be9ae1088954a11cec3302c25af8aade47bae14f3ada8"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\win32u.dll",
+      "bytes": 109280,
+      "sha256": "098802d32f359f1ccd53e654f6a4fbfd6bf7d3cce58cc8f73ef389c8a9b26117"
+    }
+  ],
+  "scope": "Canonical deduplicated actual parent ordinary guest module paths, native four-view Win32u producer libraries, and version.dll; read-only stable before/after capture."
+}

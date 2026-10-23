@@ -219,6 +219,9 @@ pub struct Modules {
     pub(crate) dynamic: dynamic::DynamicState,
     /// Service identities from a successfully admitted executable NTDLL.
     pub(crate) nt_services: Option<(usize, services::ServiceTable)>,
+    /// Service identities from the exact selected installed Win32u file.
+    /// Supplied or application DLLs cannot populate this table by basename.
+    pub(crate) win32u_services: Option<(usize, services::ServiceTable)>,
 }
 
 impl Modules {
@@ -1198,10 +1201,28 @@ fn load_image(
         if selected_native.is_none() {
             protect_sections(p, &pe, base)?;
         }
-        if h.is_dll()
+        let ntdll = h.is_dll()
             && (name.eq_ignore_ascii_case("ntdll.dll")
-                || p.modules.list[idx].name.eq_ignore_ascii_case("ntdll.dll"))
+                || p.modules.list[idx].name.eq_ignore_ascii_case("ntdll.dll"));
+        let win32u = if h.is_dll()
+            && p.modules.list[idx].name.eq_ignore_ascii_case("win32u.dll")
+            && let (Some(runtime), Some(path)) =
+                (p.native.as_ref(), p.modules.list[idx].host_path.as_deref())
         {
+            runtime
+                .dll("win32u.dll")
+                .map_err(|error| {
+                    LoadError::new(
+                        STATUS_DLL_NOT_FOUND,
+                        format!("selected Win32u identity: {error}"),
+                    )
+                })?
+                .as_deref()
+                == Some(path)
+        } else {
+            false
+        };
+        if ntdll || win32u {
             let table = services::ServiceTable::from_image(p.arch, &pe)?;
             if let Some(slot) = table.as_ref().and_then(|table| table.wow64_slot) {
                 let transition =
@@ -1221,13 +1242,17 @@ fn load_image(
                     .map_err(|_| {
                         LoadError::new(
                             STATUS_ACCESS_VIOLATION,
-                            "cannot install selected NTDLL WoW64 transition",
+                            "cannot install selected Windows service WoW64 transition",
                         )
                     })?;
                 p.traps
                     .add(transition, vec![SlotKind::NtServiceTransition], 0x1000 / 16);
             }
-            p.modules.nt_services = table.map(|table| (idx, table));
+            if ntdll {
+                p.modules.nt_services = table.map(|table| (idx, table));
+            } else {
+                p.modules.win32u_services = table.map(|table| (idx, table));
+            }
         }
         if h.is_dll() {
             p.modules.init_order.push(idx);

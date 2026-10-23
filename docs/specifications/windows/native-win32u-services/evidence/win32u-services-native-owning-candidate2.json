@@ -1,0 +1,124 @@
+{
+  "state": "finished",
+  "pid": 4968,
+  "source-epoch": 1,
+  "utc": "2026-10-23T01:01:18.324314+00:00",
+  "steps": [
+    {
+      "name": "toolchain",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "--version"
+      ],
+      "exit-code": 0,
+      "seconds": 0.35267391602974385,
+      "log": "win32u-services-native-owning-candidate2-toolchain.log",
+      "bytes": 36,
+      "sha256": "c10ec31b8c6e6e2693cf65fc1971b41edbc3da1ae7db6f9f3f36c4823f8dcab5"
+    },
+    {
+      "name": "artifacts-before",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "build",
+        "--locked",
+        "--offline",
+        "--features",
+        "rax",
+        "--message-format=json"
+      ],
+      "exit-code": 0,
+      "seconds": 287.05272416601656,
+      "log": "win32u-services-native-owning-candidate2-artifacts-before.log",
+      "bytes": 132536,
+      "sha256": "66243f376d73f647f962c8d920704e846baf5611e9471324b9b5107c8b291a50"
+    },
+    {
+      "name": "archive-before",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\win32u-validation-recovery-v2\\transfer\\collect-win32u-services-archives-candidate1.py",
+        "--host",
+        "windows",
+        "--source",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1",
+        "--manifest",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\win32u-validation-recovery-v2\\transfer\\win32u-services-owning-source-hashes-candidate2.json",
+        "--messages",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\win32u-validation-recovery-v2\\transfer\\win32u-services-native-owning-candidate2-artifacts-before.log",
+        "--output",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\win32u-validation-recovery-v2\\transfer\\native-win32u-services-candidate1-pre-cpp-archives.json"
+      ],
+      "exit-code": 0,
+      "seconds": 10.452301124983933,
+      "log": "win32u-services-native-owning-candidate2-archive-before.log",
+      "bytes": 182,
+      "sha256": "7fca8e62d122a7ec86d66db933a59ad77112954b13151115377ab45f8eecd866"
+    },
+    {
+      "name": "cpp",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\helpers\\win32u-services-owned-cpp-build-candidate2.py"
+      ],
+      "exit-code": 0,
+      "seconds": 99.96565020800335,
+      "log": "win32u-services-native-owning-candidate2-cpp.log",
+      "bytes": 3705,
+      "sha256": "3881ba6239715dadd54b2d5dd4c2dafa5a4be345ec6d91becf143e104657279e"
+    },
+    {
+      "name": "artifacts-after",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\cargo.exe",
+        "build",
+        "--locked",
+        "--offline",
+        "--features",
+        "rax",
+        "--message-format=json"
+      ],
+      "exit-code": 0,
+      "seconds": 0.7535465839901008,
+      "log": "win32u-services-native-owning-candidate2-artifacts-after.log",
+      "bytes": 132251,
+      "sha256": "73aa34838f57e9f252d71f6e83288aa302c699217b94dc62962e10e4507abdd0"
+    },
+    {
+      "name": "archive-after",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+        "-B",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\win32u-validation-recovery-v2\\transfer\\collect-win32u-services-archives-candidate1.py",
+        "--host",
+        "windows",
+        "--source",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1",
+        "--manifest",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\win32u-validation-recovery-v2\\transfer\\win32u-services-owning-source-hashes-candidate2.json",
+        "--messages",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\win32u-validation-recovery-v2\\transfer\\win32u-services-native-owning-candidate2-artifacts-after.log",
+        "--output",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\win32u-validation-recovery-v2\\transfer\\native-win32u-services-candidate1-final-owning-archive-identities.json"
+      ],
+      "exit-code": 0,
+      "seconds": 9.694929416989908,
+      "log": "win32u-services-native-owning-candidate2-archive-after.log",
+      "bytes": 182,
+      "sha256": "7fca8e62d122a7ec86d66db933a59ad77112954b13151115377ab45f8eecd866"
+    }
+  ],
+  "junction": {
+    "before": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1",
+    "after": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1"
+  },
+  "current-step": "archive-after",
+  "child-pid": 4828,
+  "exit-code": 0,
+  "source-inputs": 3983,
+  "archive-identities-stable": true,
+  "scope": "Frozen win32u-services lifetime source; retained Assist ABI184 linked consumers. Whole current-root ABI274 GUI/plugin/packages not claimed.",
+  "completed-utc": "2026-10-23T01:08:45.710351+00:00"
+}

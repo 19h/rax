@@ -174,6 +174,13 @@ mod nls_initialize_tests;
 #[path = "services_tests/virtual_memory_tests.rs"]
 mod virtual_memory_tests;
 
+#[path = "services_tests/win32u_tests.rs"]
+mod win32u_tests;
+
+#[cfg(windows)]
+#[path = "services_tests/win32u_leaf_tests.rs"]
+mod win32u_leaf_tests;
+
 fn fixture(
     arch: WinArch,
     name: &str,

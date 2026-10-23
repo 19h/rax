@@ -1,0 +1,10 @@
+{
+  "file": "native-gdi-init2-v1.cpp",
+  "bytes": 3726,
+  "sha256": "e95c424c7c54fe6e2fb4bcb94d0c962ee4472820d5cbdc56457121ab9b71eb8e",
+  "signature-basis": [
+    "native-win32u-stubs-v1-four-views-x86.log",
+    "native-win32u-caller-v1-whoami.log",
+    "win32u-caller-v1-disassembly.txt"
+  ]
+}

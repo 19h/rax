@@ -1,4 +1,4 @@
-//! Kernel entry from an admitted native NTDLL. A return resumes the leaf stub,
+//! Kernel entry from admitted native NTDLL/Win32u images. A return resumes the leaf stub,
 //! with its stack intact; it must not apply the HLE export's callee cleanup.
 
 use super::{Proc, Thread};
@@ -54,15 +54,38 @@ fn enter(
     if !p.modules.is_live(*idx) {
         return None;
     }
-    let Some(name) = table.name(p.arch, number).map(str::to_owned) else {
+    let nt_name = table.name(p.arch, number);
+    let win32u_name = p
+        .modules
+        .win32u_services
+        .as_ref()
+        .filter(|(idx, _)| p.modules.is_live(*idx))
+        .and_then(|(_, table)| table.name(p.arch, number));
+    if nt_name.is_some() && win32u_name.is_some() {
         return Some(Outcome::Fail(format!(
-            "raw Windows {} service {number:#x} at {pc:#x} has no admitted stub in the selected NTDLL",
+            "raw Windows {} service {number:#x} at {pc:#x} has conflicting selected NTDLL and Win32u identities",
+            p.arch
+        )));
+    }
+    let Some((source, name)) = nt_name
+        .map(|name| ("NTDLL", name.to_owned()))
+        .or_else(|| win32u_name.map(|name| ("Win32u", name.to_owned())))
+    else {
+        return Some(Outcome::Fail(format!(
+            "raw Windows {} service {number:#x} at {pc:#x} has no admitted stub in the selected NTDLL or Win32u",
             p.arch
         )));
     };
-    let Some(api) = dll::nt_service(&name, p.arch) else {
+    // Win32k entry also initializes GUI process/thread state and can invoke
+    // USER callbacks. A named leaf is not sufficient proof of that contract.
+    // Keep it explicit until those effects are implemented, and never borrow
+    // an identically named NTDLL implementation from the other namespace.
+    let api = (source == "NTDLL")
+        .then(|| dll::nt_service(&name, p.arch))
+        .flatten();
+    let Some(api) = api else {
         return Some(Outcome::Fail(format!(
-            "native NTDLL service {name} ({number:#x}) at {pc:#x} is not implemented"
+            "native {source} service {name} ({number:#x}) at {pc:#x} is not implemented"
         )));
     };
     // SYSCALL has overwritten RCX with its resume PC. The native wrapper
@@ -113,9 +136,9 @@ fn enter(
         Ok(Flow::ResumeAlertable(context)) => resume_context(p, t, &name, &context, true),
         Ok(Flow::TerminateProcess(status)) => Outcome::ProcessTerminate(status),
         Ok(Flow::TerminateThread(status)) => Outcome::ThreadTerminate(status),
-        Err(error) => Outcome::Fail(format!("native NTDLL service {name}: {error:?}")),
+        Err(error) => Outcome::Fail(format!("native {source} service {name}: {error:?}")),
         Ok(_) => Outcome::Fail(format!(
-            "native NTDLL service {name} requires an unsupported kernel continuation"
+            "native {source} service {name} requires an unsupported kernel continuation"
         )),
     })
 }

@@ -1,0 +1,59 @@
+{
+  "utc": "2026-10-23T01:00:04.641469+00:00",
+  "state": "finished",
+  "exit-code": 0,
+  "clients": [
+    {
+      "pid": 48478,
+      "script": "run-win32u-services-candidate1-windows.py",
+      "action": "closed blocked/superseded prlctl client; original receipts retained"
+    },
+    {
+      "pid": 50315,
+      "script": "run-win32u-services-native-owning-candidate1.py",
+      "action": "closed blocked/superseded prlctl client; original receipts retained"
+    },
+    {
+      "pid": 53132,
+      "script": "run-native-win32u-next-frontier-v1.py",
+      "action": "closed blocked/superseded prlctl client; original receipts retained"
+    },
+    {
+      "pid": 53133,
+      "script": "run-win32u-services-owning-capi-candidate1.py",
+      "action": "closed blocked/superseded prlctl client; original receipts retained"
+    },
+    {
+      "pid": 55319,
+      "script": "capture-win32u-runtime-inputs-v1.py",
+      "action": "closed blocked/superseded prlctl client; original receipts retained"
+    },
+    {
+      "pid": 61056,
+      "script": "run-native-win32u-next-frontier-v2.py",
+      "action": "closed blocked/superseded prlctl client; original receipts retained"
+    },
+    {
+      "pid": 61058,
+      "script": "run-win32u-services-owning-capi-candidate2.py",
+      "action": "closed blocked/superseded prlctl client; original receipts retained"
+    },
+    {
+      "pid": 62360,
+      "script": "own read-only diagnostic",
+      "action": "closed blocked/superseded prlctl client; original receipts retained"
+    },
+    {
+      "pid": 68469,
+      "script": "own read-only diagnostic",
+      "action": "closed blocked/superseded prlctl client; original receipts retained"
+    },
+    {
+      "pid": 70029,
+      "script": "own read-only diagnostic",
+      "action": "closed blocked/superseded prlctl client; original receipts retained"
+    }
+  ],
+  "replacement": "sealed local recovery v2 packet; same candidate1 compiler frame",
+  "guest-restart": false
+}

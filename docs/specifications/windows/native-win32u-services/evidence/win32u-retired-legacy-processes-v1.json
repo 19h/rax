@@ -1,0 +1,70 @@
+{
+  "state": "finished",
+  "exit-code": 0,
+  "retired": [
+    {
+      "pid": 7636,
+      "parent": 3320,
+      "image": "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+      "command-before": "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe  -B C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-win32u-services-candidate1-windows.py",
+      "verified-legacy-script": "run-win32u-services-candidate1-windows.py",
+      "exit-request": "0xe0000002",
+      "reason": "Replaced by sealed local-disk recovery after Home sharing became unavailable; original partial receipts retained."
+    },
+    {
+      "pid": 5864,
+      "parent": 8020,
+      "image": "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+      "command-before": "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe  -B C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-win32u-services-native-owning-candidate1.py",
+      "verified-legacy-script": "run-win32u-services-native-owning-candidate1.py",
+      "exit-request": "0xe0000002",
+      "reason": "Replaced by sealed local-disk recovery after Home sharing became unavailable; original partial receipts retained."
+    },
+    {
+      "pid": 6076,
+      "parent": 7364,
+      "image": "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+      "command-before": "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe  -B C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-win32u-services-owning-capi-candidate1.py",
+      "verified-legacy-script": "run-win32u-services-owning-capi-candidate1.py",
+      "exit-request": "0xe0000002",
+      "reason": "Replaced by sealed local-disk recovery after Home sharing became unavailable; original partial receipts retained."
+    },
+    {
+      "pid": 1328,
+      "parent": 1184,
+      "image": "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+      "command-before": "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe  -B C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-native-win32u-next-frontier-v1.py",
+      "verified-legacy-script": "run-native-win32u-next-frontier-v1.py",
+      "exit-request": "0xe0000002",
+      "reason": "Replaced by sealed local-disk recovery after Home sharing became unavailable; original partial receipts retained."
+    },
+    {
+      "pid": 1764,
+      "parent": 6352,
+      "image": "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+      "command-before": "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe  -B C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\capture-win32u-runtime-inputs-v1.py",
+      "verified-legacy-script": "capture-win32u-runtime-inputs-v1.py",
+      "exit-request": "0xe0000002",
+      "reason": "Replaced by sealed local-disk recovery after Home sharing became unavailable; original partial receipts retained."
+    },
+    {
+      "pid": 7072,
+      "parent": 6264,
+      "image": "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+      "command-before": "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe  -B C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-native-win32u-next-frontier-v2.py",
+      "verified-legacy-script": "run-native-win32u-next-frontier-v2.py",
+      "exit-request": "0xe0000002",
+      "reason": "Replaced by sealed local-disk recovery after Home sharing became unavailable; original partial receipts retained."
+    },
+    {
+      "pid": 3768,
+      "parent": 8496,
+      "image": "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe",
+      "command-before": "C:\\Windows\\Temp\\assist-native-rax-20261010\\python\\python.exe  -B C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\run-win32u-services-owning-capi-candidate2.py",
+      "verified-legacy-script": "run-win32u-services-owning-capi-candidate2.py",
+      "exit-request": "0xe0000002",
+      "reason": "Replaced by sealed local-disk recovery after Home sharing became unavailable; original partial receipts retained."
+    }
+  ],
+  "scope": "Only exact legacy script paths and pinned task Python image prefix; new local recovery processes excluded by path."
+}

@@ -1,0 +1,17 @@
+[
+  {
+    "file": "run-win32u-services-unix-candidate1.py",
+    "bytes": 5428,
+    "sha256": "61572c6f17e9bc27833e1dfcfab64cc757740ae6a8d03100a5f9b2b87f75dc8b"
+  },
+  {
+    "file": "run-win32u-services-candidate1-windows.py",
+    "bytes": 9601,
+    "sha256": "23137575f71d91bf42837e0854d8f5d652d6f8e3bcad9b8eb88c27dd6544587f"
+  },
+  {
+    "file": "run-win32u-services-quality-v1.py",
+    "bytes": 3504,
+    "sha256": "59baeddafc6a892b871d81f8c30a7543f33669982e61fafcbec4de1164fbbbaf"
+  }
+]

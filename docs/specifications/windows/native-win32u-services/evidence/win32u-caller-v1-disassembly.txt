@@ -1,0 +1,65 @@
+input-start=0x40c1378
+	mov	x2, #520                        // =0x208
+	mov	w1, #0                          // =0x0
+	bl	#44180
+	add	x0, sp, #48
+	mov	x2, #520                        // =0x208
+	mov	w1, #0                          // =0x0
+	bl	#44164
+	bl	#35020
+	mov	w3, #260                        // =0x104
+	add	x2, sp, #568
+	mov	x1, #0                          // =0x0
+	bl	#35016
+	cbz	w0, #-569376
+	mov	w1, #260                        // =0x104
+	add	x0, sp, #48
+	bl	#35012
+	cbz	w0, #-569392
+	mov	x2, x19
+	mov	x1, #260                        // =0x104
+	add	x0, sp, #48
+	bl	#34812
+	cbnz	w0, #-569412
+	mov	x2, #260                        // =0x104
+	add	x1, sp, #568
+	add	x0, sp, #48
+	bl	#34780
+	cbnz	w0, #-569432
+	bl	#-17212
+	b	#-569440
+	bl	#-569532
+	bl	#-567832
+	bl	#37996
+	adrp	x8, #663552
+	ldr	x8, [x8, #16]
+	str	x0, [x8]
+	cbz	x0, #160
+	adrp	x8, #1146880
+	add	x0, x8, #96
+	mov	w1, #14                         // =0xe
+	bl	#36072
+	cmp	w0, #1
+	b.ne	#136
+	adrp	x8, #1146880
+	add	x0, x8, #984
+	bl	#-567560
+	adrp	x8, #1175552
+	add	x10, x8, #2912
+	str	xzr, [x10, #16]
+	mov	x8, #1                          // =0x1
+	str	xzr, [x10]
+	str	x8, [x10, #24]
+	adrp	x8, #737280
+	add	x9, x8, #152
+	adrp	x8, #1175552
+	str	x9, [x8, #2904]
+	adrp	x8, #1146880
+	str	x10, [x8, #344]
+	bl	#-567444
+	bl	#-568912
+	tbnz	w0, #31, #64
+	bl	#-508672
+	cbz	w0, #56
+	mov	w0, #18                         // =0x12
+	bl	#-514308

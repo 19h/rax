@@ -1,0 +1,37 @@
+{
+  "state": "finished",
+  "executable": "/Users/int/.assist-native-display-policy-20261022/target/candidate1/debug/deps/rax-dd79f0cd9ae9bb68",
+  "image-before": {
+    "bytes": 642939128,
+    "sha256": "7d28972a0b7facb8d503222f9bf5dc44897bf081ba5d497b20220a887bceb329"
+  },
+  "source-frame-sha256": "6140e8121129bbd12c871dac8525834b68aacff0b9484b027054ec0b58e45a62",
+  "steps": [
+    {
+      "test": "user::linux::tests::sockets::abstract_names_and_autobind",
+      "exit-code": 0,
+      "log": "win32u-services-macos-socket-recheck-v1-abstract_names_and_autobind.log",
+      "bytes": 184,
+      "sha256": "ce86044b8b9698f273755f532bd910f0dad9ca7a2396880d00e65a7f103a5293"
+    },
+    {
+      "test": "user::linux::tests::sockets::unix_names_bind_resolve_and_report",
+      "exit-code": 0,
+      "log": "win32u-services-macos-socket-recheck-v1-unix_names_bind_resolve_and_report.log",
+      "bytes": 191,
+      "sha256": "59809cb0bc66a48977143053f4d5526a8033d539cdf35b48f1f403b481653242"
+    }
+  ],
+  "image-after": {
+    "bytes": 642939128,
+    "sha256": "7d28972a0b7facb8d503222f9bf5dc44897bf081ba5d497b20220a887bceb329"
+  },
+  "abstract-path-lengths-bytes": {
+    "old": 115,
+    "short": 85,
+    "Darwin-sun_path-capacity": 104,
+    "NUL-bytes": 1
+  },
+  "exit-code": 0,
+  "utc": "2026-10-23T00:32:59.893077+00:00"
+}

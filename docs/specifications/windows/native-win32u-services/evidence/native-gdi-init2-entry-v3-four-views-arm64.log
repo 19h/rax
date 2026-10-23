@@ -1,0 +1,28 @@
+profile=arm64 pid=7768
+phase=before-load-user32 callback=0000000000000000 table=0000000000000000
+phase=before-first-init2-svc callback=00007fff36bbdb60 table=0000000000000000
+phase=after-first-init2-svc callback=00007fff36bbdb60 table=0000020c42d60000
+gdi-table-region phase=after-first-init2-svc returned=48 base=0000020C42D60000 allocation=0000020C42D60000 bytes=1576960 state=00001000 protect=00000002 type=00040000
+delta=peb offset=0080 before=0000000000010007 after=000000000001000f
+delta=peb offset=00f8 before=0000000000000000 after=0000020c42d60000
+delta=peb offset=0108 before=0000000000000000 after=0000000017d24bef
+delta=teb offset=0078 before=0000000000000000 after=0000000000002038
+delta=teb offset=0800 before=0000000000000000 after=0000000020000008
+delta=teb offset=0810 before=0000000000000000 after=0000000000000a00
+delta=teb offset=0820 before=0000000000000000 after=0000020c42ef1040
+delta=teb offset=0828 before=0000000000000000 after=0000020c42ef0000
+delta=teb offset=0860 before=0000000000000000 after=0000020c42f032b0
+delta=teb offset=0890 before=0000000000000000 after=0000000004090409
+delta=teb offset=0898 before=0000000000000000 after=00000000000004e4
+delta=teb offset=08d0 before=0000000000000000 after=00007fff36bfbbb8
+delta=teb offset=0910 before=0000000000000000 after=0000000000000002
+delta=teb offset=0918 before=0000000000000000 after=0000008000202920
+service-return=aeb0a5c317d24bef
+user32-loaded=1 events=2
+phase=after-load-user32 callback=00007fff36bbdb60 table=0000020c42d60000
+gdi-table-region phase=after-load-user32 returned=48 base=0000020C42D60000 allocation=0000020C42D60000 bytes=1576960 state=00001000 protect=00000002 type=00040000
+call=0 return=aeb0a5c317d24bef
+call=1 return=aeb0a5c317d24bef
+call=2 return=aeb0a5c317d24bef
+call=3 return=aeb0a5c317d24bef
+restored-instructions=1 closed-module-references=2 removed-observers=1

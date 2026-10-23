@@ -1,0 +1,21 @@
+{
+  "scope": "Selected installed Win32u admission; native observations are one Windows ARM64 10.0.29683.1000 kernel, with four execution views. No documented Microsoft NtGdiInit2 prototype is claimed.",
+  "primary_sources": [
+    {
+      "title": "MSVC __debugbreak intrinsic",
+      "url": "https://learn.microsoft.com/en-us/cpp/intrinsics/debugbreak?view=msvc-170",
+      "used_for": "The working native ARM64 observer uses the documented BRK #0xF000 instruction."
+    },
+    {
+      "title": "System Informer PHNT PEB and TEB declarations",
+      "url": "https://github.com/winsiderss/phnt/blob/master/ntpebteb.h",
+      "used_for": "Independent implementation nomenclature for KernelCallbackTable and GdiSharedHandleTable; actual field effects and values come from the captured Windows binaries and native observations. The moving master URL is context, not a frozen ABI input."
+    },
+    {
+      "title": "Installed Windows images and native execution",
+      "used_for": "Export RVAs, instruction bytes, caller behavior, return-value relationships, failures and first-entry effects. Raw image identities and executable/source before/after identities are retained in the evidence inventory."
+    }
+  ],
+  "assumptions": "The native pointer-width zero-argument prototype is an inference from the x86 leaf, ARM64 caller and successful controlled execution; it is not presented as a Microsoft-documented interface.",
+  "whole_goal_complete": false
+}

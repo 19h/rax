@@ -1,0 +1,7 @@
+{
+  "file": "native-gdi-init2-entry-v2.cpp",
+  "bytes": 3868,
+  "sha256": "eb7b2402c95b77252685c3939872d31c291a890ddfcdccee41aed7f884936cea",
+  "extends": "native-gdi-init2-entry-v1.cpp",
+  "fix": "Windows ARM64 recognized BRK immediate 0xF000"
+}

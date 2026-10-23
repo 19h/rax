@@ -1,0 +1,50 @@
+{
+  "schema": 1,
+  "proof": {
+    "file": "proof.json",
+    "bytes": 55992,
+    "sha256": "e9ef0e03db1f23269acb89ce6376f1827102eb09f7566bbf480f4704ef58416c"
+  },
+  "checker": {
+    "file": "check_evidence.py",
+    "bytes": 14501,
+    "sha256": "ef63f6cb9fd3cb6304f8dc17191bcf0f89c71330c3751647b094ce343630a686"
+  },
+  "files": [
+    {
+      "file": "check_validation.py",
+      "bytes": 3468,
+      "sha256": "915fff40a88add7adf9759b4a5dfa8e99678cadbc5e95e82a8aebf09d857fdb9"
+    },
+    {
+      "file": "win32u-proof-linux-v1.json",
+      "bytes": 1363,
+      "sha256": "45fa76ea94b4867f05114827e535459c231c397e7c3dadb69d771b07c8bb668a"
+    },
+    {
+      "file": "win32u-proof-linux-v1.log",
+      "bytes": 143,
+      "sha256": "0e189ca2c16ea1b11729214845812fe9f7fd3a6188cd4022483d71e8f973d162"
+    },
+    {
+      "file": "win32u-proof-macos-v1.json",
+      "bytes": 1211,
+      "sha256": "711c707aeab7811974b683c80d34a80b8f39707cf53f77b5d74510519f69ab14"
+    },
+    {
+      "file": "win32u-proof-macos-v1.log",
+      "bytes": 143,
+      "sha256": "0e189ca2c16ea1b11729214845812fe9f7fd3a6188cd4022483d71e8f973d162"
+    },
+    {
+      "file": "win32u-proof-windows-v1.json",
+      "bytes": 1081,
+      "sha256": "feec55361f220e113dc4c568772099c00221ada7a0fd6d6e112ce1a089dc48c7"
+    },
+    {
+      "file": "win32u-proof-windows-v1.log",
+      "bytes": 144,
+      "sha256": "b9fc7b24286b24d88b1d3a168371d1e1aa19e75f882dd6d543441b25a3b0e6c4"
+    }
+  ]
+}

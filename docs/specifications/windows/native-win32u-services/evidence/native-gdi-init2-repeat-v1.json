@@ -1,0 +1,262 @@
+{
+  "state": "finished",
+  "steps": [
+    {
+      "profile": "arm64",
+      "exit-code": 0,
+      "log": {
+        "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-gdi-init2-repeat-v1-arm64.log",
+        "bytes": 8604,
+        "sha256": "58b38da959e297c3fde8af807893da048548e907892947db7b5bf9a454e06f10"
+      },
+      "executable-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-gdi-init2-v3-four-views\\target\\arm64\\probe.exe",
+        "bytes": 148480,
+        "sha256": "92049efd62d45903691cb380d275bb333442c2ae01828b0e258cb979bd49aa5e"
+      },
+      "executable-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-gdi-init2-v3-four-views\\target\\arm64\\probe.exe",
+        "bytes": 148480,
+        "sha256": "92049efd62d45903691cb380d275bb333442c2ae01828b0e258cb979bd49aa5e"
+      },
+      "calls": 32,
+      "stable-across-threads-and-phases": true,
+      "independent-process-value-differs": true,
+      "last-error-preserved": true
+    },
+    {
+      "profile": "x64",
+      "exit-code": 0,
+      "log": {
+        "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-gdi-init2-repeat-v1-x64.log",
+        "bytes": 8602,
+        "sha256": "a54ad0463b87c92f736a013a04abae75280259f433c4ec6dfccecda5d99856cc"
+      },
+      "executable-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-gdi-init2-v3-four-views\\target\\x64\\probe.exe",
+        "bytes": 146432,
+        "sha256": "de1e2a15d749d49876b38dbf82334cfd90be28a96aa451b8a098229ddea9f670"
+      },
+      "executable-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-gdi-init2-v3-four-views\\target\\x64\\probe.exe",
+        "bytes": 146432,
+        "sha256": "de1e2a15d749d49876b38dbf82334cfd90be28a96aa451b8a098229ddea9f670"
+      },
+      "calls": 32,
+      "stable-across-threads-and-phases": true,
+      "independent-process-value-differs": true,
+      "last-error-preserved": true
+    },
+    {
+      "profile": "x86",
+      "exit-code": 0,
+      "log": {
+        "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-gdi-init2-repeat-v1-x86.log",
+        "bytes": 8748,
+        "sha256": "04704b2da7b3197dfeec5bc68cf4828ea639a22421e870a4ed01b31b5f2f5190"
+      },
+      "executable-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-gdi-init2-v3-four-views\\target\\x86\\probe.exe",
+        "bytes": 120832,
+        "sha256": "b3d8e504f0be8b1b304ea5a42b50b9a11c79ffadf89d6cc4ad0033706dd712f0"
+      },
+      "executable-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-gdi-init2-v3-four-views\\target\\x86\\probe.exe",
+        "bytes": 120832,
+        "sha256": "b3d8e504f0be8b1b304ea5a42b50b9a11c79ffadf89d6cc4ad0033706dd712f0"
+      },
+      "calls": 32,
+      "stable-across-threads-and-phases": true,
+      "independent-process-value-differs": true,
+      "last-error-preserved": true
+    },
+    {
+      "profile": "x86-laa",
+      "exit-code": 0,
+      "log": {
+        "path": "C:\\Mac\\Home\\Downloads\\assist-native-allocate-ex-transfer-20261010-2154\\native-gdi-init2-repeat-v1-x86-laa.log",
+        "bytes": 8752,
+        "sha256": "0b661a4b1ff106972bf67dac6b90376380d35c738f7c55159a146feaffcdb6ff"
+      },
+      "executable-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-gdi-init2-v3-four-views\\target\\x86-laa\\probe.exe",
+        "bytes": 120832,
+        "sha256": "7d5518d7cb6523b78963bd9a7129c0a2db65e5969a31113c15fd63396c262124"
+      },
+      "executable-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-gdi-init2-v3-four-views\\target\\x86-laa\\probe.exe",
+        "bytes": 120832,
+        "sha256": "7d5518d7cb6523b78963bd9a7129c0a2db65e5969a31113c15fd63396c262124"
+      },
+      "calls": 32,
+      "stable-across-threads-and-phases": true,
+      "independent-process-value-differs": true,
+      "last-error-preserved": true
+    }
+  ],
+  "runtime-before": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e"
+    },
+    {
+      "path": "C:\\Windows\\System32\\KernelBase.dll",
+      "bytes": 7213728,
+      "sha256": "6b2fa508ac4f9bce5d7351676485d1dc5b5236cd9656034e2fec1eaba3b82bc9"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\KernelBase.dll",
+      "bytes": 3073488,
+      "sha256": "e9c414d7c6bd2c6fde608f31b2f31da3c2014c801b3764a30ee42abd1e9c2d58"
+    },
+    {
+      "path": "C:\\Windows\\System32\\kernel32.dll",
+      "bytes": 1500304,
+      "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\kernel32.dll",
+      "bytes": 696392,
+      "sha256": "9c9a0c54a79ea712bb533fcc79ba9935ed9f9d3f777fd65cf62d9cec6699b9df"
+    },
+    {
+      "path": "C:\\Windows\\System32\\msvcrt.dll",
+      "bytes": 1347856,
+      "sha256": "779eb5cb1ae357196254af9755307544a3dd20011c84768ae72f45d366f47148"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\msvcrt.dll",
+      "bytes": 810688,
+      "sha256": "67c03357458a951402cc1804e05d3301f011a59d352f684fbe283f546f8ae398"
+    },
+    {
+      "path": "C:\\Windows\\System32\\win32u.dll",
+      "bytes": 387768,
+      "sha256": "e2aa1e93f5e45377922bf6e5525d9fc37a60494da1d602033974883987e9c7d4"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\win32u.dll",
+      "bytes": 109280,
+      "sha256": "098802d32f359f1ccd53e654f6a4fbfd6bf7d3cce58cc8f73ef389c8a9b26117"
+    },
+    {
+      "path": "C:\\Windows\\System32\\gdi32full.dll",
+      "bytes": 1893296,
+      "sha256": "3f73ffd0d20b492cfc3302c7ba193138a96d6161c2bea0b6b6c559f104f7f70e"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\gdi32full.dll",
+      "bytes": 954272,
+      "sha256": "0ea5a50fd5653f6c88fa657a3aec92dde0bfaa106c14df4d928886b85cd7d099"
+    },
+    {
+      "path": "C:\\Windows\\System32\\gdi32.dll",
+      "bytes": 462600,
+      "sha256": "55a43a68318f896557d8433d1094b0acce8c9ec05b7085bbce558fefa280d42a"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\gdi32.dll",
+      "bytes": 160416,
+      "sha256": "e1b13f557255c4568a68ab85736c3f9461e1e8a162936fcce3437eaafbed9f8a"
+    },
+    {
+      "path": "C:\\Windows\\System32\\user32.dll",
+      "bytes": 2799192,
+      "sha256": "bd104076063e3bc8ce65fb744a947f533b8ac6bc737c999b1d7beacbc1b6b058"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\user32.dll",
+      "bytes": 2039408,
+      "sha256": "f32a037264cb173501c4ba0c3fff25cd274e154e59be85c06a75a02f89a8e64b"
+    }
+  ],
+  "runtime-after": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e"
+    },
+    {
+      "path": "C:\\Windows\\System32\\KernelBase.dll",
+      "bytes": 7213728,
+      "sha256": "6b2fa508ac4f9bce5d7351676485d1dc5b5236cd9656034e2fec1eaba3b82bc9"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\KernelBase.dll",
+      "bytes": 3073488,
+      "sha256": "e9c414d7c6bd2c6fde608f31b2f31da3c2014c801b3764a30ee42abd1e9c2d58"
+    },
+    {
+      "path": "C:\\Windows\\System32\\kernel32.dll",
+      "bytes": 1500304,
+      "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\kernel32.dll",
+      "bytes": 696392,
+      "sha256": "9c9a0c54a79ea712bb533fcc79ba9935ed9f9d3f777fd65cf62d9cec6699b9df"
+    },
+    {
+      "path": "C:\\Windows\\System32\\msvcrt.dll",
+      "bytes": 1347856,
+      "sha256": "779eb5cb1ae357196254af9755307544a3dd20011c84768ae72f45d366f47148"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\msvcrt.dll",
+      "bytes": 810688,
+      "sha256": "67c03357458a951402cc1804e05d3301f011a59d352f684fbe283f546f8ae398"
+    },
+    {
+      "path": "C:\\Windows\\System32\\win32u.dll",
+      "bytes": 387768,
+      "sha256": "e2aa1e93f5e45377922bf6e5525d9fc37a60494da1d602033974883987e9c7d4"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\win32u.dll",
+      "bytes": 109280,
+      "sha256": "098802d32f359f1ccd53e654f6a4fbfd6bf7d3cce58cc8f73ef389c8a9b26117"
+    },
+    {
+      "path": "C:\\Windows\\System32\\gdi32full.dll",
+      "bytes": 1893296,
+      "sha256": "3f73ffd0d20b492cfc3302c7ba193138a96d6161c2bea0b6b6c559f104f7f70e"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\gdi32full.dll",
+      "bytes": 954272,
+      "sha256": "0ea5a50fd5653f6c88fa657a3aec92dde0bfaa106c14df4d928886b85cd7d099"
+    },
+    {
+      "path": "C:\\Windows\\System32\\gdi32.dll",
+      "bytes": 462600,
+      "sha256": "55a43a68318f896557d8433d1094b0acce8c9ec05b7085bbce558fefa280d42a"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\gdi32.dll",
+      "bytes": 160416,
+      "sha256": "e1b13f557255c4568a68ab85736c3f9461e1e8a162936fcce3437eaafbed9f8a"
+    },
+    {
+      "path": "C:\\Windows\\System32\\user32.dll",
+      "bytes": 2799192,
+      "sha256": "bd104076063e3bc8ce65fb744a947f533b8ac6bc737c999b1d7beacbc1b6b058"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\user32.dll",
+      "bytes": 2039408,
+      "sha256": "f32a037264cb173501c4ba0c3fff25cd274e154e59be85c06a75a02f89a8e64b"
+    }
+  ],
+  "exit-code": 0
+}

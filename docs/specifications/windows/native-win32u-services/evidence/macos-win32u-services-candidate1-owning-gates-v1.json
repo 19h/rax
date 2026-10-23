@@ -1,0 +1,133 @@
+{
+  "state": "finished",
+  "host": "macos",
+  "pid": 50313,
+  "source-inputs": 3983,
+  "scope": "Retained Assist ABI184 linked consumers; no whole current root GUI/plugin/package claim.",
+  "steps": [
+    {
+      "gate": "prime-artifacts",
+      "cwd": "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/rust/assist-rs",
+      "command": [
+        "cmake",
+        "-E",
+        "env",
+        "CARGO_TARGET_DIR=/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes/assist-rs-target",
+        "CARGO_PROFILE_RELEASE_STRIP=false",
+        "MACOSX_DEPLOYMENT_TARGET=10.15",
+        "ASSIST_RESOURCE_PYTHON=/opt/homebrew/Frameworks/Python.framework/Versions/3.15/bin/python3.15",
+        "CARGO_BUILD_JOBS=2",
+        "RUSTUP_TOOLCHAIN=1.95.0",
+        "/Users/int/.cargo/bin/cargo",
+        "build",
+        "--locked",
+        "--offline",
+        "--manifest-path",
+        "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/rust/assist-rs/Cargo.toml",
+        "--package",
+        "assist-rs",
+        "--target",
+        "aarch64-apple-darwin",
+        "--features",
+        "rax",
+        "--message-format=json"
+      ],
+      "exit-code": 0,
+      "seconds": 31.77507049997803,
+      "log": "macos-win32u-services-candidate1-owning-v1-prime-artifacts.log",
+      "bytes": 137670,
+      "sha256": "ce3f061577f3f9ac520743876b8f6affe088b5500b04d67de2e6fac6fb7787a5"
+    },
+    {
+      "gate": "archives-before",
+      "command": [
+        "python3",
+        "-B",
+        "/Users/int/Library/Caches/assist-process-emulation/native-win32u-services-20261023/collect-win32u-services-archives-candidate1.py",
+        "--host",
+        "macos",
+        "--source",
+        "/Users/int/.assist-native-display-policy-20261022",
+        "--manifest",
+        "/Users/int/Library/Caches/assist-process-emulation/native-win32u-services-20261023/win32u-services-owning-source-hashes-candidate1.json",
+        "--messages",
+        "/Users/int/Library/Caches/assist-process-emulation/native-win32u-services-20261023/macos-win32u-services-candidate1-owning-v1-prime-artifacts.log",
+        "--output",
+        "/Users/int/Library/Caches/assist-process-emulation/native-win32u-services-20261023/macos-win32u-services-candidate1-archives-before.json"
+      ],
+      "exit-code": 0,
+      "seconds": 0.8745938329957426,
+      "log": "macos-win32u-services-candidate1-owning-v1-archives-before.log",
+      "bytes": 180,
+      "sha256": "e3a34162b3e60c08c45c67f76d1bb2ddbdeb1f484bc2c921be28f85e416a8609"
+    },
+    {
+      "gate": "build",
+      "command": [
+        "cmake",
+        "--build",
+        "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes",
+        "--target",
+        "assist_idalib_cli",
+        "assist_mcp",
+        "assist_mcp_tool_manifest_tests",
+        "assist_rax_process_tests",
+        "assist_process_tool_tests",
+        "assist_process_tool_unavailable_tests",
+        "assist_e14_rax_abi_drift_tests",
+        "assist_rust_archive_link_tests",
+        "--parallel",
+        "2"
+      ],
+      "exit-code": 0,
+      "seconds": 16.502340583014302,
+      "log": "macos-win32u-services-candidate1-owning-v1-build.log",
+      "bytes": 1403,
+      "sha256": "ec931de96ff40580a2b13e92c9e7a6d69f52cdabc27c738f7068300ee40c1f67"
+    },
+    {
+      "gate": "ctest",
+      "command": [
+        "ctest",
+        "--test-dir",
+        "/Users/int/Library/Caches/assist-process-emulation/wait-completion-packet-create-20261012/assist-root-current/build-native-attributes",
+        "--output-on-failure",
+        "-R",
+        "^(assist_rust_archive_link_tests|assist_rax_process_tests|assist_process_tool_tests|assist_process_tool_unavailable_tests|assist_e14_rax_abi_drift_tests|assist_mcp_tool_manifest_tests|assist_mcp_manifest_runtime_test)$"
+      ],
+      "exit-code": 0,
+      "seconds": 5.090030250023119,
+      "log": "macos-win32u-services-candidate1-owning-v1-ctest.log",
+      "bytes": 1298,
+      "sha256": "5785249b2d826bf24ecb0c3d11241ca629c3130e05351c4ad8e8faf61bceda41"
+    },
+    {
+      "gate": "archives-after",
+      "command": [
+        "python3",
+        "-B",
+        "/Users/int/Library/Caches/assist-process-emulation/native-win32u-services-20261023/collect-win32u-services-archives-candidate1.py",
+        "--host",
+        "macos",
+        "--source",
+        "/Users/int/.assist-native-display-policy-20261022",
+        "--manifest",
+        "/Users/int/Library/Caches/assist-process-emulation/native-win32u-services-20261023/win32u-services-owning-source-hashes-candidate1.json",
+        "--messages",
+        "/Users/int/Library/Caches/assist-process-emulation/native-win32u-services-20261023/macos-win32u-services-candidate1-owning-v1-prime-artifacts.log",
+        "--output",
+        "/Users/int/Library/Caches/assist-process-emulation/native-win32u-services-20261023/macos-win32u-services-candidate1-archives-after.json"
+      ],
+      "exit-code": 0,
+      "seconds": 0.7818693339941092,
+      "log": "macos-win32u-services-candidate1-owning-v1-archives-after.log",
+      "bytes": 180,
+      "sha256": "e3a34162b3e60c08c45c67f76d1bb2ddbdeb1f484bc2c921be28f85e416a8609"
+    }
+  ],
+  "current-step": "archives-after",
+  "child-pid": 51112,
+  "exit-code": 0,
+  "archive-identities-stable": true,
+  "completed-utc": "2026-10-23T00:24:23.205679+00:00"
+}

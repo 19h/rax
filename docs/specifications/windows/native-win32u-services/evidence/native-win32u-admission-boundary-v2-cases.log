@@ -1,0 +1,6 @@
+case=selected arch=arm64 original-service=0x12fd terminal=Internal("native Win32u service NtGdiInit2 (0x12fd) at 0x94bfd0 is not implemented")
+case=supplied arch=arm64 original-service=0x12fd terminal=Internal("raw Windows arm64 service 0x1fef at 0x94bfd0 has no admitted stub in the selected NTDLL or Win32u")
+case=file arch=arm64 original-service=0x12fd terminal=Internal("raw Windows arm64 service 0x1fef at 0x94bfd0 has no admitted stub in the selected NTDLL or Win32u")
+case=selected arch=x86 original-service=0x12fd terminal=Internal("native Win32u service NtGdiInit2 (0x12fd) at 0x280000 is not implemented")
+case=supplied arch=x86 original-service=0x12fd terminal=Internal("raw Windows x86 service 0x1fef at 0x280000 has no admitted stub in the selected NTDLL or Win32u")
+case=file arch=x86 original-service=0x12fd terminal=Internal("raw Windows x86 service 0x1fef at 0x280000 has no admitted stub in the selected NTDLL or Win32u")

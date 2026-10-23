@@ -1,0 +1,6 @@
+{
+  "file": "native-win32u-caller-v2.rs",
+  "bytes": 10657,
+  "sha256": "4feab007022200e5cfae4425af67d91da847404e5a3c0e1b3a469c1bad2ff4c5",
+  "extends-observer": "native-win32u-caller-v1.rs"
+}

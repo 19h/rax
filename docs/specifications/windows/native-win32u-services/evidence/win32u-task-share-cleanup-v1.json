@@ -1,0 +1,20 @@
+{
+  "utc": "2026-10-23T00:54:33.217082+00:00",
+  "state": "finished",
+  "exit-code": 0,
+  "original-host-sharing-restored": true,
+  "fields": {
+    "Enabled": "0",
+    "ShareAllMacDisks": "0",
+    "ShareUserHomeDir": "0",
+    "MapSharedFoldersOnLetters": "1",
+    "UserDefinedFoldersEnabled": "0",
+    "SetExecBitForFiles": "0",
+    "VirtualLinks": "1",
+    "EnableDos8dot3Names": "1",
+    "SharedShortcuts": "1",
+    "SharedCloud": "1"
+  },
+  "task-shares": 0,
+  "replacement": "verified prlctl stdin/stdout; no Home access required"
+}

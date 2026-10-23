@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/Users/int/.assist-native-display-policy-20261022/t/win32u-evidence-negatives-v1/hidden-original-failure/check_evidence.py", line 341, in <module>
+    main()
+    ~~~~^^
+  File "/Users/int/.assist-native-display-policy-20261022/t/win32u-evidence-negatives-v1/hidden-original-failure/check_evidence.py", line 161, in main
+    assert original["state"] == "failed" and original["exit-code"] == 1
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

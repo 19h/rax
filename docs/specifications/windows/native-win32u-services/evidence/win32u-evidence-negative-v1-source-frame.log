@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "/Users/int/.assist-native-display-policy-20261022/t/win32u-evidence-negatives-v1/source-frame/check_evidence.py", line 341, in <module>
+    main()
+    ~~~~^^
+  File "/Users/int/.assist-native-display-policy-20261022/t/win32u-evidence-negatives-v1/source-frame/check_evidence.py", line 90, in main
+    sha((evidence / "win32u-services-candidate1-source.json").read_bytes()) == FRAME
+AssertionError

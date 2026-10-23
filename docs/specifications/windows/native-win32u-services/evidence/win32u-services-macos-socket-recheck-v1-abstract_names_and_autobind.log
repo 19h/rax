@@ -1,0 +1,6 @@
+
+running 1 test
+test user::linux::tests::sockets::abstract_names_and_autobind ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 8208 filtered out; finished in 0.01s
+

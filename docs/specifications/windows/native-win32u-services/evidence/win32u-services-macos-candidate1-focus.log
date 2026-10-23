@@ -1,0 +1,11 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.04s
+     Running unittests src/lib.rs (target/candidate1/debug/deps/rax-dd79f0cd9ae9bb68)
+
+running 4 tests
+test user::windows::process::sched::tests::services_tests::win32u_tests::supplied_win32u_basename_cannot_admit_a_service_table ... ok
+test user::windows::process::sched::tests::services_tests::win32u_tests::win32u_named_init2_fails_without_success_or_guest_state_changes_and_keeps_ntdll_live ... ok
+test user::windows::process::sched::tests::services_tests::win32u_tests::win32u_namespace_cannot_borrow_ntdll_implementation_or_outlive_its_selected_module ... ok
+test user::windows::process::sched::tests::services_tests::win32u_tests::win32u_number_collisions_fail_before_any_implementation_and_unknown_numbers_remain_explicit ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 8205 filtered out; finished in 0.05s
+

@@ -1,0 +1,6 @@
+{
+  "file": "native-win32u-caller-v1.rs",
+  "bytes": 10545,
+  "sha256": "14f4bbe2fc645feb2ccbb0141d89f43ab15198f3d0af63c69020ac1cb841a57d",
+  "extends-observer": "native-gre-next-frontier-v4.rs"
+}

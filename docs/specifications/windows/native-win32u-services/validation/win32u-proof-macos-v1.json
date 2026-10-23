@@ -1,0 +1,39 @@
+{
+  "state": "finished",
+  "exit-code": 0,
+  "host": "macos",
+  "inputs-before": {
+    "proof.json": {
+      "bytes": 55992,
+      "sha256": "e9ef0e03db1f23269acb89ce6376f1827102eb09f7566bbf480f4704ef58416c"
+    },
+    "check_evidence.py": {
+      "bytes": 14501,
+      "sha256": "ef63f6cb9fd3cb6304f8dc17191bcf0f89c71330c3751647b094ce343630a686"
+    }
+  },
+  "inputs-after": {
+    "proof.json": {
+      "bytes": 55992,
+      "sha256": "e9ef0e03db1f23269acb89ce6376f1827102eb09f7566bbf480f4704ef58416c"
+    },
+    "check_evidence.py": {
+      "bytes": 14501,
+      "sha256": "ef63f6cb9fd3cb6304f8dc17191bcf0f89c71330c3751647b094ce343630a686"
+    }
+  },
+  "argv": [
+    "/opt/homebrew/opt/python@3.15/bin/python3.15",
+    "-B",
+    "/Users/int/.assist-native-display-policy-20261022/docs/specifications/windows/native-win32u-services/check_evidence.py",
+    "--source-root",
+    "/Users/int/.assist-native-display-policy-20261022"
+  ],
+  "log": {
+    "file": "win32u-proof-macos-v1.log",
+    "bytes": 143,
+    "sha256": "0e189ca2c16ea1b11729214845812fe9f7fd3a6188cd4022483d71e8f973d162"
+  },
+  "source-frame-sha256": "6140e8121129bbd12c871dac8525834b68aacff0b9484b027054ec0b58e45a62",
+  "source-inputs": 29182
+}

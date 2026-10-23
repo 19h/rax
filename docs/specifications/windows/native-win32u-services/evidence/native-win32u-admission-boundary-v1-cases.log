@@ -1,0 +1,6 @@
+case=selected arch=arm64 original-service=0x12fd terminal=Internal("native Win32u service NtGdiInit2 (0x12fd) at 0x94bfd0 is not implemented")
+case=supplied arch=arm64 original-service=0x12fd terminal=Internal("raw Windows arm64 service 0x1fef at 0x94bfd0 has no admitted stub in the selected NTDLL or Win32u")
+
+thread 'main' (4108) panicked at C:\Windows\Temp\assist-native-rax-20261010\assist\target\native-attributes\win32u-admission-boundary-v1\native-win32u-admission-boundary-v1.rs:102:55:
+called `Result::unwrap()` on an `Err` value: LoadError { status: 3221225781, message: "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\win32u-admission-boundary-v1\\fixtures\\arm64\\win32u.dll was not found" }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

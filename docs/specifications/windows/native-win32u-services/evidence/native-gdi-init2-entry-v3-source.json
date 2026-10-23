@@ -1,0 +1,7 @@
+{
+  "file": "native-gdi-init2-entry-v3.cpp",
+  "bytes": 5212,
+  "sha256": "2d6aa430c5f9517848b73e91149b23509312c6f932be35022fbfb5bc5b31a04c",
+  "extends": "native-gdi-init2-entry-v2.cpp",
+  "added": "512-byte PEB and 6144-byte TEB before/after deltas and native GDI table mapping geometry; no production changes"
+}

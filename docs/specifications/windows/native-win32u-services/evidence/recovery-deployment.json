@@ -1,0 +1,137 @@
+{
+  "state": "finished",
+  "pid": 7372,
+  "packet-bytes": 1636214,
+  "packet-sha256": "7fe216c60a42804fef5134e4f9fbfea3fb96d506b88ec92f94683ad3373d4caa",
+  "files": [
+    {
+      "file": "run-win32u-services-candidate2-windows.py",
+      "bytes": 8690,
+      "sha256": "50088dc754c071e75c25a26019baf980e3c00458ea8b9da45726d42b42e7ba1f"
+    },
+    {
+      "file": "run-win32u-services-native-owning-candidate2.py",
+      "bytes": 7057,
+      "sha256": "3e46540642e5aed39a64e93cf7ef2978afb2d67c5e3483af42e69f69e8f433cb"
+    },
+    {
+      "file": "win32u-services-owned-cpp-build-candidate2.py",
+      "bytes": 3434,
+      "sha256": "ba81ef9d1e67af2af7d2db856383db4c6e4282d4106431c695f14898e7fa1689"
+    },
+    {
+      "file": "capture-win32u-runtime-inputs-v2.py",
+      "bytes": 1479,
+      "sha256": "f49f1287cc353bb8ad5195db2f3a5dc04d5567d2c82c6e9e504a3857e762ec31"
+    },
+    {
+      "file": "run-native-win32u-next-frontier-v3.py",
+      "bytes": 8289,
+      "sha256": "eaca5ac939026072035a24cbac1cf2f81b4ccea7b0b2bc578abecfc90ec357a9"
+    },
+    {
+      "file": "run-win32u-services-owning-capi-candidate3.py",
+      "bytes": 8380,
+      "sha256": "806593a0c75cfd52c0fb7a42502ebe262868029bb8f5b6b21f944ef3ccf75d94"
+    },
+    {
+      "file": "run-win32u-services-owning-candidate1-v1.py",
+      "bytes": 3767,
+      "sha256": "d41a8b4864402156e7aec7613b747ac3ce5515ecac0f17f592f28d8cf0af6af3"
+    },
+    {
+      "file": "collect-win32u-services-archives-candidate1.py",
+      "bytes": 3480,
+      "sha256": "fbeb50a873f080287919adf15d5fc028314b9f8e0a40016e4476815cd8290957"
+    },
+    {
+      "file": "owning-linux-cpp-build-win32u-services-candidate1.py",
+      "bytes": 3045,
+      "sha256": "950426cdddee642189d2174de32411fbe235886425fe3fe8cb7e2ac9301e862e"
+    },
+    {
+      "file": "win32u-services-owning-source-hashes-candidate2.json",
+      "bytes": 764463,
+      "sha256": "7b3374881c5b5f8a81cace9d551ea738c17e708cbd7a7355ac9e15037700866b"
+    },
+    {
+      "file": "native-win32u-next-frontier-v3.rs",
+      "bytes": 11273,
+      "sha256": "31d9b072e47c9bc6d12db5716c201167bc3fefd0add197307d9b5fad50574d4c"
+    },
+    {
+      "file": "native-win32u-next-frontier-v3-source.json",
+      "bytes": 271,
+      "sha256": "92f405264ccb41c66843540fcac0b03abed06b63f798b8f4e4cb50608d1dffd3"
+    },
+    {
+      "file": "win32u-services-owning-capi.cpp",
+      "bytes": 3573,
+      "sha256": "706cb2a46c143a557f3c565792d954c40e596ddbd767a2138a9d2303e94261e3"
+    },
+    {
+      "file": "win32u-services-owning-capi-source.json",
+      "bytes": 145,
+      "sha256": "7986515d8d6773b35bb04d392233e7fbb994b3086ead73a6f6de2ab746519cdd"
+    },
+    {
+      "file": "win32u-runtime-paths-v1.json",
+      "bytes": 1855,
+      "sha256": "41a320240c67bae0787d930a78cefc090ebb8a256f24257dd851854b4e78d06e"
+    },
+    {
+      "file": "win32u-services-candidate1-source.json",
+      "bytes": 6884605,
+      "sha256": "6140e8121129bbd12c871dac8525834b68aacff0b9484b027054ec0b58e45a62"
+    },
+    {
+      "file": "win32u-services-candidate1-overrides.tar.gz",
+      "bytes": 31104,
+      "sha256": "7edd8235ca0d2fa83a288e2e09beea893997cfbd886a597753f4c3bf6c093891"
+    },
+    {
+      "file": "current-cpp-consumers-wait-root.json",
+      "bytes": 2147,
+      "sha256": "53d9e0caa94fe53441aa9f5d429b26c8e801e8fca5b4297af248206c1a3f8dac"
+    },
+    {
+      "file": "mutant-native-compiler-env-epoch4.json",
+      "bytes": 4122,
+      "sha256": "e6ca43bcdcbd3067b5de05d051259d4d3abf0bfa5283a98daac14fd508a05fad"
+    },
+    {
+      "file": "mutant-native-baseline-failures.json",
+      "bytes": 635,
+      "sha256": "9f679114d1dd64361640d4c11e5f124b248e159ad234777bb9b53855f848750b"
+    },
+    {
+      "file": "native-test-alert-v1b-launch.json",
+      "bytes": 16763,
+      "sha256": "e9172da3fd202af717cb395a9827b500bc5f0a965c2cc45855ac989731d8a6f8"
+    }
+  ],
+  "children": [
+    {
+      "script": "capture-win32u-runtime-inputs-v2.py",
+      "pid": 2096
+    },
+    {
+      "script": "run-win32u-services-candidate2-windows.py",
+      "pid": 5496
+    },
+    {
+      "script": "run-win32u-services-native-owning-candidate2.py",
+      "pid": 4968
+    },
+    {
+      "script": "run-native-win32u-next-frontier-v3.py",
+      "pid": 6164
+    },
+    {
+      "script": "run-win32u-services-owning-capi-candidate3.py",
+      "pid": 5720
+    }
+  ],
+  "scope": "Local native transfer files replace inaccessible Home sharing. Frozen RAX source is not modified by this receiver.",
+  "exit-code": 0
+}

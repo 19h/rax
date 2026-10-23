@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/Users/int/.assist-native-display-policy-20261022/t/win32u-evidence-negatives-v1/full-result/check_evidence.py", line 341, in <module>
+    main()
+    ~~~~^^
+  File "/Users/int/.assist-native-display-policy-20261022/t/win32u-evidence-negatives-v1/full-result/check_evidence.py", line 146, in main
+    assert full["exit-code"] == (101 if expected_failed else 0)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

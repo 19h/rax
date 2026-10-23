@@ -1,0 +1,12 @@
+profile=arm64 pid=9360
+phase=before-load-user32 callback=0000000000000000 table=0000000000000000
+phase=before-first-init2-svc callback=00007fff36bbdb60 table=0000000000000000
+phase=after-first-init2-svc callback=00007fff36bbdb60 table=000001c47de70000
+service-return=b5a770ba118ecac4
+user32-loaded=1 events=2
+phase=after-load-user32 callback=00007fff36bbdb60 table=000001c47de70000
+call=0 return=b5a770ba118ecac4
+call=1 return=b5a770ba118ecac4
+call=2 return=b5a770ba118ecac4
+call=3 return=b5a770ba118ecac4
+restored-instructions=1 closed-module-references=2 removed-observers=1

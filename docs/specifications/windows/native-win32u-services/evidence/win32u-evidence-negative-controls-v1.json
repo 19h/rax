@@ -1,0 +1,128 @@
+{
+  "state": "finished",
+  "exit-code": 0,
+  "outcomes": [
+    {
+      "name": "positive-before",
+      "expected-pass": true,
+      "exit-code": 0,
+      "log": "win32u-evidence-negative-v1-positive-before.log",
+      "bytes": 143,
+      "sha256": "0e189ca2c16ea1b11729214845812fe9f7fd3a6188cd4022483d71e8f973d162"
+    },
+    {
+      "name": "parent",
+      "expected-pass": false,
+      "exit-code": 1,
+      "log": "win32u-evidence-negative-v1-parent.log",
+      "bytes": 431,
+      "sha256": "48007656eda3aaa7334b51577f053cb5dfb1893bce316a3a0320259b60099ff0"
+    },
+    {
+      "name": "source-frame",
+      "expected-pass": false,
+      "exit-code": 1,
+      "log": "win32u-evidence-negative-v1-source-frame.log",
+      "bytes": 440,
+      "sha256": "b8e8aa355f1701adb6d9dac82293138f81d8d69bcfb024ea29615f89bff2d69e"
+    },
+    {
+      "name": "native-failures",
+      "expected-pass": false,
+      "exit-code": 1,
+      "log": "win32u-evidence-negative-v1-native-failures.log",
+      "bytes": 512,
+      "sha256": "c6ca361a91e784b9a1c3e9654d27b3fd6f8f9ce8d23025a64fa45e00d9306a5c"
+    },
+    {
+      "name": "native-test-image",
+      "expected-pass": false,
+      "exit-code": 1,
+      "log": "win32u-evidence-negative-v1-native-test-image.log",
+      "bytes": 504,
+      "sha256": "71958c0e93d9d2c699c006cb59944e17b973ebf05e6ffe39a4242e9ab64489ed"
+    },
+    {
+      "name": "guest-false-complete",
+      "expected-pass": false,
+      "exit-code": 1,
+      "log": "win32u-evidence-negative-v1-guest-false-complete.log",
+      "bytes": 474,
+      "sha256": "1ed1a62b32f1aab45b43e1453b4500d8a626b3229749e3bd3c15ba1dac4383e1"
+    },
+    {
+      "name": "owning-archive",
+      "expected-pass": false,
+      "exit-code": 1,
+      "log": "win32u-evidence-negative-v1-owning-archive.log",
+      "bytes": 462,
+      "sha256": "62f6205587b665237529173d4c9a4bf19e215a9c232b16d26a1a1a46855bce57"
+    },
+    {
+      "name": "first-entry-state",
+      "expected-pass": false,
+      "exit-code": 1,
+      "log": "win32u-evidence-negative-v1-first-entry-state.log",
+      "bytes": 534,
+      "sha256": "f08a3feb038deecca5b0e7b549f34852ddf4f57a852169c345940284a5bbf254"
+    },
+    {
+      "name": "forged-service",
+      "expected-pass": false,
+      "exit-code": 1,
+      "log": "win32u-evidence-negative-v1-forged-service.log",
+      "bytes": 476,
+      "sha256": "b8f1384bc37e817822996cb174a5df07992d27604f6e6f83e33790fcccc1612f"
+    },
+    {
+      "name": "hidden-original-failure",
+      "expected-pass": false,
+      "exit-code": 1,
+      "log": "win32u-evidence-negative-v1-hidden-original-failure.log",
+      "bytes": 522,
+      "sha256": "0f4d8f3e7216fbb3bb9aa76b4ddbc823d9096aaa407c2de9efeaa426ebb76cf7"
+    },
+    {
+      "name": "checker-binding",
+      "expected-pass": false,
+      "exit-code": 1,
+      "log": "win32u-evidence-negative-v1-checker-binding.log",
+      "bytes": 503,
+      "sha256": "ac6a671eacd856e745fffb0327037b2cac622386920a50c2c6b01a9a61b6fc13"
+    },
+    {
+      "name": "full-result",
+      "expected-pass": false,
+      "exit-code": 1,
+      "log": "win32u-evidence-negative-v1-full-result.log",
+      "bytes": 482,
+      "sha256": "728ddb6fdc940aac0b850781878bf1b0a0b13143a3699165aea8cdb7a6dd0c9c"
+    },
+    {
+      "name": "optimized-O",
+      "expected-pass": false,
+      "exit-code": 1,
+      "log": "win32u-evidence-negative-v1-optimized-O.log",
+      "bytes": 62,
+      "sha256": "d0261121477d8d515970882721d81661ecf1408e685e67cdc303aae3ed7f7883"
+    },
+    {
+      "name": "optimized-OO",
+      "expected-pass": false,
+      "exit-code": 1,
+      "log": "win32u-evidence-negative-v1-optimized-OO.log",
+      "bytes": 62,
+      "sha256": "d0261121477d8d515970882721d81661ecf1408e685e67cdc303aae3ed7f7883"
+    },
+    {
+      "name": "positive-after",
+      "expected-pass": true,
+      "exit-code": 0,
+      "log": "win32u-evidence-negative-v1-positive-after.log",
+      "bytes": 143,
+      "sha256": "0e189ca2c16ea1b11729214845812fe9f7fd3a6188cd4022483d71e8f973d162"
+    }
+  ],
+  "checker-sha256": "ef63f6cb9fd3cb6304f8dc17191bcf0f89c71330c3751647b094ce343630a686",
+  "scope": "Eleven reindexed corruptions and both optimized Python modes must reject; two unmodified controls must pass."
+}

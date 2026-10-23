@@ -1,0 +1,156 @@
+{
+  "state": "finished",
+  "host": "macos",
+  "pid": 57548,
+  "steps": [
+    {
+      "name": "ordinals",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "ntdll_ordinal",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 0.26536270801443607,
+      "log": "win32u-services-macos-candidate1-retry-v3-ordinals.log",
+      "bytes": 892,
+      "sha256": "e27333c76afb90f7b70b2c2a59e4e926c9df506e92ab1c8d00aaa9f51176f58a",
+      "results": [
+        "ok. 4 passed; 0 failed; 0 ignored; 0 measured; 8205 filtered out; finished in 0.02s"
+      ]
+    },
+    {
+      "name": "focus",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "win32u",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 0.17040570901008323,
+      "log": "win32u-services-macos-candidate1-retry-v3-focus.log",
+      "bytes": 909,
+      "sha256": "600146fdcc7f1826770277ca2b6fd547bd5b5ee355c79c00c8ae02bb24058b2d",
+      "results": [
+        "ok. 4 passed; 0 failed; 0 ignored; 0 measured; 8205 filtered out; finished in 0.09s"
+      ]
+    },
+    {
+      "name": "full",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--lib",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 450.73672049999004,
+      "log": "win32u-services-macos-candidate1-retry-v3-full.log",
+      "bytes": 868336,
+      "sha256": "7133f013ab3d7b7af96dc48bfef4b9dea74f4e9b1a75dc4bbab85543409f2dd7",
+      "results": [
+        "ok. 8207 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 450.65s"
+      ]
+    },
+    {
+      "name": "capi",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "-p",
+        "rax-capi",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 55.583754374994896,
+      "log": "win32u-services-macos-candidate1-retry-v3-capi.log",
+      "bytes": 14131,
+      "sha256": "9cdab8b7825c16448264ec1ea657fadec3c509fef19725def34d756208d1e6e7",
+      "results": [
+        "ok. 183 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 13.47s",
+        "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    {
+      "name": "integration",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "test",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--test",
+        "user_windows",
+        "--test",
+        "user_windows_memory",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit-code": 0,
+      "seconds": 60.151339625008404,
+      "log": "win32u-services-macos-candidate1-retry-v3-integration.log",
+      "bytes": 35856,
+      "sha256": "923ee9cf2fade014a8d97c1b7b5cdb6cad27f6d702330796d6bbb4b5cfcaeae7",
+      "results": [
+        "ok. 544 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 57.60s",
+        "ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+      ]
+    },
+    {
+      "name": "all-targets",
+      "argv": [
+        "cargo",
+        "+1.95.0",
+        "check",
+        "--locked",
+        "--offline",
+        "--no-default-features",
+        "--all-targets"
+      ],
+      "exit-code": 0,
+      "seconds": 47.753107416967396,
+      "log": "win32u-services-macos-candidate1-retry-v3-all-targets.log",
+      "bytes": 149,
+      "sha256": "b9a298121f9f82591a9d5412f02b47a1bec66a144951120563089077ba8283be",
+      "results": []
+    }
+  ],
+  "supersedes": "win32u-services-macos-candidate1-gates.json",
+  "reason": "Original full Mac run used an overlong validation TMPDIR and failed two host Unix socket tests. Restore the short in-worktree TMPDIR used by the parent; preserve the original result and rerun all unchanged-source gates.",
+  "manifest-sha256": "6140e8121129bbd12c871dac8525834b68aacff0b9484b027054ec0b58e45a62",
+  "step": "all-targets",
+  "child": 65882,
+  "exit-code": 0,
+  "source-inputs": 29182,
+  "completed-utc": "2026-10-23T00:42:47.667171+00:00"
+}

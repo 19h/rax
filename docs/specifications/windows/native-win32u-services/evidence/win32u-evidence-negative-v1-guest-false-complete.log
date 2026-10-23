@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/Users/int/.assist-native-display-policy-20261022/t/win32u-evidence-negatives-v1/guest-false-complete/check_evidence.py", line 341, in <module>
+    main()
+    ~~~~^^
+  File "/Users/int/.assist-native-display-policy-20261022/t/win32u-evidence-negatives-v1/guest-false-complete/check_evidence.py", line 286, in main
+    whoami["reason"] == 5
+    and "native Win32u service NtGdiInit2 (0x12fd)" in whoami["diagnostic"]
+AssertionError

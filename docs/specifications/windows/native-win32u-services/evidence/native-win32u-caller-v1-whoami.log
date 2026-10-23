@@ -1,0 +1,39 @@
+terminal turn=2875 result=Complete(Internal("raw Windows arm64 service 0x12fd at 0x3d1bfd0 has no admitted stub in the selected NTDLL"))
+thread=8 pc=3D1BFD4 sp=1A5E140 frames=0
+terminal-region=Some(RegionInfo { base: 64073728, allocation_base: 64028672, allocation_protect: 128, size: 122880, state: 4096, protect: 32, kind: 16777216 })
+terminal-code=Ok([61, 5F, 2, D4, C0, 3, 5F, D6, 0, 0, 0, 0, 0, 0, 0, 0, 81, 5F, 2, D4, C0, 3, 5F, D6, 0, 0, 0, 0, 0, 0, 0, 0, A1, 5F, 2, D4, C0, 3, 5F, D6, 0, 0, 0, 0, 0, 0, 0, 0, C1, 5F, 2, D4, C0, 3, 5F, D6, 0, 0, 0, 0, 0, 0, 0, 0, E1, 5F, 2, D4, C0, 3, 5F, D6, 0, 0, 0, 0, 0, 0, 0, 0, 1, 60, 2, D4, C0, 3, 5F, D6, 0, 0, 0, 0, 0, 0, 0, 0])
+registered-module name="probe.exe" base=0x140000000 size=0x19000 host=None
+registered-module name="ntdll.dll" base=0x7fff38a40000 size=0x473000 host=Some("\\\\?\\C:\\Windows\\System32\\ntdll.dll")
+registered-module name="kernel32.dll" base=0x180000000 size=0x171000 host=Some("\\\\?\\C:\\Windows\\System32\\kernel32.dll")
+registered-module name="KernelBase.dll" base=0x150000 size=0x6e6000 host=Some("\\\\?\\C:\\Windows\\System32\\KernelBase.dll")
+registered-module name="advapi32.dll" base=0x840000 size=0x157000 host=Some("\\\\?\\C:\\Windows\\System32\\advapi32.dll")
+registered-module name="msvcrt.dll" base=0x9a0000 size=0x14d000 host=Some("\\\\?\\C:\\Windows\\System32\\msvcrt.dll")
+registered-module name="sechost.dll" base=0xaf0000 size=0xf2000 host=Some("\\\\?\\C:\\Windows\\System32\\sechost.dll")
+registered-module name="rpcrt4.dll" base=0xbf0000 size=0x217000 host=Some("\\\\?\\C:\\Windows\\System32\\rpcrt4.dll")
+registered-module name="user32.dll" base=0xe10000 size=0x2ab000 host=Some("\\\\?\\C:\\Windows\\System32\\user32.dll")
+registered-module name="win32u.dll" base=0x10c0000 size=0x62000 host=Some("\\\\?\\C:\\Windows\\System32\\win32u.dll")
+registered-module name="gdi32.dll" base=0x1130000 size=0x73000 host=Some("\\\\?\\C:\\Windows\\System32\\gdi32.dll")
+registered-module name="ucrtbase.dll" base=0x11b0000 size=0x228000 host=Some("\\\\?\\C:\\Windows\\System32\\ucrtbase.dll")
+registered-module name="gdi32full.dll" base=0x13e0000 size=0x1d4000 host=Some("\\\\?\\C:\\Windows\\System32\\gdi32full.dll")
+registered-module name="msvcp_win.dll" base=0x15c0000 size=0x14b000 host=Some("\\\\?\\C:\\Windows\\System32\\msvcp_win.dll")
+registered-module name="ETW.dll" base=0x1710000 size=0x4f000 host=Some("\\\\?\\C:\\Windows\\System32\\ETW.dll")
+registered-module name="ws2_32.dll" base=0x1760000 size=0xdb000 host=Some("\\\\?\\C:\\Windows\\System32\\ws2_32.dll")
+registered-module name="version.dll" base=0x1840000 size=0x16000 host=Some("\\\\?\\C:\\Windows\\System32\\version.dll")
+registered-module name="authz.dll" base=0x1860000 size=0x8c000 host=Some("\\\\?\\C:\\Windows\\System32\\authz.dll")
+registered-module name="sspicli.dll" base=0x18f0000 size=0x83000 host=Some("\\\\?\\C:\\Windows\\System32\\sspicli.dll")
+registered-module name="wkscli.dll" base=0x1980000 size=0x33000 host=Some("\\\\?\\C:\\Windows\\System32\\wkscli.dll")
+registered-module name="netutils.dll" base=0x19c0000 size=0x1a000 host=Some("\\\\?\\C:\\Windows\\System32\\netutils.dll")
+matching-registered-code observed=0x3d1bfd0 allocation=0x3d10000 module="win32u.dll" rva=0xbfd0
+terminal-module name="win32u.dll" base=0x10c0000 size=0x62000 rva=0xbfd0 host=Some("\\\\?\\C:\\Windows\\System32\\win32u.dll")
+terminal-module-code start=0x10cbfb0 bytes=Ok([61, 5F, 2, D4, C0, 3, 5F, D6, 0, 0, 0, 0, 0, 0, 0, 0, 81, 5F, 2, D4, C0, 3, 5F, D6, 0, 0, 0, 0, 0, 0, 0, 0, A1, 5F, 2, D4, C0, 3, 5F, D6, 0, 0, 0, 0, 0, 0, 0, 0, C1, 5F, 2, D4, C0, 3, 5F, D6, 0, 0, 0, 0, 0, 0, 0, 0])
+terminal-export name="NtGdiIcmBrushInfo" rva=0xbfb0 displacement=0x20
+terminal-export name="NtGdiInit" rva=0xbfc0 displacement=0x10
+terminal-export name="NtGdiInit2" rva=0xbfd0 displacement=0x0
+terminal-link-register=0x40c13f8 region=Some(RegionInfo { base: 67899392, allocation_base: 67305472, allocation_protect: 128, size: 663552, state: 4096, protect: 32, kind: 16777216 })
+terminal-caller-code start=0x40c1378 bytes=Ok([2, 41, 80, D2, 1, 0, 80, 52, 25, 2B, 0, 94, E0, C3, 0, 91, 2, 41, 80, D2, 1, 0, 80, 52, 21, 2B, 0, 94, 33, 22, 0, 94, 83, 20, 80, 52, E2, E3, 8, 91, 1, 0, 80, D2, 32, 22, 0, 94, 0, 7F, BA, 34, 81, 20, 80, 52, E0, C3, 0, 91, 31, 22, 0, 94, 80, 7E, BA, 34, E2, 3, 13, AA, 81, 20, 80, D2, E0, C3, 0, 91, FF, 21, 0, 94, E0, 7D, BA, 35, 82, 20, 80, D2, E1, E3, 8, 91, E0, C3, 0, 91, F7, 21, 0, 94, 40, 7D, BA, 35, 31, EF, FF, 97, E8, D3, FD, 17, D1, D3, FD, 97, 7A, D5, FD, 97, 1B, 25, 0, 94, 8, 5, 0, D0, 8, 9, 40, F9, 0, 1, 0, F9, 0, 5, 0, B4, C8, 8, 0, 90, 0, 81, 1, 91, C1, 1, 80, 52, 3A, 23, 0, 94, 1F, 4, 0, 71, 41, 4, 0, 54, C8, 8, 0, 90, 0, 61, F, 91, BE, D5, FD, 97, E8, 8, 0, F0, A, 81, 2D, 91, 5F, 9, 0, F9, 28, 0, 80, D2, 5F, 1, 0, F9, 48, D, 0, F9, A8, 5, 0, 90, 9, 61, 2, 91, E8, 8, 0, F0, 9, AD, 5, F9, C8, 8, 0, 90, A, AD, 0, F9, DB, D5, FD, 97, 6C, D4, FD, 97, 0, 2, F8, 37, 40, F, FE, 97, C0, 1, 0, 34, 40, 2, 80, 52, BF, 9, FE, 97])
+matching-caller-code module="gdi32full.dll" rva=0x913f8 allocation=0x4030000 host=Some("\\\\?\\C:\\Windows\\System32\\gdi32full.dll")
+registers=[0, 1A5E010, 2, 1A5E050, 14, 1A5E000, 1000100, 2119024]
+raw-arguments x0=0 x1=1A5E010 x2=2 x3=1A5E050 x4=14
+argument2-memory=Err(MemFault { addr: 2, write: false })
+argument1-memory=Ok([20, 0, 22, 0, 0, 0, 0, 0, 78, 4F, 17, 4, 0, 0, 0, 0, 30, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, E0, A5, 1, 0, 0, 0, 0, 40, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 58, E0, A5, 1, 0, 0, 0, 0, 5C, 0, 52, 0, 65, 0, 67, 0, 69, 0, 73, 0, 74, 0, 72, 0, 79, 0, 5C, 0, 4D, 0, 61, 0, 63, 0, 68, 0, 69, 0, 6E, 0, 65, 0, 5C, 0, 53, 0, 6F, 0, 66, 0, 74, 0, 77, 0, 61, 0, 72, 0, 65, 0, 5C, 0, 4D, 0, 69, 0, 63, 0, 72, 0, 6F, 0, 73, 0, 6F, 0, 66, 0, 74, 0, 5C, 0, 57, 0, 69, 0, 6E, 0, 64, 0, 6F, 0, 77, 0, 73, 0, 20, 0, 4E, 0, 54, 0, 5C, 0, 43, 0, 75, 0, 72, 0, 72, 0, 65, 0, 6E, 0, 74, 0, 56, 0, 65, 0, 72, 0, 73, 0, 69, 0, 6F, 0, 6E, 0, 5C, 0, 47, 0, 52, 0, 45, 0, 5F, 0, 49, 0, 6E, 0, 69, 0, 74, 0, 69, 0, 61, 0, 6C, 0, 69, 0, 7A, 0, 65, 0, 0, 0, 0, 0, 0, 0])
+argument4-memory=Err(MemFault { addr: 14, write: false })

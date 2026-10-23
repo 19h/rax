@@ -1,0 +1,530 @@
+{
+  "state": "finished",
+  "pid": 6164,
+  "utc": "2026-10-23T01:01:18.365222+00:00",
+  "steps": [
+    {
+      "name": "build",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\toolchain\\bin\\rustc.exe",
+        "--edition=2024",
+        "--crate-name",
+        "file_attributes_ordinary_owner",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\helpers\\native-win32u-next-frontier-v3.rs",
+        "-C",
+        "target-feature=+crt-static",
+        "--extern",
+        "rax=C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\debug\\deps\\librax-934115059aa64c85.rlib",
+        "-L",
+        "dependency=C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\debug\\deps",
+        "-o",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\native-win32u-next-frontier-v3.exe"
+      ],
+      "seconds": 4.47779645799892,
+      "exit-code": 0,
+      "log": "native-win32u-next-frontier-v3-build.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "smoke",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\native-win32u-next-frontier-v3.exe",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\tests\\fixtures\\user\\windows\\bin\\arm64\\smoke.exe"
+      ],
+      "seconds": 6.152641916007269,
+      "exit-code": 0,
+      "log": "native-win32u-next-frontier-v3-smoke.log",
+      "bytes": 1662,
+      "sha256": "11da261c8061d1fac986dc901472c38514da985b0a2698a63398db12c6bda9de"
+    },
+    {
+      "name": "whoami",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\native-win32u-next-frontier-v3.exe",
+        "C:\\Windows\\System32\\whoami.exe"
+      ],
+      "seconds": 20.779130375012755,
+      "exit-code": 0,
+      "log": "native-win32u-next-frontier-v3-whoami.log",
+      "bytes": 7866,
+      "sha256": "c4a8bb23a3e652d35588d66e9517cff76312c5c6e6106588cc7175aad90b534e"
+    }
+  ],
+  "outcomes": [
+    {
+      "name": "smoke",
+      "program-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\tests\\fixtures\\user\\windows\\bin\\arm64\\smoke.exe",
+        "bytes": 3584,
+        "sha256": "325730e33e981784bff4a60bc6f342cf95c2735e85042c89748fc471cbe7781b"
+      },
+      "native-before": {
+        "exit-code": 0,
+        "stdout-bytes": 0,
+        "stdout-sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr-bytes": 0,
+        "stderr-sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "program-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\tests\\fixtures\\user\\windows\\bin\\arm64\\smoke.exe",
+        "bytes": 3584,
+        "sha256": "325730e33e981784bff4a60bc6f342cf95c2735e85042c89748fc471cbe7781b"
+      },
+      "native-after": {
+        "exit-code": 0,
+        "stdout-bytes": 0,
+        "stdout-sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr-bytes": 0,
+        "stderr-sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "log": "native-win32u-next-frontier-v3-smoke.log",
+      "log-sha256": "11da261c8061d1fac986dc901472c38514da985b0a2698a63398db12c6bda9de"
+    },
+    {
+      "name": "whoami",
+      "program-before": {
+        "path": "C:\\Windows\\System32\\whoami.exe",
+        "bytes": 84480,
+        "sha256": "48fde190b002a5a4c4b8b19db014377263ba94220f23a4f0a117fec082d46bf6"
+      },
+      "native-before": {
+        "exit-code": 0,
+        "stdout-bytes": 21,
+        "stdout-sha256": "1d11fe0d35f45662cdc2e6237b8a12d402752770ca2f76c2ac3ef54f0b006fb6",
+        "stderr-bytes": 0,
+        "stderr-sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "program-after": {
+        "path": "C:\\Windows\\System32\\whoami.exe",
+        "bytes": 84480,
+        "sha256": "48fde190b002a5a4c4b8b19db014377263ba94220f23a4f0a117fec082d46bf6"
+      },
+      "native-after": {
+        "exit-code": 0,
+        "stdout-bytes": 21,
+        "stdout-sha256": "1d11fe0d35f45662cdc2e6237b8a12d402752770ca2f76c2ac3ef54f0b006fb6",
+        "stderr-bytes": 0,
+        "stderr-sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "log": "native-win32u-next-frontier-v3-whoami.log",
+      "log-sha256": "c4a8bb23a3e652d35588d66e9517cff76312c5c6e6106588cc7175aad90b534e"
+    }
+  ],
+  "core-before": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\debug\\deps\\librax-934115059aa64c85.rlib",
+    "bytes": 513131874,
+    "sha256": "c1d306dbb6bb7ac0f33436ac6321eda5a9680893a795b18c2d4a4c9e2a753ce0"
+  },
+  "observer-before": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\helpers\\native-win32u-next-frontier-v3.rs",
+    "bytes": 11273,
+    "sha256": "31d9b072e47c9bc6d12db5716c201167bc3fefd0add197307d9b5fad50574d4c"
+  },
+  "current-step": "whoami",
+  "child-pid": 2840,
+  "executable-before": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\native-win32u-next-frontier-v3.exe",
+    "bytes": 27330048,
+    "sha256": "945bc354f86d9454330d5afff12ce5cddd9a314e5d736e3fc0c7ac284c7585e6"
+  },
+  "runtime-input-manifest": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\win32u-validation-recovery-v2\\transfer\\win32u-runtime-inputs-v2.json",
+    "bytes": 5724,
+    "sha256": "51f7ffb0c68ad5e061207c019304501de9df759db64f67482f9654f46185ff3a"
+  },
+  "runtime-before": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e"
+    },
+    {
+      "path": "C:\\Windows\\System32\\KernelBase.dll",
+      "bytes": 7213728,
+      "sha256": "6b2fa508ac4f9bce5d7351676485d1dc5b5236cd9656034e2fec1eaba3b82bc9"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\KernelBase.dll",
+      "bytes": 3073488,
+      "sha256": "e9c414d7c6bd2c6fde608f31b2f31da3c2014c801b3764a30ee42abd1e9c2d58"
+    },
+    {
+      "path": "C:\\Windows\\System32\\kernel32.dll",
+      "bytes": 1500304,
+      "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\kernel32.dll",
+      "bytes": 696392,
+      "sha256": "9c9a0c54a79ea712bb533fcc79ba9935ed9f9d3f777fd65cf62d9cec6699b9df"
+    },
+    {
+      "path": "C:\\Windows\\System32\\version.dll",
+      "bytes": 73200,
+      "sha256": "d30c2a9c9d81982b112c5a60878f3579ddb3db3a09443147c63f10bc749aaab2"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\version.dll",
+      "bytes": 29208,
+      "sha256": "688ea4248da1e28bd77be9ae1088954a11cec3302c25af8aade47bae14f3ada8"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\advapi32.dll",
+      "bytes": 1390176,
+      "sha256": "55574d41274e407861a51574fb76fe36f02a8809da67255d45081fb435fe5018"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\authz.dll",
+      "bytes": 552960,
+      "sha256": "b41ade886dcfd24b4fddef948f04e1153dca483db8421ca36defb8c3bae54167"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\ETW.dll",
+      "bytes": 307728,
+      "sha256": "a935159c98a26eebf4b6d5f9b3ad8e3adf549641f8020d089c7d9c8e82f7051e"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\gdi32.dll",
+      "bytes": 462600,
+      "sha256": "55a43a68318f896557d8433d1094b0acce8c9ec05b7085bbce558fefa280d42a"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\gdi32full.dll",
+      "bytes": 1893296,
+      "sha256": "3f73ffd0d20b492cfc3302c7ba193138a96d6161c2bea0b6b6c559f104f7f70e"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\kernel32.dll",
+      "bytes": 1500304,
+      "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\KernelBase.dll",
+      "bytes": 7213728,
+      "sha256": "6b2fa508ac4f9bce5d7351676485d1dc5b5236cd9656034e2fec1eaba3b82bc9"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\msvcp_win.dll",
+      "bytes": 1279224,
+      "sha256": "1424a6c4065b41ced5d137131b97fe563a848ac66b286a5895e80cccd2e7969d"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\msvcrt.dll",
+      "bytes": 1347856,
+      "sha256": "779eb5cb1ae357196254af9755307544a3dd20011c84768ae72f45d366f47148"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\netutils.dll",
+      "bytes": 90240,
+      "sha256": "dffb104efda2a7eb194d32d6bc246e8283a19648b7bd72d9c309d9ac5a9d72cf"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\rpcrt4.dll",
+      "bytes": 2186248,
+      "sha256": "e4fd9ff555bcdf4ef1d4970feb4eec4889cab1adaa39848d043fd45e83fb3b0b"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\sechost.dll",
+      "bytes": 982704,
+      "sha256": "e620b3d59f10fe71770968575fc0c2af0592ca1f451c62b596ed08857039354c"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\sspicli.dll",
+      "bytes": 521472,
+      "sha256": "c52cffe95aaca5af51fc6a87496e078bcc4a63578b77a9d43c9758317af6a29b"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\ucrtbase.dll",
+      "bytes": 2260040,
+      "sha256": "d0c03ee466babee46e4c46ef18c88965cd1de29acbdd623cfd625efa4da8d13e"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\user32.dll",
+      "bytes": 2799192,
+      "sha256": "bd104076063e3bc8ce65fb744a947f533b8ac6bc737c999b1d7beacbc1b6b058"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\version.dll",
+      "bytes": 73200,
+      "sha256": "d30c2a9c9d81982b112c5a60878f3579ddb3db3a09443147c63f10bc749aaab2"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\win32u.dll",
+      "bytes": 387768,
+      "sha256": "e2aa1e93f5e45377922bf6e5525d9fc37a60494da1d602033974883987e9c7d4"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\wkscli.dll",
+      "bytes": 195592,
+      "sha256": "425f2253df4ab6879355efcf43cc194d3979272ff7907dfe6646fbd662cd1670"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\ws2_32.dll",
+      "bytes": 884632,
+      "sha256": "6926b64bd7a14c813c419e263dfa6bf6ff81ead446b8f98709eb227a960bb232"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\gdi32.dll",
+      "bytes": 160416,
+      "sha256": "e1b13f557255c4568a68ab85736c3f9461e1e8a162936fcce3437eaafbed9f8a"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\gdi32full.dll",
+      "bytes": 954272,
+      "sha256": "0ea5a50fd5653f6c88fa657a3aec92dde0bfaa106c14df4d928886b85cd7d099"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\kernel32.dll",
+      "bytes": 696392,
+      "sha256": "9c9a0c54a79ea712bb533fcc79ba9935ed9f9d3f777fd65cf62d9cec6699b9df"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\KernelBase.dll",
+      "bytes": 3073488,
+      "sha256": "e9c414d7c6bd2c6fde608f31b2f31da3c2014c801b3764a30ee42abd1e9c2d58"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\msvcrt.dll",
+      "bytes": 810688,
+      "sha256": "67c03357458a951402cc1804e05d3301f011a59d352f684fbe283f546f8ae398"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\user32.dll",
+      "bytes": 2039408,
+      "sha256": "f32a037264cb173501c4ba0c3fff25cd274e154e59be85c06a75a02f89a8e64b"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\version.dll",
+      "bytes": 29208,
+      "sha256": "688ea4248da1e28bd77be9ae1088954a11cec3302c25af8aade47bae14f3ada8"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\win32u.dll",
+      "bytes": 109280,
+      "sha256": "098802d32f359f1ccd53e654f6a4fbfd6bf7d3cce58cc8f73ef389c8a9b26117"
+    }
+  ],
+  "core-after": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\debug\\deps\\librax-934115059aa64c85.rlib",
+    "bytes": 513131874,
+    "sha256": "c1d306dbb6bb7ac0f33436ac6321eda5a9680893a795b18c2d4a4c9e2a753ce0"
+  },
+  "observer-after": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\helpers\\native-win32u-next-frontier-v3.rs",
+    "bytes": 11273,
+    "sha256": "31d9b072e47c9bc6d12db5716c201167bc3fefd0add197307d9b5fad50574d4c"
+  },
+  "executable-after": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\assist\\target\\native-attributes\\native-win32u-next-frontier-v3.exe",
+    "bytes": 27330048,
+    "sha256": "945bc354f86d9454330d5afff12ce5cddd9a314e5d736e3fc0c7ac284c7585e6"
+  },
+  "runtime-after": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e"
+    },
+    {
+      "path": "C:\\Windows\\System32\\KernelBase.dll",
+      "bytes": 7213728,
+      "sha256": "6b2fa508ac4f9bce5d7351676485d1dc5b5236cd9656034e2fec1eaba3b82bc9"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\KernelBase.dll",
+      "bytes": 3073488,
+      "sha256": "e9c414d7c6bd2c6fde608f31b2f31da3c2014c801b3764a30ee42abd1e9c2d58"
+    },
+    {
+      "path": "C:\\Windows\\System32\\kernel32.dll",
+      "bytes": 1500304,
+      "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\kernel32.dll",
+      "bytes": 696392,
+      "sha256": "9c9a0c54a79ea712bb533fcc79ba9935ed9f9d3f777fd65cf62d9cec6699b9df"
+    },
+    {
+      "path": "C:\\Windows\\System32\\version.dll",
+      "bytes": 73200,
+      "sha256": "d30c2a9c9d81982b112c5a60878f3579ddb3db3a09443147c63f10bc749aaab2"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\version.dll",
+      "bytes": 29208,
+      "sha256": "688ea4248da1e28bd77be9ae1088954a11cec3302c25af8aade47bae14f3ada8"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\advapi32.dll",
+      "bytes": 1390176,
+      "sha256": "55574d41274e407861a51574fb76fe36f02a8809da67255d45081fb435fe5018"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\authz.dll",
+      "bytes": 552960,
+      "sha256": "b41ade886dcfd24b4fddef948f04e1153dca483db8421ca36defb8c3bae54167"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\ETW.dll",
+      "bytes": 307728,
+      "sha256": "a935159c98a26eebf4b6d5f9b3ad8e3adf549641f8020d089c7d9c8e82f7051e"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\gdi32.dll",
+      "bytes": 462600,
+      "sha256": "55a43a68318f896557d8433d1094b0acce8c9ec05b7085bbce558fefa280d42a"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\gdi32full.dll",
+      "bytes": 1893296,
+      "sha256": "3f73ffd0d20b492cfc3302c7ba193138a96d6161c2bea0b6b6c559f104f7f70e"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\kernel32.dll",
+      "bytes": 1500304,
+      "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\KernelBase.dll",
+      "bytes": 7213728,
+      "sha256": "6b2fa508ac4f9bce5d7351676485d1dc5b5236cd9656034e2fec1eaba3b82bc9"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\msvcp_win.dll",
+      "bytes": 1279224,
+      "sha256": "1424a6c4065b41ced5d137131b97fe563a848ac66b286a5895e80cccd2e7969d"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\msvcrt.dll",
+      "bytes": 1347856,
+      "sha256": "779eb5cb1ae357196254af9755307544a3dd20011c84768ae72f45d366f47148"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\netutils.dll",
+      "bytes": 90240,
+      "sha256": "dffb104efda2a7eb194d32d6bc246e8283a19648b7bd72d9c309d9ac5a9d72cf"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\rpcrt4.dll",
+      "bytes": 2186248,
+      "sha256": "e4fd9ff555bcdf4ef1d4970feb4eec4889cab1adaa39848d043fd45e83fb3b0b"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\sechost.dll",
+      "bytes": 982704,
+      "sha256": "e620b3d59f10fe71770968575fc0c2af0592ca1f451c62b596ed08857039354c"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\sspicli.dll",
+      "bytes": 521472,
+      "sha256": "c52cffe95aaca5af51fc6a87496e078bcc4a63578b77a9d43c9758317af6a29b"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\ucrtbase.dll",
+      "bytes": 2260040,
+      "sha256": "d0c03ee466babee46e4c46ef18c88965cd1de29acbdd623cfd625efa4da8d13e"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\user32.dll",
+      "bytes": 2799192,
+      "sha256": "bd104076063e3bc8ce65fb744a947f533b8ac6bc737c999b1d7beacbc1b6b058"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\version.dll",
+      "bytes": 73200,
+      "sha256": "d30c2a9c9d81982b112c5a60878f3579ddb3db3a09443147c63f10bc749aaab2"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\win32u.dll",
+      "bytes": 387768,
+      "sha256": "e2aa1e93f5e45377922bf6e5525d9fc37a60494da1d602033974883987e9c7d4"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\wkscli.dll",
+      "bytes": 195592,
+      "sha256": "425f2253df4ab6879355efcf43cc194d3979272ff7907dfe6646fbd662cd1670"
+    },
+    {
+      "path": "\\\\?\\C:\\Windows\\System32\\ws2_32.dll",
+      "bytes": 884632,
+      "sha256": "6926b64bd7a14c813c419e263dfa6bf6ff81ead446b8f98709eb227a960bb232"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\gdi32.dll",
+      "bytes": 160416,
+      "sha256": "e1b13f557255c4568a68ab85736c3f9461e1e8a162936fcce3437eaafbed9f8a"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\gdi32full.dll",
+      "bytes": 954272,
+      "sha256": "0ea5a50fd5653f6c88fa657a3aec92dde0bfaa106c14df4d928886b85cd7d099"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\kernel32.dll",
+      "bytes": 696392,
+      "sha256": "9c9a0c54a79ea712bb533fcc79ba9935ed9f9d3f777fd65cf62d9cec6699b9df"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\KernelBase.dll",
+      "bytes": 3073488,
+      "sha256": "e9c414d7c6bd2c6fde608f31b2f31da3c2014c801b3764a30ee42abd1e9c2d58"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\msvcrt.dll",
+      "bytes": 810688,
+      "sha256": "67c03357458a951402cc1804e05d3301f011a59d352f684fbe283f546f8ae398"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\user32.dll",
+      "bytes": 2039408,
+      "sha256": "f32a037264cb173501c4ba0c3fff25cd274e154e59be85c06a75a02f89a8e64b"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\version.dll",
+      "bytes": 29208,
+      "sha256": "688ea4248da1e28bd77be9ae1088954a11cec3302c25af8aade47bae14f3ada8"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\win32u.dll",
+      "bytes": 109280,
+      "sha256": "098802d32f359f1ccd53e654f6a4fbfd6bf7d3cce58cc8f73ef389c8a9b26117"
+    }
+  ],
+  "exit-code": 0,
+  "source-inputs": 3983,
+  "selected-Win32u-frontier-observed": true,
+  "scope": "Actual owning selected-Win32u ordinary observer: smoke guest exit0; whoami must remain explicitly unsupported and name NtGdiInit2. Same frontier, improved selected-system identity; observer exit0 is not guest completion.",
+  "completed-utc": "2026-10-23T01:09:28.993669+00:00"
+}

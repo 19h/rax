@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/Users/int/.assist-native-display-policy-20261022/t/win32u-evidence-negatives-v1/forged-service/check_evidence.py", line 341, in <module>
+    main()
+    ~~~~^^
+  File "/Users/int/.assist-native-display-policy-20261022/t/win32u-evidence-negatives-v1/forged-service/check_evidence.py", line 334, in main
+    assert "native Win32u service NtGdiInit2" not in line
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

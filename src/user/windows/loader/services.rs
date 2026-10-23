@@ -1,4 +1,4 @@
-//! NT service numbers decoded from the selected NTDLL image, never a build table.
+//! Service numbers decoded from selected NTDLL/Win32u images, never a build table.
 //!
 //! Only complete, recognized leaf stubs are admitted. Hooked/forwarded exports
 //! and unknown encodings cannot select an unrelated kernel operation.
@@ -41,7 +41,7 @@ impl ServiceTable {
         let malformed = || {
             LoadError::new(
                 STATUS_INVALID_IMAGE_FORMAT,
-                "malformed NTDLL service exports",
+                "malformed Windows service exports",
             )
         };
         let Some(exports) = ExportDirectory::read(image, range).map_err(|_| malformed())? else {
@@ -128,7 +128,7 @@ impl ServiceTable {
                 return Err(LoadError::new(
                     STATUS_INVALID_IMAGE_FORMAT,
                     format!(
-                        "NTDLL service {number:#x} has conflicting exports {previous} and {name}"
+                        "Windows service {number:#x} has conflicting exports {previous} and {name}"
                     ),
                 ));
             }
@@ -224,6 +224,13 @@ fn x86_entry(bytes: &[u8]) -> Option<X86Entry> {
 pub(crate) mod tests {
     use super::*;
     use crate::user::windows::{dll, loader::builtin};
+
+    /// Dispatcher fixture; admission itself is exercised with image exports.
+    pub(crate) fn named_table(arch: WinArch, name: &str, number: u32) -> ServiceTable {
+        let mut table = table(arch, "NtClose", number);
+        table.names.insert(number, name.to_owned());
+        table
+    }
 
     pub(crate) fn table(arch: WinArch, name: &str, number: u32) -> ServiceTable {
         if arch == WinArch::X86 {
@@ -526,6 +533,30 @@ pub(crate) mod tests {
                 table.names.values().any(|found| found == name),
                 "missing installed {name}"
             );
+        }
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn installed_win32u_exports_define_both_native_and_wow64_service_identities() {
+        let root = std::path::PathBuf::from(std::env::var_os("SystemRoot").unwrap());
+        for directory in ["System32", "SysWOW64"] {
+            let pe =
+                PeImage::parse(std::fs::read(root.join(directory).join("win32u.dll")).unwrap())
+                    .unwrap();
+            let arch = WinArch::from_machine(pe.headers().machine).unwrap();
+            let table = ServiceTable::from_image(arch, &pe)
+                .unwrap()
+                .expect("selected installed Win32u must admit complete service leaves");
+            for name in ["NtGdiInit", "NtGdiInit2", "NtUserProcessConnect"] {
+                assert!(
+                    table.names.values().any(|value| value == name),
+                    "{directory}: {name}"
+                );
+            }
+            if arch == WinArch::X86 {
+                assert!(table.wow64_slot.is_some());
+            }
         }
     }
 }

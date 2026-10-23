@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/Users/int/.assist-native-display-policy-20261022/t/win32u-evidence-negatives-v1/parent/check_evidence.py", line 341, in <module>
+    main()
+    ~~~~^^
+  File "/Users/int/.assist-native-display-policy-20261022/t/win32u-evidence-negatives-v1/parent/check_evidence.py", line 33, in main
+    assert proof["source-parent"] == PARENT
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

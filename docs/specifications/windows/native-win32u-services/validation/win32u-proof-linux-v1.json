@@ -1,0 +1,49 @@
+{
+  "state": "finished",
+  "exit-code": 0,
+  "host": "linux",
+  "inputs-before": {
+    "proof.json": {
+      "bytes": 55992,
+      "sha256": "e9ef0e03db1f23269acb89ce6376f1827102eb09f7566bbf480f4704ef58416c"
+    },
+    "check_evidence.py": {
+      "bytes": 14501,
+      "sha256": "ef63f6cb9fd3cb6304f8dc17191bcf0f89c71330c3751647b094ce343630a686"
+    }
+  },
+  "inputs-after": {
+    "proof.json": {
+      "bytes": 55992,
+      "sha256": "e9ef0e03db1f23269acb89ce6376f1827102eb09f7566bbf480f4704ef58416c"
+    },
+    "check_evidence.py": {
+      "bytes": 14501,
+      "sha256": "ef63f6cb9fd3cb6304f8dc17191bcf0f89c71330c3751647b094ce343630a686"
+    }
+  },
+  "argv": [
+    "docker",
+    "run",
+    "--rm",
+    "--platform",
+    "linux/amd64",
+    "-v",
+    "/Users/int/.assist-native-display-policy-20261022:/work/vendor/rax:ro",
+    "-w",
+    "/work/vendor/rax",
+    "assist-rax-validation-rustfmt:1.95-bullseye-20261015",
+    "python3",
+    "-B",
+    "/work/vendor/rax/docs/specifications/windows/native-win32u-services/check_evidence.py",
+    "--source-root",
+    "/work/vendor/rax"
+  ],
+  "log": {
+    "file": "win32u-proof-linux-v1.log",
+    "bytes": 143,
+    "sha256": "0e189ca2c16ea1b11729214845812fe9f7fd3a6188cd4022483d71e8f973d162"
+  },
+  "source-frame-sha256": "6140e8121129bbd12c871dac8525834b68aacff0b9484b027054ec0b58e45a62",
+  "source-inputs": 29182
+}

@@ -1,0 +1,7 @@
+{
+  "file": "native-gdi-init2-v3.cpp",
+  "bytes": 4446,
+  "sha256": "327982b23500b2f27669fde7c4bc31743ba1de797b506f26e98c7c2f55318e2d",
+  "extends": "native-gdi-init2-v2.cpp",
+  "changed-precondition": "LoadLibraryW(user32.dll) before service calls"
+}

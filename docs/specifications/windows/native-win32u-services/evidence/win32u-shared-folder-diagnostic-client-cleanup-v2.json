@@ -1,0 +1,17 @@
+{
+  "utc": "2026-10-23T00:42:42.982945+00:00",
+  "clients": [
+    {
+      "pid": 62005,
+      "action": "SIGTERM verified own read-only diagnostic prlctl client"
+    },
+    {
+      "pid": 62361,
+      "action": "SIGTERM verified own read-only diagnostic prlctl client"
+    },
+    {
+      "pid": 62832,
+      "action": "SIGTERM verified own read-only diagnostic prlctl client"
+    }
+  ]
+}

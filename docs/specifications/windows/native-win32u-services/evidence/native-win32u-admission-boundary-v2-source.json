@@ -1,0 +1,7 @@
+{
+  "file": "native-win32u-admission-boundary-v2.rs",
+  "bytes": 6477,
+  "sha256": "6bedf743f02639247d6a55a73f66095bcfdb3763c4628a6101cd3d52ca7535db",
+  "supersedes": "native-win32u-admission-boundary-v1.rs",
+  "fix": "explicit X drive mapping for owned file-backed fixture"
+}

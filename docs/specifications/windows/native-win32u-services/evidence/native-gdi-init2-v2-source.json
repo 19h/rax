@@ -1,0 +1,7 @@
+{
+  "file": "native-gdi-init2-v2.cpp",
+  "bytes": 4223,
+  "sha256": "698b3437e7d71bb4fc9e01229d57627417912bf6800056399a766fd4f6aa9c4b",
+  "extends": "native-gdi-init2-v1.cpp",
+  "purpose": "localize native crash; preserve all exits"
+}
