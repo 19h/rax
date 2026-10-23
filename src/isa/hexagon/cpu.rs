@@ -1,5 +1,6 @@
 mod alignment;
 mod execute;
+mod transaction;
 
 use std::sync::Arc;
 
@@ -201,6 +202,7 @@ fn resolve_new_value(insn: DecodedInsn, producers: &[u8]) -> DecodedInsn {
 }
 
 struct MmioPending {
+    addr: u32,
     dst: u8,
     size: u8,
     signed: bool,
@@ -250,6 +252,8 @@ pub struct HexagonVcpu {
     halted: bool,
     pending_mmio: Option<MmioPending>,
     pending_packet: Option<PacketState>,
+    effects: transaction::PacketEffects,
+    packet_producers: Vec<u8>,
     _isa: HexagonIsa,
     endian: Endianness,
     /// In-flight HVX vector writes for the current packet (committed at packet
@@ -292,6 +296,8 @@ impl HexagonVcpu {
             halted: false,
             pending_mmio: None,
             pending_packet: None,
+            effects: Default::default(),
+            packet_producers: Vec::new(),
             _isa: isa,
             endian,
             new_v: [None; 32],
@@ -306,17 +312,13 @@ impl HexagonVcpu {
 
     fn read_u8(&self, addr: u32) -> Result<u8> {
         let mut buf = [0u8; 1];
-        self.mem
-            .read_slice(&mut buf, GuestAddress(addr as u64))
-            .map_err(Error::from)?;
+        self.read_packet_data(addr, &mut buf)?;
         Ok(buf[0])
     }
 
     fn read_u16(&self, addr: u32) -> Result<u16> {
         let mut buf = [0u8; 2];
-        self.mem
-            .read_slice(&mut buf, GuestAddress(addr as u64))
-            .map_err(Error::from)?;
+        self.read_packet_data(addr, &mut buf)?;
         Ok(match self.endian {
             Endianness::Little => u16::from_le_bytes(buf),
             Endianness::Big => u16::from_be_bytes(buf),
@@ -325,9 +327,7 @@ impl HexagonVcpu {
 
     fn read_u32(&self, addr: u32) -> Result<u32> {
         let mut buf = [0u8; 4];
-        self.mem
-            .read_slice(&mut buf, GuestAddress(addr as u64))
-            .map_err(Error::from)?;
+        self.read_packet_data(addr, &mut buf)?;
         Ok(match self.endian {
             Endianness::Little => u32::from_le_bytes(buf),
             Endianness::Big => u32::from_be_bytes(buf),
@@ -336,9 +336,7 @@ impl HexagonVcpu {
 
     fn read_u64(&self, addr: u32) -> Result<u64> {
         let mut buf = [0u8; 8];
-        self.mem
-            .read_slice(&mut buf, GuestAddress(addr as u64))
-            .map_err(Error::from)?;
+        self.read_packet_data(addr, &mut buf)?;
         Ok(match self.endian {
             Endianness::Little => u64::from_le_bytes(buf),
             Endianness::Big => u64::from_be_bytes(buf),
@@ -346,9 +344,7 @@ impl HexagonVcpu {
     }
 
     fn write_u8(&self, addr: u32, value: u8) -> Result<()> {
-        self.mem
-            .write_slice(&[value], GuestAddress(addr as u64))
-            .map_err(Error::from)?;
+        self.write_packet_memory(addr, &[value])?;
         Ok(())
     }
 
@@ -357,9 +353,7 @@ impl HexagonVcpu {
             Endianness::Little => value.to_le_bytes(),
             Endianness::Big => value.to_be_bytes(),
         };
-        self.mem
-            .write_slice(&bytes, GuestAddress(addr as u64))
-            .map_err(Error::from)?;
+        self.write_packet_memory(addr, &bytes)?;
         Ok(())
     }
 
@@ -368,9 +362,7 @@ impl HexagonVcpu {
             Endianness::Little => value.to_le_bytes(),
             Endianness::Big => value.to_be_bytes(),
         };
-        self.mem
-            .write_slice(&bytes, GuestAddress(addr as u64))
-            .map_err(Error::from)?;
+        self.write_packet_memory(addr, &bytes)?;
         Ok(())
     }
 
@@ -379,9 +371,7 @@ impl HexagonVcpu {
             Endianness::Little => value.to_le_bytes(),
             Endianness::Big => value.to_be_bytes(),
         };
-        self.mem
-            .write_slice(&bytes, GuestAddress(addr as u64))
-            .map_err(Error::from)?;
+        self.write_packet_memory(addr, &bytes)?;
         Ok(())
     }
 
@@ -390,9 +380,7 @@ impl HexagonVcpu {
     /// the words use the same LE packing as the `v[]` register storage.
     fn read_vec(&self, addr: u32) -> Result<[u32; 32]> {
         let mut buf = [0u8; 128];
-        self.mem
-            .read_slice(&mut buf, GuestAddress(addr as u64))
-            .map_err(Error::from)?;
+        self.read_packet_data(addr, &mut buf)?;
         let mut v = [0u32; 32];
         for i in 0..32 {
             v[i] = u32::from_le_bytes([buf[i * 4], buf[i * 4 + 1], buf[i * 4 + 2], buf[i * 4 + 3]]);
@@ -406,9 +394,7 @@ impl HexagonVcpu {
         for i in 0..32 {
             buf[i * 4..i * 4 + 4].copy_from_slice(&vec[i].to_le_bytes());
         }
-        self.mem
-            .write_slice(&buf, GuestAddress(addr as u64))
-            .map_err(Error::from)?;
+        self.write_packet_memory(addr, &buf)?;
         Ok(())
     }
 
@@ -574,7 +560,14 @@ impl HexagonVcpu {
                 access: crate::error::MemoryAccessKind::Fetch,
             });
         }
-        self.read_u32(pc)
+        // Instruction words belong to the packet-entry image even when a
+        // pending store overlaps a later word of this same packet.
+        let mut bytes = [0; 4];
+        self.read_packet_ram(pc, &mut bytes)?;
+        Ok(match self.endian {
+            Endianness::Little => u32::from_le_bytes(bytes),
+            Endianness::Big => u32::from_be_bytes(bytes),
+        })
     }
 
     fn ensure_isa_supports(
@@ -674,9 +667,9 @@ impl HexagonVcpu {
 
     fn eval_pred(&self, cond: PredCond, new_p: &[Option<u8>; 4]) -> bool {
         let val = if cond.pred_new {
-            new_p[cond.pred as usize].unwrap_or(self.regs.p[cond.pred as usize])
+            new_p[cond.pred as usize].unwrap_or(self.old_regs().p[cond.pred as usize])
         } else {
-            self.regs.p[cond.pred as usize]
+            self.old_regs().p[cond.pred as usize]
         };
         // Conditional execution tests only the least-significant bit.
         let lsb = val & 1 != 0;
@@ -689,12 +682,13 @@ impl HexagonVcpu {
 
     /// Modifier register value for `modsel` (0 -> M0/C6, 1 -> M1/C7).
     fn modifier(&self, modsel: u8) -> u32 {
-        self.regs.control(if modsel & 1 == 0 { 6 } else { 7 })
+        self.old_regs().control(if modsel & 1 == 0 { 6 } else { 7 })
     }
 
     /// Circular-start register for `modsel` (0 -> CS0/C12, 1 -> CS1/C13).
     fn circ_start(&self, modsel: u8) -> u32 {
-        self.regs.control(if modsel & 1 == 0 { 12 } else { 13 })
+        self.old_regs()
+            .control(if modsel & 1 == 0 { 12 } else { 13 })
     }
 
     /// Resolve a load/store `AddrMode` to `(effective_addr, base_update)`,
@@ -711,7 +705,7 @@ impl HexagonVcpu {
                 (base_val, Some((base, new_base)))
             }
             AddrMode::GpOffset { offset } => {
-                let gp = self.regs.control(11) & !0x3f; // GP low 6 bits hardwired zero
+                let gp = self.old_regs().control(11) & !0x3f; // GP low 6 bits hardwired zero
                 (gp.wrapping_add(offset as u32), None)
             }
             AddrMode::Abs { addr } => (addr, None),
@@ -792,7 +786,7 @@ impl HexagonVcpu {
         };
         let (usr_or, v_writes, q_writes) = {
             let mut ctx = super::semantics::SemCtx {
-                regs: &self.regs,
+                regs: self.effects.initial.as_deref().unwrap_or(&self.regs),
                 new_r: &mut *new_r,
                 new_p: &mut *new_p,
                 vnew: &self.new_v,
@@ -938,6 +932,7 @@ impl HexagonVcpu {
         // Fresh packet: clear the in-flight HVX vector write buffers (they
         // persist across an MMIO suspend/resume of the same packet).
         if !resuming {
+            self.packet_producers.clear();
             self.new_v = [None; 32];
             self.new_q = [None; 4];
             self.new_v_tmp = [None; 32];
@@ -948,7 +943,7 @@ impl HexagonVcpu {
             // BEFORE the producing `.tmp` load). Read-only here: the producing
             // load still runs normally in the main loop (post-increment, etc.).
             let mut scan_pc = state.pc;
-            for _ in 0..8 {
+            for _ in 0..4 {
                 let w = match self.fetch_word(scan_pc) {
                     Ok(w) => w,
                     Err(_) => break,
@@ -1020,12 +1015,6 @@ impl HexagonVcpu {
         let mut second_parse = state.second_parse;
         let mut pending_subinsn = state.pending_subinsn;
         let mut pending_end = state.pending_end;
-        // GPR producers (dest registers) of this packet's instructions, in
-        // execution order — used to resolve new-value stores (`Nt8`). Local to
-        // this call: a packet that suspends for MMIO mid-flight won't carry the
-        // list across resume, but a new-value store after an MMIO access in the
-        // same packet does not occur in practice.
-        let mut producers: Vec<u8> = Vec::new();
 
         loop {
             if let Some(sub) = pending_subinsn.take() {
@@ -1082,6 +1071,12 @@ impl HexagonVcpu {
                 continue;
             }
 
+            if pending_end {
+                break;
+            }
+            if inst_index >= 4 {
+                return Err(Error::Emulator("Hexagon packet exceeds four words".into()));
+            }
             let word = self.fetch_word(pc)?;
             let parse = (word >> 14) & 0x3;
 
@@ -1211,7 +1206,7 @@ impl HexagonVcpu {
                 insn => {
                     // Resolve a new-value store's `Nt8` against the packet's
                     // GPR producers before executing it.
-                    let insn = resolve_new_value(insn, &producers);
+                    let insn = resolve_new_value(insn, &self.packet_producers);
                     let before = producer_mask(&new_r);
                     if let Some(exit) = self.execute_aligned_insn(
                         insn,
@@ -1234,6 +1229,18 @@ impl HexagonVcpu {
                             return Ok(Some(exit));
                         }
 
+                        // The MMIO destination is a producer even before its
+                        // value arrives; retain exactly one producer per word.
+                        let mut produced = new_r.iter().enumerate().find_map(|(index, value)| {
+                            (value.is_some() && !before[index]).then_some(index as u8)
+                        });
+                        if let Some(pending) = &self.pending_mmio {
+                            produced =
+                                Some(produced.map_or(pending.dst, |index| index.min(pending.dst)));
+                        }
+                        if let Some(register) = produced {
+                            self.packet_producers.push(register);
+                        }
                         pc = pc.wrapping_add(4);
                         pending_end = parse == 0x3;
                         self.save_packet_state(
@@ -1251,7 +1258,7 @@ impl HexagonVcpu {
                         );
                         return Ok(Some(exit));
                     }
-                    record_producer(&new_r, before, &mut producers);
+                    record_producer(&new_r, before, &mut self.packet_producers);
                 }
             }
 

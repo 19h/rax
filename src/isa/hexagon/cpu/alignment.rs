@@ -51,6 +51,15 @@ impl HexagonVcpu {
                 }
             }
         }
-        self.execute_insn(insn, packet_pc, immext, new_r, new_p, branch)
+        match self.execute_insn(insn, packet_pc, immext, new_r, new_p, branch)? {
+            Some(exit @ VcpuExit::MmioWrite { .. }) => {
+                self.effects.outputs.push_back(exit);
+                Ok(None)
+            }
+            Some(VcpuExit::MmioRead { .. }) if !self.effects.outputs.is_empty() => Err(
+                Error::Emulator("Hexagon ordered MMIO write/read packet is not supported".into()),
+            ),
+            result => Ok(result),
+        }
     }
 }

@@ -9,11 +9,7 @@ impl HexagonVcpu {
     /// Executes (or resumes) one packet, counting it once it commits. A packet
     /// suspended at an MMIO exit commits when it is resumed and completes.
     fn step_counted(&mut self) -> Result<Option<VcpuExit>> {
-        let exit = self.step_packet()?;
-        if self.pending_packet.is_none() {
-            self.packets = self.packets.wrapping_add(1);
-        }
-        Ok(exit)
+        self.step_packet_atomic()
     }
 }
 
@@ -45,7 +41,7 @@ impl VCpu for HexagonVcpu {
     }
 
     fn current_pc(&self) -> u64 {
-        u64::from(self.regs.pc())
+        u64::from(self.old_regs().pc())
     }
 
     fn wake(&mut self) {
@@ -58,7 +54,7 @@ impl VCpu for HexagonVcpu {
     }
 
     fn get_state(&self) -> Result<CpuState> {
-        Ok(CpuState::hexagon(self.regs.clone()))
+        Ok(CpuState::hexagon(self.old_regs().clone()))
     }
 
     fn set_state(&mut self, state: &CpuState) -> Result<()> {
@@ -70,12 +66,14 @@ impl VCpu for HexagonVcpu {
                 ));
             }
         };
+        self.discard_packet();
+        self.lock_addr = None;
         self.regs = state.regs.clone();
         Ok(())
     }
 
     fn complete_io_in(&mut self, data: &[u8]) {
-        if let Some(pending) = self.pending_mmio.take() {
+        if let Some(pending) = self.pending_mmio.as_ref() {
             let val = match pending.size {
                 1 if data.len() >= 1 => {
                     let raw = data[0] as u32;
@@ -103,6 +101,7 @@ impl VCpu for HexagonVcpu {
                 _ => return,
             };
 
+            let pending = self.pending_mmio.take().unwrap();
             if let Some(packet) = self.pending_packet.as_mut() {
                 packet.new_r[pending.dst as usize] = Some(val);
             } else {

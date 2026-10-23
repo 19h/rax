@@ -1,3 +1,6 @@
+#[path = "packet_commit.rs"]
+mod packet_commit;
+
 #[path = "packet_registers.rs"]
 mod packet_registers;
 

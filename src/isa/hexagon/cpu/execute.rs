@@ -119,7 +119,12 @@ impl HexagonVcpu {
                         }
                     };
                     let signed = matches!(sign, MemSign::Signed) && size < 4;
-                    self.pending_mmio = Some(MmioPending { dst, size, signed });
+                    self.pending_mmio = Some(MmioPending {
+                        addr,
+                        dst,
+                        size,
+                        signed,
+                    });
                     return Ok(Some(VcpuExit::MmioRead {
                         addr: addr as u64,
                         size,
@@ -327,7 +332,7 @@ impl HexagonVcpu {
                         base_val.wrapping_add(offset as u32)
                     }
                     AddrMode::GpOffset { offset } => {
-                        let gp = self.regs.control(11) & !0x3f; // GP low 6 bits are hardwired zero
+                        let gp = self.old_regs().control(11) & !0x3f; // GP low 6 bits are hardwired zero
                         gp.wrapping_add(offset as u32)
                     }
                     AddrMode::Abs { addr } => addr,
@@ -646,30 +651,28 @@ impl HexagonVcpu {
                 new_r[dst as usize] = Some(hex_reg_shift32(val, rt, kind));
             }
             DecodedInsn::TfrCrR { dst, src } => {
-                new_r[dst as usize] = Some(self.regs.control(src as usize));
+                new_r[dst as usize] = Some(self.old_regs().control(src as usize));
             }
             DecodedInsn::TfrRrCr { dst, src } => {
                 let val = self.regs.r[src as usize];
-                self.regs.set_control(dst as usize, val);
+                self.write_packet_control(dst as usize, val, new_p);
             }
             DecodedInsn::TfrCrRPair { dst, src } => {
                 // Rdd = Css: read the even/odd control-register pair into a GPR pair.
-                new_r[dst as usize] = Some(self.regs.control(src as usize));
-                new_r[dst as usize + 1] = Some(self.regs.control(src as usize + 1));
+                new_r[dst as usize] = Some(self.old_regs().control(src as usize));
+                new_r[dst as usize + 1] = Some(self.old_regs().control(src as usize + 1));
             }
             DecodedInsn::TfrRrCrPair { dst, src } => {
                 // Cdd = Rss: write a GPR pair into the control-register pair.
                 let lo = self.regs.r[src as usize];
                 let hi = self.regs.r[src as usize + 1];
-                self.regs.set_control(dst as usize, lo);
-                self.regs.set_control(dst as usize + 1, hi);
+                self.write_packet_control(dst as usize, lo, new_p);
+                self.write_packet_control(dst as usize + 1, hi, new_p);
             }
             DecodedInsn::DcZero { base } => {
                 // Zero the 32-byte cache line containing Rs (aligned down to 32).
                 let ea = self.regs.r[base as usize] & !31;
-                self.mem
-                    .write_slice(&[0u8; 32], GuestAddress(ea as u64))
-                    .map_err(|e| Error::Emulator(format!("dczeroa write: {e}")))?;
+                self.write_packet_memory(ea, &[0u8; 32])?;
             }
             DecodedInsn::LoopStartReg {
                 loop_id,

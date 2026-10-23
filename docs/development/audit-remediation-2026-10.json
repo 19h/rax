@@ -349,7 +349,8 @@
         "/tmp/rax-hexagon-commit/parent-red.log",
         "/tmp/rax-hexagon-commit/mmio.enc"
       ],
-      "baseline": "Six contracts fail against the GPR-group source image: direct/lifted RAM rollback, lifted GPR rollback, direct USR rollback, .new producer continuity over MMIO read, and an MMIO write escaping a later-faulting packet."
+      "baseline": "Six contracts fail against the GPR-group source image: direct/lifted RAM rollback, lifted GPR rollback, direct USR rollback, .new producer continuity over MMIO read, and an MMIO write escaping a later-faulting packet.",
+      "direct_validation": "The direct V68 RAM write log now passes the expanded packet fault/commit contracts. Lifted SMIR register/memory rollback remains pending; this finding stays pending until that plane is corrected."
     },
     {
       "id": "H-PC",
@@ -770,34 +771,85 @@
       "id": "H-MMIO-NEW",
       "area": "Hexagon packet commit",
       "finding": "GPR producer indices are discarded when a packet suspends for an MMIO read, so a legal later .new store resolves to R0.",
-      "status": "pending",
+      "status": "locally_validated",
       "evidence": [
         "/tmp/rax-hexagon-commit/contracts.rs",
-        "/tmp/rax-hexagon-commit/parent-red.log"
+        "/tmp/rax-hexagon-commit/parent-red.log",
+        "tests/suites/machine/hexagon_baremetal/packet_commit.rs",
+        "/tmp/rax-hexagon-commit/direct-parent-red.log",
+        "/tmp/rax-hexagon-commit/final-integration.log"
       ],
-      "primary_source": "V68 sections 3.3.1/3.3.2; fixed LLVM 23 V68 encodings in /tmp/rax-hexagon-commit/mmio.enc."
+      "primary_source": "V68 sections 3.3.1/3.3.2; fixed LLVM 23 V68 encodings in /tmp/rax-hexagon-commit/mmio.enc.",
+      "remaining_validation": [
+        "Independent QEMU / physical Hexagon execution"
+      ]
     },
     {
       "id": "H-MMIO-COMMIT",
       "area": "Hexagon packet commit",
       "finding": "A dual-store packet emits an MMIO write exit before detecting an unmapped later store.",
-      "status": "pending",
+      "status": "locally_validated",
       "evidence": [
         "/tmp/rax-hexagon-commit/contracts.rs",
-        "/tmp/rax-hexagon-commit/parent-red.log"
+        "/tmp/rax-hexagon-commit/parent-red.log",
+        "tests/suites/machine/hexagon_baremetal/packet_commit.rs",
+        "/tmp/rax-hexagon-commit/direct-parent-red.log",
+        "/tmp/rax-hexagon-commit/final-integration.log"
       ],
-      "primary_source": "V68 sections 3.3.1/3.3.2; fixed LLVM 23 V68 encodings in /tmp/rax-hexagon-commit/mmio.enc."
+      "primary_source": "V68 sections 3.3.1/3.3.2; fixed LLVM 23 V68 encodings in /tmp/rax-hexagon-commit/mmio.enc.",
+      "remaining_validation": [
+        "Independent QEMU / physical Hexagon execution"
+      ]
     },
     {
       "id": "H-USR-COMMIT",
       "area": "Hexagon packet commit",
       "finding": "A saturating instruction sets USR.OVF before a later packet fault, and the sticky control-state change survives the fault.",
-      "status": "pending",
+      "status": "locally_validated",
       "evidence": [
         "/tmp/rax-hexagon-commit/contracts.rs",
-        "/tmp/rax-hexagon-commit/parent-red.log"
+        "/tmp/rax-hexagon-commit/parent-red.log",
+        "tests/suites/machine/hexagon_baremetal/packet_commit.rs",
+        "/tmp/rax-hexagon-commit/direct-parent-red.log",
+        "/tmp/rax-hexagon-commit/final-integration.log"
       ],
-      "primary_source": "V68 sections 3.3.1/3.3.2; fixed LLVM 23 V68 encodings in /tmp/rax-hexagon-commit/mmio.enc."
+      "primary_source": "V68 sections 3.3.1/3.3.2; fixed LLVM 23 V68 encodings in /tmp/rax-hexagon-commit/mmio.enc.",
+      "remaining_validation": [
+        "Independent QEMU / physical Hexagon execution"
+      ]
+    },
+    {
+      "id": "H-MMIO-END",
+      "area": "Hexagon packet execution",
+      "finding": "Resuming a final-word MMIO read executes the following packet word before completing the suspended packet.",
+      "status": "locally_validated",
+      "evidence": [
+        "tests/suites/machine/hexagon_baremetal/packet_commit.rs",
+        "/tmp/rax-hexagon-commit/direct-parent-red.log",
+        "/tmp/rax-hexagon-commit/final-integration.log"
+      ]
+    },
+    {
+      "id": "H-GP-OLD",
+      "area": "Hexagon packet execution",
+      "finding": "A same-packet GP transfer changes an ordinary GP-relative load address before packet commit.",
+      "status": "locally_validated",
+      "evidence": [
+        "tests/suites/machine/hexagon_baremetal/packet_commit.rs",
+        "/tmp/rax-hexagon-commit/direct-parent-red.log",
+        "/tmp/rax-hexagon-commit/final-integration.log"
+      ]
+    },
+    {
+      "id": "H-MMIO-ORDER",
+      "area": "Hexagon packet execution",
+      "finding": "Ordered MMIO store/load packets need a continuation that preserves device access order and validates later effects; the current packet journal explicitly rejects this profile.",
+      "status": "pending",
+      "evidence": [
+        "tests/suites/machine/hexagon_baremetal/packet_commit.rs",
+        "/tmp/rax-hexagon-commit/direct-parent-red.log",
+        "/tmp/rax-hexagon-commit/final-integration.log"
+      ]
     }
   ],
   "decisions": {
@@ -2499,6 +2551,131 @@
         {
           "impact": "low",
           "item": "For n instruction IR operations, rewriting is O(n+32) time and O(n+32) space per word; accepted ordinary packets contain at most four words. Single-word packets without prior outputs bypass packet-view copies.",
+          "blocks": false
+        }
+      ]
+    },
+    {
+      "id": "hexagon-direct-packet-commit",
+      "baseline": "3c29cd6ec1a4e6ca459338e5ced59a6fbbc87167",
+      "status": "locally_validated",
+      "scope": [
+        "Probe and log all direct scalar/vector/cache-zero RAM stores, publishing after successful packet execution and queued MMIO writes",
+        "Restore registers, control flags, reservations, scratch and continuation state after failure",
+        "Preserve ordinary control-register inputs, packet-entry instruction words and V68 store-to-load forwarding",
+        "Preserve producer indices across MMIO reads, reject incomplete read completions, and retire exactly the suspended packet",
+        "Report packet-entry registers/PC while suspended; state replacement discards old continuations",
+        "Retain Sync through a private mutex-protected write log and bound instruction fetch to four packet words"
+      ],
+      "primary_source": "docs/architecture/hexagon/80-N2040-46_REV_B_Hexagon_V68_Programmers_Reference_Manual.txt: sections 3.3.1/3.3.2, 5.4 dual stores and 5.5 slot-1 store/slot-0 load; tools/hexagon/qemu/imported/mmvec/ext.idef:2472-2485; LLVM 23 V68 fixed encodings in /tmp/rax-hexagon-commit/*.enc.",
+      "assumptions": [
+        {
+          "assumption": "GuestMemoryMmap region mappings remain fixed during a vCPU packet.",
+          "dependent_result": "A successfully probed logged store range remains writable by the same RAM backend at commit.",
+          "stress_test": "Mapped/unmapped dual stores, unaligned later access, missing instruction fetch, partial vector span, late scatter element failure, successful scalar/vector stores.",
+          "falsification_probe": "A backend changes its region map or rejects a write after a successful fixed-map probe."
+        },
+        {
+          "assumption": "Ordinary packet reads use entry registers; physical memory-instruction order identifies V68 :mem_noshuf forwarding.",
+          "dependent_result": "Control/GP values, instruction words, conditional effects and data forwarding.",
+          "stress_test": "Same-packet GP transfer, both byte orders, full/partial overlapping store/load, load-before-store, code-overlapping stores, repeated scatter increments.",
+          "falsification_probe": "An ordinary input sees a new control value, a data load misses a prior slot-1 store, or instruction fetch sees an uncommitted code store."
+        },
+        {
+          "assumption": "The modeled scalar MMIO interface completes reads with supplied data and acknowledges writes on the next entry.",
+          "dependent_result": "One packet retirement across resumptions and no queued output from a later-faulting packet.",
+          "stress_test": "Producer/read/.new-store sequence, short/absent completions, two writes, RAM plus write, explicit state replacement, final-word read followed by a distinguishable next packet.",
+          "falsification_probe": "An output is duplicated, state becomes visible early, a producer is lost, or a read completion executes the next packet."
+        },
+        {
+          "assumption": "Bulk/implicit MMIO and mixed ordered MMIO write/read are outside the currently representable device profile.",
+          "dependent_result": "These combinations reject before reversing device operations or bypassing routing through backing RAM.",
+          "stress_test": "Backed MMIO vector-store rejection and ordered scalar MMIO store/load rejection.",
+          "falsification_probe": "Either case touches backing RAM, emits a premature device exit, or silently completes."
+        }
+      ],
+      "baseline_results": {
+        "contracts": {
+          "passed": 5,
+          "failed": 20
+        },
+        "basis": "The final 25-contract standalone suite links the pre-transaction GPR-group rlib. Five passing controls include successful dual-store, scatter accumulation and memory order. One failure is the new explicit ordered-MMIO admission bound rather than a claim that hardware rejects that packet."
+      },
+      "affected_planes": {
+        "direct": "CPU state, RAM, MMIO continuations, decoded and opaque scalar/HVX execution paths.",
+        "smir": "Unchanged. The two independent lifted rollback regressions still fail and remain under H-COMMIT.",
+        "oracle": "Shared static/seeded IR unchanged; no independent hardware claim.",
+        "c_api": "Engine execution changes through existing vCPU interfaces; no ABI layout change.",
+        "native": "No Hexagon native execution admission is added."
+      },
+      "validation": {
+        "contracts": {
+          "passed": 25,
+          "failed": 0
+        },
+        "bare_metal": {
+          "passed": 135,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0
+        },
+        "smir_consistency": {
+          "passed": 313,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0
+        },
+        "oracle": {
+          "passed": 95,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0
+        },
+        "logs": [
+          "/tmp/rax-hexagon-commit/direct-parent-red.log",
+          "/tmp/rax-hexagon-commit/final-integration.log",
+          "/tmp/rax-hexagon-commit/final-library.log",
+          "/tmp/rax-hexagon-commit/final-capi.log",
+          "/tmp/rax-hexagon-commit/final-build.log",
+          "/tmp/rax-hexagon-commit/final-clippy.log",
+          "/tmp/rax-hexagon-commit/final-fmt.log"
+        ],
+        "library": {
+          "passed": 10418,
+          "failed": 0,
+          "ignored": 2,
+          "filtered": 0,
+          "test_threads": 12,
+          "elapsed_seconds": 259.11
+        },
+        "c_api": {
+          "passed": 185,
+          "failed": 0,
+          "ignored": 0
+        },
+        "all_targets_build": "passed",
+        "clippy_all_targets": "passed",
+        "format": "passed"
+      },
+      "bounded_scope": [
+        {
+          "impact": "high",
+          "item": "H-COMMIT remains pending for lifted SMIR rollback. Complete checkpointing of the new private continuation, write log and queued outputs remains in C-STATE.",
+          "blocks": "Complete all-plane packet and checkpoint fidelity."
+        },
+        {
+          "impact": "medium",
+          "item": "H-MMIO-ORDER remains pending. Mixed ordered MMIO writes/reads and bulk/implicit MMIO reject explicitly instead of changing device order or accessing backing RAM. MMIO read device side effects are external transactions, not reversible RAM writes.",
+          "blocks": false
+        },
+        {
+          "impact": "medium",
+          "item": "The fixed RAM map and functional reservation model do not establish a complete multicore Hexagon memory model, independent QEMU equivalence, or physical hardware execution.",
+          "blocks": false
+        },
+        {
+          "impact": "low",
+          "item": "For b logged bytes and k log entries, storage is O(b+k+register-file size). A data read of r bytes forwards in O(k*r); commit is O(b+k). Packet fetch is capped at four words. No runtime performance claim is made.",
           "blocks": false
         }
       ]
