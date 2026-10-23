@@ -1,3 +1,10 @@
+#[cfg(target_arch = "aarch64")]
+#[path = "fp_native.rs"]
+mod fp_native;
+
+#[path = "fp_contract.rs"]
+mod fp_contract;
+
 use rax::isa::arm::decoder::{Aarch32Decoder, DecodedInsn, Mnemonic};
 use rax::isa::arm::execution::{ArmMemory, FlatMemory};
 use rax::isa::arm::vfp::{Fpscr, RoundingMode};

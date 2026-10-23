@@ -38,6 +38,10 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
     }
 
     pub(crate) fn exec_neon_fp_add_sub(&mut self, insn: &DecodedInsn) -> ExecResult {
+        self.with_standard_fp_controls(|executor| executor.exec_neon_fp_add_sub_inner(insn))
+    }
+
+    fn exec_neon_fp_add_sub_inner(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
             return ExecResult::Exception(ExceptionType::UndefinedInstruction);
         }
@@ -121,6 +125,10 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
     }
 
     pub(crate) fn exec_neon_fp_pairwise(&mut self, insn: &DecodedInsn) -> ExecResult {
+        self.with_standard_fp_controls(|executor| executor.exec_neon_fp_pairwise_inner(insn))
+    }
+
+    fn exec_neon_fp_pairwise_inner(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
             return ExecResult::Exception(ExceptionType::UndefinedInstruction);
         }
@@ -329,6 +337,10 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
     }
 
     pub(crate) fn exec_neon_fp_multiply(&mut self, insn: &DecodedInsn) -> ExecResult {
+        self.with_standard_fp_controls(|executor| executor.exec_neon_fp_multiply_inner(insn))
+    }
+
+    fn exec_neon_fp_multiply_inner(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
             return ExecResult::Exception(ExceptionType::UndefinedInstruction);
         }

@@ -22,7 +22,9 @@ use crate::smir::ir::types::*;
 use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind};
 
 // ---- module tree (auto-split) ----
+mod arm_arithmetic;
 mod arm_flags;
+pub(crate) use arm_arithmetic::ArmFpOperation;
 mod execution;
 mod hexagon_packets;
 pub use execution::*;

@@ -290,8 +290,18 @@
       "id": "A32-FP",
       "area": "A32 VFP",
       "finding": "Incorrect FPSCR behavior for infinity/NaN/division by zero, and incorrect rounding/FZ handling",
-      "status": "pending",
-      "evidence": []
+      "status": "partially_validated",
+      "evidence": [
+        "tests/suites/isa/arm/aarch32/fp_contract.rs",
+        "tests/suites/isa/arm/aarch32/fp_native.rs",
+        "/tmp/rax-a32-fp/expanded-parent-red.log",
+        "/tmp/rax-a32-fp/native-integration.log"
+      ],
+      "remaining_validation": [
+        "Fused arithmetic, conversions and complete FP16/FZ16 profiles",
+        "Enabled floating-point exception delivery",
+        "Native A32 hardware or independent A32 system oracle"
+      ]
     },
     {
       "id": "R-AMO",
@@ -2826,6 +2836,122 @@
         {
           "impact": "low",
           "item": "C API analysis ABI sizes are unchanged. Public JSON gains two packet opcode names; SMIR operation counts include them. Static address abstraction remains conservatively partial where expressions cannot be represented.",
+          "blocks": false
+        }
+      ]
+    },
+    {
+      "id": "a32-vfp-basic-arithmetic",
+      "baseline": "6c61734006f16f7947b307dca2ccba90c68bd628",
+      "status": "locally_validated",
+      "scope": [
+        "Binary32/binary64 VADD, VSUB, VMUL, VDIV and VSQRT with guest rounding, NaN classification/payload, DN, FZ and cumulative FPSCR exceptions",
+        "Non-fused VMLA/VMLS/VNMLA/VNMLS/VNMUL retain intermediate rounding and perform operand negation at architectural boundaries",
+        "Legacy Advanced SIMD callers select StandardFPSCRValue, retaining original guest controls and cumulative exceptions",
+        "Extract arithmetic/non-fused implementations while preserving public helper paths"
+      ],
+      "primary_source": {
+        "local": "docs/architecture/arm/asl/arm_defs.asl: FPUnpack, FPAdd, FPSub, FPRoundBase and StandardFPSCRValue",
+        "manual": "https://documentation-service.arm.com/static/5f8daeb7f86e16515cdb8c4e",
+        "profile": "Armv7-A/R Architecture Reference Manual DDI0406C.d; VMLA/VMLS/VNMLA/VNMLS/VNMUL operation pseudocode"
+      },
+      "assumptions": [
+        {
+          "assumption": "Basic binary32/binary64 arithmetic with exception enables clear shares the checked Arm arithmetic rules across A32 VFP and A64 scalar FP.",
+          "dependent_result": "Native A64 provides an independent arithmetic result/status control.",
+          "stress_test": "100000 seeded comparisons over five operations, both precisions, all rounding directions, FZ/DN and exceptional bit patterns.",
+          "falsification_probe": "Any result bit or cumulative exception differs from native A64; native A32 decoding is not inferred."
+        },
+        {
+          "assumption": "The represented scope is untrapped scalar arithmetic; FP16 wrappers and other instruction families require additional work.",
+          "dependent_result": "No full A32 FP fidelity claim follows from this group.",
+          "stress_test": "A32 raw-word fixtures, sticky status, host FPCR/FPSR preservation and unsupported SMIR admission controls.",
+          "falsification_probe": "A changed helper bypasses guest controls, changes the host FP environment, or VFP is silently admitted without FPSCR representation."
+        }
+      ],
+      "baseline_results": {
+        "reported_cases": {
+          "passed": 0,
+          "failed": 18
+        },
+        "expanded_contracts": {
+          "passed": 1,
+          "failed": 26
+        },
+        "basis": "Final expanded contracts link the saved parent rlib. The passing case is the pre-existing fail-closed VFP lifter boundary."
+      },
+      "affected_planes": {
+        "direct": "Shared VFP helpers implement exact integer-significand arithmetic; decoded scalar and legacy Advanced SIMD callers are tested.",
+        "cpu_state": "FPSCR cumulative bits merge; unrelated controls and flags remain. Enabled trap delivery is still pending.",
+        "smir": "A32 lifter rejects the unrepresented VFP instructions; no native admission is added. Existing integer soft-FP primitives are reused without changing x86 operations.",
+        "native": "Host FPCR/FPSR are untouched by software; native A64 is a test-only common-profile oracle.",
+        "memory_backend_abi": "No memory, backend, public register layout or C ABI changes."
+      },
+      "validation": {
+        "status": "passed_for_represented_scope",
+        "native_comparisons": 100000,
+        "seed": "0x07d38b9264a1ef05",
+        "generator": "xorshift64: shifts 13,7,17",
+        "logs": [
+          "/tmp/rax-a32-fp/expanded-parent-red.log",
+          "/tmp/rax-a32-fp/third-integration.log",
+          "/tmp/rax-a32-fp/native-integration.log",
+          "/tmp/rax-a32-fp/library.log",
+          "/tmp/rax-a32-fp/capi.log",
+          "/tmp/rax-a32-fp/final-integration.log",
+          "/tmp/rax-a32-fp/build.log",
+          "/tmp/rax-a32-fp/clippy.log",
+          "/tmp/rax-a32-fp/fmt.log",
+          "/tmp/rax-a32-fp/doc.log"
+        ],
+        "arm": {
+          "passed": 46850,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0
+        },
+        "vfp": {
+          "passed": 125,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0
+        },
+        "c_api": {
+          "passed": 185,
+          "failed": 0,
+          "ignored": 0
+        },
+        "all_targets_build": "passed",
+        "clippy_all_targets": "passed",
+        "format": "passed",
+        "doctests": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 5
+        },
+        "library": {
+          "passed": 10418,
+          "failed": 0,
+          "ignored": 2,
+          "filtered": 0,
+          "elapsed_seconds": 278.92,
+          "test_threads": 12
+        }
+      },
+      "bounded_scope": [
+        {
+          "impact": "high",
+          "item": "Fused arithmetic, conversions, minNum/maxNum, full FP16/FZ16 and enabled exception delivery remain separate pending profiles.",
+          "blocks": "Full A32 floating-point fidelity."
+        },
+        {
+          "impact": "medium",
+          "item": "Native A64 comparisons establish common arithmetic behavior, not native A32 decoding or privileged execution.",
+          "blocks": false
+        },
+        {
+          "impact": "low",
+          "item": "Fixed-width u128 arithmetic has bounded time/space per operation; integer square root is bounded by 128-bit radicands. No performance claim is made.",
           "blocks": false
         }
       ]
