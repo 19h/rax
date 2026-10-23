@@ -16,6 +16,7 @@ use super::linear::crossing_next;
 
 #[path = "memory_fault.rs"]
 mod fault;
+mod paging;
 
 #[cfg(feature = "profiling")]
 use crate::observability::profiling;
@@ -335,29 +336,27 @@ mod flags {
 /// Control register bits.
 mod cr0 {
     pub const PE: u64 = 1 << 0; // Protected Mode Enable
+    pub const WP: u64 = 1 << 16; // Supervisor write protection
     pub const PG: u64 = 1 << 31; // Paging Enable
 }
 
 /// Physical address bits (must match CPUID 0x80000008 EAX[7:0])
 const PHYS_BITS: u32 = 48;
 /// Reserved bits mask: bits in PTE address field that must be zero
-/// For 40 phys bits: bits 51:40 in the address portion (0x000FFF0000000000)
+/// Address bits at or above PHYS_BITS are reserved in this profile.
 const PTE_RSVD_MASK: u64 = !((1u64 << PHYS_BITS) - 1) & 0x000F_FFFF_FFFF_F000;
 
 #[allow(dead_code)]
 mod cr4 {
+    pub const SMEP: u64 = 1 << 20; // Supervisor execution prevention
     pub const PAE: u64 = 1 << 5; // Physical Address Extension
 }
 
 mod efer {
     pub const LME: u64 = 1 << 8; // Long Mode Enable
+    pub const NXE: u64 = 1 << 11; // No-execute enable
     pub const LMA: u64 = 1 << 10; // Long Mode Active
 }
-
-/// Linux kernel direct map virtual address base (physical memory mapped here)
-const DIRECT_MAP_BASE: u64 = 0xffff888000000000;
-/// Direct map covers up to 64TB of physical memory
-const DIRECT_MAP_END: u64 = 0xffffc87fffffffff;
 
 /// Memory access type.
 #[derive(Debug, Clone, Copy)]
@@ -376,6 +375,10 @@ struct TlbEntry {
     phys_base: u64,
     /// Page size shift: 12 for 4KB, 21 for 2MB, 30 for 1GB
     page_shift: u8,
+    /// Effective permissions accumulated across the translation hierarchy.
+    writable: bool,
+    user: bool,
+    no_execute: bool,
     /// Valid bit
     valid: bool,
 }
@@ -388,6 +391,9 @@ impl Default for TlbEntry {
             phys_base: 0,
             page_shift: 12,
             valid: false,
+            writable: false,
+            user: false,
+            no_execute: false,
         }
     }
 }
@@ -834,6 +840,11 @@ impl Mmu {
         access: AccessType,
         sregs: &SystemRegisters,
     ) -> Result<u64> {
+        let access = if self.fetch_active && matches!(access, AccessType::Read) {
+            AccessType::Execute
+        } else {
+            access
+        };
         // User mode: the installed translation replaces paging. Long mode
         // still requires canonical linear addresses (SDM Vol. 1 §3.3.7.1), and
         // a non-canonical access is #GP(0), never a page fault.
@@ -844,7 +855,6 @@ impl Mmu {
             let kind = match access {
                 AccessType::Write => MemoryAccessKind::Write,
                 AccessType::Execute => MemoryAccessKind::Fetch,
-                AccessType::Read if self.fetch_active => MemoryAccessKind::Fetch,
                 AccessType::Read => MemoryAccessKind::Read,
             };
             return flat.translate(vaddr, kind).map_err(Error::from);
@@ -871,15 +881,15 @@ impl Mmu {
             self.cached_cr3 = sregs.cr3;
         }
 
-        // TLB lookup - only use for reads (writes need permission check)
-        // TODO: Could cache write permission in TLB for better performance
+        // Recheck current privilege and control state even on a TLB hit.
+        // Writes walk again so the leaf dirty bit can be updated.
         if !matches!(access, AccessType::Write) {
             let index = Self::tlb_index(vaddr);
             let tag = Self::tlb_tag(vaddr, sregs.cr3);
 
             let entry = &self.tlb[index];
             if entry.valid && entry.tag == tag {
-                // TLB hit! Fast path
+                self.check_paging_access(vaddr, access, sregs, entry)?;
                 let offset_mask = (1u64 << entry.page_shift) - 1;
                 let paddr = entry.phys_base | (vaddr & offset_mask);
                 return Ok(paddr);
@@ -890,17 +900,7 @@ impl Mmu {
         let index = Self::tlb_index(vaddr);
         let tag = Self::tlb_tag(vaddr, sregs.cr3);
 
-        // Try normal page table walk first
-        match self.translate_slow(vaddr, access, sregs, index, tag) {
-            Ok(paddr) => Ok(paddr),
-            Err(Error::PageFault { vaddr, error_code }) => {
-                // Page table walk failed. Check if this is a direct map access
-                // that falls outside the kernel's page tables but within our
-                // actual physical memory allocation (used for per-CPU overflow).
-                self.try_direct_map_fallback(vaddr, error_code)
-            }
-            Err(e) => Err(e),
-        }
+        self.translate_slow(vaddr, access, sregs, index, tag)
     }
 
     /// Preflight every translated chunk of a write without modifying guest
@@ -1025,264 +1025,6 @@ impl Mmu {
         sregs: &SystemRegisters,
     ) -> bool {
         self.range_is_plain_ram(vaddr, len, AccessType::Write, sregs)
-    }
-
-    /// Fallback translation for direct map addresses outside kernel's page tables.
-    ///
-    /// The kernel only creates page table entries for memory reported in e820,
-    /// but we allocate extra memory for per-CPU overflow. When the kernel tries
-    /// to access per-CPU data at addresses just past the e820 range, the page
-    /// table walk fails. This function handles those accesses by directly
-    /// computing the physical address from the direct map virtual address.
-    fn try_direct_map_fallback(&self, vaddr: u64, error_code: u64) -> Result<u64> {
-        // Check if address is in the direct map region
-        if vaddr >= DIRECT_MAP_BASE && vaddr <= DIRECT_MAP_END {
-            let paddr = vaddr - DIRECT_MAP_BASE;
-
-            // Check if physical address is within our actual allocation
-            let mem_size = self.memory_size();
-            if paddr < mem_size {
-                // Allow access to memory we've allocated but kernel doesn't know about
-                return Ok(paddr);
-            }
-        }
-
-        // Not in direct map or outside our allocation - return the original page fault
-        // with the error_code computed by translate_slow (includes U/S and W/R bits)
-        Err(Error::PageFault { vaddr, error_code })
-    }
-
-    /// Slow path: full page table walk (called on TLB miss)
-    #[cold]
-    fn translate_slow(
-        &mut self,
-        vaddr: u64,
-        access: AccessType,
-        sregs: &SystemRegisters,
-        tlb_index: usize,
-        tlb_tag: u64,
-    ) -> Result<u64> {
-        // For now, we only support 64-bit 4-level paging
-        if !self.long_mode(sregs) {
-            return Err(Error::Emulator(
-                "only 64-bit long mode paging is supported".to_string(),
-            ));
-        }
-
-        let is_write = matches!(access, AccessType::Write);
-
-        // Determine current privilege level (CPL) from CS selector
-        let cpl = (sregs.cs.selector & 0x3) as u8;
-        let is_user = cpl == 3;
-        // Page fault error code bits:
-        // Bit 0 (P): 0 = non-present page, 1 = protection violation
-        // Bit 1 (W/R): 0 = read, 1 = write
-        // Bit 2 (U/S): 0 = supervisor, 1 = user
-        let user_bit = if is_user { 0x4 } else { 0 };
-        let write_bit = if is_write { 0x2 } else { 0 };
-
-        // 4-level paging: PML4 -> PDPT -> PD -> PT
-        let pml4_base = sregs.cr3 & !0xFFF;
-        let pml4_index = (vaddr >> 39) & 0x1FF;
-        let pdpt_index = (vaddr >> 30) & 0x1FF;
-        let pd_index = (vaddr >> 21) & 0x1FF;
-        let pt_index = (vaddr >> 12) & 0x1FF;
-
-        // Read PML4 entry
-        let pml4e = self.read_pte(pml4_base + pml4_index * 8)?;
-        if pml4e & flags::PRESENT == 0 {
-            return Err(Error::PageFault {
-                vaddr,
-                error_code: user_bit | write_bit,
-            });
-        }
-        // Check reserved bits (must be zero) - error code 0x9 = RSVD | P
-        if pml4e & PTE_RSVD_MASK != 0 {
-            return Err(Error::PageFault {
-                vaddr,
-                error_code: user_bit | write_bit | 0x9,
-            });
-        }
-        // Check U/S permission: if user mode, page must have USER bit set
-        if is_user && pml4e & flags::USER == 0 {
-            // User mode accessing supervisor page = protection violation
-            return Err(Error::PageFault {
-                vaddr,
-                error_code: user_bit | write_bit | 0x1,
-            });
-        }
-        // Check write permission at PML4 level
-        if is_write && pml4e & flags::WRITABLE == 0 {
-            // error_code bit 1 = write access, bit 0 = present
-            return Err(Error::PageFault {
-                vaddr,
-                error_code: user_bit | 0x3,
-            });
-        }
-
-        // Read PDPT entry
-        let pdpt_base = pml4e & 0x000F_FFFF_FFFF_F000;
-        let pdpte = self.read_pte(pdpt_base + pdpt_index * 8)?;
-        if pdpte & flags::PRESENT == 0 {
-            return Err(Error::PageFault {
-                vaddr,
-                error_code: user_bit | write_bit,
-            });
-        }
-        // Check reserved bits
-        if pdpte & PTE_RSVD_MASK != 0 {
-            return Err(Error::PageFault {
-                vaddr,
-                error_code: user_bit | write_bit | 0x9,
-            });
-        }
-        // Check U/S permission
-        if is_user && pdpte & flags::USER == 0 {
-            return Err(Error::PageFault {
-                vaddr,
-                error_code: user_bit | write_bit | 0x1,
-            });
-        }
-        // Check write permission at PDPT level
-        if is_write && pdpte & flags::WRITABLE == 0 {
-            return Err(Error::PageFault {
-                vaddr,
-                error_code: user_bit | 0x3,
-            });
-        }
-
-        // Check for 1GB huge page
-        if pdpte & flags::HUGE_PAGE != 0 {
-            // For 1GB pages, bits 29:13 in address portion must be zero (bit 12 is PAT)
-            // Additional reserved mask: (0x40000000 - 1) & 0x000FFFFFFFFFF000 & ~0x1000 = 0x3FFFE000
-            let huge_rsvd = 0x3FFFE000u64;
-            if pdpte & (PTE_RSVD_MASK | huge_rsvd) != 0 {
-                return Err(Error::PageFault {
-                    vaddr,
-                    error_code: user_bit | write_bit | 0x9,
-                });
-            }
-            let page_base = pdpte & 0x000F_FFFF_C000_0000;
-            // Cache in TLB
-            self.tlb[tlb_index] = TlbEntry {
-                tag: tlb_tag,
-                phys_base: page_base,
-                page_shift: 30, // 1GB
-                valid: true,
-            };
-            return Ok(page_base | (vaddr & 0x3FFF_FFFF));
-        }
-
-        // Read PD entry
-        let pd_base = pdpte & 0x000F_FFFF_FFFF_F000;
-        let pde = self.read_pte(pd_base + pd_index * 8)?;
-        if pde & flags::PRESENT == 0 {
-            return Err(Error::PageFault {
-                vaddr,
-                error_code: user_bit | write_bit,
-            });
-        }
-        // Check reserved bits
-        if pde & PTE_RSVD_MASK != 0 {
-            return Err(Error::PageFault {
-                vaddr,
-                error_code: user_bit | write_bit | 0x9,
-            });
-        }
-        // Check U/S permission
-        if is_user && pde & flags::USER == 0 {
-            return Err(Error::PageFault {
-                vaddr,
-                error_code: user_bit | write_bit | 0x1,
-            });
-        }
-        // Check write permission at PD level
-        if is_write && pde & flags::WRITABLE == 0 {
-            return Err(Error::PageFault {
-                vaddr,
-                error_code: user_bit | 0x3,
-            });
-        }
-
-        // Check for 2MB huge page
-        if pde & flags::HUGE_PAGE != 0 {
-            // For 2MB pages, bits 20:13 in address portion must be zero (bit 12 is PAT)
-            // Additional reserved mask: (0x200000 - 1) & 0x000FFFFFFFFFF000 & ~0x1000 = 0x1FE000
-            let huge_rsvd = 0x1FE000u64;
-            if pde & (PTE_RSVD_MASK | huge_rsvd) != 0 {
-                return Err(Error::PageFault {
-                    vaddr,
-                    error_code: user_bit | write_bit | 0x9,
-                });
-            }
-            let page_base = pde & 0x000F_FFFF_FFE0_0000;
-            let paddr = page_base | (vaddr & 0x1F_FFFF);
-
-            // Cache in TLB
-            self.tlb[tlb_index] = TlbEntry {
-                tag: tlb_tag,
-                phys_base: page_base,
-                page_shift: 21, // 2MB
-                valid: true,
-            };
-            return Ok(paddr);
-        }
-
-        // Read PT entry
-        let pt_base = pde & 0x000F_FFFF_FFFF_F000;
-        let pt_addr = pt_base + pt_index * 8;
-        let pte = self.read_pte(pt_addr)?;
-        if pte & flags::PRESENT == 0 {
-            return Err(Error::PageFault {
-                vaddr,
-                error_code: user_bit | write_bit,
-            });
-        }
-        // Check reserved bits
-        if pte & PTE_RSVD_MASK != 0 {
-            return Err(Error::PageFault {
-                vaddr,
-                error_code: user_bit | write_bit | 0x9,
-            });
-        }
-        // Check U/S permission
-        if is_user && pte & flags::USER == 0 {
-            return Err(Error::PageFault {
-                vaddr,
-                error_code: user_bit | write_bit | 0x1,
-            });
-        }
-        // Check write permission at PT level
-        if is_write && pte & flags::WRITABLE == 0 {
-            return Err(Error::PageFault {
-                vaddr,
-                error_code: user_bit | 0x3,
-            });
-        }
-
-        let page_base = pte & 0x000F_FFFF_FFFF_F000;
-        let offset = vaddr & 0xFFF;
-        let paddr = page_base | offset;
-
-        // Cache in TLB
-        self.tlb[tlb_index] = TlbEntry {
-            tag: tlb_tag,
-            phys_base: page_base,
-            page_shift: 12, // 4KB
-            valid: true,
-        };
-
-        Ok(paddr)
-    }
-
-    /// Read a page table entry from physical memory.
-    #[inline(always)]
-    fn read_pte(&self, paddr: u64) -> Result<u64> {
-        let mut buf = [0u8; 8];
-        self.memory
-            .read_slice(&mut buf, GuestAddress(paddr))
-            .map_err(|e| Error::Emulator(format!("failed to read PTE at {:#x}: {}", paddr, e)))?;
-        Ok(u64::from_le_bytes(buf))
     }
 
     /// Read bytes from guest memory (physical address).

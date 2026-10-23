@@ -1,5 +1,9 @@
 //! Native x86 guest-region metadata shared by compilation and execution.
 
+#[cfg(test)]
+#[path = "cpu_jit_paging_tests.rs"]
+mod paging_tests;
+
 use super::X86_64Vcpu;
 use crate::smir::ir::SmirFunction;
 
@@ -180,6 +184,20 @@ impl JitRegion {
 }
 
 impl X86_64Vcpu {
+    /// A denied page may belong to an untaken branch. Defer to the interpreter
+    /// rather than injecting a speculative fetch fault for the whole region.
+    pub(super) fn jit_source_pages_accessible(&mut self, region: &JitRegion) -> bool {
+        region.source_pages.iter().all(|&page| {
+            self.mmu
+                .translate(
+                    page,
+                    crate::isa::x86_64::memory::AccessType::Execute,
+                    &self.sregs,
+                )
+                .is_ok()
+        })
+    }
+
     /// The JIT cache key discriminator: address space (CR3), CPU mode (CS.L
     /// long-mode, CS.DB default-size), and every mutable runtime capability that
     /// changes region eligibility or lowering. A compiled region or ineligible

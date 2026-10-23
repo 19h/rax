@@ -38,43 +38,103 @@
       "id": "X-NX",
       "area": "x86 paging",
       "finding": "A NOP on an NX page executes through system-mode CPU.step",
-      "status": "pending",
-      "evidence": []
+      "status": "locally_validated",
+      "evidence": [
+        "tests/suites/isa/x86_64/paging_contract.rs",
+        "src/isa/x86_64/cpu_jit_paging_tests.rs",
+        "/tmp/rax-x86-paging-red.log",
+        "/tmp/rax-x86-paging-final-integration.log",
+        "/tmp/rax-x86-audit-mmu-after-paging.log",
+        "/tmp/rax-x86-audit-protection-after-paging.log"
+      ],
+      "remaining_validation": [
+        "Native x86-64 host / privileged hardware oracle"
+      ]
     },
     {
       "id": "X-WP",
       "area": "x86 paging",
       "finding": "Rejects an R/W=0 write that should be allowed at CPL0 with CR0.WP=0",
-      "status": "pending",
-      "evidence": []
+      "status": "locally_validated",
+      "evidence": [
+        "tests/suites/isa/x86_64/paging_contract.rs",
+        "src/isa/x86_64/cpu_jit_paging_tests.rs",
+        "/tmp/rax-x86-paging-red.log",
+        "/tmp/rax-x86-paging-final-integration.log",
+        "/tmp/rax-x86-audit-mmu-after-paging.log",
+        "/tmp/rax-x86-audit-protection-after-paging.log"
+      ],
+      "remaining_validation": [
+        "Native x86-64 host / privileged hardware oracle"
+      ]
     },
     {
       "id": "X-TLB",
       "area": "x86 paging",
       "finding": "TLB-hit path does not revalidate current access/CPL conditions",
-      "status": "pending",
-      "evidence": []
+      "status": "locally_validated",
+      "evidence": [
+        "tests/suites/isa/x86_64/paging_contract.rs",
+        "src/isa/x86_64/cpu_jit_paging_tests.rs",
+        "/tmp/rax-x86-paging-red.log",
+        "/tmp/rax-x86-paging-final-integration.log",
+        "/tmp/rax-x86-audit-mmu-after-paging.log",
+        "/tmp/rax-x86-audit-protection-after-paging.log"
+      ],
+      "remaining_validation": [
+        "Native x86-64 host / privileged hardware oracle"
+      ]
     },
     {
       "id": "X-AD",
       "area": "x86 paging",
       "finding": "Page-table accessed/dirty bits are not updated after accesses/writes",
-      "status": "pending",
-      "evidence": []
+      "status": "locally_validated",
+      "evidence": [
+        "tests/suites/isa/x86_64/paging_contract.rs",
+        "src/isa/x86_64/cpu_jit_paging_tests.rs",
+        "/tmp/rax-x86-paging-red.log",
+        "/tmp/rax-x86-paging-final-integration.log",
+        "/tmp/rax-x86-audit-mmu-after-paging.log",
+        "/tmp/rax-x86-audit-protection-after-paging.log"
+      ],
+      "remaining_validation": [
+        "Native x86-64 host / privileged hardware oracle"
+      ]
     },
     {
       "id": "X-FALLBACK",
       "area": "x86 paging",
       "finding": "Linux direct-map fallback converts a non-present #PF into a successful RAM mapping; source inspection also shows protection/reserved faults entering the same branch",
-      "status": "pending",
-      "evidence": []
+      "status": "locally_validated",
+      "evidence": [
+        "tests/suites/isa/x86_64/paging_contract.rs",
+        "src/isa/x86_64/cpu_jit_paging_tests.rs",
+        "/tmp/rax-x86-paging-red.log",
+        "/tmp/rax-x86-paging-final-integration.log",
+        "/tmp/rax-x86-audit-mmu-after-paging.log",
+        "/tmp/rax-x86-audit-protection-after-paging.log"
+      ],
+      "remaining_validation": [
+        "Native x86-64 host / privileged hardware oracle"
+      ]
     },
     {
       "id": "X-RSVD",
       "area": "x86 paging",
       "finding": "Accepts a reserved PML4 PS bit",
-      "status": "pending",
-      "evidence": []
+      "status": "locally_validated",
+      "evidence": [
+        "tests/suites/isa/x86_64/paging_contract.rs",
+        "src/isa/x86_64/cpu_jit_paging_tests.rs",
+        "/tmp/rax-x86-paging-red.log",
+        "/tmp/rax-x86-paging-final-integration.log",
+        "/tmp/rax-x86-audit-mmu-after-paging.log",
+        "/tmp/rax-x86-audit-protection-after-paging.log"
+      ],
+      "remaining_validation": [
+        "Native x86-64 host / privileged hardware oracle"
+      ]
     },
     {
       "id": "X-SMAP",
@@ -355,6 +415,39 @@
       "evidence": [
         "tests/suites/isa/arm/mmu_contract.rs::cpu_preserves_instruction_fetch_fault_classification",
         "/tmp/rax-arm-fetch-red.log"
+      ]
+    },
+    {
+      "id": "X-NATIVE-FETCH",
+      "area": "x86 native cache",
+      "finding": "Cached native regions executed guest instructions after their source page became NX.",
+      "status": "locally_validated",
+      "evidence": [
+        "src/isa/x86_64/cpu_jit_paging_tests.rs",
+        "/tmp/rax-x86-paging-native-red.log",
+        "/tmp/rax-x86-paging-native-green.log"
+      ]
+    },
+    {
+      "id": "X-FETCH-ID",
+      "area": "x86 fetch fault metadata",
+      "finding": "CPU fetch unconditionally set #PF.I/D even with both NXE and SMEP clear.",
+      "status": "locally_validated",
+      "evidence": [
+        "tests/suites/isa/x86_64/paging_contract.rs",
+        "/tmp/rax-x86-paging-fetch-red.log"
+      ]
+    },
+    {
+      "id": "X-BOOT-CR4",
+      "area": "x86 Linux boot",
+      "finding": "Bundled Linux 6.19.0-rc3-dirty panics in native_write_cr4+0x1a with RDI=0x80050030 on both pre-paging and current revisions. Root cause unknown.",
+      "status": "pending",
+      "evidence": [
+        "/tmp/rax-x86-paging-linux-boot-parent.log",
+        "/tmp/rax-x86-paging-linux-boot-parent.json",
+        "/tmp/rax-x86-paging-linux-boot-current-final.log",
+        "/tmp/rax-x86-paging-linux-boot-current-final.json"
       ]
     }
   ],
@@ -673,7 +766,14 @@
             "failed": 0,
             "log": "/tmp/rax-arm-sp-legacy-tests.log"
           },
-          "full_rerun": "pending with subsequent paging validation"
+          "full_rerun": {
+            "passed": 10398,
+            "failed": 0,
+            "ignored": 2,
+            "filtered": 0,
+            "log": "/tmp/rax-x86-paging-library.log",
+            "note": "Includes corrected LDRAA fixture and subsequent x86 paging tests."
+          }
         },
         "logs": [
           "/tmp/rax-arm-sp-integration.log",
@@ -693,6 +793,115 @@
         {
           "impact": "medium",
           "item": "Memory regions defer to the interpreter while SA/SA0 checks are enabled because current native IR lacks per-instruction stack checks. Register-only regions still execute natively.",
+          "blocks": false
+        }
+      ]
+    },
+    {
+      "id": "x86-four-level-paging-contracts",
+      "baseline": "c46bef60ca2c5c934d64a9f71c53286996991cbb",
+      "status": "locally_validated",
+      "primary_source": "docs/specifications/x86_64/325462-sdm-vol-1-2abcd-3abcd-4-1.pdf: Vol. 3A sections 5.5 through 5.8 (four-level formats, access rights, fault metadata, A/D)",
+      "scope": [
+        "Hierarchical NX, read/write and user/supervisor rights",
+        "Current CPL and control checks on TLB hits",
+        "CR0.WP supervisor override",
+        "Reserved descriptor, address width and large-page alignment checks",
+        "Atomic paging-entry reads and A/D updates",
+        "Removal of synthetic Linux direct-map translations",
+        "CPU fetch intent, conditional I/D bit, and native-cache source-page permission validation"
+      ],
+      "baseline_results": {
+        "mmu_contracts": {
+          "passed": 0,
+          "failed": 7
+        },
+        "native_cache": {
+          "passed": 1,
+          "failed": 1
+        },
+        "fetch_metadata": {
+          "passed": 7,
+          "failed": 1
+        },
+        "native_fixture_correction": "The first loop used operations not admitted by the cross-host native gate. Replaced by an admitted MOV/JNZ loop before capturing the native baseline."
+      },
+      "validation": {
+        "host": "aarch64-apple-darwin",
+        "contracts": {
+          "passed": 10,
+          "failed": 0,
+          "ignored": 0
+        },
+        "native_cache": {
+          "passed": 2,
+          "failed": 0,
+          "filtered": 10398
+        },
+        "x86_64": {
+          "passed": 28541,
+          "failed": 0,
+          "ignored": 3
+        },
+        "smir_jit_x86_aarch64": {
+          "passed": 31,
+          "failed": 0,
+          "ignored": 0
+        },
+        "ci_actions_pinned": {
+          "passed": 12,
+          "failed": 0
+        },
+        "library": {
+          "passed": 10398,
+          "failed": 0,
+          "ignored": 2,
+          "filtered": 0,
+          "test_threads": 4
+        },
+        "all_targets_build": "passed with x86_64-suite,smir-jit on final source",
+        "format": "passed on final source",
+        "original_audit": "Recompiled original MMU and CPU protection reproducers. NX, WP, TLB privilege, A/D, direct-map and reserved-descriptor outputs now match their expected results. SMAP, PKRU, INVD/WBINVD and legacy PAE remain pending.",
+        "existing_fixture_corrections": "Two fetch-fault tests expected I/D=1 while NXE/SMEP were both clear. Enabled NXE in those fixtures; new matrix covers both states.",
+        "linux_boot": {
+          "result": "Both the pre-paging revision and current immutable binary panic at native_write_cr4+0x1a with RDI=0x80050030.",
+          "kernel_sha256": "76795bd4ceb7db28ee9484b8407f920debe16522a461e319774e6b5524a8ee55",
+          "initrd_sha256": "dd8b74a3a5cd9a1f0c71e560a4661afbf7213826e5b066d236b8bbe258135216",
+          "comparison_limit": "No successful Linux userspace boot established; behavior after the shared early panic is unverified.",
+          "parent_source": "0c4ea9b5 archive; x86 implementation is identical to the group parent."
+        },
+        "not_run": [
+          "Native x86-64 JIT and privileged hardware oracle",
+          "KVM",
+          "realmode_boot: target_arch=x86_64 gate produced 0 tests on this host",
+          "C API runtime suite after this group"
+        ],
+        "logs": [
+          "/tmp/rax-x86-paging-red.log",
+          "/tmp/rax-x86-paging-fetch-red.log",
+          "/tmp/rax-x86-paging-native-red.log",
+          "/tmp/rax-x86-paging-native-green.log",
+          "/tmp/rax-x86-paging-final-integration.log",
+          "/tmp/rax-x86-paging-library.log",
+          "/tmp/rax-x86-paging-final-build.log",
+          "/tmp/rax-x86-paging-linux-boot-parent.json",
+          "/tmp/rax-x86-paging-linux-boot-current-final.json"
+        ]
+      },
+      "bounded_scope": [
+        {
+          "impact": "high",
+          "item": "Pre-existing bundled-kernel CR4 panic prevents a successful Linux boot comparison. Tracked as X-BOOT-CR4.",
+          "blocks": "Full Linux-machine validation, not these reproduced paging contracts."
+        },
+        {
+          "impact": "high",
+          "item": "SMAP, PKRU and legacy/PAE paging remain explicit pending work.",
+          "blocks": "Complete x86 memory/privilege profile."
+        },
+        {
+          "impact": "medium",
+          "item": "Native source-page checks conservatively defer a region containing an inaccessible untaken page to direct execution.",
           "blocks": false
         }
       ]

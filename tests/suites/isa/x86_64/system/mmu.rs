@@ -1364,6 +1364,10 @@ fn test_decode_cache_hit_revalidates_instruction_fetch_after_invlpg() {
     mem.write_slice(&fail_code, GuestAddress(fail)).unwrap();
 
     let mut vcpu = create_paged_vcpu(mem.clone());
+    // Intel SDM: the fetch I/D error bit requires NXE (or SMEP).
+    let mut sregs = vcpu.get_sregs().unwrap();
+    sregs.efer |= 1 << 11;
+    vcpu.set_sregs(&sregs).unwrap();
     let mut regs = vcpu.get_regs().unwrap();
     regs.rip = target;
     regs.rax = 0;

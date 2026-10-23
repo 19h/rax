@@ -111,6 +111,8 @@ The current design includes:
 - coherence handling for guest writes to executable code;
 - a 256-entry direct-mapped translation cache over four-level page walks;
 - support for 4 KiB, 2 MiB, and 1 GiB mappings in the documented x86 path;
+- hierarchical read/write, user/supervisor and NX permissions, rechecked on cached translations;
+- atomic accessed/dirty updates and reserved-bit validation, including NX when NXE is clear;
 - direct host-pointer access for ordinary RAM where safe;
 - fast paths for common ModR/M memory forms;
 - page-oriented string-operation acceleration;
@@ -118,6 +120,12 @@ The current design includes:
 - a dirty-page journal used to invalidate native regions after self-modifying code.
 
 A decode-cache hit avoids repeating the guest-memory fetch only when the cached bytes and mode tag still match. Self-modifying code must invalidate both decode and native-region assumptions.
+
+The four-level walker follows guest page tables for every virtual address,
+including Linux direct-map addresses. CR0.WP controls supervisor writes to
+read-only mappings. The physical-address profile is 48 bits. Legacy/PAE
+paging, SMAP, and protection-key completion are tracked separately in the
+audit remediation ledger.
 
 ## Linux direct boot
 

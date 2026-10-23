@@ -93,7 +93,7 @@ pub struct GuestMemoryWrapper {
     mem: GuestMemoryMmap,
     /// The size reported to the guest via e820
     reported_size: u64,
-    /// The actual allocated size (includes padding for per-CPU overflow)
+    /// The actual allocated size (includes reserved backing padding)
     actual_size: u64,
 }
 
@@ -101,17 +101,10 @@ impl GuestMemoryWrapper {
     pub fn new(size_bytes: u64) -> Result<Self> {
         let (reported_size, actual_size) = checked_guest_memory_sizes(size_bytes)?;
 
-        // Add extra padding for per-CPU allocation that may end up slightly past
-        // the reported memory size. The Linux kernel's per-CPU allocator sometimes
-        // computes addresses that land just past the end of RAM. By allocating
-        // extra physical memory (but not reporting it to the kernel via e820),
-        // these accesses will succeed.
-        //
-        // Observed offsets past RAM:
-        // - 64GB guest: ~200MB past end
-        // - 32GB guest: ~1.5GB past end
-        // - 1GB guest: ~2GB past end
-        // Use 4GB padding as a safe margin.
+        // Retain the historical backing allocation independently of the RAM
+        // advertised through E820. Extra physical backing does not create a
+        // guest virtual mapping: the software MMU always follows guest page
+        // tables, including for Linux direct-map addresses.
         info!(
             reported_bytes = reported_size,
             actual_bytes = actual_size,

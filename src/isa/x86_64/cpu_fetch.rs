@@ -29,10 +29,6 @@ fn execution_fault(error: Error) -> Error {
             fault.access = MemoryAccessKind::Fetch;
             fault.into()
         }
-        Error::PageFault { vaddr, error_code } => Error::PageFault {
-            vaddr,
-            error_code: error_code | 0x10,
-        },
         other => other,
     }
 }

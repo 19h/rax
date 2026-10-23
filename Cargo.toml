@@ -72,6 +72,10 @@ name = "asm_instructions"
 path = "tests/suites/isa/x86_64/assembly.rs"
 
 [[test]]
+name = "x86_64_paging"
+path = "tests/suites/isa/x86_64/paging_contract.rs"
+
+[[test]]
 name = "ci_actions_pinned"
 path = "tests/suites/tooling/ci_actions_pinned.rs"
 

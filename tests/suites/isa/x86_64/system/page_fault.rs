@@ -575,6 +575,10 @@ fn test_read_readonly_succeeds() {
 fn test_pf_fetch_non_present() {
     let mem = setup_paged_memory();
     let mut vcpu = create_paged_vcpu(mem.clone());
+    // Intel SDM: the fetch I/D error bit requires NXE (or SMEP).
+    let mut sregs = vcpu.get_sregs().unwrap();
+    sregs.efer |= 1 << 11;
+    vcpu.set_sregs(&sregs).unwrap();
 
     // Clear PT entry for page at 0x80000 where we'll try to execute
     mem.write_slice(&0u64.to_le_bytes(), GuestAddress(PT_ADDR + 128 * 8))

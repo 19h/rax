@@ -78,7 +78,9 @@ impl X86_64Vcpu {
                 {
                     let key = (rip, self.jit_mode_tag());
                     if let Some(slot) = self.jit_cache.get(&key).cloned() {
-                        if let Some(region) = slot {
+                        if let Some(region) =
+                            slot.filter(|region| self.jit_source_pages_accessible(region))
+                        {
                             self.jit_run_region(&region);
                             // A lift-through-calls call-out may have bailed with a
                             // VMM-bound exit (I/O, HLT, …) from a callee — propagate it.
@@ -88,7 +90,7 @@ impl X86_64Vcpu {
                             }
                             continue;
                         }
-                        // None ⇒ known-ineligible: fall through to the interpreter.
+                        // Ineligible or fetch permissions denied: interpret at the current RIP.
                     }
                 }
                 rip
