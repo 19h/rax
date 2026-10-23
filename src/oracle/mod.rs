@@ -592,7 +592,14 @@ fn decode_hexagon_packet(bytes: &[u8], opts: &OracleOptions) -> Result<Value, St
     let loop0_end = matches!((first_parse, second_parse), (Some(first), Some(second)) if first == 0b10 && second != 0);
     let loop1_end = matches!((first_parse, second_parse), (Some(first), Some(second)) if second == 0b10 && first != 0);
     let smir = if opts.include_smir {
-        lift_smir(SourceArch::Hexagon, &bytes[..consumed_words * 4], opts)
+        // The decoder accepts either guest byte order. The Hexagon lifter
+        // consumes canonical little-endian words, so normalize the same packet
+        // before asking it for SMIR instead of lifting byte-swapped opcodes.
+        let canonical: Vec<u8> = bytes[..consumed_words * 4]
+            .chunks_exact(4)
+            .flat_map(|word| word_from_bytes(word, opts.hexagon_endian).to_le_bytes())
+            .collect();
+        lift_smir(SourceArch::Hexagon, &canonical, opts)
     } else {
         json!({"available": false, "reason": "disabled"})
     };

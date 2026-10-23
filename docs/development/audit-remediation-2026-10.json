@@ -654,12 +654,38 @@
       "id": "H-DUPLEX-CLASS",
       "area": "Hexagon decoder",
       "finding": "Mixed duplex ICLASS groups are assigned to the opposite low/high subinstruction slots",
+      "status": "locally_validated",
+      "evidence": [
+        "tests/suites/machine/hexagon_baremetal/packet_duplex.rs",
+        "src/isa/hexagon/decode/duplex.rs",
+        "/tmp/rax-hexagon-duplex/parent-red.log",
+        "/tmp/rax-hexagon-duplex/final-integration.log"
+      ],
+      "primary_source": "V68 Programmer Reference tables 10-4 and 10-5; LLVM 23 V68 word 0x51330012.",
+      "remaining_validation": [
+        "Independent QEMU / physical Hexagon execution"
+      ]
+    },
+    {
+      "id": "H-ORACLE-ENDIAN",
+      "area": "Hexagon oracle",
+      "finding": "The packet decoder honors guest byte order but passes raw big-endian bytes to a little-endian lifter; an ordinary word load can produce empty IR for a different opcode",
+      "status": "locally_validated",
+      "evidence": [
+        "tests/suites/machine/hexagon_baremetal/packet_duplex.rs",
+        "/tmp/rax-hexagon-duplex/oracle-byte-order-red.log"
+      ]
+    },
+    {
+      "id": "H-EXT-LEAK",
+      "area": "Hexagon SMIR",
+      "finding": "An absolute load leaves its constant extender live in LiftContext; the next packet changes r4=#1 into r4=#0x2001",
       "status": "pending",
       "evidence": [
-        "/tmp/rax-hexagon-alignment/adjacent_contracts.rs",
-        "/tmp/rax-hexagon-alignment/adjacent-red.log"
+        "/tmp/rax-hexagon-extended/contracts.rs",
+        "/tmp/rax-hexagon-extended/parent-red.log"
       ],
-      "primary_source": "V68 Programmer Reference tables 10-4 and 10-5; LLVM 23 V68 word 0x51330012."
+      "baseline": "Direct execution of immext + memw(##0x2010), then r4=#1, yields r4=1; O0 SMIR yields 8193. Fixed LLVM V68 words 0x00004080/0x4980c203/0x7800c024."
     }
   ],
   "decisions": {
@@ -1808,6 +1834,117 @@
         {
           "impact": "medium",
           "item": "The ordinary-opcode SMIR lifter now explicitly rejects duplex containers. Direct execution checks both subinstructions; complete duplex lifting remains outside this group.",
+          "blocks": false
+        }
+      ]
+    },
+    {
+      "id": "hexagon-duplex-slot-classes",
+      "baseline": "1997cd78f4db13ae01cc416741b032874796e7c3",
+      "status": "locally_validated",
+      "scope": [
+        "Bind V68 ICLASS table columns to low Slot 0 and high Slot 1 in the documented order",
+        "Extract the existing subinstruction decoder into a dedicated 524-line module; preserve public decode_duplex path and (Slot 1, Slot 0) return order",
+        "Correct three legacy bare-metal fixture slot encodings that mirrored the reversed decoder",
+        "Normalize guest instruction bytes before the oracle calls the canonical little-endian lifter"
+      ],
+      "primary_source": "docs/architecture/hexagon/80-N2040-46_REV_B_Hexagon_V68_Programmers_Reference_Manual.txt: tables 10-4 and 10-5, sections 5.1 and 10.3. Fixed LLVM 23 V68 encodings; class B verified with llvm-mc --disassemble.",
+      "assumptions": [
+        {
+          "assumption": "Each test word uses the documented duplex ICLASS and fixed subinstruction encodings.",
+          "dependent_result": "The action pairs independently identify the low/high slot classes and public JSON opcode tags.",
+          "stress_test": "All 15 allocated classes plus reserved F; LE/BE execution, signed halfword loads, partial stores, arithmetic, exact register/memory/PC/retirement effects and explicit SMIR rejection.",
+          "falsification_probe": "A fixed word disassembles to a different action or a class column is interpreted as high-before-low instead of the manual low/high ordering."
+        }
+      ],
+      "baseline_results": {
+        "class_matrix": {
+          "passed": 6,
+          "failed": 10
+        },
+        "byte_order_after_decoder_fix": {
+          "passed": 10,
+          "failed": 7
+        },
+        "basis": "The first 16 standalone contracts link the alignment-group parent. The final 17 contracts separately link a captured intermediate engine library with the slot-class fix and old oracle byte-order adapter; that isolates the adapter defect."
+      },
+      "affected_planes": {
+        "direct": "Correct decoded scalar memory/arithmetic actions and physical slot order.",
+        "smir": "Duplex remains explicitly rejected by the lifter admission check from the alignment group.",
+        "oracle": "Correct per-slot opcode identity and canonical guest instruction words in both byte orders; existing available/error/ops JSON schema preserved.",
+        "c_api": "Uses the corrected shared decoder/oracle; no ABI change.",
+        "native": "No duplex IR is admitted or emitted."
+      },
+      "validation": {
+        "contracts": {
+          "passed": 17,
+          "failed": 0
+        },
+        "bare_metal": {
+          "passed": 60,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0
+        },
+        "smir_consistency": {
+          "passed": 313,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0
+        },
+        "oracle": {
+          "passed": 82,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0
+        },
+        "extraction": "Verified the extracted subinstruction function against the parent source: only the ICLASS binding order changes, excluding comments/terminal whitespace.",
+        "logs": [
+          "/tmp/rax-hexagon-duplex/parent-red.log",
+          "/tmp/rax-hexagon-duplex/oracle-byte-order-red.log",
+          "/tmp/rax-hexagon-duplex/final-integration.log",
+          "/tmp/rax-hexagon-duplex/final-library.log",
+          "/tmp/rax-hexagon-duplex/final-capi.log",
+          "/tmp/rax-hexagon-duplex/final-build.log",
+          "/tmp/rax-hexagon-duplex/final-clippy.log",
+          "/tmp/rax-hexagon-duplex/final-fmt.log"
+        ],
+        "library": {
+          "passed": 10418,
+          "failed": 0,
+          "ignored": 2,
+          "filtered": 0,
+          "test_threads": 12,
+          "elapsed_seconds": 229.76
+        },
+        "c_api": {
+          "passed": 185,
+          "failed": 0,
+          "ignored": 0
+        },
+        "all_targets_build": "passed",
+        "clippy_all_targets": "passed",
+        "format": "passed"
+      },
+      "bounded_scope": [
+        {
+          "impact": "high",
+          "item": "H-EXT-SCALE, H-GPR-OLD, H-EA32 and H-COMMIT remain separate pending work.",
+          "blocks": "Complete Hexagon execution fidelity."
+        },
+        {
+          "impact": "medium",
+          "item": "The byte-order adapter establishes instruction identity for static IR generation. It does not establish big-endian data execution in generic SMIR, which has separate representation/profile requirements.",
+          "blocks": false
+        },
+        {
+          "impact": "medium",
+          "item": "Independent physical Hexagon and QEMU execution are unrun; the matrix uses the primary encoding specification and LLVM assembly/disassembly.",
+          "blocks": false
+        },
+        {
+          "impact": "low",
+          "item": "Slot selection is O(1); oracle instruction canonicalization takes O(n) time and O(n) bytes for n packet bytes.",
           "blocks": false
         }
       ]

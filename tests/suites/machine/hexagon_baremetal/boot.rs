@@ -1,3 +1,6 @@
+#[path = "packet_duplex.rs"]
+mod packet_duplex;
+
 #[path = "packet_alignment.rs"]
 mod packet_alignment;
 
@@ -430,8 +433,8 @@ fn hexagon_bare_metal_big_endian_doubleword_ops() {
 #[test]
 fn hexagon_bare_metal_big_endian_duplex_word_ops() {
     let duplex = encode_duplex(
-        encode_duplex_s1_word(0, 2, 0),
         encode_duplex_l1_word(0, 1, 1),
+        encode_duplex_s1_word(0, 2, 0),
         0x8,
     );
     let code = [
@@ -462,8 +465,8 @@ fn hexagon_bare_metal_big_endian_duplex_word_ops() {
 #[test]
 fn hexagon_bare_metal_duplex_doubleword_stack_ops() {
     let duplex = encode_duplex(
-        encode_duplex_s2_dword_sp(0, 0),
         encode_duplex_l2_dword_sp(2, 1),
+        encode_duplex_s2_dword_sp(0, 0),
         0xd,
     );
     let code = [
@@ -500,8 +503,8 @@ fn hexagon_bare_metal_duplex_doubleword_stack_ops() {
 #[test]
 fn hexagon_bare_metal_big_endian_duplex_doubleword_stack_ops() {
     let duplex = encode_duplex(
-        encode_duplex_s2_dword_sp(0, 0),
         encode_duplex_l2_dword_sp(2, 1),
+        encode_duplex_s2_dword_sp(0, 0),
         0xd,
     );
     let code = [
