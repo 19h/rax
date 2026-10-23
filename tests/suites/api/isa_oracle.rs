@@ -12,6 +12,8 @@ mod cache_maintenance;
 mod fma;
 #[path = "isa_oracle_hexagon_alignment.rs"]
 mod hexagon_alignment;
+#[path = "isa_oracle_hexagon_packet.rs"]
+mod hexagon_packet;
 #[path = "isa_oracle_int3.rs"]
 mod int3;
 #[path = "isa_oracle_invpcid.rs"]

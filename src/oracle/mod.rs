@@ -1,6 +1,8 @@
 //! JSON oracle harness for ISA-specific decoders and SMIR lifters.
 
 mod address;
+mod hexagon;
+use hexagon::decode_hexagon_packet;
 mod arm_simd_resize;
 mod arm_simd_saturating;
 mod call_target;
@@ -490,145 +492,6 @@ fn decode_riscv(bytes: &[u8], opts: &OracleOptions) -> Result<Value, String> {
     }))
 }
 
-fn decode_hexagon_packet(bytes: &[u8], opts: &OracleOptions) -> Result<Value, String> {
-    if bytes.is_empty() || bytes.len() % 4 != 0 {
-        return Err("Hexagon packet bytes must be a non-empty multiple of 4".to_string());
-    }
-
-    let mut decoded_ops = Vec::new();
-    let mut control_effects = Vec::new();
-    let mut parse_bits = Vec::new();
-    let mut warnings = Vec::new();
-    let mut immext = None;
-    let mut first_parse = None;
-    let mut second_parse = None;
-    let mut has_duplex = false;
-    let mut end_seen = false;
-    let mut consumed_words = 0usize;
-
-    for (idx, chunk) in bytes.chunks_exact(4).enumerate() {
-        let word = word_from_bytes(chunk, opts.hexagon_endian);
-        let parse = (word >> 14) & 0x3;
-        parse_bits.push(parse);
-        if idx == 0 {
-            first_parse = Some(parse);
-        } else if idx == 1 {
-            second_parse = Some(parse);
-        }
-
-        let word_pc = opts.pc.wrapping_add((idx * 4) as u64);
-        consumed_words = idx + 1;
-
-        if parse == 0 {
-            has_duplex = true;
-            match hex_decode::decode_duplex(word, opts.hexagon_isa) {
-                Some((slot1, slot0)) => {
-                    for (slot, sub) in [(1u8, slot1), (0u8, slot0)] {
-                        let cf = hex_control_flow(&sub.insn, word_pc, opts.pc, false);
-                        if !is_fallthrough(&cf) {
-                            control_effects.push(cf.clone());
-                        }
-                        decoded_ops.push(json!({
-                            "offset": idx * 4,
-                            "pc": hex_u64(word_pc),
-                            "word": hex_u32(word),
-                            "parse_bits": parse,
-                            "duplex_slot": slot,
-                            "opcode": sub.opcode.map(hex_opcode::opcode_name),
-                            "op": format!("{:?}", sub.insn),
-                            "control_flow": cf,
-                        }));
-                    }
-                }
-                None => {
-                    decoded_ops.push(json!({
-                        "offset": idx * 4,
-                        "pc": hex_u64(word_pc),
-                        "word": hex_u32(word),
-                        "parse_bits": parse,
-                        "error": "unknown_duplex",
-                    }));
-                }
-            }
-            end_seen = true;
-            if consumed_words * 4 != bytes.len() {
-                warnings.push("bytes_after_packet_end");
-            }
-            break;
-        }
-
-        let decoded = hex_decode::decode(word, immext, opts.hexagon_isa);
-        let fields = hex_fields(word);
-        let cf = hex_control_flow(&decoded.insn, word_pc, opts.pc, decoded.used_ext);
-        if !is_fallthrough(&cf) {
-            control_effects.push(cf.clone());
-        }
-        decoded_ops.push(json!({
-            "offset": idx * 4,
-            "pc": hex_u64(word_pc),
-            "word": hex_u32(word),
-            "parse_bits": parse,
-            "opcode": decoded.opcode.map(hex_opcode::opcode_name),
-            "op": format!("{:?}", decoded.insn),
-            "used_ext": decoded.used_ext,
-            "fields": fields,
-            "control_flow": cf,
-        }));
-
-        immext = match decoded.insn {
-            HexInsn::ImmExt { value } => Some(value),
-            _ => None,
-        };
-
-        if parse == 0x3 {
-            end_seen = true;
-            if consumed_words * 4 != bytes.len() {
-                warnings.push("bytes_after_packet_end");
-            }
-            break;
-        }
-    }
-
-    let loop0_end = matches!((first_parse, second_parse), (Some(first), Some(second)) if first == 0b10 && second != 0);
-    let loop1_end = matches!((first_parse, second_parse), (Some(first), Some(second)) if second == 0b10 && first != 0);
-    let smir = if opts.include_smir {
-        // The decoder accepts either guest byte order. The Hexagon lifter
-        // consumes canonical little-endian words, so normalize the same packet
-        // before asking it for SMIR instead of lifting byte-swapped opcodes.
-        let canonical: Vec<u8> = bytes[..consumed_words * 4]
-            .chunks_exact(4)
-            .flat_map(|word| word_from_bytes(word, opts.hexagon_endian).to_le_bytes())
-            .collect();
-        lift_smir(SourceArch::Hexagon, &canonical, opts)
-    } else {
-        json!({"available": false, "reason": "disabled"})
-    };
-
-    Ok(json!({
-        "isa": "hexagon",
-        "hexagon_isa": format!("{:?}", opts.hexagon_isa),
-        "endian": format!("{:?}", opts.hexagon_endian).to_lowercase(),
-        "pc": hex_u64(opts.pc),
-        "input": input_json(bytes),
-        "decoded_ops": decoded_ops,
-        "packet_flags": {
-            "word_count": consumed_words,
-            "parse_bits": parse_bits,
-            "end_seen": end_seen,
-            "complete": end_seen && consumed_words * 4 == bytes.len(),
-            "has_duplex": has_duplex,
-            "first_parse": first_parse,
-            "second_parse": second_parse,
-            "loop0_end": loop0_end,
-            "loop1_end": loop1_end,
-            "warnings": warnings,
-        },
-        "control_flow": packet_control_flow(control_effects),
-        "smir": smir,
-        "side_effects": side_effects_not_run(),
-    }))
-}
-
 fn decode_smir_only(bytes: &[u8], opts: &OracleOptions) -> Value {
     let smir = lift_smir(opts.smir_source, bytes, opts);
     let decoded_ops = smir
@@ -829,33 +692,10 @@ fn lift_side_effect_ops(
             ops = result.ops;
         }
         SourceArch::Hexagon => {
-            if bytes.is_empty() || bytes.len() % 4 != 0 {
-                return Err("Hexagon side-effect bytes must be a non-empty multiple of 4".into());
-            }
-            let mut lifter = HexagonLifter::new(opts.hexagon_isa);
-            let mut pc = opts.pc;
-            let mut total = 0usize;
-            for chunk in bytes.chunks_exact(4) {
-                let word = word_from_bytes(chunk, opts.hexagon_endian);
-                let parse = (word >> 14) & 0x3;
-                if parse == 0 {
-                    return Err(
-                        "Hexagon duplex packet side effects are not supported by the SMIR word lifter"
-                            .to_string(),
-                    );
-                }
-                let word_bytes = word.to_le_bytes();
-                let result = lifter
-                    .lift_insn(pc, &word_bytes, &mut ctx)
-                    .map_err(|e| e.to_string())?;
-                ops.extend(result.ops);
-                total += 4;
-                pc = pc.wrapping_add(4);
-                if parse == 0x3 {
-                    break;
-                }
-            }
-            consumed = total;
+            let result =
+                hexagon::lift_packet(bytes, opts, &mut ctx).map_err(|error| error.to_string())?;
+            consumed = result.bytes_consumed;
+            ops = result.ops;
         }
         SourceArch::RiscV64 => {
             let result = RiscVLifter::new_rv64(riscv_extensions(opts.riscv_isa))
@@ -1099,9 +939,7 @@ fn lift_smir(source: SourceArch, bytes: &[u8], opts: &OracleOptions) -> Value {
     let result = match source {
         SourceArch::X86_64 => X86_64Lifter::new().lift_insn(opts.pc, bytes, &mut ctx),
         SourceArch::Aarch64 => Aarch64Lifter::new().lift_insn(opts.pc, bytes, &mut ctx),
-        SourceArch::Hexagon => {
-            HexagonLifter::new(opts.hexagon_isa).lift_insn(opts.pc, bytes, &mut ctx)
-        }
+        SourceArch::Hexagon => hexagon::lift_packet(bytes, opts, &mut ctx),
         SourceArch::RiscV64 => RiscVLifter::new_rv64(riscv_extensions(opts.riscv_isa))
             .lift_insn(opts.pc, bytes, &mut ctx),
         SourceArch::RiscV32 => RiscVLifter::new_rv32(riscv_extensions(opts.riscv_isa))
