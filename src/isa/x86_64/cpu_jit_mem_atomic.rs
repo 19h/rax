@@ -149,6 +149,44 @@ mod tests {
         unsafe { rax_jit_mem_atomic_rmw(cpu, addr, operand, size, op) }
     }
 
+    /// Paging walks may set A/D even when the data transaction cannot commit.
+    /// Permit only monotonic status-bit updates in this fixture's five entries;
+    /// every other memory bit must retain its exact expected value.
+    fn assert_memory_image(actual: &[u8], expected: &[u8], paging: bool) {
+        let mut expected = expected.to_vec();
+        if paging {
+            for (address, status_mask) in [
+                (0x8000, 0x20),
+                (0x9000, 0x20),
+                (0xa000, 0x20),
+                (0xb010, 0x60),
+                (0xb018, 0x60),
+            ] {
+                let previous = expected[address];
+                let current = actual[address];
+                assert_eq!(
+                    current & previous,
+                    previous,
+                    "cleared PTE bits at {address:#x}"
+                );
+                assert_eq!(
+                    current & !status_mask,
+                    previous & !status_mask,
+                    "changed PTE fields at {address:#x}"
+                );
+                if previous & 1 == 0 {
+                    assert_eq!(current, previous, "changed absent PTE at {address:#x}");
+                }
+                expected[address] = current;
+            }
+        }
+        let mismatch = actual
+            .iter()
+            .zip(&expected)
+            .position(|(actual, expected)| actual != expected);
+        assert_eq!(mismatch, None, "unexpected memory change at {mismatch:#x?}");
+    }
+
     fn assert_rejected(
         cpu: &mut X86_64Vcpu,
         memory: &GuestMemoryMmap,
@@ -171,7 +209,11 @@ mod tests {
             before_state,
             "addr={addr:#x}, size={size}, op={op}"
         );
-        assert_eq!(memory_bytes(memory), before_memory);
+        assert_memory_image(
+            &memory_bytes(memory),
+            &before_memory,
+            cpu.sregs.cr0 & (1 << 31) != 0,
+        );
         assert_eq!(cpu.jit_mem_trace, before_trace);
         assert_eq!(cpu.jit_mem_log, before_log);
         assert_eq!(cpu.mmu.mem_record_checkpoint(), before_records);
@@ -404,6 +446,12 @@ mod tests {
                 bytes[addr as usize] = new_bytes[0];
                 bytes[0x4000..0x4000 + size as usize - 1]
                     .copy_from_slice(&new_bytes[1..size as usize]);
+                for address in [0x8000, 0x9000, 0xa000] {
+                    bytes[address] |= 0x20;
+                }
+                for address in [0xb010, 0xb018] {
+                    bytes[address] |= 0x60;
+                }
                 assert_eq!(
                     call(&mut cpu, addr, operand, size, op),
                     X86AtomicRmwRet {
