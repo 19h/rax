@@ -571,7 +571,7 @@ impl AArch64Cpu {
         let sctlr = self.sysregs.bank(self.current_el).sctlr;
         let tcr = self.sysregs.bank(self.current_el).tcr;
         let ttbr0 = self.sysregs.bank(self.current_el).ttbr0;
-        let ttbr1 = if self.current_el == 1 {
+        let ttbr1 = if self.current_el <= 1 {
             self.sysregs.el1.ttbr1
         } else {
             0
@@ -585,13 +585,30 @@ impl AArch64Cpu {
         let t1sz = ((tcr >> 16) & 0x3F) as u8;
         let tg0 = ((tcr >> 14) & 0x3) as u8;
         let tg1 = ((tcr >> 30) & 0x3) as u8;
+        // EL1 and EL2 host regimes use IPS[34:32]; single-privilege EL2/EL3
+        // regimes use PS[18:16]. The modeled physical profile ends at 48 bits.
+        let el2_host =
+            self.current_el == 2 && self.sysregs.hcr_el2 & crate::isa::arm::aarch64::hcr::E2H != 0;
+        let ps_shift = if self.current_el <= 1 || el2_host {
+            32
+        } else {
+            16
+        };
+        let pa_size = match (tcr >> ps_shift) & 7 {
+            0 => 32,
+            1 => 36,
+            2 => 40,
+            3 => 42,
+            4 => 44,
+            _ => 48,
+        };
 
         let granule0 = TranslationGranule::from_tg0(tg0).unwrap_or(TranslationGranule::Granule4KB);
         let granule1 = TranslationGranule::from_tg1(tg1).unwrap_or(TranslationGranule::Granule4KB);
 
         self.mmu.set_config(MmuConfig {
             enabled,
-            pa_size: 48,
+            pa_size,
             t0sz,
             t1sz,
             tg0: granule0,

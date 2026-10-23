@@ -135,6 +135,7 @@ jobs:
             --test x86_64 \
             --test asm_instructions \
             --test arm \
+            --test aarch64_mmu \
             --test aarch64_smir_programs \
             --test realmode_boot \
             --test riscv_boot \

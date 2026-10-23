@@ -66,7 +66,7 @@ jobs:
           # arm32_gen.rs are pure data tables (`pub static ..._SWEEP`) with no
           # #[test] of their own — they are `include!`d by arm_diff*.rs and so are
           # exercised in differential.yml, NOT selectable as standalone `--test`s.
-          - { name: arm,       tests: "--test arm --test arm_vfp_a32 --test asm_instructions", harness: "--include-ignored" }
+          - { name: arm,       tests: "--test arm --test arm_vfp_a32 --test aarch64_mmu --test asm_instructions", harness: "--include-ignored" }
           # Host-specific SMIR JIT binaries are cfg-gated internally: the x86
           # native/RISC-V-cross targets select their host backend internally;
           # AArch32/Thumb and x86-to-AArch64 targets run only on arm64.

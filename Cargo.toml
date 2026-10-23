@@ -64,6 +64,10 @@ name = "arm_vfp_a32"
 path = "tests/suites/isa/arm/aarch32/vfp.rs"
 
 [[test]]
+name = "aarch64_mmu"
+path = "tests/suites/isa/arm/mmu_contract.rs"
+
+[[test]]
 name = "asm_instructions"
 path = "tests/suites/isa/x86_64/assembly.rs"
 

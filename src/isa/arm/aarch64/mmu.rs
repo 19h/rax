@@ -1,12 +1,14 @@
 //! AArch64 Memory Management Unit (MMU)
 //!
-//! This module implements the complete AArch64 MMU including:
+//! This module models non-LPA stage-1 translation with:
 //! - 4KB, 16KB, and 64KB translation granules
 //! - 4-level page table walks
-//! - Stage 1 and Stage 2 translation
+//! - Stage-1 table walks with physical addresses up to 48 bits
 //! - Memory attributes (MAIR)
 //! - Access permissions
-//! - Translation regimes for all ELs
+//!
+//! Stage-2 descriptor accessors and regime identifiers are also defined here;
+//! their presence does not establish a complete two-stage translation path.
 
 use crate::isa::arm::common::memory::{ArmMemory, MemoryError};
 
@@ -387,7 +389,7 @@ impl Default for MemoryAttributes {
 pub struct MmuConfig {
     /// Whether MMU is enabled.
     pub enabled: bool,
-    /// Physical address size (bits).
+    /// Physical address size (bits), clamped to the modeled 32..=48-bit profile.
     pub pa_size: u8,
     /// Input address size for TTBR0 (T0SZ).
     pub t0sz: u8,
@@ -426,6 +428,8 @@ impl Default for MmuConfig {
 
 impl MmuConfig {
     fn sanitized(mut self) -> Self {
+        // This walker models the non-LPA 48-bit physical-address profile.
+        self.pa_size = self.pa_size.clamp(32, 48);
         self.t0sz = sanitize_tsz(self.t0sz, self.tg0);
         self.t1sz = sanitize_tsz(self.t1sz, self.tg1);
         self
@@ -517,6 +521,17 @@ impl Mmu {
 
         // Walk the page tables
         let mut table_addr = ttbr & 0x0000_FFFF_FFFF_F000; // Extract base address
+        // AArch64.TranslationTableWalk checks the base before the first fetch.
+        if table_addr >> self.config.pa_size != 0 {
+            return Err(TranslationFault {
+                fault_type: TranslationFaultType::AddressSize,
+                level: 0,
+                stage2: false,
+                s1ptw: false,
+                va,
+                ipa: None,
+            });
+        }
         let mut level = start_level;
         let mut ap_from_table: u8 = 0;
         let mut uxn_from_table = false;
@@ -540,9 +555,27 @@ impl Mmu {
             let entry = PageTableEntry::from_raw(entry_value);
 
             // Check validity
-            if !entry.is_valid() {
+            if !entry.is_valid() || (level == 3 && !entry.is_table()) {
                 return Err(TranslationFault {
                     fault_type: TranslationFaultType::Translation,
+                    level,
+                    stage2: false,
+                    s1ptw: false,
+                    va,
+                    ipa: None,
+                });
+            }
+
+            // Validate descriptor address bits before masking them into an
+            // output address. Otherwise a narrow IPS can silently admit an
+            // inaccessible PA, or the next table fetch hides the size fault.
+            // The 64 KiB non-LPA format also requires descriptor[15:12]=0.
+            let output_bits = entry.value & 0x0000_FFFF_FFFF_F000;
+            let reserved_large_granule_bits =
+                matches!(granule, TranslationGranule::Granule64KB) && entry.value & 0xF000 != 0;
+            if output_bits >> self.config.pa_size != 0 || reserved_large_granule_bits {
+                return Err(TranslationFault {
+                    fault_type: TranslationFaultType::AddressSize,
                     level,
                     stage2: false,
                     s1ptw: false,
@@ -683,7 +716,10 @@ impl Mmu {
         let ap = entry.ap();
 
         // Apply hierarchical permissions
-        let effective_ap = ap | ap_from_table;
+        // APTable[1] forces read-only; APTable[0] removes unprivileged
+        // access. Arm AArch64.TranslationTableWalk applies OR to AP[2]
+        // and AND-NOT to AP[1], respectively.
+        let effective_ap = (ap | (ap_from_table & 0b10)) & !(ap_from_table & 0b01);
         let effective_uxn = entry.uxn() || uxn_from_table;
         let effective_pxn = entry.pxn() || pxn_from_table;
 
@@ -732,7 +768,9 @@ impl Mmu {
         // Check execute permissions
         if is_execute {
             let xn = if privileged {
-                effective_pxn
+                // AArch64.CheckPermission: EL1 must not execute a page
+                // which remains writable by EL0 after hierarchical AP.
+                effective_pxn || (el == 1 && effective_ap == 0b01)
             } else {
                 effective_uxn
             };

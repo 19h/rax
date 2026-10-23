@@ -54,6 +54,7 @@ cargo test --release --test differential case_name -- --exact --nocapture
 | `arm_diff` | `tests/suites/differential/arm/aarch64.rs` | AArch64 differential |
 | `arm_diff32` | `tests/suites/differential/arm/aarch32.rs` | AArch32 differential |
 | `arm_vfp_a32` | `tests/suites/isa/arm/aarch32/vfp.rs` | AArch32 VFP |
+| `aarch64_mmu` | `tests/suites/isa/arm/mmu_contract.rs` | Stage-1 translation and CPU MMU configuration contracts |
 | `asm_instructions` | `tests/suites/isa/x86_64/assembly.rs` | x86 assembly/encoding semantics |
 | `ci_actions_pinned` | `tests/suites/tooling/ci_actions_pinned.rs` | CI supply-chain invariant |
 | `diff_fuzz` | `tests/suites/differential/x86_64/fuzz.rs` | randomized x86/KVM/SMIR differential |

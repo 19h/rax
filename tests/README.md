@@ -33,6 +33,7 @@ listed below is declared explicitly with a `[[test]]` entry in the root
 | `arm_diff` | `suites/differential/arm/aarch64.rs` |
 | `arm_diff32` | `suites/differential/arm/aarch32.rs` |
 | `arm_vfp_a32` | `suites/isa/arm/aarch32/vfp.rs` |
+| `aarch64_mmu` | `suites/isa/arm/mmu_contract.rs` |
 | `asm_instructions` | `suites/isa/x86_64/assembly.rs` |
 | `ci_actions_pinned` | `suites/tooling/ci_actions_pinned.rs` |
 | `diff_fuzz` | `suites/differential/x86_64/fuzz.rs` |

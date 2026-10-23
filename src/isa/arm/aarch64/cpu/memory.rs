@@ -1,5 +1,7 @@
 //! Load/store, exclusive, atomic, and address-translation execution
 
+mod fault;
+
 use crate::isa::arm::aarch64::cpu::*;
 use std::collections::HashSet;
 use std::fmt::Debug;
@@ -224,7 +226,16 @@ impl AArch64Cpu {
             self.current_el,
         ) {
             Ok(desc) => Ok(desc.pa),
-            Err(fault) => Err(self.translation_fault_to_error(fault, is_write)),
+            Err(fault) => {
+                let access = if is_execute {
+                    crate::isa::arm::common::cpu::AccessType::InstructionFetch
+                } else if is_write {
+                    crate::isa::arm::common::cpu::AccessType::Write
+                } else {
+                    crate::isa::arm::common::cpu::AccessType::Read
+                };
+                Err(self.translation_fault_to_error(fault, access))
+            }
         }
     }
 

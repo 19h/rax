@@ -136,38 +136,6 @@ impl AArch64Cpu {
         }
     }
 
-    /// Convert translation fault to ArmError.
-    pub(crate) fn translation_fault_to_error(
-        &self,
-        fault: TranslationFault,
-        is_write: bool,
-    ) -> ArmError {
-        use crate::isa::arm::aarch64::mmu::TranslationFaultType;
-
-        let fault_type = match fault.fault_type {
-            TranslationFaultType::Translation => MemoryFaultType::Translation,
-            TranslationFaultType::Permission => MemoryFaultType::Permission,
-            TranslationFaultType::Alignment => MemoryFaultType::Alignment,
-            TranslationFaultType::AccessFlag => MemoryFaultType::AccessFlag,
-            TranslationFaultType::AddressSize => MemoryFaultType::AddressSize,
-            TranslationFaultType::ExternalAbort => MemoryFaultType::External,
-        };
-
-        self.last_fault_level
-            .store(fault.level, std::sync::atomic::Ordering::Relaxed);
-
-        ArmError::MemoryError(MemoryFaultInfo {
-            address: fault.va,
-            access: if is_write {
-                crate::isa::arm::common::cpu::AccessType::Write
-            } else {
-                crate::isa::arm::common::cpu::AccessType::Read
-            },
-            fault_type,
-            stage2: fault.stage2,
-        })
-    }
-
     /// Shared handle to the GIC (for the platform memory bridge to service
     /// distributor/redistributor MMIO).
     pub fn gic_handle(&self) -> Option<std::sync::Arc<std::sync::Mutex<Gic>>> {

@@ -87,6 +87,13 @@ The Linux software-machine path includes:
 
 The same AArch64 Linux image can use the software backend on supported hosts. On Apple Silicon it can use Hypervisor.framework after building the `hvf` feature and signing the binary with the project entitlement.
 
+The software stage-1 walker supports 4 KiB, 16 KiB, and 64 KiB granules
+within its non-LPA physical-address profile. Output width follows TCR.IPS
+(or the EL2/EL3 PS field), capped at 48 bits. Hierarchical APTable restrictions
+remove permissions, and EL1 instruction fetches reject pages that remain
+writable by EL0. Stage-2 descriptor helpers do not establish complete
+two-stage translation support.
+
 ## Generated A64 corpus configuration
 
 The generated allocated-encoding smoke tests enable `ArmFeatures::PACA`, as do
