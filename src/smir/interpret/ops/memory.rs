@@ -27,6 +27,28 @@ impl SmirInterpreter {
             // ==================================================================
             // MEMORY OPERATIONS
             // ==================================================================
+            OpKind::CheckMemoryAlignment {
+                addr,
+                width,
+                access,
+                cond,
+            } => {
+                if cond.is_none_or(|predicate| ctx.read_vreg(predicate) & 1 != 0) {
+                    let address = self.compute_address(ctx, addr);
+                    let alignment = width.bytes();
+                    if address % u64::from(alignment) != 0 {
+                        ctx.pc = op.guest_pc;
+                        ctx.arch_regs.set_pc(op.guest_pc);
+                        ctx.request_exit(ExitReason::AlignmentFault {
+                            pc: op.guest_pc,
+                            address,
+                            alignment,
+                            access: *access,
+                        });
+                    }
+                }
+            }
+
             OpKind::Load {
                 dst,
                 addr,
@@ -525,3 +547,7 @@ impl SmirInterpreter {
         Ok(())
     }
 }
+
+#[cfg(test)]
+#[path = "memory_alignment_tests.rs"]
+mod memory_alignment_tests;

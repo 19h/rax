@@ -647,6 +647,7 @@ impl OpKind {
             | OpKind::ClearExclusive
             | OpKind::Prefetch { .. }
             | OpKind::X86CacheControl { .. }
+            | OpKind::CheckMemoryAlignment { .. }
             | OpKind::X86CheckAlignment { .. }
             | OpKind::X86CheckAlignmentAc { .. }
             | OpKind::Fence { .. }
@@ -776,6 +777,7 @@ impl OpKind {
                     | OpKind::X86LoadMxcsr { .. }
                     | OpKind::X86StoreMxcsr { .. }
                     | OpKind::X86CacheControl { .. }
+                    | OpKind::CheckMemoryAlignment { .. }
                     | OpKind::X86CheckAlignment { .. }
                     | OpKind::X86CheckAlignmentAc { .. }
                     | OpKind::X86X87Control {

@@ -28,6 +28,13 @@ pub enum ExitReason {
     Breakpoint { addr: GuestAddr },
     /// Memory fault
     MemoryFault { addr: GuestAddr, write: bool },
+    /// Data alignment failed before any memory access or destination update.
+    AlignmentFault {
+        pc: GuestAddr,
+        address: GuestAddr,
+        alignment: u32,
+        access: crate::error::MemoryAccessKind,
+    },
     /// Undefined instruction
     Undefined { addr: GuestAddr, opcode: u32 },
     /// x86 general-protection exception with its architectural error code.

@@ -2753,6 +2753,16 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
             op_json!("x86_store_mxcsr", addr, requires_apx)
         }
         OpKind::X86CacheControl { addr, kind } => op_json!("x86_cache_control", addr, kind),
+        OpKind::CheckMemoryAlignment {
+            addr,
+            width,
+            access,
+            cond,
+        } => {
+            let mut value = op_json!("check_memory_alignment", addr, width, cond);
+            value["access"] = json!(access.to_string());
+            value
+        }
         OpKind::X86CheckAlignment { addr, alignment } => {
             op_json!("x86_check_alignment", addr, alignment)
         }

@@ -326,8 +326,18 @@
       "id": "H-ALIGN",
       "area": "Hexagon",
       "finding": "Executes an unaligned scalar word load as a normal load",
-      "status": "pending",
-      "evidence": []
+      "status": "locally_validated",
+      "evidence": [
+        "tests/suites/machine/hexagon_baremetal/packet_alignment.rs",
+        "src/isa/hexagon/memory_access.rs",
+        "src/smir/lift/hexagon/alignment.rs",
+        "/tmp/rax-hexagon-alignment-parent-red.log",
+        "/tmp/rax-hexagon-alignment-original-audit.log"
+      ],
+      "remaining_validation": [
+        "Independent QEMU / physical Hexagon oracle",
+        "Hardware exception cause delivery; this group exposes typed execution faults"
+      ]
     },
     {
       "id": "H-COMMIT",
@@ -606,6 +616,50 @@
       "remaining_validation": [
         "Independent QEMU / physical Hexagon oracle"
       ]
+    },
+    {
+      "id": "H-GPR-OLD",
+      "area": "Hexagon SMIR",
+      "finding": "Sequential lifted GPR writes replace packet-old source values; a legal two-register swap duplicates one value",
+      "status": "pending",
+      "evidence": [
+        "/tmp/rax-hexagon-alignment/adjacent_contracts.rs",
+        "/tmp/rax-hexagon-alignment/adjacent-red.log"
+      ],
+      "baseline": "Direct CPU swaps R24/R25; O0 SMIR produces R25=0x22 instead of 0x11. Fixed LLVM 23 V68 encodings 0x70794018/0x7078c019."
+    },
+    {
+      "id": "H-EA32",
+      "area": "Hexagon SMIR",
+      "finding": "An aligned effective address wraps to 32 bits in the direct CPU but retains a 64-bit carry in the lifted memory operation",
+      "status": "pending",
+      "evidence": [
+        "/tmp/rax-hexagon-alignment/adjacent_contracts.rs",
+        "/tmp/rax-hexagon-alignment/adjacent-red.log"
+      ],
+      "baseline": "R1=0xfffffff0; memw(R1+#32) reads mapped 0x10 directly, while O0 SMIR faults at 0x100000010. Alignment guard itself correctly uses the 32-bit address."
+    },
+    {
+      "id": "H-EXT-SCALE",
+      "area": "Hexagon decoder",
+      "finding": "Constant-extended native-width scalar offsets are scaled after extension; LLVM memw(R1+##2) decodes offset 8 instead of 2",
+      "status": "pending",
+      "evidence": [
+        "/tmp/rax-hexagon-alignment/adjacent_contracts.rs",
+        "/tmp/rax-hexagon-alignment/adjacent-red.log"
+      ],
+      "primary_source": "V68 Programmer Reference section 10.9: scaled immediates are not scaled by the processor when extended."
+    },
+    {
+      "id": "H-DUPLEX-CLASS",
+      "area": "Hexagon decoder",
+      "finding": "Mixed duplex ICLASS groups are assigned to the opposite low/high subinstruction slots",
+      "status": "pending",
+      "evidence": [
+        "/tmp/rax-hexagon-alignment/adjacent_contracts.rs",
+        "/tmp/rax-hexagon-alignment/adjacent-red.log"
+      ],
+      "primary_source": "V68 Programmer Reference tables 10-4 and 10-5; LLVM 23 V68 word 0x51330012."
     }
   ],
   "decisions": {
@@ -1585,6 +1639,175 @@
         {
           "impact": "medium",
           "item": "QEMU/physical Hexagon differential execution is unavailable on this host; the portable suite compares local paths, supplemented by primary-specification contracts.",
+          "blocks": false
+        }
+      ]
+    },
+    {
+      "id": "hexagon-scalar-alignment",
+      "baseline": "60c3faba9ca141aa45fa2ab5cbb5ea54c8db1c23",
+      "status": "locally_validated",
+      "scope": [
+        "Four-byte instruction alignment in direct fetch and lifter admission",
+        "Native-width scalar data alignment before destination, base-update, memory and MMIO effects",
+        "Conditional generic SMIR fault barrier with packet-start PC and precise access intent",
+        "Preserve C fault ABI v1 and classify alignment as existing OTHER with precise diagnostic fields",
+        "Reject duplex containers in the ordinary-opcode lifter before unchecked/misdecoded access emission",
+        "Give the scalar opcode coverage probe legal packet-end parse bits"
+      ],
+      "primary_source": "docs/architecture/hexagon/80-N2040-46_REV_B_Hexagon_V68_Programmers_Reference_Manual.txt: section 5.1.3, scalar memory instruction entries, section 10.3 and exception-cause table; fixed LLVM 23 V68 encodings.",
+      "assumptions": [
+        {
+          "assumption": "The selected V68 scalar access uses its native data width; a false predicate cancels the access.",
+          "dependent_result": "Alignment fault precedes scalar instruction side effects and MMIO exit.",
+          "stress_test": "LE/BE direct execution, widths 2/4/8, every misaligned residue, aligned controls, false/true predicates, post-increment/modifier/circular/bit-reversed addressing, unpack, locked loads, frame doublewords and RMW; lifted O0/O1/O2.",
+          "falsification_probe": "An encoding has a different native alignment requirement or a cancelled access emits an external request."
+        },
+        {
+          "assumption": "Failed store-conditional behavior retains the existing no-memory-access contract.",
+          "dependent_result": "The direct conditional store checks alignment only when its reservation matches; release stores check unconditionally.",
+          "stress_test": "Successful reservations originate from naturally aligned load-locked accesses; no externally forgeable unaligned reservation is introduced.",
+          "falsification_probe": "Independent V68 execution establishes that failed reservations must fault on an unaligned address; that priority remains unknown."
+        }
+      ],
+      "baseline_results": {
+        "contracts": {
+          "passed": 2,
+          "failed": 4
+        },
+        "basis": "Initial six standalone contracts against the parent library: aligned/false-predicate controls pass; unaligned load/store/MMIO/fetch fail. Final stronger typed/SMIR contracts are additional validation, not identical parent-source tests."
+      },
+      "affected_planes": {
+        "direct": "Shared scalar descriptor checked before execution/MMIO routing; fetch checks four-byte alignment.",
+        "smir": "New conditional CheckMemoryAlignment op; interpreter updates context and architectural PC before typed exit; optimizer effect/source metadata and oracle JSON.",
+        "native": "Explicitly rejected by all native admission gates until a target provides precise lowering; direct/interpreted fallback remains available.",
+        "c_api": "Existing RAX_FAULT_OTHER, access intent, address, native-width size and packet PC; unchanged 48-byte v1 layout. Alignment maps to existing guest-fault status rather than backend error."
+      },
+      "validation": {
+        "contracts": {
+          "passed": 14,
+          "failed": 0
+        },
+        "bare_metal": {
+          "passed": 43,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0
+        },
+        "smir_consistency": {
+          "passed": 313,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0
+        },
+        "oracle": {
+          "passed": 82,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0
+        },
+        "ir_unit": {
+          "passed": 4,
+          "failed": 0
+        },
+        "c_api": {
+          "passed": 185,
+          "failed": 0,
+          "ignored": 0
+        },
+        "original_audit": "Unchanged audit_other/repro.rs rebuilt: unaligned word load now returns AlignmentFault(pc=0x1000,address=0x201,alignment=4,access=Read); packet rollback still reproduces.",
+        "logs": [
+          "/tmp/rax-hexagon-alignment-parent-red.log",
+          "/tmp/rax-hexagon-alignment-unit.log",
+          "/tmp/rax-hexagon-alignment-expanded-integration.log",
+          "/tmp/rax-hexagon-alignment-final-library.log",
+          "/tmp/rax-hexagon-alignment-final-capi.log",
+          "/tmp/rax-hexagon-alignment-final-build.log",
+          "/tmp/rax-hexagon-alignment-final-fmt.log",
+          "/tmp/rax-hexagon-alignment-original-audit.log",
+          "/tmp/rax-hexagon-alignment-final-integration.log",
+          "/tmp/rax-hexagon-alignment-final-library-after-admission.log",
+          "/tmp/rax-hexagon-alignment-final-cross-isa.log",
+          "/tmp/rax-hexagon-alignment-final-doc.log",
+          "/tmp/rax-hexagon-alignment-final-clippy.log"
+        ],
+        "cross_isa": {
+          "arm": {
+            "passed": 46850,
+            "failed": 0
+          },
+          "x86": {
+            "passed": 28557,
+            "failed": 0,
+            "ignored": 3
+          },
+          "aarch32_aarch64_jit": {
+            "passed": 26,
+            "failed": 0
+          },
+          "thumb_aarch64_jit": {
+            "passed": 25,
+            "failed": 0
+          },
+          "x86_aarch64_jit": {
+            "passed": 31,
+            "failed": 0
+          }
+        },
+        "doctests": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 5
+        },
+        "library": {
+          "passed": 10418,
+          "failed": 0,
+          "ignored": 2,
+          "filtered": 0,
+          "test_threads": 12,
+          "elapsed_seconds": 231.25
+        },
+        "all_targets_build": "passed",
+        "clippy_all_targets": "passed",
+        "format": "passed",
+        "c_api_execution": "Read/write/fetch through rax_emu_step return RaxStatus::Fault, retain exact PC/address/access and unchanged RAM, report zero retirement; diagnostic queries are repeatable.",
+        "library_before_final_duplex_admission": {
+          "passed": 10418,
+          "failed": 0,
+          "ignored": 2,
+          "test_threads": 4,
+          "elapsed_seconds": 377.43
+        }
+      },
+      "bounded_scope": [
+        {
+          "impact": "high",
+          "item": "Packet-wide memory/state rollback remains H-COMMIT; a typed alignment error does not establish whole-packet atomicity.",
+          "blocks": "Complete Hexagon packet correctness."
+        },
+        {
+          "impact": "high",
+          "item": "Two independently reproduced lifted defects, H-GPR-OLD and H-EA32, are registered for subsequent semantic groups.",
+          "blocks": "Complete Hexagon SMIR parity."
+        },
+        {
+          "impact": "medium",
+          "item": "Hardware exception injection and independent Hexagon execution are not verified; typed bare-metal exits preserve the existing execution model.",
+          "blocks": false
+        },
+        {
+          "impact": "low",
+          "item": "One scalar instruction adds a bounded number of pure address/predicate operations and one fault barrier; time/space are O(1) per scalar operand.",
+          "blocks": false
+        },
+        {
+          "impact": "high",
+          "item": "H-DUPLEX-CLASS and H-EXT-SCALE are independently reproduced decoder defects. Symmetric duplex classes and zero extended offsets isolate this group from those defects; nonzero extension alignment claims depend on their subsequent correction.",
+          "blocks": "Complete Hexagon scalar decode fidelity."
+        },
+        {
+          "impact": "medium",
+          "item": "The ordinary-opcode SMIR lifter now explicitly rejects duplex containers. Direct execution checks both subinstructions; complete duplex lifting remains outside this group.",
           "blocks": false
         }
       ]

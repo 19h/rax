@@ -1193,6 +1193,17 @@ pub enum OpKind {
         write: bool,
     },
 
+    /// Require natural byte-width alignment before a memory access. A clear
+    /// predicate bit 0 cancels the check. Failure reports AlignmentFault at this
+    /// operation's guest PC without accessing memory. Native admission must
+    /// reject this guard until an equivalent fault-precise lowering exists.
+    CheckMemoryAlignment {
+        addr: Address,
+        width: MemWidth,
+        access: crate::error::MemoryAccessKind,
+        cond: Option<VReg>,
+    },
+
     /// x86 cache-line writeback/invalidation operation.
     X86CacheControl {
         addr: Address,

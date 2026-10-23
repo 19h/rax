@@ -85,6 +85,22 @@ impl RaxFaultInfo {
                     RAX_FAULT_ACCESS_READ
                 };
             }
+            Error::AlignmentFault {
+                pc,
+                address,
+                alignment,
+                access,
+            } => {
+                info.pc = *pc;
+                info.address = *address;
+                info.size = *alignment;
+                info.flags = RAX_FAULT_ADDRESS_VALID;
+                info.access = match access {
+                    MemoryAccessKind::Read => RAX_FAULT_ACCESS_READ,
+                    MemoryAccessKind::Write => RAX_FAULT_ACCESS_WRITE,
+                    MemoryAccessKind::Fetch => RAX_FAULT_ACCESS_FETCH,
+                };
+            }
             Error::GeneralProtection { .. } => info.kind = RAX_FAULT_PERMISSION,
             Error::InvalidInstruction { pc, .. } => {
                 info.kind = RAX_FAULT_INVALID_INSTRUCTION;
@@ -123,4 +139,101 @@ pub extern "C" fn rax_emu_last_fault(engine: *const Engine, out: *mut RaxFaultIn
         }
         RaxStatus::Ok
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn hexagon_alignment_faults_reach_the_public_execution_and_diagnostic_apis() {
+        use crate::arch::RaxArch;
+        use crate::engine::{rax_engine_close, rax_engine_open};
+        use crate::mem::{rax_mem_read, rax_mem_write};
+        use crate::reg::{rax_reg_read_u64, rax_reg_write_u64};
+        use crate::run::{rax_emu_icount, rax_emu_step};
+
+        struct Handle(*mut Engine);
+        impl Drop for Handle {
+            fn drop(&mut self) {
+                rax_engine_close(self.0);
+            }
+        }
+
+        for (word, pc, address, access) in [
+            (0x9181c003_u32, 0x1000, 0x2001, RAX_FAULT_ACCESS_READ),
+            (0xa181c200, 0x1000, 0x2001, RAX_FAULT_ACCESS_WRITE),
+            (0x9181c003, 0x1001, 0x1001, RAX_FAULT_ACCESS_FETCH),
+        ] {
+            let mut engine = std::ptr::null_mut();
+            assert_eq!(
+                rax_engine_open(RaxArch::Hexagon as i32, 0, &mut engine),
+                RaxStatus::Ok
+            );
+            let handle = Handle(engine);
+            assert_eq!(
+                rax_mem_write(handle.0, pc, word.to_le_bytes().as_ptr(), 4),
+                RaxStatus::Ok
+            );
+            assert_eq!(
+                rax_mem_write(handle.0, 0x2000, [0xa5_u8; 8].as_ptr(), 8),
+                RaxStatus::Ok
+            );
+            assert_eq!(rax_reg_write_u64(handle.0, 0x0101, 0x2001), RaxStatus::Ok);
+            assert_eq!(rax_reg_write_u64(handle.0, 0x0309, pc), RaxStatus::Ok);
+            let mut done = u64::MAX;
+            assert_eq!(rax_emu_step(handle.0, 1, &mut done), RaxStatus::Fault);
+            assert_eq!(done, 0);
+            assert_eq!(rax_emu_icount(handle.0), 0);
+            for _ in 0..2 {
+                let mut info = RaxFaultInfo::default();
+                assert_eq!(rax_emu_last_fault(handle.0, &mut info), RaxStatus::Ok);
+                assert_eq!((info.kind, info.access), (RAX_FAULT_OTHER, access));
+                assert_eq!((info.pc, info.address), (pc, address));
+                assert_eq!((info.size, info.flags), (4, RAX_FAULT_ADDRESS_VALID));
+                assert_eq!(info.retired_instructions, 0);
+            }
+            let mut after_pc = 0;
+            assert_eq!(
+                rax_reg_read_u64(handle.0, 0x0309, &mut after_pc),
+                RaxStatus::Ok
+            );
+            assert_eq!(after_pc, pc);
+            let mut bytes = [0; 8];
+            assert_eq!(
+                rax_mem_read(handle.0, 0x2000, bytes.as_mut_ptr(), 8),
+                RaxStatus::Ok
+            );
+            assert_eq!(bytes, [0xa5; 8]);
+        }
+    }
+
+    #[test]
+    fn alignment_diagnostics_preserve_v1_layout_and_precise_access_fields() {
+        assert_eq!(std::mem::size_of::<RaxFaultInfo>(), 48);
+        for (access, expected) in [
+            (MemoryAccessKind::Read, RAX_FAULT_ACCESS_READ),
+            (MemoryAccessKind::Write, RAX_FAULT_ACCESS_WRITE),
+            (MemoryAccessKind::Fetch, RAX_FAULT_ACCESS_FETCH),
+        ] {
+            let error = Error::AlignmentFault {
+                pc: 0x1000,
+                address: 0x2001,
+                alignment: 8,
+                access,
+            };
+            assert_eq!(
+                crate::status::status_from_engine_error(&error),
+                RaxStatus::Fault
+            );
+            let info = RaxFaultInfo::from_error(0xdead, &error);
+            assert_eq!(info.version, 1);
+            assert_eq!(info.kind, RAX_FAULT_OTHER);
+            assert_eq!(info.access, expected);
+            assert_eq!(info.pc, 0x1000);
+            assert_eq!(info.address, 0x2001);
+            assert_eq!(info.size, 8);
+            assert_eq!(info.flags, RAX_FAULT_ADDRESS_VALID);
+        }
+    }
 }

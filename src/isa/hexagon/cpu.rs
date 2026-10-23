@@ -1,3 +1,4 @@
+mod alignment;
 mod execute;
 
 use std::sync::Arc;
@@ -566,6 +567,14 @@ impl HexagonVcpu {
     }
 
     fn fetch_word(&self, pc: u32) -> Result<u32> {
+        if pc & 3 != 0 {
+            return Err(Error::AlignmentFault {
+                pc: pc as u64,
+                address: pc as u64,
+                alignment: 4,
+                access: crate::error::MemoryAccessKind::Fetch,
+            });
+        }
         self.read_u32(pc)
     }
 
@@ -1021,7 +1030,7 @@ impl HexagonVcpu {
 
         loop {
             if let Some(sub) = pending_subinsn.take() {
-                if let Some(exit) = self.execute_insn(
+                if let Some(exit) = self.execute_aligned_insn(
                     sub.insn,
                     packet_pc,
                     None,
@@ -1093,7 +1102,7 @@ impl HexagonVcpu {
                 self.ensure_isa_supports(word, &slot1.insn, slot1.opcode)?;
                 self.ensure_isa_supports(word, &slot0.insn, slot0.opcode)?;
 
-                if let Some(exit) = self.execute_insn(
+                if let Some(exit) = self.execute_aligned_insn(
                     slot1.insn,
                     packet_pc,
                     None,
@@ -1133,7 +1142,7 @@ impl HexagonVcpu {
                     return Ok(Some(exit));
                 }
 
-                if let Some(exit) = self.execute_insn(
+                if let Some(exit) = self.execute_aligned_insn(
                     slot0.insn,
                     packet_pc,
                     None,
@@ -1205,7 +1214,7 @@ impl HexagonVcpu {
                     // GPR producers before executing it.
                     let insn = resolve_new_value(insn, &producers);
                     let before = producer_mask(&new_r);
-                    if let Some(exit) = self.execute_insn(
+                    if let Some(exit) = self.execute_aligned_insn(
                         insn,
                         packet_pc,
                         cur_immext,

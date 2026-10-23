@@ -27,6 +27,7 @@ use crate::isa::hexagon::decode::{
 use crate::isa::hexagon::opcode::{DecodedOp, Opcode, decode_word};
 
 // ---- module tree (auto-split) ----
+mod alignment;
 mod emit;
 pub use emit::*;
 mod helpers;
@@ -103,7 +104,23 @@ impl SmirLifter for HexagonLifter {
             });
         }
 
+        if addr & 3 != 0 {
+            return Err(LiftError::MemoryError {
+                addr,
+                error: crate::smir::ir::memory::MemoryError::Alignment { addr, required: 4 },
+            });
+        }
+
         let word = u32::from_le_bytes(bytes[..4].try_into().unwrap());
+        // Parse 00 contains two subinstructions, not one ordinary opcode.
+        // Until this lifter expands both slots, reject the container before
+        // opcode decoding can misinterpret it or omit either access guard.
+        if (word >> 14) & 3 == 0 {
+            return Err(LiftError::Unsupported {
+                addr,
+                mnemonic: "Hexagon duplex container".into(),
+            });
+        }
 
         // PACKET-PRODUCER TRACKING (for new-value `.new` resolution): the GPR
         // producers list is per-packet. If the previous word ended its packet,
@@ -131,6 +148,7 @@ impl SmirLifter for HexagonLifter {
         // unrelated later instruction/block.
         let had_pending = self.pending_hist.is_some();
 
+        let mut alignment_prefix = self.alignment_prefix(&insn, addr, ctx);
         let result = self.lift_insn_inner(&insn, addr, ctx);
 
         if had_pending && self.pending_hist.is_some() {
@@ -138,9 +156,17 @@ impl SmirLifter for HexagonLifter {
         }
 
         let (ops, mut control_flow) = result?;
-        let ops = self
-            .packet_predicates
-            .rewrite(ops, &insn, &mut control_flow, addr, ctx)?;
+        alignment_prefix.extend(ops);
+        for (index, op) in alignment_prefix.iter_mut().enumerate() {
+            op.id = OpId(index as u16);
+        }
+        let ops = self.packet_predicates.rewrite(
+            alignment_prefix,
+            &insn,
+            &mut control_flow,
+            addr,
+            ctx,
+        )?;
 
         // Record this instruction's GPR producer for same-packet new-value
         // resolution: the LOWEST Hexagon R register newly written by the ops it

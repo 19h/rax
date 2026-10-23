@@ -290,8 +290,8 @@ impl HexagonLifter {
 
     /// TEST/AUDIT probe: re-scan the full Hexagon opcode table and report which
     /// NON-V6 (scalar) opcodes still lift to `Unsupported`. For each opcode the
-    /// encoding table's `value` (all variable fields = 0) is used as a canonical
-    /// instruction word and fed through `lift_insn`. Returns the de-duplicated
+    /// encoding table's `value` (operand fields = 0) is given packet-end parse
+    /// bits and fed through `lift_insn`. Returns the de-duplicated
     /// sorted list of `(opcode_name, unsupported_mnemonic)` for opcodes whose
     /// canonical word fails to lift. HVX (`V6_*`) opcodes are skipped (they are a
     /// separate, complete subsystem). This is a coverage signal, not a semantic
@@ -314,7 +314,9 @@ impl HexagonLifter {
             }
             let mut lifter = HexagonLifter::default_isa();
             let mut ctx = LiftContext::new(SourceArch::Hexagon);
-            let word = enc.value;
+            // Zero parse bits describe a duplex container, not the ordinary
+            // scalar opcode whose operand coverage is being probed here.
+            let word = (enc.value & !0xc000) | 0xc000;
             match lifter.lift_insn(0x1000, &word.to_le_bytes(), &mut ctx) {
                 Ok(_) => {}
                 Err(LiftError::Unsupported { mnemonic, .. }) => {

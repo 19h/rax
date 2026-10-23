@@ -42,6 +42,14 @@ pub enum Error {
     Emulator(String),
     #[error("Page fault at vaddr {vaddr:#x} (error_code={error_code:#x})")]
     PageFault { vaddr: u64, error_code: u64 },
+    /// Architectural alignment failure before a guest access occurs.
+    #[error("unaligned {access} at {address:#x} (requires {alignment}-byte alignment; pc={pc:#x})")]
+    AlignmentFault {
+        pc: u64,
+        address: u64,
+        alignment: u32,
+        access: MemoryAccessKind,
+    },
     #[error("General protection fault (error_code={error_code:#x})")]
     GeneralProtection { error_code: u64 },
     /// An exception or software interrupt was reported to a user-mode

@@ -97,6 +97,7 @@ pub(crate) fn status_from_engine_error(e: &rax_engine::Error) -> RaxStatus {
         | E::InvalidInstruction { .. }
         | E::FaultDelivery { .. } => RaxStatus::Fault,
         E::PageFault { .. } => RaxStatus::Fault,
+        E::AlignmentFault { .. } => RaxStatus::Fault,
         E::GeneralProtection { .. } => RaxStatus::Fault,
         // A user-mode exception the run loop did not consume as an event.
         E::GuestEvent { .. } => RaxStatus::Fault,

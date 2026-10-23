@@ -1,3 +1,6 @@
+#[path = "packet_alignment.rs"]
+mod packet_alignment;
+
 #[path = "packet_predicates.rs"]
 mod packet_predicates;
 

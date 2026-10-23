@@ -1564,6 +1564,11 @@ impl OpKind {
                 result.extend(addr.regs());
             }
 
+            OpKind::CheckMemoryAlignment { addr, cond, .. } => {
+                result.extend(addr.regs());
+                result.extend(*cond);
+            }
+
             OpKind::X86CacheControl { addr, .. }
             | OpKind::X86CheckAlignment { addr, .. }
             | OpKind::X86CheckAlignmentAc { addr, .. } => {
