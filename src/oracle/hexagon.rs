@@ -212,3 +212,8 @@ pub(super) fn lift_packet(
         need: packet.bytes_consumed + 4,
     })
 }
+
+/// Observable commit boundaries are part of the public packet IR.
+pub(super) fn packet_boundary_json(begin: bool) -> Value {
+    json!({"opcode": if begin { "hexagon_packet_begin" } else { "hexagon_packet_commit" }})
+}

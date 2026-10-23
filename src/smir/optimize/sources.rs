@@ -15,6 +15,9 @@ impl OpKind {
         let mut result = Vec::new();
 
         match self {
+            OpKind::HexagonPacketBegin | OpKind::HexagonPacketCommit => {
+                result.extend(super::hexagon_packets::boundary_sources());
+            }
             OpKind::X86Opmask(op) => result.extend(op.source_vregs()),
 
             OpKind::Add { src1, src2, .. }

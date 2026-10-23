@@ -176,6 +176,12 @@ impl SmirInterpreter {
             // ==================================================================
             // SYSTEM / PRIVILEGED
             // ==================================================================
+            OpKind::HexagonPacketBegin | OpKind::HexagonPacketCommit => {
+                ctx.request_exit(ExitReason::Unsupported {
+                    addr: op.guest_pc,
+                    operation: "Hexagon packet boundary outside a Hexagon execution context",
+                });
+            }
             OpKind::EbpfInstruction { .. } => {}
             OpKind::Syscall { num, args } => {
                 let num_val = ctx.read_vreg(*num);

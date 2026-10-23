@@ -24,6 +24,7 @@ use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind}
 // ---- module tree (auto-split) ----
 mod arm_flags;
 mod execution;
+mod hexagon_packets;
 pub use execution::*;
 mod hex_float;
 mod operands;

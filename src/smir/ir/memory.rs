@@ -6,6 +6,9 @@ use crate::smir::ir::types::*;
 
 #[path = "endian_atomic.rs"]
 mod endian_atomic;
+#[path = "packet_memory.rs"]
+mod packet_memory;
+pub use packet_memory::{PacketCommitError, PacketWrite};
 
 // ============================================================================
 // Memory Error
@@ -124,6 +127,23 @@ pub trait SmirMemory: Send {
 
     /// Write bytes to memory
     fn write(&mut self, addr: GuestAddr, data: &[u8]) -> Result<(), MemoryError>;
+
+    /// Preflight a data write. Packet-capable backends should preserve the
+    /// fault-address convention of write(), which can differ from a range probe.
+    fn probe_write(&self, addr: GuestAddr, size: usize) -> Result<(), MemoryError> {
+        self.probe(addr, size, true)
+    }
+
+    /// Publish a complete write set, or return an error without changing any
+    /// byte. Backends must opt in to this contract; probing individual stores
+    /// does not guarantee that later callback-backed writes cannot fail.
+    fn write_packet(&mut self, writes: &[PacketWrite]) -> Result<(), PacketCommitError> {
+        if writes.is_empty() {
+            Ok(())
+        } else {
+            Err(PacketCommitError::Unsupported)
+        }
+    }
 
     /// Atomic load
     fn atomic_load(
@@ -358,6 +378,15 @@ impl FlatMemory {
 }
 
 impl SmirMemory for FlatMemory {
+    fn probe_write(&self, addr: GuestAddr, size: usize) -> Result<(), MemoryError> {
+        let start = self.offset(addr)?;
+        self.end(start, addr, size).map(|_| ())
+    }
+
+    fn write_packet(&mut self, writes: &[PacketWrite]) -> Result<(), PacketCommitError> {
+        self.publish_packet(writes)
+    }
+
     fn read(&mut self, addr: GuestAddr, buf: &mut [u8]) -> Result<(), MemoryError> {
         let off = self.offset(addr)?;
         let end = self.end(off, addr, buf.len())?;

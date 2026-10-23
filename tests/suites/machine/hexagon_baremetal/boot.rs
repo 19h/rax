@@ -1,3 +1,9 @@
+#[path = "packet_ir.rs"]
+mod packet_ir;
+
+#[path = "packet_atomic.rs"]
+mod packet_atomic;
+
 #[path = "packet_commit.rs"]
 mod packet_commit;
 

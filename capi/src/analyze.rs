@@ -409,6 +409,11 @@ impl Analyzer {
     }
 
     fn analyze_memory(&mut self, opcode: &str, op: &Value, kind: &Value) {
+        // Packet boundaries publish effects already described by the enclosed
+        // data operations; they add no separate address-bearing memory access.
+        if matches!(opcode, "hexagon_packet_begin" | "hexagon_packet_commit") {
+            return;
+        }
         let reads = op
             .get("memory")
             .and_then(|m| m.get("reads"))

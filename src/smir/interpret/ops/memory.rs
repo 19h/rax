@@ -496,7 +496,11 @@ impl SmirInterpreter {
 
             OpKind::LoadExclusive { dst, addr, width } => {
                 let effective_addr = self.compute_address(ctx, addr);
-                let val = memory.load_exclusive(effective_addr, *width)?;
+                let val = if ctx.source_arch == SourceArch::Hexagon {
+                    self.load_memory(memory, effective_addr, *width, SignExtend::Zero)?
+                } else {
+                    memory.load_exclusive(effective_addr, *width)?
+                };
                 ctx.exclusive_monitor
                     .mark_exclusive(effective_addr, *width, val);
                 ctx.write_vreg(*dst, val);
@@ -510,14 +514,26 @@ impl SmirInterpreter {
             } => {
                 let effective_addr = self.compute_address(ctx, addr);
                 let val = ctx.read_vreg(*src);
-                let success = memory.store_exclusive(effective_addr, val, *width)?;
+                let success = if ctx.source_arch == SourceArch::Hexagon {
+                    let success = ctx
+                        .exclusive_monitor
+                        .check_exclusive(effective_addr, *width);
+                    if success {
+                        self.store_memory(memory, effective_addr, val, *width)?;
+                    }
+                    success
+                } else {
+                    memory.store_exclusive(effective_addr, val, *width)?
+                };
                 ctx.write_vreg(*status, if success { 0 } else { 1 });
                 ctx.exclusive_monitor.clear();
             }
 
             OpKind::ClearExclusive => {
                 ctx.exclusive_monitor.clear();
-                memory.clear_exclusive();
+                if ctx.source_arch != SourceArch::Hexagon {
+                    memory.clear_exclusive();
+                }
             }
 
             OpKind::Prefetch { addr, write } => {

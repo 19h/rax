@@ -719,6 +719,8 @@ impl OpKind {
             | OpKind::X86Enter(..)
             | OpKind::X86Leave(..)
             | OpKind::EbpfInstruction { .. }
+            | OpKind::HexagonPacketBegin
+            | OpKind::HexagonPacketCommit
             | OpKind::Nop
             | OpKind::Undefined { .. }
             | OpKind::Breakpoint => vec![],
@@ -738,6 +740,8 @@ impl OpKind {
             || matches!(
                 self,
                 OpKind::EbpfInstruction { .. }
+                    | OpKind::HexagonPacketBegin
+                    | OpKind::HexagonPacketCommit
                     | OpKind::Store { .. }
                     | OpKind::PredStore { .. }
                     | OpKind::X86PackedFpConvertStore { .. }
@@ -965,7 +969,8 @@ impl OpKind {
     pub fn writes_memory(&self) -> bool {
         matches!(
             self,
-            OpKind::Store { .. }
+            OpKind::HexagonPacketCommit
+                | OpKind::Store { .. }
                 | OpKind::PredStore { .. }
                 | OpKind::X86PackedFpConvertStore { .. }
                 | OpKind::RepStos { .. }

@@ -343,14 +343,23 @@
       "id": "H-COMMIT",
       "area": "Hexagon",
       "finding": "An earlier store remains in memory when a later store in the packet faults",
-      "status": "pending",
+      "status": "locally_validated",
       "evidence": [
         "/tmp/rax-hexagon-commit/contracts.rs",
         "/tmp/rax-hexagon-commit/parent-red.log",
-        "/tmp/rax-hexagon-commit/mmio.enc"
+        "/tmp/rax-hexagon-commit/mmio.enc",
+        "tests/suites/machine/hexagon_baremetal/packet_atomic.rs",
+        "tests/suites/machine/hexagon_baremetal/packet_ir.rs",
+        "/tmp/rax-hexagon-smir-packet/parent-red.log",
+        "/tmp/rax-hexagon-smir-packet/eighth-integration.log"
       ],
       "baseline": "Six contracts fail against the GPR-group source image: direct/lifted RAM rollback, lifted GPR rollback, direct USR rollback, .new producer continuity over MMIO read, and an MMIO write escaping a later-faulting packet.",
-      "direct_validation": "The direct V68 RAM write log now passes the expanded packet fault/commit contracts. Lifted SMIR register/memory rollback remains pending; this finding stays pending until that plane is corrected."
+      "execution_validation": "Direct and generated SMIR ordinary packet fault/commit contracts pass. Explicit boundary operations, state snapshots and opt-in backend batch publication preserve complete represented packet effects.",
+      "remaining_validation": [
+        "Independent QEMU / physical Hexagon execution",
+        "Ordered mixed MMIO write/read remains H-MMIO-ORDER",
+        "Hardware-loop/duplex packet IR and native transactional packet lowering remain unsupported profiles"
+      ]
     },
     {
       "id": "H-PC",
@@ -838,6 +847,10 @@
         "tests/suites/machine/hexagon_baremetal/packet_commit.rs",
         "/tmp/rax-hexagon-commit/direct-parent-red.log",
         "/tmp/rax-hexagon-commit/final-integration.log"
+      ],
+      "remaining_validation": [
+        "SMIR same-packet old control-register read views",
+        "Independent QEMU / physical Hexagon execution"
       ]
     },
     {
@@ -2679,6 +2692,144 @@
           "blocks": false
         }
       ]
+    },
+    {
+      "id": "hexagon-smir-packet-commit",
+      "baseline": "eeb6942b3ba7ea1513b0030653fc5bebbd3c015e",
+      "status": "locally_validated",
+      "scope": [
+        "Represent packet begin/commit in generated IR, public JSON and optimization metadata",
+        "Snapshot architectural state, SSA temporaries, flags, reservations and counters; restore on faults",
+        "Probe and forward staged data writes, and publish only through an explicit all-or-nothing backend method",
+        "Implement FlatMemory batch publication with full validation before writes; preserve write fault-address conventions",
+        "Keep prior packet commits across later faults and complete packet tails before control-flow retirement",
+        "Count one retirement per committed packet, and resume cached packet boundaries after budgets/debug stepping",
+        "Preserve C API analysis effects without inventing an extra address-bearing access for commit metadata",
+        "Extract redundant-load elimination while retaining its public entry point; packet begin is an explicit cache barrier"
+      ],
+      "primary_source": "docs/architecture/hexagon/80-N2040-46_REV_B_Hexagon_V68_Programmers_Reference_Manual.txt: sections 3.3.1/3.3.2 and 5.4/5.5. Existing fixed V68 encodings plus /tmp/rax-hexagon-smir-packet/words.enc. No independent hardware execution is claimed.",
+      "assumptions": [
+        {
+          "assumption": "Generated ordinary packet IR contains balanced, non-nested begin/commit operations.",
+          "dependent_result": "Rollback and retirement cover the complete represented packet.",
+          "stress_test": "Missing/unmatched/nested boundaries reject before execution; a branch encoded before a later data instruction retires after that data effect.",
+          "falsification_probe": "An incomplete packet executes any operation or an early branch omits a later word."
+        },
+        {
+          "assumption": "A backend opts in only when write_packet either publishes the full ordered write set or returns an error without publication.",
+          "dependent_result": "A later store or commit failure cannot expose an earlier logged store.",
+          "stress_test": "Default unsupported backend performs zero writes; read-only packets still execute; a late invalid FlatMemory destination preserves bytes and reservation; overlapping valid writes keep order.",
+          "falsification_probe": "A purported packet-capable backend partially writes on error or silently falls back to individually fallible writes."
+        },
+        {
+          "assumption": "The complete architectural file is observable at each packet boundary even if a later packet overwrites the same register.",
+          "dependent_result": "O1/O2 cannot discard an earlier committed result needed after a later fault.",
+          "stress_test": "GPR, predicate, saturation/USR and vector rollback, postincrement faults, earlier successful packet, natural alignment and exact start PC, O0/O1/O2.",
+          "falsification_probe": "Optimization removes a committed intermediate architectural value or a fault leaves a staged update visible."
+        },
+        {
+          "assumption": "Only represented ordinary software packet profiles execute; native and hardware-loop/duplex profiles require additional semantic representation.",
+          "dependent_result": "Unknown profiles reject explicitly instead of reporting a completed packet.",
+          "stress_test": "Native admission metadata rejects both boundaries; hardware-loop words reject; unsupported backend exits are distinct from guest memory faults.",
+          "falsification_probe": "An unrepresented profile is admitted or an unsupported backend is reported as a guest memory permission violation."
+        }
+      ],
+      "baseline_results": {
+        "contracts": {
+          "passed": 1,
+          "failed": 10
+        },
+        "basis": "The final 11 machine-word contracts link the direct-packet-commit parent rlib. Nine additional IR/backend/budget contracts and one oracle JSON contract were added as final behavior/admission checks and are not claimed as parent-red regressions."
+      },
+      "affected_planes": {
+        "direct": "Previous group supplies controls; no direct CPU changes in this group.",
+        "smir": "Explicit boundaries, optimizer architecture anchors, fault snapshots and staged batch publication. Generic unmarked hand-authored IR retains its existing semantics.",
+        "oracle": "Both static and seeded packet paths expose the shared boundaries. Seeded results remain shared IR effects, not an independent oracle.",
+        "c_api": "Static effect analysis recognizes boundaries without changing ABI layouts; scalar move remains complete and stores have one data-memory effect. Existing address abstraction can still report partial analysis.",
+        "native": "Boundaries fail native admission; no transactional native execution is added."
+      },
+      "validation": {
+        "machine_word_contracts": {
+          "passed": 11,
+          "failed": 0
+        },
+        "ir_contracts": {
+          "passed": 9,
+          "failed": 0
+        },
+        "oracle_contracts": {
+          "passed": 1,
+          "failed": 0
+        },
+        "bare_metal": {
+          "passed": 155,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0
+        },
+        "smir_consistency": {
+          "passed": 313,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0
+        },
+        "oracle": {
+          "passed": 96,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0
+        },
+        "c_api": {
+          "passed": 185,
+          "failed": 0,
+          "ignored": 0
+        },
+        "all_targets_build": "passed",
+        "clippy_all_targets": "passed",
+        "format": "passed",
+        "logs": [
+          "/tmp/rax-hexagon-smir-packet/parent-red.log",
+          "/tmp/rax-hexagon-smir-packet/eighth-integration.log",
+          "/tmp/rax-hexagon-smir-packet/final-library.log",
+          "/tmp/rax-hexagon-smir-packet/final-capi.log",
+          "/tmp/rax-hexagon-smir-packet/final-capi-after-analysis.log",
+          "/tmp/rax-hexagon-smir-packet/final-capi-validated.log",
+          "/tmp/rax-hexagon-smir-packet/final-build.log",
+          "/tmp/rax-hexagon-smir-packet/final-clippy.log",
+          "/tmp/rax-hexagon-smir-packet/final-fmt.log"
+        ],
+        "library": {
+          "passed": 10418,
+          "failed": 0,
+          "ignored": 2,
+          "filtered": 0,
+          "test_threads": 12,
+          "elapsed_seconds": 270.69
+        }
+      },
+      "bounded_scope": [
+        {
+          "impact": "high",
+          "item": "H-MMIO-ORDER, complete checkpoint state and remaining architecture/platform findings stay pending. Successful same-packet old control-register reads, including the lifted H-GP-OLD view, require a separate control-view group.",
+          "blocks": "Complete architectural/platform fidelity."
+        },
+        {
+          "impact": "medium",
+          "item": "Hardware-loop, duplex, multiple-control-transfer packet IR and transactional native lowering are outside this execution profile. No QEMU or physical Hexagon run is claimed.",
+          "blocks": false
+        },
+        {
+          "impact": "medium",
+          "item": "Snapshot cost includes the currently populated SSA temporary map. For p packets, t populated temporaries and b logged bytes, execution snapshot work is O(p*t+b), with per-packet storage O(t+b+architectural state); forwarding a read of r bytes over k writes is O(k*r). Large synthetic regions can therefore incur extra snapshot cost.",
+          "blocks": false
+        },
+        {
+          "impact": "low",
+          "item": "C API analysis ABI sizes are unchanged. Public JSON gains two packet opcode names; SMIR operation counts include them. Static address abstraction remains conservatively partial where expressions cannot be represented.",
+          "blocks": false
+        }
+      ]
     }
-  ]
+  ],
+  "group_scope_notes": "Each group records limits at its own validation point; findings contains the current disposition."
 }

@@ -127,11 +127,19 @@ impl SmirLifter for HexagonLifter {
             });
         }
 
+        if (word >> 14) & 3 == 2 {
+            return Err(LiftError::Unsupported {
+                addr,
+                mnemonic: "Hexagon hardware-loop packet".into(),
+            });
+        }
+
         // PACKET-PRODUCER TRACKING (for new-value `.new` resolution): the GPR
         // producers list is per-packet. If the previous word ended its packet,
         // start a fresh producers list before lifting this (first-of-packet)
         // instruction. The parse bits live in word[15:14] (`0b11`/`0b00` = end).
-        if self.prev_word_ended_packet {
+        let starts_packet = self.prev_word_ended_packet;
+        if starts_packet {
             self.packet_producers.clear();
             self.packet_predicates = Default::default();
             self.packet_registers = Default::default();
@@ -201,9 +209,25 @@ impl SmirLifter for HexagonLifter {
             self.packet_producers.push(n);
         }
 
-        let ops = self
+        let mut ops = self
             .packet_registers
             .rewrite(ops, addr, ctx, self.prev_word_ended_packet)?;
+
+        if starts_packet {
+            ops.insert(0, SmirOp::new(OpId(0), addr, OpKind::HexagonPacketBegin));
+        }
+        if self.prev_word_ended_packet {
+            if self.pending_hist.is_some() {
+                return Err(LiftError::Unsupported {
+                    addr,
+                    mnemonic: "Hexagon histogram without packet input".into(),
+                });
+            }
+            ops.push(SmirOp::new(OpId(0), addr, OpKind::HexagonPacketCommit));
+        }
+        for (index, op) in ops.iter_mut().enumerate() {
+            op.id = OpId(index as u16);
+        }
 
         let mut branch_targets = Vec::new();
         match &control_flow {
@@ -243,8 +267,17 @@ impl SmirLifter for HexagonLifter {
         let block_id = ctx.get_or_create_block(addr);
         let mut all_ops = Vec::new();
         let mut current_addr = addr;
+        let mut packet_flow = ControlFlow::Fallthrough;
+        let mut packet_words = 0;
 
         loop {
+            if packet_words == 4 {
+                return Err(LiftError::Unsupported {
+                    addr: current_addr,
+                    mnemonic: "Hexagon packet exceeds four words".into(),
+                });
+            }
+            packet_words += 1;
             // Fetch instruction bytes
             let bytes = mem
                 .read(current_addr, 4)
@@ -258,9 +291,25 @@ impl SmirLifter for HexagonLifter {
             all_ops.extend(result.ops);
             current_addr += result.bytes_consumed as u64;
 
-            // Check if block ends
             if result.control_flow.ends_block() {
-                let terminator = match result.control_flow {
+                if packet_flow.ends_block() {
+                    return Err(LiftError::Unsupported {
+                        addr: current_addr,
+                        mnemonic: "multiple Hexagon control-flow instructions in a packet".into(),
+                    });
+                }
+                packet_flow = result.control_flow;
+            }
+            if self.prev_word_ended_packet {
+                packet_words = 0;
+            }
+            // Control transfers retire after the complete packet, including
+            // instructions physically encoded after the branch word.
+            if self.prev_word_ended_packet && packet_flow.ends_block() {
+                if let ControlFlow::CondBranchReg { not_taken, .. } = &mut packet_flow {
+                    *not_taken = current_addr;
+                }
+                let terminator = match packet_flow {
                     ControlFlow::Fallthrough | ControlFlow::NextInsn => unreachable!(),
                     ControlFlow::Branch { target } | ControlFlow::DirectBranch(target) => {
                         Terminator::Branch {

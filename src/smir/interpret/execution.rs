@@ -117,6 +117,21 @@ impl SmirInterpreter {
                         None => return ExitReason::BlockNotFound { addr: ctx.pc },
                     }
                 }
+                None if ctx.source_arch == SourceArch::Hexagon => {
+                    let suffix = self.block_cache.values().find_map(|block| {
+                        let index = block.ops.iter().position(|op| {
+                            op.guest_pc == ctx.pc && matches!(op.kind, OpKind::HexagonPacketBegin)
+                        })?;
+                        let mut suffix = block.clone();
+                        suffix.ops = block.ops[index..].to_vec();
+                        suffix.guest_pc = ctx.pc;
+                        Some(suffix)
+                    });
+                    match suffix {
+                        Some(block) => block,
+                        None => return ExitReason::BlockNotFound { addr: ctx.pc },
+                    }
+                }
                 None => return ExitReason::BlockNotFound { addr: ctx.pc },
             };
 
@@ -186,6 +201,16 @@ impl SmirInterpreter {
         block: &SmirBlock,
         limit: u64,
     ) -> BlockResult {
+        if ctx.source_arch == SourceArch::Hexagon
+            && block.ops.iter().any(|op| {
+                matches!(
+                    op.kind,
+                    OpKind::HexagonPacketBegin | OpKind::HexagonPacketCommit
+                )
+            })
+        {
+            return self.execute_hexagon_packets(ctx, memory, block, limit);
+        }
         let ebpf = ctx.source_arch == SourceArch::Ebpf;
         let guest_boundaries = ebpf
             && block

@@ -35,6 +35,11 @@ pub enum ExitReason {
         alignment: u32,
         access: crate::error::MemoryAccessKind,
     },
+    /// The selected execution backend cannot represent this operation.
+    Unsupported {
+        addr: GuestAddr,
+        operation: &'static str,
+    },
     /// Undefined instruction
     Undefined { addr: GuestAddr, opcode: u32 },
     /// x86 general-protection exception with its architectural error code.

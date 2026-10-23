@@ -282,6 +282,15 @@ fn hexagon_lifter_is_available_and_deterministic() {
             assert_eq!(write.width_bits, 32);
             assert_eq!(write.value_kind, RAX_VALUE_CONSTANT);
             assert_eq!(write.value, 5);
+            // Commit metadata must not become an unknown extra memory access.
+            let (store, effects) = analyze(RaxArch::Hexagon, 0, &[0x00, 0xc2, 0x81, 0xa1]);
+            assert_eq!(store.flags & RAX_ANALYSIS_HAS_SMIR, RAX_ANALYSIS_HAS_SMIR);
+            let memory: Vec<_> = effects
+                .iter()
+                .filter(|effect| effect.kind == RAX_EFFECT_MEMORY)
+                .collect();
+            assert_eq!(memory.len(), 1);
+            assert_eq!(memory[0].width_bits, 32);
         })
         .expect("spawn Hexagon analysis test")
         .join()

@@ -184,3 +184,19 @@ fn a_call_before_packet_end_defers_until_packet_link_effects_are_modeled() {
     let value = packet(&[0x5a004004, 0x7800c024]);
     assert_rejected(&value, "call/return/trap before packet end");
 }
+
+#[test]
+fn public_packet_ir_exposes_ordered_commit_boundaries() {
+    let value = packet(&[0x78004038, 0xa181c200]);
+    let operations = value["smir"]["ops"].as_array().unwrap();
+    assert_eq!(
+        operations.first().unwrap()["opcode"],
+        "hexagon_packet_begin"
+    );
+    assert_eq!(
+        operations.last().unwrap()["opcode"],
+        "hexagon_packet_commit"
+    );
+    assert_eq!(operations.first().unwrap()["memory"]["writes"], false);
+    assert_eq!(operations.last().unwrap()["memory"]["writes"], true);
+}

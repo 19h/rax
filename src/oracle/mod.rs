@@ -1402,6 +1402,8 @@ fn smir_op_kind_json(kind: &OpKind) -> Value {
     }
 
     match kind {
+        OpKind::HexagonPacketBegin => hexagon::packet_boundary_json(true),
+        OpKind::HexagonPacketCommit => hexagon::packet_boundary_json(false),
         OpKind::EbpfInstruction {
             dialect,
             endian,

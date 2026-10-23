@@ -1193,6 +1193,13 @@ pub enum OpKind {
         write: bool,
     },
 
+    /// Start a fault-atomic Hexagon packet. This observable barrier must
+    /// survive optimization and is never admitted to native lowering.
+    HexagonPacketBegin,
+
+    /// Publish the current Hexagon packet's validated memory/register effects.
+    HexagonPacketCommit,
+
     /// Require natural byte-width alignment before a memory access. A clear
     /// predicate bit 0 cancels the check. Failure reports AlignmentFault at this
     /// operation's guest PC without accessing memory. Native admission must
