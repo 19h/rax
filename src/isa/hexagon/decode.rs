@@ -596,7 +596,9 @@ pub enum DecodedInsn {
         src: MemOpSrc,
     },
     /// J4 compound compare-and-jump (`J4_<cmp>_<cond>_jump[nv]_<hint>`): a single
-    /// instruction that evaluates a compare and branches on the result.
+    /// instruction that evaluates a compare. Predicate-writing forms branch
+    /// on the aggregate P0/P1.new value; new-value register forms branch on
+    /// their own comparison result.
     ///
     /// * `kind` is the comparison (reg/reg, reg/imm, or vs the constants -1 / bit
     ///   0). `src1` is `Rs` (or, when `new_value` is set, the `Ns8` producer

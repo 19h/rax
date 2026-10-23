@@ -30,6 +30,7 @@ use crate::isa::hexagon::opcode::{DecodedOp, Opcode, decode_word};
 mod emit;
 pub use emit::*;
 mod helpers;
+mod packet_predicates;
 pub use helpers::*;
 mod lift;
 pub use lift::*;
@@ -80,6 +81,7 @@ pub struct HexagonLifter {
     /// compound compare-jump (which is NOT the first word of its packet) needs
     /// this. Updated at every packet boundary alongside `packet_producers`.
     packet_start_pc: GuestAddr,
+    packet_predicates: packet_predicates::PacketPredicates,
 }
 
 impl SmirLifter for HexagonLifter {
@@ -109,6 +111,7 @@ impl SmirLifter for HexagonLifter {
         // instruction. The parse bits live in word[15:14] (`0b11`/`0b00` = end).
         if self.prev_word_ended_packet {
             self.packet_producers.clear();
+            self.packet_predicates = Default::default();
             self.packet_start_pc = addr;
         }
         let parse = (word >> 14) & 0x3;
@@ -134,7 +137,10 @@ impl SmirLifter for HexagonLifter {
             self.pending_hist = None;
         }
 
-        let (ops, control_flow) = result?;
+        let (ops, mut control_flow) = result?;
+        let ops = self
+            .packet_predicates
+            .rewrite(ops, &insn, &mut control_flow, addr, ctx)?;
 
         // Record this instruction's GPR producer for same-packet new-value
         // resolution: the LOWEST Hexagon R register newly written by the ops it

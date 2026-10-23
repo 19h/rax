@@ -33,6 +33,7 @@ impl HexagonLifter {
             packet_producers: Vec::new(),
             prev_word_ended_packet: true,
             packet_start_pc: 0,
+            packet_predicates: Default::default(),
         }
     }
 

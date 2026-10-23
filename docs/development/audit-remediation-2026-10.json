@@ -312,8 +312,15 @@
       "id": "H-PRED",
       "area": "Hexagon",
       "finding": "Multiple compare writes to one predicate in a packet retain the last value instead of applying auto-AND",
-      "status": "pending",
-      "evidence": []
+      "status": "locally_validated",
+      "evidence": [
+        "tests/suites/machine/hexagon_baremetal/packet_predicates.rs",
+        "/tmp/rax-hexagon-predicates-final-parent-red.log",
+        "/tmp/rax-hexagon-predicates-final-full.log"
+      ],
+      "remaining_validation": [
+        "Independent QEMU / physical Hexagon oracle"
+      ]
     },
     {
       "id": "H-ALIGN",
@@ -569,6 +576,36 @@
         "/tmp/rax-x86-priv-rosetta-library-final.log"
       ],
       "cause": "unknown"
+    },
+    {
+      "id": "H-PRED-OLD",
+      "area": "Hexagon packet predicates",
+      "finding": "Lifted ordinary predicate reads used a preceding same-packet predicate write instead of the packet-old byte.",
+      "status": "locally_validated",
+      "evidence": [
+        "tests/suites/machine/hexagon_baremetal/packet_predicates.rs",
+        "/tmp/rax-hexagon-predicates-final-parent-red.log",
+        "/tmp/rax-hexagon-predicates-compound-red.log",
+        "/tmp/rax-hexagon-predicates-final-full.log"
+      ],
+      "remaining_validation": [
+        "Independent QEMU / physical Hexagon oracle"
+      ]
+    },
+    {
+      "id": "H-PRED-CJUMP",
+      "area": "Hexagon packet predicates",
+      "finding": "Compound compare-jumps branched on their own compare result instead of aggregate P0/P1.new.",
+      "status": "locally_validated",
+      "evidence": [
+        "tests/suites/machine/hexagon_baremetal/packet_predicates.rs",
+        "/tmp/rax-hexagon-predicates-final-parent-red.log",
+        "/tmp/rax-hexagon-predicates-compound-red.log",
+        "/tmp/rax-hexagon-predicates-final-full.log"
+      ],
+      "remaining_validation": [
+        "Independent QEMU / physical Hexagon oracle"
+      ]
     }
   ],
   "decisions": {
@@ -1450,6 +1487,104 @@
         {
           "impact": "medium",
           "item": "Physical Intel hardware execution is unavailable; emitted x86 code and host-MXCSR preservation are exercised under Rosetta.",
+          "blocks": false
+        }
+      ]
+    },
+    {
+      "id": "hexagon-packet-predicates",
+      "baseline": "71c3d05e22737d54592f268bc60815c2c47be2a4",
+      "status": "locally_validated",
+      "scope": [
+        "Auto-AND for valid same-packet compare and predicate-register-transfer writes",
+        "Separate packet-old predicate inputs and in-flight aggregate values in SMIR",
+        "Explicit .new consumers, cancelled accesses and reset at packet boundaries",
+        "Compound compare-jumps consume the aggregate P0/P1.new condition",
+        "Reject opaque predicate consumers after a producer when their read mode is not represented",
+        "Share the existing 64 MiB debug-lifter test helper"
+      ],
+      "primary_source": "docs/architecture/hexagon/80-N2040-46_REV_B_Hexagon_V68_Programmers_Reference_Manual.txt: sections 3.3.1, 6.1.3 and 8.5; tools/hexagon/qemu/imported/branch.idef STD_CMPJUMP/fPART1/fLSBNEW0/1; fixed LLVM 23 V68 encodings.",
+      "assumptions": [
+        {
+          "assumption": "Packets satisfy the V68 restrictions on multiple predicate writes and producer/consumer placement.",
+          "dependent_result": "Auto-AND applies to compares and predicate-register transfers, without legitimizing other conflicting writes.",
+          "stress_test": "Every predicate destination and Boolean result pair, old 0/0xff values, full-byte predicate transfers, old/.new consumers, cancelled unmapped load, packet reset, P0/P1 compound jumps with both senses and register/immediate comparisons at O0/O1/O2.",
+          "falsification_probe": "A supposedly legal packet violates V68 scheduling/write restrictions or an opaque consumer is admitted with an inferred read mode."
+        }
+      ],
+      "baseline_results": {
+        "initial_contracts": {
+          "passed": 2,
+          "failed": 4
+        },
+        "final_contracts": {
+          "passed": 2,
+          "failed": 7
+        },
+        "compound_after_initial_auto_and_fix": {
+          "passed": 0,
+          "failed": 2
+        },
+        "basis": "Initial/final standalone contracts use a parent library with the same relevant predicate behavior. The intermediate compound reproducer links the current packet-PC-correct build before changing its branch condition, isolating wrong .new consumption from the earlier PC-base defect."
+      },
+      "validation": {
+        "contracts": {
+          "passed": 9,
+          "failed": 0,
+          "ignored": 0
+        },
+        "bare_metal": {
+          "passed": 29,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0
+        },
+        "smir_consistency": {
+          "passed": 313,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0
+        },
+        "c_api": {
+          "passed": 183,
+          "failed": 0,
+          "ignored": 0
+        },
+        "all_targets_build": "passed",
+        "debug_stack": "Opaque predicate-transfer opcodes enter the existing large scalar lifter frame. Default test stack overflowed; 16 MiB diagnostic completed all six initial contracts. The final tests share the pre-existing 64 MiB lifter helper; no emulator runtime stack setting changed.",
+        "logs": [
+          "/tmp/rax-hexagon-predicates-parent-red.log",
+          "/tmp/rax-hexagon-predicates-final-parent-red.log",
+          "/tmp/rax-hexagon-predicates-compound-red.log",
+          "/tmp/rax-hexagon-predicates-stack-diagnostic.log",
+          "/tmp/rax-hexagon-predicates-final-quick.log",
+          "/tmp/rax-hexagon-predicates-final-full.log",
+          "/tmp/rax-hexagon-predicates-final-capi.log",
+          "/tmp/rax-hexagon-predicates-final-build.log"
+        ],
+        "library": {
+          "passed": 10414,
+          "failed": 0,
+          "ignored": 2,
+          "filtered": 0,
+          "test_threads": 4
+        },
+        "format": "passed"
+      },
+      "bounded_scope": [
+        {
+          "impact": "medium",
+          "item": "Opaque predicate consumers after a same-packet producer are explicitly unsupported by the lifter and remain executable through the direct CPU. Single-instruction consumers without a preceding producer retain their existing support.",
+          "blocks": false
+        },
+        {
+          "impact": "high",
+          "item": "Scalar alignment and packet memory-fault rollback remain pending; these predicate contracts do not establish complete packet atomicity.",
+          "blocks": "Complete Hexagon packet correctness."
+        },
+        {
+          "impact": "medium",
+          "item": "QEMU/physical Hexagon differential execution is unavailable on this host; the portable suite compares local paths, supplemented by primary-specification contracts.",
           "blocks": false
         }
       ]

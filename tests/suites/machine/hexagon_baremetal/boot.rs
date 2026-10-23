@@ -1,3 +1,6 @@
+#[path = "packet_predicates.rs"]
+mod packet_predicates;
+
 #[path = "packet_control.rs"]
 mod packet_control;
 

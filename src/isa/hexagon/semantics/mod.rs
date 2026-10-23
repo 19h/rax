@@ -19,6 +19,14 @@ use std::cell::Cell;
 use super::opcode::DecodedOp;
 use crate::vm::vcpu::HexagonRegisters;
 
+/// V68 section 6.1.3: concurrent compare/predicate-transfer writes auto-AND.
+/// The first write starts from all ones, never the old architectural value.
+#[inline]
+pub(crate) fn merge_predicate(writes: &mut [Option<u8>; 4], predicate: u8, value: u8) {
+    let pending = &mut writes[predicate as usize];
+    *pending = Some(pending.unwrap_or(0xff) & value);
+}
+
 mod alu;
 mod alu_ext;
 mod alu_pred;
@@ -150,7 +158,7 @@ impl SemCtx<'_> {
     /// Write an 8-bit predicate register.
     #[inline]
     pub fn set_p(&mut self, pred: u8, value: u8) {
-        self.new_p[pred as usize] = Some(value);
+        merge_predicate(self.new_p, pred, value);
     }
 
     /// Raise the sticky saturation/overflow flag.

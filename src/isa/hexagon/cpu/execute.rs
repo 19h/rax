@@ -1,6 +1,7 @@
 //! Decoded scalar, control-flow, and vector instruction execution.
 
 use super::*;
+use crate::isa::hexagon::semantics::merge_predicate;
 
 impl HexagonVcpu {
     pub(super) fn execute_insn(
@@ -533,11 +534,15 @@ impl HexagonVcpu {
                 };
                 // The predicate-writing (`_jump`) forms write P0/P1 with the
                 // compare result; the `_jumpnv` forms write no predicate.
-                if let Some(p) = write_pred {
-                    new_p[p as usize] = Some(if result { 0xff } else { 0 });
-                }
-                // Branch when (compare result == taken sense).
-                if result == sense {
+                let branch_result = if let Some(p) = write_pred {
+                    merge_predicate(new_p, p, if result { 0xff } else { 0 });
+                    new_p[p as usize].is_some_and(|value| value & 1 != 0)
+                } else {
+                    result
+                };
+                // Predicate-writing forms consume the aggregate P0/P1.new;
+                // new-value register comparisons branch on their own result.
+                if branch_result == sense {
                     let target = packet_pc.wrapping_add(offset as u32) & !0x3;
                     self.set_branch(branch, target, false)?;
                 }
@@ -573,7 +578,7 @@ impl HexagonVcpu {
                     CmpKind::Lteu => a <= b,
                     CmpKind::Gte => (a as i32) >= (b as i32),
                 };
-                new_p[pred as usize] = Some(if result { 0xff } else { 0 });
+                merge_predicate(new_p, pred, if result { 0xff } else { 0 });
             }
             DecodedInsn::CmpImm {
                 pred,
@@ -606,7 +611,7 @@ impl HexagonVcpu {
                         CmpKind::Gte => (a as i32) >= b,
                     }
                 };
-                new_p[pred as usize] = Some(if result { 0xff } else { 0 });
+                merge_predicate(new_p, pred, if result { 0xff } else { 0 });
             }
             DecodedInsn::Mul { dst, src1, src2 } => {
                 let val = self.regs.r[src1 as usize].wrapping_mul(self.regs.r[src2 as usize]);

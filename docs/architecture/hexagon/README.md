@@ -73,6 +73,8 @@ The packet model includes work for:
 
 PC-relative branch, call, and loop targets use the packet-start address in both direct execution and SMIR, including ordinary and constant-extended encodings. Target arithmetic wraps in the 32-bit address space. Decoded instruction execution lives in `src/isa/hexagon/cpu/execute.rs`.
 
+Compare and predicate-register-transfer writes to the same predicate byte auto-AND within a legal packet. Direct execution buffers these writes, and SMIR keeps packet-old inputs separate from the aggregate read by `.new` consumers. Compound compare-jumps use that aggregate as their branch condition. The lifter rejects an opaque predicate consumer after a producer when its old/new read mode is unavailable; the direct CPU retains execution support.
+
 The `hexagon_bare_metal` target contains fixed-encoding packet-PC and wraparound contracts. The `hexagon_smir_lift` consistency target runs on hosts with `llvm-mc`; it compares local CPU and lifted execution and does not establish an independent hardware-oracle result. The QEMU differential targets retain their Linux requirement.
 
 Tests must cover packet combinations, not only isolated instructions, because forwarding and commit behavior are relational properties.
