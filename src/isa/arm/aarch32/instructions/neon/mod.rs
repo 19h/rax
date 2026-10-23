@@ -39,4 +39,5 @@ pub(crate) use ops::*;
 mod shift;
 pub(crate) use shift::*;
 
+mod fp_selection;
 mod fp_state;

@@ -162,26 +162,27 @@ fn seeded_basic_arithmetic_matches_native_common_arm_profile() {
 #[test]
 fn software_results_and_guest_flags_preserve_host_control_and_status() {
     let _entry = HostState::save();
-    let control = (1_u64 << 22) | (1 << 24) | (1 << 25);
-    let status = 0x9f_u64;
-    // SAFETY: set a distinct, masked host environment on this test thread.
-    unsafe {
-        asm!("msr fpcr, {control}", "msr fpsr, {status}", control=in(reg) control, status=in(reg) status, options(nomem,nostack));
-    }
-    for operation in [
-        Operation::Add,
-        Operation::Subtract,
-        Operation::Multiply,
-        Operation::Divide,
-        Operation::SquareRoot,
-    ] {
-        evaluate32(operation, 0x3f800000, 0x33800000, 0);
-        evaluate64(operation, 0x3ff0000000000000, 0x3ca0000000000000, 0);
-        let after = HostState::save();
-        assert_eq!(
-            (after.control, after.status),
-            (control, status),
-            "{operation:?}"
-        );
+    let control = (1_u64 << 22) | (3 << 24);
+    for status in [0_u64, 0x80, 0x9f] {
+        // SAFETY: thread-local masked controls/status restored by the entry guard.
+        unsafe {
+            asm!("msr fpcr, {control}","msr fpsr, {status}",control=in(reg) control,status=in(reg) status,options(nomem,nostack));
+        }
+        for operation in [
+            Operation::Add,
+            Operation::Subtract,
+            Operation::Multiply,
+            Operation::Divide,
+            Operation::SquareRoot,
+        ] {
+            evaluate32(operation, 0x3f800000, 0x33800000, 0);
+            evaluate64(operation, 0x3ff0000000000000, 0x3ca0000000000000, 0);
+            let after = HostState::save();
+            assert_eq!(
+                (after.control, after.status),
+                (control, status),
+                "{operation:?}"
+            );
+        }
     }
 }

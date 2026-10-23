@@ -1,3 +1,14 @@
+#[path = "fp_fused_contract.rs"]
+mod fp_fused_contract;
+#[cfg(target_arch = "aarch64")]
+#[path = "fp_fused_native.rs"]
+mod fp_fused_native;
+#[path = "fp_selection_contract.rs"]
+mod fp_selection_contract;
+#[cfg(target_arch = "aarch64")]
+#[path = "fp_selection_native.rs"]
+mod fp_selection_native;
+
 #[cfg(target_arch = "aarch64")]
 #[path = "fp_native.rs"]
 mod fp_native;
@@ -730,7 +741,7 @@ fn scalar_vmaxnm_vminnm_decode_and_execute_number_minmax() {
         ExecResult::Continue
     ));
     assert_eq!(cpu.vfp.read_h_bits(0), 0x4700);
-    assert!(cpu.vfp.fpscr.ioc());
+    assert!(!cpu.vfp.fpscr.ioc());
 
     cpu.vfp.fpscr.set_ioc(false);
     cpu.vfp.write_h_bits(1, 0x8000); // -0.0
@@ -772,7 +783,7 @@ fn scalar_vmaxnm_vminnm_decode_and_execute_number_minmax() {
         ExecResult::Continue
     ));
     assert_eq!(cpu.vfp.read_s_bits(0), 7.0f32.to_bits());
-    assert!(cpu.vfp.fpscr.ioc());
+    assert!(!cpu.vfp.fpscr.ioc());
 
     cpu.vfp.fpscr.set_ioc(false);
     cpu.vfp.write_s(1, -0.0);

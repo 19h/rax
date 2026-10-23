@@ -295,10 +295,15 @@
         "tests/suites/isa/arm/aarch32/fp_contract.rs",
         "tests/suites/isa/arm/aarch32/fp_native.rs",
         "/tmp/rax-a32-fp/expanded-parent-red.log",
-        "/tmp/rax-a32-fp/native-integration.log"
+        "/tmp/rax-a32-fp/native-integration.log",
+        "tests/suites/isa/arm/aarch32/fp_fused_contract.rs",
+        "tests/suites/isa/arm/aarch32/fp_selection_contract.rs",
+        "tests/suites/isa/arm/aarch32/fp_fused_native.rs",
+        "tests/suites/isa/arm/aarch32/fp_selection_native.rs",
+        "/tmp/rax-a32-fma/all-parent-red.log"
       ],
       "remaining_validation": [
-        "Fused arithmetic, conversions and complete FP16/FZ16 profiles",
+        "Conversions, round-to-integral, complete FP16/FZ16 profiles and remaining Advanced SIMD estimate/step families",
         "Enabled floating-point exception delivery",
         "Native A32 hardware or independent A32 system oracle"
       ]
@@ -2952,6 +2957,139 @@
         {
           "impact": "low",
           "item": "Fixed-width u128 arithmetic has bounded time/space per operation; integer square root is bounded by 128-bit radicands. No performance claim is made.",
+          "blocks": false
+        }
+      ]
+    },
+    {
+      "id": "a32-vfp-fused-selection-comparison",
+      "baseline": "a03e85540e8672003894f9864437833a5d8977cc",
+      "status": "locally_validated",
+      "scope": [
+        "Binary32/binary64 VFMA/VFMS/VFNMA/VFNMS with exact single rounding, Arm NaN input priority, operand negation, invalid override and cumulative status",
+        "Binary32/binary64 minNum/maxNum preserve equal nonzero values and implement quiet/signaling NaNs, signed zeros, DN and FZ",
+        "Scalar comparisons unpack inputs with FZ/IDC, distinguish quiet/signaling forms, and update only NZCV/cumulative exceptions",
+        "Legacy Advanced SIMD min/max, pairwise min/max, comparison and absolute difference select StandardFPSCRValue and retain cumulative exceptions",
+        "Extract scalar fused/selection and NEON selection implementations while preserving public helper paths",
+        "Strengthen host FP-state preservation controls with initially clear, partially set and fully set exception bits"
+      ],
+      "primary_source": {
+        "local": "docs/architecture/arm/asl/arm_defs.asl: FPMulAdd, FPProcessNaNs3, FPMaxNum/FPMinNum, FPMax/FPMin, FPCompare/FPCompareEQ/FPCompareGT/FPCompareGE, StandardFPSCRValue",
+        "manual": "https://documentation-service.arm.com/static/5f8daeb7f86e16515cdb8c4e",
+        "native_manual": "https://documentation-service.arm.com/static/6245c734b059dc5ff9a8bdab"
+      },
+      "assumptions": [
+        {
+          "assumption": "The selected untrapped binary32/binary64 profiles share the primary-source A32/A64 arithmetic rules.",
+          "dependent_result": "Native A64 supplies independent arithmetic/selection/status expectations; this does not establish A32 hardware decoding or trap delivery.",
+          "stress_test": "200000 fused comparisons and 200000 selection/comparison comparisons across both precisions, four rounding modes, DN/FZ; 40000 additional decoded A32 NEON min/max comparisons use native scalar FMAX/FMIN under StandardFPSCRValue.",
+          "falsification_probe": "Any raw result/status differs from native execution under the matched control profile."
+        },
+        {
+          "assumption": "Intermediate fused products are not rounded before addition, including binary64 cancellation.",
+          "dependent_result": "Fused residuals and range are preserved.",
+          "stress_test": "Exact f32/f64 residual fixtures; opposite-sign infinity invalid cases; tiny results; directed rounding; signaling NaN priority and quiet-addend zero-times-infinity override.",
+          "falsification_probe": "A fused result matches a separately rounded multiply/add where primary-source results differ."
+        },
+        {
+          "assumption": "A32 floating-point state remains outside the scalar SMIR/native admission profile.",
+          "dependent_result": "No stale native VFP path is enabled.",
+          "stress_test": "Ten raw fused/selection encodings reject at their exact guest address; public helper paths and existing decoded forms remain.",
+          "falsification_probe": "An encoding is admitted without represented FPSCR/register semantics."
+        }
+      ],
+      "baseline_results": {
+        "all_contracts": {
+          "passed": 4,
+          "failed": 26
+        },
+        "fused_and_admission": {
+          "passed": 4,
+          "failed": 12
+        },
+        "selection_and_neon": {
+          "passed": 0,
+          "failed": 9
+        },
+        "native_checks": {
+          "passed": 0,
+          "failed": 5
+        },
+        "basis": "Final four new test modules link the saved a03e85540 product rlib. Native tests stop at their first mismatch; no baseline full-campaign completion is claimed."
+      },
+      "affected_planes": {
+        "direct": "Scalar VFP helpers plus decoded scalar/NEON callers; controls and sticky status use shared integer soft-FP primitives.",
+        "cpu_state": "FPSCR controls/NZCV/QC are preserved except architecturally selected compare flags and cumulative exceptions. Host FPCR/FPSR are unchanged.",
+        "smir_native": "A32 VFP remains fail-closed. Common exact binary64 finite-product addition and Arm final rounding gain restricted internal visibility for reuse; existing x86 operation semantics are unchanged.",
+        "memory_backend_abi": "No memory translation, public state-layout, backend or C ABI changes."
+      },
+      "validation": {
+        "status": "passed_for_represented_scope",
+        "native_comparisons": 440000,
+        "seeds": {
+          "fused": "0x05a3e1d7b46c928f",
+          "selection_compare": "0x37c254e09b6d18af",
+          "decoded_neon": "0x1bd75a9362e40cf8"
+        },
+        "generator": "xorshift64: shifts 13,7,17",
+        "logs": [
+          "/tmp/rax-a32-fma/all-parent-red.log",
+          "/tmp/rax-a32-fma/final-integration.log",
+          "/tmp/rax-a32-fma/library.log",
+          "/tmp/rax-a32-fma/capi.log",
+          "/tmp/rax-a32-fma/build.log",
+          "/tmp/rax-a32-fma/clippy.log",
+          "/tmp/rax-a32-fma/fmt.log",
+          "/tmp/rax-a32-fma/doc.log"
+        ],
+        "arm": {
+          "passed": 46850,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0
+        },
+        "vfp": {
+          "passed": 155,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0
+        },
+        "c_api": {
+          "passed": 185,
+          "failed": 0,
+          "ignored": 0
+        },
+        "all_targets_build": "passed",
+        "clippy_all_targets": "passed",
+        "library": {
+          "passed": 10418,
+          "failed": 0,
+          "ignored": 2,
+          "filtered": 0,
+          "elapsed_seconds": 262.66,
+          "test_threads": 12
+        },
+        "format": "passed",
+        "doctests": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 5
+        }
+      },
+      "bounded_scope": [
+        {
+          "impact": "high",
+          "item": "Conversions, round-to-integral, complete FP16/FZ16, remaining Advanced SIMD estimate/step families and enabled exception delivery still require work. Half wrappers retain their existing conversion profile.",
+          "blocks": "Full A32 floating-point fidelity."
+        },
+        {
+          "impact": "medium",
+          "item": "Native comparisons run A64 common-profile scalar instructions; A32 hardware execution, privileged FP exception delivery and arbitrary architecture extensions are not established.",
+          "blocks": false
+        },
+        {
+          "impact": "low",
+          "item": "All significands/intermediates are bounded by u128. Binary64 fused addition uses exact alignment when representable and guarded sticky-bit alignment otherwise; no host floating arithmetic or runtime performance claim.",
           "blocks": false
         }
       ]

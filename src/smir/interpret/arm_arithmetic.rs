@@ -14,7 +14,7 @@ pub(crate) enum ArmFpOperation {
     SquareRoot,
 }
 
-fn rounding(control: u32) -> FpRoundMode {
+pub(super) fn rounding(control: u32) -> FpRoundMode {
     match (control >> 22) & 3 {
         0 => FpRoundMode::RoundNearest,
         1 => FpRoundMode::RoundUp,
@@ -212,7 +212,7 @@ impl SmirInterpreter {
         (result.0, status | result.1)
     }
 
-    fn arm_round_arithmetic(
+    pub(super) fn arm_round_arithmetic(
         negative: bool,
         magnitude: u128,
         exponent: i32,

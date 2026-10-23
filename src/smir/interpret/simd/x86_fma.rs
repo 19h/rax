@@ -10,7 +10,7 @@ impl SmirInterpreter {
     /// exact `u128` representation impossible, the larger-scale operand is
     /// retained with enough low guard bits for binary64 rounding and every
     /// discarded bit is represented by `sticky`.
-    fn x86_f64_fma_add_scaled(
+    pub(in crate::smir::interpret) fn x86_f64_fma_add_scaled(
         product_negative: bool,
         product_magnitude: u128,
         product_exponent: i32,
