@@ -10,6 +10,8 @@ mod arm;
 mod cache_maintenance;
 #[path = "isa_oracle_fma.rs"]
 mod fma;
+#[path = "isa_oracle_gs_base.rs"]
+mod gs_base;
 #[path = "isa_oracle_hexagon_alignment.rs"]
 mod hexagon_alignment;
 #[path = "isa_oracle_hexagon_packet.rs"]

@@ -115,9 +115,6 @@ pub(crate) struct X86MsrWriteEffect {
     /// WRMSR is serializing except for IA32_TSC_DEADLINE and x2APIC MSRs. The
     /// deterministic profile exposes no x2APIC MSRs.
     pub serializing: bool,
-    /// Preserve the direct emulator's Linux per-CPU CR0-shadow synchronization
-    /// after a successful IA32_GS_BASE write.
-    pub sync_gs_cr0_shadow: bool,
     /// Invalidate cached translations when a translation-relevant EFER bit
     /// changes. Validation remains non-committing; callers apply this effect
     /// only after the complete WRMSR candidate has been accepted.
@@ -197,7 +194,6 @@ pub(crate) fn validate_x86_msr_write(
     tsc: u64,
 ) -> core::result::Result<X86MsrWriteEffect, X86MsrFault> {
     let gp = || Err(X86MsrFault::GeneralProtection);
-    let mut sync_gs_cr0_shadow = false;
     let mut flush_tlb = false;
 
     match index {
@@ -305,7 +301,6 @@ pub(crate) fn validate_x86_msr_write(
                 return gp();
             }
             state.gs_base = value;
-            sync_gs_cr0_shadow = value != 0;
         }
         IA32_KERNEL_GS_BASE => {
             if !is_canonical_48(value) {
@@ -325,7 +320,6 @@ pub(crate) fn validate_x86_msr_write(
     Ok(X86MsrWriteEffect {
         state,
         serializing: index != IA32_TSC_DEADLINE,
-        sync_gs_cr0_shadow,
         flush_tlb,
     })
 }
@@ -371,17 +365,6 @@ fn commit_vcpu_msr_state(vcpu: &mut X86_64Vcpu, state: X86MsrState) {
     vcpu.kernel_gs_base = state.kernel_gs_base;
 }
 
-pub(crate) fn sync_gs_cr0_shadow(vcpu: &mut X86_64Vcpu, gs_base: u64) {
-    // Existing Linux-boot compatibility: when GS.base establishes per-CPU
-    // storage after CR0 was initialized, refresh the shadow used by that guest.
-    let percpu_offset = 0xFFFF_FFFF_836E_E018u64;
-    let instance_addr = gs_base.wrapping_add(percpu_offset);
-    vcpu.mmu.flush_tlb();
-    let _ = vcpu
-        .mmu
-        .write_u64(instance_addr, vcpu.sregs.cr0, &vcpu.sregs);
-}
-
 #[inline]
 fn msr_access_allowed(vcpu: &X86_64Vcpu) -> bool {
     vcpu.sregs.cr0 & CR0_PE == 0 || is_cpl0(vcpu)
@@ -404,9 +387,6 @@ pub fn wrmsr(vcpu: &mut X86_64Vcpu, ctx: &mut InsnContext) -> Result<Option<Vcpu
     commit_vcpu_msr_state(vcpu, effect.state);
     if effect.flush_tlb {
         vcpu.mmu.flush_tlb();
-    }
-    if effect.sync_gs_cr0_shadow {
-        sync_gs_cr0_shadow(vcpu, effect.state.gs_base);
     }
     vcpu.regs.rip += ctx.cursor as u64;
     Ok(None)
@@ -600,7 +580,7 @@ mod tests {
     }
 
     #[test]
-    fn write_effects_classify_serialization_and_gs_shadow_exactly() {
+    fn write_effects_classify_serialization_and_gs_base_state_exactly() {
         let state = X86MsrState::default();
         assert!(
             validate_x86_msr_write(IA32_STAR, 0x1234, state, 0)
@@ -612,15 +592,11 @@ mod tests {
                 .unwrap()
                 .serializing
         );
-        assert!(
-            !validate_x86_msr_write(IA32_GS_BASE, 0, state, 0)
-                .unwrap()
-                .sync_gs_cr0_shadow
-        );
-        assert!(
-            validate_x86_msr_write(IA32_GS_BASE, 0x1000, state, 0)
-                .unwrap()
-                .sync_gs_cr0_shadow
-        );
+        for base in [0, 0x1000] {
+            let effect = validate_x86_msr_write(IA32_GS_BASE, base, state, 0).unwrap();
+            assert_eq!(effect.state.gs_base, base);
+            assert_eq!(effect.state.cr0, state.cr0);
+            assert!(!effect.flush_tlb);
+        }
     }
 }

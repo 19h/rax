@@ -540,3 +540,28 @@ fn jit_disabled_msr_extensions_exit_at_the_exact_faulting_frontier() {
         );
     }
 }
+
+#[test]
+fn jit_gs_base_writes_preserve_memory_on_initial_and_cached_entry() {
+    let memory = memory_with_code(&[0x0f, 0x30, 0xeb, 0, 0xf4]);
+    let mut native = test_vcpu(memory.clone());
+    let target = 0x6000_u64;
+    let base = target.wrapping_sub(0xffff_ffff_836e_e018);
+    install_msr_inputs(&mut native, IA32_GS_BASE, base);
+    let region = native
+        .jit_compile_region()
+        .unwrap()
+        .expect("native WRMSR admission");
+    for canary in [0x200b0_u64, 0x0123456789abcdef, u64::MAX] {
+        memory
+            .write_slice(&canary.to_le_bytes(), GuestAddress(target))
+            .unwrap();
+        native.regs.rip = 0;
+        install_msr_inputs(&mut native, IA32_GS_BASE, base);
+        native.jit_run_region_native(&region);
+        let mut bytes = [0; 8];
+        memory.read_slice(&mut bytes, GuestAddress(target)).unwrap();
+        assert_eq!(u64::from_le_bytes(bytes), canary);
+        assert_eq!(native.sregs.gs.base, base);
+    }
+}

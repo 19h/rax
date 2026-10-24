@@ -550,14 +550,34 @@
     {
       "id": "X-BOOT-CR4",
       "area": "x86 Linux boot",
-      "finding": "Bundled Linux 6.19.0-rc3-dirty panics in native_write_cr4+0x1a with RDI=0x80050030 on both pre-paging and current revisions. Root cause unknown.",
-      "status": "pending",
+      "finding": "The supplied Linux kernel CR4 panic is caused by an unintended guest RAM write during IA32_GS_BASE WRMSR. The write is removed in direct and native x86 JIT execution; post-fix capture has matching valid CR4/shadow 0x670eb0 and execution progresses past the old panic. Full userspace boot remains unverified after two bounded debug-run timeouts.",
+      "status": "partially_validated",
       "evidence": [
         "/tmp/rax-x86-paging-linux-boot-parent.log",
         "/tmp/rax-x86-paging-linux-boot-parent.json",
         "/tmp/rax-x86-paging-linux-boot-current-final.log",
-        "/tmp/rax-x86-paging-linux-boot-current-final.json"
-      ]
+        "/tmp/rax-x86-paging-linux-boot-current-final.json",
+        "/tmp/rax-x86-boot-control-trace/diagnostic-pc.log",
+        "/tmp/rax-x86-gs-base/boot-default.log",
+        "/tmp/rax-x86-gs-base/boot-no-jit.log",
+        "/tmp/rax-x86-gs-base/boot-default-memory.log",
+        "/tmp/rax-x86-gs-base/parent-red.log",
+        "/tmp/rax-x86-gs-base/native-parent-red.log",
+        "/tmp/rax-x86-gs-base/oracle-parent.log",
+        "/tmp/rax-ptrace-adoption/v3-library.log",
+        "/tmp/rax-ptrace-adoption/v3-rosetta-library.log",
+        "/tmp/rax-ptrace-adoption/v3-owning-rosetta.log",
+        "/tmp/rax-ptrace-adoption/v3-readiness-rosetta.log",
+        "/tmp/rax-ptrace-adoption/v3-build.log",
+        "/tmp/rax-ptrace-adoption/v3-clippy.log",
+        "/tmp/rax-ptrace-adoption/v3-fmt.log",
+        "/tmp/rax-ptrace-adoption/v3-doc.log",
+        "/tmp/rax-ptrace-adoption/v3-integration.log",
+        "/tmp/rax-ptrace-adoption/v4-family-repeats.json",
+        "/tmp/rax-x86-gs-base/v3-native-msr.log"
+      ],
+      "resolution": "Remove the hard-coded per-CPU CR0 shadow write from IA32_GS_BASE WRMSR in direct execution and native x86 JIT callbacks. Preserve validated MSR state updates, serialization and EFER translation invalidation.",
+      "remaining": "Observe successful guest userspace execution; no v7 checkpoint resume success is claimed."
     },
     {
       "id": "A-JIT-FETCH",
@@ -4223,6 +4243,262 @@
           "Initial descriptor-number assertions were replaced by observable lifetime checks: descriptor numbers can be reused by other test threads. Last-reference checks run in isolated single-test processes; disconnect fixtures use shutdown because concurrent native fork tests inherit descriptors.",
           "Bare POLLHUP corrected events=0 but lost a later close after queued data consumed the native one-shot filter. EV_CLEAR/NOTE_LOWAT and a remaining-time loop also handle full-buffer data events. Independent C probes and extracted owning tests establish these cases.",
           "A preliminary 1000-launch repetition collector was stopped after its run 464 record contained a passed test but a supervisor failure. Timeout versus nonzero exit is unknown because that collector omitted the reason. Its 15 s launch limit was separate from the guest/test; final complete 200-run collection records exit code, timeout and elapsed time for every invocation, with no failures and maximum 14.741672249976546 s. No product or test timeout was increased."
+        ]
+      }
+    },
+    {
+      "id": "x86-gs-base-without-guest-memory-side-effects",
+      "status": "locally_validated",
+      "scope": "Remove the hard-coded per-CPU CR0 shadow write from IA32_GS_BASE WRMSR in direct execution and native x86 JIT callbacks. Preserve validated MSR state updates, serialization and EFER translation invalidation.",
+      "primary_source": [
+        {
+          "path": "docs/specifications/x86_64/325462-sdm-vol-1-2abcd-3abcd-4-1.pdf",
+          "sha256": "6f6286056edad4ffdca8716e9039e9598e9e71ab029284facde6a786e1b65f73",
+          "section": "Vol. 2D 6-9/6-10, WRMSR. MSR[ECX] := EDX:EAX; IA32_GS_BASE canonical-address validation. No guest memory operand."
+        },
+        {
+          "path": "linux/vmlinux",
+          "sha256": "76795bd4ceb7db28ee9484b8407f920debe16522a461e319774e6b5524a8ee55",
+          "basis": "Supplied ELF disassembly: switch_gdt_and_percpu_base WRMSR at ffffffff8343c2ce; later cpu_init reads the per-CPU CR4 shadow before native_write_cr4."
+        },
+        {
+          "path": "initrd.cpio.gz",
+          "sha256": "dd8b74a3a5cd9a1f0c71e560a4661afbf7213826e5b066d236b8bbe258135216",
+          "basis": "Supplied init launcher and /etc/init.sh are preserved; userspace requires observed guest execution, not merely kernel launch."
+        }
+      ],
+      "cause": {
+        "writer_pc": "0xffffffff8343c2ce",
+        "gs_base": "0xffff88809bd3a000",
+        "hard_coded_offset": "0xffffffff836ee018",
+        "effective_address": "0xffff88801f428018",
+        "physical_address": "0x1f428018",
+        "calculation": "(GS.base + offset) modulo 2^64 resolves to the supplied kernel CR4 shadow. The helper wrote CR0=0x80050033 over valid CR4=0x200b0; kernel AND ~0xf produced invalid CR4 candidate 0x80050030.",
+        "post_fix_checkpoint": "CR0 remains 0x80050033; CR4 and shadow both contain valid 0x670eb0. The boot passes the former fault and reaches subsequent kernel initialization."
+      },
+      "baseline_results": {
+        "direct_canary": "1 pass, 1 fail: IA32_GS_BASE writes CR0 into the aliased ordinary guest RAM. FS_BASE and KERNEL_GS_BASE controls pass.",
+        "native_canary": "0 pass, 1 fail on actual translated x86 native JIT execution; observed 0x80050033 instead of canary 0x200b0.",
+        "oracle": "1 pass: existing IR and interpreter already have no guest RAM effect; this is a representation-consistency control, not a pre-fix IR defect.",
+        "kernel": "Parent and current pre-fix artifacts reproduce native_write_cr4+0x1a with RDI=0x80050030. Independent runs with JIT enabled and RAX_NO_JIT=1 reproduce the same corruption."
+      },
+      "affected_planes": {
+        "direct": "Validated architectural MSR commit only; remove Linux-specific MMU write and extra TLB flush.",
+        "native_x86": "Remove the same hidden memory side effect from helper-backed compiled WRMSR; repeated execution of one cached region preserves three distinct canaries.",
+        "ir_oracle": "Seeded WRMSR updates GS base, advertises no store, and reports no changed guest RAM. Existing semantics retained.",
+        "other_backends": "KVM/HVF hardware MSR state paths have no call to the removed helper. No backend control-register masks, CPUID claims or ABI changes."
+      },
+      "assumptions": [
+        {
+          "id": "GS1",
+          "assumption": "Writing IA32_GS_BASE updates the canonical architectural base without a guest memory operand.",
+          "basis": "Intel SDM WRMSR operation and exceptions.",
+          "dependent_result": "Remove both hidden-memory-write call sites and their shared effect flag.",
+          "stress_test": "Three aliased guest RAM addresses, four canaries, FS/KERNEL_GS positive controls; native cached re-entry and existing IR semantics.",
+          "falsification_probe": "Any accepted GS-base write changes the canary, records a store, or changes unrelated architectural state.",
+          "status": "confirmed"
+        },
+        {
+          "id": "GS2",
+          "assumption": "The observed CR4 panic is caused by the hidden RAM write rather than missing CR4 feature support.",
+          "basis": "Writer-PC trace, ELF disassembly, pre/post CR4 shadow values, and reproduction with JIT disabled.",
+          "dependent_result": "Correct MSR semantics without advertising additional control bits.",
+          "stress_test": "Post-fix diagnostic checkpoint preserves matching valid CR4/shadow and progresses past the former panic.",
+          "falsification_probe": "The same shadow corruption or native_write_cr4+0x1a panic recurs with the fixed artifact.",
+          "status": "confirmed"
+        },
+        {
+          "id": "GS3",
+          "assumption": "The diagnostic checkpoint establishes only captured state, not complete checkpoint fidelity or successful guest userspace.",
+          "basis": "Both bounded 300 s debug boots timed out without the shell marker; no v7 resume was attempted.",
+          "dependent_result": "Keep userspace boot and complete v8 checkpoint work pending.",
+          "stress_test": "Exact artifact hash, arguments, image hashes, boot logs and independently read captured RAM.",
+          "falsification_probe": "A result claims userspace or resumability from the launch/checkpoint messages alone.",
+          "status": "retained"
+        }
+      ],
+      "complexity": "Removal eliminates a hidden page-table walk, RAM write and TLB flush. The remaining MSR state validation/commit is O(1) time and space.",
+      "bounded_scope": [
+        {
+          "impact": "high",
+          "item": "The original CR4 corruption is fixed locally, but complete Linux userspace boot remains unverified. Both 300 s debug runs timed out after progressing beyond the old panic.",
+          "blocks": "A successful userspace boot claim."
+        },
+        {
+          "impact": "high",
+          "item": "The existing v7 capture was used only to inspect raw diagnostic CPU/RAM state. The complete checkpoint v8 plan remains pending.",
+          "blocks": "Complete remediation plan."
+        },
+        {
+          "impact": "medium",
+          "item": "Debug boot performance under concurrent host load is not characterized. No product/test timeout or advertised CPU capability was changed.",
+          "blocks": false
+        }
+      ],
+      "baseline": "34b79ddc2b46de457c1e2dcf5f60e16a16086b77",
+      "validation": {
+        "complete_arm_library": {
+          "passed": 10433,
+          "failed": 0,
+          "ignored": 2,
+          "filtered": 0,
+          "elapsed_seconds": 400.53
+        },
+        "complete_rosetta_library": {
+          "passed": 11429,
+          "failed": 0,
+          "ignored": 2,
+          "filtered": 0,
+          "elapsed_seconds": 797.44
+        },
+        "ptrace_owning_rosetta": {
+          "passed": 68,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 11363,
+          "elapsed_seconds": 3.12
+        },
+        "readiness_owning_rosetta": {
+          "passed": 9,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 11422,
+          "elapsed_seconds": 0.94
+        },
+        "native_x86_msr": {
+          "passed": 10,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 11421,
+          "elapsed_seconds": 0.14
+        },
+        "build_all_targets": "passed",
+        "clippy_all_targets": "passed",
+        "format": "passed",
+        "doctests": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 5,
+          "filtered": 0,
+          "elapsed_seconds": 0.0
+        },
+        "integration": {
+          "isa_oracle": {
+            "passed": 101,
+            "failed": 0,
+            "ignored": 0,
+            "filtered": 0,
+            "elapsed_seconds": 0.16
+          },
+          "user_darwin": {
+            "passed": 117,
+            "failed": 0,
+            "ignored": 0,
+            "filtered": 0,
+            "elapsed_seconds": 435.79
+          },
+          "user_linux": {
+            "passed": 42,
+            "failed": 0,
+            "ignored": 1,
+            "filtered": 0,
+            "elapsed_seconds": 206.02
+          },
+          "x86_64": {
+            "passed": 28559,
+            "failed": 0,
+            "ignored": 3,
+            "filtered": 0,
+            "elapsed_seconds": 4.07
+          }
+        },
+        "family_repetitions": {
+          "runs": 200,
+          "failures": 0,
+          "timeouts": 0,
+          "elapsed_seconds": 331.75643729197327,
+          "max_launch_to_exit_seconds": 14.741672249976546
+        },
+        "logs": [
+          "/tmp/rax-ptrace-adoption/v3-library.log",
+          "/tmp/rax-ptrace-adoption/v3-rosetta-library.log",
+          "/tmp/rax-ptrace-adoption/v3-owning-rosetta.log",
+          "/tmp/rax-ptrace-adoption/v3-readiness-rosetta.log",
+          "/tmp/rax-ptrace-adoption/v3-build.log",
+          "/tmp/rax-ptrace-adoption/v3-clippy.log",
+          "/tmp/rax-ptrace-adoption/v3-fmt.log",
+          "/tmp/rax-ptrace-adoption/v3-doc.log",
+          "/tmp/rax-ptrace-adoption/v3-integration.log",
+          "/tmp/rax-ptrace-adoption/v4-family-repeats.json",
+          "/tmp/rax-x86-gs-base/v3-native-msr.log"
+        ],
+        "direct_and_ir_baselines": [
+          "/tmp/rax-x86-gs-base/parent-red.log",
+          "/tmp/rax-x86-gs-base/native-parent-red.log",
+          "/tmp/rax-x86-gs-base/oracle-parent.log"
+        ],
+        "kernel_boot": {
+          "boot-default": {
+            "args": [
+              "/tmp/rax-audit-host-final-target/debug/rax",
+              "--arch",
+              "x86-64",
+              "--backend",
+              "emulator",
+              "--memory",
+              "512M",
+              "--kernel",
+              "/Users/int/dev/rax/linux/vmlinux",
+              "--initrd",
+              "/Users/int/dev/rax/initrd.cpio.gz",
+              "--cmdline",
+              "console=ttyS0 earlycon=uart,io,0x3f8 earlyprintk=serial,ttyS0,115200 rdinit=/init root=/dev/ram0 nokaslr noapic nolapic nosmp mitigations=off tsc=reliable nohz=off clocksource=tsc",
+              "--snapshot-out",
+              "/tmp/rax-x86-gs-base/boot-default.rxc"
+            ],
+            "no_jit": false,
+            "outcome": "timeout",
+            "seconds": 301.3634407080244,
+            "code": -15,
+            "stdin_command_sent": false,
+            "snapshot_requested": false,
+            "snapshot_exists": true,
+            "binary_sha256": "47c8a65f81048074ec7a4f147ce38e1f94f4aef6621cf16aafffffeadc279c43"
+          },
+          "boot-no-jit": {
+            "args": [
+              "/tmp/rax-audit-host-final-target/debug/rax",
+              "--arch",
+              "x86-64",
+              "--backend",
+              "emulator",
+              "--memory",
+              "512M",
+              "--kernel",
+              "/Users/int/dev/rax/linux/vmlinux",
+              "--initrd",
+              "/Users/int/dev/rax/initrd.cpio.gz",
+              "--cmdline",
+              "console=ttyS0 earlycon=uart,io,0x3f8 earlyprintk=serial,ttyS0,115200 rdinit=/init root=/dev/ram0 nokaslr noapic nolapic nosmp mitigations=off tsc=reliable nohz=off clocksource=tsc",
+              "--snapshot-out",
+              "/tmp/rax-x86-gs-base/boot-no-jit.rxc"
+            ],
+            "no_jit": true,
+            "outcome": "timeout",
+            "seconds": 300.0301085000392,
+            "code": -15,
+            "stdin_command_sent": false,
+            "snapshot_requested": false,
+            "snapshot_exists": false,
+            "binary_sha256": "47c8a65f81048074ec7a4f147ce38e1f94f4aef6621cf16aafffffeadc279c43"
+          },
+          "diagnostic_note": "The default diagnostic checkpoint was requested externally with SIGUSR1; its helper metadata snapshot_requested=false reflects that collector only requesting on panic. Snapshot::load/decompress was used solely for CPU/RAM inspection, never resume validation."
+        },
+        "kernel_logs": [
+          "/tmp/rax-x86-boot-control-trace/diagnostic-pc.log",
+          "/tmp/rax-x86-gs-base/boot-default.log",
+          "/tmp/rax-x86-gs-base/boot-no-jit.log",
+          "/tmp/rax-x86-gs-base/boot-default-memory.log"
         ]
       }
     }

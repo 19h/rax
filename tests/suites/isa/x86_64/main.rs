@@ -10,6 +10,9 @@ mod common;
 #[path = "simd/sse_fp_contract.rs"]
 mod sse_fp_contract;
 
+#[path = "system/gs_base_contract.rs"]
+mod gs_base_contract;
+
 // Arithmetic
 #[path = "integer/arithmetic/aaa_aas.rs"]
 mod x86_64_arithmetic_aaa_aas;

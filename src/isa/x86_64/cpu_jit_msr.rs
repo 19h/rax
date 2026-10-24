@@ -1,9 +1,7 @@
 //! Helper-backed RDMSR/WRMSR execution for native x86-64 JIT regions.
 
 use super::X86_64Vcpu;
-use crate::isa::x86_64::execute::system::{
-    X86MsrState, read_x86_msr, sync_gs_cr0_shadow, validate_x86_msr_write,
-};
+use crate::isa::x86_64::execute::system::{X86MsrState, read_x86_msr, validate_x86_msr_write};
 use crate::smir::lower::runtime::GuestRegs;
 
 fn msr_state(state: &GuestRegs) -> X86MsrState {
@@ -75,9 +73,6 @@ pub(super) unsafe extern "C" fn rax_jit_msr(state: *mut GuestRegs, write: u64) -
         commit_msr_state(state, effect.state);
         if effect.flush_tlb {
             vcpu.mmu.flush_tlb();
-        }
-        if effect.sync_gs_cr0_shadow {
-            sync_gs_cr0_shadow(vcpu, effect.state.gs_base);
         }
     } else {
         let Ok(value) = read_x86_msr(index, current, tsc) else {
