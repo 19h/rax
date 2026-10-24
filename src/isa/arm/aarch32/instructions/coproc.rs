@@ -47,7 +47,7 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
                     if !self.cpu.vfp.is_enabled() {
                         ExecResult::Exception(ExceptionType::UndefinedInstruction)
                     } else {
-                        self.cpu.vfp.fpscr = Fpscr::from_bits(value);
+                        self.cpu.vfp.write_fpscr(value);
                         ExecResult::Continue
                     }
                 }
@@ -108,7 +108,7 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
                     if !self.cpu.vfp.is_enabled() {
                         return ExecResult::Exception(ExceptionType::UndefinedInstruction);
                     }
-                    self.cpu.vfp.fpscr.bits()
+                    self.cpu.vfp.read_fpscr()
                 }
                 5 => self.cpu.vfp.mvfr2,
                 6 => self.cpu.vfp.mvfr1,

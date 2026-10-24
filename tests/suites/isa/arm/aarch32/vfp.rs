@@ -7099,3 +7099,6 @@ mod fp_profile_native;
 
 #[path = "fp_profile_matrix.rs"]
 mod fp_profile_matrix;
+
+#[path = "fp_nontrapping_profile.rs"]
+mod fp_nontrapping_profile;

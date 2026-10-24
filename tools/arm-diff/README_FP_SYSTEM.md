@@ -89,3 +89,19 @@ Version 2 adds half/double precision conversion, scalar fixed conversion at
 and fixed conversion, high SIMD register fields, half vector FMA, and half/single
 number min/max. The protocol is unchanged; the 140 instruction pairs require
 256 MiB guest RAM. Python 3.10 or newer is required.
+
+A separate register probe checks the default non-trapping FPSCR contract:
+
+```sh
+python3 tools/arm-diff/fpscr_profile_oracle.py \
+    --llvm-bin /path/to/llvm/bin \
+    --work-dir /tmp/rax-fpscr-register-oracle
+```
+
+It checks MVFR0.FPTrap=0 and all32768 combinations of A32/T32 system-register
+access,64 supported floating controls and256 exception/reserved-byte values.
+Bits15:8 read zero while rounding, DN, FZ, AHP, FZ16, NZCV, QC and sticky status
+remain intact. A missing tool, timeout, failed guest or missing completion marker
+fails the command. Logs, tool versions, source/ELF hashes and command timings are
+retained. This is independent system emulation for the selected register contract;
+physical A32 hardware and optional trapped profiles are separate validation.

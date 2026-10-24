@@ -609,12 +609,40 @@
         "/tmp/rax-a32-profile/final-library.log",
         "/tmp/rax-a32-profile/final-rosetta-vfp.log",
         "/tmp/rax-a32-profile/final-capi.log",
-        "/tmp/rax-a32-profile/final-system-oracle.log"
+        "/tmp/rax-a32-profile/final-system-oracle.log",
+        "src/isa/arm/aarch32/vfp.rs",
+        "src/isa/arm/aarch32/instructions/coproc.rs",
+        "tests/suites/isa/arm/aarch32/vfp.rs",
+        "tests/suites/isa/arm/aarch32/fp_nontrapping_profile.rs",
+        "tools/arm-diff/fpscr_profile_guest.s",
+        "tools/arm-diff/fpscr_profile_oracle.py",
+        "tools/arm-diff/README_FP_SYSTEM.md",
+        "/tmp/rax-a32-fpscr-profile/parent-red.log",
+        "/tmp/rax-a32-fpscr-profile/register-oracle-result.json",
+        "/tmp/rax-a32-fpscr-profile/tool-oracle/manifest.json",
+        "/tmp/rax-a32-fpscr-profile/worktree-checks.json",
+        "/tmp/rax-a32-fpscr-profile/worktree-result.json",
+        "/tmp/rax-a32-fpscr-profile/final-register-oracle/manifest.json",
+        "/tmp/rax-a32-fpscr-profile/green-v2/manifest.json",
+        "/tmp/rax-a32-fpscr-profile/green-v2/report.json",
+        "/tmp/rax-a32-fpscr-profile/checks.jsonl",
+        "/tmp/rax-a32-fpscr-profile/final-build.log",
+        "/tmp/rax-a32-fpscr-profile/final-vfp.log",
+        "/tmp/rax-a32-fpscr-profile/final-integration.log",
+        "/tmp/rax-a32-fpscr-profile/final-clippy.log",
+        "/tmp/rax-a32-fpscr-profile/final-fmt.log",
+        "/tmp/rax-a32-fpscr-profile/final-doc.log",
+        "/tmp/rax-a32-fpscr-profile/final-ci-owning.log",
+        "/tmp/rax-a32-fpscr-profile/final-library.log",
+        "/tmp/rax-a32-fpscr-profile/final-rosetta-vfp.log",
+        "/tmp/rax-a32-fpscr-profile/final-capi.log",
+        "/tmp/rax-a32-fpscr-profile/final-system-oracle.log",
+        "/tmp/rax-a32-fpscr-profile/final-register-oracle.log"
       ],
       "remaining_validation": [
-        "Floating register read/write masks and capability declarations for the advertised non-trapping profile",
-        "Remaining selected-profile instruction/admission semantics beyond the listed corpus",
-        "Physical A32 hardware remains unverified"
+        "Capability declarations and remaining selected-profile instruction/admission semantics",
+        "Other reserved system-register fields and FPEXC profile consistency",
+        "Physical A32 hardware and optional trapped profiles remain unverified"
       ]
     },
     {
@@ -775,7 +803,28 @@
         "/tmp/rax-a32-profile/final-library.log",
         "/tmp/rax-a32-profile/final-rosetta-vfp.log",
         "/tmp/rax-a32-profile/final-capi.log",
-        "/tmp/rax-a32-profile/final-system-oracle.log"
+        "/tmp/rax-a32-profile/final-system-oracle.log",
+        "/tmp/rax-a32-fpscr-profile/parent-red.log",
+        "/tmp/rax-a32-fpscr-profile/register-oracle-result.json",
+        "/tmp/rax-a32-fpscr-profile/tool-oracle/manifest.json",
+        "/tmp/rax-a32-fpscr-profile/worktree-checks.json",
+        "/tmp/rax-a32-fpscr-profile/worktree-result.json",
+        "/tmp/rax-a32-fpscr-profile/final-register-oracle/manifest.json",
+        "/tmp/rax-a32-fpscr-profile/green-v2/manifest.json",
+        "/tmp/rax-a32-fpscr-profile/green-v2/report.json",
+        "/tmp/rax-a32-fpscr-profile/checks.jsonl",
+        "/tmp/rax-a32-fpscr-profile/final-build.log",
+        "/tmp/rax-a32-fpscr-profile/final-vfp.log",
+        "/tmp/rax-a32-fpscr-profile/final-integration.log",
+        "/tmp/rax-a32-fpscr-profile/final-clippy.log",
+        "/tmp/rax-a32-fpscr-profile/final-fmt.log",
+        "/tmp/rax-a32-fpscr-profile/final-doc.log",
+        "/tmp/rax-a32-fpscr-profile/final-ci-owning.log",
+        "/tmp/rax-a32-fpscr-profile/final-library.log",
+        "/tmp/rax-a32-fpscr-profile/final-rosetta-vfp.log",
+        "/tmp/rax-a32-fpscr-profile/final-capi.log",
+        "/tmp/rax-a32-fpscr-profile/final-system-oracle.log",
+        "/tmp/rax-a32-fpscr-profile/final-register-oracle.log"
       ],
       "remaining_validation": [
         "Other architecture/profile independent oracles and native hardware gates",
@@ -8499,6 +8548,398 @@
             "ignored": 0,
             "filtered": 0,
             "elapsed_seconds": 10.23
+          },
+          {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "filtered": 0,
+            "elapsed_seconds": 0.0
+          }
+        ]
+      }
+    },
+    {
+      "id": "a32-nontrapping-fpscr-register-contract",
+      "status": "locally_validated",
+      "scope": "Architectural VMSR/VMRS FPSCR exception-enable/reserved-byte behavior for the already-advertised MVFR0.FPTrap=0 implementation; raw helper APIs remain unmasked.",
+      "assumptions": [
+        {
+          "id": "R1",
+          "assumption": "The existing implementation advertises no floating-point exception trapping: MVFR0.FPTrap[15:12]=0.",
+          "dependent_result": "Guest FPSCR system-register writes cannot enable unsupported traps, and architectural reads return zero for bits15:8. Arithmetic remains cumulative/non-trapping.",
+          "stress_test": "Both states x64 supported controls x256 exception/reserved-byte values, read/write and attempted-enables invalid arithmetic.",
+          "falsification_probe": "Default FPTrap is nonzero, any enable bit survives an architectural read/write, or an attempted enable changes arithmetic into a trap.",
+          "status": "retained for the current default implementation; no optional trapped profile claimed"
+        },
+        {
+          "id": "R2",
+          "assumption": "The older Cortex-A32 register manual supplies the non-trapping byte contract but does not describe this implementation's later FZ16 arithmetic extension.",
+          "dependent_result": "Mask only bits15:8; retain FZ16 and all other pre-existing bits. Raw Fpscr::from_bits/bits API remains unchanged.",
+          "stress_test": "FZ16 plus rounding/DN/FZ/AHP/NZCV/QC/sticky combinations, raw restored state reads and every raw helper bit.",
+          "falsification_probe": "FZ16 or an existing control/status bit changes, or raw bit roundtrips lose information.",
+          "status": "retained"
+        },
+        {
+          "id": "R3",
+          "assumption": "Independent QEMU system execution can verify this narrow non-trapping register contract without asserting physical A32 hardware equivalence.",
+          "dependent_result": "Committed probe checks FPTrap and all32768 register cases, with nonzero guest failure, timeouts and exact completion marker enforced.",
+          "stress_test": "Actual A32/T32 VMSR/VMRS, LLVM assembly, QEMU max/virt and full573440 numerical-system regression corpus.",
+          "falsification_probe": "Probe mismatch, absent completion, failed command, timeout or numerical state mismatch.",
+          "status": "retained"
+        }
+      ],
+      "primary_sources": [
+        {
+          "url": "https://documentation-service.arm.com/static/5e7dcaaea3736a0d2e8614db",
+          "title": "Cortex-A32 Advanced SIMD and Floating-point Support TRM r1p0",
+          "document": "100243_0100_00_en",
+          "path": "/tmp/rax-a32-profile/100243_0100_00_en_cortex_a32_fpu.pdf",
+          "sha256": "d87f2be4c6b0472fa73137a499a04fd9ec7e65af76741143e469fd273018ef2b",
+          "basis": [
+            "FPSCR RES0 exception-enable field [15:8], pages 2-17 through 2-19",
+            "MVFR0.FPTrap [15:12]=0, pages 2-20/2-21"
+          ],
+          "scope": "Register contract for a non-trapping A-profile implementation; its older FZ16/FP16 feature set is not used to restrict newer half arithmetic."
+        },
+        {
+          "path": "docs/architecture/arm/asl/arm_defs.asl",
+          "sha256": "1ade68e5dacfff1b63a42ad3ee1c426aae5d36ed5dfcbf39de4baab478a190f8",
+          "operation": "AArch32 FPProcessException, lines3624+: exception delivery/accumulation for enabled traps is IMPLEMENTATION DEFINED; it does not mandate a trapped profile for FPTrap=0."
+        }
+      ],
+      "affected_planes": {
+        "direct": "VMSR writes mask the exception/reserved byte; VMRS reads the masked architectural view even after raw state restoration.",
+        "public_helpers": "Fpscr::from_bits/bits and direct raw helper status/control handling preserve their existing contracts.",
+        "numeric": "No arithmetic implementation changes; complete VFP/native and independent numerical-system suites regress shared behavior.",
+        "tooling": "Adjacent standalone source/probe runner and documented command; existing version2 numerical tool is byte-identical.",
+        "embedding": "No ABI, CPU-state layout, serialized field or feature declaration changes."
+      },
+      "complexity": "O(1) time/space per architectural register read/write. Probe has32768 checks=2 instruction states x64 controls x256 byte values; guest work is O(N) time and O(1) memory with128MiB configured guest RAM.",
+      "bounded_scope": [
+        {
+          "impact": "high",
+          "item": "Capability declarations, other reserved register fields, FPEXC and remaining selected-profile instruction semantics are separate validation.",
+          "blocks": "Full A32-FP closure."
+        },
+        {
+          "impact": "high",
+          "item": "Optional trapped profiles and physical A32 hardware are not implemented or validated by this group. Existing non-trapping capability remains unchanged.",
+          "blocks": "Any claim of optional exception delivery."
+        },
+        {
+          "impact": "medium",
+          "item": "Public raw FPSCR state can retain unsupported bits for API compatibility; architectural reads mask the non-trapping byte.",
+          "blocks": false
+        }
+      ],
+      "quality_gates": {
+        "assumptions": "R1-R3 carry dependent results and falsification probes.",
+        "coverage": "Four focused regressions, full owning suites, all32768 independent register cases and complete573440 numerical cases.",
+        "reproducibility": "Committed guest/runner, pinned primary manual URL/SHA and ASL SHA, exact counters/commands/logs and source fingerprints.",
+        "contradictions": "No mandatory enabled-trap claim; the advertised non-trapping profile, architectural register view and raw API contract are distinct and tested.",
+        "provenance": "Arm Cortex-A32 register documentation, pinned shared architectural operation, LLVM and installed QEMU system execution.",
+        "bounded_expansion": "Capability completeness, other registers and physical/optional trapped profiles remain open.",
+        "worktree_integrity": "Seven guarded owned paths and ledger only; unrelated files hashed and preserved.",
+        "behavioral_evidence": "Parent has two failing architectural regressions while the raw-API compatibility regression passes. Complete positive counters required.",
+        "repository_consistency": "Centralized VfpState architectural read/write methods; existing guest dispatch and raw public signatures retained."
+      },
+      "baseline": "daf89093873fb689efa74adea27c503a92e91815",
+      "validation": {
+        "checks": [
+          {
+            "check": "final-build",
+            "args": [
+              "cargo",
+              "+stable",
+              "build",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--all-targets"
+            ],
+            "code": 0,
+            "seconds": 182.69219312502537
+          },
+          {
+            "check": "final-vfp",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--test",
+              "arm_vfp_a32",
+              "--",
+              "--test-threads=4"
+            ],
+            "code": 0,
+            "seconds": 16.163284500013106
+          },
+          {
+            "check": "final-integration",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--test",
+              "arm",
+              "--test",
+              "isa_oracle",
+              "--",
+              "--test-threads=4"
+            ],
+            "code": 0,
+            "seconds": 28.02728220797144
+          },
+          {
+            "check": "final-clippy",
+            "args": [
+              "cargo",
+              "+stable",
+              "clippy",
+              "--locked",
+              "--offline",
+              "--all-targets",
+              "--features",
+              "x86_64-suite"
+            ],
+            "code": 0,
+            "seconds": 76.10644075006712
+          },
+          {
+            "check": "final-fmt",
+            "args": [
+              "cargo",
+              "+stable",
+              "fmt",
+              "--all",
+              "--check"
+            ],
+            "code": 0,
+            "seconds": 12.025883459020406
+          },
+          {
+            "check": "final-doc",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--doc"
+            ],
+            "code": 0,
+            "seconds": 5.04253479198087
+          },
+          {
+            "check": "final-ci-owning",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--test",
+              "ci_actions_pinned"
+            ],
+            "code": 0,
+            "seconds": 0.1357347919838503
+          },
+          {
+            "check": "final-library",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--lib",
+              "--",
+              "--test-threads=4"
+            ],
+            "code": 0,
+            "seconds": 404.9306908750441
+          },
+          {
+            "check": "final-rosetta-vfp",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--target",
+              "x86_64-apple-darwin",
+              "--test",
+              "arm_vfp_a32",
+              "--",
+              "--test-threads=4"
+            ],
+            "code": 0,
+            "seconds": 41.996490749996156
+          },
+          {
+            "check": "final-capi",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "-p",
+              "rax-capi",
+              "--",
+              "--test-threads=4"
+            ],
+            "code": 0,
+            "seconds": 43.00521170895081
+          },
+          {
+            "check": "final-system-oracle",
+            "args": [
+              "python3",
+              "/Users/int/dev/rax/tools/arm-diff/fp_system_oracle.py",
+              "--repo",
+              "/Users/int/dev/rax",
+              "--work-dir",
+              "/tmp/rax-a32-fpscr-profile/green-v2",
+              "--target-dir",
+              "/tmp/rax-audit-host-final-target",
+              "--llvm-bin",
+              "/Users/int/local/bin",
+              "--timeout",
+              "60"
+            ],
+            "code": 0,
+            "seconds": 17.080178583972156
+          },
+          {
+            "check": "final-register-oracle",
+            "args": [
+              "python3",
+              "/Users/int/dev/rax/tools/arm-diff/fpscr_profile_oracle.py",
+              "--llvm-bin",
+              "/Users/int/local/bin",
+              "--work-dir",
+              "/tmp/rax-a32-fpscr-profile/final-register-oracle"
+            ],
+            "code": 0,
+            "seconds": 0.3475956659531221
+          }
+        ],
+        "complete_library": {
+          "passed": 10437,
+          "failed": 0,
+          "ignored": 2,
+          "filtered": 0,
+          "elapsed_seconds": 404.82
+        },
+        "complete_vfp_arm": {
+          "passed": 436,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0,
+          "elapsed_seconds": 16.0
+        },
+        "complete_vfp_rosetta": {
+          "passed": 403,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0,
+          "elapsed_seconds": 0.52
+        },
+        "doctests": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 5,
+          "filtered": 0,
+          "elapsed_seconds": 0.0
+        },
+        "complete_ci_owning": [
+          {
+            "passed": 12,
+            "failed": 0,
+            "ignored": 0,
+            "filtered": 0,
+            "elapsed_seconds": 0.05
+          }
+        ],
+        "parent_regressions": "Three initial tests: two architectural failures, one raw-helper pass. The fourth attempted-enable arithmetic regression was added subsequently.",
+        "independent_register_cases": 32768,
+        "independent_numerical_cases": 573440,
+        "independent_numerical_failures": 0,
+        "numerical_oracle_tool_input_and_reference_unchanged": true,
+        "rosetta_cfg_elision": "33 A64 hardware tests cfg-elided; all403 applicable owning tests execute.",
+        "logs": [
+          "/tmp/rax-a32-fpscr-profile/parent-red.log",
+          "/tmp/rax-a32-fpscr-profile/register-oracle-result.json",
+          "/tmp/rax-a32-fpscr-profile/tool-oracle/manifest.json",
+          "/tmp/rax-a32-fpscr-profile/worktree-checks.json",
+          "/tmp/rax-a32-fpscr-profile/worktree-result.json",
+          "/tmp/rax-a32-fpscr-profile/final-register-oracle/manifest.json",
+          "/tmp/rax-a32-fpscr-profile/green-v2/manifest.json",
+          "/tmp/rax-a32-fpscr-profile/green-v2/report.json",
+          "/tmp/rax-a32-fpscr-profile/checks.jsonl",
+          "/tmp/rax-a32-fpscr-profile/final-build.log",
+          "/tmp/rax-a32-fpscr-profile/final-vfp.log",
+          "/tmp/rax-a32-fpscr-profile/final-integration.log",
+          "/tmp/rax-a32-fpscr-profile/final-clippy.log",
+          "/tmp/rax-a32-fpscr-profile/final-fmt.log",
+          "/tmp/rax-a32-fpscr-profile/final-doc.log",
+          "/tmp/rax-a32-fpscr-profile/final-ci-owning.log",
+          "/tmp/rax-a32-fpscr-profile/final-library.log",
+          "/tmp/rax-a32-fpscr-profile/final-rosetta-vfp.log",
+          "/tmp/rax-a32-fpscr-profile/final-capi.log",
+          "/tmp/rax-a32-fpscr-profile/final-system-oracle.log",
+          "/tmp/rax-a32-fpscr-profile/final-register-oracle.log"
+        ],
+        "integration": {
+          "arm": {
+            "passed": 46850,
+            "failed": 0,
+            "ignored": 0,
+            "filtered": 0,
+            "elapsed_seconds": 27.74
+          },
+          "isa_oracle": {
+            "passed": 101,
+            "failed": 0,
+            "ignored": 0,
+            "filtered": 0,
+            "elapsed_seconds": 0.16
+          }
+        },
+        "capi": [
+          {
+            "passed": 185,
+            "failed": 0,
+            "ignored": 0,
+            "filtered": 0,
+            "elapsed_seconds": 9.88
           },
           {
             "passed": 0,

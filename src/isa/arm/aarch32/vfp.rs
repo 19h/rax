@@ -66,6 +66,18 @@ impl Default for VfpState {
 }
 
 impl VfpState {
+    /// Architectural FPSCR view for this implementation's non-trapping profile.
+    /// MVFR0.FPTrap is zero; exception enables and reserved bits15:8 read zero.
+    pub(crate) fn read_fpscr(&self) -> u32 {
+        self.fpscr.bits() & !0x0000_ff00
+    }
+
+    /// Apply the non-trapping FPSCR write mask without restricting FZ16.
+    /// Raw Fpscr bit helpers retain their existing unmasked API contract.
+    pub(crate) fn write_fpscr(&mut self, value: u32) {
+        self.fpscr = Fpscr::from_bits(value & !0x0000_ff00);
+    }
+
     /// Create a new VFP state.
     pub fn new() -> Self {
         Self::default()
