@@ -680,7 +680,7 @@ fn lowers_vector_fp16_arithmetic_runtime() {
         f16_bits(18.0),
         f16_bits(19.0),
     ];
-    let code = lower_ops(vec![
+    let func = func_with_ops(vec![
         OpKind::VFP16Arith {
             dst: v(0),
             src1: v(1),
@@ -748,6 +748,11 @@ fn lowers_vector_fp16_arithmetic_runtime() {
             zeroing: false,
         },
     ]);
+
+    let mut lowerer = Aarch64Lowerer::new();
+    lowerer.set_fp16_available_for_test(true);
+    lowerer.lower_function(&func).unwrap();
+    let code = lowerer.finalize().unwrap();
 
     let (_, simd, _) = run_aarch64_code_with_regs_and_simd(
         &code,

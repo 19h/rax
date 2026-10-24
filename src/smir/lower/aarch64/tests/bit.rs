@@ -2201,6 +2201,7 @@ fn lowers_bzhi_x_with_flags_and_low_byte_index_guards() {
     let func = builder.finish();
 
     let mut lowerer = Aarch64Lowerer::new();
+    lowerer.set_flagm_features_for_test(true, false);
     lowerer.lower_function(&func).unwrap();
     let code = lowerer.finalize().unwrap();
 
@@ -2463,6 +2464,7 @@ fn lowers_bzhi_x_two_imms_with_flags_sets_carry() {
     let func = builder.finish();
 
     let mut lowerer = Aarch64Lowerer::new();
+    lowerer.set_flagm_features_for_test(true, false);
     lowerer.lower_function(&func).unwrap();
     let code = lowerer.finalize().unwrap();
 
@@ -2490,6 +2492,7 @@ fn lowers_bzhi_x_two_imms_all_ones_with_flags_as_movn_sets_carry() {
     let func = builder.finish();
 
     let mut lowerer = Aarch64Lowerer::new();
+    lowerer.set_flagm_features_for_test(true, false);
     lowerer.lower_function(&func).unwrap();
     let code = lowerer.finalize().unwrap();
 
@@ -2517,6 +2520,7 @@ fn lowers_bzhi_x_imm_index_at_width_with_flags_sets_carry() {
     let func = builder.finish();
 
     let mut lowerer = Aarch64Lowerer::new();
+    lowerer.set_flagm_features_for_test(true, false);
     lowerer.lower_function(&func).unwrap();
     let code = lowerer.finalize().unwrap();
 
@@ -2526,6 +2530,66 @@ fn lowers_bzhi_x_imm_index_at_width_with_flags_sets_carry() {
     expected.extend_from_slice(&enc_flagm(0b000).to_le_bytes());
     expected.extend_from_slice(&0xd65f_03c0u32.to_le_bytes());
     assert_eq!(code, expected);
+}
+#[test]
+fn bzhi_results_and_flags_match_with_and_without_flagm() {
+    for flagm in [false, true] {
+        for width in [OpWidth::W32, OpWidth::W64] {
+            let bits = width.bits();
+            for source in [0, 1, 1u64 << (bits - 1), u64::MAX] {
+                for index in [0, 1, bits - 1, bits, bits + 1, 255, 256, 511] {
+                    for (immediate_source, immediate_index) in
+                        [(false, false), (false, true), (true, true)]
+                    {
+                        let code = lower_ops_with_flagm_features(
+                            vec![OpKind::Bzhi {
+                                dst: x(0),
+                                src: if immediate_source {
+                                    VReg::Imm(source as i64)
+                                } else {
+                                    x(1)
+                                },
+                                index: if immediate_index {
+                                    VReg::Imm(i64::from(index))
+                                } else {
+                                    x(2)
+                                },
+                                width,
+                                flags: bzhi_flags(),
+                            }],
+                            flagm,
+                            false,
+                        );
+                        if !flagm {
+                            assert!(!code_has_flagm(&code, 0b000));
+                        }
+                        let (expected, carry) = ref_bzhi(source, u64::from(index), width);
+                        let registers = [
+                            (1, source),
+                            (2, u64::from(index)),
+                            (16, 0x1616_1616_1616_1616),
+                            (17, 0x1717_1717_1717_1717),
+                        ];
+                        for old_nzcv in [0, 0b1111] {
+                            let (out, nzcv, sp) = run_aarch64_code(&code, &registers, old_nzcv);
+                            assert_eq!(
+                                out[0], expected,
+                                "FLAGM={flagm}, {width:?}, source={source:#x}, index={index}, immediate source={immediate_source}, immediate index={immediate_index}"
+                            );
+                            assert_eq!(
+                                nzcv,
+                                expected_bzhi_nzcv(old_nzcv, expected, carry, width, bzhi_flags(),)
+                            );
+                            for (register, value) in registers {
+                                assert_eq!(out[register as usize], value, "x{register} preserved");
+                            }
+                            assert_eq!(sp, 0x8000, "stack restored");
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 #[test]
 fn lowers_bzhi_x_imm_index_zero_as_zero() {
