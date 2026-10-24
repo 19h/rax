@@ -56,7 +56,7 @@ The AArch64 lifter consumes the existing ARM decoder. It maps `SP` versus `XZR/W
 
 MTE tag-clearing add/sub forms are represented by arithmetic plus masking. Memory operands are translated to `Address` plus pre-ops when an index calculation must be materialized.
 
-Pointer-authentication forms (`PAC*`, `AUT*`, `XPAC*`, `PACGA`), authenticated branches (`BRAA`/`BLRAA`/`RETAA` families), authenticated loads (`LDRAA`/`LDRAB`), and the adjacent MTE forms are rejected rather than approximated: SMIR has no PAC operation and no key or `BTYPE` state. See `16-aarch64-pauth.md` for the support contract, the current deviations, and the requirements for lifting them.
+With `LiftContext.aarch64_features` configured, all 46 pointer-authentication forms (signing, authentication, stripping, `PACGA`, authenticated branches and returns, and `LDRAA`/`LDRAB`) lift to a single typed `ArmPauth` operation framed by `ArmInstructionBegin`/`ArmInstructionCommit`; keys, algorithm, controls, `BTYPE`, and precise faults are read from guest state at execution time. Without a configured feature set the same forms are rejected explicitly in both lifter modes rather than approximated. The adjacent MTE forms (`SUBP`, `SUBPS`, `IRG`, `GMI`) retain explicit lift rejection. See `16-aarch64-pointer-authentication.md` for the support contract, frontiers, and validation obligations.
 
 ## 7. Hexagon lifting
 

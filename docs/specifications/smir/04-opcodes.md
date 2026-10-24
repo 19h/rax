@@ -24,6 +24,7 @@ AVX10: VDotProduct, VMultiplyAdd52, VPopcnt, VPermute, VShuffleBitQM, VDotProduc
 Flag operations: ReadFlags, WriteFlags, SetCF, SetDF, CmcCF, MaterializeFlags, TestCondition, SetCC.
 Privileged/system: Syscall, Swi, ReadSysReg, WriteSysReg.
 Architecture-exact semantic escapes: HexFp, HexFp3, HexFpRecip, HexFpDf, HexFpScFma, RvFp, RvIntCrypto, RvVector.
+AArch64 typed/framed: ArmPauth, ArmInstructionBegin, ArmInstructionCommit, ArmRegShift, ArmDpRegShift, ArmSimdLong, ArmSimdNarrow, ArmSimdSaturating.
 Meta/debug: Nop, Undefined, Breakpoint.
 
 ## 3. Integer arithmetic
