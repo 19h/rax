@@ -31,8 +31,17 @@ pub(crate) fn set_ptracer(c: &Ctx<'_>, value: u64) -> SysResult {
     Err(Errno(EINVAL))
 }
 
+struct AncestorLink {
+    route: LinkId,
+    pid: i32,
+    offered: Link,
+    child: Link,
+    #[cfg(unix)]
+    watch: std::os::fd::OwnedFd,
+}
+
 pub(crate) struct ForkLinks {
-    ancestors: Vec<(LinkId, i32, Link, Link)>,
+    ancestors: Vec<AncestorLink>,
 }
 
 impl ForkLinks {
@@ -45,9 +54,16 @@ impl ForkLinks {
             .iter()
             .map(|pid| (LinkId::Adopted(*pid), *pid));
         for (id, pid) in parent.into_iter().chain(earlier) {
-            if link_ref(p, id).is_some_and(|link| !link.closed) {
+            if let Some(source) = link_ref(p, id).filter(|link| !link.closed) {
                 let (ancestor_end, child_end) = Link::pair()?;
-                ancestors.push((id, pid, ancestor_end, child_end));
+                let watch = source.fd.try_clone().map_err(Errno::from)?;
+                ancestors.push(AncestorLink {
+                    route: id,
+                    pid,
+                    offered: ancestor_end,
+                    child: child_end,
+                    watch,
+                });
             }
         }
         Ok(Self { ancestors })
@@ -55,10 +71,13 @@ impl ForkLinks {
 
     #[cfg(unix)]
     pub(crate) fn publish(self, p: &ProcState, child: i32) {
-        for (id, _, ancestor_end, child_end) in self.ancestors {
-            drop(child_end);
-            if let Some(link) = link_ref(p, id) {
-                link.send_passing(&Msg::Relative { pid: child }, &ancestor_end);
+        for entry in self.ancestors {
+            drop(entry.child);
+            let sent = link_ref(p, entry.route).is_some_and(|link| {
+                link.send_passing(&Msg::Relative { pid: child }, &entry.offered)
+            });
+            if !sent {
+                entry.offered.adoption_ready(false);
             }
         }
     }
@@ -66,10 +85,11 @@ impl ForkLinks {
     #[cfg(unix)]
     pub(crate) fn inherit(self, p: &mut ProcState) {
         p.ancestor_pids.clear();
-        for (_, pid, ancestor_end, child_end) in self.ancestors {
-            drop(ancestor_end);
-            p.ancestor_pids.push(pid);
-            p.adopted.push((pid, child_end));
+        for entry in self.ancestors {
+            let mut child = entry.child;
+            child.retain_adoption(entry.offered, entry.watch);
+            p.ancestor_pids.push(entry.pid);
+            p.adopted.push((entry.pid, child));
         }
     }
 }
@@ -99,13 +119,12 @@ mod tests {
             ancestors: links
                 .ancestors
                 .iter()
-                .map(|(id, pid, a, b)| {
-                    (
-                        *id,
-                        *pid,
-                        Link::from_fd(a.fd.try_clone().unwrap()),
-                        Link::from_fd(b.fd.try_clone().unwrap()),
-                    )
+                .map(|entry| AncestorLink {
+                    route: entry.route,
+                    pid: entry.pid,
+                    offered: Link::from_fd(entry.offered.fd.try_clone().unwrap()),
+                    child: Link::from_fd(entry.child.fd.try_clone().unwrap()),
+                    watch: entry.watch.try_clone().unwrap(),
                 })
                 .collect(),
         }
@@ -131,6 +150,10 @@ mod tests {
             let inherited = fork_copy(&links);
             links.publish(&parent.proc.state, c);
             inherited.inherit(&mut child.proc.state);
+            for (_, link) in &child.proc.state.adopted {
+                let watch = link.adoption_watch_fd().unwrap();
+                assert!(ptrace::link_fds(&child.proc.state).contains(&(watch, false, false)));
+            }
             poll(&mut ancestor);
             drop(parent);
             poll(&mut ancestor);
@@ -227,7 +250,17 @@ mod tests {
             let mut actual = vec![0; expected.len()];
             child.proc.state.space.read(output, &mut actual).unwrap();
             assert_eq!(actual, expected);
+            for (_, link) in &child.proc.state.adopted {
+                // Concurrent host-fork tests can briefly inherit descriptors.
+                // Model loss of this peer independently of those extra copies.
+                // SAFETY: Link owns this live socket; shutdown retains ownership.
+                assert_eq!(unsafe { libc::shutdown(link.fd(), libc::SHUT_RDWR) }, 0);
+            }
             drop(child);
+            let link = ptrace::link_to(&ancestor.proc.state, c).unwrap();
+            let fd = link_ref(&ancestor.proc.state, link).unwrap().fd();
+            let ready = crate::user::linux::host::poll(&[(fd, false, false)], 1000).unwrap();
+            assert!(ready[0].hangup || ready[0].error);
             poll(&mut ancestor);
             assert_eq!(tracee::tracer_pid(&ancestor.proc.threads[0]), 0);
             assert!(!tracee::parked(&ancestor.proc.threads[0]));

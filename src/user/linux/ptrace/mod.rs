@@ -21,8 +21,11 @@
 //! system-call stops and single steps is in `stops`. The tracer's requests
 //! are the `ptrace` system call (`syscall::ptrace`).
 
+#[cfg(all(test, unix))]
+mod adoption_tests;
 pub mod call;
 pub(crate) mod family;
+mod pending_adoption;
 pub(crate) mod procfs;
 pub mod regs;
 pub mod regs32;
@@ -484,6 +487,8 @@ pub struct Link {
     #[cfg(not(unix))]
     unavailable: std::convert::Infallible,
     inbox: Vec<u8>,
+    #[cfg(unix)]
+    pending_adoption: Option<pending_adoption::PendingAdoption>,
     /// Descriptors that arrived with the bytes (`SCM_RIGHTS`), in order.
     #[cfg(unix)]
     fds: std::collections::VecDeque<OwnedFd>,
@@ -505,9 +510,27 @@ impl Link {
         Link {
             fd,
             inbox: Vec::new(),
+            pending_adoption: None,
             fds: Default::default(),
             closed: false,
         }
+    }
+
+    /// Retain the offered endpoint until the ancestor acknowledges its copy.
+    /// The old route wakes this link if that ancestor disappears first.
+    pub(super) fn retain_adoption(&mut self, offered: Link, watch: OwnedFd) {
+        self.pending_adoption = Some(pending_adoption::PendingAdoption::new(offered.fd, watch));
+    }
+
+    pub(super) fn adoption_ready(&self, accepted: bool) -> bool {
+        // A transport control frame, outside the public tracing message enum.
+        super::host::write_all_waiting(&self.fd, &[2, 0, 0, 0, b'!', u8::from(accepted)]).is_ok()
+    }
+
+    pub(super) fn adoption_watch_fd(&self) -> Option<crate::user::readiness::Descriptor> {
+        self.pending_adoption
+            .as_ref()
+            .map(|pending| pending.watch_fd())
     }
 
     /// Sends a message whose frame carries descriptor `fd`
@@ -552,6 +575,13 @@ impl Link {
     /// The messages that have arrived, in order; marks the link closed when
     /// the other end is gone.
     pub fn recv(&mut self) -> Vec<Msg> {
+        if self
+            .pending_adoption
+            .as_ref()
+            .is_some_and(|pending| pending.abandoned())
+        {
+            self.pending_adoption = None;
+        }
         let mut buf = [0u8; 4096];
         loop {
             match super::net::sys::recvmsg(&self.fd, &mut buf, 0) {
@@ -578,6 +608,12 @@ impl Link {
                 break;
             }
             let frame: Vec<u8> = self.inbox.drain(..4 + len).skip(4).collect();
+            if frame.len() == 2 && frame[0] == b'!' && frame[1] <= 1 {
+                if self.pending_adoption.take().is_some() && frame[1] == 0 {
+                    self.closed = true;
+                }
+                continue;
+            }
             if let Some(m) = Msg::decode(&frame) {
                 out.push(m);
             }
@@ -597,6 +633,10 @@ impl AsRawFd for Link {
 // transport. Safe code cannot construct a Link on this profile.
 #[cfg(not(unix))]
 impl Link {
+    pub(super) fn adoption_watch_fd(&self) -> Option<crate::user::readiness::Descriptor> {
+        None
+    }
+
     pub fn fd(&self) -> crate::user::readiness::Descriptor {
         match self.unavailable {}
     }
@@ -922,7 +962,11 @@ pub fn link_ref(p: &ProcState, id: LinkId) -> Option<&Link> {
 pub fn link_fds(p: &ProcState) -> Vec<(crate::user::readiness::Descriptor, bool, bool)> {
     link_ids(p)
         .into_iter()
-        .filter_map(|id| link_ref(p, id).map(|l| (l.fd(), true, false)))
+        .filter_map(|id| link_ref(p, id))
+        .flat_map(|link| {
+            std::iter::once((link.fd(), true, false))
+                .chain(link.adoption_watch_fd().map(|fd| (fd, false, false)))
+        })
         .collect()
 }
 

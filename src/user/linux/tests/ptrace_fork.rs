@@ -289,10 +289,12 @@ fn a_tracer_adopts_a_forked_tracee_and_reaps_it() {
         seized: false,
     };
     assert!(theirs.send_passing(&adopt, &tracer_end));
-    drop(tracer_end);
     while h.proc.state.tracees.get(g).is_none() {
         h.proc.collect_async(None);
     }
+    // This fixture publishes directly, outside the production fork handoff.
+    // Keep the offered endpoint alive until its receiver owns the descriptor.
+    drop(tracer_end);
     let rec = h.proc.state.tracees.get(g).unwrap();
     assert_eq!((rec.tracer, rec.link), (me, LinkId::Adopted(g)));
     assert_eq!(link_to(&h.proc.state, g), Some(LinkId::Adopted(g)));

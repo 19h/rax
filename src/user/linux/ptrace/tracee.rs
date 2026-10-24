@@ -117,7 +117,10 @@ fn on_message(p: &mut ProcState, th: &mut Threads<'_>, link: LinkId, m: Msg) {
         #[cfg(unix)]
         Msg::Relative { pid } => {
             if let Some(fd) = link_mut(p, link).and_then(|l| l.take_fd()) {
-                p.adopted.push((pid, super::Link::from_fd(fd)));
+                let adopted = super::Link::from_fd(fd);
+                if adopted.adoption_ready(true) {
+                    p.adopted.push((pid, adopted));
+                }
             }
         }
         #[cfg(not(unix))]
@@ -190,8 +193,12 @@ fn on_message(p: &mut ProcState, th: &mut Threads<'_>, link: LinkId, m: Msg) {
         {
             #[cfg(unix)]
             if let Some(fd) = link_mut(p, link).and_then(|l| l.take_fd()) {
+                let adopted = super::Link::from_fd(fd);
+                if !adopted.adoption_ready(true) {
+                    return;
+                }
                 p.adopted.retain(|a| a.0 != tid);
-                p.adopted.push((tid, super::Link::from_fd(fd)));
+                p.adopted.push((tid, adopted));
                 let tracer = p.tracees.get(parent).map_or(p.pid, |t| t.tracer);
                 p.tracees.add(tid, tracer, LinkId::Adopted(tid), seized);
             }
@@ -1175,6 +1182,22 @@ pub struct ForkTrace {
     pub ends: (super::Link, super::Link),
 }
 
+#[cfg(unix)]
+impl ForkTrace {
+    pub(crate) fn prepare_adoption(
+        &mut self,
+        p: &ProcState,
+        route: LinkId,
+    ) -> Result<(), super::super::abi::errno::Errno> {
+        if let Some(source) = super::link_ref(p, route) {
+            let offered = super::Link::from_fd(self.ends.0.fd.try_clone()?);
+            let watch = source.fd.try_clone()?;
+            self.ends.1.retain_adoption(offered, watch);
+        }
+        Ok(())
+    }
+}
+
 /// Whether and how a process thread `t` forks is traced: the event is
 /// `PTRACE_EVENT_VFORK` with `CLONE_VFORK`, `PTRACE_EVENT_CLONE` for an exit
 /// signal other than `SIGCHLD`, else `PTRACE_EVENT_FORK`; traced when the
@@ -1241,8 +1264,9 @@ pub fn forker_traced(p: &mut ProcState, t: &mut Thread, trace: ForkTrace, pid: i
         seized: trace.seized,
     };
     let link = tr.link;
-    if let Some(l) = link_mut(p, link) {
-        l.send_passing(&m, &trace.ends.0);
+    let sent = link_mut(p, link).is_some_and(|l| l.send_passing(&m, &trace.ends.0));
+    if !sent {
+        trace.ends.0.adoption_ready(false);
     }
     if let Some(event) = trace.event {
         due_event(t, event, pid as u64);

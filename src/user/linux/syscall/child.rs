@@ -108,13 +108,16 @@ pub fn fork(c: &mut Ctx<'_>, args: ForkArgs) -> Result<Outcome, Errno> {
     // ptrace_init_task and the fork's event: traced by the forker's tracer
     // along a link of its own.
     use super::super::ptrace::tracee;
-    let trace = tracee::fork_trace(
+    let mut trace = tracee::fork_trace(
         c.t,
         flags & CLONE_VFORK != 0,
         flags & super::thread::cf::CLONE_UNTRACED != 0,
         flags & super::thread::cf::CLONE_PTRACE != 0,
         args.exit_signal,
     )?;
+    if let (Some(trace), Some(parent_trace)) = (trace.as_mut(), c.t.ptrace.as_ref()) {
+        trace.prepare_adoption(c.p, parent_trace.link)?;
+    }
     let family = super::super::ptrace::family::ForkLinks::prepare(c.p)?;
     // The child shares the open file descriptions.
     if let Some(h) = &c.p.fsnotify {

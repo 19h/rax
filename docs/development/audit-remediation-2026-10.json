@@ -963,16 +963,31 @@
       "id": "C-PTRACE-FAMILY-ADOPTION",
       "area": "Linux user-mode tracing transport",
       "finding": "Grandchild tracing-link adoption intermittently disappears after the intermediate process exits. Current and isolated 0c4ea9b5 binaries each reproduce 2 failures in 200 isolated owning-suite repetitions under Rosetta.",
-      "status": "pending",
-      "cause": "unknown",
+      "status": "locally_validated",
+      "cause": "Premature EOF after SCM_RIGHTS transfer and original endpoint release reproduces independently in native C. The internal host-kernel cause remains unknown. Retaining the offered endpoint through receiver ownership removes the observed failures.",
       "evidence": [
         "src/user/linux/ptrace/family.rs",
         "src/user/linux/ptrace/mod.rs",
         "src/user/linux/net/sys.rs",
         "/tmp/rax-darwin-runtime-profile/final-rosetta-library.log",
         "/tmp/rax-darwin-runtime-profile/ptrace-repeats.json",
-        "/tmp/rax-darwin-runtime-profile/ptrace-parent-repeats.json"
-      ]
+        "/tmp/rax-darwin-runtime-profile/ptrace-parent-repeats.json",
+        "src/user/linux/ptrace/pending_adoption.rs",
+        "src/user/linux/ptrace/adoption_tests.rs",
+        "src/user/readiness/darwin_poll.rs",
+        "/tmp/rax-ptrace-adoption/v3-library.log",
+        "/tmp/rax-ptrace-adoption/v3-rosetta-library.log",
+        "/tmp/rax-ptrace-adoption/v3-owning-rosetta.log",
+        "/tmp/rax-ptrace-adoption/v3-readiness-rosetta.log",
+        "/tmp/rax-ptrace-adoption/v3-build.log",
+        "/tmp/rax-ptrace-adoption/v3-clippy.log",
+        "/tmp/rax-ptrace-adoption/v3-fmt.log",
+        "/tmp/rax-ptrace-adoption/v3-doc.log",
+        "/tmp/rax-ptrace-adoption/v3-integration.log",
+        "/tmp/rax-ptrace-adoption/v4-family-repeats.json",
+        "/tmp/rax-x86-gs-base/v3-native-msr.log"
+      ],
+      "resolution": "Retain fork-offered sockets until receiver acknowledgement; release on rejection or ancestor disconnect. Include ancestor disconnect watches in sleep readiness. Preserve public tracing messages and fork API fields. Correct Darwin error-only stream watches with EV_CLEAR kqueue filters and remaining-time accounting."
     }
   ],
   "decisions": {
@@ -4014,6 +4029,202 @@
           "blocks": false
         }
       ]
+    },
+    {
+      "id": "ptrace-acknowledged-descriptor-adoption",
+      "baseline": "1de914f38cab525b6cd9ab489f46aa0dc1af8b32",
+      "scope": "Retain fork-offered sockets until receiver acknowledgement; release on rejection or ancestor disconnect. Include ancestor disconnect watches in sleep readiness. Preserve public tracing messages and fork API fields. Correct Darwin error-only stream watches with EV_CLEAR kqueue filters and remaining-time accounting.",
+      "primary_source": {
+        "revision": "f6217f891ac0bb64f3d375211650a4c1ff8ca1ea",
+        "files": [
+          {
+            "path": "bsd/kern/sys_generic.c",
+            "url": "https://raw.githubusercontent.com/apple-oss-distributions/xnu/f6217f891ac0bb64f3d375211650a4c1ff8ca1ea/bsd/kern/sys_generic.c",
+            "sha256": "6bf3e35160701519d433f5a2269f8220646459e2b131816de7408fb7d5505c2c"
+          },
+          {
+            "path": "bsd/kern/uipc_usrreq.c",
+            "url": "https://raw.githubusercontent.com/apple-oss-distributions/xnu/f6217f891ac0bb64f3d375211650a4c1ff8ca1ea/bsd/kern/uipc_usrreq.c",
+            "sha256": "c34d28100931762957c2cb2f3b7a2bef5fe078e4d9c1dca1c494345cbec0e12c"
+          },
+          {
+            "path": "bsd/sys/poll.h",
+            "url": "https://raw.githubusercontent.com/apple-oss-distributions/xnu/f6217f891ac0bb64f3d375211650a4c1ff8ca1ea/bsd/sys/poll.h",
+            "sha256": "0b8cebda20c1bf38e48f5d37d9a64355415f82c8c3660bdf9ceb0c79585b5769"
+          },
+          {
+            "path": "bsd/kern/uipc_socket.c",
+            "url": "https://raw.githubusercontent.com/apple-oss-distributions/xnu/f6217f891ac0bb64f3d375211650a4c1ff8ca1ea/bsd/kern/uipc_socket.c",
+            "sha256": "68d5a0dfb22ad62bca963b3bc3b1c08ed28549f3c7679789a549eae428fa60bc"
+          }
+        ]
+      },
+      "cause": "Premature EOF after SCM_RIGHTS transfer and original endpoint release reproduces independently in native C. The internal host-kernel cause remains unknown. Retaining the offered endpoint through receiver ownership removes the observed failures.",
+      "baseline_results": {
+        "family_parent_and_current": "Each fails 2/200 isolated owning-suite repetitions under Rosetta before this group.",
+        "bare_rax_link": "3 premature EOF in 20000 transfers; a diagnostic repetition has 6 in 20000.",
+        "native_c": "5/100000 premature EOF on ARM and 14/100000 under Rosetta. Receiver reports EOF while peer can still send.",
+        "controlled_native_c": "Retain offered endpoint until receiver owns descriptor: 0/100000 failures. Retain only carrier: 8/100000. Datagram carrier: 9/100000.",
+        "error_only_poll": "events=0 fails to report peer hangup; POLLHUP alone loses a later close when queued data consumes its one-shot read filter. Extracted owning tests and independent C probes reproduce both cases."
+      },
+      "assumptions": [
+        {
+          "id": "PA1",
+          "assumption": "Receiver ownership must be established before releasing the last original offered endpoint on this host.",
+          "dependent_result": "Asynchronous acknowledgement and retained offered descriptor.",
+          "basis": "Independent native C and RAX transfer probes.",
+          "stress_test": "50000 actual SCM_RIGHTS handoffs with immediate original and carrier release, bidirectional liveness and data exchange; both compiler architectures.",
+          "falsification_probe": "Premature EOF, missing adoption, frame loss or stuck lifetime after acknowledgement, rejection or ancestor disconnect.",
+          "status": "retained"
+        },
+        {
+          "id": "PA2",
+          "assumption": "Ancestor disconnect must wake a child even before the offer is accepted.",
+          "dependent_result": "Pending adoption watches are included in link_fds, with no second reader on the old route.",
+          "basis": "Otherwise the retained endpoint can keep its own new peer alive indefinitely.",
+          "stress_test": "Ancestor exit before receiving the offer, explicit rejection, queued data, delayed disconnect and full receive buffer; no ordinary data readiness.",
+          "falsification_probe": "Child fails to close or release retained state, or the watch consumes tracing messages.",
+          "status": "confirmed"
+        },
+        {
+          "id": "PA3",
+          "assumption": "Host fork tests inherit other tests descriptors until exec or exit.",
+          "dependent_result": "Resource-lifetime assertions execute in isolated single-test processes; disconnect fixtures use shutdown to affect inherited copies.",
+          "basis": "Native fork semantics and observed parallel-test EOF delays; no raw descriptor-number assertions remain.",
+          "stress_test": "Outer owning suite runs concurrently, inner tests prove one executed test and successful exit.",
+          "falsification_probe": "Inner execution runs zero tests, hangs, or leaves retained endpoints after acknowledgement.",
+          "status": "confirmed"
+        }
+      ],
+      "affected_planes": {
+        "linux_user": "Ancestor and traced-fork preparation, publication, receiver adoption, lifecycle cleanup and wait descriptor collection.",
+        "host_readiness": "Darwin stream error watches retain EV_CLEAR filters through ordinary data. Other readiness directions retain their existing masks.",
+        "compatibility": "Public Msg variants/encoded messages, ForkTrace fields, fork_trace arguments and guest tracing ABI unchanged. The new acknowledgement is an internal transport control frame.",
+        "other_execution": "ISA, SMIR, native instruction lowerers, KVM/HVF CPU adapters, VM checkpoint schema and C ABI unchanged."
+      },
+      "complexity": "Fork depth d uses O(d) time, stored descriptors and state. Darwin waits add one temporary kqueue descriptor per distinct error-only stream watch; duplicate requests remain coalesced. Data-only wake retries preserve a monotonic deadline, rounded up by less than 1 ms.",
+      "bounded_scope": [
+        {
+          "impact": "high",
+          "item": "The underlying host-kernel transfer anomaly remains unidentified. Generic bare Link::send_passing is not claimed to repair host SCM_RIGHTS semantics. Production fork handoffs use the lifetime protocol.",
+          "blocks": false
+        },
+        {
+          "impact": "medium",
+          "item": "Darwin error-only watches add temporary kernel descriptors and registration calls; no throughput claim is made.",
+          "blocks": false
+        },
+        {
+          "impact": "high",
+          "item": "Other audit groups, complete checkpoint/scheduling and userspace kernel boot remain pending.",
+          "blocks": "Complete remediation plan."
+        }
+      ],
+      "status": "locally_validated",
+      "validation": {
+        "complete_arm_library": {
+          "passed": 10433,
+          "failed": 0,
+          "ignored": 2,
+          "filtered": 0,
+          "elapsed_seconds": 400.53
+        },
+        "complete_rosetta_library": {
+          "passed": 11429,
+          "failed": 0,
+          "ignored": 2,
+          "filtered": 0,
+          "elapsed_seconds": 797.44
+        },
+        "ptrace_owning_rosetta": {
+          "passed": 68,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 11363,
+          "elapsed_seconds": 3.12
+        },
+        "readiness_owning_rosetta": {
+          "passed": 9,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 11422,
+          "elapsed_seconds": 0.94
+        },
+        "native_x86_msr": {
+          "passed": 10,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 11421,
+          "elapsed_seconds": 0.14
+        },
+        "build_all_targets": "passed",
+        "clippy_all_targets": "passed",
+        "format": "passed",
+        "doctests": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 5,
+          "filtered": 0,
+          "elapsed_seconds": 0.0
+        },
+        "integration": {
+          "isa_oracle": {
+            "passed": 101,
+            "failed": 0,
+            "ignored": 0,
+            "filtered": 0,
+            "elapsed_seconds": 0.16
+          },
+          "user_darwin": {
+            "passed": 117,
+            "failed": 0,
+            "ignored": 0,
+            "filtered": 0,
+            "elapsed_seconds": 435.79
+          },
+          "user_linux": {
+            "passed": 42,
+            "failed": 0,
+            "ignored": 1,
+            "filtered": 0,
+            "elapsed_seconds": 206.02
+          },
+          "x86_64": {
+            "passed": 28559,
+            "failed": 0,
+            "ignored": 3,
+            "filtered": 0,
+            "elapsed_seconds": 4.07
+          }
+        },
+        "family_repetitions": {
+          "runs": 200,
+          "failures": 0,
+          "timeouts": 0,
+          "elapsed_seconds": 331.75643729197327,
+          "max_launch_to_exit_seconds": 14.741672249976546
+        },
+        "logs": [
+          "/tmp/rax-ptrace-adoption/v3-library.log",
+          "/tmp/rax-ptrace-adoption/v3-rosetta-library.log",
+          "/tmp/rax-ptrace-adoption/v3-owning-rosetta.log",
+          "/tmp/rax-ptrace-adoption/v3-readiness-rosetta.log",
+          "/tmp/rax-ptrace-adoption/v3-build.log",
+          "/tmp/rax-ptrace-adoption/v3-clippy.log",
+          "/tmp/rax-ptrace-adoption/v3-fmt.log",
+          "/tmp/rax-ptrace-adoption/v3-doc.log",
+          "/tmp/rax-ptrace-adoption/v3-integration.log",
+          "/tmp/rax-ptrace-adoption/v4-family-repeats.json",
+          "/tmp/rax-x86-gs-base/v3-native-msr.log"
+        ],
+        "intermediate_notes": [
+          "The early complete ARM run timed out in the closed Darwin printf fixture during observed severe host memory pressure (10430 pass, 1 fail, 2 ignored). Final complete ARM and Rosetta libraries pass without changing that timeout.",
+          "An early parallel Darwin integration run has 113 pass, 4 fail: fork alarm exits, an expired exec timer and a spawn mismatch. All four pass individually, and the final complete Darwin binary passes all 117 with required native oracles and four test threads.",
+          "Initial descriptor-number assertions were replaced by observable lifetime checks: descriptor numbers can be reused by other test threads. Last-reference checks run in isolated single-test processes; disconnect fixtures use shutdown because concurrent native fork tests inherit descriptors.",
+          "Bare POLLHUP corrected events=0 but lost a later close after queued data consumed the native one-shot filter. EV_CLEAR/NOTE_LOWAT and a remaining-time loop also handle full-buffer data events. Independent C probes and extracted owning tests establish these cases.",
+          "A preliminary 1000-launch repetition collector was stopped after its run 464 record contained a passed test but a supervisor failure. Timeout versus nonzero exit is unknown because that collector omitted the reason. Its 15 s launch limit was separate from the guest/test; final complete 200-run collection records exit code, timeout and elapsed time for every invocation, with no failures and maximum 14.741672249976546 s. No product or test timeout was increased."
+        ]
+      }
     }
   ],
   "group_scope_notes": "Each group records limits at its own validation point; findings contains the current disposition."

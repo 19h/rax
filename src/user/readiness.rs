@@ -7,6 +7,10 @@
 
 use std::io;
 
+#[cfg(target_vendor = "apple")]
+#[path = "readiness/darwin_poll.rs"]
+mod darwin_poll;
+
 /// Native readiness identifier; never a guest descriptor number.
 #[cfg(unix)]
 pub type Descriptor = std::os::fd::RawFd;
@@ -48,20 +52,35 @@ pub(crate) fn poll_descriptors(
     }
     let mut fds: Vec<_> = interests
         .iter()
-        .map(|(&fd, &(read, write))| libc::pollfd {
-            fd,
-            events: (if read { libc::POLLIN } else { 0 }) | (if write { libc::POLLOUT } else { 0 }),
-            revents: 0,
+        .map(|(&fd, &(read, write))| {
+            let events =
+                (if read { libc::POLLIN } else { 0 }) | (if write { libc::POLLOUT } else { 0 });
+            libc::pollfd {
+                fd,
+                // Darwin omits hangup for events=0. Request its error bits
+                // explicitly for a watch that must not wake on ordinary data.
+                events: if events == 0 {
+                    libc::POLLHUP | libc::POLLERR
+                } else {
+                    events
+                },
+                revents: 0,
+            }
         })
         .collect();
     let count = fds
         .len()
         .try_into()
         .map_err(|_| io::ErrorKind::InvalidInput)?;
-    // SAFETY: initialized writable pollfd array. Native descriptors are owned
-    // by the caller throughout; poll does not retain the buffer.
-    if unsafe { libc::poll(fds.as_mut_ptr(), count, timeout_ms) } < 0 {
-        return Err(io::Error::last_os_error());
+    #[cfg(target_vendor = "apple")]
+    darwin_poll::poll(&mut fds, count, timeout_ms)?;
+    #[cfg(not(target_vendor = "apple"))]
+    {
+        // SAFETY: initialized writable pollfd array. The caller owns every
+        // native descriptor throughout; poll does not retain the buffer.
+        if unsafe { libc::poll(fds.as_mut_ptr(), count, timeout_ms) } < 0 {
+            return Err(io::Error::last_os_error());
+        }
     }
     Ok(requests
         .iter()
@@ -384,6 +403,93 @@ mod tests {
             assert!(fd_flags >= 0 && fd_flags & libc::FD_CLOEXEC != 0);
             assert!(status_flags >= 0 && status_flags & libc::O_NONBLOCK != 0);
         }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn error_only_socket_watch_reports_peer_exit_without_read_interest() {
+        use std::os::fd::AsRawFd;
+        use std::os::unix::net::UnixStream;
+        let (reader, writer) = UnixStream::pair().unwrap();
+        drop(writer);
+        let ready = poll_descriptors(&[(reader.as_raw_fd(), false, false)], 1000).unwrap();
+        assert!(ready[0].hangup);
+        assert!(!ready[0].readable && !ready[0].writable && !ready[0].error);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn error_only_socket_watch_ignores_data_and_retains_hangup_with_unread_data() {
+        use std::io::Write;
+        use std::os::fd::AsRawFd;
+        use std::os::unix::net::UnixStream;
+        let (reader, mut writer) = UnixStream::pair().unwrap();
+        writer.write_all(b"pending data").unwrap();
+        let request = [(reader.as_raw_fd(), false, false)];
+        let ready = poll_descriptors(&request, 0).unwrap();
+        assert!(!ready[0].any());
+        drop(writer);
+        let ready = poll_descriptors(&request, 1000).unwrap();
+        assert!(ready[0].hangup);
+        assert!(!ready[0].readable && !ready[0].writable && !ready[0].error);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn error_only_socket_watch_observes_a_later_close_with_data_already_queued() {
+        use std::io::Write;
+        use std::os::fd::AsRawFd;
+        use std::os::unix::net::UnixStream;
+        let (reader, mut writer) = UnixStream::pair().unwrap();
+        writer.write_all(b"pending data").unwrap();
+        let barrier = std::sync::Arc::new(std::sync::Barrier::new(2));
+        let closing = barrier.clone();
+        let closer = std::thread::spawn(move || {
+            closing.wait();
+            std::thread::sleep(std::time::Duration::from_millis(20));
+            // Other tests fork concurrently and can inherit this descriptor.
+            // Disconnect the connection even while an inherited copy exists.
+            writer.shutdown(std::net::Shutdown::Both).unwrap();
+            drop(writer);
+        });
+        barrier.wait();
+        let ready = poll_descriptors(&[(reader.as_raw_fd(), false, false)], 1000).unwrap();
+        closer.join().unwrap();
+        assert!(ready[0].hangup);
+        assert!(!ready[0].readable && !ready[0].writable && !ready[0].error);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn error_only_socket_watch_waits_through_a_full_receive_buffer() {
+        use std::io::Write;
+        use std::os::fd::AsRawFd;
+        use std::os::unix::net::UnixStream;
+        let (reader, mut writer) = UnixStream::pair().unwrap();
+        writer.set_nonblocking(true).unwrap();
+        let bytes = [0; 65536];
+        let mut queued = 0;
+        loop {
+            match writer.write(&bytes) {
+                Ok(count) => {
+                    assert!(count > 0);
+                    queued += count;
+                    assert!(queued < 16 * 1024 * 1024);
+                }
+                Err(error) if error.kind() == io::ErrorKind::WouldBlock => break,
+                Err(error) => panic!("fill socket buffer: {error}"),
+            }
+        }
+        assert!(queued > 0);
+        let request = [(reader.as_raw_fd(), false, false)];
+        let start = Instant::now();
+        let ready = poll_descriptors(&request, 20).unwrap();
+        assert!(!ready[0].any());
+        assert!(start.elapsed() >= Duration::from_millis(20));
+        writer.shutdown(std::net::Shutdown::Both).unwrap();
+        let ready = poll_descriptors(&request, 1000).unwrap();
+        assert!(ready[0].hangup);
+        assert!(!ready[0].readable && !ready[0].writable && !ready[0].error);
     }
 
     #[cfg(unix)]
