@@ -426,8 +426,10 @@ pub enum VfpDataType {
 mod arithmetic;
 mod half;
 mod half_conversion;
+mod half_integer;
 pub use arithmetic::*;
 pub use half_conversion::*;
+pub use half_integer::*;
 mod fused;
 pub use fused::*;
 mod selection;

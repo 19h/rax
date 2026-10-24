@@ -16,6 +16,26 @@ impl SmirInterpreter {
         (result as u32, status)
     }
 
+    pub(crate) fn arm_eval_half_to_integer(
+        raw: u16,
+        signed: bool,
+        integer_bits: u32,
+        mode: FpRoundMode,
+        control: u32,
+    ) -> (u32, u32) {
+        debug_assert!(matches!(integer_bits, 16 | 32));
+        let (bits, status) = Self::arm_eval_fp_to_fixed_format(
+            u64::from(raw),
+            super::X86_SIMD_F16,
+            signed,
+            integer_bits,
+            0,
+            mode,
+            super::arm_format::half_control(control),
+        );
+        (bits as u32, status)
+    }
+
     pub(super) fn arm_eval_fp_to_fixed(
         raw: u64,
         double: bool,
@@ -44,7 +64,7 @@ impl SmirInterpreter {
         mut mode: FpRoundMode,
         control: u32,
     ) -> (u64, u32) {
-        debug_assert!(matches!(integer_bits, 32 | 64));
+        debug_assert!(matches!(integer_bits, 16 | 32 | 64));
         let source = format;
         let (sign, exponent, fraction, _) = Self::x86_simd_fp_masks(source);
         let negative = raw & sign != 0;

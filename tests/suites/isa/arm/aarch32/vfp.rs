@@ -12,6 +12,13 @@ mod fp_half_estimate_decoded;
 #[cfg(all(target_arch = "aarch64", target_feature = "fp16"))]
 #[path = "fp_half_estimate_native.rs"]
 mod fp_half_estimate_native;
+#[path = "fp_half_integer_contract.rs"]
+mod fp_half_integer_contract;
+#[path = "fp_half_integer_decoded.rs"]
+mod fp_half_integer_decoded;
+#[cfg(all(target_arch = "aarch64", target_feature = "fp16"))]
+#[path = "fp_half_integer_native.rs"]
+mod fp_half_integer_native;
 #[cfg(all(target_arch = "aarch64", target_feature = "fp16"))]
 #[path = "fp_half_native.rs"]
 mod fp_half_native;

@@ -2,6 +2,10 @@
 use crate::isa::arm::aarch32::vfp::{
     vcvt_f16_bits_s32, vcvt_f16_bits_u32, vcvt_f32_f16_bits_with_fpscr,
 };
+use crate::isa::arm::aarch32::vfp::{
+    vcvt_s16_f16_bits_round, vcvt_s32_f16_bits_round, vcvt_u16_f16_bits_round,
+    vcvt_u32_f16_bits_round,
+};
 
 use crate::isa::arm::ExecutionState;
 use crate::isa::arm::aarch32::cpu::{
@@ -651,15 +655,19 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
                 self.cpu.vfp.write_s_bits(d, value);
             }
             Mnemonic::VCVT_S32_F16 => {
-                let value = vcvt_s32_f32(
-                    vcvt_f32_f16_bits(self.cpu.vfp.read_h_bits(m)),
+                let mode = RoundingMode::RoundZero;
+                let value = vcvt_s32_f16_bits_round(
+                    self.cpu.vfp.read_h_bits(m),
+                    mode,
                     &mut self.cpu.vfp.fpscr,
                 );
                 self.cpu.vfp.write_s_bits(d, value as u32);
             }
             Mnemonic::VCVT_U32_F16 => {
-                let value = vcvt_u32_f32(
-                    vcvt_f32_f16_bits(self.cpu.vfp.read_h_bits(m)),
+                let mode = RoundingMode::RoundZero;
+                let value = vcvt_u32_f16_bits_round(
+                    self.cpu.vfp.read_h_bits(m),
+                    mode,
                     &mut self.cpu.vfp.fpscr,
                 );
                 self.cpu.vfp.write_s_bits(d, value);
@@ -673,15 +681,19 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
                 self.cpu.vfp.write_s_bits(d, value);
             }
             Mnemonic::VCVTR_S32_F16 => {
-                let value = vcvtr_s32_f32(
-                    vcvt_f32_f16_bits(self.cpu.vfp.read_h_bits(m)),
+                let mode = self.cpu.vfp.fpscr.rmode();
+                let value = vcvt_s32_f16_bits_round(
+                    self.cpu.vfp.read_h_bits(m),
+                    mode,
                     &mut self.cpu.vfp.fpscr,
                 );
                 self.cpu.vfp.write_s_bits(d, value as u32);
             }
             Mnemonic::VCVTR_U32_F16 => {
-                let value = vcvtr_u32_f32(
-                    vcvt_f32_f16_bits(self.cpu.vfp.read_h_bits(m)),
+                let mode = self.cpu.vfp.fpscr.rmode();
+                let value = vcvt_u32_f16_bits_round(
+                    self.cpu.vfp.read_h_bits(m),
+                    mode,
                     &mut self.cpu.vfp.fpscr,
                 );
                 self.cpu.vfp.write_s_bits(d, value);
@@ -730,8 +742,8 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
                 let Some(mode) = Self::directed_vcvt_rounding(insn.mnemonic) else {
                     return ExecResult::Undefined;
                 };
-                let value = vcvt_s32_f32_round(
-                    vcvt_f32_f16_bits(self.cpu.vfp.read_h_bits(m)),
+                let value = vcvt_s32_f16_bits_round(
+                    self.cpu.vfp.read_h_bits(m),
                     mode,
                     &mut self.cpu.vfp.fpscr,
                 );
@@ -755,8 +767,8 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
                 let Some(mode) = Self::directed_vcvt_rounding(insn.mnemonic) else {
                     return ExecResult::Undefined;
                 };
-                let value = vcvt_u32_f32_round(
-                    vcvt_f32_f16_bits(self.cpu.vfp.read_h_bits(m)),
+                let value = vcvt_u32_f16_bits_round(
+                    self.cpu.vfp.read_h_bits(m),
                     mode,
                     &mut self.cpu.vfp.fpscr,
                 );
@@ -1123,11 +1135,7 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
             return ExecResult::Undefined;
         }
 
-        let mut fpscr = if size == NeonSize::S32 {
-            self.standard_simd_fp_controls()
-        } else {
-            self.cpu.vfp.fpscr
-        };
+        let mut fpscr = self.standard_simd_fp_controls();
         let ebytes = (size.bits() / 8) as u8;
         for reg in 0..regs {
             let elements = self.neon_read_vector_elements_u64(m + reg, 1, ebytes);
@@ -1135,10 +1143,12 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
             for elem in elements {
                 let result = match size {
                     NeonSize::H16 => {
-                        let value = vcvt_f32_f16_bits(elem as u16);
-                        u64::from(Self::neon_float_to_int_lane(
-                            value, 16, unsigned, mode, &mut fpscr,
-                        ))
+                        let result = if unsigned {
+                            vcvt_u16_f16_bits_round(elem as u16, mode, &mut fpscr)
+                        } else {
+                            vcvt_s16_f16_bits_round(elem as u16, mode, &mut fpscr) as u16
+                        };
+                        u64::from(result)
                     }
                     NeonSize::S32 if unsigned => {
                         let value =
@@ -1159,50 +1169,6 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
 
         self.cpu.vfp.fpscr = Fpscr::from_bits(self.cpu.vfp.fpscr.bits() | (fpscr.bits() & 0x9f));
         ExecResult::Continue
-    }
-
-    pub(crate) fn neon_float_to_int_lane(
-        value: f32,
-        bits: u32,
-        unsigned: bool,
-        mode: RoundingMode,
-        fpscr: &mut Fpscr,
-    ) -> u32 {
-        let rounded = match mode {
-            RoundingMode::RoundNearest => value.round_ties_even(),
-            RoundingMode::RoundPlusInf => value.ceil(),
-            RoundingMode::RoundMinusInf => value.floor(),
-            RoundingMode::RoundZero => value.trunc(),
-            RoundingMode::RoundTiesAway => value.round(),
-        };
-
-        if unsigned {
-            let max = (1u32 << bits) - 1;
-            if rounded.is_nan() || rounded < 0.0 {
-                fpscr.set_ioc(true);
-                0
-            } else if rounded >= max as f32 {
-                fpscr.set_ioc(true);
-                max
-            } else {
-                rounded as u32
-            }
-        } else {
-            let min = -(1i32 << (bits - 1));
-            let max = (1i32 << (bits - 1)) - 1;
-            if rounded.is_nan() {
-                fpscr.set_ioc(true);
-                0
-            } else if rounded >= max as f32 {
-                fpscr.set_ioc(true);
-                max as u32
-            } else if rounded <= min as f32 {
-                fpscr.set_ioc(true);
-                (min as u32) & ((1u32 << bits) - 1)
-            } else {
-                (rounded as i32 as u32) & ((1u32 << bits) - 1)
-            }
-        }
     }
 
     pub(crate) fn directed_vcvt_rounding(mnemonic: Mnemonic) -> Option<RoundingMode> {
