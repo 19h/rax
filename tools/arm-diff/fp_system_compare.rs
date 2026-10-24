@@ -1,0 +1,76 @@
+use rax::isa::arm::aarch32::vfp::Fpscr;
+use rax::isa::arm::decoder::{Aarch32Decoder, ThumbDecoder};
+use rax::isa::arm::execution::FlatMemory;
+use rax::isa::arm::{Armv7Cpu, ExecResult, Executor};
+fn u32_at(bytes: &[u8], at: usize) -> u32 {
+    u32::from_le_bytes(bytes[at..at + 4].try_into().unwrap())
+}
+fn u64_at(bytes: &[u8], at: usize) -> u64 {
+    u64::from_le_bytes(bytes[at..at + 8].try_into().unwrap())
+}
+fn main() {
+    let mut args = std::env::args_os().skip(1);
+    let cases = std::fs::read(args.next().expect("cases path")).expect("read cases");
+    let oracle = std::fs::read(args.next().expect("oracle path")).expect("read oracle");
+    assert!(args.next().is_none(), "unexpected arguments");
+    assert_eq!(cases.len() % 268, 0);
+    let count = cases.len() / 268;
+    assert_eq!(oracle.len(), count * 260);
+    assert_eq!(count % 2048, 0);
+    let mut memory = FlatMemory::new(4096, 0);
+    for group in 0..count / 2048 {
+        let (mut bad, mut reg_bad, mut flag_bad, mut undefined) = (0, 0, 0, 0);
+        for i in group * 2048..(group + 1) * 2048 {
+            let b = &cases[i * 268..(i + 1) * 268];
+            let q = &oracle[i * 260..(i + 1) * 260];
+            let thumb = u32_at(b, 0) != 0;
+            let raw = u32_at(b, 4);
+            let mut cpu = Armv7Cpu::new();
+            cpu.cpsr.t = thumb;
+            cpu.vfp.fpscr = Fpscr::from_bits(u32_at(b, 8));
+            for j in 0..32 {
+                cpu.vfp.dregs[j] = u64_at(b, 12 + j * 8);
+            }
+            let insn = if thumb {
+                ThumbDecoder::decode_32bit(raw)
+            } else {
+                Aarch32Decoder::decode(raw)
+            };
+            let admitted = insn.is_ok_and(|insn| {
+                matches!(
+                    Executor::new(&mut cpu, &mut memory).execute(&insn),
+                    ExecResult::Continue
+                )
+            });
+            let registers = (0..32).any(|j| cpu.vfp.dregs[j] != u64_at(q, j * 8));
+            let flags = cpu.vfp.fpscr.bits() != u32_at(q, 256);
+            if !admitted {
+                undefined += 1;
+            }
+            if registers {
+                reg_bad += 1;
+            }
+            if flags {
+                flag_bad += 1;
+            }
+            if !admitted || registers || flags {
+                bad += 1;
+                if bad <= 3 {
+                    eprint!(
+                        "case={i} group={group} raw={raw:08x} thumb={thumb} admitted={admitted} control={:08x} fpscr={:08x}/{:08x}",
+                        u32_at(b, 8),
+                        cpu.vfp.fpscr.bits(),
+                        u32_at(q, 256)
+                    );
+                    for j in 0..32 {
+                        if cpu.vfp.dregs[j] != u64_at(q, j * 8) {
+                            eprint!(" d{j}={:016x}/{:016x}", cpu.vfp.dregs[j], u64_at(q, j * 8));
+                        }
+                    }
+                    eprintln!();
+                }
+            }
+        }
+        println!("{group}\t2048\t{bad}\t{reg_bad}\t{flag_bad}\t{undefined}");
+    }
+}

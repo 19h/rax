@@ -548,7 +548,23 @@
         "/tmp/rax-a32-fused-long/final-library.log",
         "/tmp/rax-a32-fused-long/final-rosetta-vfp.log",
         "/tmp/rax-a32-fused-long/final-capi.log",
-        "/tmp/rax-a32-fused-long/checks.jsonl"
+        "/tmp/rax-a32-fused-long/checks.jsonl",
+        "tools/arm-diff/fp_system_oracle.py",
+        "tools/arm-diff/fp_system_guest.s",
+        "tools/arm-diff/fp_system_compare.rs",
+        "tools/arm-diff/README_FP_SYSTEM.md",
+        "/tmp/rax-a32-oracle-tool/negative-hardened.log",
+        "/tmp/rax-a32-oracle-tool/negative-hardened/manifest.json",
+        "/tmp/rax-a32-oracle-tool/negative-hardened/report.json",
+        "/tmp/rax-a32-oracle-tool/green/manifest.json",
+        "/tmp/rax-a32-oracle-tool/green/report.json",
+        "/tmp/rax-a32-oracle-tool/checks.json",
+        "/tmp/rax-a32-oracle-tool/ci-owning.log",
+        "/tmp/rax-a32-oracle-tool/all-target-build.log",
+        "/tmp/rax-a32-oracle-tool/clippy.log",
+        "/tmp/rax-a32-oracle-tool/fmt.log",
+        "/tmp/rax-a32-oracle-tool/doc.log",
+        "/tmp/rax-a32-oracle-tool/independent-system-oracle.log"
       ],
       "remaining_validation": [
         "Half fixed conversions and unimplemented 16-bit fixed encodings",
@@ -674,8 +690,29 @@
     },
     {
       "id": "independent-oracles",
-      "status": "pending",
-      "evidence": []
+      "status": "partially_validated",
+      "evidence": [
+        "tools/arm-diff/fp_system_oracle.py",
+        "tools/arm-diff/fp_system_guest.s",
+        "tools/arm-diff/fp_system_compare.rs",
+        "tools/arm-diff/README_FP_SYSTEM.md",
+        "/tmp/rax-a32-oracle-tool/negative-hardened.log",
+        "/tmp/rax-a32-oracle-tool/negative-hardened/manifest.json",
+        "/tmp/rax-a32-oracle-tool/negative-hardened/report.json",
+        "/tmp/rax-a32-oracle-tool/green/manifest.json",
+        "/tmp/rax-a32-oracle-tool/green/report.json",
+        "/tmp/rax-a32-oracle-tool/checks.json",
+        "/tmp/rax-a32-oracle-tool/ci-owning.log",
+        "/tmp/rax-a32-oracle-tool/all-target-build.log",
+        "/tmp/rax-a32-oracle-tool/clippy.log",
+        "/tmp/rax-a32-oracle-tool/fmt.log",
+        "/tmp/rax-a32-oracle-tool/doc.log",
+        "/tmp/rax-a32-oracle-tool/independent-system-oracle.log"
+      ],
+      "remaining_validation": [
+        "Other architecture/profile independent oracles and native hardware gates",
+        "A32 fixed/admission/register-policy extensions beyond the version1 instruction list"
+      ]
     },
     {
       "id": "bounded-proofs",
@@ -7789,6 +7826,186 @@
         "worktree_integrity": "Nine explicit baseline paths/absences checked before import; only those and the ledger may be staged. Original untracked content preserved.",
         "behavioral_evidence": "No filtered owning tests; target cfg elision separate. Complete numerical/system counters and host-state restoration verified.",
         "repository_consistency": "Dedicated mixed execution/helper modules and explicit new APIs; existing dispatch/signatures/state layouts retained. No ABI/serialization changes."
+      }
+    },
+    {
+      "id": "a32-floating-system-differential-oracle",
+      "status": "locally_validated",
+      "baseline": "751367890ae49d737fca9e1453e39d6a42034849",
+      "scope": "Repeatable bare-metal A32/T32 differential tool for selected floating-point instructions and complete D-register/FPSCR output.",
+      "assumptions": [
+        {
+          "id": "O1",
+          "assumption": "The selected operations are register-only and do not depend on guest GPR/PC/memory values.",
+          "dependent_result": "The 268-byte input/260-byte output protocol captures every relevant floating register and status bit.",
+          "stress_test": "All94 instruction pairs execute in both states under64 control profiles and32 operand samples.",
+          "falsification_probe": "An instruction requires an omitted input or affects omitted state; such an operation requires an extended protocol.",
+          "status": "retained for the fixed version1 instruction list"
+        },
+        {
+          "id": "O2",
+          "assumption": "A passing tool requires complete independent execution and exact comparison, with stable sources and a bound library artifact.",
+          "dependent_result": "Exit status, completion marker, exact output length, full counters and source/artifact hashes are checked.",
+          "stress_test": "The exact same tool/input/reference records detect27882 failures before the mixed-FMA repair, then all385024 cases pass afterward.",
+          "falsification_probe": "A missing/failed/timed-out guest, truncated output, source mutation or any state mismatch produces a passing run.",
+          "status": "retained"
+        }
+      ],
+      "validation": {
+        "checks": [
+          {
+            "name": "ci-owning",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--test",
+              "ci_actions_pinned"
+            ],
+            "code": 0,
+            "seconds": 0.18939745798707008
+          },
+          {
+            "name": "all-target-build",
+            "args": [
+              "cargo",
+              "+stable",
+              "build",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--all-targets"
+            ],
+            "code": 0,
+            "seconds": 0.3760069579584524
+          },
+          {
+            "name": "clippy",
+            "args": [
+              "cargo",
+              "+stable",
+              "clippy",
+              "--locked",
+              "--offline",
+              "--all-targets",
+              "--features",
+              "x86_64-suite"
+            ],
+            "code": 0,
+            "seconds": 0.4962779999477789
+          },
+          {
+            "name": "fmt",
+            "args": [
+              "cargo",
+              "+stable",
+              "fmt",
+              "--all",
+              "--check"
+            ],
+            "code": 0,
+            "seconds": 12.63530870899558
+          },
+          {
+            "name": "doc",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--doc"
+            ],
+            "code": 0,
+            "seconds": 6.2943683749763295
+          },
+          {
+            "name": "independent-system-oracle",
+            "args": [
+              "python3",
+              "/Users/int/dev/rax/tools/arm-diff/fp_system_oracle.py",
+              "--repo",
+              "/Users/int/dev/rax",
+              "--work-dir",
+              "/tmp/rax-a32-oracle-tool/green",
+              "--target-dir",
+              "/tmp/rax-audit-host-final-target",
+              "--llvm-bin",
+              "/Users/int/local/bin"
+            ],
+            "code": 0,
+            "seconds": 8.466803124989383
+          }
+        ],
+        "complete_cases": 385024,
+        "instruction_pairs": 94,
+        "failed": 0,
+        "negative_control_failures": 27882,
+        "negative_control_scope": "All failures belong to eight mixed-precision instruction pairs in both states; the other pairs match.",
+        "identical_input_and_reference_hashes_before_after": true,
+        "identical_executed_tool_sources_before_after": true,
+        "product_source_fingerprint": {
+          "rust_and_build_sources_sha256": "fbd9ac41a85440af15c223b1242fea0d4832684bc57bdb865b75aa8aa7acc770",
+          "files": 3469
+        },
+        "unchanged_product_gates_reused": {
+          "group": "a32-mixed-half-product-single-accumulator-contract",
+          "commit": "751367890ae49d737fca9e1453e39d6a42034849",
+          "scope": "Product Rust/build sources are fingerprint-identical to the preceding fully validated group. Its complete library/ISA/Rosetta/C API gates remain the product evidence; this group executes its new complete standalone oracle and owning CI/tooling target."
+        },
+        "logs": [
+          "/tmp/rax-a32-oracle-tool/negative-hardened.log",
+          "/tmp/rax-a32-oracle-tool/negative-hardened/manifest.json",
+          "/tmp/rax-a32-oracle-tool/negative-hardened/report.json",
+          "/tmp/rax-a32-oracle-tool/green/manifest.json",
+          "/tmp/rax-a32-oracle-tool/green/report.json",
+          "/tmp/rax-a32-oracle-tool/checks.json",
+          "/tmp/rax-a32-oracle-tool/ci-owning.log",
+          "/tmp/rax-a32-oracle-tool/all-target-build.log",
+          "/tmp/rax-a32-oracle-tool/clippy.log",
+          "/tmp/rax-a32-oracle-tool/fmt.log",
+          "/tmp/rax-a32-oracle-tool/doc.log",
+          "/tmp/rax-a32-oracle-tool/independent-system-oracle.log"
+        ]
+      },
+      "complexity": "O(N) time for N state comparisons with32 fixed D registers per case. The standalone comparator uses O(N) host memory for input/output buffers; generation streams fixed268-byte records. Version1 has385024 cases,103186432 input bytes,100106240 result bytes and128MiB guest RAM.",
+      "bounded_scope": [
+        {
+          "impact": "high",
+          "item": "Only94 selected pure floating instruction pairs and disabled exception enables are covered; remaining fixed/admission/register-policy work is separate.",
+          "blocks": "Complete A32-FP closure."
+        },
+        {
+          "impact": "high",
+          "item": "Other architectures and physical A32 hardware are separate independent-oracle requirements.",
+          "blocks": "Global independent-oracles closure."
+        },
+        {
+          "impact": "medium",
+          "item": "The Linux user-mode oracle and its existing wire protocol are unchanged; this system oracle executes without an ARM libc/sysroot or qemu-user.",
+          "blocks": false
+        }
+      ],
+      "quality_gates": {
+        "assumptions": "O1/O2 include explicit dependent results and falsification probes.",
+        "coverage": "All385024 version1 comparisons execute with exact counters and zero mismatches; negative control fails on27882 genuine pending-code discrepancies.",
+        "reproducibility": "Guest/runner/generator sources committed; exact commands, versions, revision, source fingerprint, linked-library SHA and input/reference/ELF hashes retained.",
+        "contradictions": "QEMU stderr completion, little-endian T32 halfword order, finite profile bounds and software/native evidence are explicit.",
+        "provenance": "LLVM independently assembles both states; installed QEMU11.1.2 max/virt TCG executes them. Pinned architectural-operation provenance is retained in the preceding numerical groups.",
+        "bounded_expansion": "No whole-CPU, physical-hardware, exception-delivery or unlisted-profile coverage claim.",
+        "worktree_integrity": "Four new explicit tools paths and ledger only; disjoint tracked and original untracked work preserved.",
+        "behavioral_evidence": "A complete failing-before/passing-after run uses identical executed tool sources and identical independent inputs/reference output.",
+        "repository_consistency": "Existing ARM differential harness remains compatible; new files are adjacent, documented, formatted and self-contained."
       }
     }
   ],
