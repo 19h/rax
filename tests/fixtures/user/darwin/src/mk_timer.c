@@ -113,14 +113,18 @@ static void expiry(mach_port_t t) {
     sleep_ms(30);
     printf("two expirations unreceived: %u queued\n", status(t).mps_msgcount);
     drain(t);
-    // Critical timers and windows wider than the coalescing slop a
-    // QoS-clamped host gives the sleeps between the checks.
-    mk_timer_arm_leeway(t, MK_TIMER_CRITICAL, mach_absolute_time() + ms(100), 0);
-    mk_timer_arm_leeway(t, MK_TIMER_CRITICAL, mach_absolute_time() + ms(400), 0);
-    sleep_ms(200);
-    printf("re-armed before expiry, at 200 ms: %u queued\n", status(t).mps_msgcount);
-    sleep_ms(600);
-    printf("at 800 ms: %u queued\n", status(t).mps_msgcount);
+    // Cancellation observes which deadline survived re-arming without assuming
+    // an upper bound on a QoS-clamped sleep. Neither future deadline is awaited.
+    mk_timer_arm_leeway(t, MK_TIMER_CRITICAL, mach_absolute_time() + ms(10000), 0);
+    dl = mach_absolute_time() + ms(60000);
+    mk_timer_arm_leeway(t, MK_TIMER_CRITICAL, dl, 0);
+    res = 0;
+    kr = mk_timer_cancel(t, &res);
+    // Rosetta can round a cancelled native deadline down by one reported tick.
+    printf("latest re-arm deadline: %d\n", kr == KERN_SUCCESS && res >= dl - 1 && res <= dl + 1);
+    mk_timer_arm(t, 0);
+    sleep_ms(30);
+    printf("re-armed timer fires: %u queued\n", status(t).mps_msgcount);
     drain(t);
     printf("seqno after 5 receives: %u\n", status(t).mps_seqno);
 }

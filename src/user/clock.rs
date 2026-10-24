@@ -7,6 +7,9 @@
 
 use std::io;
 
+#[cfg(target_os = "macos")]
+mod darwin;
+
 /// Host clock domain, independent of any guest's numeric clock IDs.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum HostClock {
@@ -43,6 +46,10 @@ mod platform {
     use super::*;
 
     pub fn read(clock: HostClock) -> io::Result<(i64, i64)> {
+        #[cfg(target_os = "macos")]
+        if clock == HostClock::ThreadCpu {
+            return super::darwin::read_thread_cpu();
+        }
         let id = match clock {
             HostClock::Realtime => libc::CLOCK_REALTIME,
             HostClock::Monotonic => libc::CLOCK_MONOTONIC,

@@ -88,6 +88,7 @@ fn slop_max(abi: DarwinAbi) -> u64 {
 }
 
 /// `abi`'s absolute-time units as nanoseconds, and back.
+#[cfg(test)]
 fn to_ns(abi: DarwinAbi, t: u64) -> u64 {
     match abi {
         DarwinAbi::X86_64 => t,
@@ -98,6 +99,7 @@ fn to_ns(abi: DarwinAbi, t: u64) -> u64 {
     }
 }
 
+#[cfg(test)]
 fn from_ns(abi: DarwinAbi, ns: u64) -> u64 {
     match abi {
         DarwinAbi::X86_64 => ns,
@@ -106,6 +108,75 @@ fn from_ns(abi: DarwinAbi, ns: u64) -> u64 {
             (u128::from(ns) * hz / 1_000_000_000) as u64
         }
     }
+}
+
+// Keep the guest/host ratio intact until the final division: going through
+// integer nanoseconds first loses an Arm guest tick even on a matching host.
+#[cfg(any(target_os = "macos", test))]
+fn guest_frequency(abi: DarwinAbi) -> u128 {
+    match abi {
+        DarwinAbi::X86_64 => 1_000_000_000,
+        DarwinAbi::Arm64 => u128::from(crate::user::darwin::arch::ARM64_COUNTER_HZ),
+    }
+}
+
+#[cfg(any(target_os = "macos", test))]
+fn to_host_units(abi: DarwinAbi, ticks: u64, numer: u32, denom: u32) -> u64 {
+    (u128::from(ticks) * 1_000_000_000 * u128::from(denom)
+        / (guest_frequency(abi) * u128::from(numer)))
+    .min(u128::from(u64::MAX)) as u64
+}
+
+#[cfg(any(target_os = "macos", test))]
+fn from_host_units(abi: DarwinAbi, ticks: u64, numer: u32, denom: u32) -> u64 {
+    (u128::from(ticks) * u128::from(numer) * guest_frequency(abi)
+        / (u128::from(denom) * 1_000_000_000))
+        .min(u128::from(u64::MAX)) as u64
+}
+
+/// One hardware timebase period, rounded up in the process's reported units.
+/// Rosetta reports nanosecond units even when the kernel uses a 24 MHz clock.
+#[cfg(any(target_os = "macos", test))]
+fn deadline_quantum(numer: u32, denom: u32, frequency: u64) -> u64 {
+    if numer == 0 || denom == 0 || frequency == 0 {
+        return 1;
+    }
+    (1_000_000_000_u128 * u128::from(denom))
+        .div_ceil(u128::from(frequency) * u128::from(numer))
+        .clamp(1, u128::from(u64::MAX)) as u64
+}
+
+#[cfg(any(target_os = "macos", test))]
+fn sampled_slop(
+    abi: DarwinAbi,
+    expire: u64,
+    canceled: u64,
+    leeway: u64,
+    numer: u32,
+    denom: u32,
+    quantum: u64,
+) -> Option<u64> {
+    // Zero denotes a timer that is no longer armed. A live translated deadline
+    // can round down by one hardware period; larger discrepancies fail.
+    if numer == 0
+        || denom == 0
+        || quantum == 0
+        || canceled == 0
+        || canceled.saturating_add(quantum) < expire
+    {
+        return None;
+    }
+    let observed = from_host_units(abi, canceled.saturating_sub(expire), numer, denom);
+    // XNU's explicit leeway can only extend the kernel-selected slop. Input
+    // duration rounding, deadline rounding, and final guest truncation can
+    // account for less than two hardware periods plus one guest unit. Recover only
+    // that bounded loss; do not fabricate a large missing leeway.
+    let rounding_bound =
+        from_host_units(abi, quantum.saturating_mul(2), numer, denom).saturating_add(2);
+    if observed < leeway && leeway - observed > rounding_bound {
+        return None;
+    }
+    Some(observed.max(leeway))
 }
 
 /// The slop, in `abi`'s units, the host kernel gives a timer of this
@@ -131,7 +202,7 @@ fn host_slop(abi: DarwinAbi, delta: u64, flags: u64, leeway: u64) -> Option<u64>
                 unsafe { mk_timer_destroy(self.0) };
             }
         }
-        static TIMEBASE: OnceLock<(u64, u64)> = OnceLock::new();
+        static TIMEBASE: OnceLock<(u32, u32, u64)> = OnceLock::new();
         // Each probe owns a timer: sharing an arm/cancel pair across owner
         // threads can cancel another process's probe and mix its deadline.
         // SAFETY: mk_timer_create has no arguments. A nonzero returned name
@@ -141,37 +212,50 @@ fn host_slop(abi: DarwinAbi, delta: u64, flags: u64, leeway: u64) -> Option<u64>
             return None;
         }
         let _timer = HostTimer(name);
-        let (numer, denom) = *TIMEBASE.get_or_init(|| {
+        let (numer, denom, quantum) = *TIMEBASE.get_or_init(|| {
             let mut tb = libc::mach_timebase_info { numer: 0, denom: 0 };
             // SAFETY: `tb` is a live mach_timebase_info.
             unsafe { libc::mach_timebase_info(&mut tb) };
-            (u64::from(tb.numer), u64::from(tb.denom))
+            let mut frequency = 0_u64;
+            let mut size = std::mem::size_of_val(&frequency);
+            // SAFETY: the name is NUL-terminated and the output is a writable
+            // u64 with its exact size. No new sysctl value is supplied.
+            let status = unsafe {
+                libc::sysctlbyname(
+                    c"hw.tbfrequency".as_ptr(),
+                    (&mut frequency as *mut u64).cast(),
+                    &mut size,
+                    std::ptr::null_mut(),
+                    0,
+                )
+            };
+            if status != 0 || size != std::mem::size_of_val(&frequency) {
+                frequency = 0;
+            }
+            // If frequency is unavailable, tolerate only one reported unit;
+            // larger discrepancies still defer to the modeled fallback.
+            (
+                tb.numer,
+                tb.denom,
+                deadline_quantum(tb.numer, tb.denom, frequency),
+            )
         });
         if numer == 0 || denom == 0 {
             return None;
         }
-        let to_host = |ns: u64| {
-            (u128::from(ns) * u128::from(denom) / u128::from(numer)).min(u128::from(u64::MAX))
-                as u64
-        };
-        let from_host = |t: u64| {
-            (u128::from(t) * u128::from(numer) / u128::from(denom)).min(u128::from(u64::MAX)) as u64
-        };
+        let to_host = |ticks| to_host_units(abi, ticks, numer, denom);
         // SAFETY: mach_absolute_time reads the host's clock.
-        let expire =
-            unsafe { libc::mach_absolute_time() }.saturating_add(to_host(to_ns(abi, delta)));
+        let expire = unsafe { libc::mach_absolute_time() }.saturating_add(to_host(delta));
         let mut result = 0u64;
         // SAFETY: `name` is a host timer and `result` a live u64.
         let ok = unsafe {
-            mk_timer_arm_leeway(
-                name,
-                flags & MK_TIMER_CRITICAL,
-                expire,
-                to_host(to_ns(abi, leeway)),
-            ) == 0
+            mk_timer_arm_leeway(name, flags & MK_TIMER_CRITICAL, expire, to_host(leeway)) == 0
                 && mk_timer_cancel(name, &mut result) == 0
         };
-        (ok && result >= expire).then(|| from_ns(abi, from_host(result - expire)))
+        if !ok {
+            return None;
+        }
+        sampled_slop(abi, expire, result, leeway, numer, denom, quantum)
     }
     #[cfg(not(target_os = "macos"))]
     {
@@ -368,6 +452,76 @@ mod tests {
     use super::*;
 
     #[test]
+    fn hardware_period_bounds_translated_deadline_rounding() {
+        assert_eq!(deadline_quantum(125, 3, 24_000_000), 1);
+        assert_eq!(deadline_quantum(1, 1, 24_000_000), 42);
+        assert_eq!(deadline_quantum(1, 1, 1_000_000_000), 1);
+        assert_eq!(deadline_quantum(1, 1, u64::MAX), 1);
+        assert_eq!(deadline_quantum(1, u32::MAX, 1), 4_294_967_295_000_000_000);
+        assert_eq!(deadline_quantum(1, 1, 0), 1);
+        for loss in 0..=42 {
+            assert_eq!(
+                sampled_slop(DarwinAbi::X86_64, 100, 100 - loss, 0, 1, 1, 42),
+                Some(0)
+            );
+        }
+        assert_eq!(sampled_slop(DarwinAbi::X86_64, 100, 57, 0, 1, 1, 42), None);
+        assert_eq!(sampled_slop(DarwinAbi::X86_64, 100, 101, 0, 1, 1, 0), None);
+        assert_eq!(
+            sampled_slop(DarwinAbi::X86_64, 100, 1_000_058, 1_000_000, 1, 1, 42),
+            Some(1_000_000)
+        );
+    }
+
+    #[test]
+    fn exact_duration_ratios_preserve_all_matching_arm_ticks() {
+        for ticks in [0, 1, 2, 3, 4, 5, 23, 24, 25, u32::MAX as u64, u64::MAX] {
+            assert_eq!(to_host_units(DarwinAbi::Arm64, ticks, 125, 3), ticks);
+            assert_eq!(from_host_units(DarwinAbi::Arm64, ticks, 125, 3), ticks);
+            assert_eq!(to_host_units(DarwinAbi::X86_64, ticks, 1, 1), ticks);
+            assert_eq!(from_host_units(DarwinAbi::X86_64, ticks, 1, 1), ticks);
+        }
+        assert_eq!(to_host_units(DarwinAbi::Arm64, 1, 1, 1), 41);
+        assert_eq!(from_host_units(DarwinAbi::Arm64, 125, 1, 1), 3);
+        assert_eq!(
+            to_host_units(DarwinAbi::X86_64, u64::MAX, 1, u32::MAX),
+            u64::MAX
+        );
+        assert_eq!(
+            from_host_units(DarwinAbi::X86_64, u64::MAX, u32::MAX, 1),
+            u64::MAX
+        );
+    }
+
+    #[test]
+    fn translated_deadline_rounding_preserves_zero_and_explicit_minimum_slop() {
+        assert_eq!(
+            sampled_slop(DarwinAbi::X86_64, 100, 99, 0, 1, 1, 1),
+            Some(0)
+        );
+        assert_eq!(sampled_slop(DarwinAbi::X86_64, 100, 98, 0, 1, 1, 1), None);
+        assert_eq!(
+            sampled_slop(DarwinAbi::X86_64, 100, 149, 50, 1, 1, 1),
+            Some(50)
+        );
+        assert_eq!(
+            sampled_slop(DarwinAbi::Arm64, 100, 5_000_099, 120_000, 1, 1, 1),
+            Some(120_000)
+        );
+        assert_eq!(
+            sampled_slop(DarwinAbi::X86_64, 100, 200, 50, 1, 1, 1),
+            Some(100)
+        );
+        assert_eq!(
+            sampled_slop(DarwinAbi::X86_64, 100, 100, 500, 1, 1, 1),
+            None
+        );
+        assert_eq!(sampled_slop(DarwinAbi::Arm64, 100, 0, 0, 125, 3, 1), None);
+        assert_eq!(sampled_slop(DarwinAbi::X86_64, 100, 101, 0, 0, 1, 1), None);
+        assert_eq!(sampled_slop(DarwinAbi::X86_64, 100, 101, 0, 1, 0, 1), None);
+    }
+
+    #[test]
     fn time_units_convert_both_ways() {
         // 24 MHz: 20 ms is 480 000 ticks.
         assert_eq!(to_ns(DarwinAbi::Arm64, 480_000), 20_000_000);
@@ -422,6 +576,21 @@ mod tests {
                 });
             }
         });
+    }
+
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn critical_host_timer_probes_cover_nonintegral_hardware_periods() {
+        for abi in [DarwinAbi::X86_64, DarwinAbi::Arm64] {
+            let base = from_ns(abi, 60_000_000_000);
+            for phase in 0..125 {
+                assert_eq!(host_slop(abi, base + phase, MK_TIMER_CRITICAL, 0), Some(0));
+                assert_eq!(
+                    host_slop(abi, base + phase, MK_TIMER_CRITICAL, 1_000_000 + phase),
+                    Some(1_000_000 + phase)
+                );
+            }
+        }
     }
 
     #[test]

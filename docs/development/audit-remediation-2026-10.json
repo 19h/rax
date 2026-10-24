@@ -608,13 +608,18 @@
       "id": "C-DARWIN-TIMER-ROSETTA",
       "area": "Darwin host timer",
       "finding": "Under Rosetta, timer-slop probes return None or differ from exact nanosecond assertions; two tests fail on both the isolated parent and current source.",
-      "status": "pending",
+      "status": "locally_validated",
       "evidence": [
         "/tmp/rax-rosetta-parent-host-failures.log",
         "/tmp/rax-rosetta-parent-host-failures.json",
-        "/tmp/rax-x86-priv-rosetta-library-final.log"
+        "/tmp/rax-x86-priv-rosetta-library-final.log",
+        "src/user/darwin/syscall/mach/timer.rs",
+        "/tmp/rax-darwin-host/timer-phase-intermediate-tests.log",
+        "/tmp/rax-darwin-host/timer-phase-current-tests.log",
+        "/tmp/rax-darwin-host/final-rosetta-library.log",
+        "/tmp/rax-darwin-host/validated-personalities.log"
       ],
-      "cause": "unknown"
+      "cause": "Intermediate nanosecond truncation loses an Arm guest tick, and translated native deadlines can round down by one physical timebase period (42 reported ns on this host)."
     },
     {
       "id": "C-DARWIN-RUNTIME-ROSETTA",
@@ -632,13 +637,18 @@
       "id": "C-THREAD-CLOCK-ROSETTA",
       "area": "Host thread clock",
       "finding": "Under Rosetta, the thread CPU-clock worker reports no clock advance; parent and current source fail identically.",
-      "status": "pending",
+      "status": "locally_validated",
       "evidence": [
         "/tmp/rax-rosetta-parent-host-failures.log",
         "/tmp/rax-rosetta-parent-host-failures.json",
-        "/tmp/rax-x86-priv-rosetta-library-final.log"
+        "/tmp/rax-x86-priv-rosetta-library-final.log",
+        "src/user/clock/darwin.rs",
+        "/tmp/rax-darwin-host/probe-x86.log",
+        "/tmp/rax-darwin-host/clock-parent-tests.log",
+        "/tmp/rax-darwin-host/clock-current-tests.log",
+        "/tmp/rax-darwin-host/final-rosetta-library.log"
       ],
-      "cause": "unknown"
+      "cause": "Measured translated clock_gettime ThreadCpu scaling differs from Mach thread_basic_info accounting. The internal Rosetta cause is unknown; the adapter now consumes explicit seconds/microseconds."
     },
     {
       "id": "H-PRED-OLD",
@@ -3444,6 +3454,278 @@
           "impact": "low",
           "item": "Transfer work is bounded by four predicate bytes; packet-view scanning is O(operations+37), with old/new snapshots allocated only for overwritten represented registers. No runtime performance claim.",
           "blocks": false
+        }
+      ]
+    },
+    {
+      "id": "darwin-translated-host-time",
+      "baseline": "9d22c78c784328e5bf3af57f48b7228085e2aa31",
+      "status": "locally_validated",
+      "scope": "Preserve Mach duration ratios and bound translated deadline rounding; use caller-thread Mach CPU accounting on macOS, including Rosetta. No guest cycle model or timeout increase. Timed native-comparison fixtures validate positive one-shot counts and cancellation-observed re-arm deadlines rather than exact scheduling windows.",
+      "primary_source": [
+        {
+          "url": "https://github.com/apple-oss-distributions/xnu/blob/f6217f891ac0bb64f3d375211650a4c1ff8ca1ea/osfmk/kern/mk_timer.c",
+          "basis": "Arming with critical and explicit leeway; cancellation reports the armed deadline or zero."
+        },
+        {
+          "url": "https://github.com/apple-oss-distributions/xnu/blob/f6217f891ac0bb64f3d375211650a4c1ff8ca1ea/osfmk/kern/thread_call.c",
+          "basis": "thread_call_enter_delayed_internal selects max(kernel slop, explicit leeway), then adds it with saturation."
+        },
+        {
+          "url": "https://github.com/apple-oss-distributions/xnu/blob/f6217f891ac0bb64f3d375211650a4c1ff8ca1ea/osfmk/mach/thread_info.h",
+          "basis": "THREAD_BASIC_INFO exposes user/system time_value_t seconds and microseconds."
+        },
+        {
+          "url": "https://github.com/apple-oss-distributions/xnu/blob/f6217f891ac0bb64f3d375211650a4c1ff8ca1ea/osfmk/kern/bsd_kern.c",
+          "basis": "fill_taskthreadinfo converts basic user/system seconds and microseconds to nanoseconds."
+        },
+        {
+          "url": "https://raw.githubusercontent.com/apple-oss-distributions/xnu/f6217f891ac0bb64f3d375211650a4c1ff8ca1ea/bsd/kern/kern_event.c",
+          "basis": "filt_timerprocess computes elapsed/interval for any nonzero interval, including EV_ONESHOT; only re-arming is suppressed for one-shot timers."
+        },
+        {
+          "url": "https://raw.githubusercontent.com/apple-oss-distributions/xnu/f6217f891ac0bb64f3d375211650a4c1ff8ca1ea/bsd/kern/kern_mib.c",
+          "basis": "sysctl_tbfrequency returns the 64-bit gPEClockFrequencyInfo.timebase_frequency_hz, independently of a process-reported mach_timebase_info ratio."
+        },
+        {
+          "revision": "42d026df5b07825070f60134b980a1ec2552dfee",
+          "url": "https://raw.githubusercontent.com/apple-oss-distributions/libpthread/42d026df5b07825070f60134b980a1ec2552dfee/src/pthread.c",
+          "sha256": "20dbfe99ea37add77c34da12d3590d267aacb4e92c862d649db4d43bc3274669",
+          "basis": "pthread_mach_thread_np returns the validated pthread Mach port without acquiring a new send right."
+        }
+      ],
+      "assumptions": [
+        {
+          "assumption": "Mach thread_basic_info accounts for the calling host thread in explicit seconds and microseconds on both execution architectures.",
+          "dependent_result": "Thread CPU time advances at the correct scale without counting the blocked caller as worker CPU.",
+          "stress_test": "Independent C programs on arm64 and translated x86-64, unchanged worker/caller isolation regression, i32 maximum components and fractional carry.",
+          "falsification_probe": "Mach CPU accounting differs from process CPU accumulated by a lone busy thread, or advances for a blocked caller while another thread works."
+        },
+        {
+          "assumption": "Translated arm/cancel deadlines round down by at most one hardware timebase period, expressed in the process-reported units.",
+          "dependent_result": "Critical timers preserve zero slop and explicit leeway remains a lower bound after bounded conversion loss.",
+          "stress_test": "10,000 independent translated deadline-phase probes observe -42..0 ns; both native and translated hw.tbfrequency report 24 MHz. The old 1 ns intermediate implementation passes six tests but fails the added arbitrary-phase test. New owning suite covers 125 phases, both guest ABIs, zero and varying explicit leeway, and 8 threads x 128 probes.",
+          "falsification_probe": "Deadline reversal exceeds ceil(1e9*denom/(frequency*numer)) reported units, or missing leeway exceeds two converted hardware periods plus two guest units; such samples return None. Unknown frequency uses a conservative one-reported-unit bound rather than assuming a hardware frequency."
+        },
+        {
+          "assumption": "Host timebase components are nonzero u32 and guest frequency is 1 GHz or 24 MHz.",
+          "dependent_result": "Integer duration conversion floors once and all u64 input products fit u128.",
+          "stress_test": "Matching 125/3 Arm and 1/1 Intel ratios, single ticks, u32::MAX and u64::MAX, saturating output, invalid timebase rejection before conversion.",
+          "falsification_probe": "A valid matching-ratio input loses a tick, an intermediate exceeds 2^128-1, or a zero divisor reaches conversion."
+        },
+        {
+          "assumption": "Independent native and emulated runs can resume after different numbers of timer intervals; sleep duration has no finite scheduling upper bound.",
+          "dependent_result": "A differential fixture must not require identical elapsed counts or assume a 200 ms sleep resumes before a 400 ms deadline.",
+          "stress_test": "Complete initial Darwin target: 115 pass, 2 timed comparison failures. Unmodified standalone utility replay reports native one-shot count 10 and parent count 1. Independent arm64 and Rosetta C probes each report 5 elapsed intervals for a one-shot timer processed after 550 ms with a 100 ms interval.",
+          "falsification_probe": "The replacement fixture suppresses an incorrect event identity/flags, accepts nonpositive counts, or fails to distinguish a re-armed timer retaining the first deadline. Metadata still compares; deadline equality permits at most one reported native tick."
+        },
+        {
+          "assumption": "pthread_mach_thread_np supplies a borrowed live-thread port, and thread_info does not acquire an additional send reference.",
+          "dependent_result": "Repeated ThreadCpu sampling neither leaks send references nor deallocates libpthread-owned rights.",
+          "stress_test": "10,000 independent C queries retain 2 send references before/after on native ARM, and 4 before/after under Rosetta; the worker/caller unit tests query only their own live thread.",
+          "falsification_probe": "The current thread port send-reference count grows with query count or the next query fails after an earlier sample."
+        }
+      ],
+      "baseline_results": {
+        "clock_owning_unit_binary": {
+          "passed": 3,
+          "failed": 1
+        },
+        "timer_owning_unit_binary": {
+          "passed": 2,
+          "failed": 2
+        },
+        "basis": "Standalone owning-unit binaries link libc 0.2.189 under Rosetta. Clock harness only adjusts its child-module path; timer harness extracts the actual helper and test regions with the production ABI frequencies. Source copies and harnesses are retained in /tmp/rax-darwin-host."
+      },
+      "affected_planes": {
+        "host_clock": "macOS ThreadCpu reads borrowed pthread Mach port using thread_info; other clocks and platforms retain existing adapters. Native errors and malformed components remain errors.",
+        "darwin_timer": "One rational conversion before final floor; per-query timer ownership retained; only bounded rounding loss recovered. No shared timer or duration-dependent floating point.",
+        "direct_smir_native": "Instruction, IR, optimizer, JIT and public register-state representations do not change. Both software guest personalities consume the corrected host adapters.",
+        "backend_abi": "No public C ABI, checkpoint format or execution backend changes.",
+        "native_oracles": "kqueue retains other event metadata comparisons after validating the positive elapsed count. Mach re-arming compares its cancel-returned latest deadline, with one native tick tolerance, then tests immediate delivery and unchanged receive sequence count. No 200/400 ms sleep ordering assumption."
+      },
+      "validation": {
+        "owning_units_rosetta": {
+          "clock": {
+            "passed": 5,
+            "failed": 0
+          },
+          "timer": {
+            "passed": 8,
+            "failed": 0
+          }
+        },
+        "independent_host_probes": "macOS 27.2 arm64 reports timebase 125/3; Rosetta reports 1/1. A translated 343.624 ms process CPU interval advances clock_gettime thread time by 8.246887 ms while Mach basic accounting tracks approximately 343.6 ms. The 125/3 scale explanation is an inference, not a proved internal Rosetta cause. Mach timer probes capture critical -1 ns and explicit leeway 149999999 ns for requested 150000000 ns. Arbitrary deadline phases extend the observed cancellation error to -42 ns. hw.tbfrequency reports 24000000 Hz under both native ARM and Rosetta; ceil(1e9 / 24000000) = 42 reported nanoseconds.",
+        "logs": [
+          "/tmp/rax-darwin-host/probe-arm64.log",
+          "/tmp/rax-darwin-host/probe-x86.log",
+          "/tmp/rax-darwin-host/timer-arm64.log",
+          "/tmp/rax-darwin-host/timer-x86.log",
+          "/tmp/rax-darwin-host/clock-parent-tests.log",
+          "/tmp/rax-darwin-host/clock-current-tests.log",
+          "/tmp/rax-darwin-host/timer-parent-tests.log",
+          "/tmp/rax-darwin-host/timer-current-tests.log",
+          "/tmp/rax-darwin-host/personalities.log",
+          "/tmp/rax-darwin-host/oneshot-probe-arm.log",
+          "/tmp/rax-darwin-host/oneshot-probe-x86.log",
+          "/tmp/rax-darwin-host/utility-replays.json",
+          "/tmp/rax-darwin-host/timer-phase-x86.log",
+          "/tmp/rax-darwin-host/timer-phase-intermediate-tests.log",
+          "/tmp/rax-darwin-host/timer-phase-current-tests.log",
+          "/tmp/rax-darwin-host/library.log",
+          "/tmp/rax-darwin-host/rosetta-library.log",
+          "/tmp/rax-darwin-host/final-personalities.log",
+          "/tmp/rax-darwin-host/thread-port-arm.log",
+          "/tmp/rax-darwin-host/thread-port-x86.log",
+          "/tmp/rax-darwin-host/final-library.log",
+          "/tmp/rax-darwin-host/final-rosetta-library.log",
+          "/tmp/rax-darwin-host/validated-personalities.log",
+          "/tmp/rax-darwin-host/final-capi.log",
+          "/tmp/rax-darwin-host/final-build.log",
+          "/tmp/rax-darwin-host/final-clippy.log",
+          "/tmp/rax-darwin-host/final-fmt.log",
+          "/tmp/rax-darwin-host/final-doc.log"
+        ],
+        "initial_darwin_integration": {
+          "passed": 115,
+          "failed": 2,
+          "ignored": 0,
+          "filtered": 0,
+          "elapsed_seconds": 435.05,
+          "failures": [
+            "fixtures::kqueue_at_utility_x86_64",
+            "fixtures::mk_timer_at_utility_x86_64"
+          ],
+          "basis": "Timing-sensitive fixture assumptions; kernel interval-counting rule matches existing product implementation. No change to kqueue timer count semantics."
+        },
+        "deadline_phase_red": {
+          "passed": 6,
+          "failed": 1,
+          "basis": "Saved intermediate implementation with a one-reported-unit bound; unchanged six owning tests pass, added arbitrary-phase host test fails."
+        },
+        "intermediate_library": {
+          "passed": 10423,
+          "failed": 0,
+          "ignored": 2,
+          "filtered": 0,
+          "elapsed_seconds": 519.87,
+          "basis": "Before the hardware-frequency refinement and its two new tests."
+        },
+        "intermediate_rosetta_library": {
+          "passed": 11417,
+          "failed": 1,
+          "ignored": 2,
+          "filtered": 0,
+          "elapsed_seconds": 700.99,
+          "failure": "user::darwin::runtime_files::tests::native_runtime_executes_system_programs_in_a_closed_process",
+          "basis": "The three original timing failures pass; shared-cache profile mismatch remains. Before the hardware-frequency refinement and its two new tests."
+        },
+        "intermediate_revised_personalities": {
+          "darwin": {
+            "passed": 117,
+            "failed": 0,
+            "ignored": 0,
+            "filtered": 0,
+            "elapsed_seconds": 187.52
+          },
+          "basis": "RAX_USER_DARWIN_REQUIRE_ORACLE=1. Revised C fixtures, before hardware-frequency refinement."
+        },
+        "library": {
+          "passed": 10425,
+          "failed": 0,
+          "ignored": 2,
+          "filtered": 0,
+          "elapsed_seconds": 620.29,
+          "test_threads": 12
+        },
+        "rosetta_library": {
+          "passed": 11419,
+          "failed": 1,
+          "ignored": 2,
+          "filtered": 0,
+          "elapsed_seconds": 783.73,
+          "test_threads": 12,
+          "failure": "user::darwin::runtime_files::tests::native_runtime_executes_system_programs_in_a_closed_process",
+          "scope": "All clock/timer tests, including arbitrary deadline phases, pass. The separate shared-cache fixture profile correction is not part of this commit."
+        },
+        "darwin": {
+          "passed": 117,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0,
+          "elapsed_seconds": 458.79,
+          "required_oracle": "RAX_USER_DARWIN_REQUIRE_ORACLE=1"
+        },
+        "linux": {
+          "passed": 42,
+          "failed": 0,
+          "ignored": 1,
+          "filtered": 0,
+          "elapsed_seconds": 204.89
+        },
+        "c_api": {
+          "passed": 185,
+          "failed": 0,
+          "ignored": 0
+        },
+        "all_targets_build": "passed",
+        "clippy_all_targets": "passed",
+        "format": "passed",
+        "doctests": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 5
+        },
+        "build_scope": "All-target/lint/format gates validate the combined authorized timing, precision-conversion and runtime-test worktree. Only this group owns the clock/timer adapters and timed C fixtures; the other code changes are committed separately."
+      },
+      "bounded_scope": [
+        {
+          "impact": "high",
+          "item": "C-DARWIN-RUNTIME-ROSETTA remains separate: this host supplies arm64e caches and the translated fixture chooses an x86-64 executable slice. No x86 closed-runtime success is claimed.",
+          "blocks": false
+        },
+        {
+          "impact": "high",
+          "item": "The remaining audit plan, including scheduling/checkpoint/backend work and residual architecture profiles, stays pending.",
+          "blocks": "Complete remediation plan."
+        },
+        {
+          "impact": "low",
+          "item": "Thread accounting has microsecond field resolution. Nanosecond output units do not imply nanosecond precision. Duration conversions and component normalization are O(1) time and space; no performance claim.",
+          "blocks": false
+        }
+      ],
+      "primary_source_revision": "f6217f891ac0bb64f3d375211650a4c1ff8ca1ea",
+      "primary_source_manifest": [
+        {
+          "path": "osfmk/kern/mk_timer.c",
+          "url": "https://raw.githubusercontent.com/apple-oss-distributions/xnu/f6217f891ac0bb64f3d375211650a4c1ff8ca1ea/osfmk/kern/mk_timer.c",
+          "sha256": "aa73f8976c8be7e2dbb89bedee9de7d245eb67fa5f29de3b05ee7c3083ea22ff"
+        },
+        {
+          "path": "osfmk/kern/thread_call.c",
+          "url": "https://raw.githubusercontent.com/apple-oss-distributions/xnu/f6217f891ac0bb64f3d375211650a4c1ff8ca1ea/osfmk/kern/thread_call.c",
+          "sha256": "c14d9956890389097874811695ce90d436da9a39957124be4a79b4d6a426c876"
+        },
+        {
+          "path": "osfmk/mach/thread_info.h",
+          "url": "https://raw.githubusercontent.com/apple-oss-distributions/xnu/f6217f891ac0bb64f3d375211650a4c1ff8ca1ea/osfmk/mach/thread_info.h",
+          "sha256": "331d64126eec283f88dedb84a69561ebf8ed44c54306b58d941576ff6aa2215f"
+        },
+        {
+          "path": "osfmk/kern/bsd_kern.c",
+          "url": "https://raw.githubusercontent.com/apple-oss-distributions/xnu/f6217f891ac0bb64f3d375211650a4c1ff8ca1ea/osfmk/kern/bsd_kern.c",
+          "sha256": "670dcdf6feb73845b102965c8dfab6175f87893bf0b7ca9fa450f38cc83ba19c"
+        },
+        {
+          "path": "bsd/kern/kern_event.c",
+          "url": "https://raw.githubusercontent.com/apple-oss-distributions/xnu/f6217f891ac0bb64f3d375211650a4c1ff8ca1ea/bsd/kern/kern_event.c",
+          "sha256": "d6bd6351f97713c24d05235179d67ec6947be0114dec1298f77e4deb457b618d"
+        },
+        {
+          "path": "bsd/kern/kern_mib.c",
+          "url": "https://raw.githubusercontent.com/apple-oss-distributions/xnu/f6217f891ac0bb64f3d375211650a4c1ff8ca1ea/bsd/kern/kern_mib.c",
+          "sha256": "c34d16dde6e3a1c588dada1d282a1f3ade898154c6b2b2978df5a9bfc29ead00"
         }
       ]
     }

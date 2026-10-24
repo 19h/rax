@@ -107,15 +107,16 @@ int main(void) {
     unlink(path);
     close(f);
 
-    // Timers. The one-shot timer's data counts the intervals that passed by
-    // the time it is delivered: a critical timer (no coalescing, which a
-    // QoS-clamped host stretches to several 20 ms intervals) of 200 ms
-    // makes that one wherever the fixture runs.
+    // filt_timerprocess counts elapsed intervals even for EV_ONESHOT. Native
+    // and emulated runs can resume at different times, so validate positivity
+    // before removing that scheduling-dependent count from the record comparison.
     EV_SET(&ch[0], 10, EVFILT_TIMER, EV_ADD | EV_ONESHOT, NOTE_CRITICAL, 200, NULL);
     kevent(kq, ch, 1, NULL, 0, &zero);
     n = kevent(kq, NULL, 0, ev, 8, &zero);
     printf("timer early: n=%d\n", n);
     n = kevent(kq, NULL, 0, ev, 8, NULL);
+    printf("timer oneshot count>=1: %d\n", n == 1 && ev[0].data >= 1);
+    if (n == 1) ev[0].data = 0;
     show("timer oneshot", n, ev);
     EV_SET(&ch[0], 10, EVFILT_TIMER, EV_DELETE, 0, 0, NULL);
     n = kevent(kq, ch, 1, ev, 8, &zero);
