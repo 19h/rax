@@ -429,6 +429,8 @@ mod fused;
 pub use fused::*;
 mod selection;
 pub use selection::*;
+mod integer;
+pub use integer::*;
 mod precision;
 pub use precision::{vcvt_f32_f64, vcvt_f64_f32, vcvt_f64_f32_with_fpscr};
 
@@ -483,138 +485,6 @@ fn is_snan_f64(value: f64) -> bool {
     (bits & 0x7FF0_0000_0000_0000) == 0x7FF0_0000_0000_0000
         && (bits & 0x000F_FFFF_FFFF_FFFF) != 0
         && (bits & 0x0008_0000_0000_0000) == 0
-}
-
-/// Convert signed 32-bit integer to single-precision float.
-pub fn vcvt_f32_s32(val: i32) -> f32 {
-    val as f32
-}
-
-/// Convert unsigned 32-bit integer to single-precision float.
-pub fn vcvt_f32_u32(val: u32) -> f32 {
-    val as f32
-}
-
-/// Convert signed 32-bit fixed-point value to single-precision float.
-pub fn vcvt_f32_s32_fixed(val: i32, fbits: u32) -> f32 {
-    (val as f32) * 2.0f32.powi(-(fbits as i32))
-}
-
-/// Convert unsigned 32-bit fixed-point value to single-precision float.
-pub fn vcvt_f32_u32_fixed(val: u32, fbits: u32) -> f32 {
-    (val as f32) * 2.0f32.powi(-(fbits as i32))
-}
-
-/// Convert single-precision float to signed 32-bit integer (round toward zero).
-pub fn vcvt_s32_f32(val: f32, fpscr: &mut Fpscr) -> i32 {
-    saturate_f32_to_i32(val.trunc(), fpscr)
-}
-
-/// Convert single-precision float to unsigned 32-bit integer (round toward zero).
-pub fn vcvt_u32_f32(val: f32, fpscr: &mut Fpscr) -> u32 {
-    saturate_f32_to_u32(val.trunc(), fpscr)
-}
-
-/// Convert single-precision float to signed 32-bit fixed-point (round toward zero).
-pub fn vcvt_s32_f32_fixed(val: f32, fbits: u32, fpscr: &mut Fpscr) -> i32 {
-    let scaled = val * 2.0f32.powi(fbits as i32);
-    saturate_f32_to_i32(scaled.trunc(), fpscr)
-}
-
-/// Convert single-precision float to unsigned 32-bit fixed-point (round toward zero).
-pub fn vcvt_u32_f32_fixed(val: f32, fbits: u32, fpscr: &mut Fpscr) -> u32 {
-    let scaled = val * 2.0f32.powi(fbits as i32);
-    saturate_f32_to_u32(scaled.trunc(), fpscr)
-}
-
-/// Convert signed 32-bit integer to double-precision float.
-pub fn vcvt_f64_s32(val: i32) -> f64 {
-    val as f64
-}
-
-/// Convert unsigned 32-bit integer to double-precision float.
-pub fn vcvt_f64_u32(val: u32) -> f64 {
-    val as f64
-}
-
-/// Convert signed 32-bit fixed-point value to double-precision float.
-pub fn vcvt_f64_s32_fixed(val: i32, fbits: u32) -> f64 {
-    (val as f64) * 2.0f64.powi(-(fbits as i32))
-}
-
-/// Convert unsigned 32-bit fixed-point value to double-precision float.
-pub fn vcvt_f64_u32_fixed(val: u32, fbits: u32) -> f64 {
-    (val as f64) * 2.0f64.powi(-(fbits as i32))
-}
-
-/// Convert double-precision float to signed 32-bit integer (round toward zero).
-pub fn vcvt_s32_f64(val: f64, fpscr: &mut Fpscr) -> i32 {
-    saturate_f64_to_i32(val.trunc(), fpscr)
-}
-
-/// Convert double-precision float to unsigned 32-bit integer (round toward zero).
-pub fn vcvt_u32_f64(val: f64, fpscr: &mut Fpscr) -> u32 {
-    saturate_f64_to_u32(val.trunc(), fpscr)
-}
-
-/// Convert double-precision float to signed 32-bit fixed-point (round toward zero).
-pub fn vcvt_s32_f64_fixed(val: f64, fbits: u32, fpscr: &mut Fpscr) -> i32 {
-    let scaled = val * 2.0f64.powi(fbits as i32);
-    saturate_f64_to_i32(scaled.trunc(), fpscr)
-}
-
-/// Convert double-precision float to unsigned 32-bit fixed-point (round toward zero).
-pub fn vcvt_u32_f64_fixed(val: f64, fbits: u32, fpscr: &mut Fpscr) -> u32 {
-    let scaled = val * 2.0f64.powi(fbits as i32);
-    saturate_f64_to_u32(scaled.trunc(), fpscr)
-}
-
-/// Convert single-precision float to signed 32-bit integer using FPSCR rounding mode.
-pub fn vcvtr_s32_f32(val: f32, fpscr: &mut Fpscr) -> i32 {
-    let rounded = round_f32_for_int(val, fpscr.rmode());
-    saturate_f32_to_i32(rounded, fpscr)
-}
-
-/// Convert single-precision float to signed 32-bit integer using an explicit rounding mode.
-pub fn vcvt_s32_f32_round(val: f32, mode: RoundingMode, fpscr: &mut Fpscr) -> i32 {
-    let rounded = round_f32_for_int(val, mode);
-    saturate_f32_to_i32(rounded, fpscr)
-}
-
-/// Convert single-precision float to unsigned 32-bit integer using FPSCR rounding mode.
-pub fn vcvtr_u32_f32(val: f32, fpscr: &mut Fpscr) -> u32 {
-    let rounded = round_f32_for_int(val, fpscr.rmode());
-    saturate_f32_to_u32(rounded, fpscr)
-}
-
-/// Convert single-precision float to unsigned 32-bit integer using an explicit rounding mode.
-pub fn vcvt_u32_f32_round(val: f32, mode: RoundingMode, fpscr: &mut Fpscr) -> u32 {
-    let rounded = round_f32_for_int(val, mode);
-    saturate_f32_to_u32(rounded, fpscr)
-}
-
-/// Convert double-precision float to signed 32-bit integer using FPSCR rounding mode.
-pub fn vcvtr_s32_f64(val: f64, fpscr: &mut Fpscr) -> i32 {
-    let rounded = round_f64_for_int(val, fpscr.rmode());
-    saturate_f64_to_i32(rounded, fpscr)
-}
-
-/// Convert double-precision float to signed 32-bit integer using an explicit rounding mode.
-pub fn vcvt_s32_f64_round(val: f64, mode: RoundingMode, fpscr: &mut Fpscr) -> i32 {
-    let rounded = round_f64_for_int(val, mode);
-    saturate_f64_to_i32(rounded, fpscr)
-}
-
-/// Convert double-precision float to unsigned 32-bit integer using FPSCR rounding mode.
-pub fn vcvtr_u32_f64(val: f64, fpscr: &mut Fpscr) -> u32 {
-    let rounded = round_f64_for_int(val, fpscr.rmode());
-    saturate_f64_to_u32(rounded, fpscr)
-}
-
-/// Convert double-precision float to unsigned 32-bit integer using an explicit rounding mode.
-pub fn vcvt_u32_f64_round(val: f64, mode: RoundingMode, fpscr: &mut Fpscr) -> u32 {
-    let rounded = round_f64_for_int(val, mode);
-    saturate_f64_to_u32(rounded, fpscr)
 }
 
 /// Round single-precision to an integral floating-point value.
@@ -790,60 +660,6 @@ fn round_shift_right_ties_even(value: u32, shift: u32) -> u32 {
         quotient + 1
     } else {
         quotient
-    }
-}
-
-fn saturate_f32_to_i32(val: f32, fpscr: &mut Fpscr) -> i32 {
-    if val.is_nan() {
-        fpscr.set_ioc(true);
-        0
-    } else if val >= i32::MAX as f32 {
-        fpscr.set_ioc(true);
-        i32::MAX
-    } else if val <= i32::MIN as f32 {
-        fpscr.set_ioc(true);
-        i32::MIN
-    } else {
-        val as i32
-    }
-}
-
-fn saturate_f32_to_u32(val: f32, fpscr: &mut Fpscr) -> u32 {
-    if val.is_nan() || val < 0.0 {
-        fpscr.set_ioc(true);
-        0
-    } else if val >= u32::MAX as f32 {
-        fpscr.set_ioc(true);
-        u32::MAX
-    } else {
-        val as u32
-    }
-}
-
-fn saturate_f64_to_i32(val: f64, fpscr: &mut Fpscr) -> i32 {
-    if val.is_nan() {
-        fpscr.set_ioc(true);
-        0
-    } else if val >= i32::MAX as f64 {
-        fpscr.set_ioc(true);
-        i32::MAX
-    } else if val <= i32::MIN as f64 {
-        fpscr.set_ioc(true);
-        i32::MIN
-    } else {
-        val as i32
-    }
-}
-
-fn saturate_f64_to_u32(val: f64, fpscr: &mut Fpscr) -> u32 {
-    if val.is_nan() || val < 0.0 {
-        fpscr.set_ioc(true);
-        0
-    } else if val >= u32::MAX as f64 {
-        fpscr.set_ioc(true);
-        u32::MAX
-    } else {
-        val as u32
     }
 }
 

@@ -395,7 +395,11 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
             | Mnemonic::VRINTM_F16
             | Mnemonic::VRINTN_F16 => self.exec_vrint(insn),
             Mnemonic::VCMP | Mnemonic::VCMPE => self.exec_vcmp(insn),
-            Mnemonic::VCVT_S32_F32
+            Mnemonic::VCVTA_S32_F32
+            | Mnemonic::VCVTA_U32_F32
+            | Mnemonic::VCVTA_S32_F16
+            | Mnemonic::VCVTA_U32_F16
+            | Mnemonic::VCVT_S32_F32
             | Mnemonic::VCVT_U32_F32
             | Mnemonic::VCVT_S32_F16
             | Mnemonic::VCVT_U32_F16

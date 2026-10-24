@@ -327,10 +327,32 @@
         "tests/suites/isa/arm/aarch32/fp_precision_native.rs",
         "/tmp/rax-a32-conversion/expanded-parent-red.log",
         "/tmp/rax-a32-conversion/final-integration.log",
-        "/tmp/rax-a32-conversion/rosetta-vfp.log"
+        "/tmp/rax-a32-conversion/rosetta-vfp.log",
+        "src/smir/interpret/arm_integer_conversion.rs",
+        "src/isa/arm/aarch32/vfp/integer.rs",
+        "tests/suites/isa/arm/aarch32/fp_integer_contract.rs",
+        "tests/suites/isa/arm/aarch32/fp_integer_decoded.rs",
+        "tests/suites/isa/arm/aarch32/fp_integer_directed.rs",
+        "tests/suites/isa/arm/aarch32/fp_integer_native.rs",
+        "/tmp/rax-a32-integer-conversion/parent-contract-red.log",
+        "/tmp/rax-a32-integer-conversion/parent-decoded-red.log",
+        "/tmp/rax-a32-integer-conversion/parent-directed-red.log",
+        "/tmp/rax-a32-integer-conversion/baseline-native.log",
+        "/tmp/rax-a32-integer-conversion/llvm-words.log",
+        "/tmp/rax-a32-integer-conversion/llvm-thumb-words.log",
+        "/tmp/rax-a32-integer-conversion/llvm-directed.log",
+        "/tmp/rax-a32-integer-conversion/final-build.log",
+        "/tmp/rax-a32-integer-conversion/final-vfp.log",
+        "/tmp/rax-a32-integer-conversion/final-integration.log",
+        "/tmp/rax-a32-integer-conversion/final-clippy.log",
+        "/tmp/rax-a32-integer-conversion/final-fmt.log",
+        "/tmp/rax-a32-integer-conversion/final-doc.log",
+        "/tmp/rax-a32-integer-conversion/final-library.log",
+        "/tmp/rax-a32-integer-conversion/final-rosetta-vfp.log",
+        "/tmp/rax-a32-integer-conversion/final-capi.log"
       ],
       "remaining_validation": [
-        "Integer/fixed-point conversions, round-to-integral, complete FP16/FZ16/AHP profiles and remaining Advanced SIMD estimate/step families",
+        "Round-to-integral, complete FP16/FZ16/AHP profiles, unimplemented 16-bit fixed encodings and remaining Advanced SIMD estimate/step families",
         "Enabled floating-point exception delivery",
         "Native A32 hardware or independent A32 system oracle"
       ]
@@ -4501,6 +4523,207 @@
           "/tmp/rax-x86-gs-base/boot-default-memory.log"
         ]
       }
+    },
+    {
+      "id": "a32-integer-fixed-conversion-status",
+      "baseline": "0d7f5e17270ba13f68711fd89a186499a433307a",
+      "status": "locally_validated",
+      "scope": "Implemented binary32/binary64 conversions with 32-bit integer and fixed-point operands. Preserve legacy helper signatures, add controlled integer-to-float helpers, accumulate IOC/IXC/IDC, apply scalar/directed/Advanced SIMD controls and correct fixed-point destination extension. Directed Advanced SIMD opcode values 0/1/2/3 select A/N/P/M, and their cumulative status uses standard vector controls.",
+      "assumptions": [
+        {
+          "id": "AI1",
+          "assumption": "The common FPToFixed/FixedToFP numerical operations can use A64 instructions as arithmetic oracles.",
+          "basis": "Arm shared ASL plus A32 instruction-specific control selection.",
+          "dependent_result": "Native oracle tests for result bits and status, separate A32/Thumb decode tests for instruction control and register layout.",
+          "stress_test": "8960000 edge/seeded native arithmetic comparisons across both directions, binary32/binary64, signedness, all four FPSCR rounding modes, five explicit integer rounding modes, FZ/DN and all 32 architectural fractional-bit immediates.",
+          "falsification_probe": "Any result/status mismatch, skipped comparison, or treating A64 arithmetic execution as native A32 execution.",
+          "status": "retained"
+        },
+        {
+          "id": "AI2",
+          "assumption": "Scalar fixed-point-to-floating conversions use nearest rounding independently of FPSCR RM; signed fixed-point results extend across the destination register.",
+          "basis": "Arm instruction reference C4.8 and architecture reference F6.1.60; Cortex-M guide documents the common instruction rules explicitly.",
+          "dependent_result": "Clear RM only in the conversion control copy for fixed-point helpers; sign/zero extend D-register integer results.",
+          "stress_test": "FPSCR plus/minus modes with inexact fixed inputs; negative signed and positive unsigned D-register output cases.",
+          "falsification_probe": "Decoded fixed-point values follow live RM, retain prior upper D bits, or change FPSCR control bits.",
+          "status": "revised"
+        },
+        {
+          "id": "AI3",
+          "assumption": "Existing 16-bit fixed encodings remain outside the implemented profile.",
+          "basis": "decode_vcvt_fixed_fbits rejects the halfword-size bit before evaluation.",
+          "dependent_result": "No new 16-bit fixed-point instruction admission or complete FP16 claim.",
+          "stress_test": "Retain undefined/unsupported boundaries and full existing ARM suite.",
+          "falsification_probe": "An unimplemented encoding executes partially or is silently reported as supported.",
+          "status": "retained"
+        }
+      ],
+      "primary_sources": [
+        "docs/architecture/arm/asl/arm_defs.asl: FPToFixed, FixedToFP, StandardFPSCRValue",
+        "https://documentation-service.arm.com/static/6245c734b059dc5ff9a8bdab",
+        "https://support.arm.com/documentation/dui0646/c/The-Cortex-M7-Instruction-Set/Floating-point-instructions/VCVT-between-floating-point-and-fixed-point",
+        "https://www.bitsavers.org/components/arm/ARM_Architecture_Reference_Manual_ARMv8_Rev_A.k_201609.pdf",
+        "LLVM 23.0.0 /Users/int/local/bin/llvm-mc: A32 and T32 byte encodings recorded in the listed logs."
+      ],
+      "baseline_results": {
+        "contract": {
+          "passed": 8,
+          "failed": 18
+        },
+        "arithmetic_probe": "Five independently observed f64->i32 boundary/fractional flag mismatches against A64 FCVTZS.",
+        "decoded": {
+          "passed": 0,
+          "failed": 8
+        },
+        "directed_opcodes": {
+          "passed": 0,
+          "failed": 4
+        }
+      },
+      "bounded_scope": [
+        {
+          "impact": "high",
+          "item": "A64 arithmetic checks do not establish native A32 execution, A32 fixed-width register extension, Thumb decoding or Advanced SIMD control selection.",
+          "blocks": "Completion until decoded instruction tests pass."
+        },
+        {
+          "impact": "high",
+          "item": "FP16/FZ16/AHP, round-integral operations, estimate/step operations and enabled exception traps remain outside this group; A32-FP remains partial.",
+          "blocks": "Complete remediation plan."
+        },
+        {
+          "impact": "low",
+          "item": "fbits beyond architectural immediates is handled without integer overflow in legacy public helpers; no such instruction encoding is newly admitted.",
+          "blocks": false
+        }
+      ],
+      "temporary_worktree_validation": {
+        "complete_vfp": {
+          "passed": 222,
+          "failed": 0,
+          "ignored": 0
+        },
+        "arm": {
+          "passed": 46850,
+          "failed": 0,
+          "ignored": 0
+        },
+        "isa_oracle": {
+          "passed": 100,
+          "failed": 0,
+          "ignored": 0
+        },
+        "note": "Before importing the two unrelated completed ptrace/GS groups; no main-checkout all-target/build/library gate is inferred from this worktree."
+      },
+      "regression_baseline": "1de914f38cab525b6cd9ab489f46aa0dc1af8b32; the intervening ptrace/GS groups do not modify the A32 conversion files.",
+      "validation": {
+        "complete_library": {
+          "passed": 10433,
+          "failed": 0,
+          "ignored": 2,
+          "filtered": 0,
+          "elapsed_seconds": 338.21
+        },
+        "complete_vfp_arm": {
+          "passed": 222,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0,
+          "elapsed_seconds": 1.01
+        },
+        "complete_vfp_rosetta": {
+          "passed": 210,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0,
+          "elapsed_seconds": 0.01
+        },
+        "doctests": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 5,
+          "filtered": 0,
+          "elapsed_seconds": 0.0
+        },
+        "all_targets_build": "passed",
+        "clippy_all_targets": "passed",
+        "format": "passed",
+        "integration": {
+          "arm": {
+            "passed": 46850,
+            "failed": 0,
+            "ignored": 0,
+            "filtered": 0,
+            "elapsed_seconds": 28.26
+          },
+          "isa_oracle": {
+            "passed": 101,
+            "failed": 0,
+            "ignored": 0,
+            "filtered": 0,
+            "elapsed_seconds": 0.16
+          }
+        },
+        "capi": [
+          {
+            "passed": 185,
+            "failed": 0,
+            "ignored": 0,
+            "filtered": 0,
+            "elapsed_seconds": 8.48
+          },
+          {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "filtered": 0,
+            "elapsed_seconds": 0.0
+          }
+        ],
+        "native_arithmetic": {
+          "float_to_integer_comparisons": 4736000,
+          "integer_to_float_comparisons": 4224000,
+          "total_comparisons": 8960000,
+          "seeds": [
+            "0x72c66bad84d1f039",
+            "0x294ca1750b936fd2"
+          ],
+          "fractional_bits": "Every immediate 1..32, plus ordinary integer conversion with no scaling.",
+          "scope": "Actual A64 FCVT*/SCVTF/UCVTF numerical/status execution; A32/Thumb decoding and standard vector controls are tested separately. No native A32 execution claim."
+        },
+        "rosetta_cfg_elision": "12 A64-specific hardware oracle tests are cfg-elided. All 210 applicable owning tests execute and pass.",
+        "logs": [
+          "/tmp/rax-a32-integer-conversion/parent-contract-red.log",
+          "/tmp/rax-a32-integer-conversion/parent-decoded-red.log",
+          "/tmp/rax-a32-integer-conversion/parent-directed-red.log",
+          "/tmp/rax-a32-integer-conversion/baseline-native.log",
+          "/tmp/rax-a32-integer-conversion/llvm-words.log",
+          "/tmp/rax-a32-integer-conversion/llvm-thumb-words.log",
+          "/tmp/rax-a32-integer-conversion/llvm-directed.log",
+          "/tmp/rax-a32-integer-conversion/final-build.log",
+          "/tmp/rax-a32-integer-conversion/final-vfp.log",
+          "/tmp/rax-a32-integer-conversion/final-integration.log",
+          "/tmp/rax-a32-integer-conversion/final-clippy.log",
+          "/tmp/rax-a32-integer-conversion/final-fmt.log",
+          "/tmp/rax-a32-integer-conversion/final-doc.log",
+          "/tmp/rax-a32-integer-conversion/final-library.log",
+          "/tmp/rax-a32-integer-conversion/final-rosetta-vfp.log",
+          "/tmp/rax-a32-integer-conversion/final-capi.log"
+        ],
+        "intermediate_notes": [
+          "The first scratch Cargo invocation filtered the unrelated arm target and ran zero tests. It is excluded from owning evidence; arm_vfp_a32 is the registered target.",
+          "An intermediate test addition needed an explicit u32 opcode-array type. Final owning tests and complete build use the corrected fixture.",
+          "Old directed-conversion fixture expectations described N/P/M/Z for machine encodings A/N/P/M. LLVM 23 encoding output and four independent new decoded regressions establish the corrected selectors and results.",
+          "Fixed-to-floating nearest rounding and signed/unsigned full D-register extension were verified against instruction-specific Arm documentation; shared A64 arithmetic alone is not used to infer these A32 rules."
+        ]
+      },
+      "affected_planes": {
+        "direct_helpers": "Integer significands, exact fixed scaling, saturation after rounding and sticky IOC/IXC/IDC. Existing signatures remain; integer-to-FP controlled variants are additive.",
+        "decoded_a32_thumb": "Scalar FPSCR rounding, fixed-to-FP nearest, full D-register result extension, standard Advanced SIMD controls and corrected A/N/P/M decoder/dispatch selection.",
+        "smir": "Shared bit-level arithmetic core; A32 and Thumb lifters still reject the seven tested instruction pairs whose FPSCR state is not represented. No native A32 IR admission.",
+        "embedding": "C API shapes and checkpoint schema unchanged; all 185 C API tests pass. ARM and translated x86 owning binaries exercise the same software ISA operations."
+      },
+      "complexity": "Each lane uses O(1) time and space with fixed-width u128 integer arithmetic. There are no host FP arithmetic operations in the new binary32/binary64 conversion evaluator."
     }
   ],
   "group_scope_notes": "Each group records limits at its own validation point; findings contains the current disposition."
