@@ -9,7 +9,7 @@ measures the native contract before changing the runtime or installed-leaf tests
 Run on an x64 Windows kernel with Visual Studio C++ tools installed:
 
 ```text
-python docs/specifications/windows/native-clock-profile/run-v2.py
+python docs/specifications/windows/native-clock-profile/run-v3.py
 ```
 
 The default architectures are x64 and x86. A native ARM64 host can additionally
@@ -51,6 +51,10 @@ source and failed record remain preserved. A fresh version passes the exact
 Windows command line directly to `cmd.exe`, disables AutoRun/delayed expansion,
 keeps captured environment output private and completes all three architectures.
 The developer command changes only its child process environment.
+The next hosted attempt exposed a case-sensitive dictionary lookup after copying
+Windows environment variables. Version 3 normalizes inherited and snapshot keys
+before selecting `PROGRAMFILES(X86)` or the compiler directory. Version 2 is
+retained as the executed historical producer; the workflow selects version 3.
 
 All three views run on one ARM64 kernel, build 29683. They are not independent
 x64-kernel measurements. Each has 16 returned calls, zero caller exceptions,
