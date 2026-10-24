@@ -875,9 +875,11 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
                 self.cpu.vfp.write_s_bits(d, value);
             }
             Mnemonic::VCVT_F64_F32 => {
-                self.cpu
-                    .vfp
-                    .write_d(d, vcvt_f64_f32(self.cpu.vfp.read_s(m)));
+                let value = crate::isa::arm::aarch32::vfp::vcvt_f64_f32_with_fpscr(
+                    self.cpu.vfp.read_s(m),
+                    &mut self.cpu.vfp.fpscr,
+                );
+                self.cpu.vfp.write_d(d, value);
             }
             Mnemonic::VCVT_F32_F64 => {
                 let value = vcvt_f32_f64(self.cpu.vfp.read_d(m), &mut self.cpu.vfp.fpscr);

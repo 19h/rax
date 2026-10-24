@@ -16,12 +16,15 @@
 //! # FPSCR (Floating-Point Status and Control Register)
 //!
 //! - Bits 31-28: N, Z, C, V condition flags
-//! - Bits 26-25: Stride (deprecated in VFPv3+)
+//! - Bit 27: QC (cumulative saturation)
+//! - Bit 26: AHP (alternative half-precision format for conversions)
+//! - Bit 25: DN (default NaN)
 //! - Bit 24: FZ (flush-to-zero mode)
 //! - Bits 23-22: Rounding mode
-//! - Bits 21-20: Len (deprecated in VFPv3+)
-//! - Bits 19-16: IDE, IXE, UFE, OFE, DZE, IOE (exception enable bits)
-//! - Bits 8-4: IDC, IXC, UFC, OFC, DZC, IOC (cumulative exception flags)
+//! - Bits 21-20: Stride; bits 18-16: Len (deprecated short-vector controls)
+//! - Bit 19: FZ16 (half-precision flushing, where implemented)
+//! - Bit 15: IDE; bits 12-8: IXE, UFE, OFE, DZE, IOE (exception enables)
+//! - Bit 7: IDC; bits 4-0: IXC, UFC, OFC, DZC, IOC (cumulative status)
 
 use std::fmt;
 
@@ -426,6 +429,8 @@ mod fused;
 pub use fused::*;
 mod selection;
 pub use selection::*;
+mod precision;
+pub use precision::{vcvt_f32_f64, vcvt_f64_f32, vcvt_f64_f32_with_fpscr};
 
 mod nonfused;
 pub use nonfused::*;
@@ -649,18 +654,6 @@ pub fn vrint_f64(val: f64, mode: RoundingMode, exact: bool, fpscr: &mut Fpscr) -
         fpscr.set_ixc(true);
     }
     rounded
-}
-
-/// Convert single-precision to double-precision.
-pub fn vcvt_f64_f32(val: f32) -> f64 {
-    val as f64
-}
-
-/// Convert double-precision to single-precision.
-pub fn vcvt_f32_f64(val: f64, fpscr: &mut Fpscr) -> f32 {
-    let result = val as f32;
-    update_fpscr_after_op(result, fpscr);
-    result
 }
 
 /// Convert IEEE-754 binary16 bits to single-precision.

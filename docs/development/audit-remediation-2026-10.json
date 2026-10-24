@@ -320,10 +320,17 @@
         "tests/suites/isa/arm/aarch32/fp_selection_contract.rs",
         "tests/suites/isa/arm/aarch32/fp_fused_native.rs",
         "tests/suites/isa/arm/aarch32/fp_selection_native.rs",
-        "/tmp/rax-a32-fma/all-parent-red.log"
+        "/tmp/rax-a32-fma/all-parent-red.log",
+        "src/smir/interpret/arm_conversion.rs",
+        "src/isa/arm/aarch32/vfp/precision.rs",
+        "tests/suites/isa/arm/aarch32/fp_precision_contract.rs",
+        "tests/suites/isa/arm/aarch32/fp_precision_native.rs",
+        "/tmp/rax-a32-conversion/expanded-parent-red.log",
+        "/tmp/rax-a32-conversion/final-integration.log",
+        "/tmp/rax-a32-conversion/rosetta-vfp.log"
       ],
       "remaining_validation": [
-        "Conversions, round-to-integral, complete FP16/FZ16 profiles and remaining Advanced SIMD estimate/step families",
+        "Integer/fixed-point conversions, round-to-integral, complete FP16/FZ16/AHP profiles and remaining Advanced SIMD estimate/step families",
         "Enabled floating-point exception delivery",
         "Native A32 hardware or independent A32 system oracle"
       ]
@@ -3726,6 +3733,153 @@
           "path": "bsd/kern/kern_mib.c",
           "url": "https://raw.githubusercontent.com/apple-oss-distributions/xnu/f6217f891ac0bb64f3d375211650a4c1ff8ca1ea/bsd/kern/kern_mib.c",
           "sha256": "c34d16dde6e3a1c588dada1d282a1f3ade898154c6b2b2978df5a9bfc29ead00"
+        }
+      ]
+    },
+    {
+      "id": "a32-vfp-precision-conversion",
+      "baseline": "30636c277820fb923c20ffc56d2feb439bc3b29a",
+      "status": "locally_validated",
+      "scope": "Binary32/binary64 VFP precision changes with guest rounding, DN/FZ, NaN payload/quieting, cumulative exceptions and host-FP-state preservation. A32 and T32 decoded execution share the controlled widening adapter. The legacy stateless widening API retains default controls.",
+      "primary_source": {
+        "path": "docs/architecture/arm/asl/arm_defs.asl",
+        "sha256": "1ade68e5dacfff1b63a42ad3ee1c426aae5d36ed5dfcbf39de4baab478a190f8",
+        "functions": [
+          "FPConvert",
+          "FPConvertNaN",
+          "FPUnpackCV",
+          "FPRoundCV",
+          "FPRoundBase"
+        ],
+        "encoding_anchor": "LLVM 23 llvm-mc armv7/thumbv7 +vfp3: A32 eeb70bc1/eeb70ac1; Thumb bytes b7 ee c1 0b / b7 ee c1 0a.",
+        "independent_oracle": "Native A64 FCVT S,D and D,S under the common legacy FPCR profile; actual A32 instruction execution is emulated."
+      },
+      "assumptions": [
+        {
+          "assumption": "Legacy A64 and A32 binary32/binary64 precision changes share the selected FPConvert rules with exception traps disabled and alternate FP behavior disabled.",
+          "dependent_result": "Native A64 result/status comparisons validate common arithmetic behavior, not native A32 decoding or trap delivery.",
+          "stress_test": "20 hand expectations independently pass native FCVT probes. The campaign checks 20000 seeded/edge values x 16 controls x 2 conversion directions = 640000 native comparisons, each against helper and decoded execution.",
+          "falsification_probe": "A native result/status differs, or the primary ASL selects a different operation for the claimed A32 profile."
+        },
+        {
+          "assumption": "Guest FPSCR controls/results must not depend on or modify host FP control/status.",
+          "dependent_result": "Integer conversion and exact rounding honor guest rounding, denormal and NaN rules.",
+          "stress_test": "Clear host FP state before each campaign software evaluation; separate nondefault host control and status 0/0x80/0x9f, including the legacy stateless API. black_box forces unused-result probes to execute.",
+          "falsification_probe": "Any software call changes host control/status or follows host rounding instead of guest rounding."
+        },
+        {
+          "assumption": "S/D register aliases and unrelated state survive conversion.",
+          "dependent_result": "Narrowing writes only its S destination; widening preserves its source; FPSCR status is sticky and integer CPSR is unchanged.",
+          "stress_test": "A32 and Thumb decoded fixed cases preserve neighboring S bits, source D bits, CPSR and pre-existing FPSCR status/NZCV.",
+          "falsification_probe": "A conversion overwrites a neighboring alias, source, integer flags or pre-existing status."
+        }
+      ],
+      "baseline_results": {
+        "original_contracts": {
+          "passed": 4,
+          "failed": 16
+        },
+        "expanded_contracts": {
+          "passed": 5,
+          "failed": 16
+        },
+        "native_expectation_probes": {
+          "passed": 20,
+          "failed": 0
+        },
+        "basis": "Saved 9d22c78c product rlib before precision edits; timing adapters do not alter VFP arithmetic. Contracts stop at the first failing path within each case. Expanded cases include both execution states and lifter rejection. An attempted saved x86 rlib link failed with E0463; it is not red-test evidence."
+      },
+      "affected_planes": {
+        "direct": "Integer format conversion and exact destination rounding; scalar CPU widening now receives live FPSCR. Both decoders execute the same corrected conversion.",
+        "smir": "Shared format/rounding helpers provide arithmetic support; A32/Thumb conversion IR remains explicitly unsupported because FPSCR is not represented. Four word/state admission checks confirm rejection.",
+        "optimizer_native": "No new IR or native admission, and no claim of native A32 execution. Native A64 FCVT is an independent common-profile arithmetic oracle.",
+        "oracle_c_api": "No source-ABI, public state-layout or C ABI changes; unrepresented conversion IR does not become a successful partial analysis."
+      },
+      "validation": {
+        "native_campaign": {
+          "cases": 640000,
+          "seed": "0x6c3a94f1d82e570b",
+          "controls": "4 rounding modes x 2 DN x 2 FZ; both conversion directions",
+          "software_planes": [
+            "controlled helpers",
+            "decoded A32 execution"
+          ]
+        },
+        "vfp_a32": {
+          "passed": 178,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0
+        },
+        "vfp_rosetta": {
+          "passed": 169,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0,
+          "basis": "Nine A64 hardware tests are cfg-elided on this compiler target; the remaining contracts execute under Rosetta."
+        },
+        "arm": {
+          "passed": 46850,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0
+        },
+        "c_api": {
+          "passed": 185,
+          "failed": 0,
+          "ignored": 0
+        },
+        "logs": [
+          "/tmp/rax-a32-conversion/parent-red.log",
+          "/tmp/rax-a32-conversion/expanded-parent-red.log",
+          "/tmp/rax-a32-conversion/native-contract-probes.log",
+          "/tmp/rax-a32-conversion/final-integration.log",
+          "/tmp/rax-a32-conversion/rosetta-vfp.log",
+          "/tmp/rax-a32-conversion/final-capi.log",
+          "/tmp/rax-a32-conversion/final-library.log",
+          "/tmp/rax-darwin-host/final-build.log",
+          "/tmp/rax-darwin-host/final-clippy.log",
+          "/tmp/rax-darwin-host/final-fmt.log",
+          "/tmp/rax-darwin-host/final-doc.log"
+        ],
+        "library": {
+          "passed": 10425,
+          "failed": 0,
+          "ignored": 2,
+          "filtered": 0,
+          "elapsed_seconds": 354.99,
+          "test_threads": 12
+        },
+        "all_targets_build": "passed",
+        "clippy_all_targets": "passed",
+        "format": "passed",
+        "doctests": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 5
+        },
+        "build_scope": "All-target/lint/format gates validate the combined authorized timing, precision and runtime-test worktree. The final source-only edit corrects FPSCR bit-position documentation; it does not change executable code."
+      },
+      "bounded_scope": [
+        {
+          "impact": "high",
+          "item": "Integer/fixed-point conversions, round-to-integral, complete FP16/FZ16/AHP behavior, estimate/step families and FP trap delivery remain outside this group. A32-FP remains partially validated.",
+          "blocks": "Complete A32-FP remediation."
+        },
+        {
+          "impact": "medium",
+          "item": "Native A32 hardware or independent QEMU instruction execution has not been established; native A64 checks only the shared numerical profile.",
+          "blocks": false
+        },
+        {
+          "impact": "low",
+          "item": "Each conversion uses bounded integer fields and exact rounding in O(1) time/space. No throughput claim.",
+          "blocks": false
+        },
+        {
+          "impact": "low",
+          "item": "Corrected the nearby FPSCR register-layout documentation for DN/AHP/QC, Stride/Len, FZ16 and exception fields. This documents bit positions without claiming enabled-trap or complete half-precision execution.",
+          "blocks": false
         }
       ]
     }

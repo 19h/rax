@@ -1,3 +1,9 @@
+#[path = "fp_precision_contract.rs"]
+mod fp_precision_contract;
+#[cfg(target_arch = "aarch64")]
+#[path = "fp_precision_native.rs"]
+mod fp_precision_native;
+
 #[path = "fp_fused_contract.rs"]
 mod fp_fused_contract;
 #[cfg(target_arch = "aarch64")]
