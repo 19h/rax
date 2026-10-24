@@ -24,11 +24,11 @@ import time
 
 sys.dont_write_bytecode = True
 SEED = 0x71293E84C65A0FDB
-CASE_BYTES = 268
-RESULT_BYTES = 260
+CASE_BYTES = 276
+RESULT_BYTES = 268
 SAMPLES = 32
 CONTROLS = 64
-VERSION = 2
+VERSION = 3
 OWNER = ".rax-a32-fp-system-oracle"
 
 EDGES = (
@@ -183,6 +183,10 @@ INSTRUCTIONS = (
     'vcvt.f16.u16 q0,q1,#8',
     'vcvt.s16.f16 q0,q1,#8',
     'vcvt.u16.f16 q0,q1,#8',
+    'vmovx.f16 s0,s2',
+    'vins.f16 s0,s2',
+    'vmov.f16 s0,r0',
+    'vmov.f16 r0,s2',
 )
 
 
@@ -235,8 +239,8 @@ def command(args: list[str], work: Path, name: str, manifest: dict,
 
 
 def make_cases(work: Path, llvm: Path, manifest: dict) -> list[dict]:
-    if len(INSTRUCTIONS) != 140:
-        raise ValueError("Version 2 requires exactly 140 instruction pairs")
+    if len(INSTRUCTIONS) != 144:
+        raise ValueError("Version 3 requires exactly 144 instruction pairs")
     source = ".syntax unified\n.arm\n" + "\n".join(INSTRUCTIONS)
     source += "\n.thumb\n" + "\n".join(INSTRUCTIONS) + "\n"
     (work / "instructions.s").write_text(source)
@@ -259,6 +263,7 @@ def make_cases(work: Path, llvm: Path, manifest: dict) -> list[dict]:
             op_index = group % len(INSTRUCTIONS)
             # The same operation receives identical input states in A32/T32.
             rng = random.Random(SEED ^ op_index)
+            gpr_rng = random.Random(SEED ^ op_index ^ 0x9E3779B97F4A7C15)
             first = count
             for sample in range(SAMPLES):
                 for c in range(CONTROLS):
@@ -270,7 +275,9 @@ def make_cases(work: Path, llvm: Path, manifest: dict) -> list[dict]:
                     regs = [EDGES[(sample + j) % len(EDGES)]
                             if sample < len(EDGES) else rng.getrandbits(64)
                             for j in range(32)]
-                    output.write(struct.pack("<III32Q", int(thumb), word, control, *regs))
+                    gprs = ((0, 0xFFFFFFFF, 0x80000000, 0x1234ABCD)[sample % 4],
+                            gpr_rng.getrandbits(32))
+                    output.write(struct.pack("<III32QII", int(thumb), word, control, *regs, *gprs))
                     count += 1
             metadata.append({"thumb": thumb, "word": f"{word:08x}",
                              "instruction": INSTRUCTIONS[op_index],
@@ -393,7 +400,7 @@ def main() -> int:
     marker = work / OWNER
     ownership = f"version={VERSION}\n"
     if any(work.iterdir()) and (not marker.is_file() or marker.read_text() != ownership):
-        raise ValueError("Use an empty work directory or an existing version 2 oracle directory")
+        raise ValueError("Use an empty work directory or an existing version 3 oracle directory")
     marker.write_text(ownership)
     if args.timeout <= 0:
         raise ValueError("Guest timeout must be positive")

@@ -637,10 +637,49 @@
         "/tmp/rax-a32-fpscr-profile/final-rosetta-vfp.log",
         "/tmp/rax-a32-fpscr-profile/final-capi.log",
         "/tmp/rax-a32-fpscr-profile/final-system-oracle.log",
-        "/tmp/rax-a32-fpscr-profile/final-register-oracle.log"
+        "/tmp/rax-a32-fpscr-profile/final-register-oracle.log",
+        "src/isa/arm/decoder/mod.rs",
+        "src/isa/arm/decoder/aarch32/mod.rs",
+        "src/isa/arm/decoder/aarch32/fp_register.rs",
+        "src/isa/arm/aarch32/instructions/mod.rs",
+        "src/isa/arm/aarch32/instructions/misc.rs",
+        "src/isa/arm/aarch32/instructions/fp_register.rs",
+        "tools/arm-diff/fp_system_oracle.py",
+        "tools/arm-diff/fp_system_guest.s",
+        "tools/arm-diff/fp_system_compare.rs",
+        "tools/arm-diff/README_FP_SYSTEM.md",
+        "tests/suites/isa/arm/aarch32/fp_half_register.rs",
+        "tests/suites/isa/arm/aarch32/vfp.rs",
+        "/Users/int/dev/rax-audit-work/rax-a32-half-registers/parent-literal.rs",
+        "/Users/int/dev/rax-audit-work/rax-a32-half-registers/parent-red.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-half-registers/reference-v3/manifest.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-half-registers/reference-v3/report.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-half-registers/reference-summary.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-half-registers/worktree-checks.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-half-registers/worktree-result.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-half-registers/green-v3/manifest.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-half-registers/green-v3/report.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-half-registers/final-register-oracle/manifest.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-half-registers/checks.jsonl",
+        "/Users/int/dev/rax-audit-work/rax-a32-half-registers/final-build.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-half-registers/final-vfp.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-half-registers/final-integration.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-half-registers/final-clippy.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-half-registers/final-fmt.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-half-registers/final-doc.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-half-registers/final-ci-owning.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-half-registers/final-library.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-half-registers/final-rosetta-vfp.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-half-registers/final-capi.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-half-registers/final-system-oracle.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-half-registers/final-register-oracle.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-half-registers/llvm-words.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-half-registers/llvm-errors.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-half-registers/recovery-initial-attempt/worktree-owning.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-half-registers/parent-literal-result.json"
       ],
       "remaining_validation": [
-        "Capability declarations and remaining selected-profile instruction/admission semantics",
+        "Capability declarations and remaining selected-profile instruction/system-register semantics",
         "Other reserved system-register fields and FPEXC profile consistency",
         "Physical A32 hardware and optional trapped profiles remain unverified"
       ]
@@ -839,7 +878,34 @@
         "/Users/int/dev/rax-audit-work/rax-x86-legacy-paging/final-capi.log",
         "/Users/int/dev/rax-audit-work/rax-x86-legacy-paging/final-oracle.log",
         "/Users/int/dev/rax-audit-work/rax-x86-legacy-paging/recovery-event.json",
-        "/Users/int/dev/rax-audit-work/rax-a32-profile/green-v2/manifest.json"
+        "/Users/int/dev/rax-audit-work/rax-a32-profile/green-v2/manifest.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-half-registers/parent-literal.rs",
+        "/Users/int/dev/rax-audit-work/rax-a32-half-registers/parent-red.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-half-registers/reference-v3/manifest.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-half-registers/reference-v3/report.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-half-registers/reference-summary.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-half-registers/worktree-checks.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-half-registers/worktree-result.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-half-registers/green-v3/manifest.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-half-registers/green-v3/report.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-half-registers/final-register-oracle/manifest.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-half-registers/checks.jsonl",
+        "/Users/int/dev/rax-audit-work/rax-a32-half-registers/final-build.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-half-registers/final-vfp.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-half-registers/final-integration.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-half-registers/final-clippy.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-half-registers/final-fmt.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-half-registers/final-doc.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-half-registers/final-ci-owning.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-half-registers/final-library.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-half-registers/final-rosetta-vfp.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-half-registers/final-capi.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-half-registers/final-system-oracle.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-half-registers/final-register-oracle.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-half-registers/llvm-words.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-half-registers/llvm-errors.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-half-registers/recovery-initial-attempt/worktree-owning.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-half-registers/parent-literal-result.json"
       ],
       "remaining_validation": [
         "Other architecture/profile independent oracles and native hardware gates",
@@ -9394,6 +9460,432 @@
           "matches_original_corpus_hashes": true,
           "manifest": "/Users/int/dev/rax-audit-work/rax-a32-profile/green-v2/manifest.json"
         }
+      }
+    },
+    {
+      "id": "a32-half-register-packing-and-core-transfers",
+      "status": "locally_validated",
+      "scope": "VMOVX/VINS half-register packing and both core/half-register transfer directions, exact raw bits, field/alias effects and selected validity policy. GPR-aware independent system oracle version3.",
+      "assumptions": [
+        {
+          "id": "H1",
+          "assumption": "VMOVX extracts source bits31:16 and zero-extends; VINS places source bits15:0 into destination bits31:16 while preserving destination bits15:0.",
+          "dependent_result": "New typed decoder/execution routes replace accidental generic VMOV/VABS execution; original source/destination values are captured before writes.",
+          "stress_test": "Literal signaling-NaN bit patterns plus16384 full scalar register/alias cases and independent system output.",
+          "falsification_probe": "Wrong half selected, failed zero extension, changed sibling register, alias corruption or FPSCR effect.",
+          "status": "retained"
+        },
+        {
+          "id": "H2",
+          "assumption": "Core/half VMOV transfers exactly16 bits and zero-extends its32-bit destination without FP processing.",
+          "dependent_result": "Both directions execute explicit operations instead of generic coprocessor MCR/MRC; full core and S-register fields are retained.",
+          "stress_test": "7680 full-field/core-SP cases, signaling patterns and independent R0/R1 state capture.",
+          "falsification_probe": "Wrong field, retained destination upper half, NaN quieting/status change or an unrelated register write.",
+          "status": "retained"
+        },
+        {
+          "id": "H3",
+          "assumption": "Packing rejects nonzero FPSCR Len/Stride; half moves respect VFP enable. A selected Undefined policy handles architectural UNPREDICTABLE Thumb IT/core-PC cases.",
+          "dependent_result": "Validate fields/tags before mutation, preserve raw status/control and retain explicit unsupported SMIR admission.",
+          "stress_test": "All nonzero Len/Stride encodings, disabled VFP, IT, core R15 and forged direct tags.",
+          "falsification_probe": "An invalid case mutates state, or a new SMIR lift silently omits control/enable semantics.",
+          "status": "retained; no specific physical behavior claimed for UNPREDICTABLE cases"
+        },
+        {
+          "id": "H4",
+          "assumption": "The version3 protocol captures every relevant state component for the listed instructions:32 D registers, FPSCR, R0/R1.",
+          "dependent_result": "Append two32-bit GPR fields to inputs/results, preserve separate GPR RNG and version work directories, require complete exact counters.",
+          "stress_test": "589824 independent cases; the exact same tool/input/reference catches14592 pre-fix failures exclusively in the four new pairs. All prior573440 numerical input/reference records are retained after wire-field removal/reordering.",
+          "falsification_probe": "Old records change, a relevant GPR is omitted, counters are incomplete or any result/status differs.",
+          "status": "retained for the fixed144-pair list"
+        }
+      ],
+      "primary_sources": [
+        {
+          "path": "docs/architecture/arm/asl/arm_instrs.asl",
+          "sha256": "3c91ece6d0509f7ce9e8b2d8fa623787d7c7acb4cb24040a75cec5aa2789e611",
+          "operations": [
+            "aarch32_VMOVX_A lines65110+",
+            "aarch32_VINS_A lines86270+",
+            "aarch32_VMOV_h_A lines83741+"
+          ]
+        },
+        {
+          "source": "LLVM23 independently assembled words",
+          "evidence": "/Users/int/dev/rax-audit-work/rax-a32-half-registers/llvm-words.log",
+          "scope": "Four valid words in both instruction states. Three unrelated requested syntax forms were rejected; llvm-errors.log is retained and those forms are not counted as valid encodings."
+        }
+      ],
+      "affected_planes": {
+        "decode": "Priority exact register-operation decoding avoids permissive generic VFP/coprocessor fallthrough; three new enum variants append after existing variants to preserve old discriminants.",
+        "direct": "Explicit raw packing/extraction and core transfers, full fields, aliases, status preservation and selected validity checks.",
+        "smir": "Four instruction pairs explicitly reject unsupported control/enable semantics; no silent inherited generic VMOV/VABS lift.",
+        "tooling": "Version3 wire records276/268 bytes with R0/R1,144 pairs,589824 cases, separate GPR seed, exact old numerical-record preservation and ownership marker3.",
+        "embedding": "No C ABI or CPU-state/serialization fields changed."
+      },
+      "complexity": "O(1) time/space per register move. Field matrices execute16384 scalar packing and7680 core transfers. Oracle is O(N) time/O(N) comparator buffer memory for N cases, fixed32 D registers plus2 GPRs.589824 records use162791424 input and158072832 output bytes; guest RAM256MiB.",
+      "bounded_scope": [
+        {
+          "impact": "high",
+          "item": "Capability declarations and remaining selected-profile instruction/system-register semantics remain open. A wider61-request census encoded58 pairs; four valid classes were silently misdecoded. This is not full FP16 profile certification.",
+          "blocks": "Full A32-FP closure."
+        },
+        {
+          "impact": "high",
+          "item": "System records cover D0-D31/FPSCR/R0/R1; other GPR/PC/memory/exception state and physical A32 hardware are separate validation.",
+          "blocks": "Whole-CPU/native-hardware equivalence."
+        },
+        {
+          "impact": "medium",
+          "item": "The failing parent library is the immutable completed non-trapping-group product. The actual repair parent includes an intervening x86 MMU group with SHA-identical affected A32/FP/tool files.",
+          "blocks": false
+        }
+      ],
+      "quality_gates": {
+        "assumptions": "H1-H4 include dependent results and explicit falsification probes.",
+        "coverage": "Eleven focused regressions,24064 field/alias cases, full owning suites and exact589824-case system result.",
+        "reproducibility": "Pinned ASL, independently assembled words, parent library SHA, separate seeds, protocol offsets, full counters/commands/logs and final source hashes.",
+        "contradictions": "Data movement does not process NaNs or update FPSCR; VINS inserts into the high destination half. Version3 explicitly extends the protocol and proves old records unchanged.",
+        "provenance": "Pinned Arm operations, actual LLVM bytes, exact parent failures and installed QEMU A32/T32 execution.",
+        "bounded_expansion": "Capabilities, unlisted profiles, optional trap/native-hardware and other state components remain open.",
+        "worktree_integrity": "Twelve baseline-guarded owned paths plus ledger; unrelated tracked/untracked work preserved.",
+        "behavioral_evidence": "All five extracted literal tests fail on the parent, and14592 independent mismatches occur only in the four new pairs. Complete passing counters required.",
+        "repository_consistency": "Dedicated decoder/executor modules, appended enum variants, owning test registration and documented versioned protocol; no dependency/global-setting changes."
+      },
+      "baseline": "de6bb3c5249fd37c63e869c61003228cab798137",
+      "validation": {
+        "checks": [
+          {
+            "check": "final-build",
+            "args": [
+              "cargo",
+              "+stable",
+              "build",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--all-targets"
+            ],
+            "code": 0,
+            "seconds": 204.14459520799574
+          },
+          {
+            "check": "final-vfp",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--test",
+              "arm_vfp_a32",
+              "--",
+              "--test-threads=4"
+            ],
+            "code": 0,
+            "seconds": 15.890025040949695
+          },
+          {
+            "check": "final-integration",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--test",
+              "arm",
+              "--test",
+              "isa_oracle",
+              "--",
+              "--test-threads=4"
+            ],
+            "code": 0,
+            "seconds": 28.089466166915372
+          },
+          {
+            "check": "final-clippy",
+            "args": [
+              "cargo",
+              "+stable",
+              "clippy",
+              "--locked",
+              "--offline",
+              "--all-targets",
+              "--features",
+              "x86_64-suite"
+            ],
+            "code": 0,
+            "seconds": 68.2104112909874
+          },
+          {
+            "check": "final-fmt",
+            "args": [
+              "cargo",
+              "+stable",
+              "fmt",
+              "--all",
+              "--check"
+            ],
+            "code": 0,
+            "seconds": 11.993772749905474
+          },
+          {
+            "check": "final-doc",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--doc"
+            ],
+            "code": 0,
+            "seconds": 4.70433391595725
+          },
+          {
+            "check": "final-ci-owning",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--test",
+              "ci_actions_pinned"
+            ],
+            "code": 0,
+            "seconds": 0.13765749998856336
+          },
+          {
+            "check": "final-library",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--lib",
+              "--",
+              "--test-threads=4"
+            ],
+            "code": 0,
+            "seconds": 359.93812916695606
+          },
+          {
+            "check": "final-rosetta-vfp",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--target",
+              "x86_64-apple-darwin",
+              "--test",
+              "arm_vfp_a32",
+              "--",
+              "--test-threads=4"
+            ],
+            "code": 0,
+            "seconds": 38.438244416960515
+          },
+          {
+            "check": "final-capi",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "-p",
+              "rax-capi",
+              "--",
+              "--test-threads=4"
+            ],
+            "code": 0,
+            "seconds": 48.23235795798246
+          },
+          {
+            "check": "final-system-oracle",
+            "args": [
+              "python3",
+              "/Users/int/dev/rax/tools/arm-diff/fp_system_oracle.py",
+              "--repo",
+              "/Users/int/dev/rax",
+              "--work-dir",
+              "/Users/int/dev/rax-audit-work/rax-a32-half-registers/green-v3",
+              "--target-dir",
+              "/Users/int/dev/rax-audit-work/rax-audit-host-final-target",
+              "--llvm-bin",
+              "/Users/int/local/bin",
+              "--timeout",
+              "60"
+            ],
+            "code": 0,
+            "seconds": 12.51395691698417
+          },
+          {
+            "check": "final-register-oracle",
+            "args": [
+              "python3",
+              "/Users/int/dev/rax/tools/arm-diff/fpscr_profile_oracle.py",
+              "--llvm-bin",
+              "/Users/int/local/bin",
+              "--work-dir",
+              "/Users/int/dev/rax-audit-work/rax-a32-half-registers/final-register-oracle"
+            ],
+            "code": 0,
+            "seconds": 0.10927170899230987
+          }
+        ],
+        "complete_library": {
+          "passed": 10437,
+          "failed": 0,
+          "ignored": 2,
+          "filtered": 0,
+          "elapsed_seconds": 359.81
+        },
+        "complete_vfp_arm": {
+          "passed": 447,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0,
+          "elapsed_seconds": 15.74
+        },
+        "complete_vfp_rosetta": {
+          "passed": 414,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0,
+          "elapsed_seconds": 0.5
+        },
+        "doctests": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 5,
+          "filtered": 0,
+          "elapsed_seconds": 0.0
+        },
+        "ci_owning": [
+          {
+            "passed": 12,
+            "failed": 0,
+            "ignored": 0,
+            "filtered": 0,
+            "elapsed_seconds": 0.05
+          }
+        ],
+        "field_matrix_executions": {
+          "scalar": 16384,
+          "core": 7680
+        },
+        "recovery_note": "Source/scripts reconstructed after temporary artifact deletion. Every claimed current gate and independent record is freshly rerun in persistent storage. Original interrupted logs are not used as final evidence.",
+        "parent_literal_regressions": "Five tests, all five fail. Extracted source and linked immutable parent library retained.",
+        "independent_cases": 589824,
+        "independent_failures": 0,
+        "parent_independent_failures": 14592,
+        "identical_executed_tool_input_and_reference": true,
+        "old_v2_numerical_input_and_reference_retained": true,
+        "independent_fpscr_register_cases": 32768,
+        "rosetta_cfg_elision": "33 actual A64 hardware tests cfg-elided; all414 applicable owning tests execute.",
+        "negative_library_source_fingerprint": {
+          "rust_and_build_sources_sha256": "85ec58084c1d4c90628361903de82d8fbd127a978ba796b4516daefc762f4bbe",
+          "files": 3472
+        },
+        "product_source_fingerprint": {
+          "rust_and_build_sources_sha256": "f3e7371be64c49abd0ecb740be2c9bc856e2a65b7eb6295a8d1e1153132a608e",
+          "files": 3474
+        },
+        "logs": [
+          "/Users/int/dev/rax-audit-work/rax-a32-half-registers/parent-literal.rs",
+          "/Users/int/dev/rax-audit-work/rax-a32-half-registers/parent-red.log",
+          "/Users/int/dev/rax-audit-work/rax-a32-half-registers/reference-v3/manifest.json",
+          "/Users/int/dev/rax-audit-work/rax-a32-half-registers/reference-v3/report.json",
+          "/Users/int/dev/rax-audit-work/rax-a32-half-registers/reference-summary.json",
+          "/Users/int/dev/rax-audit-work/rax-a32-half-registers/worktree-checks.json",
+          "/Users/int/dev/rax-audit-work/rax-a32-half-registers/worktree-result.json",
+          "/Users/int/dev/rax-audit-work/rax-a32-half-registers/green-v3/manifest.json",
+          "/Users/int/dev/rax-audit-work/rax-a32-half-registers/green-v3/report.json",
+          "/Users/int/dev/rax-audit-work/rax-a32-half-registers/final-register-oracle/manifest.json",
+          "/Users/int/dev/rax-audit-work/rax-a32-half-registers/checks.jsonl",
+          "/Users/int/dev/rax-audit-work/rax-a32-half-registers/final-build.log",
+          "/Users/int/dev/rax-audit-work/rax-a32-half-registers/final-vfp.log",
+          "/Users/int/dev/rax-audit-work/rax-a32-half-registers/final-integration.log",
+          "/Users/int/dev/rax-audit-work/rax-a32-half-registers/final-clippy.log",
+          "/Users/int/dev/rax-audit-work/rax-a32-half-registers/final-fmt.log",
+          "/Users/int/dev/rax-audit-work/rax-a32-half-registers/final-doc.log",
+          "/Users/int/dev/rax-audit-work/rax-a32-half-registers/final-ci-owning.log",
+          "/Users/int/dev/rax-audit-work/rax-a32-half-registers/final-library.log",
+          "/Users/int/dev/rax-audit-work/rax-a32-half-registers/final-rosetta-vfp.log",
+          "/Users/int/dev/rax-audit-work/rax-a32-half-registers/final-capi.log",
+          "/Users/int/dev/rax-audit-work/rax-a32-half-registers/final-system-oracle.log",
+          "/Users/int/dev/rax-audit-work/rax-a32-half-registers/final-register-oracle.log",
+          "/Users/int/dev/rax-audit-work/rax-a32-half-registers/llvm-words.log",
+          "/Users/int/dev/rax-audit-work/rax-a32-half-registers/llvm-errors.log",
+          "/Users/int/dev/rax-audit-work/rax-a32-half-registers/recovery-initial-attempt/worktree-owning.log",
+          "/Users/int/dev/rax-audit-work/rax-a32-half-registers/parent-literal-result.json"
+        ],
+        "recovered_fixture_correction": {
+          "first_attempt": {
+            "passed": 446,
+            "failed": 1,
+            "log": "/Users/int/dev/rax-audit-work/rax-a32-half-registers/recovery-initial-attempt/worktree-owning.log"
+          },
+          "cause": "Recovered executing EQ IT fixture omitted Z=1, causing conditional skip before the tested Undefined policy. Fixture corrected; product source unchanged; all owning targets rerun."
+        },
+        "integration": {
+          "arm": {
+            "passed": 46850,
+            "failed": 0,
+            "ignored": 0,
+            "filtered": 0,
+            "elapsed_seconds": 27.82
+          },
+          "isa_oracle": {
+            "passed": 101,
+            "failed": 0,
+            "ignored": 0,
+            "filtered": 0,
+            "elapsed_seconds": 0.16
+          }
+        },
+        "capi": [
+          {
+            "passed": 185,
+            "failed": 0,
+            "ignored": 0,
+            "filtered": 0,
+            "elapsed_seconds": 9.35
+          },
+          {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "filtered": 0,
+            "elapsed_seconds": 0.0
+          }
+        ]
       }
     }
   ],

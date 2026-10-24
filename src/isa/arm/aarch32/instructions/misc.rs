@@ -257,6 +257,9 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
             Mnemonic::VST3 => self.exec_vst3_multiple(insn),
             Mnemonic::VLD4 => self.exec_vld4_multiple(insn),
             Mnemonic::VST4 => self.exec_vst4_multiple(insn),
+            Mnemonic::VMOV_F16_CORE | Mnemonic::VMOVX_F16 | Mnemonic::VINS_F16 => {
+                self.exec_half_register_move(insn)
+            }
             Mnemonic::VMOV => self.exec_vmov(insn),
             Mnemonic::VMOVL => self.exec_neon_widen_move(insn),
             Mnemonic::VMOVN | Mnemonic::VQMOVN | Mnemonic::VQMOVUN => {

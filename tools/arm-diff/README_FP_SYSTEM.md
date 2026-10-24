@@ -1,107 +1,72 @@
 # A32/T32 floating-point system oracle
 
-`fp_system_oracle.py` compares RAX with a separate bare-metal program running
-under `qemu-system-arm -cpu max -machine virt -accel tcg,thread=single`.
-LLVM assembles both instruction states. The guest loads every D register and
-FPSCR, executes one instruction, and records every D register and FPSCR.
-
-This complements `oracle-a32.c`, whose Linux user-mode signal-frame protocol
-also covers general registers and scratch memory. The system oracle requires
-LLVM (`llvm-mc` and `ld.lld` in one directory), `qemu-system-arm`, the stable
-Rust toolchain and the repository's cached Cargo dependencies.
-
-From the repository root:
+This standalone oracle executes selected instructions in a bare-metal QEMU guest
+and compares exact state with RAX. It requires Python3.10+, stable Rust, LLVM
+(`llvm-mc`/`ld.lld`), and `qemu-system-arm`; no ARM libc/sysroot is required.
 
 ```sh
 python3 tools/arm-diff/fp_system_oracle.py \
     --llvm-bin /path/to/llvm/bin \
-    --target-dir /path/to/native/cargo-target \
-    --work-dir /path/to/empty-oracle-directory
+    --work-dir /Users/int/dev/rax-audit-work/rax-a32-fp-system-v3 \
+    --target-dir /Users/int/dev/rax-audit-work/rax-a32-fp-system-target
 ```
 
-An omitted work directory creates a retained temporary directory. Reusing a
-directory requires its oracle ownership marker. `LLVM_BIN` or the directory
-containing `llvm-mc` supplies the LLVM location when `--llvm-bin` is omitted.
-The RAX library is built with stable Cargo, `--locked --offline` and
-`--no-default-features --features x86_64-suite,smir-jit`. Cargo's reported
-library artifact supplies the standalone comparison runner.
+Cargo builds with stable Rust, `--locked --offline`, and
+`--no-default-features --features x86_64-suite,smir-jit`. The runner links the
+exact library artifact identified by Cargo. `--repo`, `--qemu` and `--timeout`
+are available; `--llvm-bin` can also be supplied through `LLVM_BIN` or PATH.
 
-The version 2 corpus executes 140 instruction pairs, two instruction states,
-32 operand samples and 64 FPSCR control profiles:
+Version3 executes144 instruction pairs in both states with32 operand samples
+and64 RM/FZ/DN/AHP/FZ16 control profiles:589824 complete comparisons. Samples
+include edge bits, seeded operands and initially sticky status. A32/T32 receive
+identical inputs. The original140-pair numerical corpus is retained; the four
+new pairs cover VMOVX, VINS and both core/half-register transfer directions.
+GPR samples have a separate seed stream so prior D/FPSCR inputs remain intact.
 
-```text
-140 * 2 * 32 * 64 = 573440 state comparisons
-```
+Every case must execute and match. Missing tools, timeouts, guest failure,
+missing completion markers, short output, source mutation or any mismatch fail
+the command. The work directory retains the ELF, input/reference records,
+per-instruction counts, mismatch details, command/version/timing records,
+source fingerprints, tool hashes and linked-library SHA. A version3 ownership
+marker prevents overwriting unrelated directories or version2 evidence.
 
-It includes scalar binary16/32/64 arithmetic and integral rounding, precision
-conversions, scalar half/integer and directed vector half/integer conversion,
-reciprocal estimates/refinement, and vector/indexed mixed-precision FMA.
-The same operation receives identical operand samples in A32 and T32.
+The little-endian wire format is fixed:
 
-| FPSCR field | Bits | Values |
-| --- | --- | --- |
-| RM | 23:22 | Nearest-even, up, down, zero |
-| FZ | 24 | 0, 1 |
-| DN | 25 | 0, 1 |
-| AHP | 26 | 0, 1 |
-| FZ16 | 19 | 0, 1 |
-
-The first 24 operand samples rotate explicit zero, signed zero, subnormal,
-normal, infinity, quiet/signaling NaN and integer-boundary encodings across
-all D registers. The last eight use deterministic seeded 64-bit register
-values. Samples 28 through 31 additionally exercise initial cumulative
-status values 0, IOC, IDC and all arithmetic flags. Floating exception enable
-bits, VFP short-vector length and stride are clear.
-
-The binary protocol is little-endian:
-
-| Record | Byte offset | Field | Size in bytes |
+| Record | Offset (bytes) | Field | Size (bytes) |
 | --- | ---: | --- | ---: |
-| Input | 0 | State: 0=A32, 1=T32 | 4 |
-| Input | 4 | Instruction word; T32 uses first halfword in bits 31:16 | 4 |
+| Input | 0 | State:0 A32,1 T32 | 4 |
+| Input | 4 | Instruction word; T32 high halfword first in the word | 4 |
 | Input | 8 | FPSCR | 4 |
-| Input | 12 | D0 through D31 | 256 |
-| Result | 0 | D0 through D31 | 256 |
+| Input | 12 | D0-D31 | 256 |
+| Input | 268 | R0 | 4 |
+| Input | 272 | R1 | 4 |
+| Result | 0 | D0-D31 | 256 |
 | Result | 256 | FPSCR | 4 |
+| Result | 260 | R0 | 4 |
+| Result | 264 | R1 | 4 |
 
-Each input is 268 bytes and each result is 260 bytes. The complete corpus has
-153681920 input bytes and 149094400 result bytes. The guest uses one writable
-RAM segment at `0x40010000` inside 256 MiB of emulated RAM. Each patched ARM or
-Thumb slot is followed by an interworking return. The instruction and data
-caches remain in their reset state.
+Inputs/results are276/268 bytes, respectively:162791424/158072832 bytes for the
+complete corpus. Guest RAM is256MiB. Generation streams input records; the
+comparator uses O(N) host buffer memory and O(N) time for N cases with a fixed
+register count. All sources and artifact hashes are recorded for reproduction.
 
-A missing tool, assembly error, guest timeout, unsuccessful guest completion,
-incomplete output, unexpected RAX exception or any register/status mismatch
-causes a nonzero exit. `report.json` records every instruction's counters;
-`manifest.json` records commands, tool versions, revision, timing, source fingerprints and artifact
-hashes. Source and library-artifact changes during a run fail validation. The generated source, guest ELF, input/output records, compiler logs
-and mismatch details remain in the work directory.
+The listed operations use registers only. The captured state is complete
+D0-D31, FPSCR, R0 and R1; other GPRs, PC, memory and exception delivery are not
+covered. Exception enables remain clear. This is independent system emulation;
+physical A32 hardware, unlisted instructions/profiles and other architectures
+require separate validation. The existing Linux user-mode ARM oracle is unchanged.
 
-Coverage is bounded to the selected register-only instructions and disabled
-floating exception enables. General registers, guest memory behavior,
-exception delivery, unlisted instructions and other architecture profiles
-remain separate validation. QEMU supplies an independent software oracle;
-native A64 numerical tests and the pinned Arm instruction/shared operations
-provide separate evidence.
-
-Version 2 adds half/double precision conversion, scalar fixed conversion at
-16/32/64-bit floating precision and 16/32-bit integer width, SIMD half integer
-and fixed conversion, high SIMD register fields, half vector FMA, and half/single
-number min/max. The protocol is unchanged; the 140 instruction pairs require
-256 MiB guest RAM. Python 3.10 or newer is required.
-
-A separate register probe checks the default non-trapping FPSCR contract:
+A separate probe checks the default non-trapping FPSCR register contract:
 
 ```sh
 python3 tools/arm-diff/fpscr_profile_oracle.py \
     --llvm-bin /path/to/llvm/bin \
-    --work-dir /tmp/rax-fpscr-register-oracle
+    --work-dir /Users/int/dev/rax-audit-work/rax-fpscr-register-oracle
 ```
 
-It checks MVFR0.FPTrap=0 and all32768 combinations of A32/T32 system-register
-access,64 supported floating controls and256 exception/reserved-byte values.
-Bits15:8 read zero while rounding, DN, FZ, AHP, FZ16, NZCV, QC and sticky status
-remain intact. A missing tool, timeout, failed guest or missing completion marker
-fails the command. Logs, tool versions, source/ELF hashes and command timings are
-retained. This is independent system emulation for the selected register contract;
-physical A32 hardware and optional trapped profiles are separate validation.
+It independently checks MVFR0.FPTrap=0 and all32768 combinations of A32/T32
+access,64 supported controls and256 exception/reserved-byte values. Bits15:8
+read zero; rounding, DN, FZ, AHP, FZ16, NZCV, QC and sticky status remain intact.
+Every command must succeed with the exact guest completion marker. Commands,
+versions, timings and source/ELF hashes are retained. Optional trapped profiles
+and physical A32 hardware are separate validation.

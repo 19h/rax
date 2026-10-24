@@ -1069,6 +1069,9 @@ impl Aarch32Decoder {
     }
 
     fn decode_coprocessor_dp(raw: u32) -> Result<DecodedInsn, DecodeError> {
+        if let Some(insn) = Self::decode_vfp_half_register(raw) {
+            return Ok(insn);
+        }
         if let Some(insn) = Self::decode_vfp_conditional_select(raw) {
             return Ok(insn);
         }
@@ -1252,3 +1255,5 @@ impl Aarch32Decoder {
 }
 
 mod fp_conversion;
+
+mod fp_register;

@@ -1196,12 +1196,18 @@ pub enum Mnemonic {
     VCVTP_U16_F16,
     VCVTM_S16_F16,
     VCVTM_U16_F16,
+    VMOV_F16_CORE,
+    VMOVX_F16,
+    VINS_F16,
 }
 
 impl Mnemonic {
     /// Get the string representation of this mnemonic.
     pub fn as_str(&self) -> &'static str {
         match self {
+            Mnemonic::VMOV_F16_CORE => "vmov.f16",
+            Mnemonic::VMOVX_F16 => "vmovx.f16",
+            Mnemonic::VINS_F16 => "vins.f16",
             Mnemonic::VCVTB_F64_F16 => "vcvtb.f64.f16",
             Mnemonic::VCVTT_F64_F16 => "vcvtt.f64.f16",
             Mnemonic::VCVTB_F16_F64 => "vcvtb.f16.f64",

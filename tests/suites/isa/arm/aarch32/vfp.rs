@@ -7102,3 +7102,6 @@ mod fp_profile_matrix;
 
 #[path = "fp_nontrapping_profile.rs"]
 mod fp_nontrapping_profile;
+
+#[path = "fp_half_register.rs"]
+mod fp_half_register;

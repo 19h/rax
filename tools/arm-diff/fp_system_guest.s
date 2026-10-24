@@ -33,10 +33,16 @@ case_loop:
     vldmia r0!,{d16-d31}
     ldr r0,[r4,#8]
     vmsr fpscr,r0
+    mov r10,r1
+    ldr r0,[r4,#268]
+    ldr r1,[r4,#272]
     adr lr,after_slot
-    bx r1
+    bx r10
 after_slot:
-    ldr r0,=output
+    ldr r2,=output
+    str r0,[r2,#260]
+    str r1,[r2,#264]
+    mov r0,r2
     vstmia r0!,{d0-d15}
     vstmia r0!,{d16-d31}
     vmrs r1,fpscr
@@ -47,7 +53,7 @@ after_slot:
     svc #0x123456
     cmp r0,#0
     bne failed_write
-    add r4,r4,#268
+    add r4,r4,#276
     subs r5,r5,#1
     bne case_loop
     ldr r1,=close_args
@@ -97,11 +103,11 @@ filename_end:
 open_args:
     .word filename,5,filename_end-filename
 write_args:
-    .word 0,output,260
+    .word 0,output,268
 close_args:
     .word 0
 exit_args:
     .word 0x20026,0
 output:
-    .space 260
+    .space 268
 .include "cases.inc"

@@ -13,16 +13,16 @@ fn main() {
     let cases = std::fs::read(args.next().expect("cases path")).expect("read cases");
     let oracle = std::fs::read(args.next().expect("oracle path")).expect("read oracle");
     assert!(args.next().is_none(), "unexpected arguments");
-    assert_eq!(cases.len() % 268, 0);
-    let count = cases.len() / 268;
-    assert_eq!(oracle.len(), count * 260);
+    assert_eq!(cases.len() % 276, 0);
+    let count = cases.len() / 276;
+    assert_eq!(oracle.len(), count * 268);
     assert_eq!(count % 2048, 0);
     let mut memory = FlatMemory::new(4096, 0);
     for group in 0..count / 2048 {
         let (mut bad, mut reg_bad, mut flag_bad, mut undefined) = (0, 0, 0, 0);
         for i in group * 2048..(group + 1) * 2048 {
-            let b = &cases[i * 268..(i + 1) * 268];
-            let q = &oracle[i * 260..(i + 1) * 260];
+            let b = &cases[i * 276..(i + 1) * 276];
+            let q = &oracle[i * 268..(i + 1) * 268];
             let thumb = u32_at(b, 0) != 0;
             let raw = u32_at(b, 4);
             let mut cpu = Armv7Cpu::new();
@@ -31,6 +31,8 @@ fn main() {
             for j in 0..32 {
                 cpu.vfp.dregs[j] = u64_at(b, 12 + j * 8);
             }
+            cpu.regs[0] = u32_at(b, 268);
+            cpu.regs[1] = u32_at(b, 272);
             let insn = if thumb {
                 ThumbDecoder::decode_32bit(raw)
             } else {
@@ -42,7 +44,8 @@ fn main() {
                     ExecResult::Continue
                 )
             });
-            let registers = (0..32).any(|j| cpu.vfp.dregs[j] != u64_at(q, j * 8));
+            let registers = (0..32).any(|j| cpu.vfp.dregs[j] != u64_at(q, j * 8))
+                || (0..2).any(|j| cpu.regs[j] != u32_at(q, 260 + j * 4));
             let flags = cpu.vfp.fpscr.bits() != u32_at(q, 256);
             if !admitted {
                 undefined += 1;
@@ -65,6 +68,11 @@ fn main() {
                     for j in 0..32 {
                         if cpu.vfp.dregs[j] != u64_at(q, j * 8) {
                             eprint!(" d{j}={:016x}/{:016x}", cpu.vfp.dregs[j], u64_at(q, j * 8));
+                        }
+                    }
+                    for j in 0..2 {
+                        if cpu.regs[j] != u32_at(q, 260 + j * 4) {
+                            eprint!(" r{j}={:08x}/{:08x}", cpu.regs[j], u32_at(q, 260 + j * 4));
                         }
                     }
                     eprintln!();
