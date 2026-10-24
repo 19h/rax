@@ -145,10 +145,38 @@ mod tests {
     #[cfg(target_os = "macos")]
     #[test]
     fn native_runtime_executes_system_programs_in_a_closed_process() {
+        use crate::user::darwin::abi::DarwinAbi;
+        let files = native(&Files::default()).expect("macOS host dyld and shared cache");
+        // The runtime belongs to the host OS. A translated x86-64 test process
+        // on Apple silicon need not have an x86-64 cache installed. Exercise
+        // each supplied cache ABI explicitly, independently of the compiler ABI.
+        let mut abis = Vec::new();
+        for (abi, name) in [
+            (DarwinAbi::Arm64, "arm64e"),
+            (DarwinAbi::Arm64, "arm64"),
+            (DarwinAbi::X86_64, "x86_64h"),
+            (DarwinAbi::X86_64, "x86_64"),
+        ] {
+            let path = format!("/System/Library/dyld/dyld_shared_cache_{name}");
+            if files.lookup(&path).is_ok() && !abis.contains(&abi) {
+                abis.push(abi);
+            }
+        }
+        assert!(
+            !abis.is_empty(),
+            "no supported primary shared cache supplied"
+        );
+        for abi in abis {
+            eprintln!("closed native runtime cache ABI: {abi:?}");
+            run_system_programs(&files, abi);
+        }
+    }
+
+    #[cfg(target_os = "macos")]
+    fn run_system_programs(files: &Files, abi: crate::user::darwin::abi::DarwinAbi) {
         use crate::user::darwin::{
             DarwinConfig, DarwinProcess, ExitStatus, RunStatus, loader::ImageFile,
         };
-        let files = native(&Files::default()).expect("macOS host dyld and shared cache");
         for (path, arguments, expected) in [
             ("/usr/bin/true", vec![], ""),
             (
@@ -162,6 +190,7 @@ mod tests {
             argv.extend(arguments);
             let mut config =
                 DarwinConfig::embedded("/program", argv, vec![], files.clone(), console.clone());
+            config.abi = Some(abi);
             config.arena_bytes = 256 << 20;
             config.slice_insns = 4096;
             let image = ImageFile::new(std::fs::read(path).unwrap(), "/program");

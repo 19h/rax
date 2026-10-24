@@ -632,13 +632,20 @@
       "id": "C-DARWIN-RUNTIME-ROSETTA",
       "area": "Darwin runtime provisioning",
       "finding": "The x86-64 closed-process system-program test cannot load libSystem.B.dylib because no x86 dyld cache is available; parent and current source fail identically.",
-      "status": "pending",
+      "status": "locally_validated",
       "evidence": [
         "/tmp/rax-rosetta-parent-host-failures.log",
         "/tmp/rax-rosetta-parent-host-failures.json",
-        "/tmp/rax-x86-priv-rosetta-library-final.log"
+        "/tmp/rax-x86-priv-rosetta-library-final.log",
+        "src/user/darwin/runtime_files.rs",
+        "/tmp/rax-darwin-runtime-profile/owning-arm.log",
+        "/tmp/rax-darwin-runtime-profile/owning-validated-rosetta.log",
+        "/tmp/rax-darwin-runtime-profile/final-rosetta-library.log"
       ],
-      "cause": "unknown"
+      "cause": "Fixture selected the compiler x86-64 ABI on an Apple-silicon host that supplies only arm64e caches. It now explicitly executes each supplied cache ABI.",
+      "remaining_validation": [
+        "A matching supplied x86 cache and x86 closed-runtime execution; no product default ABI behavior was changed."
+      ]
     },
     {
       "id": "C-THREAD-CLOCK-ROSETTA",
@@ -950,6 +957,21 @@
       ],
       "remaining_validation": [
         "Independent QEMU or physical Hexagon comparison; unrepresented controls explicitly defer"
+      ]
+    },
+    {
+      "id": "C-PTRACE-FAMILY-ADOPTION",
+      "area": "Linux user-mode tracing transport",
+      "finding": "Grandchild tracing-link adoption intermittently disappears after the intermediate process exits. Current and isolated 0c4ea9b5 binaries each reproduce 2 failures in 200 isolated owning-suite repetitions under Rosetta.",
+      "status": "pending",
+      "cause": "unknown",
+      "evidence": [
+        "src/user/linux/ptrace/family.rs",
+        "src/user/linux/ptrace/mod.rs",
+        "src/user/linux/net/sys.rs",
+        "/tmp/rax-darwin-runtime-profile/final-rosetta-library.log",
+        "/tmp/rax-darwin-runtime-profile/ptrace-repeats.json",
+        "/tmp/rax-darwin-runtime-profile/ptrace-parent-repeats.json"
       ]
     }
   ],
@@ -3879,6 +3901,116 @@
         {
           "impact": "low",
           "item": "Corrected the nearby FPSCR register-layout documentation for DN/AHP/QC, Stride/Len, FZ16 and exception fields. This documents bit positions without claiming enabled-trap or complete half-precision execution.",
+          "blocks": false
+        }
+      ]
+    },
+    {
+      "id": "darwin-native-runtime-fixture-profile",
+      "baseline": "ea91ce6a965b4b30d3f92a647b585b5319db222b",
+      "status": "locally_validated",
+      "scope": "Select each actually supplied primary shared-cache ABI explicitly in the closed-runtime fixture. Execute true and printf, require a mapped shared region, closed namespace, disabled host services and exact exit/output. Product ABI selection and runtime provisioning are unchanged.",
+      "primary_source": [
+        {
+          "path": "src/user/darwin/loader.rs",
+          "basis": "choose_abi(None) prefers the compiler-target architecture for fat images; an explicit preferred ABI selects only that slice."
+        },
+        {
+          "path": "src/user/darwin/runtime_files.rs",
+          "basis": "native supplies host cache files without guaranteeing a cache for the test process compiler ABI."
+        },
+        {
+          "artifact": "/System/Volumes/Preboot/Cryptexes/OS/System/Library/dyld/dyld_shared_cache_arm64e",
+          "header": "dyld_v1  arm64e\\0",
+          "basis": "Host inventory supplies arm64e; no x86 primary cache was observed."
+        }
+      ],
+      "assumptions": [
+        {
+          "assumption": "The supplied runtime cache ABI can differ from the compiler ABI under Rosetta.",
+          "dependent_result": "The fixture must explicitly select a supplied ABI while preserving the product default ABI contract.",
+          "stress_test": "Native ARM and translated x86 owning tests both report Arm64 and execute both system programs. Candidate names cover arm64e/arm64 and x86_64h/x86_64, deduplicate ABI families, and assert at least one supported primary cache.",
+          "falsification_probe": "The fixture silently skips all runtimes, changes product ABI defaults, enables host services, or a supplied ABI fails image execution."
+        },
+        {
+          "assumption": "The ptrace family failure observed in the complete rerun is independently pre-existing.",
+          "dependent_result": "Fixing cache-profile selection does not establish a clean complete library run.",
+          "stress_test": "Current and isolated 0c4ea9b5 binaries each fail twice in 200 isolated ptrace owning-suite repetitions. Current and parent family.rs/net/sys.rs are byte-identical.",
+          "falsification_probe": "The parent cannot reproduce or the transport code differs in the fixture group."
+        }
+      ],
+      "baseline_results": {
+        "closed_runtime_rosetta": "The prior complete run fails this fixture with unavailable x86 libSystem/shared cache; isolated earlier parent reproduces the same failure.",
+        "logs": [
+          "/tmp/rax-rosetta-parent-host-failures.log",
+          "/tmp/rax-darwin-host/final-rosetta-library.log"
+        ]
+      },
+      "affected_planes": {
+        "product": "No implementation, public ABI, file-provider, default ABI, decoder, IR, JIT, backend or checkpoint changes.",
+        "test": "Actual closed-process image execution is retained; each supplied runtime ABI is selected explicitly. The test reports the executed ABI and rejects an empty supported inventory."
+      },
+      "validation": {
+        "owning_arm": {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 10425,
+          "elapsed_seconds": 8.42,
+          "runtime_abi": "Arm64"
+        },
+        "owning_rosetta": {
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 11420,
+          "elapsed_seconds": 16.9,
+          "runtime_abi": "Arm64"
+        },
+        "complete_rosetta_library": {
+          "passed": 11419,
+          "failed": 1,
+          "ignored": 2,
+          "filtered": 0,
+          "elapsed_seconds": 396.94,
+          "failure": "user::linux::ptrace::family::tests::grandchild_ptrace_links_survive_the_intermediate_process",
+          "scope": "Closed runtime, clock and timer tests all pass; separate reproducible ptrace transport/adoption defect remains pending."
+        },
+        "all_targets_build": "passed",
+        "clippy_all_targets": "passed",
+        "format": "passed",
+        "doctests": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 5
+        },
+        "logs": [
+          "/tmp/rax-darwin-runtime-profile/owning-arm.log",
+          "/tmp/rax-darwin-runtime-profile/owning-validated-rosetta.log",
+          "/tmp/rax-darwin-runtime-profile/final-rosetta-library.log",
+          "/tmp/rax-darwin-runtime-profile/ptrace-repeats.json",
+          "/tmp/rax-darwin-runtime-profile/ptrace-parent-repeats.json",
+          "/tmp/rax-darwin-host/final-build.log",
+          "/tmp/rax-darwin-host/final-clippy.log",
+          "/tmp/rax-a32-conversion/final-fmt.log",
+          "/tmp/rax-darwin-host/final-doc.log"
+        ],
+        "intermediate_notes": "The first runtime test edit used an unavailable root-module DarwinAbi re-export; the corrected explicit abi::DarwinAbi build and both owning runs are final evidence."
+      },
+      "bounded_scope": [
+        {
+          "impact": "high",
+          "item": "The x86-64 closed-runtime profile still requires a matching supplied x86 cache. This host validates the Arm64 cache under both compiler architectures; no unavailable-cache success is claimed.",
+          "blocks": false
+        },
+        {
+          "impact": "high",
+          "item": "C-PTRACE-FAMILY-ADOPTION is pending after reproduction on current and isolated parent binaries; the full Rosetta suite is not green. The remaining audit plan is still active.",
+          "blocks": "Complete remediation plan."
+        },
+        {
+          "impact": "low",
+          "item": "Inventory checks use four path lookups and at most two ABI entries; no additional runtime caches are copied, generated or installed.",
           "blocks": false
         }
       ]
