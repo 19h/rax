@@ -372,10 +372,32 @@
         "/tmp/rax-a32-rounding/final-library.log",
         "/tmp/rax-a32-rounding/final-rosetta-vfp.log",
         "/tmp/rax-a32-rounding/final-capi.log",
-        "/tmp/rax-a32-rounding/checks.jsonl"
+        "/tmp/rax-a32-rounding/checks.jsonl",
+        "src/smir/interpret/arm_reciprocal.rs",
+        "src/isa/arm/aarch32/vfp/reciprocal.rs",
+        "src/isa/arm/aarch32/instructions/neon/reciprocal.rs",
+        "tests/suites/isa/arm/aarch32/fp_recip_decoded.rs",
+        "tests/suites/isa/arm/aarch32/fp_recip_native.rs",
+        "/tmp/rax-a32-reciprocal/parent-decoded-red.log",
+        "/tmp/rax-a32-reciprocal/llvm-words.log",
+        "/tmp/rax-a32-reciprocal/quantizer-bounds.json",
+        "/tmp/rax-a32-reciprocal/worktree-vfp.log",
+        "/tmp/rax-a32-reciprocal/worktree-vfp-final.log",
+        "/tmp/rax-a32-reciprocal/worktree-integration.log",
+        "/tmp/rax-a32-reciprocal/worktree-fmt.log",
+        "/tmp/rax-a32-reciprocal/final-build.log",
+        "/tmp/rax-a32-reciprocal/final-vfp.log",
+        "/tmp/rax-a32-reciprocal/final-integration.log",
+        "/tmp/rax-a32-reciprocal/final-clippy.log",
+        "/tmp/rax-a32-reciprocal/final-fmt.log",
+        "/tmp/rax-a32-reciprocal/final-doc.log",
+        "/tmp/rax-a32-reciprocal/final-library.log",
+        "/tmp/rax-a32-reciprocal/final-rosetta-vfp.log",
+        "/tmp/rax-a32-reciprocal/final-capi.log",
+        "/tmp/rax-a32-reciprocal/checks.jsonl"
       ],
       "remaining_validation": [
-        "Complete FP16/FZ16/AHP profiles, unimplemented 16-bit fixed encodings and remaining Advanced SIMD estimate/step families",
+        "Complete FP16/FZ16/AHP profiles including half-precision estimate/step behavior, and unimplemented 16-bit fixed encodings",
         "Enabled floating-point exception delivery",
         "Native A32 hardware or independent A32 system oracle"
       ]
@@ -5231,6 +5253,382 @@
         "worktree_integrity": "Root imports were guarded against the integer-only hash snapshot. Only the exact rounding-owned paths and this ledger are staged; reciprocal experiments remain confined to the scratch checkout.",
         "behavioral_evidence": "All applicable owning tests execute, with zero filtered tests. A64-specific cfg elision on translated x86 is counted separately.",
         "repository_consistency": "Public helper signatures and serialization unchanged; new modules are registered and remain below source size limits."
+      }
+    },
+    {
+      "id": "a32-reciprocal-estimate-and-staged-step",
+      "status": "locally_validated",
+      "scope": "Binary32 reciprocal/reciprocal-square-root estimates, explicit cumulative flags, standard Advanced SIMD controls and A32 nonfused refinement steps. Preserve integer estimate behavior and retain the legacy FP16 path for its separate profile repair.",
+      "assumptions": [
+        {
+          "id": "RCP1",
+          "assumption": "A32 VRECPS/VRSQRTS use a separately rounded product before subtraction or halved subtraction.",
+          "basis": "Pinned aarch32_VRECPS_A/aarch32_VRSQRTS_A invoke FPRecipStep/FPRSqrtStep; these explicitly call FPMul before FPSub/FPHalvedSub. A64 uses distinct Fused operations.",
+          "dependent_result": "Replace host fused original-operand arithmetic with exact guest-controlled product and staged subtraction.",
+          "stress_test": "Inputs 0x3f800001 * 0x3ffffffe and 0x3f800001 * 0x403fffff distinguish the rounded product from fused residuals. Include product overflow/underflow and 40000 edge/seeded pairs.",
+          "falsification_probe": "The corrected A32 result retains a fused residual or differs from actual native FMUL followed by the required subtraction operation.",
+          "status": "retained"
+        },
+        {
+          "id": "RCP2",
+          "assumption": "StandardFPSCRValue fixes binary32 rounding to nearest-even, DN/FZ to one and does not suppress cumulative exception flags.",
+          "basis": "Pinned StandardFPSCRValue and FPProcessException: disabled trap enables select FPSCR cumulative-bit updates.",
+          "dependent_result": "Use standard numerical controls per SIMD instruction and merge only sticky status into the preserved guest FPSCR.",
+          "stress_test": "Vary live RM with DN/FZ clear; subnormal inputs, signaling and quiet NaNs, zero/infinity, underflow and overflow. Assert complete D-register array, FPSCR and CPSR.",
+          "falsification_probe": "Guest RM changes a vector result, controls change, or required cumulative bits are absent.",
+          "status": "retained"
+        },
+        {
+          "id": "RCP3",
+          "assumption": "FPHalvedSub(3, rounded_product) can be evaluated as FPMulAdd(1.5, -rounded_product, 0.5) under standard controls.",
+          "basis": "Both evaluate exactly (3-product)/2 before one rounding. The first operand 3 is finite and positive; the product is already rounded/flushed or the explicitly positive zero for zero-times-infinity. NaNs are processed before the multiplication.",
+          "dependent_result": "Reuse the independently validated bit-level FPMulAdd evaluator after the required product rounding, without adding a second final rounding.",
+          "stress_test": "Native FMUL then FMSUB oracle, exact cancellation, infinities, subnormal inputs and intermediate overflow/underflow.",
+          "falsification_probe": "Any required special case or cumulative flag differs from the pinned FPHalvedSub operation.",
+          "status": "retained"
+        },
+        {
+          "id": "RCP4",
+          "assumption": "A64 FRECPE/FRSQRTE with ordinary controls implement the same shared binary32 estimate operation as the selected A32 profile.",
+          "basis": "The pinned shared FPRecipEstimate/FPRSqrtEstimate functions are selected by A32 instruction operations. Native oracle explicitly sets FPCR and leaves alternative/reduced-precision modes clear.",
+          "dependent_result": "Use actual A64 estimate execution for common-operation result-bit/status comparisons; test A32/Thumb decoding and standard controls separately.",
+          "stress_test": "40000 edge/seeded inputs, all four rounding controls, FZ and DN, both estimate operations: 1280000 comparisons.",
+          "falsification_probe": "Any exact result-bit/status mismatch, or a profile-specific operation difference in an authoritative source.",
+          "status": "retained"
+        }
+      ],
+      "baseline_results": {
+        "decoded_instruction": {
+          "passed": 3,
+          "failed": 6,
+          "ignored": 0,
+          "filtered": 0
+        }
+      },
+      "primary_sources": [
+        {
+          "path": "docs/architecture/arm/asl/arm_defs.asl",
+          "sha256": "1ade68e5dacfff1b63a42ad3ee1c426aae5d36ed5dfcbf39de4baab478a190f8",
+          "functions": [
+            "FPRecipEstimate",
+            "FPRSqrtEstimate",
+            "RecipEstimate",
+            "RecipSqrtEstimate",
+            "FPRecipStep",
+            "FPRSqrtStep",
+            "FPHalvedSub",
+            "StandardFPSCRValue",
+            "FPProcessException",
+            "FPRecipStepFused",
+            "FPRSqrtStepFused"
+          ]
+        },
+        {
+          "path": "docs/architecture/arm/asl/arm_instrs.asl",
+          "sha256": "3c91ece6d0509f7ce9e8b2d8fa623787d7c7acb4cb24040a75cec5aa2789e611",
+          "operations": [
+            "aarch32_VRECPE_A",
+            "aarch32_VRSQRTE_A",
+            "aarch32_VRECPS_A",
+            "aarch32_VRSQRTS_A"
+          ]
+        },
+        {
+          "path": "docs/specifications/arm/DDI0568A_b_armv8_r_supplement.pdf",
+          "sha256": "320367c6ec4c13949fde2153862580d9915510a92410e23652b1fd103f26a0a0",
+          "section": "H1.3 AArch32 FPRecipStep/FPRSqrtStep, shared estimate and exception operations."
+        },
+        "LLVM 23.0.0git /Users/int/local/bin/llvm-mc encoding output for all tested A32/T32 instructions."
+      ],
+      "bounded_scope": [
+        {
+          "impact": "high",
+          "item": "FP16 estimate/step and the complete FP16/FZ16/AHP profile remain pending; existing half-precision execution is retained by this binary32 group.",
+          "blocks": "Complete A32-FP remediation."
+        },
+        {
+          "impact": "high",
+          "item": "Actual A64 common arithmetic is not native A32 execution or enabled floating-point trap proof. A32/Thumb lifters continue to reject unrepresented FPSCR operations.",
+          "blocks": "Independent A32 oracle and trap work."
+        },
+        {
+          "impact": "medium",
+          "item": "The previous estimate comment confused disabled traps with suppressed cumulative flags. The new binary32 owner follows architectural FPProcessException; the legacy FP16 fixture is not treated as a status oracle.",
+          "blocks": false
+        }
+      ],
+      "baseline": "30a9c787e93669ac9643330a61d8e24f6086f946",
+      "validation": {
+        "checks": [
+          {
+            "check": "final-build",
+            "args": [
+              "cargo",
+              "+stable",
+              "build",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--all-targets"
+            ],
+            "code": 0,
+            "seconds": 217.1288622909924
+          },
+          {
+            "check": "final-vfp",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--test",
+              "arm_vfp_a32",
+              "--",
+              "--test-threads=4"
+            ],
+            "code": 0,
+            "seconds": 1.7002382499631494
+          },
+          {
+            "check": "final-integration",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--test",
+              "arm",
+              "--test",
+              "isa_oracle",
+              "--",
+              "--test-threads=4"
+            ],
+            "code": 0,
+            "seconds": 27.894985583028756
+          },
+          {
+            "check": "final-clippy",
+            "args": [
+              "cargo",
+              "+stable",
+              "clippy",
+              "--locked",
+              "--offline",
+              "--all-targets",
+              "--features",
+              "x86_64-suite"
+            ],
+            "code": 0,
+            "seconds": 78.3438382500317
+          },
+          {
+            "check": "final-fmt",
+            "args": [
+              "cargo",
+              "+stable",
+              "fmt",
+              "--all",
+              "--check"
+            ],
+            "code": 0,
+            "seconds": 12.985608291928656
+          },
+          {
+            "check": "final-doc",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--doc"
+            ],
+            "code": 0,
+            "seconds": 4.88349204196129
+          },
+          {
+            "check": "final-library",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--lib",
+              "--",
+              "--test-threads=4"
+            ],
+            "code": 0,
+            "seconds": 417.60773975006305
+          },
+          {
+            "check": "final-rosetta-vfp",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--target",
+              "x86_64-apple-darwin",
+              "--test",
+              "arm_vfp_a32",
+              "--",
+              "--test-threads=4"
+            ],
+            "code": 0,
+            "seconds": 34.7655352500733
+          },
+          {
+            "check": "final-capi",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "-p",
+              "rax-capi",
+              "--",
+              "--test-threads=4"
+            ],
+            "code": 0,
+            "seconds": 40.86805383407045
+          }
+        ],
+        "complete_library": {
+          "passed": 10433,
+          "failed": 0,
+          "ignored": 2,
+          "filtered": 0,
+          "elapsed_seconds": 417.5
+        },
+        "complete_vfp_arm": {
+          "passed": 271,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0,
+          "elapsed_seconds": 1.55
+        },
+        "complete_vfp_rosetta": {
+          "passed": 253,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0,
+          "elapsed_seconds": 0.01
+        },
+        "doctests": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 5,
+          "filtered": 0,
+          "elapsed_seconds": 0.0
+        },
+        "integration": {
+          "arm": {
+            "passed": 46850,
+            "failed": 0,
+            "ignored": 0,
+            "filtered": 0,
+            "elapsed_seconds": 27.62
+          },
+          "isa_oracle": {
+            "passed": 101,
+            "failed": 0,
+            "ignored": 0,
+            "filtered": 0,
+            "elapsed_seconds": 0.16
+          }
+        },
+        "capi": [
+          {
+            "passed": 185,
+            "failed": 0,
+            "ignored": 0,
+            "filtered": 0,
+            "elapsed_seconds": 8.49
+          },
+          {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "filtered": 0,
+            "elapsed_seconds": 0.0
+          }
+        ],
+        "native_arithmetic": {
+          "estimate_comparisons": 1280000,
+          "staged_step_comparisons": 320000,
+          "integer_quantizer_comparisons": 3072,
+          "seeds": [
+            "0x31b98ec2754ad60f",
+            "0xe7a26d539c4018bf"
+          ],
+          "scope": "Actual A64 FRECPE/FRSQRTE compare shared estimate bits and flags under all four RM, FZ and DN controls. A32 step oracle uses native FMUL followed by FSUB or FMSUB for one halved subtraction; A64 fused estimate-step instructions are used only for the zero-times-infinity special case. All 512 integer input indices are checked at three low-bit frontiers for both integer estimate operations. No native A32 execution claim."
+        },
+        "rosetta_cfg_elision": "18 A64-only oracle tests are cfg-elided. All 253 applicable owning tests execute.",
+        "quantizer_bounds": {
+          "sqrt_input_count": 384,
+          "maximum_loop_increments": 510,
+          "maximum_checked_product": 269397130,
+          "integer_width": 64
+        },
+        "logs": [
+          "/tmp/rax-a32-reciprocal/parent-decoded-red.log",
+          "/tmp/rax-a32-reciprocal/llvm-words.log",
+          "/tmp/rax-a32-reciprocal/quantizer-bounds.json",
+          "/tmp/rax-a32-reciprocal/worktree-vfp.log",
+          "/tmp/rax-a32-reciprocal/worktree-vfp-final.log",
+          "/tmp/rax-a32-reciprocal/worktree-integration.log",
+          "/tmp/rax-a32-reciprocal/worktree-fmt.log",
+          "/tmp/rax-a32-reciprocal/final-build.log",
+          "/tmp/rax-a32-reciprocal/final-vfp.log",
+          "/tmp/rax-a32-reciprocal/final-integration.log",
+          "/tmp/rax-a32-reciprocal/final-clippy.log",
+          "/tmp/rax-a32-reciprocal/final-fmt.log",
+          "/tmp/rax-a32-reciprocal/final-doc.log",
+          "/tmp/rax-a32-reciprocal/final-library.log",
+          "/tmp/rax-a32-reciprocal/final-rosetta-vfp.log",
+          "/tmp/rax-a32-reciprocal/final-capi.log",
+          "/tmp/rax-a32-reciprocal/checks.jsonl"
+        ]
+      },
+      "affected_planes": {
+        "direct_helpers": "Additive binary32 reciprocal/rsqrt estimate and A32 step APIs use exact integer classification and explicit guest status. The estimate operation accepts explicit FPSCR controls; A32 steps select standard controls as defined by their operation.",
+        "decoded_a32_thumb": "Binary32 vector estimates flush inputs/results and accumulate required status, preserving live FPSCR controls and CPSR. A32 steps round the product before subtraction, with infinity-times-zero handled before multiplication. Complete aliased register arrays are asserted. Integer estimate outputs and FPSCR are unchanged.",
+        "smir": "Private shared numerical helpers and quantizers only. A32/Thumb lifters still reject the four tested pairs whose FPSCR effects are unrepresented; no newly admitted instruction.",
+        "embedding": "C API shapes and checkpoint schema unchanged. New instruction behavior is exercised on native A64 and translated x86 hosts; all 185 C API tests pass."
+      },
+      "complexity": "O(1) time and space per lane. RecipEstimate uses fixed-width integer division; RecipSqrtEstimate performs at most 510 increments for its finite 384-input domain. Exhaustive bound enumeration records maximum checked product 269397130, below 2^29; the implementation uses u64. Native result-bit/status comparisons are exact and do not assert a real-valued reciprocal approximation error bound.",
+      "quality_gates": {
+        "assumptions": "RCP1-RCP4 checked against pinned A32 instruction/shared operations and actual native hardware.",
+        "coverage": "Six independently reproduced instruction failures, nine decoded contracts, two binary32 numerical oracle tests, host FP-state preservation and exhaustive quantizer-index native comparison.",
+        "reproducibility": "Source hashes, opcodes, seeds, loop bounds, exact counts, complete commands and logs recorded.",
+        "contradictions": "A32 nonfused step operations are distinguished from A64 Fused functions; disabled traps do not suppress cumulative status. Legacy FP16 remains explicitly pending.",
+        "provenance": "Pinned Arm shared/instruction ASL and AArch32 architectural manual; LLVM bytes; real A64 operation sequences.",
+        "bounded_expansion": "FP16, native A32 and enabled exception delivery remain separate.",
+        "worktree_integrity": "Imports guarded against the rounding-only hash snapshot after that group was committed. Only the 11 reciprocal code paths and ledger are staged. FP16 development is confined to its separate scratch checkout.",
+        "behavioral_evidence": "Complete applicable owning suites execute with zero filtered tests. A64 hardware cfg elision under Rosetta is explicit.",
+        "repository_consistency": "Public additions are documented; no existing signatures, ABI or serialized layout changed. New source modules remain below size limits; reciprocal execution is moved out of the oversized ops owner."
       }
     }
   ],

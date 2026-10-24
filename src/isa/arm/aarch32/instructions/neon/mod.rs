@@ -41,3 +41,5 @@ pub(crate) use shift::*;
 
 mod fp_selection;
 mod fp_state;
+
+mod reciprocal;

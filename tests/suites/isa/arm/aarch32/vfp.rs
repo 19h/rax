@@ -12,6 +12,11 @@ mod fp_precision_contract;
 #[cfg(target_arch = "aarch64")]
 #[path = "fp_precision_native.rs"]
 mod fp_precision_native;
+#[path = "fp_recip_decoded.rs"]
+mod fp_recip_decoded;
+#[cfg(target_arch = "aarch64")]
+#[path = "fp_recip_native.rs"]
+mod fp_recip_native;
 #[path = "fp_round_contract.rs"]
 mod fp_round_contract;
 #[path = "fp_round_decoded.rs"]

@@ -429,6 +429,8 @@ mod fused;
 pub use fused::*;
 mod selection;
 pub use selection::*;
+mod reciprocal;
+pub use reciprocal::*;
 mod rounding;
 pub use rounding::{vrint_f32, vrint_f64};
 mod integer;

@@ -1,0 +1,203 @@
+//! A32 reciprocal estimate and refinement instruction execution.
+use super::*;
+use crate::isa::arm::aarch32::vfp::{vrecpe_f32, vrecps_f32, vrsqrte_f32, vrsqrts_f32};
+use crate::smir::interpret::SmirInterpreter;
+impl<'a, M: ArmMemory> Executor<'a, M> {
+    pub(crate) fn exec_neon_recip_estimate(&mut self, insn: &DecodedInsn) -> ExecResult {
+        if !self.cpu.vfp.is_enabled() {
+            return ExecResult::Exception(ExceptionType::UndefinedInstruction);
+        }
+        if (insn.raw >> 23) != 0b111100111
+            || ((insn.raw >> 20) & 0x3) != 0b11
+            || ((insn.raw >> 16) & 0x3) != 0b11
+            || ((insn.raw >> 4) & 1) != 0
+        {
+            return ExecResult::Undefined;
+        }
+
+        let size = (insn.raw >> 18) & 0x3;
+        let fp = match ((insn.raw >> 7) & 0x1F, insn.mnemonic) {
+            (0b01000, Mnemonic::VRECPE) | (0b01001, Mnemonic::VRSQRTE) => false,
+            (0b01010, Mnemonic::VRECPE) | (0b01011, Mnemonic::VRSQRTE) => true,
+            _ => return ExecResult::Undefined,
+        };
+        if (!fp && size != 0b10) || (fp && !matches!(size, 0b01 | 0b10)) {
+            return ExecResult::Undefined;
+        }
+
+        let d_bit = ((insn.raw >> 22) & 1) as u8;
+        let vd = ((insn.raw >> 12) & 0xF) as u8;
+        let m_bit = ((insn.raw >> 5) & 1) as u8;
+        let vm = (insn.raw & 0xF) as u8;
+        let q = ((insn.raw >> 6) & 1) != 0;
+        let regs = if q { 2 } else { 1 };
+
+        let d = (d_bit << 4) | vd;
+        let m = (m_bit << 4) | vm;
+        if q && ((d | m) & 1) != 0 {
+            return ExecResult::Undefined;
+        }
+        if d + regs > 32 || m + regs > 32 {
+            return ExecResult::Undefined;
+        }
+
+        let mut fpscr = self.standard_simd_fp_controls();
+        let ebytes = if fp && size == 0b01 { 2 } else { 4 };
+        for reg in 0..regs {
+            let elements = self.neon_read_vector_elements_u64(m + reg, 1, ebytes);
+            let mut out = Vec::with_capacity(elements.len());
+            for elem in elements {
+                let result = match (insn.mnemonic, fp) {
+                    (Mnemonic::VRECPE, false) => {
+                        u64::from(Self::neon_unsigned_recip_estimate(elem as u32))
+                    }
+                    (Mnemonic::VRSQRTE, false) => {
+                        u64::from(Self::neon_unsigned_rsqrt_estimate(elem as u32))
+                    }
+                    (Mnemonic::VRECPE, true) if size == 0b01 => {
+                        let input = vcvt_f32_f16_bits(elem as u16).to_bits();
+                        let result = f32::from_bits(Self::neon_fp_recip_estimate_f32(input));
+                        // Retain the legacy FP16 widen/narrow path until its
+                        // complete FZ16/status profile is implemented separately.
+                        let mut standard_fpscr = Fpscr::default();
+                        u64::from(vcvt_f16_bits_f32(result, &mut standard_fpscr))
+                    }
+                    (Mnemonic::VRSQRTE, true) if size == 0b01 => {
+                        let input = vcvt_f32_f16_bits(elem as u16).to_bits();
+                        let result = f32::from_bits(Self::neon_fp_rsqrt_estimate_f32(input));
+                        let mut standard_fpscr = Fpscr::default();
+                        u64::from(vcvt_f16_bits_f32(result, &mut standard_fpscr))
+                    }
+                    (Mnemonic::VRECPE, true) => {
+                        u64::from(vrecpe_f32(f32::from_bits(elem as u32), &mut fpscr).to_bits())
+                    }
+                    (Mnemonic::VRSQRTE, true) => {
+                        u64::from(vrsqrte_f32(f32::from_bits(elem as u32), &mut fpscr).to_bits())
+                    }
+                    _ => return ExecResult::Undefined,
+                };
+                out.push(result);
+            }
+            self.neon_write_vector_elements_u64(d + reg, 1, ebytes, &out);
+        }
+
+        self.cpu.vfp.fpscr = Fpscr::from_bits(self.cpu.vfp.fpscr.bits() | (fpscr.bits() & 0x9f));
+        ExecResult::Continue
+    }
+
+    pub(crate) fn neon_recip_estimate(value: u32) -> u32 {
+        SmirInterpreter::arm_recip_estimate(value)
+    }
+    pub(crate) fn neon_recip_sqrt_estimate(value: u32) -> u32 {
+        SmirInterpreter::arm_recip_sqrt_estimate(value)
+    }
+
+    pub(crate) fn neon_unsigned_recip_estimate(op: u32) -> u32 {
+        if op & 0x8000_0000 == 0 {
+            return u32::MAX;
+        }
+        let estimate = Self::neon_recip_estimate((op >> 23) & 0x1FF);
+        (estimate & 0x1FF) << 23
+    }
+
+    pub(crate) fn neon_unsigned_rsqrt_estimate(op: u32) -> u32 {
+        if op & 0xC000_0000 == 0 {
+            return u32::MAX;
+        }
+        let estimate = Self::neon_recip_sqrt_estimate((op >> 23) & 0x1FF);
+        (estimate & 0x1FF) << 23
+    }
+
+    pub(crate) fn exec_neon_recip_step(&mut self, insn: &DecodedInsn) -> ExecResult {
+        if !self.cpu.vfp.is_enabled() {
+            return ExecResult::Exception(ExceptionType::UndefinedInstruction);
+        }
+        if (insn.raw >> 25) != 0b1111001
+            || ((insn.raw >> 24) & 1) != 0
+            || ((insn.raw >> 23) & 1) != 0
+            || ((insn.raw >> 8) & 0xF) != 0b1111
+            || ((insn.raw >> 4) & 1) != 1
+        {
+            return ExecResult::Undefined;
+        }
+
+        match (insn.mnemonic, (insn.raw >> 21) & 1) {
+            (Mnemonic::VRECPS, 0) | (Mnemonic::VRSQRTS, 1) => {}
+            _ => return ExecResult::Undefined,
+        }
+
+        let d_bit = ((insn.raw >> 22) & 1) as u8;
+        let vd = ((insn.raw >> 12) & 0xF) as u8;
+        let n_bit = ((insn.raw >> 7) & 1) as u8;
+        let vn = ((insn.raw >> 16) & 0xF) as u8;
+        let m_bit = ((insn.raw >> 5) & 1) as u8;
+        let vm = (insn.raw & 0xF) as u8;
+        let q = ((insn.raw >> 6) & 1) != 0;
+        let regs = if q { 2 } else { 1 };
+
+        let d = (d_bit << 4) | vd;
+        let n = (n_bit << 4) | vn;
+        let m = (m_bit << 4) | vm;
+        if q && ((d | n | m) & 1) != 0 {
+            return ExecResult::Undefined;
+        }
+        if d + regs > 32 || n + regs > 32 || m + regs > 32 {
+            return ExecResult::Undefined;
+        }
+
+        let size = if ((insn.raw >> 20) & 1) == 0 {
+            NeonSize::S32
+        } else {
+            NeonSize::H16
+        };
+        let ebytes = (size.bits() / 8) as u8;
+
+        let mut fpscr = self.standard_simd_fp_controls();
+        for reg in 0..regs {
+            let n_elements = self.neon_read_vector_elements_u64(n + reg, 1, ebytes);
+            let m_elements = self.neon_read_vector_elements_u64(m + reg, 1, ebytes);
+            let mut out = Vec::with_capacity(n_elements.len());
+            for (n_elem, m_elem) in n_elements.into_iter().zip(m_elements.into_iter()) {
+                let lhs = match size {
+                    NeonSize::S32 => f32::from_bits(n_elem as u32),
+                    NeonSize::H16 => vcvt_f32_f16_bits(n_elem as u16),
+                    _ => return ExecResult::Undefined,
+                };
+                let rhs = match size {
+                    NeonSize::S32 => f32::from_bits(m_elem as u32),
+                    NeonSize::H16 => vcvt_f32_f16_bits(m_elem as u16),
+                    _ => return ExecResult::Undefined,
+                };
+                let result = if size == NeonSize::S32 {
+                    if insn.mnemonic == Mnemonic::VRECPS {
+                        vrecps_f32(lhs, rhs, &mut fpscr)
+                    } else {
+                        vrsqrts_f32(lhs, rhs, &mut fpscr)
+                    }
+                } else if lhs.is_nan() || rhs.is_nan() {
+                    f32::NAN
+                } else if insn.mnemonic == Mnemonic::VRECPS {
+                    if (lhs.is_infinite() && rhs == 0.0) || (rhs.is_infinite() && lhs == 0.0) {
+                        2.0
+                    } else {
+                        (-lhs).mul_add(rhs, 2.0)
+                    }
+                } else if (lhs.is_infinite() && rhs == 0.0) || (rhs.is_infinite() && lhs == 0.0) {
+                    1.5
+                } else {
+                    (-lhs).mul_add(rhs, 3.0) * 0.5
+                };
+                let result = match size {
+                    NeonSize::S32 => u64::from(result.to_bits()),
+                    NeonSize::H16 => u64::from(vcvt_f16_bits_f32(result, &mut self.cpu.vfp.fpscr)),
+                    _ => return ExecResult::Undefined,
+                };
+                out.push(result);
+            }
+            self.neon_write_vector_elements_u64(d + reg, 1, ebytes, &out);
+        }
+
+        self.cpu.vfp.fpscr = Fpscr::from_bits(self.cpu.vfp.fpscr.bits() | (fpscr.bits() & 0x9f));
+        ExecResult::Continue
+    }
+}

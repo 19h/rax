@@ -1009,7 +1009,7 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
             && ((raw >> 16) & 0x3F) >= 32
     }
 
-    fn standard_simd_fp_controls(&self) -> Fpscr {
+    pub(super) fn standard_simd_fp_controls(&self) -> Fpscr {
         // Arm StandardFPSCRValue: nearest rounding, DN/FZ set. Preserve the
         // AHP/FZ16 controls; they do not affect these binary32 conversions.
         Fpscr::from_bits((self.cpu.vfp.fpscr.bits() & ((1 << 26) | (1 << 19))) | 0x0300_0000)
