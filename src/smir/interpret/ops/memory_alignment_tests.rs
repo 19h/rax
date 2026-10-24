@@ -142,13 +142,19 @@ fn an_alignment_fault_keeps_an_earlier_store_and_prevents_a_later_store_at_every
 }
 
 #[test]
-fn alignment_guard_has_precise_effect_metadata_and_fails_native_admission() {
+fn alignment_guard_has_precise_effect_metadata() {
     let operation = guard(MemWidth::B4, 3, MemoryAccessKind::Read, Some(VReg::imm(1)));
     assert!(operation.has_side_effects());
     assert!(!operation.reads_memory());
     assert!(!operation.writes_memory());
     assert!(operation.dests().is_empty());
     assert!(!operation.is_jit_safe());
+}
+
+#[cfg(feature = "smir-jit")]
+#[test]
+fn alignment_guard_fails_native_admission() {
+    let operation = guard(MemWidth::B4, 3, MemoryAccessKind::Read, Some(VReg::imm(1)));
     let mut builder = FunctionBuilder::new(FunctionId(0), 0x1000);
     builder.push_op(0x1000, operation);
     builder.set_terminator(Terminator::Return { values: vec![] });
