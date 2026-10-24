@@ -36,10 +36,16 @@ case_loop:
     mov r10,r1
     ldr r0,[r4,#268]
     ldr r1,[r4,#272]
+    ldr r2,[r4,#276]
+    msr APSR_nzcvq,r2
     adr lr,after_slot
     bx r10
 after_slot:
+    mrs r3,cpsr
     ldr r2,=output
+    ldr r12,=0xf8000000
+    and r3,r3,r12
+    str r3,[r2,#268]
     str r0,[r2,#260]
     str r1,[r2,#264]
     mov r0,r2
@@ -53,7 +59,7 @@ after_slot:
     svc #0x123456
     cmp r0,#0
     bne failed_write
-    add r4,r4,#276
+    add r4,r4,#280
     subs r5,r5,#1
     bne case_loop
     ldr r1,=close_args
@@ -103,11 +109,11 @@ filename_end:
 open_args:
     .word filename,5,filename_end-filename
 write_args:
-    .word 0,output,268
+    .word 0,output,272
 close_args:
     .word 0
 exit_args:
     .word 0x20026,0
 output:
-    .space 268
+    .space 272
 .include "cases.inc"

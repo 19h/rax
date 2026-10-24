@@ -5,10 +5,25 @@ use rax::isa::arm::execution::FlatMemory;
 use rax::isa::arm::{Armv7Cpu, ExecResult, Executor};
 
 fn check(words: [u32; 2], inputs: &[(usize, u64)], control: u32, result: &[u64], status: u32) {
+    check_with_apsr(words, inputs, control, result, status, 0);
+}
+
+fn check_with_apsr(
+    words: [u32; 2],
+    inputs: &[(usize, u64)],
+    control: u32,
+    result: &[u64],
+    status: u32,
+    apsr: u32,
+) {
     for thumb in [false, true] {
         let mut cpu = Armv7Cpu::new();
         let mut memory = FlatMemory::new(4096, 0);
         cpu.cpsr.t = thumb;
+        cpu.cpsr.n = apsr & (1 << 31) != 0;
+        cpu.cpsr.z = apsr & (1 << 30) != 0;
+        cpu.cpsr.c = apsr & (1 << 29) != 0;
+        cpu.cpsr.v = apsr & (1 << 28) != 0;
         cpu.vfp.dregs.fill(0xcafebabe_deadbeef);
         for &(reg, bits) in inputs {
             cpu.vfp.dregs[reg] = bits;
@@ -184,8 +199,15 @@ fn scalar_half_immediate_clears_the_upper_s_half() {
 #[test]
 fn scalar_half_select_copies_nan_bits_without_quieting_and_clears_upper_s_half() {
     let inputs = [(1, 0x12345678_dead7c01), (2, 0x12345678_dead3c00)];
-    check([0xfe010902; 2], &inputs, 1 << 30, &[0xcafebabe_00007c01], 0);
-    check([0xfe010902; 2], &inputs, 0, &[0xcafebabe_00003c00], 0);
+    check_with_apsr(
+        [0xfe010902; 2],
+        &inputs,
+        0,
+        &[0xcafebabe_00007c01],
+        0,
+        1 << 30,
+    );
+    check_with_apsr([0xfe010902; 2], &inputs, 0, &[0xcafebabe_00003c00], 0, 0);
 }
 #[test]
 fn missing_fpscr_representation_keeps_half_data_processing_out_of_the_lifters() {

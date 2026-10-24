@@ -648,7 +648,7 @@ fn scalar_fp16_arithmetic_unary_and_accumulate_execute() {
 }
 
 #[test]
-fn scalar_vsel_decodes_and_selects_from_fpscr_flags() {
+fn scalar_vsel_decodes_and_selects_from_apsr_flags() {
     let cases = [
         (0xFE00_0981, Mnemonic::VSELEQ),
         (0xFE10_0981, Mnemonic::VSELVS),
@@ -674,14 +674,20 @@ fn scalar_vsel_decodes_and_selects_from_fpscr_flags() {
     cpu.vfp.write_h_bits(1, 0x3e00); // 1.5
     cpu.vfp.write_h_bits(2, 0x4000); // 2.0
 
-    cpu.vfp.fpscr.set_nzcv(false, true, false, false);
+    cpu.cpsr.n = false;
+    cpu.cpsr.z = true;
+    cpu.cpsr.c = false;
+    cpu.cpsr.v = false;
     assert!(matches!(
         exec_one(&mut cpu, &mut mem, 0xFE00_0981),
         ExecResult::Continue
     ));
     assert_eq!(cpu.vfp.read_s_bits(0), 0x0000_3e00);
 
-    cpu.vfp.fpscr.set_nzcv(false, false, false, false);
+    cpu.cpsr.n = false;
+    cpu.cpsr.z = false;
+    cpu.cpsr.c = false;
+    cpu.cpsr.v = false;
     assert!(matches!(
         exec_one(&mut cpu, &mut mem, 0xFE00_0981),
         ExecResult::Continue
@@ -691,35 +697,50 @@ fn scalar_vsel_decodes_and_selects_from_fpscr_flags() {
     cpu.vfp.write_s_bits(1, 0x1111_1111);
     cpu.vfp.write_s_bits(2, 0x2222_2222);
 
-    cpu.vfp.fpscr.set_nzcv(false, true, false, false);
+    cpu.cpsr.n = false;
+    cpu.cpsr.z = true;
+    cpu.cpsr.c = false;
+    cpu.cpsr.v = false;
     assert!(matches!(
         exec_one(&mut cpu, &mut mem, 0xFE00_0A81),
         ExecResult::Continue
     ));
     assert_eq!(cpu.vfp.read_s_bits(0), 0x1111_1111);
 
-    cpu.vfp.fpscr.set_nzcv(false, false, false, false);
+    cpu.cpsr.n = false;
+    cpu.cpsr.z = false;
+    cpu.cpsr.c = false;
+    cpu.cpsr.v = false;
     assert!(matches!(
         exec_one(&mut cpu, &mut mem, 0xFE00_0A81),
         ExecResult::Continue
     ));
     assert_eq!(cpu.vfp.read_s_bits(0), 0x2222_2222);
 
-    cpu.vfp.fpscr.set_nzcv(false, false, false, true);
+    cpu.cpsr.n = false;
+    cpu.cpsr.z = false;
+    cpu.cpsr.c = false;
+    cpu.cpsr.v = true;
     assert!(matches!(
         exec_one(&mut cpu, &mut mem, 0xFE10_0A81),
         ExecResult::Continue
     ));
     assert_eq!(cpu.vfp.read_s_bits(0), 0x1111_1111);
 
-    cpu.vfp.fpscr.set_nzcv(true, false, false, true);
+    cpu.cpsr.n = true;
+    cpu.cpsr.z = false;
+    cpu.cpsr.c = false;
+    cpu.cpsr.v = true;
     assert!(matches!(
         exec_one(&mut cpu, &mut mem, 0xFE20_0A81),
         ExecResult::Continue
     ));
     assert_eq!(cpu.vfp.read_s_bits(0), 0x1111_1111);
 
-    cpu.vfp.fpscr.set_nzcv(true, true, false, true);
+    cpu.cpsr.n = true;
+    cpu.cpsr.z = true;
+    cpu.cpsr.c = false;
+    cpu.cpsr.v = true;
     assert!(matches!(
         exec_one(&mut cpu, &mut mem, 0xFE30_0A81),
         ExecResult::Continue
@@ -728,7 +749,10 @@ fn scalar_vsel_decodes_and_selects_from_fpscr_flags() {
 
     cpu.vfp.write_d_bits(1, 0x1111_2222_3333_4444);
     cpu.vfp.write_d_bits(2, 0xaaaa_bbbb_cccc_dddd);
-    cpu.vfp.fpscr.set_nzcv(false, false, false, true);
+    cpu.cpsr.n = false;
+    cpu.cpsr.z = false;
+    cpu.cpsr.c = false;
+    cpu.cpsr.v = true;
     assert!(matches!(
         exec_one(&mut cpu, &mut mem, 0xFE11_0B02),
         ExecResult::Continue
@@ -7105,3 +7129,10 @@ mod fp_nontrapping_profile;
 
 #[path = "fp_half_register.rs"]
 mod fp_half_register;
+
+#[path = "fp_vsel_apsr.rs"]
+mod fp_vsel_apsr;
+
+#[cfg(all(target_arch = "aarch64", target_feature = "fp16"))]
+#[path = "fp_vsel_native.rs"]
+mod fp_vsel_native;

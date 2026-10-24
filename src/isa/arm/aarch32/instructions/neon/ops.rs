@@ -2366,12 +2366,18 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
         let Some((d, n, m, size)) = self.decode_vfp_cond_select_regs(insn) else {
             return ExecResult::Undefined;
         };
-        let fpscr = &self.cpu.vfp.fpscr;
+        if !crate::isa::arm::decoder::Aarch32Decoder::decode_vfp_conditional_select(insn.raw)
+            .is_some_and(|decoded| decoded.mnemonic == insn.mnemonic)
+            || (self.cpu.cpsr.t && self.cpu.cpsr.in_it_block())
+        {
+            return ExecResult::Undefined;
+        }
+        let flags = &self.cpu.cpsr;
         let take_n = match insn.mnemonic {
-            Mnemonic::VSELEQ => fpscr.z(),
-            Mnemonic::VSELVS => fpscr.v(),
-            Mnemonic::VSELGE => fpscr.n() == fpscr.v(),
-            Mnemonic::VSELGT => !fpscr.z() && fpscr.n() == fpscr.v(),
+            Mnemonic::VSELEQ => flags.z,
+            Mnemonic::VSELVS => flags.v,
+            Mnemonic::VSELGE => flags.n == flags.v,
+            Mnemonic::VSELGT => !flags.z && flags.n == flags.v,
             _ => return ExecResult::Undefined,
         };
 
