@@ -361,3 +361,7 @@ path = "tests/suites/backend/hvf_sdk_abi.rs"
 [[test]]
 name = "hvf_xsetbv"
 path = "tests/suites/backend/hvf_xsetbv.rs"
+
+[[test]]
+name = "hvf_run_loop"
+path = "tests/suites/backend/hvf_run_loop.rs"

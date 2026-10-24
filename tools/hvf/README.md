@@ -68,6 +68,31 @@ virtual8086, ignored high halves, each reserved bit and host API failures.
 TCG instruction execution supplies an independent architectural reference for
 this listed CPL0 profile. Mock host calls and compiler/link checks do not prove
 native Intel VMX calls, VM-entry delivery or every pending-event interleaving.
-The original CR-access and MMIO exit defects remain separate. Internal exits
-still use the existing recursive resume path; replacing that path and validating
-all exit transitions is a separate group.
+The original CR-access and MMIO exit defects remain separate. Internal exits use the shared iterative driver described below; actual native
+VMX transitions and the individual handler effects retain their separate limits.
+
+## Iterative VM-exit dispatch
+
+```sh
+cargo +stable test --test hvf_run_loop
+```
+
+The Intel backend drives internal exits in one loop. It prepares pending events
+before every entry, executes the selected handler once and either resumes or
+returns its public exit/error. CPUID, completed RDMSR/WRMSR, external-interrupt,
+interrupt-window, CR-access and XSETBV exits no longer recurse through `VCpu::run`.
+Work is O(n) for n internal exits; driver stack and auxiliary space are O(1).
+
+Bit31 of the VM-exit reason identifies VM-entry failure. It takes priority over
+the low16-bit basic reason and returns `VcpuExit::FailEntry` with the raw32-bit
+reason. It cannot become an ordinary exception, shutdown or MMIO dispatch.
+
+Eight host-independent tests execute the actual driver. They cover all65536
+basic codes under four non-failure flag partitions,65536 entry-failure codes,
+every handled reason, MSR public/resume outcomes, preparation exits and all host
+error phases. One million internal exits complete on a65536-byte thread stack.
+The controlled recursive/low16-only reproducer overflows that small stack and
+fails two entry-failure/error tests. The native adapter retains the prior port,
+MMIO, MSR, control and interrupt handler effects; this refactor does not certify
+those effects or native Intel hypervisor delivery. CR-access and MMIO placeholder
+semantics remain separate pending fixes.

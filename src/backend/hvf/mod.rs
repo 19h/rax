@@ -13,6 +13,7 @@ mod bindings;
 #[cfg(target_arch = "x86_64")]
 mod convert;
 pub mod rosetta;
+mod run_loop;
 #[cfg(target_arch = "x86_64")]
 mod xsetbv;
 
@@ -618,16 +619,21 @@ impl HvfVcpu {
 }
 
 #[cfg(target_arch = "x86_64")]
-impl VCpu for HvfVcpu {
-    fn run(&mut self) -> Result<VcpuExit> {
+impl run_loop::ExitHandler for HvfVcpu {
+    type Exit = VcpuExit;
+    type Error = Error;
+    fn prepare(&mut self) -> Result<Option<VcpuExit>> {
         // Try to inject any pending interrupt
         self.try_inject_interrupt()?;
 
         // If halted and no interrupt pending, return Hlt
         if self.halted && self.pending_interrupt.is_none() {
-            return Ok(VcpuExit::Hlt);
+            return Ok(Some(VcpuExit::Hlt));
         }
 
+        Ok(None)
+    }
+    fn next_reason(&mut self) -> Result<u32> {
         // Run the vCPU
         let ret = unsafe { hv_vcpu_run(self.vcpu_id) };
         if ret != HV_SUCCESS {
@@ -639,147 +645,126 @@ impl VCpu for HvfVcpu {
 
         // Get exit reason
         let exit_reason = vmcs_read(self.vcpu_id, hv_vmx_vmcs_field_t::VMCS_EXIT_REASON)? as u32;
-        let exit_reason = exit_reason & 0xFFFF; // Lower 16 bits
+        Ok(exit_reason)
+    }
+    fn halt(&mut self) -> Result<VcpuExit> {
+        self.halted = true;
+        Ok(VcpuExit::Hlt)
+    }
+    fn port_io(&mut self) -> Result<VcpuExit> {
+        let qual = vmcs_read(self.vcpu_id, hv_vmx_vmcs_field_t::VMCS_EXIT_QUALIFICATION)?;
+        let io = IoExitQualification::from_qualification(qual);
+        let insn_len = vmcs_read(
+            self.vcpu_id,
+            hv_vmx_vmcs_field_t::VMCS_EXIT_INSTRUCTION_LENGTH,
+        )?;
 
-        match exit_reason {
-            VMX_EXIT_REASON_HLT => {
-                self.halted = true;
-                Ok(VcpuExit::Hlt)
+        match io.direction {
+            IoDirection::In => {
+                self.pending_io_in = Some((io.port, io.size));
+                Ok(VcpuExit::IoIn {
+                    port: io.port,
+                    size: io.size,
+                })
             }
+            IoDirection::Out => {
+                // Read data from RAX
+                let rax = read_register(self.vcpu_id, hv_x86_reg_t::HV_X86_RAX)?;
+                let data = match io.size {
+                    1 => vec![rax as u8],
+                    2 => (rax as u16).to_le_bytes().to_vec(),
+                    4 => (rax as u32).to_le_bytes().to_vec(),
+                    _ => vec![rax as u8],
+                };
 
-            VMX_EXIT_REASON_IO => {
-                let qual = vmcs_read(self.vcpu_id, hv_vmx_vmcs_field_t::VMCS_EXIT_QUALIFICATION)?;
-                let io = IoExitQualification::from_qualification(qual);
-                let insn_len = vmcs_read(
-                    self.vcpu_id,
-                    hv_vmx_vmcs_field_t::VMCS_EXIT_INSTRUCTION_LENGTH,
-                )?;
-
-                match io.direction {
-                    IoDirection::In => {
-                        self.pending_io_in = Some((io.port, io.size));
-                        Ok(VcpuExit::IoIn {
-                            port: io.port,
-                            size: io.size,
-                        })
-                    }
-                    IoDirection::Out => {
-                        // Read data from RAX
-                        let rax = read_register(self.vcpu_id, hv_x86_reg_t::HV_X86_RAX)?;
-                        let data = match io.size {
-                            1 => vec![rax as u8],
-                            2 => (rax as u16).to_le_bytes().to_vec(),
-                            4 => (rax as u32).to_le_bytes().to_vec(),
-                            _ => vec![rax as u8],
-                        };
-
-                        // Advance RIP
-                        self.advance_rip(insn_len)?;
-
-                        Ok(VcpuExit::IoOut {
-                            port: io.port,
-                            data,
-                        })
-                    }
-                }
-            }
-
-            VMX_EXIT_REASON_EPT_VIOLATION => {
-                let qual = vmcs_read(self.vcpu_id, hv_vmx_vmcs_field_t::VMCS_EXIT_QUALIFICATION)?;
-                let gpa = vmcs_read(
-                    self.vcpu_id,
-                    hv_vmx_vmcs_field_t::VMCS_GUEST_PHYSICAL_ADDRESS,
-                )?;
-                let ept = EptViolationQualification::from_qualification(qual);
-
-                if ept.write {
-                    // MMIO write
-                    // We need to decode the instruction to get the write data
-                    // For now, return a placeholder
-                    Ok(VcpuExit::MmioWrite {
-                        addr: gpa,
-                        data: vec![0; 4], // TODO: decode actual data
-                    })
-                } else {
-                    // MMIO read
-                    Ok(VcpuExit::MmioRead {
-                        addr: gpa,
-                        size: 4, // TODO: decode actual size
-                    })
-                }
-            }
-
-            VMX_EXIT_REASON_CPUID => {
-                self.handle_cpuid()?;
-                // Re-run immediately
-                self.run()
-            }
-
-            VMX_EXIT_REASON_RDMSR => {
-                if let Some(exit) = self.handle_rdmsr()? {
-                    Ok(exit)
-                } else {
-                    // Re-run immediately
-                    self.run()
-                }
-            }
-
-            VMX_EXIT_REASON_WRMSR => {
-                if let Some(exit) = self.handle_wrmsr()? {
-                    Ok(exit)
-                } else {
-                    // Re-run immediately
-                    self.run()
-                }
-            }
-
-            VMX_EXIT_REASON_TRIPLE_FAULT => Ok(VcpuExit::Shutdown),
-
-            VMX_EXIT_REASON_EXCEPTION_NMI => {
-                let intr_info =
-                    vmcs_read(self.vcpu_id, hv_vmx_vmcs_field_t::VMCS_IDT_VECTORING_INFO)?;
-                let vector = (intr_info & INTR_INFO_VECTOR_MASK as u64) as u8;
-                Ok(VcpuExit::Exception(vector))
-            }
-
-            VMX_EXIT_REASON_EXT_INTERRUPT => {
-                // External interrupt - just continue
-                self.run()
-            }
-
-            VMX_EXIT_REASON_IRQ_WINDOW => {
-                // Interrupt window opened - try to inject
-                self.try_inject_interrupt()?;
-                self.run()
-            }
-
-            VMX_EXIT_REASON_CR_ACCESS => {
-                // Handle CR access (usually CR0/CR3/CR4 writes)
-                let qual = vmcs_read(self.vcpu_id, hv_vmx_vmcs_field_t::VMCS_EXIT_QUALIFICATION)?;
-                let insn_len = vmcs_read(
-                    self.vcpu_id,
-                    hv_vmx_vmcs_field_t::VMCS_EXIT_INSTRUCTION_LENGTH,
-                )?;
-
-                // For now, just advance RIP and continue
-                // TODO: Proper CR access handling
+                // Advance RIP
                 self.advance_rip(insn_len)?;
-                self.run()
-            }
 
-            VMX_EXIT_REASON_XSETBV => {
-                self.handle_xsetbv()?;
-                self.run()
-            }
-
-            _ => {
-                let rip = read_register(self.vcpu_id, hv_x86_reg_t::HV_X86_RIP)?;
-                Ok(VcpuExit::Unknown(format!(
-                    "Exit reason {} at RIP {:#x}",
-                    exit_reason, rip
-                )))
+                Ok(VcpuExit::IoOut {
+                    port: io.port,
+                    data,
+                })
             }
         }
+    }
+    fn mmio(&mut self) -> Result<VcpuExit> {
+        let qual = vmcs_read(self.vcpu_id, hv_vmx_vmcs_field_t::VMCS_EXIT_QUALIFICATION)?;
+        let gpa = vmcs_read(
+            self.vcpu_id,
+            hv_vmx_vmcs_field_t::VMCS_GUEST_PHYSICAL_ADDRESS,
+        )?;
+        let ept = EptViolationQualification::from_qualification(qual);
+
+        if ept.write {
+            // MMIO write
+            // We need to decode the instruction to get the write data
+            // For now, return a placeholder
+            Ok(VcpuExit::MmioWrite {
+                addr: gpa,
+                data: vec![0; 4], // TODO: decode actual data
+            })
+        } else {
+            // MMIO read
+            Ok(VcpuExit::MmioRead {
+                addr: gpa,
+                size: 4, // TODO: decode actual size
+            })
+        }
+    }
+    fn exception(&mut self) -> Result<VcpuExit> {
+        let intr_info = vmcs_read(self.vcpu_id, hv_vmx_vmcs_field_t::VMCS_IDT_VECTORING_INFO)?;
+        let vector = (intr_info & INTR_INFO_VECTOR_MASK as u64) as u8;
+        Ok(VcpuExit::Exception(vector))
+    }
+    fn cpuid(&mut self) -> Result<()> {
+        self.handle_cpuid()
+    }
+    fn rdmsr(&mut self) -> Result<Option<VcpuExit>> {
+        self.handle_rdmsr()
+    }
+    fn wrmsr(&mut self) -> Result<Option<VcpuExit>> {
+        self.handle_wrmsr()
+    }
+    fn shutdown(&mut self) -> Result<VcpuExit> {
+        Ok(VcpuExit::Shutdown)
+    }
+    fn interrupt_window(&mut self) -> Result<()> {
+        self.try_inject_interrupt()
+    }
+    fn control_register(&mut self) -> Result<()> {
+        // Handle CR access (usually CR0/CR3/CR4 writes)
+        let qual = vmcs_read(self.vcpu_id, hv_vmx_vmcs_field_t::VMCS_EXIT_QUALIFICATION)?;
+        let insn_len = vmcs_read(
+            self.vcpu_id,
+            hv_vmx_vmcs_field_t::VMCS_EXIT_INSTRUCTION_LENGTH,
+        )?;
+
+        // For now, just advance RIP and continue
+        // TODO: Proper CR access handling
+        self.advance_rip(insn_len)?;
+        Ok(())
+    }
+    fn xsetbv(&mut self) -> Result<()> {
+        self.handle_xsetbv()
+    }
+    fn fail_entry(&mut self, raw_reason: u32) -> Result<VcpuExit> {
+        Ok(VcpuExit::FailEntry {
+            reason: u64::from(raw_reason),
+        })
+    }
+    fn unknown(&mut self, exit_reason: u32) -> Result<VcpuExit> {
+        let rip = read_register(self.vcpu_id, hv_x86_reg_t::HV_X86_RIP)?;
+        Ok(VcpuExit::Unknown(format!(
+            "Exit reason {} at RIP {:#x}",
+            exit_reason, rip
+        )))
+    }
+}
+
+#[cfg(target_arch = "x86_64")]
+impl VCpu for HvfVcpu {
+    fn run(&mut self) -> Result<VcpuExit> {
+        run_loop::run(self)
     }
 
     fn get_state(&self) -> Result<CpuState> {
