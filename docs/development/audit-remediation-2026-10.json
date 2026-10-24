@@ -394,10 +394,39 @@
         "/tmp/rax-a32-reciprocal/final-library.log",
         "/tmp/rax-a32-reciprocal/final-rosetta-vfp.log",
         "/tmp/rax-a32-reciprocal/final-capi.log",
-        "/tmp/rax-a32-reciprocal/checks.jsonl"
+        "/tmp/rax-a32-reciprocal/checks.jsonl",
+        "src/smir/interpret/arm_format.rs",
+        "src/isa/arm/aarch32/vfp/half.rs",
+        "src/isa/arm/aarch32/instructions/neon/fp_selection.rs",
+        "tests/suites/isa/arm/aarch32/fp_half_contract.rs",
+        "tests/suites/isa/arm/aarch32/fp_half_decoded.rs",
+        "tests/suites/isa/arm/aarch32/fp_half_native.rs",
+        "/tmp/rax-a32-fp16/add-baseline.log",
+        "/tmp/rax-a32-fp16/host-cfg.log",
+        "/tmp/rax-a32-fp16/parent-contract-red.log",
+        "/tmp/rax-a32-fp16/parent-decoded-final-red.log",
+        "/tmp/rax-a32-fp16/llvm-words.log",
+        "/tmp/rax-a32-fp16/llvm-selection.log",
+        "/tmp/rax-a32-fp16/llvm-moves.log",
+        "/tmp/rax-a32-fp16/decode-probe.log",
+        "/tmp/rax-a32-fp16/worktree-vfp-initial.log",
+        "/tmp/rax-a32-fp16/worktree-vfp-decoded.log",
+        "/tmp/rax-a32-fp16/worktree-vfp-final.log",
+        "/tmp/rax-a32-fp16/worktree-complete.log",
+        "/tmp/rax-a32-fp16/final-build.log",
+        "/tmp/rax-a32-fp16/final-vfp.log",
+        "/tmp/rax-a32-fp16/final-integration.log",
+        "/tmp/rax-a32-fp16/final-clippy.log",
+        "/tmp/rax-a32-fp16/final-fmt.log",
+        "/tmp/rax-a32-fp16/final-doc.log",
+        "/tmp/rax-a32-fp16/final-library.log",
+        "/tmp/rax-a32-fp16/final-rosetta-vfp.log",
+        "/tmp/rax-a32-fp16/final-capi.log",
+        "/tmp/rax-a32-fp16/checks.jsonl"
       ],
       "remaining_validation": [
-        "Complete FP16/FZ16/AHP profiles including half-precision estimate/step behavior, and unimplemented 16-bit fixed encodings",
+        "Half precision conversion/AHP, half integer/fixed/estimate/step and mixed-precision FMLAL profiles, plus unimplemented 16-bit fixed encodings",
+        "Selected-profile instruction coverage, including sampled currently-undefined vector FMA/minmax-number encodings",
         "Enabled floating-point exception delivery",
         "Native A32 hardware or independent A32 system oracle"
       ]
@@ -5629,6 +5658,424 @@
         "worktree_integrity": "Imports guarded against the rounding-only hash snapshot after that group was committed. Only the 11 reciprocal code paths and ledger are staged. FP16 development is confined to its separate scratch checkout.",
         "behavioral_evidence": "Complete applicable owning suites execute with zero filtered tests. A64 hardware cfg elision under Rosetta is explicit.",
         "repository_consistency": "Public additions are documented; no existing signatures, ABI or serialized layout changed. New source modules remain below size limits; reciprocal execution is moved out of the oversized ops owner."
+      }
+    },
+    {
+      "id": "a32-binary16-data-processing-contract",
+      "status": "locally_validated",
+      "scope": "Already-admitted binary16 arithmetic, fused/nonfused operations, selection, comparison, integral rounding and architectural scalar S-register writes. Standard SIMD controls apply to half data; the shared floating comparison-with-zero owner is repaired for binary16 and binary32. Half precision conversion, integer conversion and estimate/step profiles remain separate. Reject reserved half register-to-register VMOV, with valid-width neighbor controls.",
+      "assumptions": [
+        {
+          "id": "H1",
+          "assumption": "Binary16 data processing ignores AHP, observes FZ16, and does not raise IDC for a flushed half input.",
+          "basis": "FPUnpack/FPUnpackBase and FPRound explicitly distinguish data processing from precision conversion. Actual FP16 FADD confirms half flushing without IDC; FZ32 alone does not flush half inputs.",
+          "dependent_result": "Normalize a copied control value for the common integer engine, distinguish the 16-bit format in input-flush status, and preserve the live FPSCR controls.",
+          "stress_test": "All 65536 half encodings for unary/compare operations; binary/FMA matrices include RM, FZ16, DN, AHP and an opposing FZ32 setting.",
+          "falsification_probe": "A native result/status mismatch or an architectural operation that applies AHP/IDC to the selected data-processing operation.",
+          "status": "retained"
+        },
+        {
+          "id": "H2",
+          "assumption": "The existing fixed-width integer significand engine supports binary16 once format and input-flush policy are explicit.",
+          "basis": "Binary16 has at most 11 significand bits. A product has at most 22 bits; existing 78-bit FMA guards fit below 128 bits. Division uses at most 111 numerator bits; the square-root radicand uses at most 76 bits. Fractional round-integral inputs have magnitude below 2^10 and fit a signed 64-bit intermediate.",
+          "dependent_result": "Add private format-aware evaluators behind unchanged binary32/binary64 entry points and new private half entry points.",
+          "stress_test": "23231488 exact native result/status comparisons plus the complete existing binary32/binary64 hardware matrices and owning suite.",
+          "falsification_probe": "An intermediate exceeds its fixed-width bound, any new native comparison differs, or a pre-existing binary32/binary64 oracle regresses.",
+          "status": "retained"
+        },
+        {
+          "id": "H3",
+          "assumption": "Scalar half data-processing results write S[d] = Zeros(16):result, while the public low-half write helper retains partial-write semantics.",
+          "basis": "Pinned A32 VFMA/VADD/VRINT/VSEL and VMOV-immediate operations explicitly write the full S destination. The previous helper preserves its upper 16 bits and is still needed by existing conversion/state operations.",
+          "dependent_result": "Use write_s_bits at the selected instruction commit sites, preserving the adjacent S register and the existing partial-write API.",
+          "stress_test": "Seed every D register and the destination's upper S half; assert the complete aliased register array for A32 and Thumb, including raw signaling-NaN selection without arithmetic quieting.",
+          "falsification_probe": "A selected instruction preserves stale upper-half bits, changes the neighboring S register, or changes FPSCR during bit selection/move.",
+          "status": "retained"
+        },
+        {
+          "id": "H4",
+          "assumption": "StandardFPSCRValue fixes vector RM/DN/FZ while preserving FZ16; vector VRINTX is nearest-even and vector comparison updates cumulative status without changing NZCV.",
+          "basis": "Pinned StandardFPSCRValue, VRINTX_asimd and vector comparison operations.",
+          "dependent_result": "Use standard controls for half vector rounding and bit-level half comparison/minmax paths; route floating comparison-with-zero through the same status-producing evaluators.",
+          "stress_test": "Live round-up with vector nearest-even, DN/FZ32 clear, FZ16 set, quiet/signaling NaNs and subnormal lanes; preserve entire FPSCR/CPSR and integer comparison controls.",
+          "falsification_probe": "Live RM changes the vector result, half inputs follow FZ32 instead of FZ16, a required status bit is lost, or NZCV is overwritten.",
+          "status": "retained"
+        },
+        {
+          "id": "H5",
+          "assumption": "Native A64 FP16 operations validate the shared arithmetic operation, not native A32 instruction or trap execution.",
+          "basis": "The native oracle module requires target_arch=aarch64 and target_feature=fp16. The current compiler advertises FP16 and an independent hardware probe executes it. A32/Thumb decoding/state effects are checked separately.",
+          "dependent_result": "Use real half instructions as the numerical/status oracle and explicitly count cfg elision on other targets.",
+          "stress_test": "No runtime early-return or software fallback in the hardware tests; exact counters assert the full matrix executes.",
+          "falsification_probe": "The hardware module is cfg-elided on the claimed oracle host, an instruction is unsupported, or comparison counters do not reach the declared totals.",
+          "status": "retained"
+        },
+        {
+          "id": "H6",
+          "assumption": "The scalar VMOV register encoding does not admit a half-precision register form.",
+          "basis": "Pinned aarch32_VMOV_r_A opcode fixes the coprocessor field to 101x. The observed half word uses 1001. LLVM with full FP16 enabled rejects the attempted S-to-S half syntax while accepting half immediate and single/double register forms.",
+          "dependent_result": "Reject size=01 only in register VMOV decoding and forged direct execution; retain half immediate and valid single/double neighbors.",
+          "stress_test": "6144 A32/T32 destination/source/size decode cases, including all valid neighboring widths, plus two forged execution state-preservation cases.",
+          "falsification_probe": "Any valid neighboring move is rejected, any reserved half move executes, or an authoritative matching instruction operation permits the sampled half register pattern.",
+          "status": "confirmed by primary opcode pattern and negative assembly probe"
+        }
+      ],
+      "primary_sources": [
+        {
+          "path": "docs/architecture/arm/asl/arm_defs.asl",
+          "sha256": "1ade68e5dacfff1b63a42ad3ee1c426aae5d36ed5dfcbf39de4baab478a190f8",
+          "functions": [
+            "FPUnpack",
+            "FPUnpackBase",
+            "FPRound",
+            "FPRoundBase",
+            "FPUnpackCV",
+            "FPRoundCV",
+            "FPMulAdd",
+            "FPCompare",
+            "FPMaxNum",
+            "FPMinNum",
+            "FPRoundInt",
+            "FPProcessNaN",
+            "FPProcessException",
+            "StandardFPSCRValue"
+          ]
+        },
+        {
+          "path": "docs/architecture/arm/asl/arm_instrs.asl",
+          "sha256": "3c91ece6d0509f7ce9e8b2d8fa623787d7c7acb4cb24040a75cec5aa2789e611",
+          "basis": "A32/T32 half arithmetic, VRINT, VSEL, VMOV-immediate and comparison operations; full S-register result assignments are explicit."
+        },
+        "LLVM 23.0.0git /Users/int/local/bin/llvm-mc, armv8.2-a with fp16 enabled after the fpu directive; successful A32/T32 encodings are logged separately from rejected experiments."
+      ],
+      "baseline_results": {
+        "native_add_probe": {
+          "equal": 23,
+          "different": 12,
+          "scope": "35 selected raw/control combinations; exact result bits and cumulative flags."
+        },
+        "helper_contract": {
+          "passed": 3,
+          "failed": 20,
+          "ignored": 0,
+          "filtered": 0
+        },
+        "decoded_instruction": {
+          "passed": 2,
+          "failed": 15,
+          "ignored": 0,
+          "filtered": 0
+        }
+      },
+      "bounded_scope": [
+        {
+          "impact": "high",
+          "item": "Half precision conversions including AHP, half integer/fixed conversions, FP16 estimate/step families and mixed-precision FMLAL remain pending; this group does not complete A32-FP.",
+          "blocks": "Complete A32-FP remediation."
+        },
+        {
+          "impact": "high",
+          "item": "Native A32 execution, enabled floating-point exception delivery and complete architecture/profile admission remain separate requirements.",
+          "blocks": "Corresponding oracle, trap and profile work."
+        },
+        {
+          "impact": "medium",
+          "item": "Valid vector FMA and vector min/max-number encodings sampled here decode UNDEFINED in the current selected implementation; they are not silently treated as admitted or numerically validated by the scalar helper oracle.",
+          "blocks": "Later selected-profile instruction coverage."
+        },
+        {
+          "impact": "medium",
+          "item": "The existing comparison-with-zero path also omitted binary32 standard flushing and cumulative status. Its shared owner is fixed and independently reproduced alongside half comparison.",
+          "blocks": false
+        },
+        {
+          "impact": "low",
+          "item": "The attempted vmov.f16 between two S registers exposed an existing reserved-encoding admission. The decoder and forged direct execution now reject that half register form; valid single/double neighbors and half-immediate forms are retained. The unsuccessful assembly experiment is kept apart from successful encoding logs.",
+          "blocks": false
+        }
+      ],
+      "baseline": "9c92606f764ea1664c2117c5dae00246f27c4650",
+      "validation": {
+        "checks": [
+          {
+            "check": "final-build",
+            "args": [
+              "cargo",
+              "+stable",
+              "build",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--all-targets"
+            ],
+            "code": 0,
+            "seconds": 184.42476854193956
+          },
+          {
+            "check": "final-vfp",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--test",
+              "arm_vfp_a32",
+              "--",
+              "--test-threads=4"
+            ],
+            "code": 0,
+            "seconds": 4.150219374918379
+          },
+          {
+            "check": "final-integration",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--test",
+              "arm",
+              "--test",
+              "isa_oracle",
+              "--",
+              "--test-threads=4"
+            ],
+            "code": 0,
+            "seconds": 29.798735584015958
+          },
+          {
+            "check": "final-clippy",
+            "args": [
+              "cargo",
+              "+stable",
+              "clippy",
+              "--locked",
+              "--offline",
+              "--all-targets",
+              "--features",
+              "x86_64-suite"
+            ],
+            "code": 0,
+            "seconds": 78.07948112499435
+          },
+          {
+            "check": "final-fmt",
+            "args": [
+              "cargo",
+              "+stable",
+              "fmt",
+              "--all",
+              "--check"
+            ],
+            "code": 0,
+            "seconds": 13.026343874982558
+          },
+          {
+            "check": "final-doc",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--doc"
+            ],
+            "code": 0,
+            "seconds": 5.100029500084929
+          },
+          {
+            "check": "final-library",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--lib",
+              "--",
+              "--test-threads=4"
+            ],
+            "code": 0,
+            "seconds": 347.5299973329529
+          },
+          {
+            "check": "final-rosetta-vfp",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--target",
+              "x86_64-apple-darwin",
+              "--test",
+              "arm_vfp_a32",
+              "--",
+              "--test-threads=4"
+            ],
+            "code": 0,
+            "seconds": 34.85273420903832
+          },
+          {
+            "check": "final-capi",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "-p",
+              "rax-capi",
+              "--",
+              "--test-threads=4"
+            ],
+            "code": 0,
+            "seconds": 40.465332833933644
+          }
+        ],
+        "complete_library": {
+          "passed": 10433,
+          "failed": 0,
+          "ignored": 2,
+          "filtered": 0,
+          "elapsed_seconds": 347.41
+        },
+        "complete_vfp_arm": {
+          "passed": 314,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0,
+          "elapsed_seconds": 4.04
+        },
+        "complete_vfp_rosetta": {
+          "passed": 293,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0,
+          "elapsed_seconds": 0.01
+        },
+        "doctests": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 5,
+          "filtered": 0,
+          "elapsed_seconds": 0.0
+        },
+        "integration": {
+          "arm": {
+            "passed": 46850,
+            "failed": 0,
+            "ignored": 0,
+            "filtered": 0,
+            "elapsed_seconds": 29.48
+          },
+          "isa_oracle": {
+            "passed": 101,
+            "failed": 0,
+            "ignored": 0,
+            "filtered": 0,
+            "elapsed_seconds": 0.2
+          }
+        },
+        "capi": [
+          {
+            "passed": 185,
+            "failed": 0,
+            "ignored": 0,
+            "filtered": 0,
+            "elapsed_seconds": 8.49
+          },
+          {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "filtered": 0,
+            "elapsed_seconds": 0.0
+          }
+        ],
+        "native_arithmetic": {
+          "binary_fused_staged_comparisons": 9600000,
+          "exhaustive_half_unary_comparisons": 13631488,
+          "total_comparisons": 23231488,
+          "seed": "0x864c3d2fa7915be0",
+          "matrix": "20000 edge/seeded operand triples x 32 RM/FZ16/DN/AHP control profiles x 15 binary/fused/staged operations. Separately, every one of 65536 half encodings x 16 RM/FZ16/DN profiles x 13 sqrt/rounding/comparison cases, with AHP set and opposing FZ32 to test independence.",
+          "scope": "Actual A64 half instructions with exact result-bit/status equality; target_arch=aarch64 and target_feature=fp16 are compile-time requirements. No runtime skip or software oracle fallback. Ties-away/exact uses FRINTA bits and FRINTX inexact status as in the preceding round-integral group. No native A32 or enabled-trap claim."
+        },
+        "rosetta_cfg_elision": "21 A64 hardware tests are cfg-elided, including the three new FP16 tests. All 293 applicable owning tests execute.",
+        "reserved_move_matrix": {
+          "decode_cases": 6144,
+          "dimensions": "Two instruction states x 32 destination fields x 32 source fields x three size fields. Half register form rejected; both single/double neighbors retained.",
+          "forged_execution_cases": 2,
+          "state": "All GPRs, CPSR, all aliased D registers and FPSCR remain unchanged."
+        },
+        "logs": [
+          "/tmp/rax-a32-fp16/add-baseline.log",
+          "/tmp/rax-a32-fp16/host-cfg.log",
+          "/tmp/rax-a32-fp16/parent-contract-red.log",
+          "/tmp/rax-a32-fp16/parent-decoded-final-red.log",
+          "/tmp/rax-a32-fp16/llvm-words.log",
+          "/tmp/rax-a32-fp16/llvm-selection.log",
+          "/tmp/rax-a32-fp16/llvm-moves.log",
+          "/tmp/rax-a32-fp16/decode-probe.log",
+          "/tmp/rax-a32-fp16/worktree-vfp-initial.log",
+          "/tmp/rax-a32-fp16/worktree-vfp-decoded.log",
+          "/tmp/rax-a32-fp16/worktree-vfp-final.log",
+          "/tmp/rax-a32-fp16/worktree-complete.log",
+          "/tmp/rax-a32-fp16/final-build.log",
+          "/tmp/rax-a32-fp16/final-vfp.log",
+          "/tmp/rax-a32-fp16/final-integration.log",
+          "/tmp/rax-a32-fp16/final-clippy.log",
+          "/tmp/rax-a32-fp16/final-fmt.log",
+          "/tmp/rax-a32-fp16/final-doc.log",
+          "/tmp/rax-a32-fp16/final-library.log",
+          "/tmp/rax-a32-fp16/final-rosetta-vfp.log",
+          "/tmp/rax-a32-fp16/final-capi.log",
+          "/tmp/rax-a32-fp16/checks.jsonl"
+        ],
+        "intermediate_notes": [
+          "A standalone parent probe could not link after a scratch worktree rebuilt the same dependency output paths (E0460 vm_memory artifact mismatch). Baseline fixtures were rerun against a saved main-checkout parent rlib and its matching dependency directory. This was a test artifact issue, not a product result.",
+          "The initial isolated arithmetic run passed 297 owning tests and all new native comparisons. Adding full S-register instruction writes exposed older fixtures that encoded preserved upper-half bits. Pinned A32 assignments and independent seeded-register tests establish zero extension; those expectations were corrected.",
+          "The final scratch owning run passes 314 tests after the reserved register-move decoder/direct guard and the corrected older fixtures. The independently reproduced parent decoded fixture is 2 pass/15 fail.",
+          "LLVM initially lost full FP16 when a later fpu directive reset features; the successful logs enable fp16 after that directive. A separate rejected S-to-S half move syntax is retained as negative evidence and checked against the architectural 101x register-move opcode.",
+          "A formatting-sensitive task script stopped at its explicit source guard after making two known instruction-write edits. The match was corrected before the final complete owning run; no partial script output is used as completed validation."
+        ]
+      },
+      "affected_planes": {
+        "direct_helpers": "Existing binary16 arithmetic, fused/nonfused, min/max-number, comparison and round-integral APIs use direct 16-bit format evaluation with FZ16, no input-flush IDC, explicit guest rounding/NaNs and sticky flags. No signature changes. The partial write_h_bits state helper is preserved.",
+        "decoded_a32_thumb": "Full S destinations are zero-extended at admitted scalar arithmetic/rounding/select/immediate commits. Legacy half SIMD selection/comparison avoids widening; vector X uses nearest-even. Floating zero comparison uses standard controls and cumulative status for half/single. Reserved half register VMOV is rejected by decoding and forged direct execution; valid neighbors and half immediate retained.",
+        "smir": "Private format-aware numerical evaluators behind unchanged binary32/binary64 entry points. The A32/Thumb lifters reject all 14 tested valid instruction pairs requiring the absent FPSCR representation; no new IR admission.",
+        "embedding": "All 185 C API tests pass; no CPU-state layout, ABI or checkpoint schema changes. Binary32/binary64 numerical oracles remain in the full owning suite."
+      },
+      "complexity": "O(1) time and space per lane using fixed-width integer operations. Binary16 uses at most 11 significand bits, 22 product bits, a 111-bit division numerator and a 76-bit sqrt radicand; existing u128 guards suffice. Round-integral fractional magnitude is below 2^10. Native comparisons require exact bits/status with no numerical tolerance.",
+      "quality_gates": {
+        "assumptions": "H1-H6 retained and tested; half flushing differs from binary32/64 IDC, full S-register architectural writes differ from the partial state helper, and reserved VMOV is separated from valid half immediate.",
+        "coverage": "23 helper contracts, 17 decoded/guard contracts and three native tests, plus complete existing owning suites. Parent failures independently reproduced: 20 helper and 15 decoded.",
+        "reproducibility": "Exact opcodes, pinned ASL hashes, compiler cfg, seed, comparison counts, source hashes, complete commands and logs recorded.",
+        "contradictions": "Old upper-half-preservation/VMOV fixtures were reconciled against primary instruction operations; rejected assembly and stale dependency-artifact experiments are not counted as validation.",
+        "provenance": "Pinned Arm data-processing/unpack/round/compare and instruction operations, valid LLVM byte encodings, and real A64 FP16 execution.",
+        "bounded_expansion": "Precision conversions, half integer/fixed/estimate/step, mixed-precision FMLAL, selected-profile admission and enabled traps remain explicit separate work.",
+        "worktree_integrity": "All 21 root baseline path hashes/absences were checked before import; only the explicit owned paths and ledger are staged. Original untracked content is untouched.",
+        "behavioral_evidence": "Complete applicable tests execute with zero filtered tests. Native target-feature elision is counted separately; hardware matrices have explicit final counters and host-state guards.",
+        "repository_consistency": "Existing public signatures and partial-write helper semantics retained; modules/fixtures registered, dead half-classification helpers removed, source owners remain within size limits. No ABI/serialization change."
       }
     }
   ],

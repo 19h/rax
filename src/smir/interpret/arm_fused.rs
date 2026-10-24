@@ -4,13 +4,43 @@ use super::{FpRoundMode, SmirInterpreter, X86_SIMD_F32, X86_SIMD_F64, hr_add_sca
 
 impl SmirInterpreter {
     pub(crate) fn arm_eval_fused(
-        mut accumulator: u64,
-        mut first: u64,
-        mut second: u64,
+        accumulator: u64,
+        first: u64,
+        second: u64,
         double: bool,
         control: u32,
     ) -> (u64, u32) {
-        let format = if double { X86_SIMD_F64 } else { X86_SIMD_F32 };
+        Self::arm_eval_fused_format(
+            accumulator,
+            first,
+            second,
+            if double { X86_SIMD_F64 } else { X86_SIMD_F32 },
+            control,
+        )
+    }
+    pub(crate) fn arm_eval_half_fused(
+        accumulator: u16,
+        first: u16,
+        second: u16,
+        control: u32,
+    ) -> (u16, u32) {
+        let (bits, status) = Self::arm_eval_fused_format(
+            u64::from(accumulator),
+            u64::from(first),
+            u64::from(second),
+            super::X86_SIMD_F16,
+            super::arm_format::half_control(control),
+        );
+        (bits as u16, status)
+    }
+    pub(super) fn arm_eval_fused_format(
+        mut accumulator: u64,
+        mut first: u64,
+        mut second: u64,
+        format: super::X86SimdFpFormat,
+        control: u32,
+    ) -> (u64, u32) {
+        let double = format.total_bits == 64;
         let (sign, exponent, fraction, quiet) = Self::x86_simd_fp_masks(format);
         let canonical_nan = exponent | quiet;
         let mut status = 0;
@@ -18,7 +48,7 @@ impl SmirInterpreter {
             for input in [&mut accumulator, &mut first, &mut second] {
                 if *input & exponent == 0 && *input & fraction != 0 {
                     *input &= sign;
-                    status |= 1 << 7;
+                    status |= if format.total_bits == 16 { 0 } else { 1 << 7 };
                 }
             }
         }

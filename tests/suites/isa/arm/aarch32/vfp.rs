@@ -1,3 +1,10 @@
+#[path = "fp_half_contract.rs"]
+mod fp_half_contract;
+#[path = "fp_half_decoded.rs"]
+mod fp_half_decoded;
+#[cfg(all(target_arch = "aarch64", target_feature = "fp16"))]
+#[path = "fp_half_native.rs"]
+mod fp_half_native;
 #[path = "fp_integer_contract.rs"]
 mod fp_integer_contract;
 #[path = "fp_integer_decoded.rs"]
@@ -294,7 +301,7 @@ fn vmov_immediate_materializes_scalar_constants() {
         exec_one(&mut cpu, &mut mem, 0xEEB7_0900),
         ExecResult::Continue
     ));
-    assert_eq!(cpu.vfp.read_s_bits(0), 0xaaaa_3c00);
+    assert_eq!(cpu.vfp.read_s_bits(0), 0x0000_3c00);
 
     assert!(matches!(
         exec_one(&mut cpu, &mut mem, 0xEEB7_0A00),
@@ -316,23 +323,21 @@ fn vmov_immediate_materializes_scalar_constants() {
 }
 
 #[test]
-fn scalar_fp16_vmov_register_preserves_halves() {
+fn reserved_scalar_half_register_move_is_undefined() {
     let mut cpu = Armv7Cpu::new();
     let mut mem = FlatMemory::new(0x1000, 0);
-
+    cpu.vfp.write_s_bits(0, 0xaaaa1111);
+    cpu.vfp.write_s_bits(1, 0xbbbb4000);
+    let before = cpu.vfp.dregs;
     assert_eq!(
-        Aarch32Decoder::decode(0xEEB0_0960).unwrap().mnemonic,
-        Mnemonic::VMOV
+        Aarch32Decoder::decode(0xeeb00960).unwrap().mnemonic,
+        Mnemonic::UNDEFINED
     );
-
-    cpu.vfp.write_s_bits(0, 0xaaaa_1111);
-    cpu.vfp.write_s_bits(1, 0xbbbb_4000);
     assert!(matches!(
-        exec_one(&mut cpu, &mut mem, 0xEEB0_0960),
-        ExecResult::Continue
+        exec_one(&mut cpu, &mut mem, 0xeeb00960),
+        ExecResult::Undefined
     ));
-    assert_eq!(cpu.vfp.read_s_bits(0), 0xaaaa_4000);
-    assert_eq!(cpu.vfp.read_s_bits(1), 0xbbbb_4000);
+    assert_eq!(cpu.vfp.dregs, before);
 }
 
 #[test]
@@ -541,34 +546,34 @@ fn scalar_fp16_arithmetic_unary_and_accumulate_execute() {
         exec_one(&mut cpu, &mut mem, 0xEE30_0981),
         ExecResult::Continue
     ));
-    assert_eq!(cpu.vfp.read_s_bits(0), 0xaaaa_4300); // 3.5
+    assert_eq!(cpu.vfp.read_s_bits(0), 0x0000_4300); // 3.5
 
     cpu.vfp.write_s_bits(0, 0xbbbb_0000);
     assert!(matches!(
         exec_one(&mut cpu, &mut mem, 0xEE30_09C1),
         ExecResult::Continue
     ));
-    assert_eq!(cpu.vfp.read_s_bits(0), 0xbbbb_b800); // -0.5
+    assert_eq!(cpu.vfp.read_s_bits(0), 0x0000_b800); // -0.5
 
     cpu.vfp.write_s_bits(0, 0xcccc_4900); // 10.0
     assert!(matches!(
         exec_one(&mut cpu, &mut mem, 0xEE10_09C1),
         ExecResult::Continue
     ));
-    assert_eq!(cpu.vfp.read_s_bits(0), 0xcccc_ca80); // -13.0
+    assert_eq!(cpu.vfp.read_s_bits(0), 0x0000_ca80); // -13.0
 
     cpu.vfp.write_s_bits(0, 0xdddd_4900); // 10.0
     assert!(matches!(
         exec_one(&mut cpu, &mut mem, 0xEE10_0981),
         ExecResult::Continue
     ));
-    assert_eq!(cpu.vfp.read_s_bits(0), 0xdddd_c700); // -7.0
+    assert_eq!(cpu.vfp.read_s_bits(0), 0x0000_c700); // -7.0
 
     assert!(matches!(
         exec_one(&mut cpu, &mut mem, 0xEE20_09C1),
         ExecResult::Continue
     ));
-    assert_eq!(cpu.vfp.read_s_bits(0), 0xdddd_c200); // -3.0
+    assert_eq!(cpu.vfp.read_s_bits(0), 0x0000_c200); // -3.0
 
     assert!(matches!(
         exec_one(&mut cpu, &mut mem, 0xEE20_0981),
@@ -644,14 +649,14 @@ fn scalar_vsel_decodes_and_selects_from_fpscr_flags() {
         exec_one(&mut cpu, &mut mem, 0xFE00_0981),
         ExecResult::Continue
     ));
-    assert_eq!(cpu.vfp.read_s_bits(0), 0xaaaa_3e00);
+    assert_eq!(cpu.vfp.read_s_bits(0), 0x0000_3e00);
 
     cpu.vfp.fpscr.set_nzcv(false, false, false, false);
     assert!(matches!(
         exec_one(&mut cpu, &mut mem, 0xFE00_0981),
         ExecResult::Continue
     ));
-    assert_eq!(cpu.vfp.read_s_bits(0), 0xaaaa_4000);
+    assert_eq!(cpu.vfp.read_s_bits(0), 0x0000_4000);
 
     cpu.vfp.write_s_bits(1, 0x1111_1111);
     cpu.vfp.write_s_bits(2, 0x2222_2222);
@@ -1391,7 +1396,7 @@ fn scalar_vrint_decode_and_round_to_integral_float() {
         exec_one(&mut cpu, &mut mem, 0xFEB8_0960),
         ExecResult::Continue
     ));
-    assert_eq!(cpu.vfp.read_s_bits(0), 0xaaaa_c200);
+    assert_eq!(cpu.vfp.read_s_bits(0), 0x0000_c200);
 
     cpu.vfp.fpscr.set_ixc(false);
     cpu.vfp.fpscr.set_rmode(RoundingMode::RoundNearest);
@@ -1401,7 +1406,7 @@ fn scalar_vrint_decode_and_round_to_integral_float() {
         exec_one(&mut cpu, &mut mem, 0xEEB7_0960),
         ExecResult::Continue
     ));
-    assert_eq!(cpu.vfp.read_s_bits(0), 0xaaaa_4000);
+    assert_eq!(cpu.vfp.read_s_bits(0), 0x0000_4000);
     assert!(cpu.vfp.fpscr.ixc());
 
     cpu.vfp.write_d(1, 3.5);

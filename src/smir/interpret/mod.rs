@@ -25,6 +25,7 @@ use crate::smir::ir::{CallTarget, SmirBlock, SmirFunction, Terminator, TrapKind}
 mod arm_arithmetic;
 mod arm_conversion;
 mod arm_flags;
+mod arm_format;
 mod arm_fused;
 mod arm_integer_conversion;
 mod arm_reciprocal;

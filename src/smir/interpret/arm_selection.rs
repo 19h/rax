@@ -31,7 +31,7 @@ impl SmirInterpreter {
             for input in [first, second] {
                 if *input & exponent == 0 && *input & fraction != 0 {
                     *input &= sign;
-                    status |= 1 << 7;
+                    status |= if format.total_bits == 16 { 0 } else { 1 << 7 };
                 }
             }
         }
@@ -39,14 +39,47 @@ impl SmirInterpreter {
     }
 
     pub(crate) fn arm_eval_minmax(
-        mut first: u64,
-        mut second: u64,
+        first: u64,
+        second: u64,
         double: bool,
         maximum: bool,
         number: bool,
         control: u32,
     ) -> (u64, u32) {
-        let format = if double { X86_SIMD_F64 } else { X86_SIMD_F32 };
+        Self::arm_eval_minmax_format(
+            first,
+            second,
+            if double { X86_SIMD_F64 } else { X86_SIMD_F32 },
+            maximum,
+            number,
+            control,
+        )
+    }
+    pub(crate) fn arm_eval_half_minmax(
+        first: u16,
+        second: u16,
+        maximum: bool,
+        number: bool,
+        control: u32,
+    ) -> (u16, u32) {
+        let (bits, status) = Self::arm_eval_minmax_format(
+            u64::from(first),
+            u64::from(second),
+            super::X86_SIMD_F16,
+            maximum,
+            number,
+            super::arm_format::half_control(control),
+        );
+        (bits as u16, status)
+    }
+    pub(super) fn arm_eval_minmax_format(
+        mut first: u64,
+        mut second: u64,
+        format: super::X86SimdFpFormat,
+        maximum: bool,
+        number: bool,
+        control: u32,
+    ) -> (u64, u32) {
         let mut status = Self::arm_unpack_pair(&mut first, &mut second, format, control);
         let (sign, exponent, fraction, quiet) = Self::x86_simd_fp_masks(format);
         let nan1 = Self::x86_simd_fp_is_nan(first, format);
@@ -110,13 +143,41 @@ impl SmirInterpreter {
     }
 
     pub(crate) fn arm_eval_compare(
-        mut first: u64,
-        mut second: u64,
+        first: u64,
+        second: u64,
         double: bool,
         signal_all_nans: bool,
         control: u32,
     ) -> (u32, u32) {
-        let format = if double { X86_SIMD_F64 } else { X86_SIMD_F32 };
+        Self::arm_eval_compare_format(
+            first,
+            second,
+            if double { X86_SIMD_F64 } else { X86_SIMD_F32 },
+            signal_all_nans,
+            control,
+        )
+    }
+    pub(crate) fn arm_eval_half_compare(
+        first: u16,
+        second: u16,
+        signal_all_nans: bool,
+        control: u32,
+    ) -> (u32, u32) {
+        Self::arm_eval_compare_format(
+            u64::from(first),
+            u64::from(second),
+            super::X86_SIMD_F16,
+            signal_all_nans,
+            super::arm_format::half_control(control),
+        )
+    }
+    pub(super) fn arm_eval_compare_format(
+        mut first: u64,
+        mut second: u64,
+        format: super::X86SimdFpFormat,
+        signal_all_nans: bool,
+        control: u32,
+    ) -> (u32, u32) {
         let mut status = Self::arm_unpack_pair(&mut first, &mut second, format, control);
         if Self::x86_simd_fp_is_nan(first, format) || Self::x86_simd_fp_is_nan(second, format) {
             status |= u32::from(

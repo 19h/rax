@@ -1,5 +1,5 @@
 //! Scalar number selection and comparisons use architectural NaN/FZ rules.
-use super::{Fpscr, vcvt_f16_bits_f32, vcvt_f32_f16_bits};
+use super::Fpscr;
 use crate::smir::interpret::SmirInterpreter;
 
 /// Execute binary32 VMAXNM.
@@ -32,10 +32,7 @@ pub fn vmaxnm_f64(a: f64, b: f64, fpscr: &mut Fpscr) -> f64 {
 
 /// Execute half-precision maxNum.
 pub fn vmaxnm_f16_bits(a: u16, b: u16, fpscr: &mut Fpscr) -> u16 {
-    vcvt_f16_bits_f32(
-        vmaxnm_f32(vcvt_f32_f16_bits(a), vcvt_f32_f16_bits(b), fpscr),
-        fpscr,
-    )
+    super::half::minmax(a, b, true, fpscr)
 }
 
 /// Execute binary32 VMINNM.
@@ -68,10 +65,7 @@ pub fn vminnm_f64(a: f64, b: f64, fpscr: &mut Fpscr) -> f64 {
 
 /// Execute half-precision minNum.
 pub fn vminnm_f16_bits(a: u16, b: u16, fpscr: &mut Fpscr) -> u16 {
-    vcvt_f16_bits_f32(
-        vminnm_f32(vcvt_f32_f16_bits(a), vcvt_f32_f16_bits(b), fpscr),
-        fpscr,
-    )
+    super::half::minmax(a, b, false, fpscr)
 }
 
 /// Compare binary32, signaling invalid only for signaling NaNs.

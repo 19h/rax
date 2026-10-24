@@ -178,22 +178,12 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
                         let rhs = pair[1] as u16;
                         u64::from(match insn.mnemonic {
                             Mnemonic::VPADD => vadd_f16_bits(lhs, rhs, fpscr),
-                            Mnemonic::VPMAX => {
-                                let lhs_f = vcvt_f32_f16_bits(lhs);
-                                let rhs_f = vcvt_f32_f16_bits(rhs);
-                                vcvt_f16_bits_f32(
-                                    f32::from_bits(Self::neon_fpmax_f32_bits(lhs_f, rhs_f, fpscr)),
-                                    fpscr,
-                                )
-                            }
-                            Mnemonic::VPMIN => {
-                                let lhs_f = vcvt_f32_f16_bits(lhs);
-                                let rhs_f = vcvt_f32_f16_bits(rhs);
-                                vcvt_f16_bits_f32(
-                                    f32::from_bits(Self::neon_fpmin_f32_bits(lhs_f, rhs_f, fpscr)),
-                                    fpscr,
-                                )
-                            }
+                            Mnemonic::VPMAX | Mnemonic::VPMIN => Self::neon_fp_minmax_f16_bits(
+                                lhs,
+                                rhs,
+                                insn.mnemonic == Mnemonic::VPMAX,
+                                fpscr,
+                            ),
                             _ => return ExecResult::Undefined,
                         })
                     }
@@ -253,14 +243,10 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
             return ExecResult::Undefined;
         }
 
-        let mut fpscr = if size == NeonSize::S32 {
-            if insn.mnemonic == Mnemonic::VRINTX_F32 {
-                mode = RoundingMode::RoundNearest;
-            }
-            self.standard_simd_fp_controls()
-        } else {
-            self.cpu.vfp.fpscr
-        };
+        if matches!(insn.mnemonic, Mnemonic::VRINTX_F32 | Mnemonic::VRINTX_F16) {
+            mode = RoundingMode::RoundNearest;
+        }
+        let mut fpscr = self.standard_simd_fp_controls();
         let ebytes = (size.bits() / 8) as u8;
         for reg in 0..regs {
             let elements = self.neon_read_vector_elements_u64(m + reg, 1, ebytes);
@@ -671,7 +657,7 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
             16 => {
                 let value = self.cpu.vfp.read_h_bits(m);
                 let result = vrint_f16_bits(value, mode, exact, &mut self.cpu.vfp.fpscr);
-                self.cpu.vfp.write_h_bits(d, result);
+                self.cpu.vfp.write_s_bits(d, u32::from(result));
             }
             32 => {
                 let value = self.cpu.vfp.read_s(m);

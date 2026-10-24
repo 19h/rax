@@ -424,6 +424,7 @@ pub enum VfpDataType {
 // =============================================================================
 
 mod arithmetic;
+mod half;
 pub use arithmetic::*;
 mod fused;
 pub use fused::*;
@@ -448,17 +449,7 @@ pub fn vcmp_f16_bits(a: u16, b: u16, fpscr: &mut Fpscr) {
 
 /// Compare half-precision values, optionally signaling invalid operation for any NaN.
 pub fn vcmp_f16_bits_with_exception(a: u16, b: u16, signal_all_nans: bool, fpscr: &mut Fpscr) {
-    let a_nan = is_nan_f16_bits(a);
-    let b_nan = is_nan_f16_bits(b);
-    if a_nan || b_nan {
-        if signal_all_nans || is_snan_f16_bits(a) || is_snan_f16_bits(b) {
-            fpscr.set_ioc(true);
-        }
-        fpscr.set_nzcv(false, false, true, true);
-        return;
-    }
-
-    vcmp_f32(vcvt_f32_f16_bits(a), vcvt_f32_f16_bits(b), fpscr);
+    half::compare(a, b, signal_all_nans, fpscr);
 }
 
 /// Compare single-precision value with zero.
@@ -469,14 +460,6 @@ pub fn vcmpz_f32(a: f32, fpscr: &mut Fpscr) {
 /// Compare double-precision value with zero.
 pub fn vcmpz_f64(a: f64, fpscr: &mut Fpscr) {
     vcmp_f64(a, 0.0, fpscr);
-}
-
-fn is_nan_f16_bits(bits: u16) -> bool {
-    (bits & 0x7C00) == 0x7C00 && (bits & 0x03FF) != 0
-}
-
-fn is_snan_f16_bits(bits: u16) -> bool {
-    is_nan_f16_bits(bits) && (bits & 0x0200) == 0
 }
 
 fn is_snan_f32(value: f32) -> bool {
@@ -493,9 +476,7 @@ fn is_snan_f64(value: f64) -> bool {
 
 /// Round half-precision bits to an integral half-precision floating-point value.
 pub fn vrint_f16_bits(bits: u16, mode: RoundingMode, exact: bool, fpscr: &mut Fpscr) -> u16 {
-    let value = vcvt_f32_f16_bits(bits);
-    let rounded = vrint_f32(value, mode, exact, fpscr);
-    vcvt_f16_bits_f32(rounded, fpscr)
+    half::round_integral(bits, mode, exact, fpscr)
 }
 
 /// Convert IEEE-754 binary16 bits to single-precision.

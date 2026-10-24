@@ -1,4 +1,4 @@
-//! Arm FPToFixed/FixedToFP for binary32/binary64 and 32-bit integer operands.
+//! Arm integer/fixed conversion and shared FPToFixed rounding intermediates.
 //! Scale integer significands exactly; guest FPSCR never changes host FP state.
 use super::{FpRoundMode, SmirInterpreter, X86_SIMD_F32, X86_SIMD_F64};
 
@@ -22,11 +22,30 @@ impl SmirInterpreter {
         signed: bool,
         integer_bits: u32,
         fractional_bits: u32,
+        mode: FpRoundMode,
+        control: u32,
+    ) -> (u64, u32) {
+        Self::arm_eval_fp_to_fixed_format(
+            raw,
+            if double { X86_SIMD_F64 } else { X86_SIMD_F32 },
+            signed,
+            integer_bits,
+            fractional_bits,
+            mode,
+            control,
+        )
+    }
+    pub(super) fn arm_eval_fp_to_fixed_format(
+        raw: u64,
+        format: super::X86SimdFpFormat,
+        signed: bool,
+        integer_bits: u32,
+        fractional_bits: u32,
         mut mode: FpRoundMode,
         control: u32,
     ) -> (u64, u32) {
         debug_assert!(matches!(integer_bits, 32 | 64));
-        let source = if double { X86_SIMD_F64 } else { X86_SIMD_F32 };
+        let source = format;
         let (sign, exponent, fraction, _) = Self::x86_simd_fp_masks(source);
         let negative = raw & sign != 0;
         let saturated = if Self::x86_simd_fp_is_nan(raw, source) {
@@ -43,7 +62,7 @@ impl SmirInterpreter {
             return (saturated, 1);
         }
         if raw & exponent == 0 && raw & fraction != 0 && control & (1 << 24) != 0 {
-            return (0, 1 << 7);
+            return (0, if format.total_bits == 16 { 0 } else { 1 << 7 });
         }
         // Architectural immediates are <=32. For the legacy public helpers,
         // any larger shift beyond 2048 is equivalent: every nonzero finite

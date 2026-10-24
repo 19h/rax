@@ -379,6 +379,8 @@ impl Aarch32Decoder {
             (1, 1, 0, _, 1, _) => Mnemonic::VFMS,
             (1, 0, 1, _, 1, _) => Mnemonic::VFNMA,
             (1, 0, 1, _, 0, _) => Mnemonic::VFNMS,
+            // Register VMOV uses coprocessor fields 1010/1011; 1001 is reserved.
+            (1, 1, 1, 0, 1, 0) if size == 1 => Mnemonic::UNDEFINED,
             (1, 1, 1, 0, 1, 0) => Mnemonic::VMOV,
             (1, 1, 1, 0, 0, _) => Mnemonic::VMOV,
             (1, 1, 1, 1, 1, 0) => Mnemonic::VABS,

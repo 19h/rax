@@ -1,4 +1,4 @@
-//! Arm FPAdd/FPSub/FPMul/FPDiv/FPSqrt and FPRoundBase for binary32/binary64.
+//! Arm FPAdd/FPSub/FPMul/FPDiv/FPSqrt and FPRoundBase for binary16/binary32/binary64.
 //! Integer significands and explicit guest rounding leave host FP state untouched.
 
 use super::{
@@ -26,17 +26,47 @@ pub(super) fn rounding(control: u32) -> FpRoundMode {
 impl SmirInterpreter {
     pub(crate) fn arm_eval_arithmetic(
         operation: ArmFpOperation,
-        mut first: u64,
-        mut second: u64,
+        first: u64,
+        second: u64,
         double: bool,
         control: u32,
     ) -> (u64, u32) {
-        let format = if double { X86_SIMD_F64 } else { X86_SIMD_F32 };
+        Self::arm_eval_arithmetic_format(
+            operation,
+            first,
+            second,
+            if double { X86_SIMD_F64 } else { X86_SIMD_F32 },
+            control,
+        )
+    }
+    pub(crate) fn arm_eval_half_arithmetic(
+        operation: ArmFpOperation,
+        first: u16,
+        second: u16,
+        control: u32,
+    ) -> (u16, u32) {
+        let (bits, status) = Self::arm_eval_arithmetic_format(
+            operation,
+            u64::from(first),
+            u64::from(second),
+            super::X86_SIMD_F16,
+            super::arm_format::half_control(control),
+        );
+        (bits as u16, status)
+    }
+    pub(super) fn arm_eval_arithmetic_format(
+        operation: ArmFpOperation,
+        mut first: u64,
+        mut second: u64,
+        format: super::X86SimdFpFormat,
+        control: u32,
+    ) -> (u64, u32) {
+        let double = format.total_bits == 64;
         let (sign, exponent, fraction, quiet) = Self::x86_simd_fp_masks(format);
         let canonical_nan = exponent | quiet;
         let unary = matches!(operation, ArmFpOperation::SquareRoot);
         let mut status = 0;
-        // Arm FPUnpack raises InputDenorm only when an input is flushed.
+        // Binary32/64 input flushing raises IDC; binary16 flushing does not.
         if control & (1 << 24) != 0 {
             for input in [&mut first, &mut second]
                 .into_iter()
@@ -44,7 +74,7 @@ impl SmirInterpreter {
             {
                 if *input & exponent == 0 && *input & fraction != 0 {
                     *input &= sign;
-                    status |= 1 << 7;
+                    status |= if format.total_bits == 16 { 0 } else { 1 << 7 };
                 }
             }
         }

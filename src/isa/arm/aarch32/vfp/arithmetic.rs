@@ -1,5 +1,5 @@
-//! Scalar VFP arithmetic and exact guest-controlled binary32/binary64 results.
-use super::{Fpscr, vcvt_f16_bits_f32, vcvt_f32_f16_bits};
+//! Scalar VFP arithmetic and exact guest-controlled binary16/binary32/binary64 results.
+use super::Fpscr;
 use crate::smir::interpret::{ArmFpOperation, SmirInterpreter};
 
 /// Execute single-precision addition.
@@ -30,10 +30,7 @@ pub fn vadd_f64(a: f64, b: f64, fpscr: &mut Fpscr) -> f64 {
 
 /// Execute half-precision addition.
 pub fn vadd_f16_bits(a: u16, b: u16, fpscr: &mut Fpscr) -> u16 {
-    vcvt_f16_bits_f32(
-        vadd_f32(vcvt_f32_f16_bits(a), vcvt_f32_f16_bits(b), fpscr),
-        fpscr,
-    )
+    super::half::arithmetic(ArmFpOperation::Add, a, b, fpscr)
 }
 
 /// Execute single-precision subtraction.
@@ -64,10 +61,7 @@ pub fn vsub_f64(a: f64, b: f64, fpscr: &mut Fpscr) -> f64 {
 
 /// Execute half-precision subtraction.
 pub fn vsub_f16_bits(a: u16, b: u16, fpscr: &mut Fpscr) -> u16 {
-    vcvt_f16_bits_f32(
-        vsub_f32(vcvt_f32_f16_bits(a), vcvt_f32_f16_bits(b), fpscr),
-        fpscr,
-    )
+    super::half::arithmetic(ArmFpOperation::Subtract, a, b, fpscr)
 }
 
 /// Execute single-precision multiplication.
@@ -98,10 +92,7 @@ pub fn vmul_f64(a: f64, b: f64, fpscr: &mut Fpscr) -> f64 {
 
 /// Execute half-precision multiplication.
 pub fn vmul_f16_bits(a: u16, b: u16, fpscr: &mut Fpscr) -> u16 {
-    vcvt_f16_bits_f32(
-        vmul_f32(vcvt_f32_f16_bits(a), vcvt_f32_f16_bits(b), fpscr),
-        fpscr,
-    )
+    super::half::arithmetic(ArmFpOperation::Multiply, a, b, fpscr)
 }
 
 /// Execute single-precision division.
@@ -132,10 +123,7 @@ pub fn vdiv_f64(a: f64, b: f64, fpscr: &mut Fpscr) -> f64 {
 
 /// Execute half-precision division.
 pub fn vdiv_f16_bits(a: u16, b: u16, fpscr: &mut Fpscr) -> u16 {
-    vcvt_f16_bits_f32(
-        vdiv_f32(vcvt_f32_f16_bits(a), vcvt_f32_f16_bits(b), fpscr),
-        fpscr,
-    )
+    super::half::arithmetic(ArmFpOperation::Divide, a, b, fpscr)
 }
 
 /// Execute single-precision negation.
@@ -196,5 +184,5 @@ pub fn vsqrt_f64(a: f64, fpscr: &mut Fpscr) -> f64 {
 
 /// Execute half-precision square root.
 pub fn vsqrt_f16_bits(a: u16, fpscr: &mut Fpscr) -> u16 {
-    vcvt_f16_bits_f32(vsqrt_f32(vcvt_f32_f16_bits(a), fpscr), fpscr)
+    super::half::arithmetic(ArmFpOperation::SquareRoot, a, 0, fpscr)
 }

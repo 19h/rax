@@ -1,7 +1,6 @@
 //! Multiply then add/subtract: both arithmetic steps round under guest FPSCR.
 use super::{
-    Fpscr, vadd_f32, vadd_f64, vcvt_f16_bits_f32, vcvt_f32_f16_bits, vmul_f32, vmul_f64, vneg_f32,
-    vneg_f64,
+    Fpscr, vadd_f16_bits, vadd_f32, vadd_f64, vmul_f16_bits, vmul_f32, vmul_f64, vneg_f32, vneg_f64,
 };
 
 /// Execute single-precision multiply-accumulate.
@@ -18,15 +17,8 @@ pub fn vmla_f64(acc: f64, a: f64, b: f64, fpscr: &mut Fpscr) -> f64 {
 
 /// Execute half-precision multiply-accumulate.
 pub fn vmla_f16_bits(acc: u16, a: u16, b: u16, fpscr: &mut Fpscr) -> u16 {
-    vcvt_f16_bits_f32(
-        vmla_f32(
-            vcvt_f32_f16_bits(acc),
-            vcvt_f32_f16_bits(a),
-            vcvt_f32_f16_bits(b),
-            fpscr,
-        ),
-        fpscr,
-    )
+    let product = vmul_f16_bits(a, b, fpscr);
+    vadd_f16_bits(acc, product, fpscr)
 }
 
 /// Execute single-precision multiply-subtract.
@@ -43,15 +35,8 @@ pub fn vmls_f64(acc: f64, a: f64, b: f64, fpscr: &mut Fpscr) -> f64 {
 
 /// Execute half-precision multiply-subtract.
 pub fn vmls_f16_bits(acc: u16, a: u16, b: u16, fpscr: &mut Fpscr) -> u16 {
-    vcvt_f16_bits_f32(
-        vmls_f32(
-            vcvt_f32_f16_bits(acc),
-            vcvt_f32_f16_bits(a),
-            vcvt_f32_f16_bits(b),
-            fpscr,
-        ),
-        fpscr,
-    )
+    let product = vmul_f16_bits(a, b, fpscr);
+    vadd_f16_bits(acc, product ^ 0x8000, fpscr)
 }
 
 /// Execute single-precision negated multiply-accumulate.
@@ -68,15 +53,8 @@ pub fn vnmla_f64(acc: f64, a: f64, b: f64, fpscr: &mut Fpscr) -> f64 {
 
 /// Execute half-precision negated multiply-accumulate.
 pub fn vnmla_f16_bits(acc: u16, a: u16, b: u16, fpscr: &mut Fpscr) -> u16 {
-    vcvt_f16_bits_f32(
-        vnmla_f32(
-            vcvt_f32_f16_bits(acc),
-            vcvt_f32_f16_bits(a),
-            vcvt_f32_f16_bits(b),
-            fpscr,
-        ),
-        fpscr,
-    )
+    let product = vmul_f16_bits(a, b, fpscr);
+    vadd_f16_bits(acc ^ 0x8000, product ^ 0x8000, fpscr)
 }
 
 /// Execute single-precision negated multiply-subtract.
@@ -93,15 +71,8 @@ pub fn vnmls_f64(acc: f64, a: f64, b: f64, fpscr: &mut Fpscr) -> f64 {
 
 /// Execute half-precision negated multiply-subtract.
 pub fn vnmls_f16_bits(acc: u16, a: u16, b: u16, fpscr: &mut Fpscr) -> u16 {
-    vcvt_f16_bits_f32(
-        vnmls_f32(
-            vcvt_f32_f16_bits(acc),
-            vcvt_f32_f16_bits(a),
-            vcvt_f32_f16_bits(b),
-            fpscr,
-        ),
-        fpscr,
-    )
+    let product = vmul_f16_bits(a, b, fpscr);
+    vadd_f16_bits(acc ^ 0x8000, product, fpscr)
 }
 
 /// Execute single-precision negated multiply.
@@ -118,8 +89,5 @@ pub fn vnmul_f64(a: f64, b: f64, fpscr: &mut Fpscr) -> f64 {
 
 /// Execute half-precision negated multiply.
 pub fn vnmul_f16_bits(a: u16, b: u16, fpscr: &mut Fpscr) -> u16 {
-    vcvt_f16_bits_f32(
-        vnmul_f32(vcvt_f32_f16_bits(a), vcvt_f32_f16_bits(b), fpscr),
-        fpscr,
-    )
+    vmul_f16_bits(a, b, fpscr) ^ 0x8000
 }

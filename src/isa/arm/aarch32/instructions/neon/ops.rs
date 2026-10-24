@@ -1893,98 +1893,6 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
         self.exec_neon_integer_compare(insn)
     }
 
-    pub(crate) fn exec_neon_compare_zero(&mut self, insn: &DecodedInsn) -> ExecResult {
-        if !self.cpu.vfp.is_enabled() {
-            return ExecResult::Exception(ExceptionType::UndefinedInstruction);
-        }
-        if (insn.raw >> 23) != 0b111100111
-            || ((insn.raw >> 20) & 0x3) != 0b11
-            || ((insn.raw >> 16) & 0x3) != 0b01
-            || !matches!((insn.raw >> 10) & 0x3, 0 | 1)
-            || ((insn.raw >> 4) & 1) != 0
-        {
-            return ExecResult::Undefined;
-        }
-
-        let op = (insn.raw >> 7) & 0x7;
-        let fp = ((insn.raw >> 8) & 0x7) >= 0b100;
-        match (insn.mnemonic, op) {
-            (Mnemonic::VCGT, 0b000)
-            | (Mnemonic::VCGE, 0b001)
-            | (Mnemonic::VCEQ, 0b010)
-            | (Mnemonic::VCLE, 0b011)
-            | (Mnemonic::VCLT, 0b100) => {}
-            _ => return ExecResult::Undefined,
-        }
-
-        let size = match (insn.raw >> 18) & 0x3 {
-            0b00 => NeonSize::B8,
-            0b01 => NeonSize::H16,
-            0b10 => NeonSize::S32,
-            _ => return ExecResult::Undefined,
-        };
-        if fp && !matches!(size, NeonSize::H16 | NeonSize::S32) {
-            return ExecResult::Undefined;
-        }
-        let ebytes = (size.bits() / 8) as u8;
-        let d_bit = ((insn.raw >> 22) & 1) as u8;
-        let vd = ((insn.raw >> 12) & 0xF) as u8;
-        let m_bit = ((insn.raw >> 5) & 1) as u8;
-        let vm = (insn.raw & 0xF) as u8;
-        let q = ((insn.raw >> 6) & 1) != 0;
-        let regs = if q { 2 } else { 1 };
-
-        let d = (d_bit << 4) | vd;
-        let m = (m_bit << 4) | vm;
-        if q && ((d | m) & 1) != 0 {
-            return ExecResult::Undefined;
-        }
-        if d + regs > 32 || m + regs > 32 {
-            return ExecResult::Undefined;
-        }
-
-        let true_mask = if size.bits() == 32 {
-            u64::from(u32::MAX)
-        } else {
-            (1u64 << size.bits()) - 1
-        };
-        for reg in 0..regs {
-            let elements = self.neon_read_vector_elements_u64(m + reg, 1, ebytes);
-            let mut out = Vec::with_capacity(elements.len());
-            for elem in elements {
-                let condition = if fp {
-                    let value = match size {
-                        NeonSize::H16 => vcvt_f32_f16_bits(elem as u16),
-                        NeonSize::S32 => f32::from_bits(elem as u32),
-                        _ => return ExecResult::Undefined,
-                    };
-                    match insn.mnemonic {
-                        Mnemonic::VCGT => value > 0.0,
-                        Mnemonic::VCGE => value >= 0.0,
-                        Mnemonic::VCEQ => value == 0.0,
-                        Mnemonic::VCLE => value <= 0.0,
-                        Mnemonic::VCLT => value < 0.0,
-                        _ => return ExecResult::Undefined,
-                    }
-                } else {
-                    let value = Self::neon_sign_extend_elem_u64(elem, size.bits());
-                    match insn.mnemonic {
-                        Mnemonic::VCGT => value > 0,
-                        Mnemonic::VCGE => value >= 0,
-                        Mnemonic::VCEQ => value == 0,
-                        Mnemonic::VCLE => value <= 0,
-                        Mnemonic::VCLT => value < 0,
-                        _ => return ExecResult::Undefined,
-                    }
-                };
-                out.push(if condition { true_mask } else { 0 });
-            }
-            self.neon_write_vector_elements_u64(d + reg, 1, ebytes, &out);
-        }
-
-        ExecResult::Continue
-    }
-
     pub(crate) fn exec_neon_absdiff(&mut self, insn: &DecodedInsn) -> ExecResult {
         if (insn.raw >> 25) == 0b1111001
             && ((insn.raw >> 23) & 1) == 0
@@ -2282,7 +2190,7 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
                 1 => {
                     self.cpu
                         .vfp
-                        .write_h_bits((vd << 1) | d_bit, vfp_expand_imm_f16(imm8));
+                        .write_s_bits((vd << 1) | d_bit, u32::from(vfp_expand_imm_f16(imm8)));
                     ExecResult::Continue
                 }
                 2 => {
@@ -2305,10 +2213,6 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
             return ExecResult::Undefined;
         };
         match size {
-            16 => {
-                let bits = self.cpu.vfp.read_h_bits(m);
-                self.cpu.vfp.write_h_bits(d, bits);
-            }
             32 => {
                 let bits = self.cpu.vfp.read_s_bits(m);
                 self.cpu.vfp.write_s_bits(d, bits);
@@ -2416,7 +2320,7 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
                     Mnemonic::VMINNM_F16 => vminnm_f16_bits(n_val, m_val, fpscr),
                     _ => return ExecResult::Undefined,
                 };
-                self.cpu.vfp.write_h_bits(d, result);
+                self.cpu.vfp.write_s_bits(d, u32::from(result));
             }
             32 => {
                 let n_val = self.cpu.vfp.read_s(n);
@@ -2478,7 +2382,7 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
                 } else {
                     self.cpu.vfp.read_h_bits(m)
                 };
-                self.cpu.vfp.write_h_bits(d, value);
+                self.cpu.vfp.write_s_bits(d, u32::from(value));
             }
             32 => {
                 let value = if take_n {
@@ -2530,7 +2434,7 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
                     Mnemonic::VFNMS => vfnms_f16_bits(acc, n_val, m_val, fpscr),
                     _ => return ExecResult::Undefined,
                 };
-                self.cpu.vfp.write_h_bits(d, result);
+                self.cpu.vfp.write_s_bits(d, u32::from(result));
             }
             32 => {
                 let acc = self.cpu.vfp.read_s(d);
@@ -2589,7 +2493,7 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
                     Mnemonic::VSQRT => vsqrt_f16_bits(m_val, &mut self.cpu.vfp.fpscr),
                     _ => return ExecResult::Undefined,
                 };
-                self.cpu.vfp.write_h_bits(d, result);
+                self.cpu.vfp.write_s_bits(d, u32::from(result));
             }
             32 => {
                 let m_val = self.cpu.vfp.read_s(m);
