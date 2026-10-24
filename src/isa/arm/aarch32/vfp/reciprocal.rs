@@ -1,4 +1,4 @@
-//! Binary32 estimate operations and A32 nonfused refinement steps.
+//! Binary16/binary32 estimate operations and A32 nonfused refinement steps.
 use super::Fpscr;
 use crate::smir::interpret::SmirInterpreter;
 fn estimate(value: f32, sqrt: bool, fpscr: &mut Fpscr) -> f32 {
@@ -41,6 +41,20 @@ pub fn vrsqrts_f16_bits(first: u16, second: u16, fpscr: &mut Fpscr) -> u16 {
 fn half_step(first: u16, second: u16, sqrt: bool, fpscr: &mut Fpscr) -> u16 {
     let (bits, status) =
         SmirInterpreter::arm_eval_half_recip_step(first, second, sqrt, fpscr.bits());
+    *fpscr = Fpscr::from_bits(fpscr.bits() | status);
+    bits
+}
+
+/// Shared half FPRecipEstimate under explicit FPSCR controls, ignoring AHP.
+pub fn vrecpe_f16_bits(value: u16, fpscr: &mut Fpscr) -> u16 {
+    half_estimate(value, false, fpscr)
+}
+/// Shared half FPRSqrtEstimate, including FZ16 and cumulative status.
+pub fn vrsqrte_f16_bits(value: u16, fpscr: &mut Fpscr) -> u16 {
+    half_estimate(value, true, fpscr)
+}
+fn half_estimate(value: u16, sqrt: bool, fpscr: &mut Fpscr) -> u16 {
+    let (bits, status) = SmirInterpreter::arm_eval_half_recip_estimate(value, sqrt, fpscr.bits());
     *fpscr = Fpscr::from_bits(fpscr.bits() | status);
     bits
 }

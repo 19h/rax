@@ -1,7 +1,8 @@
 //! A32 reciprocal estimate and refinement instruction execution.
 use super::*;
 use crate::isa::arm::aarch32::vfp::{
-    vrecpe_f32, vrecps_f16_bits, vrecps_f32, vrsqrte_f32, vrsqrts_f16_bits, vrsqrts_f32,
+    vrecpe_f16_bits, vrecpe_f32, vrecps_f16_bits, vrecps_f32, vrsqrte_f16_bits, vrsqrte_f32,
+    vrsqrts_f16_bits, vrsqrts_f32,
 };
 use crate::smir::interpret::SmirInterpreter;
 impl<'a, M: ArmMemory> Executor<'a, M> {
@@ -57,18 +58,10 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
                         u64::from(Self::neon_unsigned_rsqrt_estimate(elem as u32))
                     }
                     (Mnemonic::VRECPE, true) if size == 0b01 => {
-                        let input = vcvt_f32_f16_bits(elem as u16).to_bits();
-                        let result = f32::from_bits(Self::neon_fp_recip_estimate_f32(input));
-                        // Retain the legacy FP16 widen/narrow path until its
-                        // complete FZ16/status profile is implemented separately.
-                        let mut standard_fpscr = Fpscr::default();
-                        u64::from(vcvt_f16_bits_f32(result, &mut standard_fpscr))
+                        u64::from(vrecpe_f16_bits(elem as u16, &mut fpscr))
                     }
                     (Mnemonic::VRSQRTE, true) if size == 0b01 => {
-                        let input = vcvt_f32_f16_bits(elem as u16).to_bits();
-                        let result = f32::from_bits(Self::neon_fp_rsqrt_estimate_f32(input));
-                        let mut standard_fpscr = Fpscr::default();
-                        u64::from(vcvt_f16_bits_f32(result, &mut standard_fpscr))
+                        u64::from(vrsqrte_f16_bits(elem as u16, &mut fpscr))
                     }
                     (Mnemonic::VRECPE, true) => {
                         u64::from(vrecpe_f32(f32::from_bits(elem as u32), &mut fpscr).to_bits())

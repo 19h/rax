@@ -454,13 +454,44 @@
         "/tmp/rax-a32-half-conversion/final-library.log",
         "/tmp/rax-a32-half-conversion/final-rosetta-vfp.log",
         "/tmp/rax-a32-half-conversion/final-capi.log",
-        "/tmp/rax-a32-half-conversion/checks.jsonl"
+        "/tmp/rax-a32-half-conversion/checks.jsonl",
+        "src/smir/interpret/arm_reciprocal.rs",
+        "src/isa/arm/aarch32/vfp/reciprocal.rs",
+        "src/isa/arm/aarch32/instructions/neon/reciprocal.rs",
+        "src/isa/arm/aarch32/instructions/neon/fp.rs",
+        "tests/suites/isa/arm/aarch32/fp_half_estimate_decoded.rs",
+        "tests/suites/isa/arm/aarch32/fp_half_estimate_native.rs",
+        "tests/suites/isa/arm/aarch32/vfp.rs",
+        "/tmp/rax-a32-half-estimate/parent-decoded-red.log",
+        "/tmp/rax-a32-half-estimate/llvm-words.log",
+        "/tmp/rax-a32-half-estimate/llvm-errors.log",
+        "/tmp/rax-a32-half-estimate/worktree-complete.log",
+        "/tmp/rax-a32-half-estimate/worktree-result.json",
+        "/tmp/rax-a32-half-estimate/final-build.log",
+        "/tmp/rax-a32-half-estimate/final-vfp.log",
+        "/tmp/rax-a32-half-estimate/final-integration.log",
+        "/tmp/rax-a32-half-estimate/final-clippy.log",
+        "/tmp/rax-a32-half-estimate/final-fmt.log",
+        "/tmp/rax-a32-half-estimate/final-doc.log",
+        "/tmp/rax-a32-half-estimate/final-library.log",
+        "/tmp/rax-a32-half-estimate/final-rosetta-vfp.log",
+        "/tmp/rax-a32-half-estimate/final-capi.log",
+        "/tmp/rax-a32-half-estimate/checks.jsonl",
+        "/tmp/rax-a32-system-oracle/probe-result.json",
+        "/tmp/rax-a32-system-oracle/corpus-result.json",
+        "/tmp/rax-a32-system-oracle/corpus.json",
+        "/tmp/rax-a32-system-oracle/comparison-report.json",
+        "/tmp/rax-a32-system-oracle/make-corpus.py",
+        "/tmp/rax-a32-system-oracle/corpus.s",
+        "/tmp/rax-a32-system-oracle/link.ld",
+        "/tmp/rax-a32-system-oracle/compare.rs",
+        "/tmp/rax-a32-system-oracle/classify.py"
       ],
       "remaining_validation": [
-        "Half-to-integer and half fixed conversions, half estimates, mixed-precision FMLAL and unimplemented 16-bit fixed encodings",
+        "Half-to-integer and half fixed conversions, mixed-precision FMLAL and unimplemented 16-bit fixed encodings",
         "Selected-profile instruction coverage, including sampled currently-undefined vector FMA/minmax-number encodings",
         "Enabled floating-point exception delivery",
-        "Native A32 hardware or independent A32 system oracle"
+        "Extend independent A32 system coverage to remaining fixed/profile/trap operations; native A32 hardware is unverified"
       ]
     },
     {
@@ -6518,6 +6549,390 @@
         "worktree_integrity": "All 14 owned root baseline hashes/absences matched before import; only those paths and this ledger may be staged. Existing untracked files preserved.",
         "behavioral_evidence": "Zero filtered tests in complete owning suites; target cfg elision counted separately. Host FP state restored and tested.",
         "repository_consistency": "Public existing signatures and raw widening behavior retained, private format-aware factoring, modules registered; no ABI/serialization changes."
+      }
+    },
+    {
+      "id": "a32-half-reciprocal-estimate-contract",
+      "status": "locally_validated",
+      "scope": "Direct binary16 reciprocal and reciprocal-square-root estimates, explicit guest controls/status, and already-admitted A32/Thumb vector execution; remove obsolete widen/narrow estimate implementations.",
+      "assumptions": [
+        {
+          "id": "E1",
+          "assumption": "Half estimates ignore AHP and FZ32, observe FZ16, and do not signal input-denormal when flushing half inputs.",
+          "basis": "FPRecipEstimate/FPRSqrtEstimate use FPUnpack data semantics.",
+          "dependent_result": "Normalize copied controls, use format-specific flush status, preserve live controls.",
+          "stress_test": "All 65536 encodings under 64 RM/FZ32/DN/AHP/FZ16 profiles and both operations.",
+          "falsification_probe": "Any native result or newly raised status bit differs.",
+          "status": "retained"
+        },
+        {
+          "id": "E2",
+          "assumption": "StandardFPSCRValue fixes vector RM/DN/FZ32 but retains FZ16, and arithmetic accumulates required exception status.",
+          "basis": "Pinned standard controls and FPProcessException; original zero/negative fixtures omitted required flags.",
+          "dependent_result": "Use direct half helpers through the existing standard-control/sticky-status owner.",
+          "stress_test": "Zero, negative, signaling/quiet NaNs, reciprocal overflow and output underflow; all aliased state checked.",
+          "falsification_probe": "Unexpected invalid/inexact/input-denormal, lost divide-by-zero/overflow/underflow, or live-control mutation.",
+          "status": "retained"
+        },
+        {
+          "id": "E3",
+          "assumption": "The binary32 estimate algorithm can be parameterized for binary16 using the explicit architectural exponent/fraction cases.",
+          "basis": "Pinned ASL: reciprocal result exponent 2*bias-1-exp; reciprocal-square-root (3*bias-1-exp)/2; common 8-bit quantizers.",
+          "dependent_result": "Factor the private evaluator behind unchanged binary32 API and new half API.",
+          "stress_test": "Exhaustive native half comparison plus complete existing binary32 native and integer estimate tests.",
+          "falsification_probe": "Any existing binary32 result/status regresses or a normalization bound is exceeded.",
+          "status": "retained"
+        },
+        {
+          "id": "E4",
+          "assumption": "Real A64 half estimate instructions validate shared numerical/status semantics; A32/Thumb execution and IR admission need separate tests.",
+          "basis": "Actual compile-time native FP16 module, pinned A32 operations and successful LLVM encodings.",
+          "dependent_result": "No runtime skip/fallback; count cfg elision and independently test both instruction states.",
+          "stress_test": "8388608 exact comparisons, host-state guard, 5120 register/alias executions and four IR rejection pairs.",
+          "falsification_probe": "Missing hardware comparisons, host-state leakage or an instruction state/register field failure.",
+          "status": "retained"
+        }
+      ],
+      "primary_sources": [
+        {
+          "path": "docs/architecture/arm/asl/arm_defs.asl",
+          "sha256": "1ade68e5dacfff1b63a42ad3ee1c426aae5d36ed5dfcbf39de4baab478a190f8",
+          "functions": [
+            "FPRecipEstimate",
+            "FPRSqrtEstimate",
+            "RecipEstimate",
+            "RecipSqrtEstimate",
+            "FPUnpack",
+            "FPUnpackBase",
+            "FPProcessException",
+            "StandardFPSCRValue"
+          ]
+        },
+        {
+          "path": "docs/architecture/arm/asl/arm_instrs.asl",
+          "sha256": "3c91ece6d0509f7ce9e8b2d8fa623787d7c7acb4cb24040a75cec5aa2789e611",
+          "basis": "A32/T32 VRECPE/VRSQRTE operations and register encodings."
+        },
+        "LLVM 23.0.0git /Users/int/local/bin/llvm-mc, armv8.2-a with fp16 enabled after the fpu directive; successful A32/T32 encodings are logged separately from rejected experiments."
+      ],
+      "baseline_results": {
+        "decoded_instruction": {
+          "passed": 2,
+          "failed": 7,
+          "ignored": 0,
+          "filtered": 0
+        },
+        "baseline_commit": "55c33d8c174260e366b873d0dfb33ef8237efb04",
+        "baseline_scope": "Saved matching parent rlib; conversion-group edits do not alter the estimate path under test."
+      },
+      "bounded_scope": [
+        {
+          "impact": "high",
+          "item": "Half-to-integer/fixed, mixed FMLAL, selected-profile coverage, enabled traps and native A32 execution remain separate pending requirements.",
+          "blocks": "Complete A32-FP remediation."
+        },
+        {
+          "impact": "medium",
+          "item": "An old fixture described standard SIMD controls as suppressing cumulative status. Primary FPProcessException requires accumulation; only the two affected exceptional expectations and explanatory fixture naming/comments change.",
+          "blocks": false
+        },
+        {
+          "impact": "low",
+          "item": "Removing the legacy half widen/narrow users also removes two obsolete flag-free binary32 estimate implementations, retaining the shared quantizers used by unsigned integer estimates.",
+          "blocks": false
+        }
+      ],
+      "baseline": "849ffd6d7e5e6baed3f89f0d514a2cc04d33d0a0",
+      "validation": {
+        "checks": [
+          {
+            "check": "final-build",
+            "args": [
+              "cargo",
+              "+stable",
+              "build",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--all-targets"
+            ],
+            "code": 0,
+            "seconds": 175.9667920829961
+          },
+          {
+            "check": "final-vfp",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--test",
+              "arm_vfp_a32",
+              "--",
+              "--test-threads=4"
+            ],
+            "code": 0,
+            "seconds": 4.114790541003458
+          },
+          {
+            "check": "final-integration",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--test",
+              "arm",
+              "--test",
+              "isa_oracle",
+              "--",
+              "--test-threads=4"
+            ],
+            "code": 0,
+            "seconds": 27.857301375013776
+          },
+          {
+            "check": "final-clippy",
+            "args": [
+              "cargo",
+              "+stable",
+              "clippy",
+              "--locked",
+              "--offline",
+              "--all-targets",
+              "--features",
+              "x86_64-suite"
+            ],
+            "code": 0,
+            "seconds": 68.18121195805725
+          },
+          {
+            "check": "final-fmt",
+            "args": [
+              "cargo",
+              "+stable",
+              "fmt",
+              "--all",
+              "--check"
+            ],
+            "code": 0,
+            "seconds": 11.663066625013016
+          },
+          {
+            "check": "final-doc",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--doc"
+            ],
+            "code": 0,
+            "seconds": 4.866459708078764
+          },
+          {
+            "check": "final-library",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--lib",
+              "--",
+              "--test-threads=4"
+            ],
+            "code": 0,
+            "seconds": 338.31472891697194
+          },
+          {
+            "check": "final-rosetta-vfp",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--target",
+              "x86_64-apple-darwin",
+              "--test",
+              "arm_vfp_a32",
+              "--",
+              "--test-threads=4"
+            ],
+            "code": 0,
+            "seconds": 32.37345787498634
+          },
+          {
+            "check": "final-capi",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "-p",
+              "rax-capi",
+              "--",
+              "--test-threads=4"
+            ],
+            "code": 0,
+            "seconds": 37.472396458964795
+          }
+        ],
+        "complete_library": {
+          "passed": 10433,
+          "failed": 0,
+          "ignored": 2,
+          "filtered": 0,
+          "elapsed_seconds": 338.2
+        },
+        "complete_vfp_arm": {
+          "passed": 366,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0,
+          "elapsed_seconds": 3.97
+        },
+        "complete_vfp_rosetta": {
+          "passed": 339,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0,
+          "elapsed_seconds": 0.03
+        },
+        "doctests": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 5,
+          "filtered": 0,
+          "elapsed_seconds": 0.0
+        },
+        "integration": {
+          "arm": {
+            "passed": 46850,
+            "failed": 0,
+            "ignored": 0,
+            "filtered": 0,
+            "elapsed_seconds": 27.58
+          },
+          "isa_oracle": {
+            "passed": 101,
+            "failed": 0,
+            "ignored": 0,
+            "filtered": 0,
+            "elapsed_seconds": 0.16
+          }
+        },
+        "capi": [
+          {
+            "passed": 185,
+            "failed": 0,
+            "ignored": 0,
+            "filtered": 0,
+            "elapsed_seconds": 8.48
+          },
+          {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "filtered": 0,
+            "elapsed_seconds": 0.0
+          }
+        ],
+        "native_comparisons": {
+          "total": 8388608,
+          "dimensions": "Every one of 65536 half encodings x 64 RM/FZ32/DN/AHP/FZ16 profiles x two estimate operations. Guest cumulative arithmetic status starts clear, so required flags cannot be masked by a preexisting sticky bit.",
+          "scope": "Actual A64 FRECPE/FRSQRTE H instructions, exact result bits and complete cumulative arithmetic status, no tolerance or software fallback."
+        },
+        "rosetta_cfg_elision": "27 A64 hardware tests cfg-elided, including two new tests. All 339 applicable owning tests execute.",
+        "register_matrix": {
+          "executions": 5120,
+          "dimensions": "Two instruction states x two estimate operations x (32 D destinations x 32 D sources + 16 Q destinations x 16 Q sources), including all aliases. All D registers, GPRs, CPSR and FPSCR checked."
+        },
+        "logs": [
+          "/tmp/rax-a32-half-estimate/parent-decoded-red.log",
+          "/tmp/rax-a32-half-estimate/llvm-words.log",
+          "/tmp/rax-a32-half-estimate/llvm-errors.log",
+          "/tmp/rax-a32-half-estimate/worktree-complete.log",
+          "/tmp/rax-a32-half-estimate/worktree-result.json",
+          "/tmp/rax-a32-half-estimate/final-build.log",
+          "/tmp/rax-a32-half-estimate/final-vfp.log",
+          "/tmp/rax-a32-half-estimate/final-integration.log",
+          "/tmp/rax-a32-half-estimate/final-clippy.log",
+          "/tmp/rax-a32-half-estimate/final-fmt.log",
+          "/tmp/rax-a32-half-estimate/final-doc.log",
+          "/tmp/rax-a32-half-estimate/final-library.log",
+          "/tmp/rax-a32-half-estimate/final-rosetta-vfp.log",
+          "/tmp/rax-a32-half-estimate/final-capi.log",
+          "/tmp/rax-a32-half-estimate/checks.jsonl",
+          "/tmp/rax-a32-system-oracle/probe-result.json",
+          "/tmp/rax-a32-system-oracle/corpus-result.json",
+          "/tmp/rax-a32-system-oracle/corpus.json",
+          "/tmp/rax-a32-system-oracle/comparison-report.json",
+          "/tmp/rax-a32-system-oracle/make-corpus.py",
+          "/tmp/rax-a32-system-oracle/corpus.s",
+          "/tmp/rax-a32-system-oracle/link.ld",
+          "/tmp/rax-a32-system-oracle/compare.rs",
+          "/tmp/rax-a32-system-oracle/classify.py"
+        ],
+        "independent_a32_system_oracle": {
+          "complete_cases": 385024,
+          "completed_cohort_cases": 270336,
+          "completed_cohort_failures": 0,
+          "completed_instruction_pairs": 66,
+          "half_estimate_cases": 8192,
+          "half_estimate_failures": 0,
+          "pending_cases_scope": "All mismatches belong to the separately pending half-to-integer and mixed FMLAL groups. Full corpus results remain recorded; this is a bounded completed-instruction cohort, not a whole-corpus pass.",
+          "oracle": "Installed QEMU 11.1.2 max/virt, TCG single thread, bare-metal A32 and T32 execution; all D registers and FPSCR captured after each operation. This is independent system emulation, not native A32 hardware.",
+          "evidence": "/tmp/rax-a32-system-oracle/comparison-report.json",
+          "hashes": {
+            "cases.bin": "8739c4657b3cd1e408167003ccd1e77f547da9d6481c7836b8fb06e3540debca",
+            "qemu-records.bin": "6b4b56071f89a51d43161fc337591e7050b01c4821df8de151307362c3edfc00",
+            "corpus.s": "7e48037e94ec654b52ade266805f6976b7e0ad4043876ab5b01b5428a10f6f73",
+            "corpus-instructions.s": "ca08a2bc04993509de06f3abd6b9a258c667a9c0e5046306909a79505a2ac0d3",
+            "corpus.elf": "79e290a9de22066b6e96de4590c09a70a73ac1d2e5ecab6a86981abda77c2975",
+            "compare.rs": "72165da584858e38d3566138f3f8647b02b9fbfee1d72a1a5b9533e4cad539d2"
+          }
+        }
+      },
+      "affected_planes": {
+        "direct_helpers": "New bit-level half estimate APIs and private common 16/32 evaluator. Existing binary32 signatures unchanged; explicit guest rounding/default NaNs, half flushing and sticky status.",
+        "decoded_a32_thumb": "Already-admitted D/Q half estimate instructions use the direct half operation under standard controls and accumulate status across lanes/registers. Full register and alias matrix; four instruction pairs retain SMIR rejection.",
+        "smir": "Private evaluator factoring only; no new A32/Thumb IR admission.",
+        "embedding": "All 185 C API tests pass; no ABI, CPU-state layout or serialization changes."
+      },
+      "complexity": "O(1) time and space per lane with fixed-width integer arithmetic. Half normalization uses at most 9 shifts; the shared reciprocal-square-root quantizer uses at most 510 increments and its checked product remains below 2^29. Binary32 normalization and quantizer bounds are unchanged. Exact hardware comparison has zero tolerance.",
+      "quality_gates": {
+        "assumptions": "E1-E4 carry dependent results and explicit stress/falsification probes.",
+        "coverage": "Nine decoded and two native tests plus complete owning suites. Parent independently reproduces seven decoded failures.",
+        "reproducibility": "Pinned Arm ASL hashes, LLVM encodings, exhaustive dimensions/counters, commands, logs and final source hashes recorded.",
+        "contradictions": "Standard controls do not suppress cumulative arithmetic exceptions; old fixture prose and affected status expectations corrected against primary operations.",
+        "provenance": "Pinned Arm shared/instruction ASL, LLVM encodings and actual native A64 half estimates.",
+        "bounded_expansion": "Remaining integer/fixed/FMLAL, traps, admission and native A32 requirements remain open.",
+        "worktree_integrity": "Seven explicit baseline paths/absences checked before import; only those and the ledger may be staged. Original untracked content preserved.",
+        "behavioral_evidence": "No filtered owning tests; native cfg elision counted separately; exact counters and host FP-state restoration checked.",
+        "repository_consistency": "Existing binary32 API and integer quantizers retained, obsolete private flag-free estimates removed, modules registered; no ABI/serialization changes."
       }
     }
   ],

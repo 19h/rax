@@ -1,4 +1,4 @@
-//! Arm reciprocal estimates and A32 nonfused refinement steps for binary32.
+//! Arm reciprocal estimates and A32 nonfused refinement steps for binary16/binary32.
 use super::{ArmFpOperation, SmirInterpreter};
 impl SmirInterpreter {
     pub(crate) fn arm_recip_estimate(mut value: u32) -> u32 {
@@ -20,35 +20,62 @@ impl SmirInterpreter {
         }
         ((result + 1) >> 1) as u32
     }
-    pub(crate) fn arm_eval_recip_estimate(mut raw: u32, sqrt: bool, control: u32) -> (u32, u32) {
-        let sign = raw & 0x80000000;
+    pub(crate) fn arm_eval_recip_estimate(raw: u32, sqrt: bool, control: u32) -> (u32, u32) {
+        let (bits, status) = Self::arm_eval_recip_estimate_format(
+            u64::from(raw),
+            sqrt,
+            control,
+            super::X86_SIMD_F32,
+        );
+        (bits as u32, status)
+    }
+    pub(crate) fn arm_eval_half_recip_estimate(raw: u16, sqrt: bool, control: u32) -> (u16, u32) {
+        let (bits, status) = Self::arm_eval_recip_estimate_format(
+            u64::from(raw),
+            sqrt,
+            super::arm_format::half_control(control),
+            super::X86_SIMD_F16,
+        );
+        (bits as u16, status)
+    }
+    fn arm_eval_recip_estimate_format(
+        mut raw: u64,
+        sqrt: bool,
+        control: u32,
+        format: super::X86SimdFpFormat,
+    ) -> (u64, u32) {
+        let (sign_mask, exponent_mask, fraction_mask, quiet_mask) = Self::x86_simd_fp_masks(format);
+        let sign = raw & sign_mask;
+        let bias = format.bias;
+        let fraction_bits = format.fraction_bits;
+        let shift = 52 - fraction_bits;
         let mut status = 0;
-        if raw & 0x7f800000 == 0 && raw & 0x007fffff != 0 && control & (1 << 24) != 0 {
+        if raw & exponent_mask == 0 && raw & fraction_mask != 0 && control & (1 << 24) != 0 {
             raw = sign;
-            status |= 0x80;
+            status |= if format.total_bits == 16 { 0 } else { 0x80 };
         }
-        let absolute = raw & 0x7fffffff;
-        if absolute > 0x7f800000 {
-            status |= u32::from(raw & 0x00400000 == 0);
+        let absolute = raw & !sign_mask;
+        if absolute > exponent_mask {
+            status |= u32::from(raw & quiet_mask == 0);
             return (
                 if control & (1 << 25) != 0 {
-                    0x7fc00000
+                    exponent_mask | quiet_mask
                 } else {
-                    raw | 0x00400000
+                    raw | quiet_mask
                 },
                 status,
             );
         }
         if absolute == 0 {
-            return (sign | 0x7f800000, status | 2);
+            return (sign | exponent_mask, status | 2);
         }
         if sqrt && sign != 0 {
-            return (0x7fc00000, status | 1);
+            return (exponent_mask | quiet_mask, status | 1);
         }
-        if absolute == 0x7f800000 {
+        if absolute == exponent_mask {
             return (sign, status);
         }
-        if !sqrt && absolute < 0x00200000 {
+        if !sqrt && absolute < 1 << (fraction_bits - 2) {
             let infinity = match (control >> 22) & 3 {
                 0 => true,
                 1 => sign == 0,
@@ -56,15 +83,20 @@ impl SmirInterpreter {
                 _ => false,
             };
             return (
-                sign | if infinity { 0x7f800000 } else { 0x7f7fffff },
+                sign | if infinity {
+                    exponent_mask
+                } else {
+                    exponent_mask - 1
+                },
                 status | 0x14,
             );
         }
-        if !sqrt && control & (1 << 24) != 0 && absolute >= 0x7e800000 {
+        if !sqrt && control & (1 << 24) != 0 && absolute >= ((2 * bias - 1) as u64) << fraction_bits
+        {
             return (sign, status | 8);
         }
-        let mut exponent = ((raw >> 23) & 0xff) as i32;
-        let mut fraction = u64::from(raw & 0x007fffff) << 29;
+        let mut exponent = ((raw & exponent_mask) >> fraction_bits) as i32;
+        let mut fraction = (raw & fraction_mask) << shift;
         if sqrt {
             if exponent == 0 {
                 while fraction & (1 << 51) == 0 {
@@ -78,9 +110,13 @@ impl SmirInterpreter {
             } else {
                 0x80 | ((fraction >> 45) & 0x7f) as u32
             };
-            let result_exp = (380 - exponent) / 2;
+            let result_exp = (3 * bias - 1 - exponent) / 2;
             let estimate = Self::arm_recip_sqrt_estimate(scaled);
-            ((result_exp as u32) << 23 | (estimate & 0xff) << 15, status)
+            (
+                (result_exp as u64) << fraction_bits
+                    | u64::from(estimate & 0xff) << (fraction_bits - 8),
+                status,
+            )
         } else {
             if exponent == 0 {
                 if fraction & (1 << 51) == 0 {
@@ -91,7 +127,7 @@ impl SmirInterpreter {
                 }
             }
             let estimate = Self::arm_recip_estimate(0x100 | ((fraction >> 44) & 0xff) as u32);
-            let mut result_exp = 253 - exponent;
+            let mut result_exp = 2 * bias - 1 - exponent;
             let mut fraction = u64::from(estimate & 0xff) << 44;
             if result_exp == 0 {
                 fraction = (1 << 51) | fraction >> 1;
@@ -100,7 +136,8 @@ impl SmirInterpreter {
                 result_exp = 0;
             }
             (
-                sign | ((result_exp as u32) << 23) | ((fraction >> 29) as u32 & 0x007fffff),
+                sign | ((result_exp as u64) << fraction_bits)
+                    | ((fraction >> shift) & fraction_mask),
                 status,
             )
         }

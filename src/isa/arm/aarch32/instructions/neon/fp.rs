@@ -568,83 +568,6 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
         ExecResult::Continue
     }
 
-    pub(crate) fn neon_fp_recip_estimate_f32(bits: u32) -> u32 {
-        let sign = bits >> 31;
-        let exp = (bits >> 23) & 0xFF;
-        let frac = bits & 0x7F_FFFF;
-        if exp == 0xFF {
-            return if frac != 0 {
-                bits | 0x40_0000
-            } else {
-                sign << 31
-            };
-        }
-        if exp == 0 && frac == 0 {
-            return (sign << 31) | (0xFF << 23);
-        }
-        if exp == 0 && frac < 0x20_0000 {
-            return (sign << 31) | (0xFF << 23);
-        }
-
-        let mut fraction: u64 = (frac as u64) << 29;
-        let mut e = exp as i32;
-        if e == 0 {
-            if (fraction >> 51) & 1 == 0 {
-                e = -1;
-                fraction = (fraction << 2) & ((1u64 << 52) - 1);
-            } else {
-                fraction = (fraction << 1) & ((1u64 << 52) - 1);
-            }
-        }
-        let scaled = 0x100 | ((fraction >> 44) & 0xFF) as u32;
-        let estimate = Self::neon_recip_estimate(scaled);
-        let mut result_exp = 253i32 - e;
-        let mut out_frac: u64 = ((estimate & 0xFF) as u64) << 44;
-        if result_exp == 0 {
-            out_frac = (1u64 << 51) | (out_frac >> 1);
-        } else if result_exp == -1 {
-            out_frac = (1u64 << 50) | (out_frac >> 2);
-            result_exp = 0;
-        }
-        (sign << 31) | (((result_exp as u32) & 0xFF) << 23) | ((out_frac >> 29) as u32 & 0x7F_FFFF)
-    }
-
-    pub(crate) fn neon_fp_rsqrt_estimate_f32(bits: u32) -> u32 {
-        let sign = bits >> 31;
-        let exp = (bits >> 23) & 0xFF;
-        let frac = bits & 0x7F_FFFF;
-        if exp == 0xFF && frac != 0 {
-            return bits | 0x40_0000;
-        }
-        if exp == 0 && frac == 0 {
-            return (sign << 31) | (0xFF << 23);
-        }
-        if sign == 1 {
-            return 0x7FC0_0000;
-        }
-        if exp == 0xFF {
-            return 0;
-        }
-
-        let mut fraction: u64 = (frac as u64) << 29;
-        let mut e = exp as i32;
-        if e == 0 {
-            while (fraction >> 51) & 1 == 0 {
-                fraction = (fraction << 1) & 0xF_FFFF_FFFF_FFFF;
-                e -= 1;
-            }
-            fraction = (fraction << 1) & 0xF_FFFF_FFFF_FFFF;
-        }
-        let scaled = if e & 1 == 0 {
-            0x100 | ((fraction >> 44) & 0xFF) as u32
-        } else {
-            0x80 | ((fraction >> 45) & 0x7F) as u32
-        };
-        let result_exp = (((380 - e) / 2) as u32) & 0xFF;
-        let estimate = Self::neon_recip_sqrt_estimate(scaled);
-        (sign << 31) | (result_exp << 23) | ((estimate & 0xFF) << 15)
-    }
-
     pub(crate) fn exec_vrint(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
             return ExecResult::Exception(ExceptionType::UndefinedInstruction);
@@ -999,8 +922,8 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
     }
 
     pub(super) fn standard_simd_fp_controls(&self) -> Fpscr {
-        // Arm StandardFPSCRValue: nearest rounding, DN/FZ set. Preserve the
-        // AHP/FZ16 controls; they do not affect these binary32 conversions.
+        // StandardFPSCRValue fixes RM/DN/FZ and preserves AHP/FZ16 for
+        // operation-specific half precision and data-processing profiles.
         Fpscr::from_bits((self.cpu.vfp.fpscr.bits() & ((1 << 26) | (1 << 19))) | 0x0300_0000)
     }
 

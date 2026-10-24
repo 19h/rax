@@ -7,6 +7,11 @@ mod fp_half_conversion_decoded;
 mod fp_half_conversion_native;
 #[path = "fp_half_decoded.rs"]
 mod fp_half_decoded;
+#[path = "fp_half_estimate_decoded.rs"]
+mod fp_half_estimate_decoded;
+#[cfg(all(target_arch = "aarch64", target_feature = "fp16"))]
+#[path = "fp_half_estimate_native.rs"]
+mod fp_half_estimate_native;
 #[cfg(all(target_arch = "aarch64", target_feature = "fp16"))]
 #[path = "fp_half_native.rs"]
 mod fp_half_native;
@@ -5381,10 +5386,9 @@ fn neon_compare_zero_writes_integer_and_fp_lane_masks() {
 }
 
 #[test]
-fn neon_fp16_recip_estimate_does_not_mutate_fpscr() {
-    // VRECPE/VRSQRTE are computed with StandardFPSCRValue and must not raise
-    // cumulative exceptions. The FP16 forms narrow the f32 estimate back to
-    // half; that narrowing must not leak its flags into the guest FPSCR.
+fn neon_fp16_quiet_nan_estimate_does_not_raise_invalid() {
+    // Standard controls still accumulate architectural exception status.
+    // Quiet NaN with nonzero finite neighbors raises no cumulative exception.
     let mut cpu = Armv7Cpu::new();
     let mut mem = FlatMemory::new(0x1000, 0);
 
@@ -5398,9 +5402,8 @@ fn neon_fp16_recip_estimate_does_not_mutate_fpscr() {
                 Mnemonic::VRSQRTE
             }
         );
-        // Lane 0 = half qNaN (0x7E00); the estimate stays NaN and the f16
-        // narrowing would otherwise set IOC. Start with all flags clear.
-        cpu.vfp.write_d_bits(1, 0x0000_0000_0000_7E00);
+        // Lane zero is a quiet NaN; all other lanes are exactly one.
+        cpu.vfp.write_d_bits(1, 0x3c00_3c00_3c00_7E00);
         cpu.vfp.fpscr = rax::isa::arm::vfp::Fpscr::from_bits(0);
         assert!(matches!(
             exec_one(&mut cpu, &mut mem, insn),
@@ -5547,7 +5550,7 @@ fn neon_recip_estimate_handles_unsigned_f32_and_f16_forms() {
         exec_one(&mut cpu, &mut mem, 0xF3B7_0501),
         ExecResult::Continue
     ));
-    assert_eq!(cpu.vfp.fpscr.bits(), 0);
+    assert_eq!(cpu.vfp.fpscr.bits(), 2);
 
     cpu.vfp.fpscr = Fpscr::from_bits(0);
     cpu.vfp.write_d_bits(1, 0x0000_0000_0000_bc00);
@@ -5555,7 +5558,7 @@ fn neon_recip_estimate_handles_unsigned_f32_and_f16_forms() {
         exec_one(&mut cpu, &mut mem, 0xF3B7_0581),
         ExecResult::Continue
     ));
-    assert_eq!(cpu.vfp.fpscr.bits(), 0);
+    assert_eq!(cpu.vfp.fpscr.bits(), 3);
 
     assert_eq!(
         Aarch32Decoder::decode(0xF3BB_1442).unwrap().mnemonic,
