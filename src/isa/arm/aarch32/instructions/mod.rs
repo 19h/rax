@@ -255,3 +255,5 @@ pub struct Executor<'a, M: ArmMemory> {
 // =============================================================================
 
 mod fp_register;
+
+mod fp_access;

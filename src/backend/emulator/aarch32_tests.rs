@@ -117,15 +117,16 @@ fn unmapped_accesses_fault_at_the_first_missing_byte_without_retiring() {
 }
 
 #[test]
-fn undefined_instructions_are_returned_without_retiring() {
-    // Thumb `udf #0` (T1). (The ARM-state decoder does not yet recognize
-    // `udf`, 0xE7F000F0.)
+fn architectural_undefined_instructions_enter_vector_without_retiring() {
+    // Thumb UDF is an architectural Undefined exception, not a decoder failure.
     let (mut vcpu, _) = thumb_vcpu(&[0x00, 0xDE]);
-    match vcpu.step_insn() {
-        Err(Error::InvalidInstruction { pc, .. }) => assert_eq!(pc, CODE),
-        other => panic!("expected an invalid instruction, got {other:?}"),
-    }
-    assert_eq!(vcpu.current_pc(), CODE);
+    let old = state(&vcpu).regs.cpsr;
+    assert!(vcpu.step_insn().unwrap().is_none());
+    let st = state(&vcpu);
+    assert_eq!(st.regs.pc, 4);
+    assert_eq!(st.regs.cpsr & 31, ProcessorMode::Undefined as u32);
+    assert_eq!(st.regs.lr, CODE as u32 + 2);
+    assert_eq!(st.regs.spsr, old);
     assert_eq!(vcpu.instruction_count(), 0);
 }
 
@@ -216,3 +217,6 @@ fn thumb_wait_hints_halt() {
         assert_eq!(matches!(exit, Some(VcpuExit::Hlt)), waits, "{hint:x?}");
     }
 }
+
+#[path = "aarch32_fp_access_tests.rs"]
+mod fp_access;

@@ -7142,3 +7142,6 @@ mod fp_system_registers;
 
 #[path = "fp_feature_registers.rs"]
 mod fp_feature_registers;
+
+#[path = "fp_access.rs"]
+mod fp_access;

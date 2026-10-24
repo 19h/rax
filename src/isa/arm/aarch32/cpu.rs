@@ -663,7 +663,7 @@ impl Default for Armv7Cpu {
 }
 
 impl Armv7Cpu {
-    /// Create a new CPU in Supervisor mode.
+    /// Create a Supervisor-mode software context with FP enabled.
     pub fn new() -> Self {
         let mut cpu = Armv7Cpu {
             regs: [0; 16],
@@ -689,6 +689,9 @@ impl Armv7Cpu {
             vfp: VfpState::new(),
             cp15: crate::isa::arm::aarch32::cp15::Cp15State::new(),
         };
+        // Match the existing enabled FPEXC software default in CPACR as well.
+        // Standalone Cp15State::new() retains its reset permission bits.
+        cpu.cp15.cpacr.enable_vfp();
         // Start in Supervisor mode with IRQ/FIQ disabled
         cpu.cpsr.mode = ProcessorMode::Supervisor as u8;
         cpu.cpsr.i = true;

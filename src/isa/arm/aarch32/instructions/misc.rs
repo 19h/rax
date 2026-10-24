@@ -70,6 +70,12 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
             }
         }
 
+        // Failed predicates do not perform FP access checks. Denied accesses
+        // trap before any handler can modify registers or touch guest memory.
+        if self.fp_access_denied(insn) {
+            return ExecResult::Exception(ExceptionType::UndefinedInstruction);
+        }
+
         // A 16-bit Thumb data-processing instruction sets the flags only
         // outside an IT block (`setflags = !InITBlock()`); the comparisons
         // always set them.
@@ -616,7 +622,9 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
         if matches!(exception, ExceptionType::Fiq | ExceptionType::Reset) {
             self.cpu.cpsr.f = true; // Disable FIQ
         }
-        self.cpu.cpsr.t = false; // Enter ARM mode
+        self.cpu.cpsr.t = self.cpu.cp15.sctlr.te();
+        self.cpu.cpsr.e = self.cpu.cp15.sctlr.ee();
+        self.cpu.cpsr.it_state = 0;
 
         // Branch to vector
         self.cpu.regs[15] = self.vbar.wrapping_add(vector_offset);

@@ -118,3 +118,37 @@ ISAR6 extensions are not inferred from the QEMU `max` model. The8328 register
 records and prior12-byte capability header remain byte-identical after removal
 of the new header word. The projected register-profile limitations above still
 apply; feature bits do not certify unlisted instructions or an entire CPU model.
+
+## CPACR access-control probe
+
+`fp_access_oracle.py` runs48 cases of scalar arithmetic, Advanced SIMD integer
+arithmetic, FPSCR reads and FPEXC reads in A32/T32, User/Supervisor modes, and
+CPACR.cp10 values0/1/3. The bare-metal guest installs Undefined/SVC vectors,
+captures actual denial, returns past the32-bit faulting instruction and verifies
+each expected result plus the exact final counter. It produces26 denied and22
+permitted controls; the comparator also requires denied RAX cases to preserve
+registers, FP state and CPSR. Use the same `--repo`, `--work-dir`, `--target-dir`
+and `--llvm-bin` arguments as the register-profile probe.
+
+The direct executor checks CPACR.cp10 after a failed instruction predicate can
+skip execution and before any FP handler can modify state or access memory.
+Value0 denies access;1 permits privileged access;3 permits User and privileged
+access. Reserved value2 takes an explicit Undefined policy, tested locally
+rather than equated to a specific physical outcome. In the selected modern
+AArch32 FP profile, cp11 is not a second permission gate. FPEXC.EN and the
+privilege restrictions on non-FPSCR system registers retain their separate checks.
+
+`Armv7Cpu::new()` preserves its effective enabled-FP software default by enabling
+CPACR.cp10/cp11 alongside FPEXC.EN. `Cp15State::new()` retains reset permission
+bits0. This is a software-context default, not a hardware reset claim. The
+control probe does not establish NSACR/HCPTR/CPTR_EL3, unmodelled Hyp state,
+CPACR.ASEDIS/D32DIS or every reserved coprocessor encoding.
+
+The AArch32 vCPU backend delivers architectural Undefined faults through the
+guest vector without retiring the faulting instruction. SPSR preserves the old
+CPSR; LR uses A32+4/T32+2, and handler state applies SCTLR.TE/EE while clearing
+IT. Explicit unsupported decoded results retain their `InvalidInstruction` host
+error. Local backend regressions cover24 permission/enable cases and48 complete
+frames; the independent48-case probe covers actual default-handler exception
+delivery. Handler TE/EE variants rely on the pinned Arm EnterMode contract and
+are not claimed as separately executed independent hardware cases.

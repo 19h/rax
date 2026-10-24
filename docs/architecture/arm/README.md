@@ -175,6 +175,13 @@ The interpreter's default FP implementation exposes these feature registers:
 | MVFR2 | `0x43` | Scalar selection, directed conversion, round-to-integral and number min/max; corresponding Advanced SIMD operations |
 | ID_ISAR6 | `0x100` | FHM half-to-single fused multiply-add/subtract only |
 
+`Armv7Cpu::new()` creates an FP-enabled software context with both FPEXC.EN
+and CPACR permissions enabled. A standalone `Cp15State::new()` retains reset
+CPACR permissions0. Guest CPACR.cp10 changes are enforced before FP instruction
+effects:0 denies access,1 permits privileged access,3 permits full access, and
+reserved2 takes the selected Undefined policy. Failed predicates skip the access
+check. The selected modern FP profile does not use cp11 as a second permission.
+
 These declarations describe the implemented FP feature set and do not identify
 all architectural state as a Cortex-A55 or certify every optional extension of
 a selected architecture revision. [FP system oracles](../../../tools/arm-diff/README_FP_SYSTEM.md)

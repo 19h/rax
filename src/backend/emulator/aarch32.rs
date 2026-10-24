@@ -385,7 +385,14 @@ impl Aarch32Vcpu {
                 self.cpu.is_halted = true;
                 Some(VcpuExit::Hlt)
             }
-            ExecResult::Exception(ExceptionType::UndefinedInstruction) | ExecResult::Undefined => {
+            ExecResult::Exception(ExceptionType::UndefinedInstruction) => {
+                // A denied FP access is a guest architectural exception. Restore
+                // the instruction boundary before banking the exception frame.
+                (self.cpu.regs, self.cpu.cpsr) = snapshot;
+                self.take_exception(ExceptionType::UndefinedInstruction);
+                return Ok(None); // The faulting instruction did not retire.
+            }
+            ExecResult::Undefined => {
                 (self.cpu.regs, self.cpu.cpsr) = snapshot;
                 return Err(self.undefined(pc, raw));
             }

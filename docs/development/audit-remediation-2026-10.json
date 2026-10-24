@@ -782,10 +782,56 @@
         "/Users/int/dev/rax-audit-work/rax-a32-fp-feature-registers/final-system-oracle.log",
         "/Users/int/dev/rax-audit-work/rax-a32-fp-feature-registers/final-register-oracle.log",
         "/Users/int/dev/rax-audit-work/rax-a32-fp-feature-registers/final-full-register-oracle.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-system-profile/cfg-only-library-proof.json",
+        "src/isa/arm/aarch32/cpu.rs",
+        "src/isa/arm/aarch32/instructions/mod.rs",
+        "src/isa/arm/aarch32/instructions/misc.rs",
+        "src/isa/arm/aarch32/instructions/fp_access.rs",
+        "tests/suites/isa/arm/aarch32/vfp.rs",
+        "tests/suites/isa/arm/aarch32/fp_access_words.rs",
+        "tests/suites/isa/arm/aarch32/fp_access.rs",
+        "tools/arm-diff/fp_access_oracle.py",
+        "tools/arm-diff/fp_access_compare.rs",
+        "tools/arm-diff/README_FP_SYSTEM.md",
+        "docs/architecture/arm/README.md",
+        "src/backend/emulator/aarch32.rs",
+        "src/backend/emulator/aarch32_tests.rs",
+        "src/backend/emulator/aarch32_fp_access_tests.rs",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/reference-summary.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/reference-access/manifest.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/reference-access/backend-parent.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/reference-access/backend-test-overlay.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/reference-access/report.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/reference-access/parent-tests.stdout",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/reference-access/parent-tests.stderr",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/worktree-checks.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/worktree-result.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/green-access/manifest.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/green-access/report.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/green-registers/manifest.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/green-registers/report.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/green-v4/manifest.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/green-v4/report.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-register-oracle/manifest.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/checks.jsonl",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-build.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-vfp.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-integration.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-clippy.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-fmt.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-doc.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-ci-owning.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-library.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-rosetta-vfp.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-capi.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-system-oracle.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-register-oracle.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-full-register-oracle.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-fp-access-oracle.log",
         "/Users/int/dev/rax-audit-work/rax-a32-fp-system-profile/cfg-only-library-proof.json"
       ],
       "remaining_validation": [
-        "Coprocessor access-control enforcement and remaining reserved instruction-admission semantics",
+        "Remaining CPACR.ASEDIS/D32DIS, security/virtualization controls and reserved instruction-admission semantics",
         "Physical A32 hardware and optional trapped profiles remain unverified"
       ]
     },
@@ -1088,6 +1134,38 @@
         "/Users/int/dev/rax-audit-work/rax-a32-fp-feature-registers/final-system-oracle.log",
         "/Users/int/dev/rax-audit-work/rax-a32-fp-feature-registers/final-register-oracle.log",
         "/Users/int/dev/rax-audit-work/rax-a32-fp-feature-registers/final-full-register-oracle.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-system-profile/cfg-only-library-proof.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/reference-summary.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/reference-access/manifest.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/reference-access/backend-parent.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/reference-access/backend-test-overlay.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/reference-access/report.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/reference-access/parent-tests.stdout",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/reference-access/parent-tests.stderr",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/worktree-checks.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/worktree-result.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/green-access/manifest.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/green-access/report.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/green-registers/manifest.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/green-registers/report.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/green-v4/manifest.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/green-v4/report.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-register-oracle/manifest.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/checks.jsonl",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-build.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-vfp.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-integration.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-clippy.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-fmt.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-doc.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-ci-owning.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-library.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-rosetta-vfp.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-capi.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-system-oracle.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-register-oracle.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-full-register-oracle.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-fp-access-oracle.log",
         "/Users/int/dev/rax-audit-work/rax-a32-fp-system-profile/cfg-only-library-proof.json"
       ],
       "remaining_validation": [
@@ -1683,6 +1761,63 @@
         "/tmp/rax-x86-gs-base/v3-native-msr.log"
       ],
       "resolution": "Retain fork-offered sockets until receiver acknowledgement; release on rejection or ancestor disconnect. Include ancestor disconnect watches in sleep readiness. Preserve public tracing messages and fork API fields. Correct Darwin error-only stream watches with EV_CLEAR kqueue filters and remaining-time accounting."
+    },
+    {
+      "id": "A32-FP-CPACR",
+      "area": "AArch32 FP access",
+      "finding": "Decoded FP/AdvSIMD and FP coprocessor routes ignored CPACR.cp10 permissions",
+      "status": "locally_validated",
+      "evidence": [
+        "src/isa/arm/aarch32/cpu.rs",
+        "src/isa/arm/aarch32/instructions/mod.rs",
+        "src/isa/arm/aarch32/instructions/misc.rs",
+        "src/isa/arm/aarch32/instructions/fp_access.rs",
+        "tests/suites/isa/arm/aarch32/vfp.rs",
+        "tests/suites/isa/arm/aarch32/fp_access_words.rs",
+        "tests/suites/isa/arm/aarch32/fp_access.rs",
+        "tools/arm-diff/fp_access_oracle.py",
+        "tools/arm-diff/fp_access_compare.rs",
+        "tools/arm-diff/README_FP_SYSTEM.md",
+        "docs/architecture/arm/README.md",
+        "src/backend/emulator/aarch32.rs",
+        "src/backend/emulator/aarch32_tests.rs",
+        "src/backend/emulator/aarch32_fp_access_tests.rs",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/reference-summary.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/reference-access/manifest.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/reference-access/backend-parent.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/reference-access/backend-test-overlay.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/reference-access/report.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/reference-access/parent-tests.stdout",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/reference-access/parent-tests.stderr",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/worktree-checks.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/worktree-result.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/green-access/manifest.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/green-access/report.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/green-registers/manifest.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/green-registers/report.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/green-v4/manifest.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/green-v4/report.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-register-oracle/manifest.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/checks.jsonl",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-build.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-vfp.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-integration.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-clippy.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-fmt.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-doc.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-ci-owning.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-library.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-rosetta-vfp.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-capi.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-system-oracle.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-register-oracle.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-full-register-oracle.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-fp-access-oracle.log",
+        "/Users/int/dev/rax-audit-work/rax-a32-fp-system-profile/cfg-only-library-proof.json"
+      ],
+      "remaining_validation": [
+        "Other trap/feature controls and physical A32 hardware remain separate."
+      ]
     }
   ],
   "decisions": {
@@ -11485,6 +11620,554 @@
             "ignored": 0,
             "filtered": 0,
             "elapsed_seconds": 8.47
+          },
+          {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "filtered": 0,
+            "elapsed_seconds": 0.0
+          }
+        ]
+      }
+    },
+    {
+      "id": "a32-cpacr-fp-permission-contract",
+      "status": "locally_validated",
+      "scope": "Enforce CPACR.cp10 before decoded A32/T32 FP/AdvSIMD handlers and CP10/CP11 coprocessor routes, after predicate rejection. Preserve the effective FP-enabled software CPU default with matching CPACR permissions, keep standalone CP15 reset state, and retain explicit unsupported SMIR admission. Backend architectural Undefined faults enter the guest vector without retirement; exception entry applies SCTLR.TE/EE and resets IT state.",
+      "assumptions": [
+        {
+          "id": "A1",
+          "assumption": "Selected modern AArch32 FP access uses CPACR.cp10:0 denies,1 permits privileged access,3 permits full access. cp11 is not a separate gate. Reserved2 is mapped to the deny outcome of its constrained/UNKNOWN permission choice.",
+          "dependent_result": "One shared pre-dispatch guard covers all251 current V-prefixed mnemonic variants and CP10/CP11 coprocessor routes before any FP/GPR/memory mutation.",
+          "stress_test": "245 LLVM pairs:9800 denied/reserved state-preserving executions and5880 allowed controls across both states, User/privileged mode and all cp10/cp11 values. Actual QEMU48-case Undefined-exception matrix supplies independent0/1/3 controls.",
+          "falsification_probe": "Denied instruction continues or touches memory/data, PL1/full access stops working, cp11 becomes a second gate or reserved2 is claimed to match a particular physical outcome.",
+          "status": "retained for the represented non-Hyp context"
+        },
+        {
+          "id": "A2",
+          "assumption": "Failed instruction predicates suppress access checks; FPSCR still needs FPEXC.EN, whereas privileged non-FPSCR system-register access does not.",
+          "dependent_result": "Insert CPACR guard after existing A32/Thumb IT predicate handling; retain separate existing FPEXC and non-FPSCR privilege checks.",
+          "stress_test": "Failed EQ/IT with denied permissions,640 system-register/enable/privilege cases and ordinary integer control.",
+          "falsification_probe": "Skipped instruction traps, a disabled FPSCR access succeeds, a privileged FPEXC/MVFR access wrongly depends on EN or a non-FPSCR User access succeeds.",
+          "status": "retained"
+        },
+        {
+          "id": "A3",
+          "assumption": "The existing effective default permits FP while FPEXC.EN=1. Merely enforcing the previous CPACR0 initial field would break that software-context behavior.",
+          "dependent_result": "Armv7Cpu::new enables CPACR.cp10/cp11 alongside its existing FPEXC.EN default; Cp15State::new independently retains reset permissions0.",
+          "stress_test": "Constructor contract, allowed whole-instruction matrices, full prior numerical/native owning suites and C API.",
+          "falsification_probe": "Existing default FP execution becomes disabled, standalone CP15 reset changes, a field/layout/API signature changes or the software default is presented as hardware reset state.",
+          "status": "retained; default architectural CPACR read changes from0 to00f00000 explicitly"
+        },
+        {
+          "id": "A4",
+          "assumption": "The independent guest checks actual Undefined delivery and permission outcomes rather than interpreting successful decode as execution evidence.",
+          "dependent_result": "Install Undefined/SVC vectors, switch User/Supervisor context, advance Thumb32 Undefined return correctly using pinned ASL, verify every case and exact48 counter.",
+          "stress_test": "26 denied/22 permitted controls;20 pre-fix mismatches with unchanged tool/input/guest ELF around the fix.",
+          "falsification_probe": "Wrong exception return, skipped/missing case, unmatched source/reference hash, missing completion marker or hidden non-FP trap accepted as success.",
+          "status": "retained for the four listed operations"
+        },
+        {
+          "id": "A5",
+          "assumption": "A32/Thumb SMIR lacks corresponding FP access/control state for the represented instruction pairs.",
+          "dependent_result": "All245 pairs remain explicitly Unsupported in both lifters; no new IR admission or silent generic lowerings.",
+          "stress_test": "490 complete lift checks plus full owning/ISA/C API integration.",
+          "falsification_probe": "An FP instruction lifts without the required control-state semantics.",
+          "status": "retained"
+        },
+        {
+          "id": "A6",
+          "assumption": "Architectural Undefined results differ from unsupported decoded API results. Permission/FPEXC denial must enter the guest Undefined vector atPC+4/ThumbPC+2 with saved old CPSR and no retirement. Handler state uses SCTLR.TE/EE and clears IT.",
+          "dependent_result": "Split the backend result paths, restore the instruction boundary, take the architectural exception and return before the retirement counter; retain unsupported-encoding host errors.",
+          "stress_test": "24 permission/enable backend cases,48 complete exception frames, corrected UDF fixture and explicit unsupported-error control. Two new backend regressions fail on the parent while the unsupported control passes.",
+          "falsification_probe": "A host error replaces a guest access fault, a fault retires, LR/SPSR/handler flags differ, FP data changes or unsupported API errors silently change.",
+          "status": "retained for the represented non-Hyp Undefined entry"
+        }
+      ],
+      "primary_sources": [
+        {
+          "path": "docs/architecture/arm/asl/arm_defs.asl",
+          "sha256": "1ade68e5dacfff1b63a42ad3ee1c426aae5d36ed5dfcbf39de4baab478a190f8",
+          "contract": "CheckVFPEnabled2153+; AArch32.CheckAdvSIMDOrFPEnabled15700+, CPACR.cp10 permissions; Unpredictable_RESCPACR9382+; Undefined return offset8438+. AArch32.EnterMode8736+, handler T/E and IT reset."
+        },
+        {
+          "path": "docs/architecture/arm/asl/arm_instrs.asl",
+          "sha256": "3c91ece6d0509f7ce9e8b2d8fa623787d7c7acb4cb24040a75cec5aa2789e611",
+          "contract": "aarch32_VMRS_AS73200+ and aarch32_VMSR_AS71668+, separate FPSCR/FPEXC checks."
+        }
+      ],
+      "affected_planes": {
+        "direct": "Predicate-aware common CPACR access guard before every represented FP/AdvSIMD and FP coprocessor route. Existing arithmetic/handler FPEXC checks retained.",
+        "initial_state": "Software Armv7Cpu constructor now sets CPACR full FP access consistently with its existing enabled FP behavior. Standalone CP15 reset unchanged.",
+        "smir": "490 Unsupported checks prevent control-state bypass through A32/Thumb lifting; no new IR operation.",
+        "tooling": "Independent48-case actual exception-delivery probe, complete counters/markers and frozen parent/positive tool/input/ELF hashes.",
+        "embedding": "No new structure/serialized fields, enum values or C ABI signatures. Default architectural CPACR read changes explicitly; effective initial FP availability is preserved.",
+        "backend": "Actual vCPU fetch/step path delivers architectural Undefined traps with no retirement; unsupported decoded results retain their host error. Handler T/E/IT state follows pinned EnterMode; SPSR preserves the complete prior CPSR."
+      },
+      "complexity": "O(1) permission work per decoded instruction using a fixed251-variant match and live two-bit permission field.245-pair test matrices contain15680 executions plus640 system-register cases and490 lift checks. Independent48 records use960 input bytes; guest RAM128MiB. No runtime-performance claim.",
+      "bounded_scope": [
+        {
+          "impact": "high",
+          "item": "CPACR.ASEDIS/D32DIS, security/virtualization NSACR/HCPTR/CPTR_EL3, unmodelled Hyp state and every reserved coprocessor encoding remain separate.",
+          "blocks": "Full A32 control/profile equivalence."
+        },
+        {
+          "impact": "high",
+          "item": "The constructor changes architectural CPACR initial reads to00f00000 while retaining prior effective FP availability. It is a software-context default, not a hardware-reset claim.",
+          "blocks": false
+        },
+        {
+          "impact": "medium",
+          "item": "The fixed mnemonic access map must cover future FP additions. Current245-pair admission/permission/lift matrices and all251 current V-prefixed variants are explicit; unlisted encodings/native A32 hardware are separate.",
+          "blocks": "Whole-ISA certification."
+        },
+        {
+          "impact": "medium",
+          "item": "Architectural Undefined vCPU results now enter the guest vector instead of returning InvalidInstruction. Unsupported decoded results retain their prior error shape. Other exception kinds and unmodelled PSTATE fields are not certified by these frame checks.",
+          "blocks": false
+        },
+        {
+          "impact": "low",
+          "item": "The controlled parent library fingerprint predates a one-literal #[cfg(test)] FPEXC fixture correction. Production instruction/control source is unchanged by that correction; exact library-byte preservation is verified separately.",
+          "blocks": false
+        }
+      ],
+      "quality_gates": {
+        "assumptions": "A1-A5 enumerate dependent results, stress tests and falsification probes.",
+        "coverage": "Seven focused tests, full permission matrices, no-memory-access sentinels,490 lift checks, actual48-case QEMU trap probe and full prior numerical/register/native suites. Three backend tests,24 permission/enable cases and48 exception-frame cases; existing UDF fixture corrected to architectural guest trap semantics.",
+        "units": "Two-bit fields, counters,960-byte wire input and128MiB guest RAM explicit.",
+        "contradictions": "Software FP default and standalone CP15 reset are separated; skipped predicates precede access; FPEXC and privilege checks remain independent; reserved2 is not a hardware equivalence claim.",
+        "provenance": "Pinned Arm ASL, LLVM literal words, actual QEMU Undefined/SVC handling and immutable parent library/source hashes.",
+        "bounded_scope": "Remaining trap/profile controls, future enum additions and physical A32 hardware remain explicit.",
+        "worktree_integrity": "Fourteen baseline-guarded owned paths plus ledger, exact staging and unrelated-file hashes.",
+        "reproducibility": "Complete commands/counters, source/tool/input/ELF/library hashes and parent regressions required."
+      },
+      "negative_test_source_delta": {
+        "path": "src/isa/arm/aarch32/instructions/tests.rs",
+        "old_sha256": "f9e808c324fd14f37919cce726fe6267e0102e2544d6522d0184a543afbffdd0",
+        "new_sha256": "a8e2b34cccd928ce1f4782a1e81553b9e1b0d3ed8ca122b84fa36d07addc95fc",
+        "change": "One PL1 VMRS expected result40000000->40000700. Raw public fpexc storage assertion remains40000000.",
+        "cfg_exclusion": "Owner declares #[cfg(test)] mod tests; production library code is unchanged. Negative controls retain the old test-only source fingerprint explicitly.",
+        "initial_library_result": {
+          "passed": 10436,
+          "failed": 1,
+          "ignored": 2
+        },
+        "initial_evidence": "/Users/int/dev/rax-audit-work/rax-a32-fp-system-profile/initial-fixture-attempt/final-library.log"
+      },
+      "baseline": "da4e79b06ac27c3e7f502533f57ff9c9c300f891",
+      "validation": {
+        "checks": [
+          {
+            "check": "final-build",
+            "args": [
+              "cargo",
+              "+stable",
+              "build",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--all-targets"
+            ],
+            "code": 0,
+            "seconds": 172.39410725003108
+          },
+          {
+            "check": "final-vfp",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--test",
+              "arm_vfp_a32",
+              "--",
+              "--test-threads=4"
+            ],
+            "code": 0,
+            "seconds": 16.55030387500301
+          },
+          {
+            "check": "final-integration",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--test",
+              "arm",
+              "--test",
+              "isa_oracle",
+              "--",
+              "--test-threads=4"
+            ],
+            "code": 0,
+            "seconds": 28.90667845797725
+          },
+          {
+            "check": "final-clippy",
+            "args": [
+              "cargo",
+              "+stable",
+              "clippy",
+              "--locked",
+              "--offline",
+              "--all-targets",
+              "--features",
+              "x86_64-suite"
+            ],
+            "code": 0,
+            "seconds": 67.34981208411045
+          },
+          {
+            "check": "final-fmt",
+            "args": [
+              "cargo",
+              "+stable",
+              "fmt",
+              "--all",
+              "--check"
+            ],
+            "code": 0,
+            "seconds": 12.915014707949013
+          },
+          {
+            "check": "final-doc",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--doc"
+            ],
+            "code": 0,
+            "seconds": 5.079081375035457
+          },
+          {
+            "check": "final-ci-owning",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--test",
+              "ci_actions_pinned"
+            ],
+            "code": 0,
+            "seconds": 0.14308979199267924
+          },
+          {
+            "check": "final-library",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--lib",
+              "--",
+              "--test-threads=4"
+            ],
+            "code": 0,
+            "seconds": 384.63434104202315
+          },
+          {
+            "check": "final-rosetta-vfp",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--target",
+              "x86_64-apple-darwin",
+              "--test",
+              "arm_vfp_a32",
+              "--",
+              "--test-threads=4"
+            ],
+            "code": 0,
+            "seconds": 34.1167260420043
+          },
+          {
+            "check": "final-capi",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "-p",
+              "rax-capi",
+              "--",
+              "--test-threads=4"
+            ],
+            "code": 0,
+            "seconds": 37.912160083069466
+          },
+          {
+            "check": "final-system-oracle",
+            "args": [
+              "python3",
+              "/Users/int/dev/rax/tools/arm-diff/fp_system_oracle.py",
+              "--repo",
+              "/Users/int/dev/rax",
+              "--work-dir",
+              "/Users/int/dev/rax-audit-work/rax-a32-fp-access/green-v4",
+              "--target-dir",
+              "/Users/int/dev/rax-audit-work/rax-audit-host-final-target",
+              "--llvm-bin",
+              "/Users/int/local/bin",
+              "--timeout",
+              "60"
+            ],
+            "code": 0,
+            "seconds": 22.682822500006296
+          },
+          {
+            "check": "final-register-oracle",
+            "args": [
+              "python3",
+              "/Users/int/dev/rax/tools/arm-diff/fpscr_profile_oracle.py",
+              "--llvm-bin",
+              "/Users/int/local/bin",
+              "--work-dir",
+              "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-register-oracle"
+            ],
+            "code": 0,
+            "seconds": 0.11073254200164229
+          },
+          {
+            "check": "final-full-register-oracle",
+            "args": [
+              "python3",
+              "/Users/int/dev/rax/tools/arm-diff/fp_register_profile.py",
+              "--repo",
+              "/Users/int/dev/rax",
+              "--work-dir",
+              "/Users/int/dev/rax-audit-work/rax-a32-fp-access/green-registers",
+              "--target-dir",
+              "/Users/int/dev/rax-audit-work/rax-audit-host-final-target",
+              "--llvm-bin",
+              "/Users/int/local/bin"
+            ],
+            "code": 0,
+            "seconds": 1.6102100409334525
+          },
+          {
+            "check": "final-fp-access-oracle",
+            "args": [
+              "python3",
+              "/Users/int/dev/rax/tools/arm-diff/fp_access_oracle.py",
+              "--repo",
+              "/Users/int/dev/rax",
+              "--work-dir",
+              "/Users/int/dev/rax-audit-work/rax-a32-fp-access/green-access",
+              "--target-dir",
+              "/Users/int/dev/rax-audit-work/rax-audit-host-final-target",
+              "--llvm-bin",
+              "/Users/int/local/bin"
+            ],
+            "code": 0,
+            "seconds": 1.5925619170302525
+          }
+        ],
+        "complete_library": {
+          "passed": 10440,
+          "failed": 0,
+          "ignored": 2,
+          "filtered": 0,
+          "elapsed_seconds": 384.44
+        },
+        "complete_vfp_arm": {
+          "passed": 469,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0,
+          "elapsed_seconds": 16.4
+        },
+        "complete_vfp_rosetta": {
+          "passed": 435,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0,
+          "elapsed_seconds": 0.91
+        },
+        "doctests": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 5,
+          "filtered": 0,
+          "elapsed_seconds": 0.0
+        },
+        "ci_owning": [
+          {
+            "passed": 12,
+            "failed": 0,
+            "ignored": 0,
+            "filtered": 0,
+            "elapsed_seconds": 0.06
+          }
+        ],
+        "independent_access": {
+          "cases": 48,
+          "denied_cases": 26,
+          "failed": 0
+        },
+        "controlled_access_parent": {
+          "cases": 48,
+          "denied_cases": 26,
+          "failed": 20
+        },
+        "unchanged_register_profile": {
+          "cases": 8328,
+          "capability_failures": 0,
+          "local_profile_failures": 0,
+          "independent_common_field_failures": 0,
+          "qemu_raw_profile_differences": 8328
+        },
+        "permission_matrices": {
+          "denied_and_reserved": 9800,
+          "permitted": 5880,
+          "system_registers": 640,
+          "unsupported_smir_pairs": 490
+        },
+        "parent_literal_failures": 3,
+        "parent_literal_passes": 4,
+        "backend_parent_failures": 2,
+        "backend_parent_passes": 1,
+        "prior_register_tool_input_reference_unchanged": true,
+        "identical_access_tool_input_reference": true,
+        "complete_numerical_cases": 946176,
+        "numerical_failures": 0,
+        "previous_numerical_tools_input_reference_unchanged": true,
+        "nontrapping_register_cases": 32768,
+        "rosetta_cfg_elision": "34 actual A64 hardware tests cfg-elided;435 applicable owning tests execute.",
+        "qemu_limit": "Raw8328-case profile disagreement retained; only the explicitly projected common fields are an independent match. Full local masks are primary-source checks.",
+        "product_source_fingerprint": {
+          "rust_and_build_sources_sha256": "b7d29d4147b3c6aebbf1fb26a49a2cc36949fd2dedbeecd038b7be3e866411fb",
+          "files": 3476
+        },
+        "negative_library_source_fingerprint": {
+          "rust_and_build_sources_sha256": "09e9bbb0050dfcb81712349a4c1e76700eed04c09099686d2a7ac6bdbe5ff6ba",
+          "files": 3474
+        },
+        "logs": [
+          "/Users/int/dev/rax-audit-work/rax-a32-fp-access/reference-summary.json",
+          "/Users/int/dev/rax-audit-work/rax-a32-fp-access/reference-access/manifest.json",
+          "/Users/int/dev/rax-audit-work/rax-a32-fp-access/reference-access/backend-parent.log",
+          "/Users/int/dev/rax-audit-work/rax-a32-fp-access/reference-access/backend-test-overlay.json",
+          "/Users/int/dev/rax-audit-work/rax-a32-fp-access/reference-access/report.json",
+          "/Users/int/dev/rax-audit-work/rax-a32-fp-access/reference-access/parent-tests.stdout",
+          "/Users/int/dev/rax-audit-work/rax-a32-fp-access/reference-access/parent-tests.stderr",
+          "/Users/int/dev/rax-audit-work/rax-a32-fp-access/worktree-checks.json",
+          "/Users/int/dev/rax-audit-work/rax-a32-fp-access/worktree-result.json",
+          "/Users/int/dev/rax-audit-work/rax-a32-fp-access/green-access/manifest.json",
+          "/Users/int/dev/rax-audit-work/rax-a32-fp-access/green-access/report.json",
+          "/Users/int/dev/rax-audit-work/rax-a32-fp-access/green-registers/manifest.json",
+          "/Users/int/dev/rax-audit-work/rax-a32-fp-access/green-registers/report.json",
+          "/Users/int/dev/rax-audit-work/rax-a32-fp-access/green-v4/manifest.json",
+          "/Users/int/dev/rax-audit-work/rax-a32-fp-access/green-v4/report.json",
+          "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-register-oracle/manifest.json",
+          "/Users/int/dev/rax-audit-work/rax-a32-fp-access/checks.jsonl",
+          "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-build.log",
+          "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-vfp.log",
+          "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-integration.log",
+          "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-clippy.log",
+          "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-fmt.log",
+          "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-doc.log",
+          "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-ci-owning.log",
+          "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-library.log",
+          "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-rosetta-vfp.log",
+          "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-capi.log",
+          "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-system-oracle.log",
+          "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-register-oracle.log",
+          "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-full-register-oracle.log",
+          "/Users/int/dev/rax-audit-work/rax-a32-fp-access/final-fp-access-oracle.log",
+          "/Users/int/dev/rax-audit-work/rax-a32-fp-system-profile/cfg-only-library-proof.json"
+        ],
+        "cfg_only_source_delta_proof": {
+          "main45": {
+            "args": [
+              "cargo",
+              "+stable",
+              "build",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--lib"
+            ],
+            "before_sha256": "4fe76fd8f2210e5efc4ca2f32d5637f18583b9fe8ad20d918cda3a86b24b063d",
+            "after_sha256": "4fe76fd8f2210e5efc4ca2f32d5637f18583b9fe8ad20d918cda3a86b24b063d",
+            "production_library_byte_identical": true
+          },
+          "isolated46": {
+            "args": [
+              "cargo",
+              "+stable",
+              "build",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--lib"
+            ],
+            "before_sha256": "dec3d36045cd2da4eb54fa107b761113cb306b6095123b5a9ec822b5ca66de31",
+            "after_sha256": "dec3d36045cd2da4eb54fa107b761113cb306b6095123b5a9ec822b5ca66de31",
+            "production_library_byte_identical": true
+          }
+        },
+        "integration": {
+          "arm": {
+            "passed": 46850,
+            "failed": 0,
+            "ignored": 0,
+            "filtered": 0,
+            "elapsed_seconds": 28.56
+          },
+          "isa_oracle": {
+            "passed": 101,
+            "failed": 0,
+            "ignored": 0,
+            "filtered": 0,
+            "elapsed_seconds": 0.16
+          }
+        },
+        "capi": [
+          {
+            "passed": 185,
+            "failed": 0,
+            "ignored": 0,
+            "filtered": 0,
+            "elapsed_seconds": 9.6
           },
           {
             "passed": 0,
