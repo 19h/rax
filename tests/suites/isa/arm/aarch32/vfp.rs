@@ -1,3 +1,14 @@
+#[path = "fp_fused_long_contract.rs"]
+mod fp_fused_long_contract;
+#[path = "fp_fused_long_decoded.rs"]
+mod fp_fused_long_decoded;
+#[cfg(all(
+    target_arch = "aarch64",
+    target_feature = "fp16",
+    target_feature = "fhm"
+))]
+#[path = "fp_fused_long_native.rs"]
+mod fp_fused_long_native;
 #[path = "fp_half_contract.rs"]
 mod fp_half_contract;
 #[path = "fp_half_conversion_decoded.rs"]
