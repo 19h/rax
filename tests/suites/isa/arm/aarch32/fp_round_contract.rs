@@ -1,0 +1,290 @@
+//! FPRoundInt preserves NaN payloads, signed zero and guest FP controls.
+use rax::isa::arm::aarch32::vfp::{self, Fpscr, RoundingMode};
+fn check(
+    raw: u64,
+    double: bool,
+    mode: RoundingMode,
+    exact: bool,
+    control: u32,
+    want: u64,
+    status: u32,
+) {
+    let initial = control | 0xa8000004;
+    let mut fpscr = Fpscr::from_bits(initial);
+    let result = if double {
+        vfp::vrint_f64(f64::from_bits(raw), mode, exact, &mut fpscr).to_bits()
+    } else {
+        u64::from(vfp::vrint_f32(f32::from_bits(raw as u32), mode, exact, &mut fpscr).to_bits())
+    };
+    assert_eq!(
+        (result, fpscr.bits()),
+        (want, initial | status),
+        "raw={raw:016x}"
+    );
+}
+macro_rules! round_case {
+    ($name:ident,$raw:expr,$double:expr,$mode:ident,$exact:expr,$control:expr,$want:expr,$status:expr) => {
+        #[test]
+        fn $name() {
+            check(
+                $raw,
+                $double,
+                RoundingMode::$mode,
+                $exact,
+                $control,
+                $want,
+                $status,
+            );
+        }
+    };
+}
+round_case!(
+    quiet_nan_f32_is_not_invalid,
+    0x7fc12345,
+    false,
+    RoundNearest,
+    false,
+    0,
+    0x7fc12345,
+    0
+);
+round_case!(
+    negative_quiet_nan_preserves_payload,
+    0xffc12345,
+    false,
+    RoundZero,
+    true,
+    0,
+    0xffc12345,
+    0
+);
+round_case!(
+    signaling_nan_f32_is_quieted,
+    0x7f812345,
+    false,
+    RoundNearest,
+    false,
+    0,
+    0x7fc12345,
+    1
+);
+round_case!(
+    default_nan_discards_sign_and_payload,
+    0xffc12345,
+    false,
+    RoundNearest,
+    false,
+    1 << 25,
+    0x7fc00000,
+    0
+);
+round_case!(
+    default_signaling_nan_still_sets_invalid,
+    0xff812345,
+    false,
+    RoundNearest,
+    true,
+    1 << 25,
+    0x7fc00000,
+    1
+);
+round_case!(
+    positive_infinity_stays_infinite,
+    0x7f800000,
+    false,
+    RoundNearest,
+    true,
+    0,
+    0x7f800000,
+    0
+);
+round_case!(
+    negative_infinity_stays_infinite,
+    0xfff0000000000000,
+    true,
+    RoundPlusInf,
+    true,
+    0,
+    0xfff0000000000000,
+    0
+);
+round_case!(
+    negative_zero_preserves_sign,
+    0x80000000,
+    false,
+    RoundPlusInf,
+    true,
+    0,
+    0x80000000,
+    0
+);
+round_case!(
+    negative_half_nearest_preserves_negative_zero,
+    0xbf000000,
+    false,
+    RoundNearest,
+    false,
+    0,
+    0x80000000,
+    0
+);
+round_case!(
+    positive_half_exact_sets_inexact,
+    0x3f000000,
+    false,
+    RoundNearest,
+    true,
+    0,
+    0,
+    0x10
+);
+round_case!(
+    ties_away_exact_sets_inexact,
+    0x40200000,
+    false,
+    RoundTiesAway,
+    true,
+    0,
+    0x40400000,
+    0x10
+);
+round_case!(
+    positive_subnormal_flush_precedes_round_up,
+    1,
+    false,
+    RoundPlusInf,
+    false,
+    1 << 24,
+    0,
+    0x80
+);
+round_case!(
+    negative_subnormal_flush_suppresses_inexact,
+    0x80000001,
+    false,
+    RoundMinusInf,
+    true,
+    1 << 24,
+    0x80000000,
+    0x80
+);
+round_case!(
+    nonflushed_subnormal_round_up_is_one,
+    1,
+    false,
+    RoundPlusInf,
+    false,
+    0,
+    0x3f800000,
+    0
+);
+round_case!(
+    nonflushed_subnormal_exact_round_up_sets_inexact,
+    1,
+    false,
+    RoundPlusInf,
+    true,
+    0,
+    0x3f800000,
+    0x10
+);
+round_case!(
+    nonflushed_subnormal_exact_nearest_sets_inexact,
+    1,
+    false,
+    RoundNearest,
+    true,
+    0,
+    0,
+    0x10
+);
+round_case!(
+    quiet_nan_f64_is_not_invalid,
+    0x7ff8000000001234,
+    true,
+    RoundNearest,
+    true,
+    0,
+    0x7ff8000000001234,
+    0
+);
+round_case!(
+    signaling_nan_f64_is_quieted,
+    0xfff0000000001234,
+    true,
+    RoundNearest,
+    false,
+    0,
+    0xfff8000000001234,
+    1
+);
+round_case!(
+    largest_finite_f64_is_already_integral,
+    0x7fefffffffffffff,
+    true,
+    RoundMinusInf,
+    true,
+    0,
+    0x7fefffffffffffff,
+    0
+);
+round_case!(
+    large_fraction_rounds_beyond_the_32_bit_range,
+    0x432fffffffffffff,
+    true,
+    RoundNearest,
+    true,
+    0,
+    0x4330000000000000,
+    0x10
+);
+round_case!(
+    large_fraction_rounds_down_exactly,
+    0x432fffffffffffff,
+    true,
+    RoundMinusInf,
+    true,
+    0,
+    0x432ffffffffffffe,
+    0x10
+);
+round_case!(
+    negative_large_fraction_rounds_up,
+    0xc32fffffffffffff,
+    true,
+    RoundPlusInf,
+    true,
+    0,
+    0xc32ffffffffffffe,
+    0x10
+);
+round_case!(
+    negative_large_fraction_rounds_nearest,
+    0xc32fffffffffffff,
+    true,
+    RoundNearest,
+    false,
+    0,
+    0xc330000000000000,
+    0
+);
+round_case!(
+    f64_subnormal_flush_sets_input_denormal,
+    1,
+    true,
+    RoundPlusInf,
+    true,
+    1 << 24,
+    0,
+    0x80
+);
+round_case!(
+    explicit_rounding_ignores_live_rounding_control,
+    0xbff4000000000000,
+    true,
+    RoundZero,
+    true,
+    2 << 22,
+    0xbff0000000000000,
+    0x10
+);

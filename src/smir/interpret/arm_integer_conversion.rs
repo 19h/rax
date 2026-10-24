@@ -8,9 +8,24 @@ impl SmirInterpreter {
         double: bool,
         signed: bool,
         fractional_bits: u32,
-        mut mode: FpRoundMode,
+        mode: FpRoundMode,
         control: u32,
     ) -> (u32, u32) {
+        let (result, status) =
+            Self::arm_eval_fp_to_fixed(raw, double, signed, 32, fractional_bits, mode, control);
+        (result as u32, status)
+    }
+
+    pub(super) fn arm_eval_fp_to_fixed(
+        raw: u64,
+        double: bool,
+        signed: bool,
+        integer_bits: u32,
+        fractional_bits: u32,
+        mut mode: FpRoundMode,
+        control: u32,
+    ) -> (u64, u32) {
+        debug_assert!(matches!(integer_bits, 32 | 64));
         let source = if double { X86_SIMD_F64 } else { X86_SIMD_F32 };
         let (sign, exponent, fraction, _) = Self::x86_simd_fp_masks(source);
         let negative = raw & sign != 0;
@@ -18,10 +33,10 @@ impl SmirInterpreter {
             0
         } else {
             match (signed, negative) {
-                (true, true) => i32::MIN as u32,
-                (true, false) => i32::MAX as u32,
+                (true, true) => 1u64 << (integer_bits - 1),
+                (true, false) => (1u64 << (integer_bits - 1)) - 1,
                 (false, true) => 0,
-                (false, false) => u32::MAX,
+                (false, false) => u64::MAX >> (64 - integer_bits),
             }
         };
         if Self::x86_simd_fp_is_nan(raw, source) || Self::x86_simd_fp_is_infinite(raw, source) {
@@ -32,7 +47,7 @@ impl SmirInterpreter {
         }
         // Architectural immediates are <=32. For the legacy public helpers,
         // any larger shift beyond 2048 is equivalent: every nonzero finite
-        // binary64 input is then outside the 32-bit integer range.
+        // binary64 input is then outside even the 64-bit integer range.
         let scaled = super::X86SimdFpFormat {
             bias: source.bias - fractional_bits.min(2048) as i32,
             ..source
@@ -60,12 +75,12 @@ impl SmirInterpreter {
                 FpRoundMode::RoundNearest
             };
         }
-        let converted = Self::x86_simd_fp_to_int(raw, scaled, 32, signed, mode);
+        let converted = Self::x86_simd_fp_to_int(raw, scaled, integer_bits, signed, mode);
         if converted.status & 1 != 0 {
             (saturated, 1)
         } else {
             (
-                converted.bits as u32,
+                converted.bits,
                 if converted.status & (1 << 5) != 0 {
                     1 << 4
                 } else {

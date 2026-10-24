@@ -349,10 +349,33 @@
         "/tmp/rax-a32-integer-conversion/final-doc.log",
         "/tmp/rax-a32-integer-conversion/final-library.log",
         "/tmp/rax-a32-integer-conversion/final-rosetta-vfp.log",
-        "/tmp/rax-a32-integer-conversion/final-capi.log"
+        "/tmp/rax-a32-integer-conversion/final-capi.log",
+        "src/smir/interpret/arm_round_integral.rs",
+        "src/isa/arm/aarch32/vfp/rounding.rs",
+        "tests/suites/isa/arm/aarch32/fp_round_contract.rs",
+        "tests/suites/isa/arm/aarch32/fp_round_decoded.rs",
+        "tests/suites/isa/arm/aarch32/fp_round_native.rs",
+        "/tmp/rax-a32-rounding/parent-contract-red.log",
+        "/tmp/rax-a32-rounding/parent-decoded-red.log",
+        "/tmp/rax-a32-rounding/extracted-contract.log",
+        "/tmp/rax-a32-rounding/extracted-native.log",
+        "/tmp/rax-a32-rounding/llvm-words.log",
+        "/tmp/rax-a32-rounding/llvm-thumb.log",
+        "/tmp/rax-a32-rounding/worktree-vfp.log",
+        "/tmp/rax-a32-rounding/worktree-integration.log",
+        "/tmp/rax-a32-rounding/final-build.log",
+        "/tmp/rax-a32-rounding/final-vfp.log",
+        "/tmp/rax-a32-rounding/final-integration.log",
+        "/tmp/rax-a32-rounding/final-clippy.log",
+        "/tmp/rax-a32-rounding/final-fmt.log",
+        "/tmp/rax-a32-rounding/final-doc.log",
+        "/tmp/rax-a32-rounding/final-library.log",
+        "/tmp/rax-a32-rounding/final-rosetta-vfp.log",
+        "/tmp/rax-a32-rounding/final-capi.log",
+        "/tmp/rax-a32-rounding/checks.jsonl"
       ],
       "remaining_validation": [
-        "Round-to-integral, complete FP16/FZ16/AHP profiles, unimplemented 16-bit fixed encodings and remaining Advanced SIMD estimate/step families",
+        "Complete FP16/FZ16/AHP profiles, unimplemented 16-bit fixed encodings and remaining Advanced SIMD estimate/step families",
         "Enabled floating-point exception delivery",
         "Native A32 hardware or independent A32 system oracle"
       ]
@@ -4852,6 +4875,362 @@
         "behavioral_evidence": "Two actual guest shell executions; echoed input and wrong-architecture parser negative controls.",
         "repository_consistency": "X-BOOT-CR4 current status updated; historical bounded debug results retained.",
         "user_constraints": "No normative claims; time in seconds and memory conversion explicit; no new algorithm."
+      }
+    },
+    {
+      "id": "a32-round-integral-status",
+      "status": "locally_validated",
+      "baseline": "93ca5eb7a749159b7a626776c4980da267d53f97",
+      "scope": "Binary32/binary64 FPRoundInt helpers, decoded scalar/Advanced SIMD controls, NaN quieting/defaults, input flushing and exact/inexact policy. No new FP16 admission or enabled trap claim.",
+      "assumptions": [
+        {
+          "id": "AR1",
+          "assumption": "A fractional finite binary32/binary64 value can be rounded through a signed 64-bit integer without saturation.",
+          "basis": "Decoded significand precision is p=24 or p=53; fractional inputs have magnitude below 2^(p-1), so the rounded magnitude is at most 2^23/2^52 and fits signed 64 bits.",
+          "dependent_result": "Reuse the exact FPToFixed core at width 64, preserve the original 32-bit entry point, then re-encode an exact integer.",
+          "stress_test": "Both signs at precision frontiers, largest finite inputs, subnormals, all rounding controls and signed zero.",
+          "falsification_probe": "Integer conversion raises IOC for a finite fractional input, or re-encoding adds a floating-point exception.",
+          "status": "retained"
+        },
+        {
+          "id": "AR2",
+          "assumption": "Advanced SIMD VRINTX selects nearest-even; scalar VRINTX selects FPSCR RM.",
+          "basis": "Arm instruction guide C3.116 versus scalar VRINT description.",
+          "dependent_result": "Choose standard vector controls before evaluation and override vector X mode without changing scalar X/R behavior.",
+          "stress_test": "Identical fractional inputs with live FPSCR round-up produce different scalar/vector results and the same required IXC policy.",
+          "falsification_probe": "Vector X follows the live FPSCR RM or changes guest control bits.",
+          "status": "retained"
+        },
+        {
+          "id": "AR3",
+          "assumption": "Architectural FPRoundInt/FPProcessNaN defines cumulative NaN status; an old assembler-guide exception summary is insufficient as a status oracle.",
+          "basis": "The pinned AArch32 architectural manual explicitly calls FPProcessNaN from FPRoundInt; FPProcessNaN quiets signaling NaNs and FPProcessException accumulates IOC with traps disabled. An older assembler exception summary is not used to infer cumulative flag suppression.",
+          "dependent_result": "Use architectural NaN processing and separate cumulative flags from any enabled-trap claim.",
+          "stress_test": "A64 FRINT numerical/status oracle, explicit quiet/signaling/default NaN cases, and separate A32/Thumb instruction state tests.",
+          "falsification_probe": "An authoritative A32 architectural operation or physical A32 execution contradicts these selected numerical/status rules.",
+          "status": "confirmed by pinned AArch32 primary document and native common-operation comparisons"
+        }
+      ],
+      "primary_sources": [
+        {
+          "path": "docs/specifications/arm/DDI0568A_b_armv8_r_supplement.pdf",
+          "sha256": "320367c6ec4c13949fde2153862580d9915510a92410e23652b1fd103f26a0a0",
+          "edition": "Arm Architecture Reference Manual Supplement ARMv8, for ARMv8-R AArch32 architecture profile, DDI0568A.b, ID033117.",
+          "sections": "H1.3 shared FPRoundInt (H1-326/327), FPProcessNaN and FPProcessException. Explicit N in {32,64}, input flushing, NaN handling and cumulative IOC/IXC behavior."
+        },
+        {
+          "path": "docs/architecture/arm/asl/arm_defs.asl",
+          "sha256": "1ade68e5dacfff1b63a42ad3ee1c426aae5d36ed5dfcbf39de4baab478a190f8",
+          "functions": [
+            "FPRoundInt",
+            "FPProcessNaN",
+            "FPProcessException",
+            "FPUnpack",
+            "StandardFPSCRValue"
+          ]
+        },
+        {
+          "url": "https://documentation-service.arm.com/static/6245c734b059dc5ff9a8bdab",
+          "section": "C3.116 VRINT: Advanced SIMD X uses nearest-even and requests inexact; scalar X/R use current FPSCR RM."
+        },
+        "LLVM 23.0.0git /Users/int/local/bin/llvm-mc verifies A32/T32 instruction bytes in the recorded logs.",
+        {
+          "path": "docs/architecture/arm/asl/arm_instrs.asl",
+          "sha256": "3c91ece6d0509f7ce9e8b2d8fa623787d7c7acb4cb24040a75cec5aa2789e611",
+          "operations": [
+            "aarch32_VRINTX_vfp_A",
+            "aarch32_VRINTX_asimd_A"
+          ],
+          "basis": "Scalar X reads live FPSCR RM; vector X explicitly selects TIEEVEN and StandardFPSCRValue."
+        }
+      ],
+      "baseline_results": {
+        "helper_contract": {
+          "passed": 15,
+          "failed": 10
+        },
+        "decoded_instruction": {
+          "passed": 4,
+          "failed": 5,
+          "ignored": 0,
+          "filtered": 0
+        }
+      },
+      "bounded_scope": [
+        {
+          "impact": "high",
+          "item": "A64 arithmetic execution is an oracle for common operations, not native A32 execution or trap delivery. FP16/FZ16/AHP and enabled traps remain pending.",
+          "blocks": "Complete A32-FP and whole remediation plan."
+        },
+        {
+          "impact": "medium",
+          "item": "The older assembler exception summary was checked against the complete AArch32 architectural FPRoundInt/FPProcessNaN/FPProcessException operations. Cumulative flags follow the architectural operations; enabled trap delivery is not established.",
+          "blocks": false
+        }
+      ],
+      "regression_baseline": "e33c19848d482a179d08a4bcac188909a2cc0148 integer-conversion source, copied and hashed before round-integral edits. The intervening userspace evidence commit changes only this ledger.",
+      "validation": {
+        "checks": [
+          {
+            "check": "final-build",
+            "args": [
+              "cargo",
+              "+stable",
+              "build",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--all-targets"
+            ],
+            "code": 0,
+            "seconds": 164.73149337503128
+          },
+          {
+            "check": "final-vfp",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--test",
+              "arm_vfp_a32",
+              "--",
+              "--test-threads=4"
+            ],
+            "code": 0,
+            "seconds": 1.4329742499394342
+          },
+          {
+            "check": "final-integration",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--test",
+              "arm",
+              "--test",
+              "isa_oracle",
+              "--",
+              "--test-threads=4"
+            ],
+            "code": 0,
+            "seconds": 28.19821275002323
+          },
+          {
+            "check": "final-clippy",
+            "args": [
+              "cargo",
+              "+stable",
+              "clippy",
+              "--locked",
+              "--offline",
+              "--all-targets",
+              "--features",
+              "x86_64-suite"
+            ],
+            "code": 0,
+            "seconds": 128.42105674999766
+          },
+          {
+            "check": "final-fmt",
+            "args": [
+              "cargo",
+              "+stable",
+              "fmt",
+              "--all",
+              "--check"
+            ],
+            "code": 0,
+            "seconds": 11.606371958041564
+          },
+          {
+            "check": "final-doc",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--doc"
+            ],
+            "code": 0,
+            "seconds": 4.648965124972165
+          },
+          {
+            "check": "final-library",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--lib",
+              "--",
+              "--test-threads=4"
+            ],
+            "code": 0,
+            "seconds": 341.05806304200087
+          },
+          {
+            "check": "final-rosetta-vfp",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--target",
+              "x86_64-apple-darwin",
+              "--test",
+              "arm_vfp_a32",
+              "--",
+              "--test-threads=4"
+            ],
+            "code": 0,
+            "seconds": 31.490163583075628
+          },
+          {
+            "check": "final-capi",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "-p",
+              "rax-capi",
+              "--",
+              "--test-threads=4"
+            ],
+            "code": 0,
+            "seconds": 36.14539208391216
+          }
+        ],
+        "complete_library": {
+          "passed": 10433,
+          "failed": 0,
+          "ignored": 2,
+          "filtered": 0,
+          "elapsed_seconds": 340.95
+        },
+        "complete_vfp_arm": {
+          "passed": 258,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0,
+          "elapsed_seconds": 1.29
+        },
+        "complete_vfp_rosetta": {
+          "passed": 244,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0,
+          "elapsed_seconds": 0.01
+        },
+        "doctests": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 5,
+          "filtered": 0,
+          "elapsed_seconds": 0.0
+        },
+        "integration": {
+          "arm": {
+            "passed": 46850,
+            "failed": 0,
+            "ignored": 0,
+            "filtered": 0,
+            "elapsed_seconds": 27.93
+          },
+          "isa_oracle": {
+            "passed": 101,
+            "failed": 0,
+            "ignored": 0,
+            "filtered": 0,
+            "elapsed_seconds": 0.16
+          }
+        },
+        "capi": [
+          {
+            "passed": 185,
+            "failed": 0,
+            "ignored": 0,
+            "filtered": 0,
+            "elapsed_seconds": 8.25
+          },
+          {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "filtered": 0,
+            "elapsed_seconds": 0.0
+          }
+        ],
+        "native_arithmetic": {
+          "comparisons": 6400000,
+          "seed": "0xd4917c5b2a68f30e",
+          "matrix": "20000 edge/seeded raw inputs per format, binary32/binary64, 16 RM/FZ/DN controls, five explicit rounding modes and both exact policies.",
+          "scope": "Actual A64 FRINT results and cumulative flags for common FPRoundInt semantics. The helper-only ties-away/exact combination uses FRINTA result bits and FRINTX status; inexact depends on the fractional input, not selected rounding direction. No native A32 execution claim."
+        },
+        "rosetta_cfg_elision": "14 A64-only hardware oracle tests are cfg-elided; all 244 applicable owning tests execute.",
+        "logs": [
+          "/tmp/rax-a32-rounding/parent-contract-red.log",
+          "/tmp/rax-a32-rounding/parent-decoded-red.log",
+          "/tmp/rax-a32-rounding/extracted-contract.log",
+          "/tmp/rax-a32-rounding/extracted-native.log",
+          "/tmp/rax-a32-rounding/llvm-words.log",
+          "/tmp/rax-a32-rounding/llvm-thumb.log",
+          "/tmp/rax-a32-rounding/worktree-vfp.log",
+          "/tmp/rax-a32-rounding/worktree-integration.log",
+          "/tmp/rax-a32-rounding/final-build.log",
+          "/tmp/rax-a32-rounding/final-vfp.log",
+          "/tmp/rax-a32-rounding/final-integration.log",
+          "/tmp/rax-a32-rounding/final-clippy.log",
+          "/tmp/rax-a32-rounding/final-fmt.log",
+          "/tmp/rax-a32-rounding/final-doc.log",
+          "/tmp/rax-a32-rounding/final-library.log",
+          "/tmp/rax-a32-rounding/final-rosetta-vfp.log",
+          "/tmp/rax-a32-rounding/final-capi.log",
+          "/tmp/rax-a32-rounding/checks.jsonl"
+        ]
+      },
+      "affected_planes": {
+        "direct_helpers": "Existing vrint_f32/vrint_f64 APIs now use explicit integer significands, signed-zero preservation, NaN quiet/default handling, input flushing and exact-policy IXC. Public signatures unchanged.",
+        "decoded_a32_thumb": "Scalar X/R continue to use live RM; Advanced SIMD binary32 uses standard controls and X nearest-even. Complete aliased D registers, CPSR and FPSCR controls are asserted.",
+        "smir": "Private common arithmetic evaluator; width-64 intermediate added behind the unchanged width-32 conversion entry point. A32/Thumb lifters still reject the five tested instruction pairs whose FPSCR state is unrepresented. No new instruction admission.",
+        "embedding": "Checkpoint schema and C API shapes unchanged; all 185 C API tests pass. Full existing integer-conversion native oracle matrix remains green."
+      },
+      "complexity": "O(1) time and space per lane using fixed-width integer operations. Fractional binary32/binary64 magnitude is below 2^23/2^52; the rounded signed integer fits 64 bits and re-encodes exactly. Already-integral large inputs bypass conversion. Native comparisons use exact result-bit/status equality, with no tolerance.",
+      "quality_gates": {
+        "assumptions": "AR1/AR2/AR3 retained, stress-tested and reconciled with the pinned AArch32 architectural operations.",
+        "coverage": "25 direct contract tests, nine A32/T32 instruction tests and two native-oracle/host-state tests; baseline 10 helper and five instruction failures recorded.",
+        "reproducibility": "Exact source hashes, opcodes, seed, native comparison count and complete check commands/results recorded.",
+        "contradictions": "Architectural NaN status, exact/nonexact policy and scalar/vector X control distinction resolved. FP16 and enabled traps explicitly remain outside this group.",
+        "provenance": "Pinned AArch32 manual and architectural ASL, official instruction guide, LLVM encoding output and actual A64 hardware operations.",
+        "bounded_expansion": "A64 common-operation proof is separated from native A32, FP16 profiles and trap delivery.",
+        "worktree_integrity": "Root imports were guarded against the integer-only hash snapshot. Only the exact rounding-owned paths and this ledger are staged; reciprocal experiments remain confined to the scratch checkout.",
+        "behavioral_evidence": "All applicable owning tests execute, with zero filtered tests. A64-specific cfg elision on translated x86 is counted separately.",
+        "repository_consistency": "Public helper signatures and serialization unchanged; new modules are registered and remain below source size limits."
       }
     }
   ],

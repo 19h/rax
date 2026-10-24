@@ -429,6 +429,8 @@ mod fused;
 pub use fused::*;
 mod selection;
 pub use selection::*;
+mod rounding;
+pub use rounding::{vrint_f32, vrint_f64};
 mod integer;
 pub use integer::*;
 mod precision;
@@ -487,43 +489,11 @@ fn is_snan_f64(value: f64) -> bool {
         && (bits & 0x0008_0000_0000_0000) == 0
 }
 
-/// Round single-precision to an integral floating-point value.
-pub fn vrint_f32(val: f32, mode: RoundingMode, exact: bool, fpscr: &mut Fpscr) -> f32 {
-    if val.is_nan() {
-        fpscr.set_ioc(true);
-        return val;
-    }
-    if val.is_infinite() || val == 0.0 {
-        return val;
-    }
-    let rounded = round_f32_for_int(val, mode);
-    if exact && rounded != val {
-        fpscr.set_ixc(true);
-    }
-    rounded
-}
-
 /// Round half-precision bits to an integral half-precision floating-point value.
 pub fn vrint_f16_bits(bits: u16, mode: RoundingMode, exact: bool, fpscr: &mut Fpscr) -> u16 {
     let value = vcvt_f32_f16_bits(bits);
     let rounded = vrint_f32(value, mode, exact, fpscr);
     vcvt_f16_bits_f32(rounded, fpscr)
-}
-
-/// Round double-precision to an integral floating-point value.
-pub fn vrint_f64(val: f64, mode: RoundingMode, exact: bool, fpscr: &mut Fpscr) -> f64 {
-    if val.is_nan() {
-        fpscr.set_ioc(true);
-        return val;
-    }
-    if val.is_infinite() || val == 0.0 {
-        return val;
-    }
-    let rounded = round_f64_for_int(val, mode);
-    if exact && rounded != val {
-        fpscr.set_ixc(true);
-    }
-    rounded
 }
 
 /// Convert IEEE-754 binary16 bits to single-precision.
@@ -627,26 +597,6 @@ pub fn vfp_expand_imm_f64(imm8: u8) -> u64 {
     let exp = ((!b6 & 1) << 10) | ((if b6 != 0 { 0xFF } else { 0 }) << 2) | ((imm8 >> 4) & 0x3);
     let mant = (imm8 & 0xF) << 48;
     (sign << 63) | (exp << 52) | mant
-}
-
-fn round_f32_for_int(val: f32, mode: RoundingMode) -> f32 {
-    match mode {
-        RoundingMode::RoundNearest => val.round_ties_even(),
-        RoundingMode::RoundPlusInf => val.ceil(),
-        RoundingMode::RoundMinusInf => val.floor(),
-        RoundingMode::RoundZero => val.trunc(),
-        RoundingMode::RoundTiesAway => val.round(),
-    }
-}
-
-fn round_f64_for_int(val: f64, mode: RoundingMode) -> f64 {
-    match mode {
-        RoundingMode::RoundNearest => val.round_ties_even(),
-        RoundingMode::RoundPlusInf => val.ceil(),
-        RoundingMode::RoundMinusInf => val.floor(),
-        RoundingMode::RoundZero => val.trunc(),
-        RoundingMode::RoundTiesAway => val.round(),
-    }
 }
 
 fn round_shift_right_ties_even(value: u32, shift: u32) -> u32 {

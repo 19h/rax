@@ -234,7 +234,7 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
             0b10 => NeonSize::S32,
             _ => return ExecResult::Undefined,
         };
-        let Some((mode, exact)) = self.vrint_rounding(insn.mnemonic) else {
+        let Some((mut mode, exact)) = self.vrint_rounding(insn.mnemonic) else {
             return ExecResult::Undefined;
         };
 
@@ -253,26 +253,25 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
             return ExecResult::Undefined;
         }
 
+        let mut fpscr = if size == NeonSize::S32 {
+            if insn.mnemonic == Mnemonic::VRINTX_F32 {
+                mode = RoundingMode::RoundNearest;
+            }
+            self.standard_simd_fp_controls()
+        } else {
+            self.cpu.vfp.fpscr
+        };
         let ebytes = (size.bits() / 8) as u8;
         for reg in 0..regs {
             let elements = self.neon_read_vector_elements_u64(m + reg, 1, ebytes);
             let mut out = Vec::with_capacity(elements.len());
             for elem in elements {
                 let result = match size {
-                    NeonSize::H16 => u64::from(vrint_f16_bits(
-                        elem as u16,
-                        mode,
-                        exact,
-                        &mut self.cpu.vfp.fpscr,
-                    )),
+                    NeonSize::H16 => {
+                        u64::from(vrint_f16_bits(elem as u16, mode, exact, &mut fpscr))
+                    }
                     NeonSize::S32 => u64::from(
-                        vrint_f32(
-                            f32::from_bits(elem as u32),
-                            mode,
-                            exact,
-                            &mut self.cpu.vfp.fpscr,
-                        )
-                        .to_bits(),
+                        vrint_f32(f32::from_bits(elem as u32), mode, exact, &mut fpscr).to_bits(),
                     ),
                     _ => return ExecResult::Undefined,
                 };
@@ -281,6 +280,7 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
             self.neon_write_vector_elements_u64(d + reg, 1, ebytes, &out);
         }
 
+        self.cpu.vfp.fpscr = Fpscr::from_bits(self.cpu.vfp.fpscr.bits() | (fpscr.bits() & 0x9f));
         ExecResult::Continue
     }
 
@@ -1009,7 +1009,7 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
             && ((raw >> 16) & 0x3F) >= 32
     }
 
-    fn integer_conversion_simd_controls(&self) -> Fpscr {
+    fn standard_simd_fp_controls(&self) -> Fpscr {
         // Arm StandardFPSCRValue: nearest rounding, DN/FZ set. Preserve the
         // AHP/FZ16 controls; they do not affect these binary32 conversions.
         Fpscr::from_bits((self.cpu.vfp.fpscr.bits() & ((1 << 26) | (1 << 19))) | 0x0300_0000)
@@ -1038,7 +1038,7 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
             return ExecResult::Undefined;
         }
 
-        let mut fpscr = self.integer_conversion_simd_controls();
+        let mut fpscr = self.standard_simd_fp_controls();
         for reg in 0..regs {
             let elements = self.neon_read_vector_elements_u64(m + reg, 1, 4);
             let mut out = Vec::with_capacity(elements.len());
@@ -1134,7 +1134,7 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
         }
 
         let fbits = 64 - ((insn.raw >> 16) & 0x3F);
-        let mut fpscr = self.integer_conversion_simd_controls();
+        let mut fpscr = self.standard_simd_fp_controls();
         for reg in 0..regs {
             let elements = self.neon_read_vector_elements_u64(m + reg, 1, 4);
             let mut out = Vec::with_capacity(elements.len());
@@ -1206,7 +1206,7 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
         }
 
         let mut fpscr = if size == NeonSize::S32 {
-            self.integer_conversion_simd_controls()
+            self.standard_simd_fp_controls()
         } else {
             self.cpu.vfp.fpscr
         };

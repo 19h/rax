@@ -3,7 +3,7 @@ use super::{Fpscr, RoundingMode};
 use crate::smir::interpret::SmirInterpreter;
 use crate::smir::ir::types::FpRoundMode;
 
-fn mode(mode: RoundingMode) -> FpRoundMode {
+pub(super) fn mode(mode: RoundingMode) -> FpRoundMode {
     match mode {
         RoundingMode::RoundNearest => FpRoundMode::RoundNearest,
         RoundingMode::RoundPlusInf => FpRoundMode::RoundUp,

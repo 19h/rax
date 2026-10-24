@@ -27,6 +27,7 @@ mod arm_conversion;
 mod arm_flags;
 mod arm_fused;
 mod arm_integer_conversion;
+mod arm_round_integral;
 mod arm_selection;
 pub(crate) use arm_arithmetic::ArmFpOperation;
 mod execution;
