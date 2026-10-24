@@ -281,7 +281,7 @@ pub fn sregs_from_hvf(vcpu: hv_vcpuid_t) -> Result<SystemRegisters> {
         cr2,
         cr3,
         cr4,
-        cr8: 0, // CR8 (TPR) - not directly accessible via basic VMCS
+        cr8: (read_register(vcpu, HV_X86_TPR)? >> 4) & 0x0f,
         efer,
         star: 0,  // These MSRs require MSR load/store areas
         lstar: 0, // which we'll handle separately
@@ -303,6 +303,9 @@ pub fn sregs_from_hvf(vcpu: hv_vcpuid_t) -> Result<SystemRegisters> {
 pub fn sregs_to_hvf(vcpu: hv_vcpuid_t, sregs: &SystemRegisters) -> Result<()> {
     use hv_vmx_vmcs_field_t::*;
     use hv_x86_reg_t::*;
+
+    let tpr = super::cr8::tpr_value(sregs.cr8)
+        .ok_or_else(|| Error::InvalidConfig(format!("invalid CR8 value {:#x}", sregs.cr8)))?;
 
     // CS segment
     vmcs_write(vcpu, VMCS_GUEST_CS_SELECTOR, sregs.cs.selector as u64)?;
@@ -395,6 +398,9 @@ pub fn sregs_to_hvf(vcpu: hv_vcpuid_t, sregs: &SystemRegisters) -> Result<()> {
     vmcs_write(vcpu, VMCS_GUEST_CR3, sregs.cr3)?;
     vmcs_write(vcpu, VMCS_GUEST_CR4, sregs.cr4)?;
     write_register(vcpu, HV_X86_CR2, sregs.cr2)?;
+
+    // CR8 is the high priority nibble of the SDK's full TPR byte.
+    write_register(vcpu, HV_X86_TPR, tpr)?;
 
     // EFER
     vmcs_write(vcpu, VMCS_GUEST_IA32_EFER, sregs.efer)?;

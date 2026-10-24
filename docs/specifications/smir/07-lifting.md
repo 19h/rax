@@ -56,6 +56,8 @@ The AArch64 lifter consumes the existing ARM decoder. It maps `SP` versus `XZR/W
 
 MTE tag-clearing add/sub forms are represented by arithmetic plus masking. Memory operands are translated to `Address` plus pre-ops when an index calculation must be materialized.
 
+Pointer-authentication forms (`PAC*`, `AUT*`, `XPAC*`, `PACGA`), authenticated branches (`BRAA`/`BLRAA`/`RETAA` families), authenticated loads (`LDRAA`/`LDRAB`), and the adjacent MTE forms are rejected rather than approximated: SMIR has no PAC operation and no key or `BTYPE` state. See `16-aarch64-pauth.md` for the support contract, the current deviations, and the requirements for lifting them.
+
 ## 7. Hexagon lifting
 
 The Hexagon lifter is packet-aware. It tracks packet-local producers for `.new` values, packet start PC for packet-relative branches, constant extenders, pending histogram ops awaiting same-packet `.tmp` vector loads, HVX vector and Q registers, control-register value transfers, GP-relative addressing, and post-increment/circular/bit-reversed addressing forms.

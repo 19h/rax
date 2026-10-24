@@ -365,3 +365,7 @@ path = "tests/suites/backend/hvf_xsetbv.rs"
 [[test]]
 name = "hvf_run_loop"
 path = "tests/suites/backend/hvf_run_loop.rs"
+
+[[test]]
+name = "hvf_cr8"
+path = "tests/suites/backend/hvf_cr8.rs"

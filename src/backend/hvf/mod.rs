@@ -12,6 +12,8 @@
 mod bindings;
 #[cfg(target_arch = "x86_64")]
 mod convert;
+#[cfg(target_arch = "x86_64")]
+mod cr8;
 pub mod rosetta;
 mod run_loop;
 #[cfg(target_arch = "x86_64")]
@@ -253,6 +255,22 @@ impl HvfVcpu {
         Ok(vcpu)
     }
 
+    fn inject_fault(&self, fault: xsetbv::XsetbvFault) -> Result<()> {
+        let (info, error) = fault.injection();
+        if let Some(error) = error {
+            vmcs_write(
+                self.vcpu_id,
+                hv_vmx_vmcs_field_t::VMCS_CTRL_VMENTRY_EXCEPTION_ERROR,
+                error,
+            )?;
+        }
+        vmcs_write(
+            self.vcpu_id,
+            hv_vmx_vmcs_field_t::VMCS_CTRL_VMENTRY_IRQ_INFO,
+            info,
+        )
+    }
+
     /// Execute the VM-exited instruction or inject its architectural fault.
     fn handle_xsetbv(&self) -> Result<()> {
         struct Access<'a> {
@@ -291,22 +309,54 @@ impl HvfVcpu {
             }
 
             fn inject_fault(&mut self, fault: xsetbv::XsetbvFault) -> Result<()> {
-                let (info, error) = fault.injection();
-                if let Some(error) = error {
-                    vmcs_write(
-                        self.vcpu.vcpu_id,
-                        hv_vmx_vmcs_field_t::VMCS_CTRL_VMENTRY_EXCEPTION_ERROR,
-                        error,
-                    )?;
-                }
-                vmcs_write(
-                    self.vcpu.vcpu_id,
-                    hv_vmx_vmcs_field_t::VMCS_CTRL_VMENTRY_IRQ_INFO,
-                    info,
-                )
+                self.vcpu.inject_fault(fault)
             }
         }
         xsetbv::handle_xsetbv(&mut Access { vcpu: self })
+    }
+
+    fn handle_cr8(&self, qualification: u64) -> Result<bool> {
+        struct Access<'a> {
+            vcpu: &'a HvfVcpu,
+        }
+        fn register(index: u8) -> Result<hv_x86_reg_t> {
+            use hv_x86_reg_t::*;
+            const REGISTERS: [hv_x86_reg_t; 16] = [
+                HV_X86_RAX, HV_X86_RCX, HV_X86_RDX, HV_X86_RBX, HV_X86_RSP, HV_X86_RBP, HV_X86_RSI,
+                HV_X86_RDI, HV_X86_R8, HV_X86_R9, HV_X86_R10, HV_X86_R11, HV_X86_R12, HV_X86_R13,
+                HV_X86_R14, HV_X86_R15,
+            ];
+            REGISTERS.get(usize::from(index)).copied().ok_or_else(|| {
+                Error::Emulator(format!("invalid VMX CR8 general-register index {index}"))
+            })
+        }
+        impl cr8::Cr8Access for Access<'_> {
+            type Error = Error;
+            fn read_gpr(&mut self, index: u8) -> Result<u64> {
+                read_register(self.vcpu.vcpu_id, register(index)?)
+            }
+            fn write_gpr(&mut self, index: u8, value: u64) -> Result<()> {
+                write_register(self.vcpu.vcpu_id, register(index)?, value)
+            }
+            fn read_tpr(&mut self) -> Result<u64> {
+                read_register(self.vcpu.vcpu_id, hv_x86_reg_t::HV_X86_TPR)
+            }
+            fn write_tpr(&mut self, value: u64) -> Result<()> {
+                write_register(self.vcpu.vcpu_id, hv_x86_reg_t::HV_X86_TPR, value)
+            }
+            fn inject_gp(&mut self) -> Result<()> {
+                self.vcpu
+                    .inject_fault(xsetbv::XsetbvFault::GeneralProtection)
+            }
+            fn advance_rip(&mut self) -> Result<()> {
+                let length = vmcs_read(
+                    self.vcpu.vcpu_id,
+                    hv_vmx_vmcs_field_t::VMCS_EXIT_INSTRUCTION_LENGTH,
+                )?;
+                self.vcpu.advance_rip(length)
+            }
+        }
+        cr8::handle(&mut Access { vcpu: self }, qualification)
     }
 
     /// Initialize VMCS fields for the vCPU.
@@ -732,17 +782,13 @@ impl run_loop::ExitHandler for HvfVcpu {
         self.try_inject_interrupt()
     }
     fn control_register(&mut self) -> Result<()> {
-        // Handle CR access (usually CR0/CR3/CR4 writes)
-        let qual = vmcs_read(self.vcpu_id, hv_vmx_vmcs_field_t::VMCS_EXIT_QUALIFICATION)?;
-        let insn_len = vmcs_read(
-            self.vcpu_id,
-            hv_vmx_vmcs_field_t::VMCS_EXIT_INSTRUCTION_LENGTH,
-        )?;
-
-        // For now, just advance RIP and continue
-        // TODO: Proper CR access handling
-        self.advance_rip(insn_len)?;
-        Ok(())
+        let qualification = vmcs_read(self.vcpu_id, hv_vmx_vmcs_field_t::VMCS_EXIT_QUALIFICATION)?;
+        if self.handle_cr8(qualification)? {
+            return Ok(());
+        }
+        Err(Error::Emulator(format!(
+            "unsupported HVF control-register exit qualification {qualification:#x}"
+        )))
     }
     fn xsetbv(&mut self) -> Result<()> {
         self.handle_xsetbv()
@@ -783,6 +829,13 @@ impl VCpu for HvfVcpu {
             }
         };
 
+        // Reject invalid CR8 before any externally supplied CPU state is written.
+        if cr8::tpr_value(state.sregs.cr8).is_none() {
+            return Err(Error::InvalidConfig(format!(
+                "invalid CR8 value {:#x}",
+                state.sregs.cr8
+            )));
+        }
         regs_to_hvf(self.vcpu_id, &state.regs)?;
         sregs_to_hvf(self.vcpu_id, &state.sregs)?;
 

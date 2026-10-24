@@ -22,3 +22,6 @@ target/
 /tools/asl-parser/asl
 /tools/asl-parser/asl-parsed
 /tools/asl-parser/xml
+
+__pycache__/
+.idea/

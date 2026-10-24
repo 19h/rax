@@ -92,7 +92,56 @@ basic codes under four non-failure flag partitions,65536 entry-failure codes,
 every handled reason, MSR public/resume outcomes, preparation exits and all host
 error phases. One million internal exits complete on a65536-byte thread stack.
 The controlled recursive/low16-only reproducer overflows that small stack and
-fails two entry-failure/error tests. The native adapter retains the prior port,
-MMIO, MSR, control and interrupt handler effects; this refactor does not certify
-those effects or native Intel hypervisor delivery. CR-access and MMIO placeholder
-semantics remain separate pending fixes.
+fails two entry-failure/error tests. The driver delegates port, MMIO, MSR, control and interrupt effects to their
+individual handlers. Shared dispatch tests do not certify native Intel delivery.
+Remaining CR-access and MMIO semantics retain their explicit limits below.
+
+## CR8 transfers and state access
+
+```sh
+cargo +stable test --test hvf_cr8
+python3 tools/hvf/cr8_oracle.py --llvm-bin /path/to/llvm/bin --work-dir ./target/hvf-cr8
+```
+
+The configured CR8 load/store VM exits now transfer the selected architectural
+GPR and SDK TPR state. The GPR qualification index follows Intel table29-3 and
+uses an explicit mapping to SDK register identifiers. A valid CR8 value0-15
+writes TPR=value<<4, clearing its low subclass nibble, before advancing RIP.
+MOV from CR8 writes a zero-extended64-bit TPR[7:4] into the selected GPR.
+Reserved CR8 bits require #GP(0) with unchanged TPR/GPR and faulting RIP.
+
+System-state reads expose the live SDK TPR priority class as CR8. System-state
+writes restore it; invalid CR8 values fail before any supplied CPU state is
+written. This uses the already serialized CR8 field and adds no checkpoint
+layout field. Host API failures propagate; an error after a successful TPR write
+can leave that write visible without a successful RIP advance.
+
+```text
+qualification -> recognized CR8 transfer -> GPR/TPR commit -> RIP advance
+                           |
+                           +-> reserved CR8 bits -> #GP(0), faulting RIP
+```
+
+Other control-register exit forms return an explicit host error with their raw
+qualification and leave RIP unchanged. CR0.NE mask/shadow semantics and optional
+CR3/CR4 intercepts still need implementation; this bounded group does not claim
+to implement them.
+
+The six complete host-independent tests cover all16 GPRs, all256 TPR byte reads,
+all16 valid CR8 writes, every one of60 reserved CR8 bits, unrepresented control
+forms, every reserved qualification bit and host-failure boundaries. The actual
+QEMU long-mode guest executes335 instructions and retains all raw records.
+
+| Input class | RAX requirement | QEMU11.1.2 TCG result |
+| --- | --- | --- |
+| 272 legal transfers | Exact CR8/TPR transfer | Independent match |
+| 63 reserved-bit writes | #GP(0), no TPR/RIP commit | Masks to low4 bits and writes TPR |
+
+The probe validates the RAX local profile against Intel for every record and
+compares legal transfers independently. It reports all63 raw disagreements;
+reserved-bit exception behavior is primary-source validation, not a QEMU match.
+The installed reference permits precisely this known masking behavior or the
+correct architectural fault, and rejects other unexplained reference results.
+Native Intel VMX/exception delivery and SDK-TPR/software-LAPIC/IRQ coherence remain
+separate. The VMM LocalApic and software x86 InlineLapic ownership also require
+reconciliation with the pending platform/checkpoint/SMP work.
