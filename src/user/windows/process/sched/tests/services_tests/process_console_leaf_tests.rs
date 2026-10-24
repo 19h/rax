@@ -92,8 +92,9 @@ fn native_console_owner_installed_native_and_wow_leaves_preserve_values_faults_a
         let mut process = WindowsProcess::spawn_image(cfg, image.to_vec()).unwrap();
         let p = process.state_mut();
         assert_eq!(
-            p.cfg.version.build, 29683,
-            "must exercise measured installed build"
+            p.cfg.version.build,
+            native_host_profile::build(),
+            "installed profile must report the current host build"
         );
         let tid = *p.threads.keys().next().unwrap();
         let mut t = p.threads.remove(&tid).unwrap();

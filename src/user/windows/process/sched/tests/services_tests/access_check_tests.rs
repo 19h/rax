@@ -86,18 +86,35 @@ fn setup(arch: WinArch, laa: bool, native: bool) -> (WindowsProcess, Thread, u64
         .cpu
         .set_sp(thread.cpu.sp().checked_sub(0x100).unwrap());
     if native {
-        let mut actual = p.objects.primary_token_subject().unwrap().as_ref().clone();
-        // This fixture pins the access-check subject fields. Attribute capture
-        // has an independent native byte and ownership suite.
-        assert!(actual.attributes.take().is_some());
-        assert_eq!(actual, subject_fixture());
+        assert!(
+            p.objects
+                .primary_token_subject()
+                .unwrap()
+                .attributes
+                .is_some()
+        );
+        #[cfg(windows)]
+        {
+            let actual = p.objects.primary_token_subject().unwrap();
+            let mut expected = native_host_profile::primary_token_subject();
+            // Attribute contents retain their separate byte/ownership suite;
+            // compare all other live fields without printing private host SIDs.
+            expected.attributes = actual.attributes.clone();
+            assert!(
+                actual.as_ref() == &expected,
+                "captured token subject differs from independent typed Win32 controls"
+            );
+        }
     } else {
         let ntdll = p.modules.by_name("ntdll.dll").unwrap();
         p.modules.nt_services = Some((ntdll, table(arch, "NtAccessCheck", 0x21)));
-        p.objects.select_wnf_catalog(
-            crate::user::windows::wnf::Catalog::selected(Vec::new(), subject_fixture()).unwrap(),
-        );
     }
+    // Both transports replay the same recorded subject. Installed DLL selection
+    // does not imply the runner has the capture's SYSTEM identity. Attribute
+    // capture retains its independent native byte and ownership suite.
+    p.objects.select_wnf_catalog(
+        crate::user::windows::wnf::Catalog::selected(Vec::new(), subject_fixture()).unwrap(),
+    );
     let base =
         p.vm.allocate(
             None,

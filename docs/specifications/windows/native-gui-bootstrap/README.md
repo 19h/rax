@@ -84,9 +84,20 @@ ABI275 GUI/plugin/package validation. [validation-current.json](validation-curre
 records the tested source parent, exact evidence identities, and remaining
 validation boundaries.
 
-The unfiltered Windows suite reports 7757 passes, five established ARM64
-lowerer failures, and two ignored tests; it is not a passing full suite. The
+At the original GUI candidate, before the AArch64 capability-test correction,
+the unfiltered Windows suite reports 7757 passes, five established ARM64
+lowerer failures, and two ignored tests; that frame is not a passing full suite. The
 actual retained C++ adapter observes the expected USER32 fields in the retained
 `FAILED` process at the DPI frontier. A separate fine-sampling C API observer
 exited with `0xC0000409`; its cause is unknown. That failed observer is preserved
 and does not establish a callback failure or a successful whole-program run.
+
+The subsequent `7893d21c` capability-test correction passes the unfiltered native
+ARM64 library suite: 7763 passed, zero failed, two ignored and zero filtered.
+The hosted x64 build-20348 process slice is a separate frame, with 715 passed
+and six failed. Its host identity/build/session assumptions and explicit missing
+Win32u capability are addressed by the
+[installed-profile controls](../native-installed-profiles/README.md).
+That record preserves the unresolved hosted clock failure and the distinction
+between unavailable capability checks, actual installed leaves and full GUI
+support.

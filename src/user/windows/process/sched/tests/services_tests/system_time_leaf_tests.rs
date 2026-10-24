@@ -106,7 +106,21 @@ fn native_system_time_installed_leaf_uses_host_clock_and_preserves_guards() {
             STATUS_SUCCESS
         );
         let after = now();
-        assert!((before..=after).contains(&p.space.u64(base + 4).unwrap()));
+        let observed = p.space.u64(base + 4).unwrap();
+        let module = p.modules.by_name("ntdll.dll").unwrap();
+        let entry = loader::lookup(
+            p,
+            module,
+            &SymRef::Name(b"NtQuerySystemTime".to_vec(), None),
+        )
+        .unwrap()
+        .unwrap();
+        assert!(
+            (before..=after).contains(&observed),
+            "{arch}/build{}: FILETIME ticks before={before} observed={observed} after={after}; installed leaf={:02x?}",
+            p.cfg.version.build,
+            p.space.bytes(entry, 48).unwrap()
+        );
         assert_eq!(p.space.u32(last_error).unwrap(), 0x4A2E19F7);
         p.vm.poke(base + 4092, &[0xA5; 8]).unwrap();
         p.vm.protect(base + 4096, 4096, prot::READWRITE | prot::GUARD)

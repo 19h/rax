@@ -39,8 +39,9 @@ fn native_nls_initialize_installed_leaves_map_locale_file_and_preserve_ignored_o
         let mut process = WindowsProcess::spawn_image(config, image.to_vec()).unwrap();
         let p = process.state_mut();
         assert_eq!(
-            p.cfg.version.build, 29683,
-            "native profile must run on measured build"
+            p.cfg.version.build,
+            native_host_profile::build(),
+            "installed profile must report the current host build"
         );
         let file = std::fs::read(
             std::path::Path::new(&p.native.as_ref().unwrap().guest_root)

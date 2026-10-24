@@ -43,10 +43,11 @@ fn replay(native: bool) {
         let (mut process, mut thread, base, handles) = setup_runtime(arch, laa, native);
         let p = process.state_mut();
         if native {
+            #[cfg(windows)]
             assert_eq!(
                 p.objects.primary_token_session_id(),
-                Some(0),
-                "the recorded native subject was in session zero"
+                Some(native_host_profile::primary_token_session_id()),
+                "captured primary-token session must match the independent host query"
             );
             let process_session = p.objects.wnf_queries().unwrap().session;
             assert_eq!(
@@ -55,9 +56,10 @@ fn replay(native: bool) {
                     .unwrap(),
                 process_session
             );
-        } else {
-            captured(p, 0);
         }
+        // Exact corpus outputs encode session zero. Exercise the installed
+        // leaf against that explicit replay input, after checking live capture.
+        captured(p, 0);
         let module =
             native.then(|| crate::user::windows::loader::load_dll(p, "ntdll.dll").unwrap());
         for (index, row) in rows.iter().enumerate() {

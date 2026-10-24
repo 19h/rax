@@ -44,8 +44,14 @@ fn win32u_installed_init2_leaf_requires_gui_prerequisites_without_state_changes(
                 "USER callback table is absent or unreadable".to_owned()
             }
             crate::user::windows::gui::Availability::Unavailable(reason) => {
-                assert_eq!(arch, WinArch::X86, "{arch}: {reason}");
-                assert!(reason.contains("WoW64") && reason.contains("paired contexts"));
+                if arch == WinArch::X86 {
+                    assert!(reason.contains("WoW64") && reason.contains("paired contexts"));
+                } else {
+                    assert!(
+                        reason.ends_with("selected Win32u has no NtGdiInit2"),
+                        "{arch}: unexpected unavailable GUI inputs: {reason}"
+                    );
+                }
                 format!("not implemented for unavailable GUI inputs: {reason}")
             }
         };
@@ -53,18 +59,7 @@ fn win32u_installed_init2_leaf_requires_gui_prerequisites_without_state_changes(
         let mut t = p.threads.remove(&tid).unwrap();
         let module = loader::load_dll(p, "win32u.dll").unwrap();
         assert_eq!(p.modules.win32u_services.as_ref().unwrap().0, module);
-        let entry = loader::lookup(p, module, &SymRef::Name(b"NtGdiInit2".to_vec(), None))
-            .unwrap()
-            .unwrap();
-        let sp = t.cpu.sp() - 128;
-        let resume = p.traps.callback_return();
-        t.cpu.set_sp(sp);
-        t.cpu.set_pc(entry);
-        match arch {
-            WinArch::X86 => p.space.w32(sp, resume as u32).unwrap(),
-            WinArch::X64 => p.space.w64(sp, resume).unwrap(),
-            WinArch::Arm64 => t.cpu.set_gpr(30, resume),
-        }
+        let entry = loader::lookup(p, module, &SymRef::Name(b"NtGdiInit2".to_vec(), None)).unwrap();
         let error = t.teb + layout::offsets(arch).teb_last_error;
         p.space.w32(error, 0x1234_5678).unwrap();
         let rng = p.rng;
@@ -72,29 +67,52 @@ fn win32u_installed_init2_leaf_requires_gui_prerequisites_without_state_changes(
         let committed = p.vm.committed_bytes();
         let peb = p.space.bytes(p.peb, 512).unwrap();
         let teb = p.space.bytes(t.teb, 4096).unwrap();
-        let mut named = false;
-        for _ in 0..32 {
-            let boundary = t.cpu.run(64);
-            assert_ne!(
-                t.cpu.pc(),
-                resume,
-                "Win32u leaf with missing GUI prerequisites cannot return success"
-            );
-            match handle_stop(p, &mut t, boundary) {
-                Outcome::Continue | Outcome::Yield => (),
-                Outcome::Fail(reason) => {
-                    assert!(
-                        reason.starts_with("native Win32u service NtGdiInit2 (")
-                            && reason.ends_with(&expected),
-                        "{arch}: {reason}"
-                    );
-                    named = true;
-                    break;
-                }
-                other => panic!("{arch}: {other:?}"),
+        if let Some(entry) = entry {
+            let sp = t.cpu.sp() - 128;
+            let resume = p.traps.callback_return();
+            t.cpu.set_sp(sp);
+            t.cpu.set_pc(entry);
+            match arch {
+                WinArch::X86 => p.space.w32(sp, resume as u32).unwrap(),
+                WinArch::X64 => p.space.w64(sp, resume).unwrap(),
+                WinArch::Arm64 => t.cpu.set_gpr(30, resume),
             }
+            let mut named = false;
+            for _ in 0..32 {
+                let boundary = t.cpu.run(64);
+                assert_ne!(
+                    t.cpu.pc(),
+                    resume,
+                    "Win32u leaf with missing GUI prerequisites cannot return success"
+                );
+                match handle_stop(p, &mut t, boundary) {
+                    Outcome::Continue | Outcome::Yield => (),
+                    Outcome::Fail(reason) => {
+                        assert!(
+                            reason.starts_with("native Win32u service NtGdiInit2 (")
+                                && reason.ends_with(&expected),
+                            "{arch}: {reason}"
+                        );
+                        named = true;
+                        break;
+                    }
+                    other => panic!("{arch}: {other:?}"),
+                }
+            }
+            assert!(named, "{arch}");
+        } else {
+            assert!(
+                matches!(
+                    &p.native.as_ref().unwrap().gui,
+                    crate::user::windows::gui::Availability::Unavailable(reason)
+                        if reason.ends_with("selected Win32u has no NtGdiInit2")
+                ),
+                "{arch}: missing export must have an explicit unavailable capability"
+            );
+            println!(
+                "{arch}: validated missing NtGdiInit2 capability and preserved state; no leaf execution"
+            );
         }
-        assert!(named, "{arch}");
         assert_eq!(p.space.u32(error).unwrap(), 0x1234_5678);
         assert_eq!(p.rng, rng);
         assert_eq!(p.objects.handle_count(), handles);

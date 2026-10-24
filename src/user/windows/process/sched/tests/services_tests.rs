@@ -1,6 +1,10 @@
 use super::*;
 use crate::user::windows::loader::services::tests::table;
 
+#[cfg(windows)]
+#[path = "services_tests/native_host_profile.rs"]
+mod native_host_profile;
+
 #[path = "services_tests/alpc_tests.rs"]
 mod alpc_tests;
 
