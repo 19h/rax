@@ -7057,14 +7057,14 @@ fn vmrs_vmsr_fpscr_and_apsr_flags() {
         exec_one(&mut cpu, &mut mem, 0xEEE8_3A10),
         ExecResult::Continue
     ));
-    assert_eq!(cpu.vfp.fpexc, 0x4000_0000);
+    assert_eq!(cpu.vfp.fpexc, 0x4000_0700);
 
     cpu.vfp.fpexc = 0;
     assert!(matches!(
         exec_one(&mut cpu, &mut mem, 0xEEF8_2A10),
         ExecResult::Continue
     ));
-    assert_eq!(cpu.regs[2], 0);
+    assert_eq!(cpu.regs[2], 0x700);
 
     cpu.regs[2] = 0xFFFF_FFFF;
     assert!(matches!(
@@ -7136,3 +7136,6 @@ mod fp_vsel_apsr;
 #[cfg(all(target_arch = "aarch64", target_feature = "fp16"))]
 #[path = "fp_vsel_native.rs"]
 mod fp_vsel_native;
+
+#[path = "fp_system_registers.rs"]
+mod fp_system_registers;

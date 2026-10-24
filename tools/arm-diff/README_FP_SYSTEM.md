@@ -79,3 +79,33 @@ captures it immediately afterward. This is required for VSEL, whose conditions
 use APSR. The previous144 instruction pairs do not consume APSR condition flags;
 removing the appended fields and new groups preserves their original records.
 The version4 ownership marker prevents reuse of older protocol work directories.
+
+## System-register profile probe
+
+`fp_register_profile.py` checks FPSCR and FPEXC through A32/T32 VMSR/VMRS,
+using every single bit, every complementary single-bit pattern, boundary values
+and4096 seeded random values per state (8328 cases). Run with the same repository,
+target and LLVM paths as the numerical oracle:
+
+```sh
+python3 tools/arm-diff/fp_register_profile.py --repo . \
+    --work-dir /path/to/empty/register-evidence \
+    --target-dir /path/to/cargo-target --llvm-bin /path/to/llvm/bin
+```
+
+The local selected non-trapping/non-short-vector profile uses FPSCR mask
+`0xffc8009f` and FPEXC `(value & 0x40000000) | 0x700`, following Arm
+Cortex-A55 FP TRM100446_0200_01 sections4.4/4.8. This specifies register semantics;
+it does not identify the entire emulated CPU as a Cortex-A55. The existing
+software default keeps FPEXC.EN set, rather than adopting the hardware EN reset.
+Raw public `Fpscr` helpers and direct `fpexc` storage remain unmasked; architectural
+reads canonicalize their view and guest writes store canonical values.
+
+QEMU11.1.2 `max` retains FPSCR.Len/Stride and returns zero for FPEXC bits10:8.
+The tool retains its unmodified binary output and reports these raw profile
+differences. Independent comparison projects out precisely FPSCR bits21:20/18:16
+and FPEXC bits10:8; every other bit must match. RAX is separately checked against
+the complete primary-source profile mask. A passing projected comparison is
+not evidence of full QEMU/register-profile equivalence. Physical A32 validation
+and other processor profiles remain separate. The QEMU MVFR values are reported
+as evidence and do not certify RAX's capability declarations.

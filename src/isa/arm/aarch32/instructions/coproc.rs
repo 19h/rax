@@ -52,7 +52,7 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
                     }
                 }
                 8 => {
-                    self.cpu.vfp.fpexc = value;
+                    self.cpu.vfp.write_fpexc(value);
                     ExecResult::Continue
                 }
                 _ => ExecResult::Undefined,
@@ -113,7 +113,7 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
                 5 => self.cpu.vfp.mvfr2,
                 6 => self.cpu.vfp.mvfr1,
                 7 => self.cpu.vfp.mvfr0,
-                8 => self.cpu.vfp.fpexc,
+                8 => self.cpu.vfp.read_fpexc(),
                 _ => return ExecResult::Undefined,
             };
             if t == 15 && reg == 1 {

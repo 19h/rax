@@ -515,7 +515,7 @@ fn pl0_vmrs_and_vmsr_reach_only_fpscr() {
         exec.execute(&make_insn(Mnemonic::VMRS, vmrs(8, 5), false)),
         ExecResult::Continue
     ));
-    assert_eq!(cpu.regs[5], 0x4000_0000);
+    assert_eq!(cpu.regs[5], 0x4000_0700);
 }
 
 #[test]

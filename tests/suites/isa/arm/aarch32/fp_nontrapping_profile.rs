@@ -54,7 +54,7 @@ fn architectural_read_masks_unsupported_bits_from_raw_restored_state() {
         cpu.cpsr.t = thumb;
         cpu.vfp.fpscr = Fpscr::from_bits(0xffffffff);
         execute(&mut cpu, 0xeef11a10);
-        assert_eq!(cpu.regs[1], 0xffff00ff);
+        assert_eq!(cpu.regs[1], 0xffc8009f);
         assert_eq!(cpu.vfp.fpscr.bits(), 0xffffffff);
     }
 }

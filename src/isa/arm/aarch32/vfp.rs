@@ -55,7 +55,7 @@ impl Default for VfpState {
         Self {
             dregs: [0; 32],
             fpscr: Fpscr::default(),
-            fpexc: 0x4000_0000, // EN bit set by default
+            fpexc: 0x4000_0700, // EN defaults on; fixed profile bits10:8 read one.
             fpsid: 0x4103_3070, // Implementation ID for a VFPv3-style unit.
             // MVFR values indicating VFPv3 + NEON support
             mvfr0: 0x10110222, // VFPv3 with single and double precision
@@ -66,16 +66,26 @@ impl Default for VfpState {
 }
 
 impl VfpState {
-    /// Architectural FPSCR view for this implementation's non-trapping profile.
-    /// MVFR0.FPTrap is zero; exception enables and reserved bits15:8 read zero.
+    /// Architectural FPSCR view for the non-trapping, non-short-vector profile.
+    /// Retains NZCV/QC/AHP/DN/FZ/RMode/FZ16 and cumulative exception status.
+    /// Len/Stride, exception enables and all remaining reserved fields are RES0.
     pub(crate) fn read_fpscr(&self) -> u32 {
-        self.fpscr.bits() & !0x0000_ff00
+        self.fpscr.bits() & 0xffc8_009f
     }
 
-    /// Apply the non-trapping FPSCR write mask without restricting FZ16.
-    /// Raw Fpscr bit helpers retain their existing unmasked API contract.
+    /// Apply the guest-visible FPSCR write mask. Raw Fpscr helpers remain unmasked.
     pub(crate) fn write_fpscr(&mut self, value: u32) {
-        self.fpscr = Fpscr::from_bits(value & !0x0000_ff00);
+        self.fpscr = Fpscr::from_bits(value & 0xffc8_009f);
+    }
+
+    /// FPEXC.EN is writable; the selected synchronous profile fixes all other bits.
+    /// Bits10:8 are RES1; EX and bits29:11/7:0 are RES0.
+    pub(crate) fn read_fpexc(&self) -> u32 {
+        (self.fpexc & 0x4000_0000) | 0x0000_0700
+    }
+
+    pub(crate) fn write_fpexc(&mut self, value: u32) {
+        self.fpexc = (value & 0x4000_0000) | 0x0000_0700;
     }
 
     /// Create a new VFP state.
