@@ -572,8 +572,8 @@
     {
       "id": "X-BOOT-CR4",
       "area": "x86 Linux boot",
-      "finding": "The supplied Linux kernel CR4 panic is caused by an unintended guest RAM write during IA32_GS_BASE WRMSR. The write is removed in direct and native x86 JIT execution; post-fix capture has matching valid CR4/shadow 0x670eb0 and execution progresses past the old panic. Full userspace boot remains unverified after two bounded debug-run timeouts.",
-      "status": "partially_validated",
+      "finding": "The supplied Linux kernel CR4 panic was caused by an unintended guest RAM write during IA32_GS_BASE WRMSR. That write is removed in direct and native x86 JIT execution. The preserved kernel and initrd now reach BusyBox userspace, execute a serial shell command, report x86_64 and halt, both with default execution and RAX_NO_JIT=1.",
+      "status": "locally_validated",
       "evidence": [
         "/tmp/rax-x86-paging-linux-boot-parent.log",
         "/tmp/rax-x86-paging-linux-boot-parent.json",
@@ -596,10 +596,16 @@
         "/tmp/rax-ptrace-adoption/v3-doc.log",
         "/tmp/rax-ptrace-adoption/v3-integration.log",
         "/tmp/rax-ptrace-adoption/v4-family-repeats.json",
-        "/tmp/rax-x86-gs-base/v3-native-msr.log"
+        "/tmp/rax-x86-gs-base/v3-native-msr.log",
+        "/tmp/rax-x86-boot-optimized/default.log",
+        "/tmp/rax-x86-boot-optimized/default.json",
+        "/tmp/rax-x86-boot-optimized/default-classified.json",
+        "/tmp/rax-x86-boot-optimized/no-jit.log",
+        "/tmp/rax-x86-boot-optimized/no-jit.json",
+        "/tmp/rax-x86-boot-optimized/no-jit-classified.json"
       ],
       "resolution": "Remove the hard-coded per-CPU CR0 shadow write from IA32_GS_BASE WRMSR in direct execution and native x86 JIT callbacks. Preserve validated MSR state updates, serialization and EFER translation invalidation.",
-      "remaining": "Observe successful guest userspace execution; no v7 checkpoint resume success is claimed."
+      "remaining": "Physical x86/KVM/HVF boot and checkpoint resume are not established by this software-backend host run."
     },
     {
       "id": "A-JIT-FETCH",
@@ -4563,7 +4569,7 @@
         "https://documentation-service.arm.com/static/6245c734b059dc5ff9a8bdab",
         "https://support.arm.com/documentation/dui0646/c/The-Cortex-M7-Instruction-Set/Floating-point-instructions/VCVT-between-floating-point-and-fixed-point",
         "https://www.bitsavers.org/components/arm/ARM_Architecture_Reference_Manual_ARMv8_Rev_A.k_201609.pdf",
-        "LLVM 23.0.0 /Users/int/local/bin/llvm-mc: A32 and T32 byte encodings recorded in the listed logs."
+        "LLVM 23.0.0git /Users/int/local/bin/llvm-mc: A32 and T32 byte encodings recorded in the listed logs."
       ],
       "baseline_results": {
         "contract": {
@@ -4724,6 +4730,129 @@
         "embedding": "C API shapes and checkpoint schema unchanged; all 185 C API tests pass. ARM and translated x86 owning binaries exercise the same software ISA operations."
       },
       "complexity": "Each lane uses O(1) time and space with fixed-width u128 integer arithmetic. There are no host FP arithmetic operations in the new binary32/binary64 conversion evaluator."
+    },
+    {
+      "id": "x86-linux-userspace-after-gs-base-repair",
+      "status": "locally_validated",
+      "baseline": "e33c19848d482a179d08a4bcac188909a2cc0148",
+      "scope": "Runtime validation of the existing GS-base repair using the supplied unmodified Linux ELF and initrd. Evidence-only follow-up; no product behavior, CPUID capability, timeout or kernel command line was changed.",
+      "validation": {
+        "host": "Apple Silicon macOS 27.2, software emulator backend, 512 MiB RAM, single guest CPU via the recorded kernel command line.",
+        "build": "CARGO_PROFILE_DEV_OPT_LEVEL=1 CARGO_PROFILE_DEV_DEBUG=0 CARGO_INCREMENTAL=0 CARGO_BUILD_JOBS=1; cargo +stable build --locked --offline --no-default-features --features x86_64-suite,smir-jit --bin rax; optimized dev build, not release.",
+        "runs": [
+          {
+            "args": [
+              "/tmp/rax-x86-boot-optimized-target/debug/rax",
+              "--arch",
+              "x86-64",
+              "--backend",
+              "emulator",
+              "--memory",
+              "512M",
+              "--kernel",
+              "/Users/int/dev/rax/linux/vmlinux",
+              "--initrd",
+              "/Users/int/dev/rax/initrd.cpio.gz",
+              "--cmdline",
+              "console=ttyS0 earlycon=uart,io,0x3f8 earlyprintk=serial,ttyS0,115200 rdinit=/init root=/dev/ram0 nokaslr noapic nolapic nosmp mitigations=off tsc=reliable nohz=off clocksource=tsc",
+              "--snapshot-out",
+              "/tmp/rax-x86-boot-optimized/default.rxc"
+            ],
+            "no_jit": false,
+            "outcome": "timeout",
+            "seconds": 180.10589695896488,
+            "code": -15,
+            "stdin_command_sent": true,
+            "snapshot_requested": false,
+            "snapshot_exists": false,
+            "binary_sha256": "8815ebfcb0c60fc4dcc35aac093caef05d1ab6a81d87460a018fe2ca30ed0b75",
+            "postprocess": {
+              "userspace_command_executed": true,
+              "marker_line": "rax # RAX_AUDIT_USERSPACE_OK",
+              "architecture_line": "x86_64",
+              "halt_observed": true
+            },
+            "runner_limit": "The original runner only accepted a marker at the start of a serial line. BusyBox prefixes its first command output with rax #, so original outcome timeout is a parser false negative. No product timeout or code was changed."
+          },
+          {
+            "args": [
+              "/tmp/rax-x86-boot-optimized-target/debug/rax",
+              "--arch",
+              "x86-64",
+              "--backend",
+              "emulator",
+              "--memory",
+              "512M",
+              "--kernel",
+              "/Users/int/dev/rax/linux/vmlinux",
+              "--initrd",
+              "/Users/int/dev/rax/initrd.cpio.gz",
+              "--cmdline",
+              "console=ttyS0 earlycon=uart,io,0x3f8 earlyprintk=serial,ttyS0,115200 rdinit=/init root=/dev/ram0 nokaslr noapic nolapic nosmp mitigations=off tsc=reliable nohz=off clocksource=tsc",
+              "--snapshot-out",
+              "/tmp/rax-x86-boot-optimized/no-jit.rxc"
+            ],
+            "no_jit": true,
+            "outcome": "timeout",
+            "seconds": 180.04060299997218,
+            "code": -15,
+            "stdin_command_sent": true,
+            "snapshot_requested": false,
+            "snapshot_exists": false,
+            "binary_sha256": "8815ebfcb0c60fc4dcc35aac093caef05d1ab6a81d87460a018fe2ca30ed0b75",
+            "postprocess": {
+              "userspace_command_executed": true,
+              "marker_line": "rax # RAX_AUDIT_USERSPACE_OK",
+              "architecture_line": "x86_64",
+              "halt_observed": true
+            },
+            "runner_limit": "The original runner only accepted a marker at the start of a serial line. BusyBox prefixes its first command output with rax #, so original outcome timeout is a parser false negative. No product timeout or code was changed."
+          }
+        ],
+        "logs": [
+          "/tmp/rax-x86-boot-optimized/build.log",
+          "/tmp/rax-x86-boot-optimized/run.py",
+          "/tmp/rax-x86-boot-optimized/classify.py",
+          "/tmp/rax-x86-boot-optimized/run.log"
+        ],
+        "parser_regressions": "Reject echoed command text and wrong architecture; accept the actual prompt-prefixed or unprefixed standalone marker followed by x86_64. Four parser assertions passed.",
+        "original_outcome": "Both original runs retained their 180 s diagnostic bound because the runner missed prompt-prefixed command output. Original JSON/logs remain intact; classified JSON reports the observed userspace execution without relabeling process termination as normal exit. System-halted guest required host SIGTERM, code -15."
+      },
+      "assumptions": [
+        {
+          "id": "XB1",
+          "assumption": "A shell-produced marker followed by uname output demonstrates guest userspace command execution.",
+          "basis": "The log separately contains the echoed compound command, the shell banner, prompt-prefixed output marker, uname result and kernel halt from the requested poweroff.",
+          "dependent_result": "Close the supplied-kernel userspace reproduction for X-BOOT-CR4 on the software backend.",
+          "stress_test": "Default and RAX_NO_JIT=1 execute the same preserved images and exact compound command.",
+          "falsification_probe": "Only the input echo appears, uname reports another architecture, or either run panics before the marker.",
+          "status": "confirmed"
+        }
+      ],
+      "bounded_scope": [
+        {
+          "impact": "high",
+          "item": "These are software-backend executions on an A64 host; no physical Intel, KVM, Intel HVF, SMP, record/replay or checkpoint-resume claim follows.",
+          "blocks": "Corresponding remaining plan groups."
+        },
+        {
+          "impact": "medium",
+          "item": "The optimized dev build resolves the earlier debug-run wall-time limitation. Historical debug captures remain useful for the causal CR4-shadow proof but are not the userspace success evidence.",
+          "blocks": false
+        }
+      ],
+      "quality_gates": {
+        "assumptions": "XB1 retained; exact prompt parser probes pass.",
+        "coverage": "Both software execution modes reach and exercise userspace.",
+        "reproducibility": "Image and executable hashes, command arguments, compiler settings and original logs recorded.",
+        "contradictions": "Original timeout label is a prompt-parser false negative; userspace success and host-terminated halted guest are distinguished.",
+        "provenance": "Primary Intel WRMSR specification and causal regression evidence remain in the preceding GS-base group.",
+        "bounded_expansion": "Physical hardware, SMP and checkpoint resume remain separate.",
+        "worktree_integrity": "Only the ledger is staged for this evidence-only group; concurrent A32 rounding edits remain unstaged.",
+        "behavioral_evidence": "Two actual guest shell executions; echoed input and wrong-architecture parser negative controls.",
+        "repository_consistency": "X-BOOT-CR4 current status updated; historical bounded debug results retained.",
+        "user_constraints": "No normative claims; time in seconds and memory conversion explicit; no new algorithm."
+      }
     }
   ],
   "group_scope_notes": "Each group records limits at its own validation point; findings contains the current disposition."
