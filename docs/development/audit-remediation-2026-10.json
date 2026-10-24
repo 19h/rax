@@ -948,7 +948,53 @@
       "area": "Intel Mac HVF",
       "finding": "MMIO write data is a four-byte zero placeholder; read width is fixed; some CR/XSETBV exits only advance RIP",
       "status": "pending",
-      "evidence": []
+      "evidence": [
+        "src/backend/hvf/bindings.rs",
+        "src/backend/hvf/mod.rs",
+        "Cargo.toml",
+        "tools/hvf/check_sdk_abi.py",
+        "tools/hvf/README.md",
+        "tests/suites/backend/hvf_sdk_abi.rs",
+        "src/backend/hvf/arm64_bindings.rs",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/probe-parent-final/manifest.json",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/probe-parent-final/sdk-compile.stderr",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/probe-parent-final/sdk-arm64-constants.stderr",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/final-sdk-parity/manifest.json",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/final-sdk-parity/probe.rs",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/final-sdk-parity/probe.c",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/final-sdk-parity/probe-arm64.c",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/sdk-sources.json",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/instruction-sources.json",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/initial-report.json",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/feature-library-test-count.json",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/worktree-checks.json",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/worktree-result.json",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/arm64-map-probe.json",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/arm64-map-probe.c",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/arm64-map-probe.stderr",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/arm64-pointer-followup.json",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/arm64-pointer-followup-result.json",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/worktree-native-pointer-build.log",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/worktree-native-pointer-clippy.log",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/worktree-native-pointer-sdk.log",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/checks.jsonl",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/final-build.log",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/final-clippy.log",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/final-fmt.log",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/final-doc.log",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/final-sdk.log",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/final-library.log",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/final-intel-build.log",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/final-intel-sdk.log",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/final-ci-owning.log",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/final-sdk-standalone.log",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/final-capi.log"
+      ],
+      "remaining_validation": [
+        "Actual MMIO operand/data/width and completion semantics",
+        "CR-access/XSETBV state changes and architectural faults",
+        "Native Intel HVF VM/guest runtime validation"
+      ]
     },
     {
       "id": "independent-oracles",
@@ -1817,6 +1863,59 @@
       ],
       "remaining_validation": [
         "Other trap/feature controls and physical A32 hardware remain separate."
+      ]
+    },
+    {
+      "id": "HVF-SDK-ABI",
+      "area": "Hypervisor.framework bindings",
+      "finding": "Intel register IDs, vCPU handle width, capability symbol, function qualifiers, target gating and shared error constants disagreed with installed Apple SDK",
+      "status": "locally_validated",
+      "evidence": [
+        "src/backend/hvf/bindings.rs",
+        "src/backend/hvf/mod.rs",
+        "Cargo.toml",
+        "tools/hvf/check_sdk_abi.py",
+        "tools/hvf/README.md",
+        "tests/suites/backend/hvf_sdk_abi.rs",
+        "src/backend/hvf/arm64_bindings.rs",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/probe-parent-final/manifest.json",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/probe-parent-final/sdk-compile.stderr",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/probe-parent-final/sdk-arm64-constants.stderr",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/final-sdk-parity/manifest.json",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/final-sdk-parity/probe.rs",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/final-sdk-parity/probe.c",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/final-sdk-parity/probe-arm64.c",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/sdk-sources.json",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/instruction-sources.json",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/initial-report.json",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/feature-library-test-count.json",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/worktree-checks.json",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/worktree-result.json",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/arm64-map-probe.json",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/arm64-map-probe.c",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/arm64-map-probe.stderr",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/arm64-pointer-followup.json",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/arm64-pointer-followup-result.json",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/worktree-native-pointer-build.log",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/worktree-native-pointer-clippy.log",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/worktree-native-pointer-sdk.log",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/checks.jsonl",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/final-build.log",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/final-clippy.log",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/final-fmt.log",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/final-doc.log",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/final-sdk.log",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/final-library.log",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/final-intel-build.log",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/final-intel-sdk.log",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/final-ci-owning.log",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/final-sdk-standalone.log",
+        "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/final-capi.log"
+      ],
+      "remaining_validation": [
+        "Historical SDK compatibility",
+        "Native Intel VM/guest execution; original C-HVF behavior remains pending",
+        "VMCS field encodings and Arm64 function signatures are outside this group"
       ]
     }
   ],
@@ -12176,6 +12275,671 @@
             "filtered": 0,
             "elapsed_seconds": 0.0
           }
+        ]
+      }
+    },
+    {
+      "id": "hvf-intel-sdk-abi-contract",
+      "status": "locally_validated",
+      "scope": "Restore Intel Hypervisor.framework register identifiers, ABI types/function declarations and shared error constants to the installed Apple SDK contract; compile Intel and Arm64 entry points only on their owning architecture. Add source-derived compiler parity checks without VM/guest side effects.",
+      "assumptions": [
+        {
+          "id": "H1",
+          "assumption": "Installed Apple SDK headers define the ABI used by the selected macOS build, independently of the handwritten Rust bindings.",
+          "dependent_result": "SDK register IDs, u32 Intel vCPU identifier, host-address constness, function symbol/signatures, and shared return constants.",
+          "stress_test": "Unchanged compiler probe against original and corrected source; all52 canonical register IDs,20 function signatures,6 ABI aliases,7 size/alignment pairs and17 constants; shared constants compiled against Arm64 headers too.",
+          "falsification_probe": "Any static assertion fails, required symbol is absent, source/header changes during checks or the original source unexpectedly passes.",
+          "status": "confirmed for the pinned installed SDK; no claim for every historical SDK"
+        },
+        {
+          "id": "H2",
+          "assumption": "Intel and Arm64 API names can overlap with different signatures; target architecture must select the owner.",
+          "dependent_result": "Intel backend/classes/FFI and conversion helpers are x86_64-only; shared constants remain available to the Arm64 backend.",
+          "stress_test": "Native Arm64 and Rosetta x86_64 feature-hvf all-target builds, compiler checks and SDK integration tests.",
+          "falsification_probe": "Cross-architecture declarations conflict, a public factory loses its supported target, link fails or shared diagnostics use incorrect codes.",
+          "status": "retained until final gates"
+        },
+        {
+          "id": "H3",
+          "assumption": "Compilation, linking and Rosetta process execution do not establish native Intel VM-exit correctness.",
+          "dependent_result": "Keep C-HVF MMIO/CR/XSETBV finding pending after this ABI prerequisite.",
+          "stress_test": "Evidence distinguishes SDK assertion, feature build/link, process execution, and actual guest execution.",
+          "falsification_probe": "Any ledger/documentation labels these checks native Intel guest execution or closes C-HVF without its behavior tests.",
+          "status": "retained"
+        }
+      ],
+      "primary_sources": [
+        {
+          "path": "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/Hypervisor.framework/Headers/hv_arch_x86.h",
+          "sha256": "19926e960116d989531558066f21f237a8482d1feffbc911bcaae3b145bc3368"
+        },
+        {
+          "path": "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/Hypervisor.framework/Headers/hv.h",
+          "sha256": "98387bf589442a8b8cd7416588e73d2e16a64c0e5036afcbbb08cb5772f41985"
+        },
+        {
+          "path": "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/Hypervisor.framework/Headers/hv_vmx.h",
+          "sha256": "e62a6b975fdb9509ee632e4449f0d40626c78fcb0fc7b36ce1a178685e5b1413"
+        },
+        {
+          "path": "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/Hypervisor.framework/Headers/hv_types.h",
+          "sha256": "2a3a30d5d71f2ddb4316d20072a5d9d7cb7229a53bddb4036ad1ecd9585bdc10"
+        },
+        {
+          "path": "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/Hypervisor.framework/Headers/hv_error.h",
+          "sha256": "0479e1e2702a87a159b362aafee6d439ba1ec1f3b41971642c0f4f985faca2d8"
+        },
+        {
+          "path": "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/arm64/hv/hv_kern_types.h",
+          "sha256": "d1fda9e96f409485e7efc9c738cfb469b9fbb02c9f785c4ba85ef6532714fd03"
+        },
+        {
+          "path": "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/Hypervisor.framework/Headers/hv_vm.h",
+          "sha256": "f0e080fa024b144d6941d0e598eb57e4a8f6f1335d3762e2c4418cc5d7e6f40f"
+        }
+      ],
+      "affected_planes": {
+        "bindings": "Fifteen previously present register values corrected; four non-SDK pseudo-register names replaced by the complete52-entry SDK enum. Intel handle width u64->u32; correct pointer qualifiers and hv_vmx_read_capability symbol. Remove unused Arm-only debug-trap declarations from Intel block.",
+        "backend": "Architecture-gated Intel types, impls, imports and FFI; capability call sites renamed to the real SDK symbol.",
+        "arm64": "Four shared return constants corrected against both primary architecture headers. Arm64 foreign function signatures and opaque handle representation are separate. Arm64 owns its existing mutable host-address alias so correcting Intel constness does not change the Arm64 mapping declaration.",
+        "tooling": "Standalone Rust metadata and C11 compiler assertions extracted from actual source; retained commands, versions, hashes and diagnostics. Cargo macOS integration target executes the probe and fails on unavailable prerequisites.",
+        "embedding": "No C API signatures or serialized CPU/checkpoint structures changed. Public Intel binding handle type/register enum corrections follow SDK; internal bindings module remains private."
+      },
+      "complexity": "Probe O(R+F+C) source/metadata work for R=52 register IDs,F=20 foreign signatures,C=17 constants; two compiler syntax checks, no VM allocation or guest execution. Runtime ABI constants incur no additional per-instruction cost.",
+      "bounded_scope": [
+        {
+          "impact": "high",
+          "item": "C-HVF MMIO and CR/XSETBV behavior remains pending; this prerequisite establishes only the pinned SDK source ABI and target build/link contract.",
+          "blocks": "C-HVF completion"
+        },
+        {
+          "impact": "high",
+          "item": "Native Intel VM/guest execution unavailable on this Apple Silicon host; Rosetta results are process-level execution only.",
+          "blocks": "Native Intel runtime proof"
+        },
+        {
+          "impact": "medium",
+          "item": "VMCS field encodings, Arm64 function signatures/opaque handle ABI, host capability enumeration and support for historical SDK versions remain separate.",
+          "blocks": "Whole HVF ABI/runtime equivalence"
+        },
+        {
+          "impact": "medium",
+          "item": "SDK errors0xfae94004 and0xfae94008 differ in architecture-specific naming; only existing common return constants are shared, without inventing a cross-architecture HV_FAULT alias.",
+          "blocks": false
+        },
+        {
+          "impact": "medium",
+          "item": "Intel hv_uvaddr_t is const void*, while Arm64 hv_vm_map takes void*. Arm64 now owns its mutable alias rather than inheriting Intel constness. Pointer-width ABI is unchanged; primary prototype checked separately.",
+          "blocks": false
+        }
+      ],
+      "quality_gates": {
+        "assumptions": "H1-H3 link dependencies, boundaries and falsification probes.",
+        "coverage": "Compiler-backed source ABI negative/positive controls; owning integration binaries and complete feature-hvf library gates.",
+        "units": "u32 identifier32 bits; u64 register values64 bits; SDK widths/alignment checked in bytes.",
+        "contradictions": "Intel and Arm64 C symbol owners are target-gated; error codes checked against both primary architecture definitions. Native guest execution excluded from compiler/process claims.",
+        "provenance": "Installed SDK files SHA-pinned; tool, bindings, generated metadata/C probes, exact commands and compiler versions retained.",
+        "bounded_scope": "Original runtime C-HVF, VMCS and Arm64-signature findings remain explicit.",
+        "worktree_integrity": "Seven owned paths plus ledger; exact staged set and unrelated tracked hashes verified.",
+        "reproducibility": "Original mismatch and positive match use identical probe tool; all final check statuses/counts and source fingerprints required."
+      },
+      "baseline": "c1c0f1550d3116e745580111ca1a6c07c1e8c72e",
+      "validation": {
+        "checks": [
+          {
+            "check": "final-build",
+            "args": [
+              "cargo",
+              "+stable",
+              "build",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit,hvf",
+              "--all-targets"
+            ],
+            "code": 0,
+            "seconds": 404.1035360839451
+          },
+          {
+            "check": "final-clippy",
+            "args": [
+              "cargo",
+              "+stable",
+              "clippy",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit,hvf",
+              "--all-targets"
+            ],
+            "code": 0,
+            "seconds": 175.40798625000753
+          },
+          {
+            "check": "final-fmt",
+            "args": [
+              "cargo",
+              "+stable",
+              "fmt",
+              "--all",
+              "--check"
+            ],
+            "code": 0,
+            "seconds": 13.197116625029594
+          },
+          {
+            "check": "final-doc",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit,hvf",
+              "--doc"
+            ],
+            "code": 0,
+            "seconds": 4.798082916997373
+          },
+          {
+            "check": "final-sdk",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit,hvf",
+              "--test",
+              "hvf_sdk_abi",
+              "--",
+              "--nocapture"
+            ],
+            "code": 0,
+            "seconds": 0.5802707499824464
+          },
+          {
+            "check": "final-library",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit,hvf",
+              "--lib",
+              "--",
+              "--test-threads=4"
+            ],
+            "code": 0,
+            "seconds": 435.0551119580632
+          },
+          {
+            "check": "final-intel-build",
+            "args": [
+              "cargo",
+              "+stable",
+              "build",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit,hvf",
+              "--target",
+              "x86_64-apple-darwin",
+              "--all-targets"
+            ],
+            "code": 0,
+            "seconds": 402.4131219580304
+          },
+          {
+            "check": "final-intel-sdk",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit,hvf",
+              "--target",
+              "x86_64-apple-darwin",
+              "--test",
+              "hvf_sdk_abi",
+              "--",
+              "--nocapture"
+            ],
+            "code": 0,
+            "seconds": 0.7456019580131397
+          },
+          {
+            "check": "final-ci-owning",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit,hvf",
+              "--test",
+              "ci_actions_pinned"
+            ],
+            "code": 0,
+            "seconds": 0.37972004094626755
+          },
+          {
+            "check": "final-sdk-standalone",
+            "args": [
+              "python3",
+              "/Users/int/dev/rax/tools/hvf/check_sdk_abi.py",
+              "--repo",
+              "/Users/int/dev/rax",
+              "--work-dir",
+              "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/final-sdk-parity"
+            ],
+            "code": 0,
+            "seconds": 0.2797293330077082
+          },
+          {
+            "check": "final-capi",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "-p",
+              "rax-capi",
+              "--",
+              "--test-threads=4"
+            ],
+            "code": 0,
+            "seconds": 8.823912457912229
+          }
+        ],
+        "complete_feature_hvf_library": {
+          "passed": 10444,
+          "failed": 0,
+          "ignored": 2,
+          "filtered": 0,
+          "elapsed_seconds": 354.06
+        },
+        "complete_native_sdk_integration": {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0,
+          "elapsed_seconds": 0.47
+        },
+        "complete_rosetta_sdk_integration": {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0,
+          "elapsed_seconds": 0.39
+        },
+        "doctests": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 5,
+          "filtered": 0,
+          "elapsed_seconds": 0.0
+        },
+        "ci_owning": {
+          "passed": 12,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0,
+          "elapsed_seconds": 0.05
+        },
+        "negative_sdk_parity": {
+          "version": 1,
+          "bindings": "/Users/int/dev/rax/src/backend/hvf/bindings.rs",
+          "bindings_sha256": "e946100d070dc6ad423af32d15ca2d50af0a6e5641c2c8d093b618ea4e8a6ee6",
+          "tool_sha256": "530f8ae27ac5d947dd9bd4c7fa3c438467f4ea717287db3e08383df109028e85",
+          "sdk": "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk",
+          "commands": [
+            {
+              "name": "rust-version",
+              "args": [
+                "rustc",
+                "+stable",
+                "-vV"
+              ],
+              "code": 0,
+              "seconds": 0.03911941696424037
+            },
+            {
+              "name": "clang-version",
+              "args": [
+                "xcrun",
+                "clang",
+                "--version"
+              ],
+              "code": 0,
+              "seconds": 0.014094916987232864
+            },
+            {
+              "name": "sdk-version",
+              "args": [
+                "xcrun",
+                "--show-sdk-version"
+              ],
+              "code": 0,
+              "seconds": 0.009377000038512051
+            },
+            {
+              "name": "rust-build",
+              "args": [
+                "rustc",
+                "+stable",
+                "--edition=2024",
+                "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/probe-parent-final/probe.rs",
+                "-o",
+                "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/probe-parent-final/rust-probe"
+              ],
+              "code": 0,
+              "seconds": 0.17466845794115216
+            },
+            {
+              "name": "rust-values",
+              "args": [
+                "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/probe-parent-final/rust-probe"
+              ],
+              "code": 0,
+              "seconds": 0.0062310840003192425
+            },
+            {
+              "name": "sdk-compile",
+              "args": [
+                "xcrun",
+                "clang",
+                "-target",
+                "x86_64-apple-macosx13.0",
+                "-isysroot",
+                "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk",
+                "-std=c11",
+                "-Werror",
+                "-Wno-deprecated-declarations",
+                "-fsyntax-only",
+                "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/probe-parent-final/probe.c"
+              ],
+              "code": 1,
+              "seconds": 0.07037108391523361
+            },
+            {
+              "name": "sdk-arm64-constants",
+              "args": [
+                "xcrun",
+                "clang",
+                "-target",
+                "arm64-apple-macosx13.0",
+                "-isysroot",
+                "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk",
+                "-std=c11",
+                "-Werror",
+                "-fsyntax-only",
+                "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/probe-parent-final/probe-arm64.c"
+              ],
+              "code": 1,
+              "seconds": 0.03346041601616889
+            }
+          ],
+          "sdk_header_sha256": {
+            "hv_arch_x86.h": "19926e960116d989531558066f21f237a8482d1feffbc911bcaae3b145bc3368",
+            "hv.h": "98387bf589442a8b8cd7416588e73d2e16a64c0e5036afcbbb08cb5772f41985",
+            "hv_vmx.h": "e62a6b975fdb9509ee632e4449f0d40626c78fcb0fc7b36ce1a178685e5b1413",
+            "hv_types.h": "2a3a30d5d71f2ddb4316d20072a5d9d7cb7229a53bddb4036ad1ecd9585bdc10",
+            "hv_error.h": "0479e1e2702a87a159b362aafee6d439ba1ec1f3b41971642c0f4f985faca2d8"
+          },
+          "arm64_error_header_sha256": "d1fda9e96f409485e7efc9c738cfb469b9fbb02c9f785c4ba85ef6532714fd03",
+          "scope": "Intel register IDs, selected ABI type sizes/alignments, HV constants, and every declared x86 foreign function signature. VMCS field encodings and native hypervisor/guest execution are separate.",
+          "arm64_shared_constants": 11,
+          "counts": {
+            "register_ids": 43,
+            "constants": 17,
+            "types": 6,
+            "type_size_alignment_pairs": 7,
+            "function_signatures": 22
+          },
+          "artifact_sha256": {
+            "probe.rs": "53541b51b2dcc8a309afadc0a9e4e77e63379b66eb40ded86777f56bfa4583da",
+            "probe.c": "13fc94f10e243312de692dbb7b4f6724d77120ea9da8ac271cddd9a55a3f4b92",
+            "probe-arm64.c": "bbd1ed1b035de7603cc0c53f6c37064c5947a4c11ba992e5896e55291b050742",
+            "rust-values.stdout": "891c71d1e743896a6972af4e7081f8e869c5fcdca2c8b530501676c358032126"
+          },
+          "result": "mismatch"
+        },
+        "positive_sdk_parity": {
+          "version": 1,
+          "bindings": "/Users/int/dev/rax/src/backend/hvf/bindings.rs",
+          "bindings_sha256": "4d47101bee382b189a1296b0b763c57fefe703395ca6737bfac5e262fe41c877",
+          "tool_sha256": "530f8ae27ac5d947dd9bd4c7fa3c438467f4ea717287db3e08383df109028e85",
+          "sdk": "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk",
+          "commands": [
+            {
+              "name": "rust-version",
+              "args": [
+                "rustc",
+                "+stable",
+                "-vV"
+              ],
+              "code": 0,
+              "seconds": 0.0324559579603374
+            },
+            {
+              "name": "clang-version",
+              "args": [
+                "xcrun",
+                "clang",
+                "--version"
+              ],
+              "code": 0,
+              "seconds": 0.012751166941598058
+            },
+            {
+              "name": "sdk-version",
+              "args": [
+                "xcrun",
+                "--show-sdk-version"
+              ],
+              "code": 0,
+              "seconds": 0.00736033299472183
+            },
+            {
+              "name": "rust-build",
+              "args": [
+                "rustc",
+                "+stable",
+                "--edition=2024",
+                "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/final-sdk-parity/probe.rs",
+                "-o",
+                "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/final-sdk-parity/rust-probe"
+              ],
+              "code": 0,
+              "seconds": 0.1170534580014646
+            },
+            {
+              "name": "rust-values",
+              "args": [
+                "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/final-sdk-parity/rust-probe"
+              ],
+              "code": 0,
+              "seconds": 0.003761166939511895
+            },
+            {
+              "name": "sdk-compile",
+              "args": [
+                "xcrun",
+                "clang",
+                "-target",
+                "x86_64-apple-macosx13.0",
+                "-isysroot",
+                "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk",
+                "-std=c11",
+                "-Werror",
+                "-Wno-deprecated-declarations",
+                "-fsyntax-only",
+                "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/final-sdk-parity/probe.c"
+              ],
+              "code": 0,
+              "seconds": 0.031437834026291966
+            },
+            {
+              "name": "sdk-arm64-constants",
+              "args": [
+                "xcrun",
+                "clang",
+                "-target",
+                "arm64-apple-macosx13.0",
+                "-isysroot",
+                "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk",
+                "-std=c11",
+                "-Werror",
+                "-fsyntax-only",
+                "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/final-sdk-parity/probe-arm64.c"
+              ],
+              "code": 0,
+              "seconds": 0.024657833040691912
+            }
+          ],
+          "sdk_header_sha256": {
+            "hv_arch_x86.h": "19926e960116d989531558066f21f237a8482d1feffbc911bcaae3b145bc3368",
+            "hv.h": "98387bf589442a8b8cd7416588e73d2e16a64c0e5036afcbbb08cb5772f41985",
+            "hv_vmx.h": "e62a6b975fdb9509ee632e4449f0d40626c78fcb0fc7b36ce1a178685e5b1413",
+            "hv_types.h": "2a3a30d5d71f2ddb4316d20072a5d9d7cb7229a53bddb4036ad1ecd9585bdc10",
+            "hv_error.h": "0479e1e2702a87a159b362aafee6d439ba1ec1f3b41971642c0f4f985faca2d8"
+          },
+          "arm64_error_header_sha256": "d1fda9e96f409485e7efc9c738cfb469b9fbb02c9f785c4ba85ef6532714fd03",
+          "scope": "Intel register IDs, selected ABI type sizes/alignments, HV constants, and every declared x86 foreign function signature. VMCS field encodings and native hypervisor/guest execution are separate.",
+          "arm64_shared_constants": 11,
+          "counts": {
+            "register_ids": 52,
+            "constants": 17,
+            "types": 6,
+            "type_size_alignment_pairs": 7,
+            "function_signatures": 20
+          },
+          "artifact_sha256": {
+            "probe.rs": "9c42509ff247729b4a97ea5db5c9727da80954f3133b618bcd84f7e667461037",
+            "probe.c": "b69f3e668322ac0e0a6d357c3e54c45f661eb8429364ab2bc8d91025ef3beb80",
+            "probe-arm64.c": "88d84553de19e1a49e38d4004c05ac84afab6a248d6fa9f6668d6cbcb586b0b0",
+            "rust-values.stdout": "a6e79fb8d6b6b938f5b6b8d84f290d0e1e8fb1f3c853c3a7a7e10b787ed38441"
+          },
+          "result": "match"
+        },
+        "feature_enabled_library_count": {
+          "baseline_feature_disabled": {
+            "passed": 10440,
+            "ignored": 2,
+            "parsed_test_name_count": 10441
+          },
+          "feature_hvf": {
+            "passed": 10444,
+            "ignored": 2,
+            "parsed_test_name_count": 10445
+          },
+          "enabled_existing_tests": [
+            "backend::hvf::arm64::tests::checked_arm_ram_mapping_accepts_covered_window",
+            "backend::hvf::arm64::tests::checked_arm_ram_mapping_rejects_overflowing_window",
+            "backend::hvf::rosetta::tests::test_architecture_detection",
+            "backend::hvf::rosetta::tests::test_cpuid_vendor"
+          ],
+          "removed_tests": [],
+          "source_fingerprint_unchanged_during_gates": true,
+          "note": "Two Arm64 RAM-mapping tests and two rosetta tests are gated by featurehvf. Previous expected10442 omitted the Arm64 pair; actual complete successful run is10444. Parsed names are a log projection; complete result counters are authoritative."
+        },
+        "product_source_fingerprint": {
+          "rust_and_build_sources_sha256": "52fc15611c1a5c11ef366b51a5f14ff8d985716b9b737a0e392c08a1d79dc86d",
+          "files": 3476
+        },
+        "arm64_mapping_declaration": {
+          "path": "src/backend/hvf/arm64_bindings.rs",
+          "source_sha256": "f2115d974d67c89226b5a61d50476d3b3a59356643883f22b242ab00f97ab4e8",
+          "command": [
+            "xcrun",
+            "clang",
+            "-target",
+            "arm64-apple-macosx13.0",
+            "-isysroot",
+            "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk",
+            "-std=c11",
+            "-Werror",
+            "-fsyntax-only",
+            "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/arm64-map-probe.c"
+          ],
+          "code": 0,
+          "generated_probe_sha256": "8a9ebaf369d5c6361d5d6bec63a2c9bfe0e1aac5c7baabf5d2086d8cc76c01c4",
+          "primary_header_sha256": {
+            "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/Hypervisor.framework/Headers/hv_vm.h": "f0e080fa024b144d6941d0e598eb57e4a8f6f1335d3762e2c4418cc5d7e6f40f",
+            "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/Hypervisor.framework/Headers/hv_vm_types.h": "70a9c6cad172df8249f6a5d5e2298c99311897a230396b894ac6ead7a1453ea6"
+          }
+        },
+        "native_intel_guest_execution": "unverified: Apple Silicon host; Rosetta executes the SDK integration process only",
+        "arm64_runtime": "No VM creation or guest execution in this group",
+        "scope": "Current installed SDK source ABI, native/foreign build/link and probe execution. Original C-HVF behavior remains pending.",
+        "capi": [
+          {
+            "passed": 185,
+            "failed": 0,
+            "ignored": 0,
+            "filtered": 0,
+            "elapsed_seconds": 8.48
+          },
+          {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "filtered": 0,
+            "elapsed_seconds": 0.0
+          }
+        ],
+        "logs": [
+          "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/probe-parent-final/manifest.json",
+          "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/probe-parent-final/sdk-compile.stderr",
+          "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/probe-parent-final/sdk-arm64-constants.stderr",
+          "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/final-sdk-parity/manifest.json",
+          "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/final-sdk-parity/probe.rs",
+          "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/final-sdk-parity/probe.c",
+          "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/final-sdk-parity/probe-arm64.c",
+          "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/sdk-sources.json",
+          "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/instruction-sources.json",
+          "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/initial-report.json",
+          "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/feature-library-test-count.json",
+          "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/worktree-checks.json",
+          "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/worktree-result.json",
+          "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/arm64-map-probe.json",
+          "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/arm64-map-probe.c",
+          "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/arm64-map-probe.stderr",
+          "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/arm64-pointer-followup.json",
+          "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/arm64-pointer-followup-result.json",
+          "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/worktree-native-pointer-build.log",
+          "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/worktree-native-pointer-clippy.log",
+          "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/worktree-native-pointer-sdk.log",
+          "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/checks.jsonl",
+          "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/final-build.log",
+          "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/final-clippy.log",
+          "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/final-fmt.log",
+          "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/final-doc.log",
+          "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/final-sdk.log",
+          "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/final-library.log",
+          "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/final-intel-build.log",
+          "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/final-intel-sdk.log",
+          "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/final-ci-owning.log",
+          "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/final-sdk-standalone.log",
+          "/Users/int/dev/rax-audit-work/rax-hvf-sdk-abi/final-capi.log"
         ]
       }
     }

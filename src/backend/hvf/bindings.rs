@@ -1,8 +1,8 @@
-//! FFI bindings for Apple's Hypervisor.framework with Rosetta x86_64 support.
+//! Intel FFI bindings for Apple's Hypervisor.framework.
 //!
-//! This module provides safe Rust wrappers around the Hypervisor.framework C API
-//! for creating and managing virtual machines on macOS. On Apple Silicon Macs,
-//! Rosetta 2 is used to translate x86_64 guest code.
+//! Intel VMX entry points are compiled only for x86_64 macOS targets. The Arm64
+//! backend owns its separate function signatures in arm64_bindings.rs. Shared
+//! return codes and mapping flags have the same values in both SDK contracts.
 //!
 //! Reference: https://developer.apple.com/documentation/hypervisor
 
@@ -18,14 +18,14 @@ pub type hv_return_t = i32;
 /// VM handle type
 pub type hv_vm_t = *mut c_void;
 
-/// vCPU handle type (opaque, represented as u64 in the API)
-pub type hv_vcpuid_t = u64;
+/// Intel VMX vCPU identifier, `unsigned int` in Apple hv_types.h.
+pub type hv_vcpuid_t = u32;
 
 /// Guest physical address
 pub type hv_gpaddr_t = u64;
 
 /// User virtual address (host)
-pub type hv_uvaddr_t = *mut c_void;
+pub type hv_uvaddr_t = *const c_void;
 
 /// Memory flags for mapping
 pub type hv_memory_flags_t = u64;
@@ -38,21 +38,21 @@ pub const HV_SUCCESS: hv_return_t = 0;
 pub const HV_ERROR: hv_return_t = -85377023; // 0xfae94001
 pub const HV_BUSY: hv_return_t = -85377022;
 pub const HV_BAD_ARGUMENT: hv_return_t = -85377021;
-pub const HV_NO_RESOURCES: hv_return_t = -85377020;
-pub const HV_NO_DEVICE: hv_return_t = -85377019;
-pub const HV_DENIED: hv_return_t = -85377018;
-pub const HV_UNSUPPORTED: hv_return_t = -85377017;
+pub const HV_NO_RESOURCES: hv_return_t = 0xfae9_4005u32 as i32;
+pub const HV_NO_DEVICE: hv_return_t = 0xfae9_4006u32 as i32;
+pub const HV_DENIED: hv_return_t = 0xfae9_4007u32 as i32;
+pub const HV_UNSUPPORTED: hv_return_t = 0xfae9_400fu32 as i32;
 
 // Memory mapping flags
 pub const HV_MEMORY_READ: hv_memory_flags_t = 1 << 0;
 pub const HV_MEMORY_WRITE: hv_memory_flags_t = 1 << 1;
 pub const HV_MEMORY_EXEC: hv_memory_flags_t = 1 << 2;
 
-// x86_64 register definitions for Rosetta
+// Intel register IDs from Apple's hv_arch_x86.h. These are API identifiers,
+// not contiguous architectural register encodings (IDT/GDT/LDT/TSS have fields).
 #[repr(u32)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum hv_x86_reg_t {
-    // General purpose registers
     HV_X86_RIP = 0,
     HV_X86_RFLAGS = 1,
     HV_X86_RAX = 2,
@@ -71,44 +71,40 @@ pub enum hv_x86_reg_t {
     HV_X86_R13 = 15,
     HV_X86_R14 = 16,
     HV_X86_R15 = 17,
-
-    // Segment registers
     HV_X86_CS = 18,
     HV_X86_SS = 19,
     HV_X86_DS = 20,
     HV_X86_ES = 21,
     HV_X86_FS = 22,
     HV_X86_GS = 23,
-    HV_X86_LDT = 24,
-    HV_X86_TR = 25,
-
-    // Descriptor table registers
-    HV_X86_IDTR = 26,
-    HV_X86_GDTR = 27,
-
-    // Control registers
-    HV_X86_CR0 = 28,
-    HV_X86_CR1 = 29,
-    HV_X86_CR2 = 30,
-    HV_X86_CR3 = 31,
-    HV_X86_CR4 = 32,
-
-    // Debug registers
-    HV_X86_DR0 = 33,
-    HV_X86_DR1 = 34,
-    HV_X86_DR2 = 35,
-    HV_X86_DR3 = 36,
-    HV_X86_DR4 = 37,
-    HV_X86_DR5 = 38,
-    HV_X86_DR6 = 39,
-    HV_X86_DR7 = 40,
-
-    // Extended feature enable register
-    HV_X86_EFER = 41,
-
-    // XCR0 (extended control register)
-    HV_X86_XCR0 = 42,
-    // FPU registers will be handled via FXSAVE/FXRSTOR
+    HV_X86_IDT_BASE = 24,
+    HV_X86_IDT_LIMIT = 25,
+    HV_X86_GDT_BASE = 26,
+    HV_X86_GDT_LIMIT = 27,
+    HV_X86_LDTR = 28,
+    HV_X86_LDT_BASE = 29,
+    HV_X86_LDT_LIMIT = 30,
+    HV_X86_LDT_AR = 31,
+    HV_X86_TR = 32,
+    HV_X86_TSS_BASE = 33,
+    HV_X86_TSS_LIMIT = 34,
+    HV_X86_TSS_AR = 35,
+    HV_X86_CR0 = 36,
+    HV_X86_CR1 = 37,
+    HV_X86_CR2 = 38,
+    HV_X86_CR3 = 39,
+    HV_X86_CR4 = 40,
+    HV_X86_DR0 = 41,
+    HV_X86_DR1 = 42,
+    HV_X86_DR2 = 43,
+    HV_X86_DR3 = 44,
+    HV_X86_DR4 = 45,
+    HV_X86_DR5 = 46,
+    HV_X86_DR6 = 47,
+    HV_X86_DR7 = 48,
+    HV_X86_TPR = 49,
+    HV_X86_XCR0 = 50,
+    HV_X86_REGISTERS_MAX = 51,
 }
 
 // VMCS field encodings for VMX (Intel-style, used by Rosetta)
@@ -442,6 +438,7 @@ pub const RFLAGS_RESERVED_1: u64 = 1 << 1; // Always 1
 
 // External function declarations from Hypervisor.framework
 #[link(name = "Hypervisor", kind = "framework")]
+#[cfg(target_arch = "x86_64")]
 unsafe extern "C" {
     /// Create a VM instance.
     pub fn hv_vm_create(flags: u64) -> hv_return_t;
@@ -476,7 +473,7 @@ unsafe extern "C" {
     pub fn hv_vcpu_run_until(vcpu: hv_vcpuid_t, deadline: u64) -> hv_return_t;
 
     /// Interrupt a running vCPU.
-    pub fn hv_vcpu_interrupt(vcpus: *const hv_vcpuid_t, vcpu_count: u32) -> hv_return_t;
+    pub fn hv_vcpu_interrupt(vcpus: *mut hv_vcpuid_t, vcpu_count: u32) -> hv_return_t;
 
     /// Read a VMCS field.
     pub fn hv_vmx_vcpu_read_vmcs(vcpu: hv_vcpuid_t, field: u32, value: *mut u64) -> hv_return_t;
@@ -485,7 +482,7 @@ unsafe extern "C" {
     pub fn hv_vmx_vcpu_write_vmcs(vcpu: hv_vcpuid_t, field: u32, value: u64) -> hv_return_t;
 
     /// Get VMX capabilities.
-    pub fn hv_vmx_get_capability(field: hv_vmx_capability_t, value: *mut u64) -> hv_return_t;
+    pub fn hv_vmx_read_capability(field: hv_vmx_capability_t, value: *mut u64) -> hv_return_t;
 
     /// Read vCPU register.
     pub fn hv_vcpu_read_register(vcpu: hv_vcpuid_t, reg: u32, value: *mut u64) -> hv_return_t;
@@ -500,15 +497,9 @@ unsafe extern "C" {
     /// Write vCPU floating point state.
     pub fn hv_vcpu_write_fpstate(
         vcpu: hv_vcpuid_t,
-        buffer: *const c_void,
+        buffer: *mut c_void,
         size: usize,
     ) -> hv_return_t;
-
-    /// Enable native vCPU capabilities (needed for x86 on ARM).
-    pub fn hv_vcpu_set_trap_debug_exceptions(vcpu: hv_vcpuid_t, enable: bool) -> hv_return_t;
-
-    /// Set trap for debug register access.
-    pub fn hv_vcpu_set_trap_debug_reg_accesses(vcpu: hv_vcpuid_t, enable: bool) -> hv_return_t;
 
     /// Force flush vCPU state.
     pub fn hv_vcpu_flush(vcpu: hv_vcpuid_t) -> hv_return_t;
@@ -536,6 +527,7 @@ pub fn hv_error_string(ret: hv_return_t) -> &'static str {
 }
 
 /// Check if Hypervisor.framework is available and we have permission to use it.
+#[cfg(target_arch = "x86_64")]
 pub fn hv_check_available() -> Result<(), &'static str> {
     // Try to create and immediately destroy a VM to check availability
     let ret = unsafe { hv_vm_create(0) };
@@ -547,7 +539,7 @@ pub fn hv_check_available() -> Result<(), &'static str> {
     } else if ret == HV_NO_DEVICE {
         Err("Hypervisor not available on this system.")
     } else if ret == HV_UNSUPPORTED {
-        Err("Hypervisor not supported (Rosetta x86 translation may not be available).")
+        Err("Hypervisor is unavailable for this host architecture or execution environment.")
     } else {
         Err("Failed to initialize Hypervisor.framework")
     }

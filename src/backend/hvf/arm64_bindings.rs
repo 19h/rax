@@ -15,8 +15,11 @@ use std::ffi::c_void;
 pub use super::bindings::{
     HV_BAD_ARGUMENT, HV_BUSY, HV_DENIED, HV_ERROR, HV_MEMORY_EXEC, HV_MEMORY_READ, HV_MEMORY_WRITE,
     HV_NO_DEVICE, HV_NO_RESOURCES, HV_SUCCESS, HV_UNSUPPORTED, hv_error_string, hv_gpaddr_t,
-    hv_memory_flags_t, hv_return_t, hv_uvaddr_t,
+    hv_memory_flags_t, hv_return_t,
 };
+
+/// Arm64 mapping address: `void *` in Apple's hv_vm.h, unlike Intel's const alias.
+pub type hv_uvaddr_t = *mut c_void;
 
 /// ARM64 vCPU handle type
 pub type hv_vcpu_t = *mut c_void;

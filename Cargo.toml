@@ -353,3 +353,7 @@ libc = "0.2"
 # No upstream version, feature default, or Unix mapping behavior changes.
 vm-memory = { path = "vendor/vm-memory" }
 linux-loader = { git = "https://github.com/19h/linux-loader", rev = "f745b555942c4e840a784bca61e6f3976d101960" }
+
+[[test]]
+name = "hvf_sdk_abi"
+path = "tests/suites/backend/hvf_sdk_abi.rs"

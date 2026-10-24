@@ -10,6 +10,7 @@
 //! For x86_64 emulation on Apple Silicon, use the emulator backend.
 
 mod bindings;
+#[cfg(target_arch = "x86_64")]
 mod convert;
 pub mod rosetta;
 
@@ -23,27 +24,39 @@ mod arm64_bindings;
 #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
 pub use arm64::{HvfArm64Backend, HvfArm64Vcpu, HvfArm64Vm};
 
+#[cfg(target_arch = "x86_64")]
 use std::any::Any;
+#[cfg(target_arch = "x86_64")]
 use std::sync::{Arc, Mutex};
 
+#[cfg(target_arch = "x86_64")]
 use tracing::{debug, info, warn};
+#[cfg(target_arch = "x86_64")]
 use vm_memory::{Address, GuestAddress, GuestMemory, GuestMemoryMmap, GuestMemoryRegion};
 
+#[cfg(target_arch = "x86_64")]
 use crate::error::{Error, Result};
+#[cfg(target_arch = "x86_64")]
 use crate::vm::memory::GuestMemoryWrapper;
+#[cfg(target_arch = "x86_64")]
 use crate::vm::vcpu::{CpuState, VCpu, VcpuExit, X86_64CpuState};
 
 use super::{Backend, Vm};
+#[cfg(target_arch = "x86_64")]
 use bindings::*;
+#[cfg(target_arch = "x86_64")]
 use convert::*;
+#[cfg(target_arch = "x86_64")]
 use rosetta::CpuidConfig;
 
 /// HVF backend.
+#[cfg(target_arch = "x86_64")]
 pub struct HvfBackend {
     /// CPUID configuration for x86_64 guests
     cpuid_config: CpuidConfig,
 }
 
+#[cfg(target_arch = "x86_64")]
 impl HvfBackend {
     pub fn new() -> Result<Self> {
         // This backend only works on Intel Macs - verified at compile time via cfg
@@ -60,6 +73,7 @@ impl HvfBackend {
     }
 }
 
+#[cfg(target_arch = "x86_64")]
 impl Backend for HvfBackend {
     fn name(&self) -> &'static str {
         "hvf"
@@ -86,6 +100,7 @@ impl Backend for HvfBackend {
     }
 }
 
+#[cfg(target_arch = "x86_64")]
 impl Drop for HvfBackend {
     fn drop(&mut self) {
         // VM is cleaned up in HvfVm::drop
@@ -93,6 +108,7 @@ impl Drop for HvfBackend {
 }
 
 /// HVF VM instance.
+#[cfg(target_arch = "x86_64")]
 pub struct HvfVm {
     /// CPUID configuration
     cpuid_config: CpuidConfig,
@@ -102,6 +118,7 @@ pub struct HvfVm {
     memory_mapped: Mutex<bool>,
 }
 
+#[cfg(target_arch = "x86_64")]
 impl HvfVm {
     /// Register guest memory with the VM.
     pub fn register_memory(&self, mem: &GuestMemoryWrapper) -> Result<()> {
@@ -138,6 +155,7 @@ impl HvfVm {
     }
 }
 
+#[cfg(target_arch = "x86_64")]
 impl Vm for HvfVm {
     fn create_vcpu(&self, id: u32, mem: Arc<GuestMemoryMmap>) -> Result<Box<dyn VCpu>> {
         // Create vCPU
@@ -174,6 +192,7 @@ impl Vm for HvfVm {
     }
 }
 
+#[cfg(target_arch = "x86_64")]
 impl Drop for HvfVm {
     fn drop(&mut self) {
         let ret = unsafe { hv_vm_destroy() };
@@ -184,6 +203,7 @@ impl Drop for HvfVm {
 }
 
 /// HVF vCPU.
+#[cfg(target_arch = "x86_64")]
 pub struct HvfVcpu {
     /// HVF vCPU ID
     vcpu_id: hv_vcpuid_t,
@@ -201,10 +221,12 @@ pub struct HvfVcpu {
     pending_interrupt: Option<u8>,
 }
 
-// Safety: HvfVcpu is Send because the vCPU ID is just a u64 handle,
+// Safety: HvfVcpu is Send because the vCPU ID is a u32 identifier,
 // and we synchronize access appropriately.
+#[cfg(target_arch = "x86_64")]
 unsafe impl Send for HvfVcpu {}
 
+#[cfg(target_arch = "x86_64")]
 impl HvfVcpu {
     fn new(
         vcpu_id: hv_vcpuid_t,
@@ -240,11 +262,11 @@ impl HvfVcpu {
         let mut exit_cap: u64 = 0;
 
         unsafe {
-            hv_vmx_get_capability(HV_VMX_CAP_PINBASED, &mut pin_cap);
-            hv_vmx_get_capability(HV_VMX_CAP_PROCBASED, &mut proc_cap);
-            hv_vmx_get_capability(HV_VMX_CAP_PROCBASED2, &mut proc2_cap);
-            hv_vmx_get_capability(HV_VMX_CAP_ENTRY, &mut entry_cap);
-            hv_vmx_get_capability(HV_VMX_CAP_EXIT, &mut exit_cap);
+            hv_vmx_read_capability(HV_VMX_CAP_PINBASED, &mut pin_cap);
+            hv_vmx_read_capability(HV_VMX_CAP_PROCBASED, &mut proc_cap);
+            hv_vmx_read_capability(HV_VMX_CAP_PROCBASED2, &mut proc2_cap);
+            hv_vmx_read_capability(HV_VMX_CAP_ENTRY, &mut entry_cap);
+            hv_vmx_read_capability(HV_VMX_CAP_EXIT, &mut exit_cap);
         }
 
         // Pin-based controls: enable external interrupt exiting
@@ -517,6 +539,7 @@ impl HvfVcpu {
     }
 }
 
+#[cfg(target_arch = "x86_64")]
 impl VCpu for HvfVcpu {
     fn run(&mut self) -> Result<VcpuExit> {
         // Try to inject any pending interrupt
@@ -837,6 +860,7 @@ impl VCpu for HvfVcpu {
     }
 }
 
+#[cfg(target_arch = "x86_64")]
 impl Drop for HvfVcpu {
     fn drop(&mut self) {
         let ret = unsafe { hv_vcpu_destroy(self.vcpu_id) };
