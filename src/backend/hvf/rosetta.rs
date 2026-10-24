@@ -137,6 +137,8 @@ impl CpuidConfig {
             0x0D => match subleaf {
                 0 => (0x00000007, 0x00000340, 0x00000340, 0x00000000),
                 1 => (0x00000001, 0x00000000, 0x00000000, 0x00000000),
+                // YMM_Hi128: 256 bytes at standard XSAVE offset576.
+                2 => (256, 576, 0, 0),
                 _ => (0, 0, 0, 0),
             },
             // Extended CPUID info
@@ -234,6 +236,14 @@ mod tests {
             ((ecx >> 24) & 0xFF) as u8,
         ];
         assert_eq!(&vendor, b"GenuineIntel");
+    }
+
+    #[test]
+    fn test_advertised_avx_state_has_standard_component_layout() {
+        let config = CpuidConfig::default();
+        assert_eq!(config.cpuid(0x0d, 0), (7, 832, 832, 0));
+        assert_eq!(config.cpuid(0x0d, 2), (256, 576, 0, 0));
+        assert_eq!(config.cpuid(0x0d, 3), (0, 0, 0, 0));
     }
 
     #[test]

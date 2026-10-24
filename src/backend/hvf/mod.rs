@@ -13,6 +13,8 @@ mod bindings;
 #[cfg(target_arch = "x86_64")]
 mod convert;
 pub mod rosetta;
+#[cfg(target_arch = "x86_64")]
+mod xsetbv;
 
 // ARM64 HVF backend (Apple Silicon only)
 #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
@@ -250,6 +252,62 @@ impl HvfVcpu {
         Ok(vcpu)
     }
 
+    /// Execute the VM-exited instruction or inject its architectural fault.
+    fn handle_xsetbv(&self) -> Result<()> {
+        struct Access<'a> {
+            vcpu: &'a HvfVcpu,
+        }
+        impl xsetbv::XsetbvAccess for Access<'_> {
+            type Error = Error;
+
+            fn input(&mut self) -> Result<xsetbv::XsetbvInput> {
+                let id = self.vcpu.vcpu_id;
+                let (_, _, features, _) = self.vcpu.cpuid_config.cpuid(1, 0);
+                let (low, _, _, high) = self.vcpu.cpuid_config.cpuid(0x0d, 0);
+                Ok(xsetbv::XsetbvInput {
+                    xsave_supported: features & (1 << 26) != 0,
+                    supported_xcr0: u64::from(low) | (u64::from(high) << 32),
+                    cr0: read_register(id, hv_x86_reg_t::HV_X86_CR0)?,
+                    cr4: read_register(id, hv_x86_reg_t::HV_X86_CR4)?,
+                    rflags: read_register(id, hv_x86_reg_t::HV_X86_RFLAGS)?,
+                    cs_selector: vmcs_read(id, hv_vmx_vmcs_field_t::VMCS_GUEST_CS_SELECTOR)? as u16,
+                    rax: read_register(id, hv_x86_reg_t::HV_X86_RAX)?,
+                    rcx: read_register(id, hv_x86_reg_t::HV_X86_RCX)?,
+                    rdx: read_register(id, hv_x86_reg_t::HV_X86_RDX)?,
+                })
+            }
+
+            fn write_xcr0(&mut self, value: u64) -> Result<()> {
+                write_register(self.vcpu.vcpu_id, hv_x86_reg_t::HV_X86_XCR0, value)
+            }
+
+            fn advance_rip(&mut self) -> Result<()> {
+                let length = vmcs_read(
+                    self.vcpu.vcpu_id,
+                    hv_vmx_vmcs_field_t::VMCS_EXIT_INSTRUCTION_LENGTH,
+                )?;
+                self.vcpu.advance_rip(length)
+            }
+
+            fn inject_fault(&mut self, fault: xsetbv::XsetbvFault) -> Result<()> {
+                let (info, error) = fault.injection();
+                if let Some(error) = error {
+                    vmcs_write(
+                        self.vcpu.vcpu_id,
+                        hv_vmx_vmcs_field_t::VMCS_CTRL_VMENTRY_EXCEPTION_ERROR,
+                        error,
+                    )?;
+                }
+                vmcs_write(
+                    self.vcpu.vcpu_id,
+                    hv_vmx_vmcs_field_t::VMCS_CTRL_VMENTRY_IRQ_INFO,
+                    info,
+                )
+            }
+        }
+        xsetbv::handle_xsetbv(&mut Access { vcpu: self })
+    }
+
     /// Initialize VMCS fields for the vCPU.
     fn init_vmcs(&self) -> Result<()> {
         use hv_vmx_vmcs_field_t::*;
@@ -326,7 +384,18 @@ impl HvfVcpu {
         let leaf = rax as u32;
         let subleaf = rcx as u32;
 
-        let (eax, ebx, ecx, edx) = self.cpuid_config.cpuid(leaf, subleaf);
+        let configured = self.cpuid_config.cpuid(leaf, subleaf);
+        let (eax, ebx, ecx, edx) = if leaf == 1 || (leaf == 0x0d && subleaf == 0) {
+            let cr4 = read_register(self.vcpu_id, hv_x86_reg_t::HV_X86_CR4)?;
+            let xcr0 = if leaf == 0x0d {
+                read_register(self.vcpu_id, hv_x86_reg_t::HV_X86_XCR0)?
+            } else {
+                0
+            };
+            xsetbv::xsave_cpuid(leaf, subleaf, configured, cr4, xcr0)
+        } else {
+            configured
+        };
 
         write_register(self.vcpu_id, hv_x86_reg_t::HV_X86_RAX, eax as u64)?;
         write_register(self.vcpu_id, hv_x86_reg_t::HV_X86_RBX, ebx as u64)?;
@@ -503,6 +572,15 @@ impl HvfVcpu {
 
     /// Inject a pending interrupt if possible.
     fn try_inject_interrupt(&mut self) -> Result<()> {
+        if self.pending_interrupt.is_some()
+            && vmcs_read(
+                self.vcpu_id,
+                hv_vmx_vmcs_field_t::VMCS_CTRL_VMENTRY_IRQ_INFO,
+            )? & u64::from(INTR_INFO_VALID)
+                != 0
+        {
+            return Ok(());
+        }
         if let Some(vector) = self.pending_interrupt.take() {
             // Check if interrupts are enabled
             let rflags = read_register(self.vcpu_id, hv_x86_reg_t::HV_X86_RFLAGS)?;
@@ -690,12 +768,7 @@ impl VCpu for HvfVcpu {
             }
 
             VMX_EXIT_REASON_XSETBV => {
-                // Handle XSETBV (extended control register write)
-                let insn_len = vmcs_read(
-                    self.vcpu_id,
-                    hv_vmx_vmcs_field_t::VMCS_EXIT_INSTRUCTION_LENGTH,
-                )?;
-                self.advance_rip(insn_len)?;
+                self.handle_xsetbv()?;
                 self.run()
             }
 

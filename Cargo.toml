@@ -357,3 +357,7 @@ linux-loader = { git = "https://github.com/19h/linux-loader", rev = "f745b555942
 [[test]]
 name = "hvf_sdk_abi"
 path = "tests/suites/backend/hvf_sdk_abi.rs"
+
+[[test]]
+name = "hvf_xsetbv"
+path = "tests/suites/backend/hvf_xsetbv.rs"
