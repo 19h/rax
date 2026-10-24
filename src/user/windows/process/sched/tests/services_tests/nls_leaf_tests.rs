@@ -40,12 +40,10 @@ fn invoke(p: &mut Proc, t: &mut Thread, module: usize, service: &str, args: &[u6
             break;
         }
         let description = format!("{arch}/{service} PC={:#x} {boundary:?}", t.cpu.pc());
+        let outcome = handle_stop(p, t, boundary);
         assert!(
-            matches!(
-                handle_stop(p, t, boundary),
-                Outcome::Continue | Outcome::Yield
-            ),
-            "{description}"
+            matches!(outcome, Outcome::Continue | Outcome::Yield),
+            "{description}: {outcome:?}"
         );
     }
     assert!(completed, "{arch}/{service} did not return");

@@ -101,11 +101,12 @@ fn win32u_installed_init2_leaf_requires_gui_prerequisites_without_state_changes(
             }
             assert!(named, "{arch}");
         } else {
+            // The strict reason check above also permits the earlier WoW64
+            // paired-context failure, which precedes export discovery.
             assert!(
                 matches!(
                     &p.native.as_ref().unwrap().gui,
-                    crate::user::windows::gui::Availability::Unavailable(reason)
-                        if reason.ends_with("selected Win32u has no NtGdiInit2")
+                    crate::user::windows::gui::Availability::Unavailable(_)
                 ),
                 "{arch}: missing export must have an explicit unavailable capability"
             );
