@@ -243,6 +243,8 @@ jobs:
             sudo softwareupdate --install-rosetta --agree-to-license
           fi
           arch -x86_64 /usr/bin/true
+      - name: Native critical timer deadline observations
+        run: python3 docs/specifications/darwin/native-timer-deadline/run.py
       - name: cargo test (user_darwin, native oracle required)
         shell: bash
         env:

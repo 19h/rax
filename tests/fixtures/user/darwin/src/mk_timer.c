@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/event.h>
+#include <sys/sysctl.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -58,6 +59,21 @@ static void drain(mach_port_t p) {
 }
 
 static void sleep_ms(double m) { mach_wait_until(mach_absolute_time() + ms(m)); }
+
+static int same_cancelled_deadline(uint64_t expected, uint64_t observed) {
+    uint64_t frequency = 0;
+    size_t size = sizeof frequency;
+    if (!tb.numer || !tb.denom ||
+        sysctlbyname("hw.tbfrequency", &frequency, &size, NULL, 0) != 0 ||
+        size != sizeof frequency || !frequency)
+        return 0;
+    // One hardware period in reported ticks, rounded up. Rosetta reports 1 ns
+    // ticks over a 24 MHz kernel counter: ceil(1e9 / 24e6) = 42 reported ticks.
+    __uint128_t numerator = (__uint128_t)1000000000 * tb.denom;
+    __uint128_t denominator = (__uint128_t)frequency * tb.numer;
+    uint64_t quantum = (uint64_t)((numerator + denominator - 1) / denominator);
+    return observed <= expected && expected - observed <= quantum;
+}
 
 static void creation(mach_port_t t) {
     mach_port_type_t ty = 0;
@@ -120,8 +136,8 @@ static void expiry(mach_port_t t) {
     mk_timer_arm_leeway(t, MK_TIMER_CRITICAL, dl, 0);
     res = 0;
     kr = mk_timer_cancel(t, &res);
-    // Rosetta can round a cancelled native deadline down by one reported tick.
-    printf("latest re-arm deadline: %d\n", kr == KERN_SUCCESS && res >= dl - 1 && res <= dl + 1);
+    // Cancellation can lose one hardware period when crossing clock domains.
+    printf("latest re-arm deadline: %d\n", kr == KERN_SUCCESS && same_cancelled_deadline(dl, res));
     mk_timer_arm(t, 0);
     sleep_ms(30);
     printf("re-armed timer fires: %u queued\n", status(t).mps_msgcount);
