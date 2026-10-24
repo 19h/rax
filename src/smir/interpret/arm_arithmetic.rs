@@ -288,7 +288,14 @@ impl SmirInterpreter {
         }
         let rounded_msb = 127 - rounded.leading_zeros() as i32;
         let rounded_unbiased = rounded_msb + rounded_exponent;
-        if rounded_unbiased > format.bias {
+        let alternative_half = format.total_bits == 16 && control & (1 << 26) != 0;
+        let maximum_unbiased = format.bias + i32::from(alternative_half);
+        if rounded_unbiased > maximum_unbiased {
+            if alternative_half {
+                // Alternative half has finite exponent 31. Overflow saturates
+                // with IOC and suppresses IXC/OFC (FPRoundBase).
+                return (sign | exponent_mask | fraction_mask, 1);
+            }
             let to_infinity = match mode {
                 FpRoundMode::RoundNearest => true,
                 FpRoundMode::RoundUp => !negative,

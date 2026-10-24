@@ -105,51 +105,91 @@ impl SmirInterpreter {
             )
         }
     }
-    pub(crate) fn arm_eval_recip_step(mut first: u32, mut second: u32, sqrt: bool) -> (u32, u32) {
-        // A32 FPRecipStep/FPRSqrtStep use StandardFPSCRValue: nearest-even,
-        // default NaN and input/output flushing, regardless of live FPSCR RM.
-        let control = (1 << 24) | (1 << 25);
+    pub(crate) fn arm_eval_recip_step(first: u32, second: u32, sqrt: bool) -> (u32, u32) {
+        let (bits, status) = Self::arm_eval_recip_step_format(
+            u64::from(first),
+            u64::from(second),
+            sqrt,
+            super::X86_SIMD_F32,
+            3 << 24,
+        );
+        (bits as u32, status)
+    }
+    pub(crate) fn arm_eval_half_recip_step(
+        first: u16,
+        second: u16,
+        sqrt: bool,
+        control: u32,
+    ) -> (u16, u32) {
+        let standard = (control & (1 << 19)) | (3 << 24);
+        let (bits, status) = Self::arm_eval_recip_step_format(
+            u64::from(first),
+            u64::from(second),
+            sqrt,
+            super::X86_SIMD_F16,
+            super::arm_format::half_control(standard),
+        );
+        (bits as u16, status)
+    }
+    fn arm_eval_recip_step_format(
+        mut first: u64,
+        mut second: u64,
+        sqrt: bool,
+        format: super::X86SimdFpFormat,
+        control: u32,
+    ) -> (u64, u32) {
+        let (sign, exponent, fraction, quiet) = Self::x86_simd_fp_masks(format);
+        let half = format.total_bits == 16;
         let mut status = 0;
-        for raw in [&mut first, &mut second] {
-            if *raw & 0x7f800000 == 0 && *raw & 0x007fffff != 0 {
-                *raw &= 0x80000000;
-                status |= 0x80;
+        if control & (1 << 24) != 0 {
+            for raw in [&mut first, &mut second] {
+                if *raw & exponent == 0 && *raw & fraction != 0 {
+                    *raw &= sign;
+                    if !half {
+                        status |= 0x80;
+                    }
+                }
             }
         }
-        let a = first & 0x7fffffff;
-        let b = second & 0x7fffffff;
-        if a > 0x7f800000 || b > 0x7f800000 {
-            let signaling = (a > 0x7f800000 && first & 0x00400000 == 0)
-                || (b > 0x7f800000 && second & 0x00400000 == 0);
-            return (0x7fc00000, status | u32::from(signaling));
+        if Self::x86_simd_fp_is_nan(first, format) || Self::x86_simd_fp_is_nan(second, format) {
+            let signaling = Self::x86_simd_fp_is_snan(first, format)
+                || Self::x86_simd_fp_is_snan(second, format);
+            return (exponent | quiet, status | u32::from(signaling));
         }
-        let product = if (a == 0x7f800000 && b == 0) || (a == 0 && b == 0x7f800000) {
+        let a = first & !sign;
+        let b = second & !sign;
+        let product = if (a == exponent && b == 0) || (a == 0 && b == exponent) {
             0
         } else {
-            let (value, raised) = Self::arm_eval_arithmetic(
+            let (bits, raised) = Self::arm_eval_arithmetic_format(
                 ArmFpOperation::Multiply,
-                u64::from(first),
-                u64::from(second),
-                false,
+                first,
+                second,
+                format,
                 control,
             );
             status |= raised;
-            value
+            bits
         };
         let (result, raised) = if sqrt {
-            // FPHalvedSub(3, product) rounds (3-product)/2 once, *after*
-            // the already-rounded product. FPMulAdd(1.5, -product, 0.5)
-            // has exactly that value and the same special cases here.
-            Self::arm_eval_fused(0x3fc00000, product ^ 0x80000000, 0x3f000000, false, control)
+            // The product is rounded before the single halved subtraction.
+            // FPMulAdd(1.5,-product,0.5) is exactly FPHalvedSub(3,product).
+            let (one_point_five, one_half) = if half {
+                (0x3e00, 0x3800)
+            } else {
+                (0x3fc00000, 0x3f000000)
+            };
+            Self::arm_eval_fused_format(one_point_five, product ^ sign, one_half, format, control)
         } else {
-            Self::arm_eval_arithmetic(
+            let two = if half { 0x4000 } else { 0x40000000 };
+            Self::arm_eval_arithmetic_format(
                 ArmFpOperation::Subtract,
-                0x40000000,
+                two,
                 product,
-                false,
+                format,
                 control,
             )
         };
-        (result as u32, status | raised)
+        (result, status | raised)
     }
 }

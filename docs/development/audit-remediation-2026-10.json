@@ -422,10 +422,42 @@
         "/tmp/rax-a32-fp16/final-library.log",
         "/tmp/rax-a32-fp16/final-rosetta-vfp.log",
         "/tmp/rax-a32-fp16/final-capi.log",
-        "/tmp/rax-a32-fp16/checks.jsonl"
+        "/tmp/rax-a32-fp16/checks.jsonl",
+        "src/smir/interpret/arm_conversion.rs",
+        "src/smir/interpret/arm_arithmetic.rs",
+        "src/smir/interpret/arm_integer_conversion.rs",
+        "src/isa/arm/aarch32/vfp/half_conversion.rs",
+        "src/isa/arm/aarch32/vfp.rs",
+        "src/isa/arm/aarch32/instructions/neon/fp.rs",
+        "src/smir/interpret/arm_reciprocal.rs",
+        "src/isa/arm/aarch32/vfp/reciprocal.rs",
+        "src/isa/arm/aarch32/instructions/neon/reciprocal.rs",
+        "tests/suites/isa/arm/aarch32/fp_half_precision_contract.rs",
+        "tests/suites/isa/arm/aarch32/vfp.rs",
+        "src/isa/arm/decoder/aarch32/neon/two_regs.rs",
+        "tests/suites/isa/arm/aarch32/fp_half_conversion_native.rs",
+        "tests/suites/isa/arm/aarch32/fp_half_conversion_decoded.rs",
+        "/tmp/rax-a32-half-conversion/native-probe.log",
+        "/tmp/rax-a32-half-conversion/parent-contract-red.log",
+        "/tmp/rax-a32-half-conversion/parent-decoded-red.log",
+        "/tmp/rax-a32-half-conversion/llvm-words.log",
+        "/tmp/rax-a32-half-conversion/llvm-errors.log",
+        "/tmp/rax-a32-half-conversion/worktree-vfp-initial.log",
+        "/tmp/rax-a32-half-conversion/worktree-complete.log",
+        "/tmp/rax-a32-half-conversion/worktree-vfp-final.log",
+        "/tmp/rax-a32-half-conversion/final-build.log",
+        "/tmp/rax-a32-half-conversion/final-vfp.log",
+        "/tmp/rax-a32-half-conversion/final-integration.log",
+        "/tmp/rax-a32-half-conversion/final-clippy.log",
+        "/tmp/rax-a32-half-conversion/final-fmt.log",
+        "/tmp/rax-a32-half-conversion/final-doc.log",
+        "/tmp/rax-a32-half-conversion/final-library.log",
+        "/tmp/rax-a32-half-conversion/final-rosetta-vfp.log",
+        "/tmp/rax-a32-half-conversion/final-capi.log",
+        "/tmp/rax-a32-half-conversion/checks.jsonl"
       ],
       "remaining_validation": [
-        "Half precision conversion/AHP, half integer/fixed/estimate/step and mixed-precision FMLAL profiles, plus unimplemented 16-bit fixed encodings",
+        "Half-to-integer and half fixed conversions, half estimates, mixed-precision FMLAL and unimplemented 16-bit fixed encodings",
         "Selected-profile instruction coverage, including sampled currently-undefined vector FMA/minmax-number encodings",
         "Enabled floating-point exception delivery",
         "Native A32 hardware or independent A32 system oracle"
@@ -6076,6 +6108,416 @@
         "worktree_integrity": "All 21 root baseline path hashes/absences were checked before import; only the explicit owned paths and ledger are staged. Original untracked content is untouched.",
         "behavioral_evidence": "Complete applicable tests execute with zero filtered tests. Native target-feature elision is counted separately; hardware matrices have explicit final counters and host-state guards.",
         "repository_consistency": "Existing public signatures and partial-write helper semantics retained; modules/fixtures registered, dead half-classification helpers removed, source owners remain within size limits. No ABI/serialization change."
+      }
+    },
+    {
+      "id": "a32-half-precision-conversion-and-staged-refinement",
+      "status": "locally_validated",
+      "scope": "IEEE/alternative-half precision conversions, already-admitted scalar I32-to-half conversion, A32 half nonfused reciprocal refinement, and full source/destination register fields for vector half precision conversion.",
+      "assumptions": [
+        {
+          "id": "C1",
+          "assumption": "Half precision conversion observes AHP and ignores FZ16; half data-processing integer conversion ignores AHP and observes FZ16.",
+          "basis": "FPUnpackCV/FPRoundCV/FPConvert versus FixedToFP.",
+          "dependent_result": "Use distinct controlled conversion and data-processing entry points.",
+          "stress_test": "All half encodings plus seeded single/integer operands under 64 control profiles.",
+          "falsification_probe": "Any exact hardware bit/status mismatch.",
+          "status": "retained"
+        },
+        {
+          "id": "C2",
+          "assumption": "Alternative half exponent 31 is finite, including maximum 131008; exceptional precision conversions use architectural IOC saturation rules.",
+          "basis": "Pinned FPConvert and FPRoundBase alternative-half cases.",
+          "dependent_result": "Classify alternative half separately and suppress IEEE overflow/inexact flags on alternative saturation.",
+          "stress_test": "Both signs, NaNs, infinities, maximum values and directed-rounding boundaries.",
+          "falsification_probe": "NaN/Infinity classified in an alternative half source or IEEE overflow flags on alternative saturation.",
+          "status": "retained"
+        },
+        {
+          "id": "C3",
+          "assumption": "Legacy VCVTB/VCVTT use live rounding and partial S-register writes; integer-to-half zero-extends the full S destination.",
+          "basis": "Pinned A32/T32 VCVTB/T and VCVT_iv assignments.",
+          "dependent_result": "Preserve the opposite half for precision conversion and clear the upper half for integer conversion.",
+          "stress_test": "Seed every D register and verify the complete aliased register array in both states.",
+          "falsification_probe": "A wrong half or neighboring S register changes.",
+          "status": "retained"
+        },
+        {
+          "id": "C4",
+          "assumption": "Vector conversion register fields include D bit 22 and M bit 5; conversion uses StandardFPSCRValue.",
+          "basis": "Pinned aarch32_VCVT_hs_A encoding and operation.",
+          "dependent_result": "Free both register field bits and extract the complete source index.",
+          "stress_test": "2048 executions: two states, two directions, 16 Q registers and 32 D registers, including aliases.",
+          "falsification_probe": "Any full-register matrix failure or a valid high-register LLVM encoding rejected.",
+          "status": "retained"
+        },
+        {
+          "id": "C5",
+          "assumption": "A32 half reciprocal refinement rounds the product before subtraction; native A64 fused refinement is not a general A32 oracle.",
+          "basis": "Pinned FPRecipStep/FPRSqrtStep operation.",
+          "dependent_result": "Use exact half arithmetic with standard controls and live FZ16; native FMUL plus FSUB/halved subtraction.",
+          "stress_test": "640000 staged native comparisons including zero-times-infinity and flushed subnormal cases.",
+          "falsification_probe": "Any result/status mismatch or accidental single fused-step substitution.",
+          "status": "retained"
+        },
+        {
+          "id": "C6",
+          "assumption": "The existing uncontrolled half-widening API is a raw IEEE encoding map, retaining signaling-NaN payloads without FPSCR effects.",
+          "basis": "Existing public API behavior and direct callers; architectural FPConvert has a separate controlled entry point.",
+          "dependent_result": "Preserve raw utility compatibility and route architectural instructions through the controlled variant.",
+          "stress_test": "Exhaustive 65536 encodings compared to native widening with only signaling-NaN quieting undone.",
+          "falsification_probe": "Any finite/NaN encoding difference or architectural path bypassing required NaN/status processing.",
+          "status": "retained"
+        },
+        {
+          "id": "C7",
+          "assumption": "Native A64 FP16 validates shared numerical operations, not native A32 execution or enabled trap delivery.",
+          "basis": "Compile-time aarch64/fp16 requirements and actual instruction execution.",
+          "dependent_result": "Count target cfg elision explicitly and retain independent A32/Thumb decoding/state checks.",
+          "stress_test": "Exact final counters and host FP-state restoration.",
+          "falsification_probe": "A claimed hardware test is skipped or host state leaks.",
+          "status": "retained"
+        }
+      ],
+      "primary_sources": [
+        {
+          "path": "docs/architecture/arm/asl/arm_defs.asl",
+          "sha256": "1ade68e5dacfff1b63a42ad3ee1c426aae5d36ed5dfcbf39de4baab478a190f8",
+          "functions": [
+            "FPConvert",
+            "FPUnpackCV",
+            "FPRoundCV",
+            "FPRoundBase",
+            "FixedToFP",
+            "FPRecipStep",
+            "FPRSqrtStep",
+            "StandardFPSCRValue"
+          ]
+        },
+        {
+          "path": "docs/architecture/arm/asl/arm_instrs.asl",
+          "sha256": "3c91ece6d0509f7ce9e8b2d8fa623787d7c7acb4cb24040a75cec5aa2789e611",
+          "basis": "A32/T32 VCVTB/VCVTT, VCVT_iv, VCVT_hs, VRECPS and VRSQRTS operations and complete register fields."
+        },
+        "LLVM 23.0.0git /Users/int/local/bin/llvm-mc, armv8.2-a with fp16 enabled after the fpu directive; successful A32/T32 encodings are logged separately from rejected experiments."
+      ],
+      "baseline_results": {
+        "native_selected_precision_probe": {
+          "equal": 31,
+          "different": 35,
+          "total": 66
+        },
+        "helper_contract": {
+          "passed": 2,
+          "failed": 20,
+          "ignored": 0,
+          "filtered": 0
+        },
+        "decoded_instruction": {
+          "passed": 1,
+          "failed": 14,
+          "ignored": 0,
+          "filtered": 0
+        }
+      },
+      "bounded_scope": [
+        {
+          "impact": "high",
+          "item": "Half-to-integer and half fixed conversions, half estimates, mixed FMLAL, selected-profile admission and enabled traps remain pending.",
+          "blocks": "Complete A32-FP remediation."
+        },
+        {
+          "impact": "high",
+          "item": "Native A32 execution remains unverified; numerical equivalence is established for the shared operations through actual A64 instructions.",
+          "blocks": "Native A32 oracle requirement."
+        },
+        {
+          "impact": "medium",
+          "item": "The complete register matrix exposed both high destination and high source field rejection, beyond the original arithmetic conversion defect. Both are repaired and tested.",
+          "blocks": false
+        },
+        {
+          "impact": "low",
+          "item": "The raw IEEE widening utility remains compatible; controlled architectural widening is explicit to avoid silent changes to signaling-NaN payload mapping.",
+          "blocks": false
+        }
+      ],
+      "baseline": "55c33d8c174260e366b873d0dfb33ef8237efb04",
+      "validation": {
+        "checks": [
+          {
+            "check": "final-build",
+            "args": [
+              "cargo",
+              "+stable",
+              "build",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--all-targets"
+            ],
+            "code": 0,
+            "seconds": 191.10368304199073
+          },
+          {
+            "check": "final-vfp",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--test",
+              "arm_vfp_a32",
+              "--",
+              "--test-threads=4"
+            ],
+            "code": 0,
+            "seconds": 3.9558243330102414
+          },
+          {
+            "check": "final-integration",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--test",
+              "arm",
+              "--test",
+              "isa_oracle",
+              "--",
+              "--test-threads=4"
+            ],
+            "code": 0,
+            "seconds": 28.066946040955372
+          },
+          {
+            "check": "final-clippy",
+            "args": [
+              "cargo",
+              "+stable",
+              "clippy",
+              "--locked",
+              "--offline",
+              "--all-targets",
+              "--features",
+              "x86_64-suite"
+            ],
+            "code": 0,
+            "seconds": 70.19285470899194
+          },
+          {
+            "check": "final-fmt",
+            "args": [
+              "cargo",
+              "+stable",
+              "fmt",
+              "--all",
+              "--check"
+            ],
+            "code": 0,
+            "seconds": 12.340868958970532
+          },
+          {
+            "check": "final-doc",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--doc"
+            ],
+            "code": 0,
+            "seconds": 4.823557458934374
+          },
+          {
+            "check": "final-library",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--lib",
+              "--",
+              "--test-threads=4"
+            ],
+            "code": 0,
+            "seconds": 338.1016189159127
+          },
+          {
+            "check": "final-rosetta-vfp",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--target",
+              "x86_64-apple-darwin",
+              "--test",
+              "arm_vfp_a32",
+              "--",
+              "--test-threads=4"
+            ],
+            "code": 0,
+            "seconds": 33.72213649994228
+          },
+          {
+            "check": "final-capi",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "-p",
+              "rax-capi",
+              "--",
+              "--test-threads=4"
+            ],
+            "code": 0,
+            "seconds": 39.605351417092606
+          }
+        ],
+        "complete_library": {
+          "passed": 10433,
+          "failed": 0,
+          "ignored": 2,
+          "filtered": 0,
+          "elapsed_seconds": 337.99
+        },
+        "complete_vfp_arm": {
+          "passed": 355,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0,
+          "elapsed_seconds": 3.8
+        },
+        "complete_vfp_rosetta": {
+          "passed": 330,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0,
+          "elapsed_seconds": 0.01
+        },
+        "doctests": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 5,
+          "filtered": 0,
+          "elapsed_seconds": 0.0
+        },
+        "integration": {
+          "arm": {
+            "passed": 46850,
+            "failed": 0,
+            "ignored": 0,
+            "filtered": 0,
+            "elapsed_seconds": 27.8
+          },
+          "isa_oracle": {
+            "passed": 101,
+            "failed": 0,
+            "ignored": 0,
+            "filtered": 0,
+            "elapsed_seconds": 0.16
+          }
+        },
+        "capi": [
+          {
+            "passed": 185,
+            "failed": 0,
+            "ignored": 0,
+            "filtered": 0,
+            "elapsed_seconds": 8.46
+          },
+          {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "filtered": 0,
+            "elapsed_seconds": 0.0
+          }
+        ],
+        "native_comparisons": {
+          "precision": 5474304,
+          "raw_ieee_widening": 65536,
+          "integer_to_half": 2560000,
+          "staged_refinement": 640000,
+          "total": 8739840,
+          "precision_seed": "0x9e37d4a6251bc8f0",
+          "integer_seed": "0xc6efe92f5138a4d7",
+          "refinement_seed": "0xa5281e6c7fd3490b",
+          "scope": "Actual A64 FP16 exact bits/status; 64 RM/FZ32/DN/AHP/FZ16 profiles for precision/integer conversions. Staged native half arithmetic for A32 refinement; fused A64 steps used only for the architectural zero-times-infinity special case. No runtime skip or software fallback."
+        },
+        "rosetta_cfg_elision": "25 A64 hardware tests cfg-elided, including four new tests. All 330 applicable owning tests execute.",
+        "register_matrix": {
+          "executions": 2048,
+          "dimensions": "Two states x two conversion directions x 16 Q registers x 32 D registers; all D registers, FPSCR and CPSR checked, including aliases. Separate high-M semantic cases use distinct D18/D2 inputs."
+        },
+        "logs": [
+          "/tmp/rax-a32-half-conversion/native-probe.log",
+          "/tmp/rax-a32-half-conversion/parent-contract-red.log",
+          "/tmp/rax-a32-half-conversion/parent-decoded-red.log",
+          "/tmp/rax-a32-half-conversion/llvm-words.log",
+          "/tmp/rax-a32-half-conversion/llvm-errors.log",
+          "/tmp/rax-a32-half-conversion/worktree-vfp-initial.log",
+          "/tmp/rax-a32-half-conversion/worktree-complete.log",
+          "/tmp/rax-a32-half-conversion/worktree-vfp-final.log",
+          "/tmp/rax-a32-half-conversion/final-build.log",
+          "/tmp/rax-a32-half-conversion/final-vfp.log",
+          "/tmp/rax-a32-half-conversion/final-integration.log",
+          "/tmp/rax-a32-half-conversion/final-clippy.log",
+          "/tmp/rax-a32-half-conversion/final-fmt.log",
+          "/tmp/rax-a32-half-conversion/final-doc.log",
+          "/tmp/rax-a32-half-conversion/final-library.log",
+          "/tmp/rax-a32-half-conversion/final-rosetta-vfp.log",
+          "/tmp/rax-a32-half-conversion/final-capi.log",
+          "/tmp/rax-a32-half-conversion/checks.jsonl"
+        ],
+        "intermediate_notes": [
+          "Initial owning prototype: 339 pass/1 fail; the old integer-to-half fixture expected stale upper S bits, contrary to the explicit zero-extended S assignment. Only the two affected expectations were corrected.",
+          "The next complete scratch run passed all 46850 ARM tests and 354 VFP tests, then the new full-register matrix exposed the high destination mask. The final scratch VFP/ISA run is 355/101 pass after both high D and high M fixes. Main final gates cover the exact imported final source."
+        ]
+      },
+      "affected_planes": {
+        "direct_helpers": "Private generic precision conversion and alternative-half rounding behind existing 32/64 APIs. Existing raw half widening remains encoding-compatible; controlled widening and half integer entry points preserve guest controls and sticky status.",
+        "decoded_a32_thumb": "Scalar partial precision destinations versus zero-extended integer destinations, standard vector precision controls, full D/M register fields, and half staged refinement. Ten instruction pairs assert SMIR rejection rather than admitting absent FPSCR semantics.",
+        "smir": "Shared private evaluators with existing 32/64 contracts; no new A32/Thumb IR admission.",
+        "embedding": "All 185 C API tests pass; no ABI, CPU-state layout or serialization changes."
+      },
+      "complexity": "O(1) time and space per lane, using fixed-width integer significands and bounded format normalization. Half has at most 11 significand bits; a half product has at most 22. Raw widening uses one leading-zero count and fixed shifts. Exact hardware comparison uses zero tolerance.",
+      "quality_gates": {
+        "assumptions": "C1-C7 carry explicit dependent results, stress tests and falsification probes.",
+        "coverage": "22 helper, 15 decoded and four native tests plus complete owning suites. Parent independently reproduces 20 helper and 14 decoded failures.",
+        "reproducibility": "Pinned source hashes, LLVM opcodes, seeds, exact counters, baseline failures, command lines, logs and final source hashes recorded.",
+        "contradictions": "Alternative-half exceptional rules, raw encoding compatibility, old integer destination fixtures and A32 staged versus A64 fused refinement are explicitly distinguished.",
+        "provenance": "Pinned Arm shared/instruction ASL, LLVM encodings and actual A64 FP16 numerical/status execution.",
+        "bounded_expansion": "Remaining half integer/fixed/estimate/FMLAL, trap delivery, profile admission and native A32 requirements remain open.",
+        "worktree_integrity": "All 14 owned root baseline hashes/absences matched before import; only those paths and this ledger may be staged. Existing untracked files preserved.",
+        "behavioral_evidence": "Zero filtered tests in complete owning suites; target cfg elision counted separately. Host FP state restored and tested.",
+        "repository_consistency": "Public existing signatures and raw widening behavior retained, private format-aware factoring, modules registered; no ABI/serialization changes."
       }
     }
   ],

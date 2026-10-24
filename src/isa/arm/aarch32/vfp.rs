@@ -425,7 +425,9 @@ pub enum VfpDataType {
 
 mod arithmetic;
 mod half;
+mod half_conversion;
 pub use arithmetic::*;
+pub use half_conversion::*;
 mod fused;
 pub use fused::*;
 mod selection;
@@ -479,79 +481,6 @@ pub fn vrint_f16_bits(bits: u16, mode: RoundingMode, exact: bool, fpscr: &mut Fp
     half::round_integral(bits, mode, exact, fpscr)
 }
 
-/// Convert IEEE-754 binary16 bits to single-precision.
-pub fn vcvt_f32_f16_bits(bits: u16) -> f32 {
-    let sign = ((bits as u32) & 0x8000) << 16;
-    let exp = (bits >> 10) & 0x1F;
-    let frac = (bits & 0x03FF) as u32;
-
-    let out = match exp {
-        0 if frac == 0 => sign,
-        0 => {
-            let value = (frac as f32) * 2.0f32.powi(-24);
-            return if sign != 0 { -value } else { value };
-        }
-        0x1F => sign | 0x7F80_0000 | (frac << 13),
-        _ => {
-            let exp32 = ((exp as u32) + (127 - 15)) << 23;
-            sign | exp32 | (frac << 13)
-        }
-    };
-    f32::from_bits(out)
-}
-
-/// Convert single-precision to IEEE-754 binary16 bits.
-pub fn vcvt_f16_bits_f32(val: f32, fpscr: &mut Fpscr) -> u16 {
-    let bits = val.to_bits();
-    let sign = ((bits >> 16) & 0x8000) as u16;
-    let exp = ((bits >> 23) & 0xFF) as i32;
-    let frac = bits & 0x7F_FFFF;
-
-    if exp == 0xFF {
-        if frac == 0 {
-            return sign | 0x7C00;
-        }
-        fpscr.set_ioc(true);
-        return sign | 0x7E00 | ((frac >> 13) as u16);
-    }
-
-    let exp16 = exp - 127 + 15;
-    if exp16 >= 0x1F {
-        fpscr.set_ofc(true);
-        fpscr.set_ixc(true);
-        return sign | 0x7C00;
-    }
-
-    if exp16 <= 0 {
-        if exp16 < -10 {
-            if frac != 0 || exp != 0 {
-                fpscr.set_ufc(true);
-                fpscr.set_ixc(true);
-            }
-            return sign;
-        }
-        let mant = frac | 0x80_0000;
-        let rounded = round_shift_right_ties_even(mant, (14 - exp16) as u32);
-        if rounded != 0 {
-            fpscr.set_ufc(true);
-        }
-        return sign | rounded as u16;
-    }
-
-    let mut rounded_frac = round_shift_right_ties_even(frac, 13);
-    let mut final_exp = exp16;
-    if rounded_frac == 0x400 {
-        rounded_frac = 0;
-        final_exp += 1;
-        if final_exp >= 0x1F {
-            fpscr.set_ofc(true);
-            fpscr.set_ixc(true);
-            return sign | 0x7C00;
-        }
-    }
-    sign | ((final_exp as u16) << 10) | (rounded_frac as u16)
-}
-
 /// Expand an 8-bit VFP immediate to a single-precision bit pattern.
 pub fn vfp_expand_imm_f32(imm8: u8) -> u32 {
     let imm8 = imm8 as u32;
@@ -580,20 +509,6 @@ pub fn vfp_expand_imm_f64(imm8: u8) -> u64 {
     let exp = ((!b6 & 1) << 10) | ((if b6 != 0 { 0xFF } else { 0 }) << 2) | ((imm8 >> 4) & 0x3);
     let mant = (imm8 & 0xF) << 48;
     (sign << 63) | (exp << 52) | mant
-}
-
-fn round_shift_right_ties_even(value: u32, shift: u32) -> u32 {
-    if shift == 0 {
-        return value;
-    }
-    let quotient = value >> shift;
-    let remainder = value & ((1u32 << shift) - 1);
-    let halfway = 1u32 << (shift - 1);
-    if remainder > halfway || (remainder == halfway && (quotient & 1) != 0) {
-        quotient + 1
-    } else {
-        quotient
-    }
 }
 
 /// Update FPSCR exception flags after a single-precision operation.

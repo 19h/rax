@@ -1,10 +1,17 @@
 #[path = "fp_half_contract.rs"]
 mod fp_half_contract;
+#[path = "fp_half_conversion_decoded.rs"]
+mod fp_half_conversion_decoded;
+#[cfg(all(target_arch = "aarch64", target_feature = "fp16"))]
+#[path = "fp_half_conversion_native.rs"]
+mod fp_half_conversion_native;
 #[path = "fp_half_decoded.rs"]
 mod fp_half_decoded;
 #[cfg(all(target_arch = "aarch64", target_feature = "fp16"))]
 #[path = "fp_half_native.rs"]
 mod fp_half_native;
+#[path = "fp_half_precision_contract.rs"]
+mod fp_half_precision_contract;
 #[path = "fp_integer_contract.rs"]
 mod fp_integer_contract;
 #[path = "fp_integer_decoded.rs"]
@@ -1024,7 +1031,7 @@ fn scalar_conversions_decode_and_execute() {
         exec_one(&mut cpu, &mut mem, 0xEEB8_09E0),
         ExecResult::Continue
     ));
-    assert_eq!(cpu.vfp.read_s_bits(0), 0xaaaa_c200);
+    assert_eq!(cpu.vfp.read_s_bits(0), 0x0000_c200);
 
     cpu.vfp.write_s_bits(0, 0xbbbb_0000);
     cpu.vfp.write_s_bits(1, 5);
@@ -1032,7 +1039,7 @@ fn scalar_conversions_decode_and_execute() {
         exec_one(&mut cpu, &mut mem, 0xEEB8_0960),
         ExecResult::Continue
     ));
-    assert_eq!(cpu.vfp.read_s_bits(0), 0xbbbb_4500);
+    assert_eq!(cpu.vfp.read_s_bits(0), 0x0000_4500);
 
     cpu.vfp.write_s_bits(1, (-42i32) as u32);
     assert!(matches!(

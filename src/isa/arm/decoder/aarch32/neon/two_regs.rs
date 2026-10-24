@@ -401,11 +401,10 @@ impl Aarch32Decoder {
         if (raw >> 25) != 0b1111001
             || ((raw >> 24) & 1) != 1
             || ((raw >> 23) & 1) != 1
-            || ((raw >> 20) & 0x7) != 0b011
+            || ((raw >> 20) & 0x3) != 0b11
             || ((raw >> 16) & 0xF) != 0b0110
             || ((raw >> 7) & 1) != 0
             || ((raw >> 6) & 1) != 0
-            || ((raw >> 5) & 1) != 0
             || ((raw >> 4) & 1) != 0
         {
             return None;
@@ -418,7 +417,7 @@ impl Aarch32Decoder {
         };
 
         let vd = (((raw >> 22) & 1) << 4) | ((raw >> 12) & 0xF);
-        let vm = raw & 0xF;
+        let vm = (((raw >> 5) & 1) << 4) | (raw & 0xF);
         if (mnemonic == Mnemonic::VCVT_F16_F32 && (vm & 1) != 0)
             || (mnemonic == Mnemonic::VCVT_F32_F16 && (vd & 1) != 0)
         {

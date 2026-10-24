@@ -1,6 +1,8 @@
 //! A32 reciprocal estimate and refinement instruction execution.
 use super::*;
-use crate::isa::arm::aarch32::vfp::{vrecpe_f32, vrecps_f32, vrsqrte_f32, vrsqrts_f32};
+use crate::isa::arm::aarch32::vfp::{
+    vrecpe_f32, vrecps_f16_bits, vrecps_f32, vrsqrte_f32, vrsqrts_f16_bits, vrsqrts_f32,
+};
 use crate::smir::interpret::SmirInterpreter;
 impl<'a, M: ArmMemory> Executor<'a, M> {
     pub(crate) fn exec_neon_recip_estimate(&mut self, insn: &DecodedInsn) -> ExecResult {
@@ -158,38 +160,25 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
             let m_elements = self.neon_read_vector_elements_u64(m + reg, 1, ebytes);
             let mut out = Vec::with_capacity(n_elements.len());
             for (n_elem, m_elem) in n_elements.into_iter().zip(m_elements.into_iter()) {
-                let lhs = match size {
-                    NeonSize::S32 => f32::from_bits(n_elem as u32),
-                    NeonSize::H16 => vcvt_f32_f16_bits(n_elem as u16),
-                    _ => return ExecResult::Undefined,
-                };
-                let rhs = match size {
-                    NeonSize::S32 => f32::from_bits(m_elem as u32),
-                    NeonSize::H16 => vcvt_f32_f16_bits(m_elem as u16),
-                    _ => return ExecResult::Undefined,
-                };
-                let result = if size == NeonSize::S32 {
-                    if insn.mnemonic == Mnemonic::VRECPS {
-                        vrecps_f32(lhs, rhs, &mut fpscr)
-                    } else {
-                        vrsqrts_f32(lhs, rhs, &mut fpscr)
-                    }
-                } else if lhs.is_nan() || rhs.is_nan() {
-                    f32::NAN
-                } else if insn.mnemonic == Mnemonic::VRECPS {
-                    if (lhs.is_infinite() && rhs == 0.0) || (rhs.is_infinite() && lhs == 0.0) {
-                        2.0
-                    } else {
-                        (-lhs).mul_add(rhs, 2.0)
-                    }
-                } else if (lhs.is_infinite() && rhs == 0.0) || (rhs.is_infinite() && lhs == 0.0) {
-                    1.5
-                } else {
-                    (-lhs).mul_add(rhs, 3.0) * 0.5
-                };
                 let result = match size {
-                    NeonSize::S32 => u64::from(result.to_bits()),
-                    NeonSize::H16 => u64::from(vcvt_f16_bits_f32(result, &mut self.cpu.vfp.fpscr)),
+                    NeonSize::S32 => {
+                        let lhs = f32::from_bits(n_elem as u32);
+                        let rhs = f32::from_bits(m_elem as u32);
+                        let value = if insn.mnemonic == Mnemonic::VRECPS {
+                            vrecps_f32(lhs, rhs, &mut fpscr)
+                        } else {
+                            vrsqrts_f32(lhs, rhs, &mut fpscr)
+                        };
+                        u64::from(value.to_bits())
+                    }
+                    NeonSize::H16 => {
+                        let value = if insn.mnemonic == Mnemonic::VRECPS {
+                            vrecps_f16_bits(n_elem as u16, m_elem as u16, &mut fpscr)
+                        } else {
+                            vrsqrts_f16_bits(n_elem as u16, m_elem as u16, &mut fpscr)
+                        };
+                        u64::from(value)
+                    }
                     _ => return ExecResult::Undefined,
                 };
                 out.push(result);

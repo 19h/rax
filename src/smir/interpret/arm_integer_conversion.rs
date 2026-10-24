@@ -116,6 +116,31 @@ impl SmirInterpreter {
         fractional_bits: u32,
         control: u32,
     ) -> (u64, u32) {
+        Self::arm_eval_integer_to_fp_format(
+            raw,
+            if double { X86_SIMD_F64 } else { X86_SIMD_F32 },
+            signed,
+            fractional_bits,
+            control,
+        )
+    }
+    pub(crate) fn arm_eval_half_integer_to_fp(raw: u32, signed: bool, control: u32) -> (u16, u32) {
+        let (bits, status) = Self::arm_eval_integer_to_fp_format(
+            raw,
+            super::X86_SIMD_F16,
+            signed,
+            0,
+            super::arm_format::half_control(control),
+        );
+        (bits as u16, status)
+    }
+    pub(super) fn arm_eval_integer_to_fp_format(
+        raw: u32,
+        format: super::X86SimdFpFormat,
+        signed: bool,
+        fractional_bits: u32,
+        control: u32,
+    ) -> (u64, u32) {
         let negative = signed && (raw as i32) < 0;
         let magnitude = if negative {
             (raw as i32).unsigned_abs()
@@ -129,7 +154,7 @@ impl SmirInterpreter {
             u128::from(magnitude),
             -(fractional_bits.min(2048) as i32),
             false,
-            if double { X86_SIMD_F64 } else { X86_SIMD_F32 },
+            format,
             super::arm_arithmetic::rounding(control),
             control,
         )

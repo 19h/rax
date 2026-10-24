@@ -29,3 +29,18 @@ pub fn vrecps_f32(first: f32, second: f32, fpscr: &mut Fpscr) -> f32 {
 pub fn vrsqrts_f32(first: f32, second: f32, fpscr: &mut Fpscr) -> f32 {
     step(first, second, true, fpscr)
 }
+
+/// A32 half reciprocal refinement with a rounded half product and standard controls.
+pub fn vrecps_f16_bits(first: u16, second: u16, fpscr: &mut Fpscr) -> u16 {
+    half_step(first, second, false, fpscr)
+}
+/// A32 half reciprocal-square-root refinement with one final halved subtraction.
+pub fn vrsqrts_f16_bits(first: u16, second: u16, fpscr: &mut Fpscr) -> u16 {
+    half_step(first, second, true, fpscr)
+}
+fn half_step(first: u16, second: u16, sqrt: bool, fpscr: &mut Fpscr) -> u16 {
+    let (bits, status) =
+        SmirInterpreter::arm_eval_half_recip_step(first, second, sqrt, fpscr.bits());
+    *fpscr = Fpscr::from_bits(fpscr.bits() | status);
+    bits
+}

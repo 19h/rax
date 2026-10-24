@@ -1,4 +1,7 @@
 //! fp.rs
+use crate::isa::arm::aarch32::vfp::{
+    vcvt_f16_bits_s32, vcvt_f16_bits_u32, vcvt_f32_f16_bits_with_fpscr,
+};
 
 use crate::isa::arm::ExecutionState;
 use crate::isa::arm::aarch32::cpu::{
@@ -708,13 +711,13 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
             }
             Mnemonic::VCVT_F16_S32 => {
                 let value = self.cpu.vfp.read_s_bits(m) as i32;
-                let bits = vcvt_f16_bits_f32(vcvt_f32_s32(value), &mut self.cpu.vfp.fpscr);
-                self.cpu.vfp.write_h_bits(d, bits);
+                let bits = vcvt_f16_bits_s32(value, &mut self.cpu.vfp.fpscr);
+                self.cpu.vfp.write_s_bits(d, u32::from(bits));
             }
             Mnemonic::VCVT_F16_U32 => {
                 let value = self.cpu.vfp.read_s_bits(m);
-                let bits = vcvt_f16_bits_f32(vcvt_f32_u32(value), &mut self.cpu.vfp.fpscr);
-                self.cpu.vfp.write_h_bits(d, bits);
+                let bits = vcvt_f16_bits_u32(value, &mut self.cpu.vfp.fpscr);
+                self.cpu.vfp.write_s_bits(d, u32::from(bits));
             }
             Mnemonic::VCVT_S32_F32 => {
                 let value = vcvt_s32_f32(self.cpu.vfp.read_s(m), &mut self.cpu.vfp.fpscr);
@@ -876,7 +879,8 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
                     0
                 };
                 let bits = (self.cpu.vfp.read_s_bits(m) >> shift) as u16;
-                self.cpu.vfp.write_s(d, vcvt_f32_f16_bits(bits));
+                let value = vcvt_f32_f16_bits_with_fpscr(bits, &mut self.cpu.vfp.fpscr);
+                self.cpu.vfp.write_s(d, value);
             }
             Mnemonic::VCVTB_F16_F32 | Mnemonic::VCVTT_F16_F32 => {
                 let shift = if insn.mnemonic == Mnemonic::VCVTT_F16_F32 {
@@ -977,12 +981,11 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
         (raw >> 25) == 0b1111001
             && ((raw >> 24) & 1) == 1
             && ((raw >> 23) & 1) == 1
-            && ((raw >> 20) & 0x7) == 0b011
+            && ((raw >> 20) & 0x3) == 0b11
             && ((raw >> 16) & 0xF) == 0b0110
             && matches!((raw >> 8) & 0xF, 0b0110 | 0b0111)
             && ((raw >> 7) & 1) == 0
             && ((raw >> 6) & 1) == 0
-            && ((raw >> 5) & 1) == 0
             && ((raw >> 4) & 1) == 0
     }
 
@@ -1056,6 +1059,9 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
     }
 
     pub(crate) fn exec_neon_fp16_convert(&mut self, insn: &DecodedInsn) -> ExecResult {
+        self.with_standard_fp_controls(|executor| executor.exec_neon_fp16_convert_inner(insn))
+    }
+    fn exec_neon_fp16_convert_inner(&mut self, insn: &DecodedInsn) -> ExecResult {
         if !self.cpu.vfp.is_enabled() {
             return ExecResult::Exception(ExceptionType::UndefinedInstruction);
         }
@@ -1064,7 +1070,7 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
         }
 
         let d = ((((insn.raw >> 22) & 1) << 4) | ((insn.raw >> 12) & 0xF)) as u8;
-        let m = (insn.raw & 0xF) as u8;
+        let m = ((((insn.raw >> 5) & 1) << 4) | (insn.raw & 0xF)) as u8;
         match insn.mnemonic {
             Mnemonic::VCVT_F16_F32 => {
                 if (m & 1) != 0 || m + 1 >= 32 {
@@ -1086,7 +1092,10 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
                 let values = self.neon_read_vector_elements_u64(m, 1, 2);
                 let mut out = Vec::with_capacity(values.len());
                 for elem in values {
-                    out.push(u64::from(vcvt_f32_f16_bits(elem as u16).to_bits()));
+                    out.push(u64::from(
+                        vcvt_f32_f16_bits_with_fpscr(elem as u16, &mut self.cpu.vfp.fpscr)
+                            .to_bits(),
+                    ));
                 }
                 self.neon_write_vector_elements_u64(d, 2, 4, &out);
             }
