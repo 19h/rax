@@ -824,7 +824,22 @@
         "/tmp/rax-a32-fpscr-profile/final-rosetta-vfp.log",
         "/tmp/rax-a32-fpscr-profile/final-capi.log",
         "/tmp/rax-a32-fpscr-profile/final-system-oracle.log",
-        "/tmp/rax-a32-fpscr-profile/final-register-oracle.log"
+        "/tmp/rax-a32-fpscr-profile/final-register-oracle.log",
+        "/Users/int/dev/rax-audit-work/rax-x86-legacy-paging/primary-source-register.json",
+        "/Users/int/dev/rax-audit-work/rax-x86-legacy-paging/final-oracle/manifest.json",
+        "/Users/int/dev/rax-audit-work/rax-x86-legacy-paging/checks.jsonl",
+        "/Users/int/dev/rax-audit-work/rax-x86-legacy-paging/final-build.log",
+        "/Users/int/dev/rax-audit-work/rax-x86-legacy-paging/final-integration.log",
+        "/Users/int/dev/rax-audit-work/rax-x86-legacy-paging/final-clippy.log",
+        "/Users/int/dev/rax-audit-work/rax-x86-legacy-paging/final-fmt.log",
+        "/Users/int/dev/rax-audit-work/rax-x86-legacy-paging/final-doc.log",
+        "/Users/int/dev/rax-audit-work/rax-x86-legacy-paging/final-ci-owning.log",
+        "/Users/int/dev/rax-audit-work/rax-x86-legacy-paging/final-library.log",
+        "/Users/int/dev/rax-audit-work/rax-x86-legacy-paging/final-rosetta-paging.log",
+        "/Users/int/dev/rax-audit-work/rax-x86-legacy-paging/final-capi.log",
+        "/Users/int/dev/rax-audit-work/rax-x86-legacy-paging/final-oracle.log",
+        "/Users/int/dev/rax-audit-work/rax-x86-legacy-paging/recovery-event.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-profile/green-v2/manifest.json"
       ],
       "remaining_validation": [
         "Other architecture/profile independent oracles and native hardware gates",
@@ -838,8 +853,37 @@
     },
     {
       "id": "x86-legacy-paging",
-      "status": "pending",
-      "evidence": []
+      "status": "partially_validated",
+      "evidence": [
+        "src/isa/x86_64/memory.rs",
+        "src/isa/x86_64/memory/paging.rs",
+        "src/isa/x86_64/memory/protection.rs",
+        "src/isa/x86_64/memory/paging_legacy32.rs",
+        "tests/suites/isa/x86_64/paging_legacy32.rs",
+        "tests/suites/isa/x86_64/paging_contract.rs",
+        "tools/x86-paging/legacy_guest.s",
+        "tools/x86-paging/legacy_oracle.py",
+        "tools/x86-paging/README.md",
+        "/Users/int/dev/rax-audit-work/rax-x86-legacy-paging/primary-source-register.json",
+        "/Users/int/dev/rax-audit-work/rax-x86-legacy-paging/final-oracle/manifest.json",
+        "/Users/int/dev/rax-audit-work/rax-x86-legacy-paging/checks.jsonl",
+        "/Users/int/dev/rax-audit-work/rax-x86-legacy-paging/final-build.log",
+        "/Users/int/dev/rax-audit-work/rax-x86-legacy-paging/final-integration.log",
+        "/Users/int/dev/rax-audit-work/rax-x86-legacy-paging/final-clippy.log",
+        "/Users/int/dev/rax-audit-work/rax-x86-legacy-paging/final-fmt.log",
+        "/Users/int/dev/rax-audit-work/rax-x86-legacy-paging/final-doc.log",
+        "/Users/int/dev/rax-audit-work/rax-x86-legacy-paging/final-ci-owning.log",
+        "/Users/int/dev/rax-audit-work/rax-x86-legacy-paging/final-library.log",
+        "/Users/int/dev/rax-audit-work/rax-x86-legacy-paging/final-rosetta-paging.log",
+        "/Users/int/dev/rax-audit-work/rax-x86-legacy-paging/final-capi.log",
+        "/Users/int/dev/rax-audit-work/rax-x86-legacy-paging/final-oracle.log",
+        "/Users/int/dev/rax-audit-work/rax-x86-legacy-paging/recovery-event.json",
+        "/Users/int/dev/rax-audit-work/rax-a32-profile/green-v2/manifest.json"
+      ],
+      "remaining_validation": [
+        "Legacy PAE walk, cached PDPTE loading/validation at control-register writes and fault rollback",
+        "32-bit Linux boot and physical x86 validation"
+      ]
     },
     {
       "id": "arm32-lpae",
@@ -8950,7 +8994,418 @@
           }
         ]
       }
+    },
+    {
+      "id": "x86-non-pae-paging-contract",
+      "status": "locally_validated",
+      "scope": "Non-PAE32-bit4KiB/4MiB translation,32-bit entry access/status writes, effective permissions, PSE/PAT/PSE36 profile rules and translation-mode cache coherence. Legacy PAE remains separate.",
+      "assumptions": [
+        {
+          "id": "L1",
+          "assumption": "Current deterministic CPUID advertises PSE, but neither PAT nor PSE36; Intel0865.3 therefore defines the applicable reserved bits.",
+          "dependent_result": "PSE selects4MiB PDEs, with bits21:12 reserved in those entries; PTE bit7 is reserved with PSE=1. PSE=0 ignores the PDE PS/PTE PAT selectors.",
+          "stress_test": "Every large-PDE reserved bit, PTE bit7 with both PSE states and absent-entry precedence.",
+          "falsification_probe": "CPUID profile changes, an unreserved bit faults, or a reserved bit passes under PSE=1.",
+          "status": "retained for the current CPUID profile"
+        },
+        {
+          "id": "L2",
+          "assumption": "Paging entry accesses and A/D modifications are32-bit little-endian and must preserve adjacent entries.",
+          "dependent_result": "Aligned AtomicU32 loads/status ORs and4-byte dirty marking; permission checks precede setting dirty.",
+          "stress_test": "Both tested entry addresses are4 modulo8; adjacent canaries, warm reads followed by stores and denied writes.",
+          "falsification_probe": "Alignment failure, adjacent corruption, lost guest flags or dirty status after a denied write.",
+          "status": "retained"
+        },
+        {
+          "id": "L3",
+          "assumption": "Cached translations depend on paging/page-size mode as well as CR3; legacy data accesses ignore IA-32e-only PKRU policy.",
+          "dependent_result": "Mode-aware flush, including an observed paging-disabled interval, width normalization before cold/warm lookup, and long-mode qualification for protection keys.",
+          "stress_test": "PSE changes at unchanged CR3, PG off/on with a remapped leaf, high/low CR3 ignored bits, all effective permission/CPL/WP/access/warm combinations and legacy PKRU/NXE.",
+          "falsification_probe": "Stale physical address, protection-key fault in legacy paging, or mismatched cold/warm address width.",
+          "status": "retained"
+        },
+        {
+          "id": "L4",
+          "assumption": "QEMU is an independent execution probe only for the documented matching subset; its feature-reserved behavior and RSVD P flag are not Intel reference results.",
+          "dependent_result": "RAX asserts Intel reserved code9. The separate guest records QEMU code8 and excludes absent-feature reserved checks from its matching coverage claim.",
+          "stress_test": "Original rejected guest/check logs, primary Intel tables/error-code definition, retained QEMU source and passing narrowed probe.",
+          "falsification_probe": "Any assertion treats a QEMU-specific difference as the required RAX result or claims full reserved-bit equivalence.",
+          "status": "retained"
+        }
+      ],
+      "primary_sources": {
+        "intel": {
+          "path": "/Users/int/dev/rax/docs/specifications/x86_64/325462-sdm-vol-1-2abcd-3abcd-4-1.pdf",
+          "sha256": "6f6286056edad4ffdca8716e9039e9598e9e71ab029284facde6a786e1b65f73",
+          "revision": "086, December2024",
+          "sections": [
+            "5.3, tables5-3 through5-6: non-PAE32-bit paging and CPUID-dependent reserved bits",
+            "5.7: page-fault P/RSVD bit contracts",
+            "5.4.1: PAE PDPTE loading and #GP"
+          ],
+          "visually_inspected_pdf_page": 3202
+        },
+        "qemu_source": {
+          "url": "https://raw.githubusercontent.com/qemu/qemu/master/target/i386/tcg/system/excp_helper.c",
+          "sha256": "cfdb9104b0a75916ea429d3105613877e249a5ca26517d9731adf110753bcad9",
+          "version_limit": "Downloaded master source, pinned by content hash; corresponding installed11.1.2 source revision is unknown."
+        },
+        "observed_oracle_differences": [
+          {
+            "impact": "high",
+            "item": "TCG accepts some PSE36/PAT fields with their CPUID bits cleared; this is excluded from the Intel-reserved-bit reference claim."
+          },
+          {
+            "impact": "high",
+            "item": "TCG reserved read faults report code8, while Intel0865.7 requires code9. The guest explicitly records the QEMU-specific result."
+          }
+        ],
+        "bounded_oracle_scope": "Selected4KiB/4MiB mappings, A/D, PSE transitions, absent PTE, supervisor WP, PSE0 ignored bits and PG off/on behavior. No full reserved-bit or physical-hardware equivalence."
+      },
+      "affected_planes": {
+        "mmu": "Explicit two-level legacy walker; shared access predicates, TLB mapping representation and data/fetch helpers. Existing four-level walker retained.",
+        "status": "32-bit atomic entry loads/ORs preserve adjacent entries and existing flags.",
+        "cache": "CR3 plus PG/PAE/PSE/LME/LMA context invalidates stale mappings; disabled-paging intervals observed. Legacy linear width normalized before TLB use.",
+        "protection": "PKRU qualifies on IA-32e mode; common WP/user/SMAP/SMEP predicates remain the existing implementation.",
+        "jit": "Existing translated-memory adapters and source-page checks use the MMU. Applicable direct and A64 JIT suites regress shared behavior; no new32-bit native lowering claim.",
+        "embedding": "No C ABI or serialized CPU-state fields changed; new Mmu cache discriminator is derived runtime state."
+      },
+      "complexity": "O(1) time/space per translation: at most two32-bit entries, versus the existing four64-bit entries for IA-32e. Translation-context changes invalidate the fixed256-entry TLB in O(256) time; steady-state context checks are O(1). Permission matrix executes576 full combinations.",
+      "bounded_scope": [
+        {
+          "impact": "high",
+          "item": "Legacy PAE requires cached PDPTE loading/validation at control writes, including #GP, and remains unimplemented in this group.",
+          "blocks": "Complete x86-legacy-paging closure."
+        },
+        {
+          "impact": "high",
+          "item": "The independent probe does not establish Intel reserved-bit equivalence, physical x86 execution or a32-bit Linux boot.",
+          "blocks": "Global independent-oracles and legacy Linux closure."
+        },
+        {
+          "impact": "medium",
+          "item": "PAT/PSE36 enumeration changes would require revisiting the legacy walker reserved masks. Current capability bits remain unchanged.",
+          "blocks": false
+        }
+      ],
+      "quality_gates": {
+        "assumptions": "L1-L4 have dependent results and explicit falsification probes.",
+        "coverage": "Eight regressions,576 permission combinations, full owning direct/JIT/paging targets, library, Rosetta paging and C API.",
+        "reproducibility": "Pinned Intel086 PDF SHA and visual table inspection, exact QEMU source SHA/runtime logs, committed guest/runner, source fingerprints and exact commands.",
+        "contradictions": "QEMU absent-feature/RSVD differences are measured and excluded from equivalence claims; RAX keeps Intel-defined assertions.",
+        "provenance": "Intel-issued archived SDM086 and independently executed QEMU guest; exact source revision of installed QEMU remains unknown and is not fabricated.",
+        "bounded_expansion": "PAE/PDPTE loading, Linux boot and physical hardware remain open.",
+        "worktree_integrity": "Guarded explicit paths; unrelated tracked/untracked user work preserved.",
+        "behavioral_evidence": "All eight new regressions fail on the parent. Complete post-fix owning counters required.",
+        "repository_consistency": "Dedicated legacy walker, existing target registration and adjacent self-contained probe documentation; no global defaults or dependency changes."
+      },
+      "baseline": "bf24c441c17e7facaa65a7627e97c2ada025751c",
+      "validation": {
+        "checks": [
+          {
+            "check": "final-build",
+            "args": [
+              "cargo",
+              "+stable",
+              "build",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--all-targets"
+            ],
+            "code": 0,
+            "seconds": 574.4914848339977
+          },
+          {
+            "check": "final-integration",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--test",
+              "x86_64_paging",
+              "--test",
+              "x86_64",
+              "--test",
+              "smir_jit_x86_aarch64",
+              "--test",
+              "isa_oracle",
+              "--",
+              "--test-threads=4"
+            ],
+            "code": 0,
+            "seconds": 3.8579995000036433
+          },
+          {
+            "check": "final-clippy",
+            "args": [
+              "cargo",
+              "+stable",
+              "clippy",
+              "--locked",
+              "--offline",
+              "--all-targets",
+              "--features",
+              "x86_64-suite"
+            ],
+            "code": 0,
+            "seconds": 180.12560283299536
+          },
+          {
+            "check": "final-fmt",
+            "args": [
+              "cargo",
+              "+stable",
+              "fmt",
+              "--all",
+              "--check"
+            ],
+            "code": 0,
+            "seconds": 11.944799209013581
+          },
+          {
+            "check": "final-doc",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--doc"
+            ],
+            "code": 0,
+            "seconds": 4.530645042075776
+          },
+          {
+            "check": "final-ci-owning",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--test",
+              "ci_actions_pinned"
+            ],
+            "code": 0,
+            "seconds": 0.14094054198358208
+          },
+          {
+            "check": "final-library",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--lib",
+              "--",
+              "--test-threads=4"
+            ],
+            "code": 0,
+            "seconds": 365.2268384580966
+          },
+          {
+            "check": "final-rosetta-paging",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "--no-default-features",
+              "--features",
+              "x86_64-suite,smir-jit",
+              "--target",
+              "x86_64-apple-darwin",
+              "--test",
+              "x86_64_paging",
+              "--",
+              "--test-threads=4"
+            ],
+            "code": 0,
+            "seconds": 108.89198995800689
+          },
+          {
+            "check": "final-capi",
+            "args": [
+              "cargo",
+              "+stable",
+              "test",
+              "--locked",
+              "--offline",
+              "-p",
+              "rax-capi",
+              "--",
+              "--test-threads=4"
+            ],
+            "code": 0,
+            "seconds": 118.14344833407085
+          },
+          {
+            "check": "final-oracle",
+            "args": [
+              "python3",
+              "/Users/int/dev/rax/tools/x86-paging/legacy_oracle.py",
+              "--llvm-bin",
+              "/Users/int/local/bin",
+              "--work-dir",
+              "/Users/int/dev/rax-audit-work/rax-x86-legacy-paging/final-oracle"
+            ],
+            "code": 0,
+            "seconds": 0.27988879196345806
+          }
+        ],
+        "integration": {
+          "isa_oracle": {
+            "passed": 101,
+            "failed": 0,
+            "ignored": 0,
+            "filtered": 0,
+            "elapsed_seconds": 0.16
+          },
+          "smir_jit_x86_aarch64": {
+            "passed": 31,
+            "failed": 0,
+            "ignored": 0,
+            "filtered": 0,
+            "elapsed_seconds": 0.02
+          },
+          "x86_64": {
+            "passed": 28559,
+            "failed": 0,
+            "ignored": 3,
+            "filtered": 0,
+            "elapsed_seconds": 3.41
+          },
+          "x86_64_paging": {
+            "passed": 32,
+            "failed": 0,
+            "ignored": 0,
+            "filtered": 0,
+            "elapsed_seconds": 0.06
+          }
+        },
+        "complete_library": {
+          "passed": 10437,
+          "failed": 0,
+          "ignored": 2,
+          "filtered": 0,
+          "elapsed_seconds": 365.11
+        },
+        "complete_rosetta_paging": {
+          "passed": 32,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0,
+          "elapsed_seconds": 0.1
+        },
+        "doctests": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 5,
+          "filtered": 0,
+          "elapsed_seconds": 0.0
+        },
+        "ci_owning": {
+          "passed": 12,
+          "failed": 0,
+          "ignored": 0,
+          "filtered": 0,
+          "elapsed_seconds": 0.05
+        },
+        "parent_regressions": "Historical pre-deletion observation:8 tests, all8 fail on the parent. Summary retained in this session; original raw parent log was deleted.",
+        "permission_matrix_executions": 576,
+        "independent_guest": {
+          "result": "selected_contracts_passed",
+          "page_faults": 3,
+          "limits": [
+            "TCG accepts some PAT/PSE36 fields despite CPUID feature absence.",
+            "TCG reserved fault has P=0 (code8), Intel086 requires P=1 (code9).",
+            "No full reserved-bit, PAE, long-mode or physical-hardware claim."
+          ],
+          "manifest": "/Users/int/dev/rax-audit-work/rax-x86-legacy-paging/final-oracle/manifest.json"
+        },
+        "product_source_fingerprint": {
+          "rust_and_build_sources_sha256": "85ec58084c1d4c90628361903de82d8fbd127a978ba796b4516daefc762f4bbe",
+          "files": 3472
+        },
+        "logs": [
+          "/Users/int/dev/rax-audit-work/rax-x86-legacy-paging/primary-source-register.json",
+          "/Users/int/dev/rax-audit-work/rax-x86-legacy-paging/final-oracle/manifest.json",
+          "/Users/int/dev/rax-audit-work/rax-x86-legacy-paging/checks.jsonl",
+          "/Users/int/dev/rax-audit-work/rax-x86-legacy-paging/final-build.log",
+          "/Users/int/dev/rax-audit-work/rax-x86-legacy-paging/final-integration.log",
+          "/Users/int/dev/rax-audit-work/rax-x86-legacy-paging/final-clippy.log",
+          "/Users/int/dev/rax-audit-work/rax-x86-legacy-paging/final-fmt.log",
+          "/Users/int/dev/rax-audit-work/rax-x86-legacy-paging/final-doc.log",
+          "/Users/int/dev/rax-audit-work/rax-x86-legacy-paging/final-ci-owning.log",
+          "/Users/int/dev/rax-audit-work/rax-x86-legacy-paging/final-library.log",
+          "/Users/int/dev/rax-audit-work/rax-x86-legacy-paging/final-rosetta-paging.log",
+          "/Users/int/dev/rax-audit-work/rax-x86-legacy-paging/final-capi.log",
+          "/Users/int/dev/rax-audit-work/rax-x86-legacy-paging/final-oracle.log",
+          "/Users/int/dev/rax-audit-work/rax-x86-legacy-paging/recovery-event.json",
+          "/Users/int/dev/rax-audit-work/rax-a32-profile/green-v2/manifest.json"
+        ],
+        "capi": [
+          {
+            "passed": 185,
+            "failed": 0,
+            "ignored": 0,
+            "filtered": 0,
+            "elapsed_seconds": 8.32
+          },
+          {
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "filtered": 0,
+            "elapsed_seconds": 0.0
+          }
+        ],
+        "recovery_event": {
+          "observed_utc": "2026-10-24 05:01:15-05:01:50 UTC",
+          "event": "All active temporary A32/x86 evidence and Cargo targets disappeared during validation.",
+          "actor": "unknown",
+          "recovery": "Pending source/scripts reconstructed from this session; main x86 sources retained unchanged. Complete final gates and committed A32 oracle suites rerun in persistent storage.",
+          "prior_run_status": "Observed build, owning integration, Clippy, formatting, doctests and CI-owning checks passed before deletion. Library and remaining gates were interrupted; no completed final validation or commit claimed from that run.",
+          "historical_evidence_limit": "Previously committed groups retain source/tests and ledger summaries, but their raw /tmp log/corpus paths are unavailable after deletion. New independent/native reruns refresh current-state evidence; historical raw files are not fabricated."
+        },
+        "fresh_committed_fp_refresh": {
+          "code": 0,
+          "cases": 573440,
+          "native_tests": 436,
+          "matches_original_corpus_hashes": true,
+          "manifest": "/Users/int/dev/rax-audit-work/rax-a32-profile/green-v2/manifest.json"
+        }
+      }
     }
   ],
-  "group_scope_notes": "Each group records limits at its own validation point; findings contains the current disposition."
+  "group_scope_notes": "Each group records limits at its own validation point; findings contains the current disposition.",
+  "execution_environment_events": [
+    {
+      "observed_utc": "2026-10-24 05:01:15-05:01:50 UTC",
+      "event": "All active temporary A32/x86 evidence and Cargo targets disappeared during validation.",
+      "actor": "unknown",
+      "recovery": "Pending source/scripts reconstructed from this session; main x86 sources retained unchanged. Complete final gates and committed A32 oracle suites rerun in persistent storage.",
+      "prior_run_status": "Observed build, owning integration, Clippy, formatting, doctests and CI-owning checks passed before deletion. Library and remaining gates were interrupted; no completed final validation or commit claimed from that run.",
+      "historical_evidence_limit": "Previously committed groups retain source/tests and ledger summaries, but their raw /tmp log/corpus paths are unavailable after deletion. New independent/native reruns refresh current-state evidence; historical raw files are not fabricated."
+    }
+  ]
 }

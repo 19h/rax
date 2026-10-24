@@ -314,3 +314,6 @@ mod protection;
 
 #[path = "paging_protection_mmu.rs"]
 mod protection_mmu;
+
+#[path = "paging_legacy32.rs"]
+mod paging_legacy32;

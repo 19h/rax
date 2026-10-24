@@ -45,6 +45,7 @@ impl Mmu {
         // denies data access; supervisor WD is bypassed only when CR0.WP=0.
         let rights = (self.protection.pkru >> (2 * u32::from(mapping.protection_key))) & 3;
         let key = !execute
+            && self.long_mode(sregs)
             && mapping.user
             && sregs.cr4 & (1 << 22) != 0
             && (rights & 1 != 0

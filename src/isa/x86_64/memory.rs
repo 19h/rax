@@ -17,6 +17,7 @@ use super::linear::crossing_next;
 #[path = "memory_fault.rs"]
 mod fault;
 mod paging;
+mod paging_legacy32;
 mod protection;
 
 #[cfg(feature = "profiling")]
@@ -374,7 +375,7 @@ struct TlbEntry {
     tag: u64,
     /// Physical page base address (already shifted)
     phys_base: u64,
-    /// Page size shift: 12 for 4KB, 21 for 2MB, 30 for 1GB
+    /// Page size shift: 12 for 4 KiB, 21 for 2 MiB, 22 for 4 MiB, 30 for 1 GiB
     page_shift: u8,
     /// Effective permissions accumulated across the translation hierarchy.
     writable: bool,
@@ -419,6 +420,8 @@ pub struct Mmu {
     tlb: [TlbEntry; TLB_SIZE],
     /// Cached CR3 for detecting context switches
     cached_cr3: u64,
+    /// Paging mode/page-size selectors are part of the cached translation context.
+    cached_paging_mode: u64,
     /// Derived AC/PKRU and explicit/implicit access context.
     protection: protection::ProtectionState,
     /// Bitmap tracking pages that have been executed from (code pages).
@@ -502,6 +505,7 @@ impl Mmu {
             memory,
             tlb: [TlbEntry::default(); TLB_SIZE],
             cached_cr3: 0,
+            cached_paging_mode: u64::MAX,
             protection: Default::default(),
             code_page_bitmap: Box::new([0u8; CODE_PAGE_BITMAP_SIZE]),
             smc_dirty_pages: Vec::new(),
@@ -867,10 +871,30 @@ impl Mmu {
             return flat.translate(vaddr, kind).map_err(Error::from);
         }
 
+        // A mode or page-size change invalidates mappings even when CR3 is
+        // unchanged. Observe disabled paging too, so re-enabling cannot reuse
+        // translations from before an intervening identity-mapped interval.
+        let mode = (sregs.cr0 & cr0::PG)
+            | (sregs.cr4 & (cr4::PAE | (1 << 4)))
+            | (sregs.efer & (efer::LMA | efer::LME));
+        if sregs.cr3 != self.cached_cr3 || mode != self.cached_paging_mode {
+            self.flush_tlb();
+            self.cached_cr3 = sregs.cr3;
+            self.cached_paging_mode = mode;
+        }
+
         // If paging is disabled, virtual = physical
         if !self.paging_enabled(sregs) {
             return Ok(vaddr);
         }
+
+        // Legacy paging translates a 32-bit linear address. Normalize before
+        // the TLB lookup so the walk and warm-cache path use the same width.
+        let vaddr = if self.long_mode(sregs) {
+            vaddr
+        } else {
+            u64::from(vaddr as u32)
+        };
 
         // In 64-bit (long) mode the CPU validates that a linear address is
         // canonical *before* consulting the paging structures. A data access to
@@ -880,12 +904,6 @@ impl Mmu {
         // fault. (Intel SDM Vol. 1 §3.3.7.1 "Canonical Addressing".)
         if self.long_mode(sregs) && !Self::is_canonical(vaddr) {
             return Err(Error::GeneralProtection { error_code: 0 });
-        }
-
-        // Check for CR3 change (context switch) - flush TLB
-        if sregs.cr3 != self.cached_cr3 {
-            self.flush_tlb();
-            self.cached_cr3 = sregs.cr3;
         }
 
         // Recheck current privilege and control state even on a TLB hit.

@@ -1,4 +1,4 @@
-//! Four-level translation and access checks (Intel SDM Vol. 3A, chapter 5).
+//! Paging access checks and four-level translation and access checks (Intel SDM Vol. 3A, chapter 5).
 
 use super::{AccessType, Mmu, PTE_RSVD_MASK, SystemRegisters, TlbEntry, cr0, cr4, efer, flags};
 use crate::error::{Error, Result};
@@ -9,7 +9,7 @@ use vm_memory::{GuestAddress, GuestMemory, VolatileMemory};
 const ADDRESS_MASK: u64 = 0x000f_ffff_ffff_f000;
 
 impl Mmu {
-    fn paging_fault_bits(access: AccessType, sregs: &SystemRegisters) -> u64 {
+    pub(super) fn paging_fault_bits(access: AccessType, sregs: &SystemRegisters) -> u64 {
         let user = sregs.cs.selector & 3 == 3;
         let instruction = matches!(access, AccessType::Execute)
             && (sregs.cr4 & cr4::SMEP != 0
@@ -76,6 +76,9 @@ impl Mmu {
         tlb_tag: u64,
     ) -> Result<u64> {
         if !self.long_mode(sregs) {
+            if sregs.cr4 & cr4::PAE == 0 {
+                return self.translate_legacy32(vaddr, access, sregs, tlb_index, tlb_tag);
+            }
             return Err(Error::Emulator(
                 "only 64-bit long mode paging is supported".to_string(),
             ));
