@@ -300,6 +300,9 @@ impl Cp15State {
             (0, 0, 2, 3) => Some(self.id_isar[3]),
             (0, 0, 2, 4) => Some(self.id_isar[4]),
             (0, 0, 2, 5) => Some(self.id_isar[5]),
+            // ID_ISAR6.FHM: implemented half-to-single VFMAL/VFMSL.
+            // A constant read-only feature adds no serialized state field.
+            (0, 0, 2, 7) => Some(1 << 8),
 
             // CRn=1: System control
             (1, 0, 0, 0) => Some(self.sctlr.bits()),

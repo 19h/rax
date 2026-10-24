@@ -7139,3 +7139,6 @@ mod fp_vsel_native;
 
 #[path = "fp_system_registers.rs"]
 mod fp_system_registers;
+
+#[path = "fp_feature_registers.rs"]
+mod fp_feature_registers;

@@ -57,10 +57,10 @@ impl Default for VfpState {
             fpscr: Fpscr::default(),
             fpexc: 0x4000_0700, // EN defaults on; fixed profile bits10:8 read one.
             fpsid: 0x4103_3070, // Implementation ID for a VFPv3-style unit.
-            // MVFR values indicating VFPv3 + NEON support
-            mvfr0: 0x10110222, // VFPv3 with single and double precision
-            mvfr1: 0x11111111, // NEON support
-            mvfr2: 0x00000000,
+            // Implemented non-trapping scalar/AdvSIMD FP profile.
+            mvfr0: 0x10110222, // Full single/double,32 D registers; no FP traps/short vectors.
+            mvfr1: 0x13211111, // FPHP=3, SIMDHP=2, scalar/AdvSIMD half data processing.
+            mvfr2: 0x00000043, // Scalar/AdvSIMD directed conversion, rounding and number min/max; VSEL.
         }
     }
 }

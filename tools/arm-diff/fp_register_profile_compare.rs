@@ -24,15 +24,36 @@ fn main() {
     let reference = std::fs::read(args.next().expect("reference path")).unwrap();
     assert!(args.next().is_none());
     assert_eq!(input.len(), 4164 * 4);
-    assert_eq!(reference.len(), 12 + 2 * 4164 * 12);
+    assert_eq!(reference.len(), 16 + 2 * 4164 * 12);
     let mut memory = FlatMemory::new(4096, 0);
+    let mut capability_failures = 0;
+    for thumb in [false, true] {
+        let mut cpu = Armv7Cpu::new();
+        cpu.cpsr.t = thumb;
+        for (raw, offset, want) in [
+            (0xeef70a10, 0, 0x10110222),
+            (0xeef60a10, 4, 0x13211111),
+            (0xeef50a10, 8, 0x43),
+        ] {
+            assert_eq!(word(&reference, offset), want);
+            execute(&mut cpu, &mut memory, raw);
+            if cpu.regs[0] != want {
+                capability_failures += 1;
+            }
+        }
+        assert_eq!((word(&reference, 12) >> 8) & 15, 1);
+        execute(&mut cpu, &mut memory, 0xee100ff2);
+        if cpu.regs[0] != 0x100 {
+            capability_failures += 1;
+        }
+    }
     let mut local_failures = 0;
     let mut common_failures = 0;
     let mut raw_profile_differences = 0;
     for state in 0..2 {
         for i in 0..4164 {
             let value = word(&input, i * 4);
-            let offset = 12 + (state * 4164 + i) * 12;
+            let offset = 16 + (state * 4164 + i) * 12;
             assert_eq!(word(&reference, offset), value);
             let qemu_fpscr = word(&reference, offset + 4);
             let qemu_fpexc = word(&reference, offset + 8);
@@ -72,9 +93,9 @@ fn main() {
         }
     }
     println!(
-        "{{\"cases\":8328,\"local_profile_failures\":{local_failures},\"independent_common_field_failures\":{common_failures},\"qemu_raw_profile_differences\":{raw_profile_differences}}}"
+        "{{\"cases\":8328,\"capability_failures\":{capability_failures},\"local_profile_failures\":{local_failures},\"independent_common_field_failures\":{common_failures},\"qemu_raw_profile_differences\":{raw_profile_differences}}}"
     );
-    if local_failures != 0 || common_failures != 0 {
+    if capability_failures != 0 || local_failures != 0 || common_failures != 0 {
         std::process::exit(1);
     }
 }

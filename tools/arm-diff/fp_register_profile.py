@@ -42,7 +42,7 @@ def reference(out: Path, here: Path, llvm: Path, qemu: str, manifest: dict) -> N
     values.extend(rng.getrandbits(32) for _ in range(4096))
     assert len(values) == 4164
     (out / "input.bin").write_bytes(struct.pack("<4164I", *values))
-    size = 12 + 2 * len(values) * 12
+    size = 16 + 2 * len(values) * 12
     source = (here / "fp_register_profile_guest.s").read_text()
     assert source.count("@@COUNT@@") == 1 and source.count("@@OUTPUT_BYTES@@") == 2
     (out / "guest.s").write_text(source.replace("@@COUNT@@", str(len(values)))
@@ -69,7 +69,7 @@ def reference(out: Path, here: Path, llvm: Path, qemu: str, manifest: dict) -> N
     data = (out / "results.bin").read_bytes()
     if len(data) != size:
         raise RuntimeError("Incomplete reference records")
-    manifest["qemu_mvfr"] = [f"{value:08x}" for value in struct.unpack_from("<III", data)]
+    manifest["qemu_feature_registers"] = dict(zip(["MVFR0", "MVFR1", "MVFR2", "ID_ISAR6"], [f"{value:08x}" for value in struct.unpack_from("<IIII", data)]))
     manifest["artifact_sha256"] = {name: digest(out / name) for name in ["input.bin", "results.bin", "guest.elf"]}
 
 
@@ -84,11 +84,11 @@ def main() -> int:
     out = args.work_dir.resolve()
     out.mkdir(parents=True, exist_ok=True)
     owner = out / ".rax-fp-register-profile"
-    if any(out.iterdir()) and (not owner.is_file() or owner.read_text() != "version=1\n"):
-        raise ValueError("Use an empty directory or an owned version1 profile directory")
-    owner.write_text("version=1\n")
+    if any(out.iterdir()) and (not owner.is_file() or owner.read_text() != "version=2\n"):
+        raise ValueError("Use an empty directory or an owned version2 profile directory")
+    owner.write_text("version=2\n")
     here = Path(__file__).resolve().parent
-    manifest = {"version": 1, "cases": 8328, "commands": [],
+    manifest = {"version": 2, "cases": 8328, "commands": [],
                 "tool_sha256": {name: digest(here / name) for name in
                                   ["fp_register_profile.py", "fp_register_profile_guest.s", "fp_register_profile_compare.rs"]},
                 "independent_scope": "Common register fields only; raw Len/Stride and FPEXC.RES1 differences are retained, not treated as full profile equivalence."}

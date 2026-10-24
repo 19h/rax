@@ -164,6 +164,22 @@ The current high-level implementation inventory claims broad SVE, SVE2, and SVE2
 
 The generated LLVM/ASL-derived sweep is the proper authority for finite encoding coverage. Register-only oracle sweeps cannot by themselves validate every multi-vector memory interaction, exception path, streaming mode, or SME surface. Documentation should preserve those exclusions whenever using “complete.”
 
+## AArch32 FP feature registers
+
+The interpreter's default FP implementation exposes these feature registers:
+
+| Register | Value | Implemented feature declaration |
+| --- | --- | --- |
+| MVFR0 | `0x10110222` | Single/double precision and32 D registers; no FP traps or short vectors |
+| MVFR1 | `0x13211111` | Scalar and Advanced SIMD half-precision conversion/data processing, plus fused multiply-accumulate |
+| MVFR2 | `0x43` | Scalar selection, directed conversion, round-to-integral and number min/max; corresponding Advanced SIMD operations |
+| ID_ISAR6 | `0x100` | FHM half-to-single fused multiply-add/subtract only |
+
+These declarations describe the implemented FP feature set and do not identify
+all architectural state as a Cortex-A55 or certify every optional extension of
+a selected architecture revision. [FP system oracles](../../../tools/arm-diff/README_FP_SYSTEM.md)
+document exact independent/native coverage and the register-profile limits.
+
 ## Modern A-profile extensions
 
 Source and tests include work for newer architectural facilities such as:

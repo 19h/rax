@@ -109,3 +109,12 @@ the complete primary-source profile mask. A passing projected comparison is
 not evidence of full QEMU/register-profile equivalence. Physical A32 validation
 and other processor profiles remain separate. The QEMU MVFR values are reported
 as evidence and do not certify RAX's capability declarations.
+
+The version2 register probe adds ID_ISAR6 to a16-byte capability header. It
+requires MVFR0=`0x10110222`, MVFR1=`0x13211111`, MVFR2=`0x43`, and
+ID_ISAR6.FHM=`1` from independent QEMU execution, and checks RAX's corresponding
+A32/T32 guest reads. RAX ID_ISAR6 advertises only FHM (`0x100`); other optional
+ISAR6 extensions are not inferred from the QEMU `max` model. The8328 register
+records and prior12-byte capability header remain byte-identical after removal
+of the new header word. The projected register-profile limitations above still
+apply; feature bits do not certify unlisted instructions or an entire CPU model.

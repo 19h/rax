@@ -13,6 +13,8 @@ _start:
     vmrs r1,mvfr1
     vmrs r2,mvfr2
     stmia r5!,{r0-r2}
+    mrc p15,0,r0,c0,c2,7
+    str r0,[r5],#4
     mov r7,#0
 state:
     adr r9,arm_slot
