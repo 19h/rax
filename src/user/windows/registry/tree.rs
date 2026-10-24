@@ -20,6 +20,14 @@ pub(crate) const DISPLAY_POLICY_KEY: &str =
     "\\Registry\\Machine\\Software\\Policies\\Microsoft\\Windows\\Display";
 pub(crate) const GRE_INITIALIZE_KEY: &str =
     "\\Registry\\Machine\\Software\\Microsoft\\Windows NT\\CurrentVersion\\GRE_Initialize";
+pub(crate) const COMMON_GLOB_USER_SETTINGS_KEY: &str =
+    "\\Registry\\Machine\\System\\CurrentControlSet\\Control\\CommonGlobUserSettings";
+pub(crate) const MUI_SETTINGS_KEY: &str =
+    "\\Registry\\Machine\\Software\\Policies\\Microsoft\\MUI\\Settings";
+pub(crate) const MUI_SYSTEM_KEY: &str =
+    "\\Registry\\Machine\\System\\CurrentControlSet\\Control\\MUI";
+pub(crate) const LANGUAGE_OVERLAY_PACKAGES_KEY: &str =
+    "\\Registry\\Machine\\Software\\Microsoft\\LanguageOverlay\\OverlayPackages";
 pub(super) const MAX_TREE_KEYS: usize = 1024;
 pub(super) const MAX_TREE_DEPTH: usize = 32;
 pub(super) const MAX_COMPONENT_UNITS: usize = 255;
@@ -43,6 +51,10 @@ pub(crate) enum TreeRoot {
     ErrorMessageInstrument,
     DisplayPolicy,
     GreInitialize,
+    CommonGlobUserSettings,
+    MuiSettings,
+    MuiSystem,
+    LanguageOverlayPackages,
 }
 impl TreeRoot {
     pub(crate) fn path(self) -> &'static str {
@@ -57,6 +69,10 @@ impl TreeRoot {
             Self::ErrorMessageInstrument => ERROR_MESSAGE_INSTRUMENT_KEY,
             Self::DisplayPolicy => DISPLAY_POLICY_KEY,
             Self::GreInitialize => GRE_INITIALIZE_KEY,
+            Self::CommonGlobUserSettings => COMMON_GLOB_USER_SETTINGS_KEY,
+            Self::MuiSettings => MUI_SETTINGS_KEY,
+            Self::MuiSystem => MUI_SYSTEM_KEY,
+            Self::LanguageOverlayPackages => LANGUAGE_OVERLAY_PACKAGES_KEY,
         }
     }
 }

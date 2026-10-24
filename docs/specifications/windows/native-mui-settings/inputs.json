@@ -1,0 +1,45 @@
+{
+  "scope": "Four executable views on one ARM64 kernel; fixed MUI Settings root, read-only enumeration and NtOpenKey controls. Native missing root returns STATUS_OBJECT_NAME_NOT_FOUND. No independent x64 kernel claim.",
+  "files": [
+    {
+      "path": "native-mui-settings-v2-arm64.log",
+      "bytes": 20335,
+      "sha256": "00ef6f7ee605b51a11aa1ca28e08fb275daf14f49677808845f71062debe616f"
+    },
+    {
+      "path": "native-mui-settings-v2-x64.log",
+      "bytes": 20333,
+      "sha256": "265bbc4cc1441827ae8da9f1b9cfb9c49e0dc581b011789d6c02859d2033ba24"
+    },
+    {
+      "path": "native-mui-settings-v2-x86.log",
+      "bytes": 20333,
+      "sha256": "ba86122b07b9ddea04c6fd89b556eb15695894b7174e3736342c2ef37177d55e"
+    },
+    {
+      "path": "native-mui-settings-v2-x86-laa.log",
+      "bytes": 20337,
+      "sha256": "015f0b3e9fecbb2554638f37ae0dccfac9ba5008644cceadac3dbac300597140"
+    },
+    {
+      "path": "native-mui-settings-v2.cpp",
+      "bytes": 7969,
+      "sha256": "44535e8756e3cda5afc98d5f75f052158f918bbe169585c1cc02de1324c7b9eb"
+    },
+    {
+      "path": "run-native-mui-settings-v2.py",
+      "bytes": 5208,
+      "sha256": "48ee367d18181859b4a986c3ceb20fafc2ceca45588bf372edbc80707479efc2"
+    },
+    {
+      "path": "receipt.json",
+      "bytes": 11638,
+      "sha256": "35cb965c2f51fb78333b4b09adb4f0ba200a914092866ac0610614038e43508d"
+    },
+    {
+      "path": "profiles.json",
+      "bytes": 346,
+      "sha256": "1bf69a31d2085239d035f9ca70ffa6e4c53df4315d9be32787cba0fbdbc0e255"
+    }
+  ]
+}

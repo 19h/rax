@@ -9,6 +9,7 @@ use crate::user::windows::hle::dispatch::{Outcome, prune_resumed_context, write_
 use crate::user::windows::hle::{ApiErr, Ctx, Flow, Value};
 use crate::user::windows::nt::status::STATUS_ACCESS_VIOLATION;
 
+mod gui;
 mod wait;
 
 pub(super) fn dispatch(p: &mut Proc, t: &mut Thread, number: u32, pc: u64) -> Option<Outcome> {
@@ -76,10 +77,35 @@ fn enter(
             p.arch
         )));
     };
-    // Win32k entry also initializes GUI process/thread state and can invoke
-    // USER callbacks. A named leaf is not sufficient proof of that contract.
-    // Keep it explicit until those effects are implemented, and never borrow
-    // an identically named NTDLL implementation from the other namespace.
+    if source == "Win32u"
+        && matches!(
+            name.as_str(),
+            "NtGdiInit2"
+                | "NtUserRemoteConnectState"
+                | "NtUserGetThreadDesktop"
+                | "NtUserRegisterLPK"
+                | "NtUserGetProcessUIContextInformation"
+        )
+    {
+        let outcome = match name.as_str() {
+            "NtGdiInit2" => gui::initialize(p, t, sp, resume, wow64_return),
+            "NtUserRemoteConnectState" => gui::remote_connect_state(p, t, sp, resume, wow64_return),
+            "NtUserGetThreadDesktop" => gui::thread_desktop(p, t, sp, resume, wow64_return),
+            "NtUserRegisterLPK" => gui::register_lpk(p, t, sp, resume, wow64_return),
+            _ => gui::process_ui_context(p, t, sp, resume, wow64_return),
+        };
+        return Some(match outcome {
+            Outcome::Fail(reason) => Outcome::Fail(format!(
+                "native {source} service {name} ({number:#x}) at {pc:#x}: {reason}"
+            )),
+            outcome => outcome,
+        });
+    }
+    if source == "NTDLL" && name == "NtCallbackReturn" {
+        return Some(gui::callback_return(p, t, sp, resume, wow64_return));
+    }
+    // Other Win32k operations remain explicit and cannot borrow an identically
+    // named NTDLL implementation from the other namespace.
     let api = (source == "NTDLL")
         .then(|| dll::nt_service(&name, p.arch))
         .flatten();

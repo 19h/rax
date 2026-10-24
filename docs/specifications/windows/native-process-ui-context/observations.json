@@ -1,0 +1,249 @@
+{
+  "scope": "Four executable views share one ARM64 kernel and SYSTEM context. Raw identifiers and memory excluded. Native field semantics and independent x64 kernel remain unknown.",
+  "fixed-query-count": 2520,
+  "profiles": [
+    {
+      "profile": "arm64",
+      "queries": 630,
+      "native64-status-measured": true,
+      "status-transitions": [
+        {
+          "before": "80000001",
+          "after": "C0000005",
+          "count": 18
+        },
+        {
+          "before": "C0000005",
+          "after": "80000001",
+          "count": 18
+        },
+        {
+          "before": "C0000005",
+          "after": "C0000005",
+          "count": 576
+        },
+        {
+          "before": "C0000022",
+          "after": "C0000005",
+          "count": 2
+        },
+        {
+          "before": "C0000022",
+          "after": "C0000022",
+          "count": 16
+        }
+      ],
+      "private-log": {
+        "bytes": 120741,
+        "sha256": "7bc138a612a260b233f7a3d3d7ff103069d6ad19b993f7b546eb331b3f13a31b"
+      }
+    },
+    {
+      "profile": "x86",
+      "queries": 630,
+      "native64-status-measured": false,
+      "status-transitions": [
+        {
+          "before": "C0000022",
+          "after": "C0000022",
+          "count": 630
+        }
+      ],
+      "private-log": {
+        "bytes": 120739,
+        "sha256": "f1eb22ef63e10372a631cdeec3c3ebe672702aac3dc120d65c51d2c88c140989"
+      }
+    },
+    {
+      "profile": "x64",
+      "queries": 630,
+      "native64-status-measured": true,
+      "status-transitions": [
+        {
+          "before": "80000001",
+          "after": "C0000005",
+          "count": 18
+        },
+        {
+          "before": "C0000005",
+          "after": "80000001",
+          "count": 18
+        },
+        {
+          "before": "C0000005",
+          "after": "C0000005",
+          "count": 576
+        },
+        {
+          "before": "C0000022",
+          "after": "C0000005",
+          "count": 2
+        },
+        {
+          "before": "C0000022",
+          "after": "C0000022",
+          "count": 16
+        }
+      ],
+      "private-log": {
+        "bytes": 120739,
+        "sha256": "715400289cbb1a844f1c1805c1bf88f60400d2587e4e87232c315e28634aa478"
+      }
+    },
+    {
+      "profile": "x86-laa",
+      "queries": 630,
+      "native64-status-measured": false,
+      "status-transitions": [
+        {
+          "before": "C0000022",
+          "after": "C0000022",
+          "count": 630
+        }
+      ],
+      "private-log": {
+        "bytes": 120743,
+        "sha256": "3049b29ec342e7bf46f91a1dac50c9adad2fb040677fee989708c33fb0970a8b"
+      }
+    }
+  ],
+  "cold-controls": [
+    {
+      "producer": 1,
+      "mode": "normal",
+      "native-exit-code": 0,
+      "callback-index": 84,
+      "callback-input-bytes": 0,
+      "callback-status": "0x00000000",
+      "return": 1,
+      "last-error": "12345678",
+      "conversion-marker-after": true,
+      "private-log": {
+        "bytes": 83316,
+        "sha256": "0f87610e807a307b7b93a18ccb739838766f3d3271e7765b7a327e7720102896"
+      }
+    },
+    {
+      "producer": 1,
+      "mode": "callback-success",
+      "native-exit-code": 0,
+      "callback-index": 84,
+      "callback-input-bytes": 0,
+      "callback-status": "0x00000000",
+      "return": 1,
+      "last-error": "12345678",
+      "conversion-marker-after": true,
+      "private-log": {
+        "bytes": 41008,
+        "sha256": "341e07ca94890119178154dddf41a89ccfba66eb7765590bf5bc6661ab5f6a5c"
+      }
+    },
+    {
+      "producer": 1,
+      "mode": "callback-failure",
+      "native-exit-code": 5,
+      "callback-index": 84,
+      "callback-input-bytes": 0,
+      "callback-status": "0xC0000001",
+      "return": 0,
+      "last-error": "12345678",
+      "conversion-marker-after": false,
+      "private-log": {
+        "bytes": 79677,
+        "sha256": "e627c6badc1053d33ea3a4983e3493341583b00c7197c485858849bffe857e94"
+      }
+    },
+    {
+      "producer": 1,
+      "mode": "output-invalid",
+      "native-exit-code": 0,
+      "callback-index": 84,
+      "callback-input-bytes": 0,
+      "callback-status": "0x00000000",
+      "return": 1,
+      "last-error": "12345678",
+      "conversion-marker-after": true,
+      "private-log": {
+        "bytes": 41101,
+        "sha256": "f0e67b1354517647ed8b7f2171b1d466e8f69670ec63c5efb9312e88a4417d21"
+      }
+    },
+    {
+      "producer": 1,
+      "mode": "output-warning",
+      "native-exit-code": 5,
+      "callback-index": 84,
+      "callback-input-bytes": 0,
+      "callback-status": "0x80000001",
+      "return": 0,
+      "last-error": "12345678",
+      "conversion-marker-after": false,
+      "private-log": {
+        "bytes": 79866,
+        "sha256": "f92efebfc71ca1ba35da6bd13a5ec4019a75b88e8313414708acf465cf94d32e"
+      }
+    },
+    {
+      "producer": 2,
+      "mode": "query-null",
+      "native-exit-code": 0,
+      "callback-index": 84,
+      "callback-input-bytes": 0,
+      "callback-status": "0x00000000",
+      "return": 0,
+      "last-error": "000003E6",
+      "conversion-marker-after": true,
+      "private-log": {
+        "bytes": 83391,
+        "sha256": "e3c50b0a1d4086a3e43192cde7f74577e0ee2f136798722fdcd98df857e77e57"
+      }
+    },
+    {
+      "producer": 2,
+      "mode": "query-thread",
+      "native-exit-code": 0,
+      "callback-index": 84,
+      "callback-input-bytes": 0,
+      "callback-status": "0x00000000",
+      "return": 0,
+      "last-error": "00000057",
+      "conversion-marker-after": true,
+      "private-log": {
+        "bytes": 83323,
+        "sha256": "1980e93ab0bc530b684d563ee9de0808c73be132963f00efabcde2110df25c65"
+      }
+    },
+    {
+      "producer": 2,
+      "mode": "query-thread-null",
+      "native-exit-code": 0,
+      "callback-index": 84,
+      "callback-input-bytes": 0,
+      "callback-status": "0x00000000",
+      "return": 0,
+      "last-error": "00000057",
+      "conversion-marker-after": true,
+      "private-log": {
+        "bytes": 83328,
+        "sha256": "420cb368143d7b6c67fe3346fefbc37b5b706734d80eb5a608ce0800c92f0846"
+      }
+    },
+    {
+      "producer": 2,
+      "mode": "query-zero",
+      "native-exit-code": 0,
+      "callback-index": 84,
+      "callback-input-bytes": 0,
+      "callback-status": "0x00000000",
+      "return": 0,
+      "last-error": "00000057",
+      "conversion-marker-after": true,
+      "private-log": {
+        "bytes": 83322,
+        "sha256": "72c44369f321cd13c62be23ea230c78745907d50fafb05571f26cefb57714033"
+      }
+    }
+  ],
+  "cold-v1-rejected-modes": 4,
+  "DPI-controls": "Twelve setters rejected; twelve manifest variants all reported effective DPI2. No inference about field names or DPI independence."
+}

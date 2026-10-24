@@ -1,0 +1,50 @@
+{
+  "scope": "Complete byte-preserved public package inventory, excluding this inventory. Original private log identities remain in provenance.json.",
+  "files": [
+    {
+      "path": ".gitattributes",
+      "bytes": 8,
+      "sha256": "705fd4d6451a31d36b3df7de96f83f30ac976c9b4a6d1e51671d8e2f33e2d0da"
+    },
+    {
+      "path": "README.md",
+      "bytes": 6144,
+      "sha256": "dde785be8a8dcd5e40d709c1c061bbaabbc598150ad628f307a43ed162c5c43e"
+    },
+    {
+      "path": "native-system-code-integrity-v1-observations.json",
+      "bytes": 3770793,
+      "sha256": "cfe99ecff9d8df5bb140b4bd503e85a0d63035cb84c92fd36a8efab53f28e596"
+    },
+    {
+      "path": "native-system-code-integrity-v1.cpp",
+      "bytes": 5802,
+      "sha256": "9b4db8fd10f554dff3b86f63c9a26abd22a58f8d958d11bddef773c05378d678"
+    },
+    {
+      "path": "native-system-code-integrity-v2-observations.json",
+      "bytes": 452523,
+      "sha256": "0ec50f3f2c0961f5cb71439965d5fc32e1707d0519b5ae3f6743aec133ed949d"
+    },
+    {
+      "path": "native-system-code-integrity-v2.cpp",
+      "bytes": 5683,
+      "sha256": "881cc1f3d686c32bd55cdc3752f9b924eb1cf26ee86f3a95d50ae8a8d2548aa1"
+    },
+    {
+      "path": "project_observations.py",
+      "bytes": 8488,
+      "sha256": "aae5394a72da59e2cf4d5738623e21f412cb84b14845899baa2b78b6dc4093bb"
+    },
+    {
+      "path": "projection-controls.json",
+      "bytes": 10565,
+      "sha256": "56d1f041a3d857e23af29fb14e4cfbe30f3dc26dbf9c15baccf9b156be1a66d4"
+    },
+    {
+      "path": "provenance.json",
+      "bytes": 9702,
+      "sha256": "f7adcb0ee6c300db2ce65bc3ff3a1ef61f915a8d05adb9b64c44bc18bc577fb6"
+    }
+  ]
+}

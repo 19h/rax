@@ -15,6 +15,8 @@ use std::collections::{BTreeMap, HashMap};
 use std::path::PathBuf;
 use std::time::Instant;
 
+mod desktop;
+pub use desktop::Desktop;
 mod directory;
 mod etw;
 mod lpc;
@@ -245,6 +247,8 @@ pub enum Object {
     PrimaryToken,
     /// An immutable captured impersonation subject, never a host token HANDLE.
     ImpersonationToken(std::sync::Arc<super::security::Subject>),
+    /// The selected desktop, independent of its intrinsically attached handle.
+    Desktop(std::sync::Arc<Desktop>),
     /// An object this implementation only needs to name (unmodeled tokens,
     /// registry keys, window stations).
     Opaque(&'static str),
@@ -274,6 +278,7 @@ impl Object {
             Object::Directory(_) => "Directory",
             Object::SymbolicLink(_) => "SymbolicLink",
             Object::PrimaryToken | Object::ImpersonationToken(_) => "Token",
+            Object::Desktop(_) => "Desktop",
             Object::Opaque(t) => t,
         }
     }
@@ -311,6 +316,7 @@ pub struct Objects {
     etw_event: Option<ObjId>,
     /// The immutable primary token survives the last caller handle.
     primary_token: Option<ObjId>,
+    desktop: Option<(ObjId, u32)>,
     wnf_subscriptions: wnf::Subscriptions,
     scheduler_bindings: BTreeMap<u32, (ObjId, u32)>,
     retired_scheduler_views: Vec<super::memory::SchedulerView>,
@@ -537,7 +543,7 @@ impl Objects {
     pub fn close(&mut self, handle: u64) -> Result<Option<Object>, ()> {
         let key = Self::key(handle).ok_or(())?;
         let e = *self.handles.get(&key).ok_or(())?;
-        if e.protect_from_close {
+        if e.protect_from_close || self.assigned_desktop_handle(handle) {
             return Err(());
         }
         self.handles.remove(&key);
@@ -605,6 +611,7 @@ impl Objects {
         self.wnf_event = None;
         self.etw_event = None;
         self.primary_token = None;
+        self.desktop = None;
         self.wnf_subscriptions.records.clear();
         self.scheduler_bindings.clear();
         // Queue all views eagerly: dropping a partially consumed Drain also

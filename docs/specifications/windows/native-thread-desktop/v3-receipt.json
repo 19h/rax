@@ -1,0 +1,536 @@
+{
+  "state": "finished",
+  "pid": 2276,
+  "steps": [
+    {
+      "name": "build-arm64",
+      "argv": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\arm64\\cl.exe",
+        "/nologo",
+        "/std:c++20",
+        "/EHsc",
+        "/MT",
+        "/GS",
+        "/Od",
+        "/we4473",
+        "/we4474",
+        "/we4477",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-thread-desktop-v3\\native-thread-desktop-v3.cpp",
+        "/link",
+        "advapi32.lib",
+        "user32.lib",
+        "/LARGEADDRESSAWARE",
+        "/SUBSYSTEM:CONSOLE,10.0",
+        "/OUT:C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-thread-desktop-v3\\arm64\\probe.exe"
+      ],
+      "exit-code": 0,
+      "log": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-thread-desktop-v3\\arm64\\build-arm64.log",
+        "bytes": 30,
+        "sha256": "a37633b5650d18c745fb89b4c07d78ef97166e96617f88461098da0bee60cdeb"
+      }
+    },
+    {
+      "name": "native-arm64-query",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-thread-desktop-v3\\arm64\\probe.exe",
+        "arm64",
+        "query"
+      ],
+      "exit-code": 0,
+      "log": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-thread-desktop-v3\\arm64\\native-arm64-query.log",
+        "bytes": 9990,
+        "sha256": "275f788c3baa54febe740ae1f1aa2641eccb8bd197340506d937d9c5c105d8d8"
+      }
+    },
+    {
+      "name": "native-arm64-close-desktop",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-thread-desktop-v3\\arm64\\probe.exe",
+        "arm64",
+        "close-desktop"
+      ],
+      "exit-code": 0,
+      "log": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-thread-desktop-v3\\arm64\\native-arm64-close-desktop.log",
+        "bytes": 10484,
+        "sha256": "0979d200b97afd0e94324db987a61b5dff2a616f075eea3d8cd8ac218219b9c0"
+      }
+    },
+    {
+      "name": "native-arm64-nt-close",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-thread-desktop-v3\\arm64\\probe.exe",
+        "arm64",
+        "nt-close"
+      ],
+      "exit-code": 0,
+      "log": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-thread-desktop-v3\\arm64\\native-arm64-nt-close.log",
+        "bytes": 10483,
+        "sha256": "dd0a8d3b5e7cea78eb48e1ce10eb7149658651baac259f2caeb1cf39604fe0e8"
+      }
+    },
+    {
+      "name": "native-arm64-dup-close-source",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-thread-desktop-v3\\arm64\\probe.exe",
+        "arm64",
+        "dup-close-source"
+      ],
+      "exit-code": 0,
+      "log": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-thread-desktop-v3\\arm64\\native-arm64-dup-close-source.log",
+        "bytes": 10788,
+        "sha256": "92ef22cc6eadbfdb5c53650961b7f98aea756fb05964cbe3ad4a5f7bda2a9a58"
+      }
+    },
+    {
+      "name": "build-x86",
+      "argv": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\x86\\cl.exe",
+        "/nologo",
+        "/std:c++20",
+        "/EHsc",
+        "/MT",
+        "/GS",
+        "/Od",
+        "/we4473",
+        "/we4474",
+        "/we4477",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-thread-desktop-v3\\native-thread-desktop-v3.cpp",
+        "/link",
+        "advapi32.lib",
+        "user32.lib",
+        "/LARGEADDRESSAWARE:NO",
+        "/SUBSYSTEM:CONSOLE,10.0",
+        "/OUT:C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-thread-desktop-v3\\x86\\probe.exe"
+      ],
+      "exit-code": 0,
+      "log": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-thread-desktop-v3\\x86\\build-x86.log",
+        "bytes": 30,
+        "sha256": "a37633b5650d18c745fb89b4c07d78ef97166e96617f88461098da0bee60cdeb"
+      }
+    },
+    {
+      "name": "native-x86-query",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-thread-desktop-v3\\x86\\probe.exe",
+        "x86",
+        "query"
+      ],
+      "exit-code": 0,
+      "log": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-thread-desktop-v3\\x86\\native-x86-query.log",
+        "bytes": 10015,
+        "sha256": "984525e1cab92907d0c0cf980dc4d36aeb90ea313f8215bbaf47d1ece41fcd92"
+      }
+    },
+    {
+      "name": "native-x86-close-desktop",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-thread-desktop-v3\\x86\\probe.exe",
+        "x86",
+        "close-desktop"
+      ],
+      "exit-code": 0,
+      "log": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-thread-desktop-v3\\x86\\native-x86-close-desktop.log",
+        "bytes": 10512,
+        "sha256": "000befacba50fce7d704f0202def22177b922ae759195c834443fb5c203fd471"
+      }
+    },
+    {
+      "name": "native-x86-nt-close",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-thread-desktop-v3\\x86\\probe.exe",
+        "x86",
+        "nt-close"
+      ],
+      "exit-code": 0,
+      "log": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-thread-desktop-v3\\x86\\native-x86-nt-close.log",
+        "bytes": 10511,
+        "sha256": "a4a3f7f72b65936928ec4015a36d7b19e0a8562497f82c0f46a6a831e4e427bc"
+      }
+    },
+    {
+      "name": "native-x86-dup-close-source",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-thread-desktop-v3\\x86\\probe.exe",
+        "x86",
+        "dup-close-source"
+      ],
+      "exit-code": 0,
+      "log": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-thread-desktop-v3\\x86\\native-x86-dup-close-source.log",
+        "bytes": 10816,
+        "sha256": "6a0c03b42a8c50aea0de712ad87f3ac732e03a7752620cf3601542b8e86f578a"
+      }
+    },
+    {
+      "name": "build-x64",
+      "argv": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\x64\\cl.exe",
+        "/nologo",
+        "/std:c++20",
+        "/EHsc",
+        "/MT",
+        "/GS",
+        "/Od",
+        "/we4473",
+        "/we4474",
+        "/we4477",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-thread-desktop-v3\\native-thread-desktop-v3.cpp",
+        "/link",
+        "advapi32.lib",
+        "user32.lib",
+        "/LARGEADDRESSAWARE",
+        "/SUBSYSTEM:CONSOLE,10.0",
+        "/OUT:C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-thread-desktop-v3\\x64\\probe.exe"
+      ],
+      "exit-code": 0,
+      "log": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-thread-desktop-v3\\x64\\build-x64.log",
+        "bytes": 30,
+        "sha256": "a37633b5650d18c745fb89b4c07d78ef97166e96617f88461098da0bee60cdeb"
+      }
+    },
+    {
+      "name": "native-x64-query",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-thread-desktop-v3\\x64\\probe.exe",
+        "x64",
+        "query"
+      ],
+      "exit-code": 0,
+      "log": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-thread-desktop-v3\\x64\\native-x64-query.log",
+        "bytes": 10015,
+        "sha256": "8e0432a92f228532af04cba9be1fe70ebfe26a247da3c4e9bc1f234a3cdf7e71"
+      }
+    },
+    {
+      "name": "native-x64-close-desktop",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-thread-desktop-v3\\x64\\probe.exe",
+        "x64",
+        "close-desktop"
+      ],
+      "exit-code": 0,
+      "log": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-thread-desktop-v3\\x64\\native-x64-close-desktop.log",
+        "bytes": 10512,
+        "sha256": "93766c322c33ea31d8919ad33cf36fd472d4a6e0ccbbf00d31d309ea361f88e6"
+      }
+    },
+    {
+      "name": "native-x64-nt-close",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-thread-desktop-v3\\x64\\probe.exe",
+        "x64",
+        "nt-close"
+      ],
+      "exit-code": 0,
+      "log": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-thread-desktop-v3\\x64\\native-x64-nt-close.log",
+        "bytes": 10511,
+        "sha256": "04e75d84df2e85ac8fc268eb4263e35a813b577336de33f795bd02cc1c6f93d2"
+      }
+    },
+    {
+      "name": "native-x64-dup-close-source",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-thread-desktop-v3\\x64\\probe.exe",
+        "x64",
+        "dup-close-source"
+      ],
+      "exit-code": 0,
+      "log": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-thread-desktop-v3\\x64\\native-x64-dup-close-source.log",
+        "bytes": 10816,
+        "sha256": "19fa73ed4b923842b1d727cd1d66698064841da729d20d8521215c9f6f34857a"
+      }
+    },
+    {
+      "name": "build-x86",
+      "argv": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\x86\\cl.exe",
+        "/nologo",
+        "/std:c++20",
+        "/EHsc",
+        "/MT",
+        "/GS",
+        "/Od",
+        "/we4473",
+        "/we4474",
+        "/we4477",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-thread-desktop-v3\\native-thread-desktop-v3.cpp",
+        "/link",
+        "advapi32.lib",
+        "user32.lib",
+        "/LARGEADDRESSAWARE",
+        "/SUBSYSTEM:CONSOLE,10.0",
+        "/OUT:C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-thread-desktop-v3\\x86-laa\\probe.exe"
+      ],
+      "exit-code": 0,
+      "log": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-thread-desktop-v3\\x86-laa\\build-x86.log",
+        "bytes": 30,
+        "sha256": "a37633b5650d18c745fb89b4c07d78ef97166e96617f88461098da0bee60cdeb"
+      }
+    },
+    {
+      "name": "native-x86-laa-query",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-thread-desktop-v3\\x86-laa\\probe.exe",
+        "x86-laa",
+        "query"
+      ],
+      "exit-code": 0,
+      "log": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-thread-desktop-v3\\x86-laa\\native-x86-laa-query.log",
+        "bytes": 10019,
+        "sha256": "c7971540237472c62d60a6d9c8122ed04c115142ec22a892cb31f0303d469baa"
+      }
+    },
+    {
+      "name": "native-x86-laa-close-desktop",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-thread-desktop-v3\\x86-laa\\probe.exe",
+        "x86-laa",
+        "close-desktop"
+      ],
+      "exit-code": 0,
+      "log": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-thread-desktop-v3\\x86-laa\\native-x86-laa-close-desktop.log",
+        "bytes": 10516,
+        "sha256": "187664e1f471102260218dea71b55db6cdc723c2c0d580f221c2c34a6ea48c42"
+      }
+    },
+    {
+      "name": "native-x86-laa-nt-close",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-thread-desktop-v3\\x86-laa\\probe.exe",
+        "x86-laa",
+        "nt-close"
+      ],
+      "exit-code": 0,
+      "log": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-thread-desktop-v3\\x86-laa\\native-x86-laa-nt-close.log",
+        "bytes": 10515,
+        "sha256": "4993b7d5eadd737a88818bb7fc7b6bda2eb3020fd5a430ed5508af5cd51507d7"
+      }
+    },
+    {
+      "name": "native-x86-laa-dup-close-source",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-thread-desktop-v3\\x86-laa\\probe.exe",
+        "x86-laa",
+        "dup-close-source"
+      ],
+      "exit-code": 0,
+      "log": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-thread-desktop-v3\\x86-laa\\native-x86-laa-dup-close-source.log",
+        "bytes": 10820,
+        "sha256": "a263b820ed2ffa12a15654e8dd4fe55db5d915e84b27e62e4ddae12dbe71f887"
+      }
+    }
+  ],
+  "architectures": [
+    {
+      "profile": "arm64",
+      "architecture": "arm64",
+      "compiler": {
+        "path": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\arm64\\cl.exe",
+        "bytes": 787728,
+        "sha256": "5cba83692d533f6b3a6ac07c6b2cdce708e0445ed1ee36b5cb2d49a244a4c835"
+      },
+      "machine": 43620,
+      "executable-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-thread-desktop-v3\\arm64\\probe.exe",
+        "bytes": 151040,
+        "sha256": "e72508e92bb90fcff2910491ab5be66d85967fc29b0bd11e0130d97f57926f91"
+      },
+      "executable-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-thread-desktop-v3\\arm64\\probe.exe",
+        "bytes": 151040,
+        "sha256": "e72508e92bb90fcff2910491ab5be66d85967fc29b0bd11e0130d97f57926f91"
+      }
+    },
+    {
+      "profile": "x86",
+      "architecture": "x86",
+      "compiler": {
+        "path": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\x86\\cl.exe",
+        "bytes": 761104,
+        "sha256": "cfed9e6fa19f430235f7fb75dbcd3200b7c1fa036462e3a73d76b5ea8e35c7ad"
+      },
+      "machine": 332,
+      "executable-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-thread-desktop-v3\\x86\\probe.exe",
+        "bytes": 122880,
+        "sha256": "662c1e33a91ab82ff9963edf46b060779814f0564f99448cf4ed0928c32af34f"
+      },
+      "executable-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-thread-desktop-v3\\x86\\probe.exe",
+        "bytes": 122880,
+        "sha256": "662c1e33a91ab82ff9963edf46b060779814f0564f99448cf4ed0928c32af34f"
+      }
+    },
+    {
+      "profile": "x64",
+      "architecture": "x64",
+      "compiler": {
+        "path": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\x64\\cl.exe",
+        "bytes": 762720,
+        "sha256": "d7a46c9d0d970fbeb4e803f1f0e9fec4217f8c833e6bb6a015e5b87299024466"
+      },
+      "machine": 34404,
+      "executable-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-thread-desktop-v3\\x64\\probe.exe",
+        "bytes": 148480,
+        "sha256": "abc315d5fe9f7988d5c9cd2299df51bae1b7e72eb6ee5e5e4dac0ae06d612dcb"
+      },
+      "executable-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-thread-desktop-v3\\x64\\probe.exe",
+        "bytes": 148480,
+        "sha256": "abc315d5fe9f7988d5c9cd2299df51bae1b7e72eb6ee5e5e4dac0ae06d612dcb"
+      }
+    },
+    {
+      "profile": "x86-laa",
+      "architecture": "x86",
+      "compiler": {
+        "path": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\x86\\cl.exe",
+        "bytes": 761104,
+        "sha256": "cfed9e6fa19f430235f7fb75dbcd3200b7c1fa036462e3a73d76b5ea8e35c7ad"
+      },
+      "machine": 332,
+      "executable-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-thread-desktop-v3\\x86-laa\\probe.exe",
+        "bytes": 122880,
+        "sha256": "4522c4f6a1732a417132f763e2a78bbf14f5b4c2f1d832d09917a0d7d30c7bd0"
+      },
+      "executable-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-thread-desktop-v3\\x86-laa\\probe.exe",
+        "bytes": 122880,
+        "sha256": "4522c4f6a1732a417132f763e2a78bbf14f5b4c2f1d832d09917a0d7d30c7bd0"
+      }
+    }
+  ],
+  "source-before": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-thread-desktop-v3\\native-thread-desktop-v3.cpp",
+    "bytes": 9275,
+    "sha256": "055d4c7afe0eeedb3c4bff2e63bf122979b4d45b88291424ffe9e2262f88abaf"
+  },
+  "native-version": {
+    "major": 10,
+    "minor": 0,
+    "build": 29683
+  },
+  "native-modules-before": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+    },
+    {
+      "path": "C:\\Windows\\System32\\kernelbase.dll",
+      "bytes": 7213728,
+      "sha256": "6b2fa508ac4f9bce5d7351676485d1dc5b5236cd9656034e2fec1eaba3b82bc9"
+    },
+    {
+      "path": "C:\\Windows\\System32\\user32.dll",
+      "bytes": 2799192,
+      "sha256": "bd104076063e3bc8ce65fb744a947f533b8ac6bc737c999b1d7beacbc1b6b058"
+    },
+    {
+      "path": "C:\\Windows\\System32\\win32u.dll",
+      "bytes": 387768,
+      "sha256": "e2aa1e93f5e45377922bf6e5525d9fc37a60494da1d602033974883987e9c7d4"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\kernelbase.dll",
+      "bytes": 3073488,
+      "sha256": "e9c414d7c6bd2c6fde608f31b2f31da3c2014c801b3764a30ee42abd1e9c2d58"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\user32.dll",
+      "bytes": 2039408,
+      "sha256": "f32a037264cb173501c4ba0c3fff25cd274e154e59be85c06a75a02f89a8e64b"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\win32u.dll",
+      "bytes": 109280,
+      "sha256": "098802d32f359f1ccd53e654f6a4fbfd6bf7d3cce58cc8f73ef389c8a9b26117"
+    },
+    {
+      "path": "C:\\Windows\\System32\\ntoskrnl.exe",
+      "bytes": 12436088,
+      "sha256": "7e3126b28ffa1c50381de7db89be60e25be784cd6cb85db9716db5743692bd5e"
+    }
+  ],
+  "step": "native-x86-laa-dup-close-source",
+  "child": 3600,
+  "source-after": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-thread-desktop-v3\\native-thread-desktop-v3.cpp",
+    "bytes": 9275,
+    "sha256": "055d4c7afe0eeedb3c4bff2e63bf122979b4d45b88291424ffe9e2262f88abaf"
+  },
+  "native-modules-after": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+    },
+    {
+      "path": "C:\\Windows\\System32\\kernelbase.dll",
+      "bytes": 7213728,
+      "sha256": "6b2fa508ac4f9bce5d7351676485d1dc5b5236cd9656034e2fec1eaba3b82bc9"
+    },
+    {
+      "path": "C:\\Windows\\System32\\user32.dll",
+      "bytes": 2799192,
+      "sha256": "bd104076063e3bc8ce65fb744a947f533b8ac6bc737c999b1d7beacbc1b6b058"
+    },
+    {
+      "path": "C:\\Windows\\System32\\win32u.dll",
+      "bytes": 387768,
+      "sha256": "e2aa1e93f5e45377922bf6e5525d9fc37a60494da1d602033974883987e9c7d4"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\kernelbase.dll",
+      "bytes": 3073488,
+      "sha256": "e9c414d7c6bd2c6fde608f31b2f31da3c2014c801b3764a30ee42abd1e9c2d58"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\user32.dll",
+      "bytes": 2039408,
+      "sha256": "f32a037264cb173501c4ba0c3fff25cd274e154e59be85c06a75a02f89a8e64b"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\win32u.dll",
+      "bytes": 109280,
+      "sha256": "098802d32f359f1ccd53e654f6a4fbfd6bf7d3cce58cc8f73ef389c8a9b26117"
+    },
+    {
+      "path": "C:\\Windows\\System32\\ntoskrnl.exe",
+      "bytes": 12436088,
+      "sha256": "7e3126b28ffa1c50381de7db89be60e25be784cd6cb85db9716db5743692bd5e"
+    }
+  ],
+  "exit-code": 0
+}

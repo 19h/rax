@@ -1,0 +1,195 @@
+{
+  "scope": "Seven accepted native ARM64 PE header controls, main and worker observations; raw logs remain private because they include desktop/TEB/GDI bytes. Source executable unchanged and bound to native callback controller5/source4.",
+  "source-executable-sha256": "3492609b8ccd9dc96ebf3c13c12db656c6330c7606aacc302968a837b4640084",
+  "profiles": [
+    {
+      "name": "os61-subsystem100",
+      "os-version": [
+        6,
+        1
+      ],
+      "subsystem-version": [
+        10,
+        0
+      ],
+      "bytes": 154624,
+      "exe-sha256-before": "121de78d298a06528dc871cd9abca3c289a43b391c657be964ae2a978e65449f",
+      "exe-sha256-after": "121de78d298a06528dc871cd9abca3c289a43b391c657be964ae2a978e65449f",
+      "exit-code": 0,
+      "log": "os61-subsystem100.log",
+      "log-bytes": 83898,
+      "log-sha256": "d3e5e287a26ca09312c32ae0d6611537a4982295529ef2c8aea4136767d38ebb",
+      "observed-client-version-words": [
+        "0000000000000a00",
+        "0000000000000a00"
+      ],
+      "original-log": {
+        "bytes": 83898,
+        "sha256": "d3e5e287a26ca09312c32ae0d6611537a4982295529ef2c8aea4136767d38ebb"
+      },
+      "projection-only": true
+    },
+    {
+      "name": "os100-subsystem62",
+      "os-version": [
+        10,
+        0
+      ],
+      "subsystem-version": [
+        6,
+        2
+      ],
+      "bytes": 154624,
+      "exe-sha256-before": "4b3c0f8c169d2a300e37adfa4d3e77c011a481dc9497a2a9da41e342672d016c",
+      "exe-sha256-after": "4b3c0f8c169d2a300e37adfa4d3e77c011a481dc9497a2a9da41e342672d016c",
+      "exit-code": 0,
+      "log": "os100-subsystem62.log",
+      "log-bytes": 83898,
+      "log-sha256": "939fb92bf795697c52eebc24c07c7f18d462fcbbf0549153fe85c02178b12f1d",
+      "observed-client-version-words": [
+        "0000000000000602",
+        "0000000000000602"
+      ],
+      "original-log": {
+        "bytes": 83898,
+        "sha256": "939fb92bf795697c52eebc24c07c7f18d462fcbbf0549153fe85c02178b12f1d"
+      },
+      "projection-only": true
+    },
+    {
+      "name": "os61-subsystem62",
+      "os-version": [
+        6,
+        1
+      ],
+      "subsystem-version": [
+        6,
+        2
+      ],
+      "bytes": 154624,
+      "exe-sha256-before": "a4210d72347cff7aebd0c7a9b99e4799a11c38cee502471f4551dcdf8e5ab7f8",
+      "exe-sha256-after": "a4210d72347cff7aebd0c7a9b99e4799a11c38cee502471f4551dcdf8e5ab7f8",
+      "exit-code": 0,
+      "log": "os61-subsystem62.log",
+      "log-bytes": 83898,
+      "log-sha256": "c6716d895d814b99140702fbf492961180f216e4c918bcb185529bf0a4d5e8b0",
+      "observed-client-version-words": [
+        "0000000000000602",
+        "0000000000000602"
+      ],
+      "original-log": {
+        "bytes": 83898,
+        "sha256": "c6716d895d814b99140702fbf492961180f216e4c918bcb185529bf0a4d5e8b0"
+      },
+      "projection-only": true
+    },
+    {
+      "name": "os100-subsystem6-255",
+      "os-version": [
+        10,
+        0
+      ],
+      "subsystem-version": [
+        6,
+        255
+      ],
+      "bytes": 154624,
+      "exe-sha256-before": "dc955755726c757a83c577687f9ea61f5c330e36bc360c8fa22d32191f6f9bdc",
+      "exe-sha256-after": "dc955755726c757a83c577687f9ea61f5c330e36bc360c8fa22d32191f6f9bdc",
+      "exit-code": 0,
+      "log": "os100-subsystem6-255.log",
+      "log-bytes": 83897,
+      "log-sha256": "8438731d6ec52f1170e9a963f660789c815b35f06ebd2013dd6a1dffdd926115",
+      "observed-client-version-words": [
+        "00000000000006ff",
+        "00000000000006ff"
+      ],
+      "original-log": {
+        "bytes": 83897,
+        "sha256": "8438731d6ec52f1170e9a963f660789c815b35f06ebd2013dd6a1dffdd926115"
+      },
+      "projection-only": true
+    },
+    {
+      "name": "os100-subsystem7-256",
+      "os-version": [
+        10,
+        0
+      ],
+      "subsystem-version": [
+        7,
+        256
+      ],
+      "bytes": 154624,
+      "exe-sha256-before": "947abb6406271397e58e5b9ceade66f5faf5306434c37f4fc1ec9ed5ede49eba",
+      "exe-sha256-after": "947abb6406271397e58e5b9ceade66f5faf5306434c37f4fc1ec9ed5ede49eba",
+      "exit-code": 0,
+      "log": "os100-subsystem7-256.log",
+      "log-bytes": 83897,
+      "log-sha256": "8be096201de75eb4c189a470e783e06183f447ba5d3cad30217d4d10e21c15a0",
+      "observed-client-version-words": [
+        "0000000000000700",
+        "0000000000000700"
+      ],
+      "original-log": {
+        "bytes": 83897,
+        "sha256": "8be096201de75eb4c189a470e783e06183f447ba5d3cad30217d4d10e21c15a0"
+      },
+      "projection-only": true
+    },
+    {
+      "name": "os100-subsystem8-256",
+      "os-version": [
+        10,
+        0
+      ],
+      "subsystem-version": [
+        8,
+        256
+      ],
+      "bytes": 154624,
+      "exe-sha256-before": "8dce92094fa47bd7c318af056e6e13716dbca54a461b66bd34e10cf95525c0b8",
+      "exe-sha256-after": "8dce92094fa47bd7c318af056e6e13716dbca54a461b66bd34e10cf95525c0b8",
+      "exit-code": 0,
+      "log": "os100-subsystem8-256.log",
+      "log-bytes": 83897,
+      "log-sha256": "b4de47d50608c89f4b9f6b98c4c3c56184089d58f958442ee140547854061017",
+      "observed-client-version-words": [
+        "0000000000000800",
+        "0000000000000800"
+      ],
+      "original-log": {
+        "bytes": 83897,
+        "sha256": "b4de47d50608c89f4b9f6b98c4c3c56184089d58f958442ee140547854061017"
+      },
+      "projection-only": true
+    },
+    {
+      "name": "os100-subsystem7-65535",
+      "os-version": [
+        10,
+        0
+      ],
+      "subsystem-version": [
+        7,
+        65535
+      ],
+      "bytes": 154624,
+      "exe-sha256-before": "6421fa837b88a1f8f48893d45b724b52853d42641ab6ca97300719ee1324e1b3",
+      "exe-sha256-after": "6421fa837b88a1f8f48893d45b724b52853d42641ab6ca97300719ee1324e1b3",
+      "exit-code": 0,
+      "log": "os100-subsystem7-65535.log",
+      "log-bytes": 83897,
+      "log-sha256": "c410cb3d2d4fe99493851747675b0950a134f0606dcaa53ae8e493ea170e8d81",
+      "observed-client-version-words": [
+        "00000000000007ff",
+        "00000000000007ff"
+      ],
+      "original-log": {
+        "bytes": 83897,
+        "sha256": "c410cb3d2d4fe99493851747675b0950a134f0606dcaa53ae8e493ea170e8d81"
+      },
+      "projection-only": true
+    }
+  ]
+}

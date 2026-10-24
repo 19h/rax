@@ -12,6 +12,8 @@ use crate::user::image::pe::PeImage;
 
 const MAX_DLL_BYTES: u64 = 64 << 20;
 
+mod system;
+
 #[derive(Debug)]
 pub(crate) struct NativeRuntime {
     pub(crate) directory: PathBuf,
@@ -25,6 +27,8 @@ pub(crate) struct NativeRuntime {
     pub(crate) appcompat: super::appcompat::Catalog,
     pub(crate) wnf_catalog: super::wnf::Catalog,
     pub(crate) startup: Option<super::process::native_start::EntryPoints>,
+    pub(crate) gui: super::gui::Availability,
+    pub(crate) code_integrity: Result<u32, String>,
 }
 
 fn invalid(message: impl Into<String>) -> io::Error {
@@ -92,6 +96,8 @@ impl NativeRuntime {
             appcompat: Default::default(),
             wnf_catalog: Default::default(),
             startup: None,
+            gui: Default::default(),
+            code_integrity: Err("native code integrity has not been captured".into()),
         };
         let ntdll = PeImage::parse(read_image(
             &runtime
@@ -105,6 +111,7 @@ impl NativeRuntime {
                 "installed NTDLL architecture does not match the guest",
             ));
         }
+        runtime.code_integrity = system::capture();
         runtime.registry = super::registry::snapshot()?;
         runtime.wnf_catalog = super::wnf::snapshot()?;
         let subject = runtime
@@ -125,6 +132,17 @@ impl NativeRuntime {
         )?);
         runtime.appcompat =
             super::appcompat::Catalog::snapshot(&root, runtime.registry.upcase_table())?;
+        runtime.gui = match (runtime.dll("user32.dll"), runtime.dll("win32u.dll")) {
+            (Ok(Some(user)), Ok(Some(win32u))) => {
+                super::gui::Availability::select(arch, user, win32u)
+            }
+            (Err(error), _) | (_, Err(error)) => {
+                super::gui::Availability::Unavailable(error.to_string())
+            }
+            _ => super::gui::Availability::Unavailable(
+                "selected USER32/Win32u runtime is absent".into(),
+            ),
+        };
         Ok(runtime)
     }
 

@@ -1,0 +1,27 @@
+{
+  "state": "finished",
+  "scope": "Fixed readonly shared-page location plus query flags0; no cache mutation.",
+  "rows": [
+    {
+      "shared-before": 1,
+      "payload-generation": 1,
+      "shared-after": 1,
+      "bytes": 1232,
+      "sha256": "1ff64f1d44c4f0d7eb67d5e575e26a983aea701279425c21471d216ac9da3ce1"
+    },
+    {
+      "shared-before": 1,
+      "payload-generation": 1,
+      "shared-after": 1,
+      "bytes": 1232,
+      "sha256": "1ff64f1d44c4f0d7eb67d5e575e26a983aea701279425c21471d216ac9da3ce1"
+    },
+    {
+      "shared-before": 1,
+      "payload-generation": 1,
+      "shared-after": 1,
+      "bytes": 1232,
+      "sha256": "1ff64f1d44c4f0d7eb67d5e575e26a983aea701279425c21471d216ac9da3ce1"
+    }
+  ]
+}

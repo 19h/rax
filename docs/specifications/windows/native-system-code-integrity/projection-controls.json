@@ -1,0 +1,366 @@
+{
+  "state": "finished",
+  "positive": 3,
+  "negative": 48,
+  "rows": [
+    {
+      "optimizer": "normal",
+      "case": "positive",
+      "accepted": true,
+      "exit-code": 0,
+      "stderr-sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "optimizer": "normal",
+      "case": "source",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "01361c571169d53d6e836ae737d9bd2f89d666bf9d313d4d6528cdb978314eb9"
+    },
+    {
+      "optimizer": "normal",
+      "case": "unhashed-log",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "c660d227efddad66a2a17ada51804891d3d82a1639261cd524f802897672734d"
+    },
+    {
+      "optimizer": "normal",
+      "case": "completion",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "bdac5e77fab68385019809e06723bda439dfb87a1f3f6c0d5ec060baf6195a81"
+    },
+    {
+      "optimizer": "normal",
+      "case": "exit",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "bcb3696128e6fe3fec4bdc4e97a5909caf393c1325546d7133c8816753a043a6"
+    },
+    {
+      "optimizer": "normal",
+      "case": "profile",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "b760cd0aec26b55d37915649e4a21cc4a514d2507cfb0edd992f6f9d20d42514"
+    },
+    {
+      "optimizer": "normal",
+      "case": "executable",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "561ed22d94a82a5d9f4b461c52517da9e90c1e081697effcf4100175cc3ab6ed"
+    },
+    {
+      "optimizer": "normal",
+      "case": "runtime",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "23aef0c6a99dfac904c35e990a08b3a6c429cf326466c8cb1db17ad9f034db72"
+    },
+    {
+      "optimizer": "normal",
+      "case": "identity",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "bf20edcb910b6eba28ae5aa24ab604353d9c1984a9bc00afb4ea96ebccb89b09"
+    },
+    {
+      "optimizer": "normal",
+      "case": "step",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "54721ccb21317ce6c2817278950d901e3f4b82dd9e12bc3a44e6c266c7e3f208"
+    },
+    {
+      "optimizer": "normal",
+      "case": "coverage",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "0cda6c32ad733c85c9f1631c6622a366270901da301bcfd5b0723c5edfbd20ab"
+    },
+    {
+      "optimizer": "normal",
+      "case": "error",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "66a70679963b724bd0d3310d8542e1204dfbdd301f56001947294d52ba3d77bf"
+    },
+    {
+      "optimizer": "normal",
+      "case": "status",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "ba5d5f92292f5668356836d49dedeb4162dd587a4555c4d5174f106fca555145"
+    },
+    {
+      "optimizer": "normal",
+      "case": "status-domain",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "148e46d8d739b96a24062d987113c5b42a727cbac4e362ba7f99d7025effe0d5"
+    },
+    {
+      "optimizer": "normal",
+      "case": "tail",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "556f4a728424b57d00a80070aa4b6bab3426545a2c7d7d5b8cf49181b263afd2"
+    },
+    {
+      "optimizer": "normal",
+      "case": "unreadable",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "59ed79a7ed53fabaf90f8905b014f8c46c2938e29caad695983382a83473c8a8"
+    },
+    {
+      "optimizer": "normal",
+      "case": "readability",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "5f502c276b0ef1c8d270f49868795e4c375c4e5a798844a235566c973b72b658"
+    },
+    {
+      "optimizer": "-O",
+      "case": "positive",
+      "accepted": true,
+      "exit-code": 0,
+      "stderr-sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "optimizer": "-O",
+      "case": "source",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "7bf38d45a2b93b9a0bda79c49fc0f956b6fa5915f784bf6691992aa3c47ddb54"
+    },
+    {
+      "optimizer": "-O",
+      "case": "unhashed-log",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "84332c038c2d198b3bda8cca9d1a0e5596b4cd006385477261be748213bb7966"
+    },
+    {
+      "optimizer": "-O",
+      "case": "completion",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "a5a907dfb73131c5ac71d69d04ba8bb2950e26403b9ab3fb2ba6bb32267ceb04"
+    },
+    {
+      "optimizer": "-O",
+      "case": "exit",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "f2ee0c0636ed9414a2b4cfcaacdfc450580f2ee3d5549ee8799d5313c34d7fa4"
+    },
+    {
+      "optimizer": "-O",
+      "case": "profile",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "ab1bd96d6b0e55071ff172b5e3bb12bd4f3950b6739e85d704f24270dc4be90f"
+    },
+    {
+      "optimizer": "-O",
+      "case": "executable",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "11d409922d2436c9e7d34a38d946923362ed4abeccd6b4913295c0825f6bfcd0"
+    },
+    {
+      "optimizer": "-O",
+      "case": "runtime",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "c34c7bc66e96f4a4656aa4a1986ead15980bef79791afa934294f2c10a6fbbf6"
+    },
+    {
+      "optimizer": "-O",
+      "case": "identity",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "e4b0c284c62d6e1086407b6271702d9fa9e15053bf8ae8ccc6f23e99408dcd04"
+    },
+    {
+      "optimizer": "-O",
+      "case": "step",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "feb005ff7ffc552b66140388c7115cd348a7915cf10b43644826c63eb5d59ac1"
+    },
+    {
+      "optimizer": "-O",
+      "case": "coverage",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "574c23a253532c41523905fb53b305496dc12317dc6c3ed3a5ef1c27db9799c0"
+    },
+    {
+      "optimizer": "-O",
+      "case": "error",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "8f681dcb5c771a01d926c67d71334f5a36629a1c294bc96c2b661125c75269d5"
+    },
+    {
+      "optimizer": "-O",
+      "case": "status",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "86d94fde92e403ed36b6e962b9859b181db116265998eba6af90dfc5c6d7d792"
+    },
+    {
+      "optimizer": "-O",
+      "case": "status-domain",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "b50fcd14f0a9cef3bf3eea9e999d7067fd5700446a8e72e08da4c6a864394e24"
+    },
+    {
+      "optimizer": "-O",
+      "case": "tail",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "197253250e6b7aeca3772825fbda1b7fde926eef8902d5659181bfbc3176ca30"
+    },
+    {
+      "optimizer": "-O",
+      "case": "unreadable",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "21c37f7a7ba5421c3e9f8c897b850bb3886e2f4dd83dfc18b5e9bec8e2ce2031"
+    },
+    {
+      "optimizer": "-O",
+      "case": "readability",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "7d519219d4df3454ca6f89f402fb3e71f34f2f50abdb0da9ad0513d140e106e8"
+    },
+    {
+      "optimizer": "-OO",
+      "case": "positive",
+      "accepted": true,
+      "exit-code": 0,
+      "stderr-sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "optimizer": "-OO",
+      "case": "source",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "74d230dfee9427b77ec118e5a3df6d259af1985a56b4734f4d09860ca88edd5e"
+    },
+    {
+      "optimizer": "-OO",
+      "case": "unhashed-log",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "16a7aff501dc32820a23663cad536101761f6e730126e3e1fa13af455870ebfa"
+    },
+    {
+      "optimizer": "-OO",
+      "case": "completion",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "cba52efd6e372b1d8285fe8f728c1c03c7b4e76c4ebf5acfa04ea1cd99767c9e"
+    },
+    {
+      "optimizer": "-OO",
+      "case": "exit",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "33a47810ef5565122bfee2e4d31f12d3e47117773eaf6f42c3b2d87ec7024e23"
+    },
+    {
+      "optimizer": "-OO",
+      "case": "profile",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "a656536832542c1699f257799b67b505163c0311bce2f43697c36b1a27a59d1b"
+    },
+    {
+      "optimizer": "-OO",
+      "case": "executable",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "a13d0e70650a0f567dee04400fda9f13fa9bed014a665dc2de097d4ca7762776"
+    },
+    {
+      "optimizer": "-OO",
+      "case": "runtime",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "1423e72963d5880fcfbe42c83c4778c73605a8a3d22f3078bc71394ca7c7ea75"
+    },
+    {
+      "optimizer": "-OO",
+      "case": "identity",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "f91795d29e446676f3257c1031142591e7a59b4ac252ff76496ad20d6d800a2a"
+    },
+    {
+      "optimizer": "-OO",
+      "case": "step",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "5e869c4922a74be4b75caa545289b0f71b9a42d5877c8738fa047662f65335fe"
+    },
+    {
+      "optimizer": "-OO",
+      "case": "coverage",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "8ff47b63fa23753782fc46da3b746d89dfeea2261edee2f22ea5b7c02b308504"
+    },
+    {
+      "optimizer": "-OO",
+      "case": "error",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "cdbf7d1dbc042bfa2639ee5dac8bfe0d8fdb8ba1b7bce6aa3edfea857144f769"
+    },
+    {
+      "optimizer": "-OO",
+      "case": "status",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "f5db958d94e152ebad6914b7610a3660838fb1883492e405955064e49a9920b3"
+    },
+    {
+      "optimizer": "-OO",
+      "case": "status-domain",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "e3a4e8f2c486d5ad9183cdf68bbbf2f203a89668eb1d81c6e45091e45d291b1d"
+    },
+    {
+      "optimizer": "-OO",
+      "case": "tail",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "cc617ac2aa3820b90ae1d4522030efeec9bfec2bed1ffa39d3fb545620ae2405"
+    },
+    {
+      "optimizer": "-OO",
+      "case": "unreadable",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "99db2aa35174143d84d1844cf5d775ad17f40a8af85a0049e5c6fa463d2afd56"
+    },
+    {
+      "optimizer": "-OO",
+      "case": "readability",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "27be7f8daeb1d4e2b96a17ae0a97ddcb815ad5deb1e05412fee74d7f255f1597"
+    }
+  ],
+  "scope": "Projection integrity only; no independent native execution.",
+  "generator-sha256": "aae5394a72da59e2cf4d5738623e21f412cb84b14845899baa2b78b6dc4093bb"
+}

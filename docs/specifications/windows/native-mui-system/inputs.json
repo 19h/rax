@@ -1,0 +1,103 @@
+{
+  "scope": "Fixed machine MUI settings and enclosing MUI language tree, four executable views on one ARM64 Windows29683 kernel. Read-only registry capture; opened handles closed. Source/kernel/runtime DLL identities in original receipts. No independent x64 kernel claim.",
+  "coherence": [
+    {
+      "profile": "native-mui-system-settings-v3",
+      "identical-tree-captures": 24,
+      "normalized-tree": {
+        "bytes": 1626,
+        "sha256": "1ab3efe3e8d01139e922d124002b042efa21eee9065aa0e8b080a4e646aacaa5"
+      }
+    },
+    {
+      "profile": "native-mui-system-v4",
+      "identical-tree-captures": 24,
+      "normalized-tree": {
+        "bytes": 24803,
+        "sha256": "4164fcdad8c68f198dcf5a91468c9cfff7eca0205482e57ef9822f953487a877"
+      }
+    }
+  ],
+  "files": [
+    {
+      "path": "native-mui-system-settings-v3-arm64.log",
+      "bytes": 28097,
+      "sha256": "e49b4c27bf493e799eec375511c822b66efbb12ab001b69b18eae405591aa158"
+    },
+    {
+      "path": "native-mui-system-settings-v3-x64.log",
+      "bytes": 28095,
+      "sha256": "4b7c156a17bf83eeef45ee98ba61f74912d4a19098a19c2d9abc5675b7aa3dd5"
+    },
+    {
+      "path": "native-mui-system-settings-v3-x86.log",
+      "bytes": 28095,
+      "sha256": "ff476974de016b17cefcedf845596a144609f9168dce90f7a978d413684635e0"
+    },
+    {
+      "path": "native-mui-system-settings-v3-x86-laa.log",
+      "bytes": 28099,
+      "sha256": "20c64b8e59758f2d069a729d97055cdbdee01c18a1aa7c3401ba7b9cfc28134d"
+    },
+    {
+      "path": "native-mui-system-settings-v3.cpp",
+      "bytes": 7974,
+      "sha256": "9e155d285b45159a5b221891cec128701d30d1e9aa55b8b691e54ed9eb2e4218"
+    },
+    {
+      "path": "native-mui-system-settings-v3-receipt.json",
+      "bytes": 13762,
+      "sha256": "da1b603cf65589ee0de4ae1209ce8ded541745fc46e2baa022f85388cbe611f2"
+    },
+    {
+      "path": "native-mui-system-settings-v3-profiles.json",
+      "bytes": 346,
+      "sha256": "1bf69a31d2085239d035f9ca70ffa6e4c53df4315d9be32787cba0fbdbc0e255"
+    },
+    {
+      "path": "run-native-mui-system-settings-v3.py",
+      "bytes": 6035,
+      "sha256": "677036a9fb5eaa82ce4907d51bf38645a10595028c00f87b26a1758e9440b555"
+    },
+    {
+      "path": "native-mui-system-v4-arm64.log",
+      "bytes": 168077,
+      "sha256": "68509a7f3502cee4b433bed6f49bb328ba69bc1bfc24e220a0a502d7d4174410"
+    },
+    {
+      "path": "native-mui-system-v4-x64.log",
+      "bytes": 168075,
+      "sha256": "eb37c0c71fbc799dac88fc4eee8ba687838977099a6dd67bcce0df862fff7f24"
+    },
+    {
+      "path": "native-mui-system-v4-x86.log",
+      "bytes": 168075,
+      "sha256": "dffa3dd5a3f98815301e44592dbbe9fca28b09c9d29f2672e062913b6e6be195"
+    },
+    {
+      "path": "native-mui-system-v4-x86-laa.log",
+      "bytes": 168079,
+      "sha256": "db6912597221d90b957ce255c8a2622717cad197bd280f17d6db39f7bd90ee1b"
+    },
+    {
+      "path": "native-mui-system-v4.cpp",
+      "bytes": 7960,
+      "sha256": "3a20ee9dd9d1cf3b59a7de5e939babee831b67ac1151b35832a07c146cfed2b5"
+    },
+    {
+      "path": "native-mui-system-v4-receipt.json",
+      "bytes": 13442,
+      "sha256": "fd6d49a8d0b92bf55bf58dcb23454a9583c189ed02d00333dc1e87ed3664e650"
+    },
+    {
+      "path": "native-mui-system-v4-profiles.json",
+      "bytes": 346,
+      "sha256": "1bf69a31d2085239d035f9ca70ffa6e4c53df4315d9be32787cba0fbdbc0e255"
+    },
+    {
+      "path": "run-native-mui-system-v4.py",
+      "bytes": 6013,
+      "sha256": "d7cfe532123cb2b32b9ce6bb2c75554cbafbf53a26a446ba1749ba8cd0c7a9ab"
+    }
+  ]
+}

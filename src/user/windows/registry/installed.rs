@@ -305,6 +305,18 @@ pub(crate) fn snapshot() -> io::Result<Registry> {
     let registry = registry.with_tree(root, selected)?;
     let root = super::TreeRoot::GreInitialize;
     let selected = tree::capture_root(&registry, root)?;
+    let registry = registry.with_tree(root, selected)?;
+    let root = super::TreeRoot::CommonGlobUserSettings;
+    let selected = tree::capture_root(&registry, root)?;
+    let registry = registry.with_tree(root, selected)?;
+    let root = super::TreeRoot::MuiSettings;
+    let selected = tree::capture_root(&registry, root)?;
+    let registry = registry.with_tree(root, selected)?;
+    let root = super::TreeRoot::MuiSystem;
+    let selected = tree::capture_root(&registry, root)?;
+    let registry = registry.with_tree(root, selected)?;
+    let root = super::TreeRoot::LanguageOverlayPackages;
+    let selected = tree::capture_root(&registry, root)?;
     registry.with_tree(root, selected)
 }
 
@@ -351,3 +363,19 @@ mod display_policy_tests;
 #[cfg(test)]
 #[path = "installed/gre_initialize_tests.rs"]
 mod gre_initialize_tests;
+
+#[cfg(test)]
+#[path = "installed/common_glob_user_settings_tests.rs"]
+mod common_glob_user_settings_tests;
+
+#[cfg(test)]
+#[path = "installed/mui_settings_tests.rs"]
+mod mui_settings_tests;
+
+#[cfg(test)]
+#[path = "installed/mui_system_tests.rs"]
+mod mui_system_tests;
+
+#[cfg(test)]
+#[path = "installed/language_overlay_packages_tests.rs"]
+mod language_overlay_packages_tests;

@@ -1,0 +1,314 @@
+[
+  {
+    "cohort": "native-system-code-integrity-v1",
+    "receipt": {
+      "bytes": 15669,
+      "sha256": "625672ac3ab96f8626040939d177a5222ce8ef881b22b9b803fcee8a4cff0f14"
+    },
+    "source": {
+      "path": "native-system-code-integrity-v1.cpp",
+      "bytes": 5802,
+      "sha256": "9b4db8fd10f554dff3b86f63c9a26abd22a58f8d958d11bddef773c05378d678"
+    },
+    "private-log-identities": [
+      {
+        "path": "arm64/build-arm64.log",
+        "bytes": 37,
+        "sha256": "26d4eacc430bd1669a6e3f1fb523e4c88fd0e69cca34f5d7857c52002939d0a9"
+      },
+      {
+        "path": "arm64/native-arm64.log",
+        "bytes": 569827,
+        "sha256": "ca9dffe2d152adfa071e2de9fe141b112c82284059830bd82807f96c2cdd6dea"
+      },
+      {
+        "path": "x86/build-x86.log",
+        "bytes": 37,
+        "sha256": "26d4eacc430bd1669a6e3f1fb523e4c88fd0e69cca34f5d7857c52002939d0a9"
+      },
+      {
+        "path": "x86/native-x86.log",
+        "bytes": 569825,
+        "sha256": "c53c5883dd848a004f1eb53b1a0033389d2b22ef6278793c0591c8d32dbbc033"
+      },
+      {
+        "path": "x64/build-x64.log",
+        "bytes": 37,
+        "sha256": "26d4eacc430bd1669a6e3f1fb523e4c88fd0e69cca34f5d7857c52002939d0a9"
+      },
+      {
+        "path": "x64/native-x64.log",
+        "bytes": 569825,
+        "sha256": "8944290fa96116b8922443c8c0166c2155e3de5eecc760aee0171c35c0734ed9"
+      },
+      {
+        "path": "x86-laa/build-x86.log",
+        "bytes": 37,
+        "sha256": "26d4eacc430bd1669a6e3f1fb523e4c88fd0e69cca34f5d7857c52002939d0a9"
+      },
+      {
+        "path": "x86-laa/native-x86-laa.log",
+        "bytes": 569829,
+        "sha256": "3c2affa47d261026b3165dc78d783c731d5bf814e7df24715ef3252d23a16c20"
+      }
+    ],
+    "stable-source-runtime-identity-executables": true,
+    "executables": [
+      {
+        "profile": "arm64",
+        "bytes": 147968,
+        "sha256": "f00459f168a55c9f20c762d2c70b4202ce8c4f071458fe788f59a1d360f6a0b5"
+      },
+      {
+        "profile": "x86",
+        "bytes": 121344,
+        "sha256": "5bc20685d750c468efbc9bf1cea2e9f7593863016732d329acecdb6bfbbfab69"
+      },
+      {
+        "profile": "x64",
+        "bytes": 145920,
+        "sha256": "557ea85726fa72e5da659988b3e93937711deb290bb626aae4b33c6d5c52ed60"
+      },
+      {
+        "profile": "x86-laa",
+        "bytes": 121344,
+        "sha256": "b4d298994f6a1fc5bed07f89e599eabe65ec55215bee20f9b2e544add857b1bf"
+      }
+    ],
+    "native-version": {
+      "major": 10,
+      "minor": 0,
+      "build": 29683
+    },
+    "native-modules": [
+      {
+        "file": "ntdll.dll",
+        "directory": "System32",
+        "bytes": 4609312,
+        "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+      },
+      {
+        "file": "kernel32.dll",
+        "directory": "System32",
+        "bytes": 1500304,
+        "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0"
+      },
+      {
+        "file": "kernelbase.dll",
+        "directory": "System32",
+        "bytes": 7213728,
+        "sha256": "6b2fa508ac4f9bce5d7351676485d1dc5b5236cd9656034e2fec1eaba3b82bc9"
+      },
+      {
+        "file": "user32.dll",
+        "directory": "System32",
+        "bytes": 2799192,
+        "sha256": "bd104076063e3bc8ce65fb744a947f533b8ac6bc737c999b1d7beacbc1b6b058"
+      },
+      {
+        "file": "win32u.dll",
+        "directory": "System32",
+        "bytes": 387768,
+        "sha256": "e2aa1e93f5e45377922bf6e5525d9fc37a60494da1d602033974883987e9c7d4"
+      },
+      {
+        "file": "ntdll.dll",
+        "directory": "SysWOW64",
+        "bytes": 1849976,
+        "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e"
+      },
+      {
+        "file": "kernel32.dll",
+        "directory": "SysWOW64",
+        "bytes": 696392,
+        "sha256": "9c9a0c54a79ea712bb533fcc79ba9935ed9f9d3f777fd65cf62d9cec6699b9df"
+      },
+      {
+        "file": "kernelbase.dll",
+        "directory": "SysWOW64",
+        "bytes": 3073488,
+        "sha256": "e9c414d7c6bd2c6fde608f31b2f31da3c2014c801b3764a30ee42abd1e9c2d58"
+      },
+      {
+        "file": "user32.dll",
+        "directory": "SysWOW64",
+        "bytes": 2039408,
+        "sha256": "f32a037264cb173501c4ba0c3fff25cd274e154e59be85c06a75a02f89a8e64b"
+      },
+      {
+        "file": "win32u.dll",
+        "directory": "SysWOW64",
+        "bytes": 109280,
+        "sha256": "098802d32f359f1ccd53e654f6a4fbfd6bf7d3cce58cc8f73ef389c8a9b26117"
+      },
+      {
+        "file": "ntoskrnl.exe",
+        "directory": "System32",
+        "bytes": 12436088,
+        "sha256": "7e3126b28ffa1c50381de7db89be60e25be784cd6cb85db9716db5743692bd5e"
+      }
+    ],
+    "execution-identity": {
+      "stdout-bytes": 21,
+      "stdout-sha256": "1d11fe0d35f45662cdc2e6237b8a12d402752770ca2f76c2ac3ef54f0b006fb6",
+      "stderr-bytes": 0
+    },
+    "queries": 8244
+  },
+  {
+    "cohort": "native-system-code-integrity-v2",
+    "receipt": {
+      "bytes": 15665,
+      "sha256": "b5e4592401048c59822843f5895cdb2cfdbf4f820dde08b3d34ab912cfc3adf9"
+    },
+    "source": {
+      "path": "native-system-code-integrity-v2.cpp",
+      "bytes": 5683,
+      "sha256": "881cc1f3d686c32bd55cdc3752f9b924eb1cf26ee86f3a95d50ae8a8d2548aa1"
+    },
+    "private-log-identities": [
+      {
+        "path": "arm64/build-arm64.log",
+        "bytes": 37,
+        "sha256": "ca9ade9c032ebf39cc20b96ce4efe3573bdb46f35481b1db86837c3833f0b15a"
+      },
+      {
+        "path": "arm64/native-arm64.log",
+        "bytes": 68503,
+        "sha256": "99379da3da4a6455bbf93dfacc7185bd2f1c1ab7461342877dbc34ade8c3e3cc"
+      },
+      {
+        "path": "x86/build-x86.log",
+        "bytes": 37,
+        "sha256": "ca9ade9c032ebf39cc20b96ce4efe3573bdb46f35481b1db86837c3833f0b15a"
+      },
+      {
+        "path": "x86/native-x86.log",
+        "bytes": 68501,
+        "sha256": "4655058c7efb83ac3082db33a8fb3b0d44d6da056b5dc07371dadb54982fb3eb"
+      },
+      {
+        "path": "x64/build-x64.log",
+        "bytes": 37,
+        "sha256": "ca9ade9c032ebf39cc20b96ce4efe3573bdb46f35481b1db86837c3833f0b15a"
+      },
+      {
+        "path": "x64/native-x64.log",
+        "bytes": 68501,
+        "sha256": "738d79b71fa468ddd039f1e98069fe61400df02d2b143a8ca5f63be7f94e43e0"
+      },
+      {
+        "path": "x86-laa/build-x86.log",
+        "bytes": 37,
+        "sha256": "ca9ade9c032ebf39cc20b96ce4efe3573bdb46f35481b1db86837c3833f0b15a"
+      },
+      {
+        "path": "x86-laa/native-x86-laa.log",
+        "bytes": 68505,
+        "sha256": "24dfac013a6b1237108d3354bd22cd9bc77a70c4edb87c08e3c32fa65a1b7ddb"
+      }
+    ],
+    "stable-source-runtime-identity-executables": true,
+    "executables": [
+      {
+        "profile": "arm64",
+        "bytes": 147456,
+        "sha256": "9b01b841c19ebbb939216c7b02e3545abd0f9bfec5bec79932a2b65e24a669b9"
+      },
+      {
+        "profile": "x86",
+        "bytes": 120320,
+        "sha256": "c838e02ee32c1685d3cc8dce29fe01e2868598850c28471a28a23264b936b6c7"
+      },
+      {
+        "profile": "x64",
+        "bytes": 144896,
+        "sha256": "96da95d01447998011924c610c60824e277a9af6e663fc7de3b2b2f1afd390b1"
+      },
+      {
+        "profile": "x86-laa",
+        "bytes": 120320,
+        "sha256": "280feef57c33357d9d76f813c9dcf5d1e696f50c0e52f8d2e6ea347af71e5b76"
+      }
+    ],
+    "native-version": {
+      "major": 10,
+      "minor": 0,
+      "build": 29683
+    },
+    "native-modules": [
+      {
+        "file": "ntdll.dll",
+        "directory": "System32",
+        "bytes": 4609312,
+        "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+      },
+      {
+        "file": "kernel32.dll",
+        "directory": "System32",
+        "bytes": 1500304,
+        "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0"
+      },
+      {
+        "file": "kernelbase.dll",
+        "directory": "System32",
+        "bytes": 7213728,
+        "sha256": "6b2fa508ac4f9bce5d7351676485d1dc5b5236cd9656034e2fec1eaba3b82bc9"
+      },
+      {
+        "file": "user32.dll",
+        "directory": "System32",
+        "bytes": 2799192,
+        "sha256": "bd104076063e3bc8ce65fb744a947f533b8ac6bc737c999b1d7beacbc1b6b058"
+      },
+      {
+        "file": "win32u.dll",
+        "directory": "System32",
+        "bytes": 387768,
+        "sha256": "e2aa1e93f5e45377922bf6e5525d9fc37a60494da1d602033974883987e9c7d4"
+      },
+      {
+        "file": "ntdll.dll",
+        "directory": "SysWOW64",
+        "bytes": 1849976,
+        "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e"
+      },
+      {
+        "file": "kernel32.dll",
+        "directory": "SysWOW64",
+        "bytes": 696392,
+        "sha256": "9c9a0c54a79ea712bb533fcc79ba9935ed9f9d3f777fd65cf62d9cec6699b9df"
+      },
+      {
+        "file": "kernelbase.dll",
+        "directory": "SysWOW64",
+        "bytes": 3073488,
+        "sha256": "e9c414d7c6bd2c6fde608f31b2f31da3c2014c801b3764a30ee42abd1e9c2d58"
+      },
+      {
+        "file": "user32.dll",
+        "directory": "SysWOW64",
+        "bytes": 2039408,
+        "sha256": "f32a037264cb173501c4ba0c3fff25cd274e154e59be85c06a75a02f89a8e64b"
+      },
+      {
+        "file": "win32u.dll",
+        "directory": "SysWOW64",
+        "bytes": 109280,
+        "sha256": "098802d32f359f1ccd53e654f6a4fbfd6bf7d3cce58cc8f73ef389c8a9b26117"
+      },
+      {
+        "file": "ntoskrnl.exe",
+        "directory": "System32",
+        "bytes": 12436088,
+        "sha256": "7e3126b28ffa1c50381de7db89be60e25be784cd6cb85db9716db5743692bd5e"
+      }
+    ],
+    "execution-identity": {
+      "stdout-bytes": 21,
+      "stdout-sha256": "1d11fe0d35f45662cdc2e6237b8a12d402752770ca2f76c2ac3ef54f0b006fb6",
+      "stderr-bytes": 0
+    },
+    "queries": 960
+  }
+]

@@ -1,0 +1,85 @@
+{
+  "scope": "Complete primary projection package; original producer index preserved as projection-inputs.json. Raw private memory and query identifiers remain outside this package.",
+  "files": [
+    {
+      "path": ".gitattributes",
+      "bytes": 29,
+      "sha256": "730a35ae3d558080083c3103d9ac8100c3f6561678092abe341701dfa331eb1d"
+    },
+    {
+      "path": "README.md",
+      "bytes": 4825,
+      "sha256": "56f0428b6722a5b48c8c5ea0ba5700ffea0e4e0f6f52fbec8dc5c26111adf010"
+    },
+    {
+      "path": "check-lpk-projection-controls-v1.py",
+      "bytes": 6846,
+      "sha256": "ce74f7055ce3cc9ad9e00075de5c39b1ad4d67f1e7cb185e9f9dad952b683c79"
+    },
+    {
+      "path": "cold-receipt.json",
+      "bytes": 11753,
+      "sha256": "e17008907f9e0d0735f8f39143256f9acbc8e26bf385f08c04e1c5dcb32f318f"
+    },
+    {
+      "path": "fixed-receipt.json",
+      "bytes": 14204,
+      "sha256": "813c76634b2785169026705f8c6b4b00a7875375d34bec7bfd63be1ccffe65c6"
+    },
+    {
+      "path": "kernel-inputs.json",
+      "bytes": 1058,
+      "sha256": "2940736124692c9f3833d66b7d21a3138bc552049e8098fb5a9a2545b1af7a0c"
+    },
+    {
+      "path": "native-lpk-kernel-code-v1.txt",
+      "bytes": 1261,
+      "sha256": "c8e9da679f87bec37e73e4c40978f33ec1954db00390bfa57dd1435a0871caf9"
+    },
+    {
+      "path": "native-lpk-kernel-imports-v1.json",
+      "bytes": 530,
+      "sha256": "b46b6d93cb885da44e495dc60b2e5271be8216e05fb7c7f91f0e985591f806b7"
+    },
+    {
+      "path": "native-lpk-register-cold-v1.cpp",
+      "bytes": 16101,
+      "sha256": "bf0038e62f6bb9a73d2b9cd9ae04200b51b074dba504ca3f6475121ba16eef65"
+    },
+    {
+      "path": "native-lpk-register-v1.cpp",
+      "bytes": 2517,
+      "sha256": "0e9d03bbaed90fdd23a906a73b52a8e24646b9eb2c4020b683391a3f7d9064f6"
+    },
+    {
+      "path": "observations.json",
+      "bytes": 5889,
+      "sha256": "cfbc74428b69d7a99a32b8f0d07f77850782abe6e2a76532298841363e260e3b"
+    },
+    {
+      "path": "project-native-lpk-register-v1.py",
+      "bytes": 8953,
+      "sha256": "058a45cc799ce7dfd4af7276fc3aebbaad9159d506b706b84d89c5c8aa6cb5f3"
+    },
+    {
+      "path": "projection-controls.json",
+      "bytes": 8330,
+      "sha256": "df727560b974aec6da79e87504f6697bee59c77c17c4f697ddf277d5604ec260"
+    },
+    {
+      "path": "projection-inputs.json",
+      "bytes": 2082,
+      "sha256": "438cada8d464b84ef6b46c9ff528ec6f80a2d05977364d517203290bdd154c5d"
+    },
+    {
+      "path": "run-native-lpk-register-cold-v1.py",
+      "bytes": 5492,
+      "sha256": "fa666db453d24c14036ec0d1f0617ccdafae1655148b12039443683f2c29111a"
+    },
+    {
+      "path": "run-native-lpk-register-v1.py",
+      "bytes": 6042,
+      "sha256": "8ab67e39fdfbe3a42f889d4b8fdb5506efa47f0e27fa2d135d1bc3b25c6b5ffe"
+    }
+  ]
+}

@@ -1,0 +1,360 @@
+{
+  "state": "finished",
+  "pid": 2200,
+  "steps": [
+    {
+      "name": "build-arm64",
+      "argv": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\arm64\\cl.exe",
+        "/nologo",
+        "/std:c++20",
+        "/EHsc",
+        "/MT",
+        "/GS",
+        "/Od",
+        "/we4473",
+        "/we4474",
+        "/we4477",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-lpk-register-v1\\native-lpk-register-v1.cpp",
+        "/link",
+        "advapi32.lib",
+        "/LARGEADDRESSAWARE",
+        "/SUBSYSTEM:CONSOLE,10.0",
+        "/OUT:C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-lpk-register-v1\\arm64\\probe.exe"
+      ],
+      "exit-code": 0,
+      "log": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-lpk-register-v1\\arm64\\build-arm64.log",
+        "bytes": 28,
+        "sha256": "99fee2ebdc864e5d967dbb52fad867d8818ddff4f3885815047ed0bd7e2b2b8b"
+      }
+    },
+    {
+      "name": "native-arm64",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-lpk-register-v1\\arm64\\probe.exe",
+        "arm64"
+      ],
+      "exit-code": 0,
+      "log": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-lpk-register-v1\\arm64\\native-arm64.log",
+        "bytes": 11153,
+        "sha256": "cf156db2b930268be7b4c05d7958090b6081ec37d3a077b2b5484b28b04c035f"
+      }
+    },
+    {
+      "name": "build-x86",
+      "argv": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\x86\\cl.exe",
+        "/nologo",
+        "/std:c++20",
+        "/EHsc",
+        "/MT",
+        "/GS",
+        "/Od",
+        "/we4473",
+        "/we4474",
+        "/we4477",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-lpk-register-v1\\native-lpk-register-v1.cpp",
+        "/link",
+        "advapi32.lib",
+        "/LARGEADDRESSAWARE:NO",
+        "/SUBSYSTEM:CONSOLE,10.0",
+        "/OUT:C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-lpk-register-v1\\x86\\probe.exe"
+      ],
+      "exit-code": 0,
+      "log": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-lpk-register-v1\\x86\\build-x86.log",
+        "bytes": 28,
+        "sha256": "99fee2ebdc864e5d967dbb52fad867d8818ddff4f3885815047ed0bd7e2b2b8b"
+      }
+    },
+    {
+      "name": "native-x86",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-lpk-register-v1\\x86\\probe.exe",
+        "x86"
+      ],
+      "exit-code": 0,
+      "log": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-lpk-register-v1\\x86\\native-x86.log",
+        "bytes": 11151,
+        "sha256": "2d9d3094e5fb7b8b83f35e7a1b080c0665371b3d088fd26e09add319307c6df7"
+      }
+    },
+    {
+      "name": "build-x64",
+      "argv": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\x64\\cl.exe",
+        "/nologo",
+        "/std:c++20",
+        "/EHsc",
+        "/MT",
+        "/GS",
+        "/Od",
+        "/we4473",
+        "/we4474",
+        "/we4477",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-lpk-register-v1\\native-lpk-register-v1.cpp",
+        "/link",
+        "advapi32.lib",
+        "/LARGEADDRESSAWARE",
+        "/SUBSYSTEM:CONSOLE,10.0",
+        "/OUT:C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-lpk-register-v1\\x64\\probe.exe"
+      ],
+      "exit-code": 0,
+      "log": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-lpk-register-v1\\x64\\build-x64.log",
+        "bytes": 28,
+        "sha256": "99fee2ebdc864e5d967dbb52fad867d8818ddff4f3885815047ed0bd7e2b2b8b"
+      }
+    },
+    {
+      "name": "native-x64",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-lpk-register-v1\\x64\\probe.exe",
+        "x64"
+      ],
+      "exit-code": 0,
+      "log": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-lpk-register-v1\\x64\\native-x64.log",
+        "bytes": 11151,
+        "sha256": "5a00286bc822c15a73d8a24fa1c2f6503e9b36b15ef5b6eeff5c395c04a59375"
+      }
+    },
+    {
+      "name": "build-x86",
+      "argv": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\x86\\cl.exe",
+        "/nologo",
+        "/std:c++20",
+        "/EHsc",
+        "/MT",
+        "/GS",
+        "/Od",
+        "/we4473",
+        "/we4474",
+        "/we4477",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-lpk-register-v1\\native-lpk-register-v1.cpp",
+        "/link",
+        "advapi32.lib",
+        "/LARGEADDRESSAWARE",
+        "/SUBSYSTEM:CONSOLE,10.0",
+        "/OUT:C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-lpk-register-v1\\x86-laa\\probe.exe"
+      ],
+      "exit-code": 0,
+      "log": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-lpk-register-v1\\x86-laa\\build-x86.log",
+        "bytes": 28,
+        "sha256": "99fee2ebdc864e5d967dbb52fad867d8818ddff4f3885815047ed0bd7e2b2b8b"
+      }
+    },
+    {
+      "name": "native-x86-laa",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-lpk-register-v1\\x86-laa\\probe.exe",
+        "x86-laa"
+      ],
+      "exit-code": 0,
+      "log": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-lpk-register-v1\\x86-laa\\native-x86-laa.log",
+        "bytes": 11155,
+        "sha256": "bcc82885f5a8a08c089fee517bfb490e5245373b38a9dad6511678541b918cbf"
+      }
+    }
+  ],
+  "architectures": [
+    {
+      "profile": "arm64",
+      "architecture": "arm64",
+      "compiler": {
+        "path": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\arm64\\cl.exe",
+        "bytes": 787728,
+        "sha256": "5cba83692d533f6b3a6ac07c6b2cdce708e0445ed1ee36b5cb2d49a244a4c835"
+      },
+      "machine": 43620,
+      "executable-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-lpk-register-v1\\arm64\\probe.exe",
+        "bytes": 145920,
+        "sha256": "f612641dda6fc2f03b8cc41244301c91e4522fd371f81dcedc332d40ece58896"
+      },
+      "executable-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-lpk-register-v1\\arm64\\probe.exe",
+        "bytes": 145920,
+        "sha256": "f612641dda6fc2f03b8cc41244301c91e4522fd371f81dcedc332d40ece58896"
+      }
+    },
+    {
+      "profile": "x86",
+      "architecture": "x86",
+      "compiler": {
+        "path": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\x86\\cl.exe",
+        "bytes": 761104,
+        "sha256": "cfed9e6fa19f430235f7fb75dbcd3200b7c1fa036462e3a73d76b5ea8e35c7ad"
+      },
+      "machine": 332,
+      "executable-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-lpk-register-v1\\x86\\probe.exe",
+        "bytes": 118784,
+        "sha256": "6cb2fb3e985975c463ed5bac350a8f09af3b95c97f0eac6c92ed239726673f2b"
+      },
+      "executable-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-lpk-register-v1\\x86\\probe.exe",
+        "bytes": 118784,
+        "sha256": "6cb2fb3e985975c463ed5bac350a8f09af3b95c97f0eac6c92ed239726673f2b"
+      }
+    },
+    {
+      "profile": "x64",
+      "architecture": "x64",
+      "compiler": {
+        "path": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\x64\\cl.exe",
+        "bytes": 762720,
+        "sha256": "d7a46c9d0d970fbeb4e803f1f0e9fec4217f8c833e6bb6a015e5b87299024466"
+      },
+      "machine": 34404,
+      "executable-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-lpk-register-v1\\x64\\probe.exe",
+        "bytes": 143360,
+        "sha256": "8978096fdf50c879e785c0573d9c7718a4759dde6b0f9dc5042bb37b3103ac0a"
+      },
+      "executable-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-lpk-register-v1\\x64\\probe.exe",
+        "bytes": 143360,
+        "sha256": "8978096fdf50c879e785c0573d9c7718a4759dde6b0f9dc5042bb37b3103ac0a"
+      }
+    },
+    {
+      "profile": "x86-laa",
+      "architecture": "x86",
+      "compiler": {
+        "path": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\x86\\cl.exe",
+        "bytes": 761104,
+        "sha256": "cfed9e6fa19f430235f7fb75dbcd3200b7c1fa036462e3a73d76b5ea8e35c7ad"
+      },
+      "machine": 332,
+      "executable-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-lpk-register-v1\\x86-laa\\probe.exe",
+        "bytes": 118784,
+        "sha256": "7771755e1df337e0a57c82dd7fffaa58154315a49ea59463df384439d987af92"
+      },
+      "executable-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-lpk-register-v1\\x86-laa\\probe.exe",
+        "bytes": 118784,
+        "sha256": "7771755e1df337e0a57c82dd7fffaa58154315a49ea59463df384439d987af92"
+      }
+    }
+  ],
+  "source-before": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-lpk-register-v1\\native-lpk-register-v1.cpp",
+    "bytes": 2517,
+    "sha256": "0e9d03bbaed90fdd23a906a73b52a8e24646b9eb2c4020b683391a3f7d9064f6"
+  },
+  "native-version": {
+    "major": 10,
+    "minor": 0,
+    "build": 29683
+  },
+  "native-modules-before": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+    },
+    {
+      "path": "C:\\Windows\\System32\\kernelbase.dll",
+      "bytes": 7213728,
+      "sha256": "6b2fa508ac4f9bce5d7351676485d1dc5b5236cd9656034e2fec1eaba3b82bc9"
+    },
+    {
+      "path": "C:\\Windows\\System32\\user32.dll",
+      "bytes": 2799192,
+      "sha256": "bd104076063e3bc8ce65fb744a947f533b8ac6bc737c999b1d7beacbc1b6b058"
+    },
+    {
+      "path": "C:\\Windows\\System32\\win32u.dll",
+      "bytes": 387768,
+      "sha256": "e2aa1e93f5e45377922bf6e5525d9fc37a60494da1d602033974883987e9c7d4"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\kernelbase.dll",
+      "bytes": 3073488,
+      "sha256": "e9c414d7c6bd2c6fde608f31b2f31da3c2014c801b3764a30ee42abd1e9c2d58"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\user32.dll",
+      "bytes": 2039408,
+      "sha256": "f32a037264cb173501c4ba0c3fff25cd274e154e59be85c06a75a02f89a8e64b"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\win32u.dll",
+      "bytes": 109280,
+      "sha256": "098802d32f359f1ccd53e654f6a4fbfd6bf7d3cce58cc8f73ef389c8a9b26117"
+    },
+    {
+      "path": "C:\\Windows\\System32\\ntoskrnl.exe",
+      "bytes": 12436088,
+      "sha256": "7e3126b28ffa1c50381de7db89be60e25be784cd6cb85db9716db5743692bd5e"
+    }
+  ],
+  "step": "native-x86-laa",
+  "child": 2476,
+  "source-after": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-lpk-register-v1\\native-lpk-register-v1.cpp",
+    "bytes": 2517,
+    "sha256": "0e9d03bbaed90fdd23a906a73b52a8e24646b9eb2c4020b683391a3f7d9064f6"
+  },
+  "native-modules-after": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+    },
+    {
+      "path": "C:\\Windows\\System32\\kernelbase.dll",
+      "bytes": 7213728,
+      "sha256": "6b2fa508ac4f9bce5d7351676485d1dc5b5236cd9656034e2fec1eaba3b82bc9"
+    },
+    {
+      "path": "C:\\Windows\\System32\\user32.dll",
+      "bytes": 2799192,
+      "sha256": "bd104076063e3bc8ce65fb744a947f533b8ac6bc737c999b1d7beacbc1b6b058"
+    },
+    {
+      "path": "C:\\Windows\\System32\\win32u.dll",
+      "bytes": 387768,
+      "sha256": "e2aa1e93f5e45377922bf6e5525d9fc37a60494da1d602033974883987e9c7d4"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\kernelbase.dll",
+      "bytes": 3073488,
+      "sha256": "e9c414d7c6bd2c6fde608f31b2f31da3c2014c801b3764a30ee42abd1e9c2d58"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\user32.dll",
+      "bytes": 2039408,
+      "sha256": "f32a037264cb173501c4ba0c3fff25cd274e154e59be85c06a75a02f89a8e64b"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\win32u.dll",
+      "bytes": 109280,
+      "sha256": "098802d32f359f1ccd53e654f6a4fbfd6bf7d3cce58cc8f73ef389c8a9b26117"
+    },
+    {
+      "path": "C:\\Windows\\System32\\ntoskrnl.exe",
+      "bytes": 12436088,
+      "sha256": "7e3126b28ffa1c50381de7db89be60e25be784cd6cb85db9716db5743692bd5e"
+    }
+  ],
+  "exit-code": 0
+}

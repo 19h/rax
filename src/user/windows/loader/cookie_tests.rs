@@ -56,6 +56,8 @@ fn runtime() -> NativeRuntime {
         appcompat: Default::default(),
         wnf_catalog: Default::default(),
         startup: None,
+        code_integrity: Err("controlled absent code integrity metadata".into()),
+        gui: Default::default(),
     }
 }
 

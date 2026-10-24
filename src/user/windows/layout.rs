@@ -535,6 +535,8 @@ pub mod kuser {
     pub const TICK_COUNT: u64 = 0x320;
     /// `Cookie`.
     pub const COOKIE: u64 = 0x330;
+    /// `LangGenerationCount`, paired with selected MUI data's ULONG at +0xC.
+    pub const LANG_GENERATION_COUNT: u64 = 0x3A4;
     /// `ActiveProcessorCount`.
     pub const ACTIVE_PROCESSOR_COUNT: u64 = 0x3C0;
     /// `ActiveGroupCount`.

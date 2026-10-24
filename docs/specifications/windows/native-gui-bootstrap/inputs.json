@@ -1,0 +1,95 @@
+{
+  "scope": "Complete current public package inventory, excluding this inventory. Original projection inventory is preserved in projection-inputs.json.",
+  "files": [
+    {
+      "path": ".gitattributes",
+      "bytes": 29,
+      "sha256": "730a35ae3d558080083c3103d9ac8100c3f6561678092abe341701dfa331eb1d"
+    },
+    {
+      "path": "README.md",
+      "bytes": 6385,
+      "sha256": "2e71809996bf3798b24407aee9f98c700118868742039574dc9f79b62b0e6a8f"
+    },
+    {
+      "path": "capture-native-callback-return-v1.py",
+      "bytes": 3066,
+      "sha256": "18c7c39c633a0b9185efb904761956bf823596091a33b02354185409fbe1e699"
+    },
+    {
+      "path": "capture-native-gui-views-v1.py",
+      "bytes": 3953,
+      "sha256": "7a6c7df9de4bb8678509c161130ccc9aafec50da1e4c6d25e7c4380b3b1fc2b1"
+    },
+    {
+      "path": "native-callback-return-v1.json",
+      "bytes": 14395,
+      "sha256": "f779f37cb48b332e670728f490636a286798e6afaabd2332e5bde5f7d976b6ec"
+    },
+    {
+      "path": "native-win32k-callback-v4.cpp",
+      "bytes": 14323,
+      "sha256": "e80e3cb8cac9d9f967ae5cffb8addc49f1ae852f86fcb1d60fcc520bf48bdbef"
+    },
+    {
+      "path": "native-win32k-callback-v5-build.log",
+      "bytes": 31,
+      "sha256": "20a56d01a5c5cd19b0b4d4e4173a03857e833c5697d259bb407d2d3ad6c696a3"
+    },
+    {
+      "path": "native-win32k-callback-v5.cpp",
+      "bytes": 15223,
+      "sha256": "8885a4e8d30ba4de455b8354bde41e3b8fbbafa8e9bd1a4bf8bf2f851f42f777"
+    },
+    {
+      "path": "native-win32k-callback-v5.json",
+      "bytes": 9094,
+      "sha256": "f44387e1c7ec575eb30440b0064533bc0c89491e8f5bf25df1ac011fc467cede"
+    },
+    {
+      "path": "native-win32k-callback-v6-build.log",
+      "bytes": 31,
+      "sha256": "6368ecbdc81ac792a72f4d22bf884920e2f54e9e5b10700a292e5de68a226cb3"
+    },
+    {
+      "path": "native-win32k-callback-v6.json",
+      "bytes": 11386,
+      "sha256": "3ff5eb1a5fd4914d23c51dd69c84c3cf8d1eabf45eb2a726accae419e5428a76"
+    },
+    {
+      "path": "observations.json",
+      "bytes": 32501,
+      "sha256": "4ba303565f1d31ef71e3a90e7dd16b54e068d836c7905ce978151339e48276f8"
+    },
+    {
+      "path": "project-native-gui-primary-v2.py",
+      "bytes": 11585,
+      "sha256": "c2c3409517fb106ea4677e85b7328dc3dff5d9ffa01bafd9e2d86eb7a716d226"
+    },
+    {
+      "path": "projection-controls-v1.json",
+      "bytes": 10150,
+      "sha256": "a47950dbdeaf50320a0f67920b2d0e6aa4c74a0dba5ea5a2d491b1b503db9d7e"
+    },
+    {
+      "path": "projection-inputs.json",
+      "bytes": 2335,
+      "sha256": "698e01aab545efac3add49ad257d9a1102d8b8aa932aa96f867b733fec914978"
+    },
+    {
+      "path": "run-native-win32k-callback-v5.py",
+      "bytes": 5401,
+      "sha256": "fe39016305eccc48b90416aa8cb54fb68bbe98960f5d843f4dc913d9f287b72c"
+    },
+    {
+      "path": "run-native-win32k-callback-v6.py",
+      "bytes": 5480,
+      "sha256": "d99727d66eb7eff63c7909746bcbb8bc6bf031fe3a988b28b9aa8fb6b9ae97ca"
+    },
+    {
+      "path": "validation-current.json",
+      "bytes": 9239,
+      "sha256": "a7b74e550aecf4e19402be2980e5be44881aaf0bc4be4ae9b9c6a80d741a3ddf"
+    }
+  ]
+}

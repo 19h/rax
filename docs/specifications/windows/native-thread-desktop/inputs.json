@@ -1,0 +1,85 @@
+{
+  "scope": "Complete primary projection package; original producer index preserved as projection-inputs.json. Raw private memory and query identifiers remain outside this package.",
+  "files": [
+    {
+      "path": ".gitattributes",
+      "bytes": 29,
+      "sha256": "730a35ae3d558080083c3103d9ac8100c3f6561678092abe341701dfa331eb1d"
+    },
+    {
+      "path": "README.md",
+      "bytes": 5999,
+      "sha256": "255667a9f306f37aa5f5f6465125443b3f56ea8b6917194859f029978951a26f"
+    },
+    {
+      "path": "check-thread-desktop-projection-controls-v1.py",
+      "bytes": 6845,
+      "sha256": "d197a16d1cf54a11f3fcedb9c8c123c6cd911c74faf4631ed17ef0d14d7e05d7"
+    },
+    {
+      "path": "cold-receipt.json",
+      "bytes": 11825,
+      "sha256": "9f817171efefa2bd98ba0f9052ae81ff71b83de5c3ec721486103d518810a685"
+    },
+    {
+      "path": "native-thread-desktop-cold-v1.cpp",
+      "bytes": 17216,
+      "sha256": "5c1f4b620afdcc269d84baa01cbb47e53e241ba74bd9267694c3d61850323956"
+    },
+    {
+      "path": "native-thread-desktop-v3.cpp",
+      "bytes": 9275,
+      "sha256": "055d4c7afe0eeedb3c4bff2e63bf122979b4d45b88291424ffe9e2262f88abaf"
+    },
+    {
+      "path": "native-thread-desktop-v4.cpp",
+      "bytes": 9676,
+      "sha256": "c896e5e9e7eb05bb5f8e069bfbfbd2ba0d257cc3f594f059f4309fa9204f8f3d"
+    },
+    {
+      "path": "observations.json",
+      "bytes": 17812,
+      "sha256": "3b5bbeb523791b73655d41e4f69f26d610a184a68f699c776bd9e7f4c401a6a4"
+    },
+    {
+      "path": "project-native-thread-desktop-v2.py",
+      "bytes": 10286,
+      "sha256": "4262ae637a6fc0eba983bb258cc045deadaaed0e592a06bbd74d9058dae79a4c"
+    },
+    {
+      "path": "projection-controls.json",
+      "bytes": 8309,
+      "sha256": "599def780cca774ecb9dcdd7f80572521f59d33cfef69679b8be296eda99bc63"
+    },
+    {
+      "path": "projection-inputs.json",
+      "bytes": 1943,
+      "sha256": "4b75b283154f4a9bb622a6ac03ad4d5610c4f756077fe9b2bcd3bbf3454500ae"
+    },
+    {
+      "path": "run-native-thread-desktop-cold-v1.py",
+      "bytes": 5500,
+      "sha256": "cc02fec757092c672b047e12d59f7cda2e38aad0dc94109a1f10d5c5f94e9930"
+    },
+    {
+      "path": "run-native-thread-desktop-v3.py",
+      "bytes": 6185,
+      "sha256": "5f1cf1901cf7343781538cd3ed829ffabbb8387ba8693d48b1d3a4fd8ec79009"
+    },
+    {
+      "path": "run-native-thread-desktop-v4.py",
+      "bytes": 6185,
+      "sha256": "219116c62973037b1190be4d980b40b1cd07ab24cd8236c3090508d7a1211405"
+    },
+    {
+      "path": "v3-receipt.json",
+      "bytes": 21482,
+      "sha256": "a87d2f73e2413c0d23a72efd74cc038c392796fa89a57d36972df2c7b2990e13"
+    },
+    {
+      "path": "v4-receipt.json",
+      "bytes": 21483,
+      "sha256": "575b52eb048f92c807c471fb281ec6d3493319275cd617702d065db2c3fa63c2"
+    }
+  ]
+}

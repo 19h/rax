@@ -177,6 +177,15 @@ mod virtual_memory_tests;
 #[path = "services_tests/win32u_tests.rs"]
 mod win32u_tests;
 
+#[path = "services_tests/gui_tests.rs"]
+mod gui_tests;
+
+#[path = "services_tests/code_integrity_tests.rs"]
+mod code_integrity_tests;
+
+#[path = "services_tests/mui_tests.rs"]
+mod mui_tests;
+
 #[cfg(windows)]
 #[path = "services_tests/win32u_leaf_tests.rs"]
 mod win32u_leaf_tests;

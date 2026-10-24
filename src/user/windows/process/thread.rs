@@ -435,6 +435,7 @@ fn create_inner(
 /// its object is signaled with `code`, and its stack, TEB, and TLS blocks
 /// are freed.
 pub fn destroy(p: &mut Proc, t: Thread, code: u32) {
+    p.gui.retire_thread(t.tid);
     if let Err(status) = super::fiber::destroy_active(p, &t) {
         p.fail(format!("fiber teardown failed: {status:#010x}"));
     }

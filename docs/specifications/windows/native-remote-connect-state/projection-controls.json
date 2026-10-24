@@ -1,0 +1,337 @@
+{
+  "positive": [
+    {
+      "mode": "normal",
+      "case": "positive",
+      "exit-code": 0,
+      "output": {
+        "bytes": 60,
+        "sha256": "5d77f72cc2e2f37cb62ab3bd876b25895d014d743c449df345e64bcf475563b3"
+      }
+    },
+    {
+      "mode": "-O",
+      "case": "positive",
+      "exit-code": 0,
+      "output": {
+        "bytes": 60,
+        "sha256": "5d77f72cc2e2f37cb62ab3bd876b25895d014d743c449df345e64bcf475563b3"
+      }
+    },
+    {
+      "mode": "-OO",
+      "case": "positive",
+      "exit-code": 0,
+      "output": {
+        "bytes": 60,
+        "sha256": "5d77f72cc2e2f37cb62ab3bd876b25895d014d743c449df345e64bcf475563b3"
+      }
+    }
+  ],
+  "negative": [
+    {
+      "mode": "normal",
+      "case": "source-change",
+      "exit-code": 1,
+      "output": {
+        "bytes": 898,
+        "sha256": "0c18bf8f25fa79e74817c9586c5d56a3ec0b873c96192b02fd0a5fd77e71a344"
+      }
+    },
+    {
+      "mode": "normal",
+      "case": "log-change-unindexed",
+      "exit-code": 1,
+      "output": {
+        "bytes": 916,
+        "sha256": "98f56415bcd0312d2a7b700481f13239a60067d1a4caa0b70a2cc8c2829bf450"
+      }
+    },
+    {
+      "mode": "normal",
+      "case": "query-value-reindexed",
+      "exit-code": 1,
+      "output": {
+        "bytes": 545,
+        "sha256": "1fed86692b8258073154bf1720f20ad9a1d18f8b49efaa668d52d92559143646"
+      }
+    },
+    {
+      "mode": "normal",
+      "case": "query-coverage-reindexed",
+      "exit-code": 1,
+      "output": {
+        "bytes": 623,
+        "sha256": "394a76d461a723c3cd1548aabd3a43f58fadad0c2224d76b8120708db13eb878"
+      }
+    },
+    {
+      "mode": "normal",
+      "case": "callback-index-reindexed",
+      "exit-code": 1,
+      "output": {
+        "bytes": 557,
+        "sha256": "239bcd00cd49ba4d3b67540edae3cb3eeb931a6f271cc05e3f43ff07dfd5266f"
+      }
+    },
+    {
+      "mode": "normal",
+      "case": "failure-marker-reindexed",
+      "exit-code": 1,
+      "output": {
+        "bytes": 536,
+        "sha256": "831d0163c0d337f80b64becf8a2f9342df614fe90d77d50f125500116d58b4f6"
+      }
+    },
+    {
+      "mode": "normal",
+      "case": "executable-change",
+      "exit-code": 1,
+      "output": {
+        "bytes": 792,
+        "sha256": "82b6b3d33f1f9bf8c7479970c5c436db12d1e595e77dbbf0fe51cf945e0f8917"
+      }
+    },
+    {
+      "mode": "normal",
+      "case": "runtime-change",
+      "exit-code": 1,
+      "output": {
+        "bytes": 789,
+        "sha256": "9b59cabbf14ab0fa7fa76f1f3ccd48968ee0119b5b039f4de29ed2cbbbbc39a3"
+      }
+    },
+    {
+      "mode": "normal",
+      "case": "positive-output-buffer",
+      "exit-code": 1,
+      "output": {
+        "bytes": 627,
+        "sha256": "585a202b3372ffab119701ea9e2ff0944de9db6f165529c2370df9d63df0aecb"
+      }
+    },
+    {
+      "mode": "normal",
+      "case": "positive-output-status",
+      "exit-code": 1,
+      "output": {
+        "bytes": 627,
+        "sha256": "dd782d1d736a955d73e3c1be1e825dc0c1e704680c8146ea29b5c0787beffce8"
+      }
+    },
+    {
+      "mode": "normal",
+      "case": "positive-output-producer",
+      "exit-code": 1,
+      "output": {
+        "bytes": 837,
+        "sha256": "30704f9546fa02d493d81f26175167b0c6dbcc496429bef2473f3c77083d5c1e"
+      }
+    },
+    {
+      "mode": "-O",
+      "case": "source-change",
+      "exit-code": 1,
+      "output": {
+        "bytes": 898,
+        "sha256": "32b4255041b483c96bfe0c5e486c0be106f8e3db0d4568de6b786ae1c0c28b76"
+      }
+    },
+    {
+      "mode": "-O",
+      "case": "log-change-unindexed",
+      "exit-code": 1,
+      "output": {
+        "bytes": 916,
+        "sha256": "ed6248ddd0eb9fedec257205182874876e85b2d6ce05ea52dc8525606b7775e5"
+      }
+    },
+    {
+      "mode": "-O",
+      "case": "query-value-reindexed",
+      "exit-code": 1,
+      "output": {
+        "bytes": 545,
+        "sha256": "ceb5a5379b9beffd32ad39db490119065db54902487815530a94491e3bfc5528"
+      }
+    },
+    {
+      "mode": "-O",
+      "case": "query-coverage-reindexed",
+      "exit-code": 1,
+      "output": {
+        "bytes": 623,
+        "sha256": "791db3cc61cd78a8c628ca5c99928dad051e08c21be17c7dceb92b48b4bcae08"
+      }
+    },
+    {
+      "mode": "-O",
+      "case": "callback-index-reindexed",
+      "exit-code": 1,
+      "output": {
+        "bytes": 557,
+        "sha256": "a78a294fa346f3bde1c32be0d3a6f11902fb74fc419fc03a17eb4106ce68fef3"
+      }
+    },
+    {
+      "mode": "-O",
+      "case": "failure-marker-reindexed",
+      "exit-code": 1,
+      "output": {
+        "bytes": 536,
+        "sha256": "fa6d75681d85ff7ec390710025aa0fda5d3ba5c8e17d56983e2834275f40b993"
+      }
+    },
+    {
+      "mode": "-O",
+      "case": "executable-change",
+      "exit-code": 1,
+      "output": {
+        "bytes": 792,
+        "sha256": "a11753f07c23db2a9e03aedaa3d69d74afe11464cd0cd0e3b4da00e36bbdb053"
+      }
+    },
+    {
+      "mode": "-O",
+      "case": "runtime-change",
+      "exit-code": 1,
+      "output": {
+        "bytes": 789,
+        "sha256": "28dda89a60c53ccafe222c2ef6a14fd6aa22df03d21a2fe1d382e76a2d8e67f9"
+      }
+    },
+    {
+      "mode": "-O",
+      "case": "positive-output-buffer",
+      "exit-code": 1,
+      "output": {
+        "bytes": 627,
+        "sha256": "1b0dbfdf50dea2aff689c57da10c9100c420c73526f67ebeac37eaaca7f71fb3"
+      }
+    },
+    {
+      "mode": "-O",
+      "case": "positive-output-status",
+      "exit-code": 1,
+      "output": {
+        "bytes": 627,
+        "sha256": "b0f5a396d42567171eaa96a632f3c3298361048874032a5498e7b43e1bfb32fe"
+      }
+    },
+    {
+      "mode": "-O",
+      "case": "positive-output-producer",
+      "exit-code": 1,
+      "output": {
+        "bytes": 837,
+        "sha256": "ca34354341d9a34c23140154f4c3f75e2d55192a8ac10ff4f0794191c3edcfa7"
+      }
+    },
+    {
+      "mode": "-OO",
+      "case": "source-change",
+      "exit-code": 1,
+      "output": {
+        "bytes": 898,
+        "sha256": "ffb2913d642afd77128df737d59a96bc75e349c6f434e64f3b2ab238ad35a86b"
+      }
+    },
+    {
+      "mode": "-OO",
+      "case": "log-change-unindexed",
+      "exit-code": 1,
+      "output": {
+        "bytes": 916,
+        "sha256": "f44abdafce5b96214b54a1d791ccdbfd021563bf43386dd39300f1ebd97b136b"
+      }
+    },
+    {
+      "mode": "-OO",
+      "case": "query-value-reindexed",
+      "exit-code": 1,
+      "output": {
+        "bytes": 545,
+        "sha256": "4f226a142062f8c6a01844fd1b09624679122798045dd861060645df67f04328"
+      }
+    },
+    {
+      "mode": "-OO",
+      "case": "query-coverage-reindexed",
+      "exit-code": 1,
+      "output": {
+        "bytes": 623,
+        "sha256": "380197c6abff99dafec87d35994658191cb4ee6126bd445442b114ee0badb331"
+      }
+    },
+    {
+      "mode": "-OO",
+      "case": "callback-index-reindexed",
+      "exit-code": 1,
+      "output": {
+        "bytes": 557,
+        "sha256": "d0e455299e031bf275bd6897d4af38a812afe00a4f5792c5bb0e1a96e5e2ba26"
+      }
+    },
+    {
+      "mode": "-OO",
+      "case": "failure-marker-reindexed",
+      "exit-code": 1,
+      "output": {
+        "bytes": 536,
+        "sha256": "995a27712977aaf8a2b471d3ef55fa91e782f8b795bbc387bc10554185899914"
+      }
+    },
+    {
+      "mode": "-OO",
+      "case": "executable-change",
+      "exit-code": 1,
+      "output": {
+        "bytes": 792,
+        "sha256": "b5e4eee0f3010149a27a66630e5d5bdf3435e7af6685f2de39e2b226e8f51b1f"
+      }
+    },
+    {
+      "mode": "-OO",
+      "case": "runtime-change",
+      "exit-code": 1,
+      "output": {
+        "bytes": 789,
+        "sha256": "1e0f36d8b65084af762f603c3cd2606a09cf4d70da6b7ab13f63fb2c2bcfbc64"
+      }
+    },
+    {
+      "mode": "-OO",
+      "case": "positive-output-buffer",
+      "exit-code": 1,
+      "output": {
+        "bytes": 627,
+        "sha256": "97811a7438e5c1f54730006a819c8e2478791021d8cd2dbfb4fd2afe6039d129"
+      }
+    },
+    {
+      "mode": "-OO",
+      "case": "positive-output-status",
+      "exit-code": 1,
+      "output": {
+        "bytes": 627,
+        "sha256": "ac3db4d27f27e625e74e33b4c91c2d388cf12c7fd897ac9af813c1cbc8374f4f"
+      }
+    },
+    {
+      "mode": "-OO",
+      "case": "positive-output-producer",
+      "exit-code": 1,
+      "output": {
+        "bytes": 837,
+        "sha256": "368460aa881e15dc874aa491bf012152ffe6a3d1b0ea8813d79384c93e173ad9"
+      }
+    }
+  ],
+  "state": "finished",
+  "exit-code": 0,
+  "source": {
+    "bytes": 9651,
+    "sha256": "e42e7c70509cabbdeb37ad8d85df3aded50a453f8d83c2ca9cd43ba6d02ea22d"
+  },
+  "scope": "Three unmodified controls accepted;33 data/source/binary/runtime corruptions rejected across normal,-O,-OO. No production source changes; scratch directories removed."
+}

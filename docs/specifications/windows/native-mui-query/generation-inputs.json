@@ -1,0 +1,30 @@
+{
+  "scope": "Read-only KUSER_SHARED_DATA LangGenerationCount and NtGetMUIRegistryInfo flags0 capture on installed ARM64 Windows build29683. No host clear or commit operations.",
+  "field-offset": "0x3A4",
+  "mui-payload-offset": "0xC",
+  "installed-kernel": {
+    "bytes": 12436088,
+    "sha256": "7e3126b28ffa1c50381de7db89be60e25be784cd6cb85db9716db5743692bd5e"
+  },
+  "primary-symbols": {
+    "url": "https://msdl.microsoft.com/download/symbols/ntkrnlmp.pdb/1B26CF1807F147F572415ADC75B702D11/ntkrnlmp.pdb",
+    "bytes": 10727424,
+    "sha256": "7e3910f1a08932e9ae7afce4120fd8e0d0bba573c1db702fbe30420182583249",
+    "guid": "1B26CF18-07F1-47F5-7241-5ADC75B702D1",
+    "rsds-age": 1,
+    "dbi-age": 1,
+    "info-age": 6
+  },
+  "files": [
+    {
+      "path": "capture-native-mui-generation-v1.py",
+      "bytes": 1805,
+      "sha256": "e18e5cd43d87266cb3af28bc7b443efe27b46f81eda1c73eef606b72b208b60f"
+    },
+    {
+      "path": "native-mui-generation-v1.json",
+      "bytes": 727,
+      "sha256": "b3d84d979a25c3e57f588ef5b3ad68cba96a55c2e3e7a1d659db51237914f535"
+    }
+  ]
+}

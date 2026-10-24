@@ -1,0 +1,654 @@
+{
+  "scope": "Four executable views on one ARM64 Windows kernel, SYSTEM context. Native x64-kernel and native64 WoW64 marker effects remain unknown. No native IDs, handle values or private memory are projected.",
+  "cid-retirement-limitation": "Last user handle close is not proof of immediate native CID deletion; delayed object references or TID reuse are unresolved.",
+  "profiles": [
+    {
+      "profile": "arm64",
+      "query-rows": 261,
+      "groups": [
+        {
+          "phase": "after-close-desktop",
+          "role": "current",
+          "present-and-same-desktop": true,
+          "rows": 3
+        },
+        {
+          "phase": "after-dup-close",
+          "role": "current",
+          "present-and-same-desktop": true,
+          "rows": 3
+        },
+        {
+          "phase": "after-nt-close",
+          "role": "current",
+          "present-and-same-desktop": true,
+          "rows": 3
+        },
+        {
+          "phase": "exited-closed-handle",
+          "role": "worker",
+          "present-and-same-desktop": false,
+          "rows": 12
+        },
+        {
+          "phase": "exited-open-handle",
+          "role": "worker",
+          "present-and-same-desktop": true,
+          "rows": 12
+        },
+        {
+          "phase": "live",
+          "role": "worker",
+          "present-and-same-desktop": true,
+          "rows": 12
+        },
+        {
+          "phase": "live",
+          "role": "worker-tag1",
+          "present-and-same-desktop": true,
+          "rows": 12
+        },
+        {
+          "phase": "main",
+          "role": "constant",
+          "present-and-same-desktop": false,
+          "rows": 108
+        },
+        {
+          "phase": "main",
+          "role": "current",
+          "present-and-same-desktop": true,
+          "rows": 12
+        },
+        {
+          "phase": "main",
+          "role": "current-tag1",
+          "present-and-same-desktop": true,
+          "rows": 12
+        },
+        {
+          "phase": "main",
+          "role": "current-tag2",
+          "present-and-same-desktop": true,
+          "rows": 12
+        },
+        {
+          "phase": "main",
+          "role": "current-tag3",
+          "present-and-same-desktop": true,
+          "rows": 12
+        },
+        {
+          "phase": "main",
+          "role": "process-id",
+          "present-and-same-desktop": false,
+          "rows": 12
+        },
+        {
+          "phase": "skip-exited-closed",
+          "role": "worker",
+          "present-and-same-desktop": false,
+          "rows": 12
+        },
+        {
+          "phase": "skip-exited-open",
+          "role": "worker",
+          "present-and-same-desktop": true,
+          "rows": 12
+        },
+        {
+          "phase": "skip-live",
+          "role": "worker",
+          "present-and-same-desktop": true,
+          "rows": 12
+        }
+      ],
+      "last-error-preserved": true,
+      "last-nt-status-preserved": true,
+      "access": "0x000F00CF",
+      "handle-flags": 0,
+      "assigned-CloseDesktop": {
+        "result": false,
+        "error": "0x000000AA"
+      },
+      "assigned-NtClose": "0xC0000235",
+      "duplicate-close-source": {
+        "result": true,
+        "duplicate-present": true,
+        "original-valid-after": true
+      },
+      "worker-self-query": {
+        "rows": 8,
+        "marker-before": false,
+        "marker-after": true,
+        "marker-view": "native64"
+      },
+      "private-query-logs": [
+        {
+          "path": "arm64/native-arm64-query.log",
+          "bytes": 9990,
+          "sha256": "275f788c3baa54febe740ae1f1aa2641eccb8bd197340506d937d9c5c105d8d8"
+        },
+        {
+          "path": "arm64/native-arm64-close-desktop.log",
+          "bytes": 10484,
+          "sha256": "0979d200b97afd0e94324db987a61b5dff2a616f075eea3d8cd8ac218219b9c0"
+        },
+        {
+          "path": "arm64/native-arm64-nt-close.log",
+          "bytes": 10483,
+          "sha256": "dd0a8d3b5e7cea78eb48e1ce10eb7149658651baac259f2caeb1cf39604fe0e8"
+        },
+        {
+          "path": "arm64/native-arm64-dup-close-source.log",
+          "bytes": 10788,
+          "sha256": "92ef22cc6eadbfdb5c53650961b7f98aea756fb05964cbe3ad4a5f7bda2a9a58"
+        }
+      ]
+    },
+    {
+      "profile": "x86",
+      "query-rows": 261,
+      "groups": [
+        {
+          "phase": "after-close-desktop",
+          "role": "current",
+          "present-and-same-desktop": true,
+          "rows": 3
+        },
+        {
+          "phase": "after-dup-close",
+          "role": "current",
+          "present-and-same-desktop": true,
+          "rows": 3
+        },
+        {
+          "phase": "after-nt-close",
+          "role": "current",
+          "present-and-same-desktop": true,
+          "rows": 3
+        },
+        {
+          "phase": "exited-closed-handle",
+          "role": "worker",
+          "present-and-same-desktop": false,
+          "rows": 12
+        },
+        {
+          "phase": "exited-open-handle",
+          "role": "worker",
+          "present-and-same-desktop": true,
+          "rows": 12
+        },
+        {
+          "phase": "live",
+          "role": "worker",
+          "present-and-same-desktop": true,
+          "rows": 12
+        },
+        {
+          "phase": "live",
+          "role": "worker-tag1",
+          "present-and-same-desktop": true,
+          "rows": 12
+        },
+        {
+          "phase": "main",
+          "role": "constant",
+          "present-and-same-desktop": false,
+          "rows": 108
+        },
+        {
+          "phase": "main",
+          "role": "current",
+          "present-and-same-desktop": true,
+          "rows": 12
+        },
+        {
+          "phase": "main",
+          "role": "current-tag1",
+          "present-and-same-desktop": true,
+          "rows": 12
+        },
+        {
+          "phase": "main",
+          "role": "current-tag2",
+          "present-and-same-desktop": true,
+          "rows": 12
+        },
+        {
+          "phase": "main",
+          "role": "current-tag3",
+          "present-and-same-desktop": true,
+          "rows": 12
+        },
+        {
+          "phase": "main",
+          "role": "process-id",
+          "present-and-same-desktop": false,
+          "rows": 12
+        },
+        {
+          "phase": "skip-exited-closed",
+          "role": "worker",
+          "present-and-same-desktop": false,
+          "rows": 12
+        },
+        {
+          "phase": "skip-exited-open",
+          "role": "worker",
+          "present-and-same-desktop": true,
+          "rows": 12
+        },
+        {
+          "phase": "skip-live",
+          "role": "worker",
+          "present-and-same-desktop": true,
+          "rows": 12
+        }
+      ],
+      "last-error-preserved": true,
+      "last-nt-status-preserved": true,
+      "access": "0x000F00CF",
+      "handle-flags": 0,
+      "assigned-CloseDesktop": {
+        "result": false,
+        "error": "0x000000AA"
+      },
+      "assigned-NtClose": "0xC0000235",
+      "duplicate-close-source": {
+        "result": true,
+        "duplicate-present": true,
+        "original-valid-after": true
+      },
+      "worker-self-query": {
+        "rows": 8,
+        "marker-before": false,
+        "marker-after": false,
+        "marker-view": "TEB32"
+      },
+      "private-query-logs": [
+        {
+          "path": "x86/native-x86-query.log",
+          "bytes": 10015,
+          "sha256": "984525e1cab92907d0c0cf980dc4d36aeb90ea313f8215bbaf47d1ece41fcd92"
+        },
+        {
+          "path": "x86/native-x86-close-desktop.log",
+          "bytes": 10512,
+          "sha256": "000befacba50fce7d704f0202def22177b922ae759195c834443fb5c203fd471"
+        },
+        {
+          "path": "x86/native-x86-nt-close.log",
+          "bytes": 10511,
+          "sha256": "a4a3f7f72b65936928ec4015a36d7b19e0a8562497f82c0f46a6a831e4e427bc"
+        },
+        {
+          "path": "x86/native-x86-dup-close-source.log",
+          "bytes": 10816,
+          "sha256": "6a0c03b42a8c50aea0de712ad87f3ac732e03a7752620cf3601542b8e86f578a"
+        }
+      ]
+    },
+    {
+      "profile": "x64",
+      "query-rows": 261,
+      "groups": [
+        {
+          "phase": "after-close-desktop",
+          "role": "current",
+          "present-and-same-desktop": true,
+          "rows": 3
+        },
+        {
+          "phase": "after-dup-close",
+          "role": "current",
+          "present-and-same-desktop": true,
+          "rows": 3
+        },
+        {
+          "phase": "after-nt-close",
+          "role": "current",
+          "present-and-same-desktop": true,
+          "rows": 3
+        },
+        {
+          "phase": "exited-closed-handle",
+          "role": "worker",
+          "present-and-same-desktop": false,
+          "rows": 12
+        },
+        {
+          "phase": "exited-open-handle",
+          "role": "worker",
+          "present-and-same-desktop": true,
+          "rows": 12
+        },
+        {
+          "phase": "live",
+          "role": "worker",
+          "present-and-same-desktop": true,
+          "rows": 12
+        },
+        {
+          "phase": "live",
+          "role": "worker-tag1",
+          "present-and-same-desktop": true,
+          "rows": 12
+        },
+        {
+          "phase": "main",
+          "role": "constant",
+          "present-and-same-desktop": false,
+          "rows": 108
+        },
+        {
+          "phase": "main",
+          "role": "current",
+          "present-and-same-desktop": true,
+          "rows": 12
+        },
+        {
+          "phase": "main",
+          "role": "current-tag1",
+          "present-and-same-desktop": true,
+          "rows": 12
+        },
+        {
+          "phase": "main",
+          "role": "current-tag2",
+          "present-and-same-desktop": true,
+          "rows": 12
+        },
+        {
+          "phase": "main",
+          "role": "current-tag3",
+          "present-and-same-desktop": true,
+          "rows": 12
+        },
+        {
+          "phase": "main",
+          "role": "process-id",
+          "present-and-same-desktop": false,
+          "rows": 12
+        },
+        {
+          "phase": "skip-exited-closed",
+          "role": "worker",
+          "present-and-same-desktop": false,
+          "rows": 12
+        },
+        {
+          "phase": "skip-exited-open",
+          "role": "worker",
+          "present-and-same-desktop": true,
+          "rows": 12
+        },
+        {
+          "phase": "skip-live",
+          "role": "worker",
+          "present-and-same-desktop": true,
+          "rows": 12
+        }
+      ],
+      "last-error-preserved": true,
+      "last-nt-status-preserved": true,
+      "access": "0x000F00CF",
+      "handle-flags": 0,
+      "assigned-CloseDesktop": {
+        "result": false,
+        "error": "0x000000AA"
+      },
+      "assigned-NtClose": "0xC0000235",
+      "duplicate-close-source": {
+        "result": true,
+        "duplicate-present": true,
+        "original-valid-after": true
+      },
+      "worker-self-query": {
+        "rows": 8,
+        "marker-before": false,
+        "marker-after": true,
+        "marker-view": "native64"
+      },
+      "private-query-logs": [
+        {
+          "path": "x64/native-x64-query.log",
+          "bytes": 10015,
+          "sha256": "8e0432a92f228532af04cba9be1fe70ebfe26a247da3c4e9bc1f234a3cdf7e71"
+        },
+        {
+          "path": "x64/native-x64-close-desktop.log",
+          "bytes": 10512,
+          "sha256": "93766c322c33ea31d8919ad33cf36fd472d4a6e0ccbbf00d31d309ea361f88e6"
+        },
+        {
+          "path": "x64/native-x64-nt-close.log",
+          "bytes": 10511,
+          "sha256": "04e75d84df2e85ac8fc268eb4263e35a813b577336de33f795bd02cc1c6f93d2"
+        },
+        {
+          "path": "x64/native-x64-dup-close-source.log",
+          "bytes": 10816,
+          "sha256": "19fa73ed4b923842b1d727cd1d66698064841da729d20d8521215c9f6f34857a"
+        }
+      ]
+    },
+    {
+      "profile": "x86-laa",
+      "query-rows": 261,
+      "groups": [
+        {
+          "phase": "after-close-desktop",
+          "role": "current",
+          "present-and-same-desktop": true,
+          "rows": 3
+        },
+        {
+          "phase": "after-dup-close",
+          "role": "current",
+          "present-and-same-desktop": true,
+          "rows": 3
+        },
+        {
+          "phase": "after-nt-close",
+          "role": "current",
+          "present-and-same-desktop": true,
+          "rows": 3
+        },
+        {
+          "phase": "exited-closed-handle",
+          "role": "worker",
+          "present-and-same-desktop": false,
+          "rows": 12
+        },
+        {
+          "phase": "exited-open-handle",
+          "role": "worker",
+          "present-and-same-desktop": true,
+          "rows": 12
+        },
+        {
+          "phase": "live",
+          "role": "worker",
+          "present-and-same-desktop": true,
+          "rows": 12
+        },
+        {
+          "phase": "live",
+          "role": "worker-tag1",
+          "present-and-same-desktop": true,
+          "rows": 12
+        },
+        {
+          "phase": "main",
+          "role": "constant",
+          "present-and-same-desktop": false,
+          "rows": 108
+        },
+        {
+          "phase": "main",
+          "role": "current",
+          "present-and-same-desktop": true,
+          "rows": 12
+        },
+        {
+          "phase": "main",
+          "role": "current-tag1",
+          "present-and-same-desktop": true,
+          "rows": 12
+        },
+        {
+          "phase": "main",
+          "role": "current-tag2",
+          "present-and-same-desktop": true,
+          "rows": 12
+        },
+        {
+          "phase": "main",
+          "role": "current-tag3",
+          "present-and-same-desktop": true,
+          "rows": 12
+        },
+        {
+          "phase": "main",
+          "role": "process-id",
+          "present-and-same-desktop": false,
+          "rows": 12
+        },
+        {
+          "phase": "skip-exited-closed",
+          "role": "worker",
+          "present-and-same-desktop": false,
+          "rows": 12
+        },
+        {
+          "phase": "skip-exited-open",
+          "role": "worker",
+          "present-and-same-desktop": true,
+          "rows": 12
+        },
+        {
+          "phase": "skip-live",
+          "role": "worker",
+          "present-and-same-desktop": true,
+          "rows": 12
+        }
+      ],
+      "last-error-preserved": true,
+      "last-nt-status-preserved": true,
+      "access": "0x000F00CF",
+      "handle-flags": 0,
+      "assigned-CloseDesktop": {
+        "result": false,
+        "error": "0x000000AA"
+      },
+      "assigned-NtClose": "0xC0000235",
+      "duplicate-close-source": {
+        "result": true,
+        "duplicate-present": true,
+        "original-valid-after": true
+      },
+      "worker-self-query": {
+        "rows": 8,
+        "marker-before": false,
+        "marker-after": false,
+        "marker-view": "TEB32"
+      },
+      "private-query-logs": [
+        {
+          "path": "x86-laa/native-x86-laa-query.log",
+          "bytes": 10019,
+          "sha256": "c7971540237472c62d60a6d9c8122ed04c115142ec22a892cb31f0303d469baa"
+        },
+        {
+          "path": "x86-laa/native-x86-laa-close-desktop.log",
+          "bytes": 10516,
+          "sha256": "187664e1f471102260218dea71b55db6cdc723c2c0d580f221c2c34a6ea48c42"
+        },
+        {
+          "path": "x86-laa/native-x86-laa-nt-close.log",
+          "bytes": 10515,
+          "sha256": "4993b7d5eadd737a88818bb7fc7b6bda2eb3020fd5a430ed5508af5cd51507d7"
+        },
+        {
+          "path": "x86-laa/native-x86-laa-dup-close-source.log",
+          "bytes": 10820,
+          "sha256": "a263b820ed2ffa12a15654e8dd4fe55db5d915e84b27e62e4ddae12dbe71f887"
+        }
+      ]
+    }
+  ],
+  "cold-controls": [
+    {
+      "mode": "normal",
+      "native-exit-code": 0,
+      "callback-index": 84,
+      "callback-input-bytes": 0,
+      "callback-status": "0x00000000",
+      "return-nonzero": true,
+      "conversion-marker-after": true,
+      "last-error": "0x12345678",
+      "private-log": {
+        "bytes": 83214,
+        "sha256": "dd2d917a49d5c81acb9d19df3ebdd0c02510ea21e9650fc121f9734c1fbfea7a"
+      }
+    },
+    {
+      "mode": "callback-success",
+      "native-exit-code": 0,
+      "callback-index": 84,
+      "callback-input-bytes": 0,
+      "callback-status": "0x00000000",
+      "return-nonzero": true,
+      "conversion-marker-after": true,
+      "last-error": "0x12345678",
+      "private-log": {
+        "bytes": 40958,
+        "sha256": "ff415084d943de575ee97892ee06af052f34b7c5b28160b8fa113dd50b7b16f3"
+      }
+    },
+    {
+      "mode": "callback-failure",
+      "native-exit-code": 5,
+      "callback-index": 84,
+      "callback-input-bytes": 0,
+      "callback-status": "0xC0000001",
+      "return-nonzero": false,
+      "conversion-marker-after": false,
+      "last-error": "0x12345678",
+      "private-log": {
+        "bytes": 79555,
+        "sha256": "d24fd78278f12fb0c1c061d49fde7138d420784391be3c280d56f8bb9ada945f"
+      }
+    },
+    {
+      "mode": "output-invalid",
+      "native-exit-code": 0,
+      "callback-index": 84,
+      "callback-input-bytes": 0,
+      "callback-status": "0x00000000",
+      "return-nonzero": true,
+      "conversion-marker-after": true,
+      "last-error": "0x12345678",
+      "private-log": {
+        "bytes": 41051,
+        "sha256": "4c32d17e6c9f29063bea03cc438d2b85fcffa0fedb3ea103c2a919a26f61aca5"
+      }
+    },
+    {
+      "mode": "output-warning",
+      "native-exit-code": 5,
+      "callback-index": 84,
+      "callback-input-bytes": 0,
+      "callback-status": "0x80000001",
+      "return-nonzero": false,
+      "conversion-marker-after": false,
+      "last-error": "0x12345678",
+      "private-log": {
+        "bytes": 79743,
+        "sha256": "6fc01606f1da57e8bb2df3a9e6d8b601a47bc98e32e150dd70f452c3b0c0fa43"
+      }
+    }
+  ]
+}

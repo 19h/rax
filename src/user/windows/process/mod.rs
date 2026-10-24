@@ -274,6 +274,7 @@ pub struct Proc {
     /// Configuration.
     pub cfg: Arc<WindowsConfig>,
     pub(crate) native: Option<super::native::NativeRuntime>,
+    pub(crate) gui: super::gui::State,
     pub(crate) registry: super::registry::Registry,
     pub(crate) object_namespace: super::object_namespace::Namespace,
     pub(crate) nls: Option<super::nls::Nls>,

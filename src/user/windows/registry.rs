@@ -20,9 +20,10 @@ mod tree;
 #[cfg(test)]
 pub(crate) use tree::KeyTree as IfeoTree;
 pub(crate) use tree::{
-    DISPLAY_POLICY_KEY, ERROR_MESSAGE_INSTRUMENT_KEY, FILESYSTEM_KEY, GRE_INITIALIZE_KEY, IFEO_KEY,
-    KeyTree, Lookup, NLS_SORTING_VERSIONS_KEY, REDIRECTION_KEYS_KEY, SAFEBOOT_OPTION_KEY,
-    SAFER_CODE_IDENTIFIERS_KEY, SRP_DLL_KEY, TreeRoot,
+    COMMON_GLOB_USER_SETTINGS_KEY, DISPLAY_POLICY_KEY, ERROR_MESSAGE_INSTRUMENT_KEY,
+    FILESYSTEM_KEY, GRE_INITIALIZE_KEY, IFEO_KEY, KeyTree, LANGUAGE_OVERLAY_PACKAGES_KEY, Lookup,
+    MUI_SETTINGS_KEY, MUI_SYSTEM_KEY, NLS_SORTING_VERSIONS_KEY, REDIRECTION_KEYS_KEY,
+    SAFEBOOT_OPTION_KEY, SAFER_CODE_IDENTIFIERS_KEY, SRP_DLL_KEY, TreeRoot,
 };
 #[path = "registry/user_policy.rs"]
 mod user_policy;
@@ -272,3 +273,19 @@ mod display_policy_tests;
 #[cfg(test)]
 #[path = "registry/gre_initialize_tests.rs"]
 pub(crate) mod gre_initialize_tests;
+
+#[cfg(test)]
+#[path = "registry/common_glob_user_settings_tests.rs"]
+mod common_glob_user_settings_tests;
+
+#[cfg(test)]
+#[path = "registry/mui_settings_tests.rs"]
+mod mui_settings_tests;
+
+#[cfg(test)]
+#[path = "registry/mui_system_tests.rs"]
+mod mui_system_tests;
+
+#[cfg(test)]
+#[path = "registry/language_overlay_packages_tests.rs"]
+mod language_overlay_packages_tests;

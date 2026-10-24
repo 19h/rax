@@ -1,4 +1,4 @@
-//! Execute the installed Win32u leaf and retain its explicit named frontier.
+//! Execute installed leaves with missing GUI prerequisites and preserve state.
 use super::*;
 use crate::user::windows::{
     layout,
@@ -7,7 +7,7 @@ use crate::user::windows::{
 };
 
 #[test]
-fn win32u_installed_init2_leaf_reaches_named_unsupported_boundary_without_false_completion() {
+fn win32u_installed_init2_leaf_requires_gui_prerequisites_without_state_changes() {
     let host = if cfg!(target_arch = "aarch64") {
         WinArch::Arm64
     } else if cfg!(target_arch = "x86_64") {
@@ -37,6 +37,18 @@ fn win32u_installed_init2_leaf_reaches_named_unsupported_boundary_without_false_
         config.arena_bytes = 256 << 20;
         let mut process = WindowsProcess::spawn_image(config, image.to_vec()).unwrap();
         let p = process.state_mut();
+        let expected = match &p.native.as_ref().unwrap().gui {
+            crate::user::windows::gui::Availability::Available(_) => {
+                assert_ne!(arch, WinArch::X86);
+                assert_eq!(p.space.u64(p.peb + 0x58).unwrap(), 0);
+                "USER callback table is absent or unreadable".to_owned()
+            }
+            crate::user::windows::gui::Availability::Unavailable(reason) => {
+                assert_eq!(arch, WinArch::X86, "{arch}: {reason}");
+                assert!(reason.contains("WoW64") && reason.contains("paired contexts"));
+                format!("not implemented for unavailable GUI inputs: {reason}")
+            }
+        };
         let tid = *p.threads.keys().next().unwrap();
         let mut t = p.threads.remove(&tid).unwrap();
         let module = loader::load_dll(p, "win32u.dll").unwrap();
@@ -57,20 +69,23 @@ fn win32u_installed_init2_leaf_reaches_named_unsupported_boundary_without_false_
         p.space.w32(error, 0x1234_5678).unwrap();
         let rng = p.rng;
         let handles = p.objects.handle_count();
+        let committed = p.vm.committed_bytes();
+        let peb = p.space.bytes(p.peb, 512).unwrap();
+        let teb = p.space.bytes(t.teb, 4096).unwrap();
         let mut named = false;
         for _ in 0..32 {
             let boundary = t.cpu.run(64);
             assert_ne!(
                 t.cpu.pc(),
                 resume,
-                "unsupported Win32u leaf cannot return success"
+                "Win32u leaf with missing GUI prerequisites cannot return success"
             );
             match handle_stop(p, &mut t, boundary) {
                 Outcome::Continue | Outcome::Yield => (),
                 Outcome::Fail(reason) => {
                     assert!(
-                        reason.contains("native Win32u service NtGdiInit2")
-                            && reason.contains("not implemented"),
+                        reason.starts_with("native Win32u service NtGdiInit2 (")
+                            && reason.ends_with(&expected),
                         "{arch}: {reason}"
                     );
                     named = true;
@@ -83,6 +98,11 @@ fn win32u_installed_init2_leaf_reaches_named_unsupported_boundary_without_false_
         assert_eq!(p.space.u32(error).unwrap(), 0x1234_5678);
         assert_eq!(p.rng, rng);
         assert_eq!(p.objects.handle_count(), handles);
+        assert_eq!(p.vm.committed_bytes(), committed);
+        assert_eq!(p.space.bytes(p.peb, 512).unwrap(), peb);
+        assert_eq!(p.space.bytes(t.teb, 4096).unwrap(), teb);
+        assert!(p.gui.value.is_none());
+        assert!(p.gui.threads.is_empty());
         assert!(t.frames.is_empty());
     }
 }

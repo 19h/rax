@@ -1,0 +1,22 @@
+[
+  {
+    "profile": "arm64",
+    "machine": 43620,
+    "large-address-aware": true
+  },
+  {
+    "profile": "x86",
+    "machine": 332,
+    "large-address-aware": false
+  },
+  {
+    "profile": "x64",
+    "machine": 34404,
+    "large-address-aware": true
+  },
+  {
+    "profile": "x86-laa",
+    "machine": 332,
+    "large-address-aware": true
+  }
+]

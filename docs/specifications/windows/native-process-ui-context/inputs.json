@@ -1,0 +1,95 @@
+{
+  "scope": "Complete package inventory excluding this inventory file. Raw native query identifiers and memory remain private.",
+  "files": [
+    {
+      "path": ".gitattributes",
+      "bytes": 29,
+      "sha256": "730a35ae3d558080083c3103d9ac8100c3f6561678092abe341701dfa331eb1d"
+    },
+    {
+      "path": "README.md",
+      "bytes": 5964,
+      "sha256": "93eb9a8e01861a4cb2392e6b2ee4e661b8fd39295b70fe44cddde38b31986111"
+    },
+    {
+      "path": "check-process-ui-context-projection-controls-v1.py",
+      "bytes": 7986,
+      "sha256": "3e828f82ce56da8cc158afbc82d23c60145a00205d96e63f20098b87ebe4b5e4"
+    },
+    {
+      "path": "kernel-inputs.json",
+      "bytes": 1180,
+      "sha256": "165efc65cd6a5e158d6b5481186c9bb81e2c16711aebcb6588c9ca377a33d50f"
+    },
+    {
+      "path": "native-process-ui-context-cold-v1-receipt.json",
+      "bytes": 16817,
+      "sha256": "6e98429bcb34f0ae5b31898461ea658aa30b320426d3ae97ea9958e03331d67d"
+    },
+    {
+      "path": "native-process-ui-context-cold-v1.cpp",
+      "bytes": 17029,
+      "sha256": "5d5f9bcbb8eaefdb5e708e24738d0061d845b9c412fb26f11b41371d7208c6f8"
+    },
+    {
+      "path": "native-process-ui-context-cold-v2-receipt.json",
+      "bytes": 10732,
+      "sha256": "21466c0e6a36d4ac4929ea9450329b3a60702654dcc8d45b5c62e831a0f4a8f2"
+    },
+    {
+      "path": "native-process-ui-context-cold-v2.cpp",
+      "bytes": 17121,
+      "sha256": "d363eda2ecb7a65355d5cab497c5822c7c65a845b67a0e9d3bd91a84599452c8"
+    },
+    {
+      "path": "native-process-ui-context-kernel-code-v1.txt",
+      "bytes": 4971,
+      "sha256": "114c9f4a042167c87eb218164d71831dfca2c5f7197bdc3f1fb5b6c374186fcb"
+    },
+    {
+      "path": "native-process-ui-context-v2-receipt.json",
+      "bytes": 14424,
+      "sha256": "0048ffdf4a4f54dcdf111b4dd49d4a42223c37a375daa3f95f574c1141da0925"
+    },
+    {
+      "path": "native-process-ui-context-v2.cpp",
+      "bytes": 6649,
+      "sha256": "e4860b0d5d92be5a4f5fbb64c926ca397638a799f4000033ee64862bac0d1a71"
+    },
+    {
+      "path": "observations.json",
+      "bytes": 6652,
+      "sha256": "eee5325f8077db257541c745be1f555084f5c6bbcc354f127042dd06c256cfb0"
+    },
+    {
+      "path": "process-ui-context-projection-controls-v1.json",
+      "bytes": 11350,
+      "sha256": "b72f9e5085685c1b60f78cc621e825864fba98e08f24f8c6906e4ac189fe1fcd"
+    },
+    {
+      "path": "project-native-process-ui-context-v3.py",
+      "bytes": 11823,
+      "sha256": "a5150ad33c853bd654f6b72719cca3e433f91837c98a86d6d8d5cec19be5b672"
+    },
+    {
+      "path": "projection-inputs.json",
+      "bytes": 2543,
+      "sha256": "b127eeb511f77237d2c543192921db26f83381ddf5cc0d7fd23460be2252f99b"
+    },
+    {
+      "path": "run-native-process-ui-context-cold-v1.py",
+      "bytes": 5613,
+      "sha256": "df2e9ee6211691cec81519d2eb5854a6b53271390fc78c8e27d72c870cbdf775"
+    },
+    {
+      "path": "run-native-process-ui-context-cold-v2.py",
+      "bytes": 5423,
+      "sha256": "ce7eeadf5c0c9d05cf766568976e3bb23c477270e054a63f5b228faa00fd80d6"
+    },
+    {
+      "path": "run-native-process-ui-context-v2.py",
+      "bytes": 6054,
+      "sha256": "fa88dfb08a4ba16de54f57fea7e3a5002074b9cb24eb341ac486a53150c6db21"
+    }
+  ]
+}

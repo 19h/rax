@@ -1,0 +1,387 @@
+{
+  "state": "finished",
+  "pid": 9768,
+  "utc": "2026-10-24T02:10:44.620116+00:00",
+  "scope": "Observe normal main/worker conversion and controlled zero-input callback returns in separate native ARM64 processes. Nonzero controlled native exits remain explicit in native-outcomes; finished means recording completed. No on-disk DLL changes or guest import of host pointers.",
+  "steps": [
+    {
+      "name": "build",
+      "argv": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\arm64\\cl.exe",
+        "/nologo",
+        "/std:c++20",
+        "/EHsc",
+        "/MT",
+        "/GS",
+        "/Od",
+        "/we4473",
+        "/we4474",
+        "/we4477",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-process-ui-context-cold-v1\\native-process-ui-context-cold-v1.cpp",
+        "/link",
+        "/SUBSYSTEM:CONSOLE,10.0",
+        "/OUT:C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-process-ui-context-cold-v1\\probe.exe"
+      ],
+      "exit-code": 0,
+      "log": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-process-ui-context-cold-v1\\native-process-ui-context-cold-v1-build.log",
+        "bytes": 39,
+        "sha256": "8d2c7cac8bc54ae1f2df4ea7fcaa29fddd5ccb0f109a84dc40f6105eae71f98b"
+      }
+    },
+    {
+      "name": "normal",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-process-ui-context-cold-v1\\probe.exe",
+        "normal"
+      ],
+      "exit-code": 0,
+      "log": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-process-ui-context-cold-v1\\native-process-ui-context-cold-v1-normal.log",
+        "bytes": 83316,
+        "sha256": "0f87610e807a307b7b93a18ccb739838766f3d3271e7765b7a327e7720102896"
+      }
+    },
+    {
+      "name": "callback-success",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-process-ui-context-cold-v1\\probe.exe",
+        "callback-success"
+      ],
+      "exit-code": 0,
+      "log": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-process-ui-context-cold-v1\\native-process-ui-context-cold-v1-callback-success.log",
+        "bytes": 41008,
+        "sha256": "341e07ca94890119178154dddf41a89ccfba66eb7765590bf5bc6661ab5f6a5c"
+      }
+    },
+    {
+      "name": "callback-failure",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-process-ui-context-cold-v1\\probe.exe",
+        "callback-failure"
+      ],
+      "exit-code": 5,
+      "log": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-process-ui-context-cold-v1\\native-process-ui-context-cold-v1-callback-failure.log",
+        "bytes": 79677,
+        "sha256": "e627c6badc1053d33ea3a4983e3493341583b00c7197c485858849bffe857e94"
+      }
+    },
+    {
+      "name": "output-invalid",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-process-ui-context-cold-v1\\probe.exe",
+        "output-invalid"
+      ],
+      "exit-code": 0,
+      "log": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-process-ui-context-cold-v1\\native-process-ui-context-cold-v1-output-invalid.log",
+        "bytes": 41101,
+        "sha256": "f0e67b1354517647ed8b7f2171b1d466e8f69670ec63c5efb9312e88a4417d21"
+      }
+    },
+    {
+      "name": "output-warning",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-process-ui-context-cold-v1\\probe.exe",
+        "output-warning"
+      ],
+      "exit-code": 5,
+      "log": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-process-ui-context-cold-v1\\native-process-ui-context-cold-v1-output-warning.log",
+        "bytes": 79866,
+        "sha256": "f92efebfc71ca1ba35da6bd13a5ec4019a75b88e8313414708acf465cf94d32e"
+      }
+    },
+    {
+      "name": "query-null",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-process-ui-context-cold-v1\\probe.exe",
+        "query-null"
+      ],
+      "exit-code": 10,
+      "log": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-process-ui-context-cold-v1\\native-process-ui-context-cold-v1-query-null.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "name": "query-thread",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-process-ui-context-cold-v1\\probe.exe",
+        "query-thread"
+      ],
+      "exit-code": 10,
+      "log": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-process-ui-context-cold-v1\\native-process-ui-context-cold-v1-query-thread.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "name": "query-thread-null",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-process-ui-context-cold-v1\\probe.exe",
+        "query-thread-null"
+      ],
+      "exit-code": 10,
+      "log": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-process-ui-context-cold-v1\\native-process-ui-context-cold-v1-query-thread-null.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "name": "query-zero",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-process-ui-context-cold-v1\\probe.exe",
+        "query-zero"
+      ],
+      "exit-code": 10,
+      "log": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-process-ui-context-cold-v1\\native-process-ui-context-cold-v1-query-zero.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    }
+  ],
+  "source-before": {
+    "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-process-ui-context-cold-v1\\native-process-ui-context-cold-v1.cpp",
+    "bytes": 17029,
+    "sha256": "5d5f9bcbb8eaefdb5e708e24738d0061d845b9c412fb26f11b41371d7208c6f8"
+  },
+  "environment": {
+    "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\win32u-validation-recovery-v2\\transfer\\mutant-native-compiler-env-epoch4.json",
+    "bytes": 4122,
+    "sha256": "e6ca43bcdcbd3067b5de05d051259d4d3abf0bfa5283a98daac14fd508a05fad"
+  },
+  "runtime-before": [
+    {
+      "file": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+    },
+    {
+      "file": "C:\\Windows\\System32\\kernel32.dll",
+      "bytes": 1500304,
+      "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0"
+    },
+    {
+      "file": "C:\\Windows\\System32\\KernelBase.dll",
+      "bytes": 7213728,
+      "sha256": "6b2fa508ac4f9bce5d7351676485d1dc5b5236cd9656034e2fec1eaba3b82bc9"
+    },
+    {
+      "file": "C:\\Windows\\System32\\user32.dll",
+      "bytes": 2799192,
+      "sha256": "bd104076063e3bc8ce65fb744a947f533b8ac6bc737c999b1d7beacbc1b6b058"
+    },
+    {
+      "file": "C:\\Windows\\System32\\win32u.dll",
+      "bytes": 387768,
+      "sha256": "e2aa1e93f5e45377922bf6e5525d9fc37a60494da1d602033974883987e9c7d4"
+    },
+    {
+      "file": "C:\\Windows\\System32\\gdi32full.dll",
+      "bytes": 1893296,
+      "sha256": "3f73ffd0d20b492cfc3302c7ba193138a96d6161c2bea0b6b6c559f104f7f70e"
+    },
+    {
+      "file": "C:\\Windows\\System32\\gdi32.dll",
+      "bytes": 462600,
+      "sha256": "55a43a68318f896557d8433d1094b0acce8c9ec05b7085bbce558fefa280d42a"
+    }
+  ],
+  "compiler": {
+    "file": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\arm64\\cl.exe",
+    "bytes": 787728,
+    "sha256": "5cba83692d533f6b3a6ac07c6b2cdce708e0445ed1ee36b5cb2d49a244a4c835"
+  },
+  "step": "query-zero",
+  "child": 5756,
+  "machine": 43620,
+  "executable-before": {
+    "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-process-ui-context-cold-v1\\probe.exe",
+    "bytes": 156160,
+    "sha256": "d653a1a549107075d300276a47673d789845ac29e3c1412a4babf86d7bee0d3f"
+  },
+  "native-outcomes": [
+    {
+      "mode": "normal",
+      "exit-code": 0,
+      "before": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-process-ui-context-cold-v1\\probe.exe",
+        "bytes": 156160,
+        "sha256": "d653a1a549107075d300276a47673d789845ac29e3c1412a4babf86d7bee0d3f"
+      },
+      "after": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-process-ui-context-cold-v1\\probe.exe",
+        "bytes": 156160,
+        "sha256": "d653a1a549107075d300276a47673d789845ac29e3c1412a4babf86d7bee0d3f"
+      }
+    },
+    {
+      "mode": "callback-success",
+      "exit-code": 0,
+      "before": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-process-ui-context-cold-v1\\probe.exe",
+        "bytes": 156160,
+        "sha256": "d653a1a549107075d300276a47673d789845ac29e3c1412a4babf86d7bee0d3f"
+      },
+      "after": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-process-ui-context-cold-v1\\probe.exe",
+        "bytes": 156160,
+        "sha256": "d653a1a549107075d300276a47673d789845ac29e3c1412a4babf86d7bee0d3f"
+      }
+    },
+    {
+      "mode": "callback-failure",
+      "exit-code": 5,
+      "before": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-process-ui-context-cold-v1\\probe.exe",
+        "bytes": 156160,
+        "sha256": "d653a1a549107075d300276a47673d789845ac29e3c1412a4babf86d7bee0d3f"
+      },
+      "after": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-process-ui-context-cold-v1\\probe.exe",
+        "bytes": 156160,
+        "sha256": "d653a1a549107075d300276a47673d789845ac29e3c1412a4babf86d7bee0d3f"
+      }
+    },
+    {
+      "mode": "output-invalid",
+      "exit-code": 0,
+      "before": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-process-ui-context-cold-v1\\probe.exe",
+        "bytes": 156160,
+        "sha256": "d653a1a549107075d300276a47673d789845ac29e3c1412a4babf86d7bee0d3f"
+      },
+      "after": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-process-ui-context-cold-v1\\probe.exe",
+        "bytes": 156160,
+        "sha256": "d653a1a549107075d300276a47673d789845ac29e3c1412a4babf86d7bee0d3f"
+      }
+    },
+    {
+      "mode": "output-warning",
+      "exit-code": 5,
+      "before": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-process-ui-context-cold-v1\\probe.exe",
+        "bytes": 156160,
+        "sha256": "d653a1a549107075d300276a47673d789845ac29e3c1412a4babf86d7bee0d3f"
+      },
+      "after": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-process-ui-context-cold-v1\\probe.exe",
+        "bytes": 156160,
+        "sha256": "d653a1a549107075d300276a47673d789845ac29e3c1412a4babf86d7bee0d3f"
+      }
+    },
+    {
+      "mode": "query-null",
+      "exit-code": 10,
+      "before": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-process-ui-context-cold-v1\\probe.exe",
+        "bytes": 156160,
+        "sha256": "d653a1a549107075d300276a47673d789845ac29e3c1412a4babf86d7bee0d3f"
+      },
+      "after": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-process-ui-context-cold-v1\\probe.exe",
+        "bytes": 156160,
+        "sha256": "d653a1a549107075d300276a47673d789845ac29e3c1412a4babf86d7bee0d3f"
+      }
+    },
+    {
+      "mode": "query-thread",
+      "exit-code": 10,
+      "before": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-process-ui-context-cold-v1\\probe.exe",
+        "bytes": 156160,
+        "sha256": "d653a1a549107075d300276a47673d789845ac29e3c1412a4babf86d7bee0d3f"
+      },
+      "after": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-process-ui-context-cold-v1\\probe.exe",
+        "bytes": 156160,
+        "sha256": "d653a1a549107075d300276a47673d789845ac29e3c1412a4babf86d7bee0d3f"
+      }
+    },
+    {
+      "mode": "query-thread-null",
+      "exit-code": 10,
+      "before": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-process-ui-context-cold-v1\\probe.exe",
+        "bytes": 156160,
+        "sha256": "d653a1a549107075d300276a47673d789845ac29e3c1412a4babf86d7bee0d3f"
+      },
+      "after": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-process-ui-context-cold-v1\\probe.exe",
+        "bytes": 156160,
+        "sha256": "d653a1a549107075d300276a47673d789845ac29e3c1412a4babf86d7bee0d3f"
+      }
+    },
+    {
+      "mode": "query-zero",
+      "exit-code": 10,
+      "before": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-process-ui-context-cold-v1\\probe.exe",
+        "bytes": 156160,
+        "sha256": "d653a1a549107075d300276a47673d789845ac29e3c1412a4babf86d7bee0d3f"
+      },
+      "after": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-process-ui-context-cold-v1\\probe.exe",
+        "bytes": 156160,
+        "sha256": "d653a1a549107075d300276a47673d789845ac29e3c1412a4babf86d7bee0d3f"
+      }
+    }
+  ],
+  "executable-after": {
+    "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-process-ui-context-cold-v1\\probe.exe",
+    "bytes": 156160,
+    "sha256": "d653a1a549107075d300276a47673d789845ac29e3c1412a4babf86d7bee0d3f"
+  },
+  "source-after": {
+    "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-process-ui-context-cold-v1\\native-process-ui-context-cold-v1.cpp",
+    "bytes": 17029,
+    "sha256": "5d5f9bcbb8eaefdb5e708e24738d0061d845b9c412fb26f11b41371d7208c6f8"
+  },
+  "runtime-after": [
+    {
+      "file": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+    },
+    {
+      "file": "C:\\Windows\\System32\\kernel32.dll",
+      "bytes": 1500304,
+      "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0"
+    },
+    {
+      "file": "C:\\Windows\\System32\\KernelBase.dll",
+      "bytes": 7213728,
+      "sha256": "6b2fa508ac4f9bce5d7351676485d1dc5b5236cd9656034e2fec1eaba3b82bc9"
+    },
+    {
+      "file": "C:\\Windows\\System32\\user32.dll",
+      "bytes": 2799192,
+      "sha256": "bd104076063e3bc8ce65fb744a947f533b8ac6bc737c999b1d7beacbc1b6b058"
+    },
+    {
+      "file": "C:\\Windows\\System32\\win32u.dll",
+      "bytes": 387768,
+      "sha256": "e2aa1e93f5e45377922bf6e5525d9fc37a60494da1d602033974883987e9c7d4"
+    },
+    {
+      "file": "C:\\Windows\\System32\\gdi32full.dll",
+      "bytes": 1893296,
+      "sha256": "3f73ffd0d20b492cfc3302c7ba193138a96d6161c2bea0b6b6c559f104f7f70e"
+    },
+    {
+      "file": "C:\\Windows\\System32\\gdi32.dll",
+      "bytes": 462600,
+      "sha256": "55a43a68318f896557d8433d1094b0acce8c9ec05b7085bbce558fefa280d42a"
+    }
+  ],
+  "exit-code": 0,
+  "completed-utc": "2026-10-24T02:10:46.265368+00:00"
+}

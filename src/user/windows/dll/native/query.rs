@@ -18,12 +18,15 @@ use crate::user::windows::nt::status::{
 };
 use vm_memory::{Address, GuestMemory};
 
+mod code_integrity;
+
 const SYSTEM_BASIC_INFORMATION: u32 = 0;
 const SYSTEM_EMULATION_BASIC_INFORMATION: u32 = 62;
 const SYSTEM_RANGE_START_INFORMATION: u32 = 50;
 const SYSTEM_NUMA_PROCESSOR_MAP: u32 = 55;
 const SYSTEM_HYPERVISOR_SHARED_PAGE_INFORMATION: u32 = 197;
 const SYSTEM_PROCESSOR_FEATURES_BITMAP_INFORMATION: u32 = 250;
+const SYSTEM_CODE_INTEGRITY_INFORMATION: u32 = 103;
 const WOW64_LENGTH_FAILURE: u32 = 0xFFFF_FFFC;
 
 pub(super) fn probe_write(c: &Ctx, address: u64, bytes: usize) -> Result<(), MemFault> {
@@ -85,7 +88,13 @@ fn query(c: &mut Ctx) -> ApiResult {
     // Its output alignment is ULONG alignment (4), not pointer alignment (8).
     // Most WoW64 wrappers instead copy converted output first. Class55 passes
     // the original output/length to the native query, with a private ReturnLength.
-    if c.arch() != WinArch::X86 || class == SYSTEM_NUMA_PROCESSOR_MAP {
+    // Class103 forwards both destinations without a converted record.
+    if c.arch() != WinArch::X86
+        || matches!(
+            class,
+            SYSTEM_NUMA_PROCESSOR_MAP | SYSTEM_CODE_INTEGRITY_INFORMATION
+        )
+    {
         if length != 0 {
             if output % 4 != 0 {
                 return Flow::ret(STATUS_DATATYPE_MISALIGNMENT.into());
@@ -106,7 +115,8 @@ fn query(c: &mut Ctx) -> ApiResult {
             }
             probe_write(c, output, length as usize)?;
         }
-        if c.arch() != WinArch::X86 && returned != 0 {
+        if (c.arch() != WinArch::X86 || class == SYSTEM_CODE_INTEGRITY_INFORMATION) && returned != 0
+        {
             probe_write(c, returned, 4)?;
         }
     }
@@ -122,6 +132,7 @@ fn query(c: &mut Ctx) -> ApiResult {
         SYSTEM_PROCESSOR_FEATURES_BITMAP_INFORMATION => {
             processor_features(c, output, length, returned)
         }
+        SYSTEM_CODE_INTEGRITY_INFORMATION => code_integrity::query(c, output, length, returned),
         _ => Err(c.unsupported(format!("NtQuerySystemInformation class {class}"))),
     }
 }

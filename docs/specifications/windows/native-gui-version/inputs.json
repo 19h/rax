@@ -1,0 +1,25 @@
+{
+  "scope": "Projection binds original private log identities without publishing their memory buffers. Reproduce with the native controls and original callback source/executable identity.",
+  "files": [
+    {
+      "path": "observations.json",
+      "bytes": 6155,
+      "sha256": "9e6ec80e9ccc47f2401b6f85c8a7c52de931a3b816c6a69816f3c792d4b62b75"
+    },
+    {
+      "path": "native-gui-version-controls-v1-source.py",
+      "bytes": 2145,
+      "sha256": "94352bc53040eb4e8c9a79e51b1e7bb939b485d803c2f061d09e8e4cf7a5c342"
+    },
+    {
+      "path": "native-gui-version-boundaries-v2-source.py",
+      "bytes": 2708,
+      "sha256": "1e17d58f6c97cea1b1c9206532ecd5696ed944c89acd2b9e13b7780d12895a10"
+    },
+    {
+      "path": "source-executable-receipt.json",
+      "bytes": 9094,
+      "sha256": "f44387e1c7ec575eb30440b0064533bc0c89491e8f5bf25df1ac011fc467cede"
+    }
+  ]
+}

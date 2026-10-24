@@ -6,13 +6,15 @@ use crate::user::windows::object_namespace::DataSection;
 pub(super) struct DataView {
     // Retain the selected object after every guest handle has closed.
     _section: Arc<DataSection>,
+    kernel_owner: Option<Arc<()>>,
 }
+mod kernel;
+pub(crate) use kernel::KernelDataView;
 impl VirtualMemory {
     pub(crate) fn owns_readonly_data_view(&self, base: u64, section: &Arc<DataSection>) -> bool {
-        let identity = self
-            .data_views
-            .get(&base)
-            .is_some_and(|view| Arc::ptr_eq(&view._section, section));
+        let identity = self.data_views.get(&base).is_some_and(|view| {
+            view.kernel_owner.is_none() && Arc::ptr_eq(&view._section, section)
+        });
         let Some(allocation) = self.allocation(base).filter(|allocation| {
             identity
                 && allocation.base == base
@@ -120,8 +122,13 @@ impl VirtualMemory {
             return Err(error);
         }
         self.pagefile_views.insert(allocation);
-        self.data_views
-            .insert(allocation, DataView { _section: section });
+        self.data_views.insert(
+            allocation,
+            DataView {
+                _section: section,
+                kernel_owner: None,
+            },
+        );
         Ok(())
     }
 }

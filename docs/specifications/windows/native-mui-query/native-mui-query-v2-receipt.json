@@ -1,0 +1,228 @@
+{
+  "state": "finished",
+  "pid": 2624,
+  "steps": [
+    {
+      "name": "build-arm64",
+      "argv": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\arm64\\cl.exe",
+        "/nologo",
+        "/std:c++20",
+        "/EHsc",
+        "/MT",
+        "/GS",
+        "/Od",
+        "/we4473",
+        "/we4474",
+        "/we4477",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-mui-query-v2\\native-mui-query-v2.cpp",
+        "/link",
+        "/SUBSYSTEM:CONSOLE,10.0",
+        "/OUT:C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-mui-query-v2\\arm64\\probe.exe"
+      ],
+      "exit-code": 0,
+      "log": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-mui-query-v2\\arm64\\build-arm64.log",
+        "bytes": 25,
+        "sha256": "9e59b5738cc44d46a91340845c1a4bc0c1fae55d06d25558cc2cec44c2f4809a"
+      }
+    },
+    {
+      "name": "native-arm64",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-mui-query-v2\\arm64\\probe.exe"
+      ],
+      "exit-code": 0,
+      "log": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-mui-query-v2\\arm64\\native-arm64.log",
+        "bytes": 197507,
+        "sha256": "1db9913725bcd57ebfc8d47fdb5ff881515681ae311e4529fdc0ba4cf2559fb8"
+      }
+    },
+    {
+      "name": "build-x86",
+      "argv": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\x86\\cl.exe",
+        "/nologo",
+        "/std:c++20",
+        "/EHsc",
+        "/MT",
+        "/GS",
+        "/Od",
+        "/we4473",
+        "/we4474",
+        "/we4477",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-mui-query-v2\\native-mui-query-v2.cpp",
+        "/link",
+        "/SUBSYSTEM:CONSOLE,10.0",
+        "/OUT:C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-mui-query-v2\\x86\\probe.exe"
+      ],
+      "exit-code": 0,
+      "log": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-mui-query-v2\\x86\\build-x86.log",
+        "bytes": 25,
+        "sha256": "9e59b5738cc44d46a91340845c1a4bc0c1fae55d06d25558cc2cec44c2f4809a"
+      }
+    },
+    {
+      "name": "native-x86",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-mui-query-v2\\x86\\probe.exe"
+      ],
+      "exit-code": 0,
+      "log": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-mui-query-v2\\x86\\native-x86.log",
+        "bytes": 197507,
+        "sha256": "6c9d97bfb63aec5d8bb84b08a65462838747733c72910fbe577db389f50add60"
+      }
+    },
+    {
+      "name": "build-x64",
+      "argv": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\x64\\cl.exe",
+        "/nologo",
+        "/std:c++20",
+        "/EHsc",
+        "/MT",
+        "/GS",
+        "/Od",
+        "/we4473",
+        "/we4474",
+        "/we4477",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-mui-query-v2\\native-mui-query-v2.cpp",
+        "/link",
+        "/SUBSYSTEM:CONSOLE,10.0",
+        "/OUT:C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-mui-query-v2\\x64\\probe.exe"
+      ],
+      "exit-code": 0,
+      "log": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-mui-query-v2\\x64\\build-x64.log",
+        "bytes": 25,
+        "sha256": "9e59b5738cc44d46a91340845c1a4bc0c1fae55d06d25558cc2cec44c2f4809a"
+      }
+    },
+    {
+      "name": "native-x64",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-mui-query-v2\\x64\\probe.exe"
+      ],
+      "exit-code": 0,
+      "log": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-mui-query-v2\\x64\\native-x64.log",
+        "bytes": 197507,
+        "sha256": "1db9913725bcd57ebfc8d47fdb5ff881515681ae311e4529fdc0ba4cf2559fb8"
+      }
+    }
+  ],
+  "architectures": [
+    {
+      "architecture": "arm64",
+      "compiler": {
+        "path": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\arm64\\cl.exe",
+        "bytes": 787728,
+        "sha256": "5cba83692d533f6b3a6ac07c6b2cdce708e0445ed1ee36b5cb2d49a244a4c835"
+      },
+      "machine": 43620,
+      "executable-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-mui-query-v2\\arm64\\probe.exe",
+        "bytes": 162304,
+        "sha256": "541a364df198e7c561ecfc1d81913a03b40da0d8f555e294ebcc9880ec5545dc"
+      },
+      "executable-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-mui-query-v2\\arm64\\probe.exe",
+        "bytes": 162304,
+        "sha256": "541a364df198e7c561ecfc1d81913a03b40da0d8f555e294ebcc9880ec5545dc"
+      },
+      "mui": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-mui-query-v2\\arm64\\mui.bin",
+        "bytes": 1232,
+        "sha256": "1ff64f1d44c4f0d7eb67d5e575e26a983aea701279425c21471d216ac9da3ce1"
+      }
+    },
+    {
+      "architecture": "x86",
+      "compiler": {
+        "path": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\x86\\cl.exe",
+        "bytes": 761104,
+        "sha256": "cfed9e6fa19f430235f7fb75dbcd3200b7c1fa036462e3a73d76b5ea8e35c7ad"
+      },
+      "machine": 332,
+      "executable-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-mui-query-v2\\x86\\probe.exe",
+        "bytes": 132096,
+        "sha256": "11b228fbcd51cf5c3a0418de751f948902c43b0ee7db130f3d6af636f28ec08f"
+      },
+      "executable-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-mui-query-v2\\x86\\probe.exe",
+        "bytes": 132096,
+        "sha256": "11b228fbcd51cf5c3a0418de751f948902c43b0ee7db130f3d6af636f28ec08f"
+      },
+      "mui": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-mui-query-v2\\x86\\mui.bin",
+        "bytes": 1232,
+        "sha256": "1ff64f1d44c4f0d7eb67d5e575e26a983aea701279425c21471d216ac9da3ce1"
+      }
+    },
+    {
+      "architecture": "x64",
+      "compiler": {
+        "path": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\x64\\cl.exe",
+        "bytes": 762720,
+        "sha256": "d7a46c9d0d970fbeb4e803f1f0e9fec4217f8c833e6bb6a015e5b87299024466"
+      },
+      "machine": 34404,
+      "executable-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-mui-query-v2\\x64\\probe.exe",
+        "bytes": 172544,
+        "sha256": "eb55b504f0d170edd3450d27769028541ccd3bd76d751acf5c217716a6c5a84d"
+      },
+      "executable-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-mui-query-v2\\x64\\probe.exe",
+        "bytes": 172544,
+        "sha256": "eb55b504f0d170edd3450d27769028541ccd3bd76d751acf5c217716a6c5a84d"
+      },
+      "mui": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-mui-query-v2\\x64\\mui.bin",
+        "bytes": 1232,
+        "sha256": "1ff64f1d44c4f0d7eb67d5e575e26a983aea701279425c21471d216ac9da3ce1"
+      }
+    }
+  ],
+  "source-before": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-mui-query-v2\\native-mui-query-v2.cpp",
+    "bytes": 4416,
+    "sha256": "5fbe3f68518c144e46147bfe06b7ed30f455de664cf7427d30800578a0b95ce1"
+  },
+  "native-modules-before": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e"
+    }
+  ],
+  "step": "native-x64",
+  "child": 1724,
+  "source-after": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-mui-query-v2\\native-mui-query-v2.cpp",
+    "bytes": 4416,
+    "sha256": "5fbe3f68518c144e46147bfe06b7ed30f455de664cf7427d30800578a0b95ce1"
+  },
+  "native-modules-after": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e"
+    }
+  ],
+  "exit-code": 0
+}

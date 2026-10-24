@@ -1,0 +1,111 @@
+{
+  "state": "finished",
+  "pid": 7820,
+  "producer-receipt": {
+    "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-remote-connect-cold-v1\\native-remote-connect-cold-v1.json",
+    "bytes": 10623,
+    "sha256": "77382eb3e5c6893cdaa80ee0a76a2020bc77aa83a58457afbfbcb15c3b4400b5"
+  },
+  "source-before": {
+    "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-remote-connect-cold-v1\\native-remote-connect-cold-v1.cpp",
+    "bytes": 17100,
+    "sha256": "6a291095d2e4701b03a58e3191000eae9419abc2c904e8e7006fc329bd02a91a"
+  },
+  "executable-before": {
+    "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-remote-connect-cold-v1\\probe.exe",
+    "bytes": 155648,
+    "sha256": "608d1f9e6db987a26578b2c1cc9e2bd42894ffb3d529c0fea9936df4728a6d7c"
+  },
+  "runtime-before": [
+    {
+      "file": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+    },
+    {
+      "file": "C:\\Windows\\System32\\kernel32.dll",
+      "bytes": 1500304,
+      "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0"
+    },
+    {
+      "file": "C:\\Windows\\System32\\KernelBase.dll",
+      "bytes": 7213728,
+      "sha256": "6b2fa508ac4f9bce5d7351676485d1dc5b5236cd9656034e2fec1eaba3b82bc9"
+    },
+    {
+      "file": "C:\\Windows\\System32\\user32.dll",
+      "bytes": 2799192,
+      "sha256": "bd104076063e3bc8ce65fb744a947f533b8ac6bc737c999b1d7beacbc1b6b058"
+    },
+    {
+      "file": "C:\\Windows\\System32\\win32u.dll",
+      "bytes": 387768,
+      "sha256": "e2aa1e93f5e45377922bf6e5525d9fc37a60494da1d602033974883987e9c7d4"
+    },
+    {
+      "file": "C:\\Windows\\System32\\gdi32full.dll",
+      "bytes": 1893296,
+      "sha256": "3f73ffd0d20b492cfc3302c7ba193138a96d6161c2bea0b6b6c559f104f7f70e"
+    },
+    {
+      "file": "C:\\Windows\\System32\\gdi32.dll",
+      "bytes": 462600,
+      "sha256": "55a43a68318f896557d8433d1094b0acce8c9ec05b7085bbce558fefa280d42a"
+    }
+  ],
+  "child": 6516,
+  "native-exit-code": 0,
+  "log": {
+    "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-remote-connect-cold-output-v2\\native-output-invalid.log",
+    "bytes": 41049,
+    "sha256": "d1d2e8df61fe1ddf8c9d627e7f09370a39b2530b2419de5cb7f932e993c33bba"
+  },
+  "source-after": {
+    "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-remote-connect-cold-v1\\native-remote-connect-cold-v1.cpp",
+    "bytes": 17100,
+    "sha256": "6a291095d2e4701b03a58e3191000eae9419abc2c904e8e7006fc329bd02a91a"
+  },
+  "executable-after": {
+    "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-remote-connect-cold-v1\\probe.exe",
+    "bytes": 155648,
+    "sha256": "608d1f9e6db987a26578b2c1cc9e2bd42894ffb3d529c0fea9936df4728a6d7c"
+  },
+  "runtime-after": [
+    {
+      "file": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+    },
+    {
+      "file": "C:\\Windows\\System32\\kernel32.dll",
+      "bytes": 1500304,
+      "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0"
+    },
+    {
+      "file": "C:\\Windows\\System32\\KernelBase.dll",
+      "bytes": 7213728,
+      "sha256": "6b2fa508ac4f9bce5d7351676485d1dc5b5236cd9656034e2fec1eaba3b82bc9"
+    },
+    {
+      "file": "C:\\Windows\\System32\\user32.dll",
+      "bytes": 2799192,
+      "sha256": "bd104076063e3bc8ce65fb744a947f533b8ac6bc737c999b1d7beacbc1b6b058"
+    },
+    {
+      "file": "C:\\Windows\\System32\\win32u.dll",
+      "bytes": 387768,
+      "sha256": "e2aa1e93f5e45377922bf6e5525d9fc37a60494da1d602033974883987e9c7d4"
+    },
+    {
+      "file": "C:\\Windows\\System32\\gdi32full.dll",
+      "bytes": 1893296,
+      "sha256": "3f73ffd0d20b492cfc3302c7ba193138a96d6161c2bea0b6b6c559f104f7f70e"
+    },
+    {
+      "file": "C:\\Windows\\System32\\gdi32.dll",
+      "bytes": 462600,
+      "sha256": "55a43a68318f896557d8433d1094b0acce8c9ec05b7085bbce558fefa280d42a"
+    }
+  ],
+  "exit-code": 0
+}

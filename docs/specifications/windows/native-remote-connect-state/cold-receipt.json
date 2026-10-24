@@ -1,0 +1,252 @@
+{
+  "state": "finished",
+  "pid": 5012,
+  "utc": "2026-10-23T23:07:40.335198+00:00",
+  "scope": "Observe normal main/worker conversion and controlled zero-input callback returns in separate native ARM64 processes. Nonzero controlled native exits remain explicit in native-outcomes; finished means recording completed. No on-disk DLL changes or guest import of host pointers.",
+  "steps": [
+    {
+      "name": "build",
+      "argv": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\arm64\\cl.exe",
+        "/nologo",
+        "/std:c++20",
+        "/EHsc",
+        "/MT",
+        "/GS",
+        "/Od",
+        "/we4473",
+        "/we4474",
+        "/we4477",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-remote-connect-cold-v1\\native-remote-connect-cold-v1.cpp",
+        "/link",
+        "/SUBSYSTEM:CONSOLE,10.0",
+        "/OUT:C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-remote-connect-cold-v1\\probe.exe"
+      ],
+      "exit-code": 0,
+      "log": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-remote-connect-cold-v1\\native-remote-connect-cold-v1-build.log",
+        "bytes": 35,
+        "sha256": "515ef1e6604730a49416bb2cbc403f40c40768375650cd7dc0255da38a3d14e7"
+      }
+    },
+    {
+      "name": "normal",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-remote-connect-cold-v1\\probe.exe",
+        "normal"
+      ],
+      "exit-code": 0,
+      "log": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-remote-connect-cold-v1\\native-remote-connect-cold-v1-normal.log",
+        "bytes": 83212,
+        "sha256": "7367e552771f34b8d39bb7d0ae5609a18e638ada194c426b5226b349f361d6e8"
+      }
+    },
+    {
+      "name": "callback-success",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-remote-connect-cold-v1\\probe.exe",
+        "callback-success"
+      ],
+      "exit-code": 0,
+      "log": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-remote-connect-cold-v1\\native-remote-connect-cold-v1-callback-success.log",
+        "bytes": 40956,
+        "sha256": "c86fb33f86961379a6553fa93a649f113c47087f9fad093618532b72353775a5"
+      }
+    },
+    {
+      "name": "callback-failure",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-remote-connect-cold-v1\\probe.exe",
+        "callback-failure"
+      ],
+      "exit-code": 5,
+      "log": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-remote-connect-cold-v1\\native-remote-connect-cold-v1-callback-failure.log",
+        "bytes": 79555,
+        "sha256": "83d623d5c49fba120619ce5872dae9f9343593d6816f8ee7e6a5f2fff24ace60"
+      }
+    },
+    {
+      "name": "output-warning",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-remote-connect-cold-v1\\probe.exe",
+        "output-warning"
+      ],
+      "exit-code": 5,
+      "log": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-remote-connect-cold-v1\\native-remote-connect-cold-v1-output-warning.log",
+        "bytes": 79744,
+        "sha256": "ebd4f2c6a8a53a8c8f8577c12d3fdaeb8235853df6c54bc72bf219318d926dd2"
+      }
+    }
+  ],
+  "source-before": {
+    "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-remote-connect-cold-v1\\native-remote-connect-cold-v1.cpp",
+    "bytes": 17100,
+    "sha256": "6a291095d2e4701b03a58e3191000eae9419abc2c904e8e7006fc329bd02a91a"
+  },
+  "environment": {
+    "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\win32u-validation-recovery-v2\\transfer\\mutant-native-compiler-env-epoch4.json",
+    "bytes": 4122,
+    "sha256": "e6ca43bcdcbd3067b5de05d051259d4d3abf0bfa5283a98daac14fd508a05fad"
+  },
+  "runtime-before": [
+    {
+      "file": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+    },
+    {
+      "file": "C:\\Windows\\System32\\kernel32.dll",
+      "bytes": 1500304,
+      "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0"
+    },
+    {
+      "file": "C:\\Windows\\System32\\KernelBase.dll",
+      "bytes": 7213728,
+      "sha256": "6b2fa508ac4f9bce5d7351676485d1dc5b5236cd9656034e2fec1eaba3b82bc9"
+    },
+    {
+      "file": "C:\\Windows\\System32\\user32.dll",
+      "bytes": 2799192,
+      "sha256": "bd104076063e3bc8ce65fb744a947f533b8ac6bc737c999b1d7beacbc1b6b058"
+    },
+    {
+      "file": "C:\\Windows\\System32\\win32u.dll",
+      "bytes": 387768,
+      "sha256": "e2aa1e93f5e45377922bf6e5525d9fc37a60494da1d602033974883987e9c7d4"
+    },
+    {
+      "file": "C:\\Windows\\System32\\gdi32full.dll",
+      "bytes": 1893296,
+      "sha256": "3f73ffd0d20b492cfc3302c7ba193138a96d6161c2bea0b6b6c559f104f7f70e"
+    },
+    {
+      "file": "C:\\Windows\\System32\\gdi32.dll",
+      "bytes": 462600,
+      "sha256": "55a43a68318f896557d8433d1094b0acce8c9ec05b7085bbce558fefa280d42a"
+    }
+  ],
+  "compiler": {
+    "file": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\arm64\\cl.exe",
+    "bytes": 787728,
+    "sha256": "5cba83692d533f6b3a6ac07c6b2cdce708e0445ed1ee36b5cb2d49a244a4c835"
+  },
+  "step": "output-warning",
+  "child": 4988,
+  "machine": 43620,
+  "executable-before": {
+    "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-remote-connect-cold-v1\\probe.exe",
+    "bytes": 155648,
+    "sha256": "608d1f9e6db987a26578b2c1cc9e2bd42894ffb3d529c0fea9936df4728a6d7c"
+  },
+  "native-outcomes": [
+    {
+      "mode": "normal",
+      "exit-code": 0,
+      "before": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-remote-connect-cold-v1\\probe.exe",
+        "bytes": 155648,
+        "sha256": "608d1f9e6db987a26578b2c1cc9e2bd42894ffb3d529c0fea9936df4728a6d7c"
+      },
+      "after": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-remote-connect-cold-v1\\probe.exe",
+        "bytes": 155648,
+        "sha256": "608d1f9e6db987a26578b2c1cc9e2bd42894ffb3d529c0fea9936df4728a6d7c"
+      }
+    },
+    {
+      "mode": "callback-success",
+      "exit-code": 0,
+      "before": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-remote-connect-cold-v1\\probe.exe",
+        "bytes": 155648,
+        "sha256": "608d1f9e6db987a26578b2c1cc9e2bd42894ffb3d529c0fea9936df4728a6d7c"
+      },
+      "after": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-remote-connect-cold-v1\\probe.exe",
+        "bytes": 155648,
+        "sha256": "608d1f9e6db987a26578b2c1cc9e2bd42894ffb3d529c0fea9936df4728a6d7c"
+      }
+    },
+    {
+      "mode": "callback-failure",
+      "exit-code": 5,
+      "before": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-remote-connect-cold-v1\\probe.exe",
+        "bytes": 155648,
+        "sha256": "608d1f9e6db987a26578b2c1cc9e2bd42894ffb3d529c0fea9936df4728a6d7c"
+      },
+      "after": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-remote-connect-cold-v1\\probe.exe",
+        "bytes": 155648,
+        "sha256": "608d1f9e6db987a26578b2c1cc9e2bd42894ffb3d529c0fea9936df4728a6d7c"
+      }
+    },
+    {
+      "mode": "output-warning",
+      "exit-code": 5,
+      "before": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-remote-connect-cold-v1\\probe.exe",
+        "bytes": 155648,
+        "sha256": "608d1f9e6db987a26578b2c1cc9e2bd42894ffb3d529c0fea9936df4728a6d7c"
+      },
+      "after": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-remote-connect-cold-v1\\probe.exe",
+        "bytes": 155648,
+        "sha256": "608d1f9e6db987a26578b2c1cc9e2bd42894ffb3d529c0fea9936df4728a6d7c"
+      }
+    }
+  ],
+  "executable-after": {
+    "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-remote-connect-cold-v1\\probe.exe",
+    "bytes": 155648,
+    "sha256": "608d1f9e6db987a26578b2c1cc9e2bd42894ffb3d529c0fea9936df4728a6d7c"
+  },
+  "source-after": {
+    "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-remote-connect-cold-v1\\native-remote-connect-cold-v1.cpp",
+    "bytes": 17100,
+    "sha256": "6a291095d2e4701b03a58e3191000eae9419abc2c904e8e7006fc329bd02a91a"
+  },
+  "runtime-after": [
+    {
+      "file": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+    },
+    {
+      "file": "C:\\Windows\\System32\\kernel32.dll",
+      "bytes": 1500304,
+      "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0"
+    },
+    {
+      "file": "C:\\Windows\\System32\\KernelBase.dll",
+      "bytes": 7213728,
+      "sha256": "6b2fa508ac4f9bce5d7351676485d1dc5b5236cd9656034e2fec1eaba3b82bc9"
+    },
+    {
+      "file": "C:\\Windows\\System32\\user32.dll",
+      "bytes": 2799192,
+      "sha256": "bd104076063e3bc8ce65fb744a947f533b8ac6bc737c999b1d7beacbc1b6b058"
+    },
+    {
+      "file": "C:\\Windows\\System32\\win32u.dll",
+      "bytes": 387768,
+      "sha256": "e2aa1e93f5e45377922bf6e5525d9fc37a60494da1d602033974883987e9c7d4"
+    },
+    {
+      "file": "C:\\Windows\\System32\\gdi32full.dll",
+      "bytes": 1893296,
+      "sha256": "3f73ffd0d20b492cfc3302c7ba193138a96d6161c2bea0b6b6c559f104f7f70e"
+    },
+    {
+      "file": "C:\\Windows\\System32\\gdi32.dll",
+      "bytes": 462600,
+      "sha256": "55a43a68318f896557d8433d1094b0acce8c9ec05b7085bbce558fefa280d42a"
+    }
+  ],
+  "exit-code": 0,
+  "completed-utc": "2026-10-23T23:10:35.357365+00:00"
+}

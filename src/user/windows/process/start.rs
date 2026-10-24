@@ -373,6 +373,11 @@ pub(super) fn spawn_image(mut config: WindowsConfig, bytes: Vec<u8>) -> Result<P
     let mut objects = Objects::default();
     if let Some(runtime) = &native {
         objects.select_wnf_catalog(runtime.wnf_catalog.clone());
+        if let super::super::gui::Availability::Available(inputs) = &runtime.gui {
+            objects
+                .assign_desktop(inputs.assigned_desktop.clone())
+                .ok_or_else(|| memory("guest assigned-desktop handle allocation failed"))?;
+        }
     }
     let performance_clock =
         super::super::performance_clock::PerformanceClock::select(native.is_some())
@@ -383,6 +388,7 @@ pub(super) fn spawn_image(mut config: WindowsConfig, bytes: Vec<u8>) -> Result<P
         vm,
         cfg: Arc::new(config),
         native,
+        gui: super::super::gui::State::new(h.subsystem_version),
         registry,
         object_namespace,
         nls,
@@ -554,6 +560,13 @@ pub(super) fn spawn_image(mut config: WindowsConfig, bytes: Vec<u8>) -> Result<P
         p.vm.poke(shared + off, &value.to_le_bytes())
             .map_err(|e| memory(format!("{e:?}")))?;
     }
+    if let Some(generation) = p.nls.as_ref().and_then(|nls| nls.mui_generation()) {
+        p.vm.poke(
+            shared + kuser::LANG_GENERATION_COUNT,
+            &generation.to_le_bytes(),
+        )
+        .map_err(|e| memory(format!("{e:?}")))?;
+    }
     p.vm.poke(shared + kuser::PRODUCT_TYPE_IS_VALID, &[1])
         .map_err(|e| memory(format!("{e:?}")))?;
     p.vm.poke(
@@ -604,6 +617,10 @@ mod parameters_tests;
 #[cfg(test)]
 #[path = "start/token_session_id_tests.rs"]
 mod token_session_id_tests;
+
+#[cfg(all(test, windows))]
+#[path = "start/mui_generation_tests.rs"]
+mod mui_generation_tests;
 
 #[cfg(test)]
 mod tests {

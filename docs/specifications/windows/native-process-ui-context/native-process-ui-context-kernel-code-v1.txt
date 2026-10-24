@@ -1,0 +1,98 @@
+
+/Users/int/.assist-native-display-policy-20261022/target/win32k-symbols/win32kfull.sys:	file format coff-arm64
+
+Disassembly of section .text:
+
+000000014008ecc0 <NtUserGetProcessUIContextInformation>:
+14008ecc0: d503237f    	pacibsp
+14008ecc4: a9bf53f3    	stp	x19, x20, [sp, #-0x10]!
+14008ecc8: a9bc7bfd    	stp	x29, x30, [sp, #-0x40]!
+14008eccc: 910003fd    	mov	x29, sp
+14008ecd0: aa0003f3    	mov	x19, x0
+14008ecd4: f9001ba1    	str	x1, [x29, #0x30]
+14008ecd8: f9000fbf    	str	xzr, [x29, #0x18]
+14008ecdc: 52800021    	mov	w1, #0x1                // =1
+14008ece0: 9100e3a0    	add	x0, x29, #0x38
+14008ece4: 97ff8dd3    	bl	0x140072430 <DestroyUnlockedCursor+0x10>
+14008ece8: b100067f    	cmn	x19, #0x1
+14008ecec: 540000e1    	b.ne	0x14008ed08 <NtUserGetProcessUIContextInformation+0x48>
+14008ecf0: d2800013    	mov	x19, #0x0               // =0
+14008ecf4: f90017bf    	str	xzr, [x29, #0x28]
+14008ecf8: 900017e8    	adrp	x8, 0x14038a000
+14008ecfc: f946cd08    	ldr	x8, [x8, #0xd98]
+14008ed00: d63f0100    	blr	x8
+14008ed04: 14000022    	b	0x14008ed8c <NtUserGetProcessUIContextInformation+0xcc>
+14008ed08: f90013bf    	str	xzr, [x29, #0x20]
+14008ed0c: d2800005    	mov	x5, #0x0                // =0
+14008ed10: 910083a4    	add	x4, x29, #0x20
+14008ed14: 52800023    	mov	w3, #0x1                // =1
+14008ed18: 900017e8    	adrp	x8, 0x14038a000
+14008ed1c: f945f508    	ldr	x8, [x8, #0xbe8]
+14008ed20: f9400102    	ldr	x2, [x8]
+14008ed24: 52820001    	mov	w1, #0x1000             // =4096
+14008ed28: aa1303e0    	mov	x0, x19
+14008ed2c: 900017e8    	adrp	x8, 0x14038a000
+14008ed30: f9469d08    	ldr	x8, [x8, #0xd38]
+14008ed34: d63f0100    	blr	x8
+14008ed38: 36f800a0    	tbz	w0, #0x1f, 0x14008ed4c <NtUserGetProcessUIContextInformation+0x8c>
+14008ed3c: 52800ae0    	mov	w0, #0x57               // =87
+14008ed40: 94027ee0    	bl	0x14012e8c0 <UserSetWindowedSwapChainApiExt+0x3fdf0>
+14008ed44: 52800014    	mov	w20, #0x0               // =0
+14008ed48: 14000032    	b	0x14008ee10 <NtUserGetProcessUIContextInformation+0x150>
+14008ed4c: f94013b3    	ldr	x19, [x29, #0x20]
+14008ed50: f90017b3    	str	x19, [x29, #0x28]
+14008ed54: aa1303e0    	mov	x0, x19
+14008ed58: 900017e8    	adrp	x8, 0x14038a000
+14008ed5c: f9470508    	ldr	x8, [x8, #0xe08]
+14008ed60: d63f0100    	blr	x8
+14008ed64: 2a0003f4    	mov	w20, w0
+14008ed68: 97fdde9e    	bl	0x1400067e0 <TransformForInputMagnification+0x90>
+14008ed6c: 6b00029f    	cmp	w20, w0
+14008ed70: 54000060    	b.eq	0x14008ed7c <NtUserGetProcessUIContextInformation+0xbc>
+14008ed74: 52800ae0    	mov	w0, #0x57               // =87
+14008ed78: 1400001f    	b	0x14008edf4 <NtUserGetProcessUIContextInformation+0x134>
+14008ed7c: aa1303e0    	mov	x0, x19
+14008ed80: 900017e8    	adrp	x8, 0x14038a000
+14008ed84: f9477508    	ldr	x8, [x8, #0xee8]
+14008ed88: d63f0100    	blr	x8
+14008ed8c: b4000080    	cbz	x0, 0x14008ed9c <NtUserGetProcessUIContextInformation+0xdc>
+14008ed90: f9400008    	ldr	x8, [x0]
+14008ed94: f100011f    	cmp	x8, #0x0
+14008ed98: 9a8003e0    	csel	x0, xzr, x0, eq
+14008ed9c: b40002a0    	cbz	x0, 0x14008edf0 <NtUserGetProcessUIContextInformation+0x130>
+14008eda0: b9400c09    	ldr	w9, [x0, #0xc]
+14008eda4: 52800428    	mov	w8, #0x21               // =33
+14008eda8: 6a08013f    	tst	w9, w8
+14008edac: 54000220    	b.eq	0x14008edf0 <NtUserGetProcessUIContextInformation+0x130>
+14008edb0: f941900a    	ldr	x10, [x0, #0x320]
+14008edb4: 53041549    	ubfx	w9, w10, #4, #2
+14008edb8: f27a015f    	tst	x10, #0x40
+14008edbc: 1a9f07e8    	cset	w8, ne
+14008edc0: 290323a9    	stp	w9, w8, [x29, #0x18]
+14008edc4: 3640006a    	tbz	w10, #0x8, 0x14008edd0 <NtUserGetProcessUIContextInformation+0x110>
+14008edc8: 321f0108    	orr	w8, w8, #0x2
+14008edcc: b9001fa8    	str	w8, [x29, #0x1c]
+14008edd0: 910063a1    	add	x1, x29, #0x18
+14008edd4: 9100c3a0    	add	x0, x29, #0x30
+14008edd8: 9406fb68    	bl	0x14024db78 <EditionClientCharToWchar+0x588>
+14008eddc: 52800034    	mov	w20, #0x1               // =1
+14008ede0: 14000007    	b	0x14008edfc <NtUserGetProcessUIContextInformation+0x13c>
+14008ede4: 52800014    	mov	w20, #0x0               // =0
+14008ede8: f94017b3    	ldr	x19, [x29, #0x28]
+14008edec: 14000004    	b	0x14008edfc <NtUserGetProcessUIContextInformation+0x13c>
+14008edf0: 5280b7e0    	mov	w0, #0x5bf              // =1471
+14008edf4: 94027eb3    	bl	0x14012e8c0 <UserSetWindowedSwapChainApiExt+0x3fdf0>
+14008edf8: 52800014    	mov	w20, #0x0               // =0
+14008edfc: b40000b3    	cbz	x19, 0x14008ee10 <NtUserGetProcessUIContextInformation+0x150>
+14008ee00: aa1303e0    	mov	x0, x19
+14008ee04: 900017e8    	adrp	x8, 0x14038a000
+14008ee08: f9476508    	ldr	x8, [x8, #0xec8]
+14008ee0c: d63f0100    	blr	x8
+14008ee10: f00017e8    	adrp	x8, 0x14038d000
+14008ee14: f9444108    	ldr	x8, [x8, #0x880]
+14008ee18: d63f0100    	blr	x8
+14008ee1c: 2a1403e0    	mov	w0, w20
+14008ee20: a8c47bfd    	ldp	x29, x30, [sp], #0x40
+14008ee24: a8c153f3    	ldp	x19, x20, [sp], #0x10
+14008ee28: d50323ff    	autibsp
+14008ee2c: d65f03c0    	ret

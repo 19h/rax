@@ -1,0 +1,24 @@
+{
+  "input": {
+    "bytes": 4051968,
+    "sha256": "b2460cb52f878cc784ade6b26cc778a09337780398279a1fcc090bb4e0bffe2d"
+  },
+  "NtUserRegisterLPK-rva": "0x95A80",
+  "imports": [
+    {
+      "iat-rva": "0x38ad98",
+      "module": "ntoskrnl.exe",
+      "symbol": "PsGetCurrentProcessWin32Process"
+    },
+    {
+      "iat-rva": "0x38d878",
+      "module": "win32kbase.sys",
+      "symbol": "EnterCrit"
+    },
+    {
+      "iat-rva": "0x38d880",
+      "module": "win32kbase.sys",
+      "symbol": "UserSessionSwitchLeaveCrit"
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+
+target/win32k-symbols/win32kfull.sys:	file format coff-arm64
+
+Disassembly of section .text:
+
+0000000140095a80 <NtUserRegisterLPK>:
+140095a80: d503237f    	pacibsp
+140095a84: f81f0ff3    	str	x19, [sp, #-0x10]!
+140095a88: a9bf7bfd    	stp	x29, x30, [sp, #-0x10]!
+140095a8c: 910003fd    	mov	x29, sp
+140095a90: 900017c8    	adrp	x8, 0x14038d000
+140095a94: f9443d08    	ldr	x8, [x8, #0x878]
+140095a98: 2a0003f3    	mov	w19, w0
+140095a9c: 52800001    	mov	w1, #0x0                // =0
+140095aa0: 52800000    	mov	w0, #0x0                // =0
+140095aa4: d63f0100    	blr	x8
+140095aa8: b00017a8    	adrp	x8, 0x14038a000
+140095aac: f946cd08    	ldr	x8, [x8, #0xd98]
+140095ab0: d63f0100    	blr	x8
+140095ab4: b4000080    	cbz	x0, 0x140095ac4 <NtUserRegisterLPK+0x44>
+140095ab8: f9400008    	ldr	x8, [x0]
+140095abc: f100011f    	cmp	x8, #0x0
+140095ac0: 9a8003e0    	csel	x0, xzr, x0, eq
+140095ac4: b902f013    	str	w19, [x0, #0x2f0]
+140095ac8: 900017c8    	adrp	x8, 0x14038d000
+140095acc: f9444108    	ldr	x8, [x8, #0x880]
+140095ad0: d63f0100    	blr	x8
+140095ad4: d2800020    	mov	x0, #0x1                // =1
+140095ad8: a8c17bfd    	ldp	x29, x30, [sp], #0x10
+140095adc: f84107f3    	ldr	x19, [sp], #0x10
+140095ae0: d50323ff    	autibsp
+140095ae4: d65f03c0    	ret

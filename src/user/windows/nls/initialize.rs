@@ -17,7 +17,9 @@ impl Nls {
             || bytes.is_empty()
             || bytes.len() > MAX_SECTION_BYTES
             || bytes.len() % 4096 != 0
-            || self.sections.values().map(|data| data.len()).sum::<usize>() + bytes.len()
+            || self.sections.values().map(|data| data.len()).sum::<usize>()
+                + bytes.len()
+                + self.mui.as_ref().map_or(0, |data| data.len())
                 > MAX_TOTAL_BYTES
         {
             return Err(invalid(

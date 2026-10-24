@@ -1,0 +1,109 @@
+{
+  "scope": "Fixed machine LanguageOverlay OverlayPackages root and measured en-US child; all four executable views of one ARM64 Windows29683 kernel. Read-only metadata and native NtOpenKey statuses, with balanced handles.",
+  "coherence": [
+    {
+      "control": "native-language-overlay-v5",
+      "identical-captures": 24,
+      "native-open-cases": 576,
+      "native-open-status": "0xC0000034",
+      "scope": "Absent root/child; TREE_END key count includes the unsuccessful root attempt.",
+      "normalized-tree": {
+        "bytes": 382,
+        "sha256": "7f9f9289cfb8d98bf47584419c5cb661370673b8827d8d46d8109a1dbc54ad5c"
+      }
+    },
+    {
+      "control": "native-language-overlay-language-v6",
+      "identical-captures": 24,
+      "native-open-cases": 576,
+      "native-open-status": "0xC0000034",
+      "scope": "Absent root/child; TREE_END key count includes the unsuccessful root attempt.",
+      "normalized-tree": {
+        "bytes": 406,
+        "sha256": "367de1238e6db152a2e2c57a5fc37a381d88c59923461c4ea443c2a2b180fd80"
+      }
+    }
+  ],
+  "files": [
+    {
+      "path": "native-language-overlay-v5-arm64.log",
+      "bytes": 20575,
+      "sha256": "3317bcbceff1246a1c4c10b74e5e0bac9ce3155dd08a681af4292fe10617a5c6"
+    },
+    {
+      "path": "native-language-overlay-v5-x64.log",
+      "bytes": 20573,
+      "sha256": "b68ef982868ab9e56334e53d22470c0c61f16bf250dcdcc4c95f607da74688e2"
+    },
+    {
+      "path": "native-language-overlay-v5-x86.log",
+      "bytes": 20573,
+      "sha256": "f75de3d6a63c553210f7605e487aa7a8ff0d05fff69c44f897f38fce3304c316"
+    },
+    {
+      "path": "native-language-overlay-v5-x86-laa.log",
+      "bytes": 20577,
+      "sha256": "5a5423294fb60b7a0a6c86015f1800ccf431c5855e0c552a4e664e39b91eb0ea"
+    },
+    {
+      "path": "native-language-overlay-v5.cpp",
+      "bytes": 7978,
+      "sha256": "7f15c149a7c17202f6fbb00391a31a17311112195906d528d31f28e4a17d71fb"
+    },
+    {
+      "path": "native-language-overlay-v5-receipt.json",
+      "bytes": 13654,
+      "sha256": "db169c9bc8a275dcf4efddb073a80be3aac986089a81c9f1f23a7815d9cafcdf"
+    },
+    {
+      "path": "native-language-overlay-v5-profiles.json",
+      "bytes": 346,
+      "sha256": "1bf69a31d2085239d035f9ca70ffa6e4c53df4315d9be32787cba0fbdbc0e255"
+    },
+    {
+      "path": "run-native-language-overlay-v5.py",
+      "bytes": 6031,
+      "sha256": "a6a20c5d5d8ac3e850c0cc7407e069d44feb76bbcb33617ee5fca75f87a38bf0"
+    },
+    {
+      "path": "native-language-overlay-language-v6-arm64.log",
+      "bytes": 20719,
+      "sha256": "a605d6d94bcaba4326ac818c40daac7e178e931322a584411a5e2e371d9e8a3e"
+    },
+    {
+      "path": "native-language-overlay-language-v6-x64.log",
+      "bytes": 20717,
+      "sha256": "b567d3f62bf18eae5c391edbadb49101a17535138334e373e448a6fc04f083f1"
+    },
+    {
+      "path": "native-language-overlay-language-v6-x86.log",
+      "bytes": 20717,
+      "sha256": "f6e880c0ee9f2f68a4e6f10321c873d42afbd901d772c2d1c98bace56800dcf7"
+    },
+    {
+      "path": "native-language-overlay-language-v6-x86-laa.log",
+      "bytes": 20721,
+      "sha256": "74bb72014d61b9dd61fa357a23b100c3a6ea9fba671411f84436046c151b93c4"
+    },
+    {
+      "path": "native-language-overlay-language-v6.cpp",
+      "bytes": 7985,
+      "sha256": "72fce07de2c1ac0fdd226498a59512b86fe64eabd0de9f3fbfc6ec8d8eeb28f9"
+    },
+    {
+      "path": "native-language-overlay-language-v6-receipt.json",
+      "bytes": 13979,
+      "sha256": "88d6d6f936d1759ba2638e5ed5265b800cda709ec15edf314225ae19a94894d4"
+    },
+    {
+      "path": "native-language-overlay-language-v6-profiles.json",
+      "bytes": 346,
+      "sha256": "1bf69a31d2085239d035f9ca70ffa6e4c53df4315d9be32787cba0fbdbc0e255"
+    },
+    {
+      "path": "run-native-language-overlay-language-v6.py",
+      "bytes": 6049,
+      "sha256": "f5b96a4c9d19c572e01cd9827d201c682433b0fac977767d5211a58c0b6e2ffc"
+    }
+  ]
+}

@@ -296,6 +296,12 @@ pub(super) static EXPORTS: &[Export] = &[
         &[I32, I32, Ptr, Ptr, Ptr],
         nls::get,
     ),
+    Export::func(
+        "NtGetMUIRegistryInfo",
+        Stdcall,
+        &[I32, Ptr, Ptr],
+        nls::mui::query,
+    ),
     Export::func("NtUnmapViewOfSection", Stdcall, &[Ptr, Ptr], nls::unmap),
     Export::func(
         "NtQueryVirtualMemory",
@@ -445,6 +451,9 @@ fn terminate_thread(c: &mut Ctx) -> ApiResult {
 }
 fn close(c: &mut Ctx) -> ApiResult {
     let handle = c.ptr(0)?;
+    if c.p.objects.assigned_desktop_handle(handle) {
+        return Flow::ret(STATUS_HANDLE_NOT_CLOSABLE.into());
+    }
     Flow::ret(
         if c.p.objects.close(handle).is_ok() {
             STATUS_SUCCESS

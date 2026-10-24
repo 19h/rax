@@ -1,0 +1,366 @@
+{
+  "state": "finished",
+  "projector": {
+    "bytes": 11585,
+    "sha256": "c2c3409517fb106ea4677e85b7328dc3dff5d9ffa01bafd9e2d86eb7a716d226"
+  },
+  "controller": {
+    "bytes": 6185,
+    "sha256": "690c282756e99bda3f233a81f1b7058907fdf444e278de7ee74ede0f56d0794d"
+  },
+  "temporary-inside-worktree": true,
+  "temporary-cleaned": true,
+  "cases": [
+    {
+      "case": "positive",
+      "optimization": 0,
+      "exit-code": 0,
+      "stdout": {
+        "bytes": 169,
+        "sha256": "9cb634afd32a4eb23967fafcd4e8406ec355c4186020a7ba3ba0f5ffa87ba3e5"
+      },
+      "stderr": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "case": "positive",
+      "optimization": 1,
+      "exit-code": 0,
+      "stdout": {
+        "bytes": 169,
+        "sha256": "4921cfa0958cd7b179777120f7c6403f7a9437a4179985678cdaa01a9bc958ba"
+      },
+      "stderr": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "case": "positive",
+      "optimization": 2,
+      "exit-code": 0,
+      "stdout": {
+        "bytes": 169,
+        "sha256": "e321b028d49d65482af5d283925090f0f105c579e91b56d6440d80c7959bac81"
+      },
+      "stderr": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "case": "source-change",
+      "optimization": 0,
+      "exit-code": 1,
+      "stdout": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stderr": {
+        "bytes": 1024,
+        "sha256": "aba26023548fc7aebd8db5642c7c5bed5d7bec628e2584f16708bcb183d15be9"
+      }
+    },
+    {
+      "case": "source-change",
+      "optimization": 1,
+      "exit-code": 1,
+      "stdout": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stderr": {
+        "bytes": 1024,
+        "sha256": "aba26023548fc7aebd8db5642c7c5bed5d7bec628e2584f16708bcb183d15be9"
+      }
+    },
+    {
+      "case": "source-change",
+      "optimization": 2,
+      "exit-code": 1,
+      "stdout": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stderr": {
+        "bytes": 1024,
+        "sha256": "aba26023548fc7aebd8db5642c7c5bed5d7bec628e2584f16708bcb183d15be9"
+      }
+    },
+    {
+      "case": "unreindexed-log-change",
+      "optimization": 0,
+      "exit-code": 1,
+      "stdout": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stderr": {
+        "bytes": 993,
+        "sha256": "fc649380ba9bf5860ccb8e74d60f4d8fd2a48c70f6f626e7f2c183f11810ff04"
+      }
+    },
+    {
+      "case": "unreindexed-log-change",
+      "optimization": 1,
+      "exit-code": 1,
+      "stdout": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stderr": {
+        "bytes": 993,
+        "sha256": "fc649380ba9bf5860ccb8e74d60f4d8fd2a48c70f6f626e7f2c183f11810ff04"
+      }
+    },
+    {
+      "case": "unreindexed-log-change",
+      "optimization": 2,
+      "exit-code": 1,
+      "stdout": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stderr": {
+        "bytes": 993,
+        "sha256": "fc649380ba9bf5860ccb8e74d60f4d8fd2a48c70f6f626e7f2c183f11810ff04"
+      }
+    },
+    {
+      "case": "reindexed-callback-index",
+      "optimization": 0,
+      "exit-code": 1,
+      "stdout": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stderr": {
+        "bytes": 921,
+        "sha256": "cdf7a26b426a26b251b1ede16d329ee4648b4c2008c63f166729804b6661322f"
+      }
+    },
+    {
+      "case": "reindexed-callback-index",
+      "optimization": 1,
+      "exit-code": 1,
+      "stdout": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stderr": {
+        "bytes": 921,
+        "sha256": "cdf7a26b426a26b251b1ede16d329ee4648b4c2008c63f166729804b6661322f"
+      }
+    },
+    {
+      "case": "reindexed-callback-index",
+      "optimization": 2,
+      "exit-code": 1,
+      "stdout": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stderr": {
+        "bytes": 921,
+        "sha256": "cdf7a26b426a26b251b1ede16d329ee4648b4c2008c63f166729804b6661322f"
+      }
+    },
+    {
+      "case": "reindexed-frame-resume",
+      "optimization": 0,
+      "exit-code": 1,
+      "stdout": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stderr": {
+        "bytes": 931,
+        "sha256": "51b2a0a3d09d88ed19fb0b69ca4d2d821e86b835727aa881bd9997d924922f51"
+      }
+    },
+    {
+      "case": "reindexed-frame-resume",
+      "optimization": 1,
+      "exit-code": 1,
+      "stdout": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stderr": {
+        "bytes": 931,
+        "sha256": "51b2a0a3d09d88ed19fb0b69ca4d2d821e86b835727aa881bd9997d924922f51"
+      }
+    },
+    {
+      "case": "reindexed-frame-resume",
+      "optimization": 2,
+      "exit-code": 1,
+      "stdout": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stderr": {
+        "bytes": 931,
+        "sha256": "51b2a0a3d09d88ed19fb0b69ca4d2d821e86b835727aa881bd9997d924922f51"
+      }
+    },
+    {
+      "case": "reindexed-missing-frame",
+      "optimization": 0,
+      "exit-code": 1,
+      "stdout": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stderr": {
+        "bytes": 1039,
+        "sha256": "33ebb0c66d3be536645d05e6c2ee14e1225bd3740b291cb7d9dbbcc800b35315"
+      }
+    },
+    {
+      "case": "reindexed-missing-frame",
+      "optimization": 1,
+      "exit-code": 1,
+      "stdout": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stderr": {
+        "bytes": 1039,
+        "sha256": "33ebb0c66d3be536645d05e6c2ee14e1225bd3740b291cb7d9dbbcc800b35315"
+      }
+    },
+    {
+      "case": "reindexed-missing-frame",
+      "optimization": 2,
+      "exit-code": 1,
+      "stdout": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stderr": {
+        "bytes": 1039,
+        "sha256": "33ebb0c66d3be536645d05e6c2ee14e1225bd3740b291cb7d9dbbcc800b35315"
+      }
+    },
+    {
+      "case": "no-active-callback-status",
+      "optimization": 0,
+      "exit-code": 1,
+      "stdout": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stderr": {
+        "bytes": 706,
+        "sha256": "88a89f05fc7313f5b333d6b250694b61dc77c113a2d36ca7824b61c8c8af3ffe"
+      }
+    },
+    {
+      "case": "no-active-callback-status",
+      "optimization": 1,
+      "exit-code": 1,
+      "stdout": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stderr": {
+        "bytes": 706,
+        "sha256": "88a89f05fc7313f5b333d6b250694b61dc77c113a2d36ca7824b61c8c8af3ffe"
+      }
+    },
+    {
+      "case": "no-active-callback-status",
+      "optimization": 2,
+      "exit-code": 1,
+      "stdout": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stderr": {
+        "bytes": 706,
+        "sha256": "88a89f05fc7313f5b333d6b250694b61dc77c113a2d36ca7824b61c8c8af3ffe"
+      }
+    },
+    {
+      "case": "outcome-executable-change",
+      "optimization": 0,
+      "exit-code": 1,
+      "stdout": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stderr": {
+        "bytes": 815,
+        "sha256": "9f27b7a510e984fedec0724db39d522c9d739611e090e4bf06e06ce31a585545"
+      }
+    },
+    {
+      "case": "outcome-executable-change",
+      "optimization": 1,
+      "exit-code": 1,
+      "stdout": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stderr": {
+        "bytes": 815,
+        "sha256": "9f27b7a510e984fedec0724db39d522c9d739611e090e4bf06e06ce31a585545"
+      }
+    },
+    {
+      "case": "outcome-executable-change",
+      "optimization": 2,
+      "exit-code": 1,
+      "stdout": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stderr": {
+        "bytes": 815,
+        "sha256": "9f27b7a510e984fedec0724db39d522c9d739611e090e4bf06e06ce31a585545"
+      }
+    },
+    {
+      "case": "runtime-change",
+      "optimization": 0,
+      "exit-code": 1,
+      "stdout": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stderr": {
+        "bytes": 756,
+        "sha256": "71a80311ddcd5d2626edaecc597e65b8c8645702f15382be0b4a02dd979019a0"
+      }
+    },
+    {
+      "case": "runtime-change",
+      "optimization": 1,
+      "exit-code": 1,
+      "stdout": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stderr": {
+        "bytes": 756,
+        "sha256": "71a80311ddcd5d2626edaecc597e65b8c8645702f15382be0b4a02dd979019a0"
+      }
+    },
+    {
+      "case": "runtime-change",
+      "optimization": 2,
+      "exit-code": 1,
+      "stdout": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stderr": {
+        "bytes": 756,
+        "sha256": "71a80311ddcd5d2626edaecc597e65b8c8645702f15382be0b4a02dd979019a0"
+      }
+    }
+  ]
+}

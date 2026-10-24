@@ -1,0 +1,35 @@
+{
+  "scope": "Native read/query controls only. All three process views run on one ARM64 kernel. Captured MUI bytes remain private; only hashes are retained in the producer receipt.",
+  "files": [
+    {
+      "path": "native-mui-query-v2-arm64.log",
+      "bytes": 197507,
+      "sha256": "1db9913725bcd57ebfc8d47fdb5ff881515681ae311e4529fdc0ba4cf2559fb8"
+    },
+    {
+      "path": "native-mui-query-v2-x86.log",
+      "bytes": 197507,
+      "sha256": "6c9d97bfb63aec5d8bb84b08a65462838747733c72910fbe577db389f50add60"
+    },
+    {
+      "path": "native-mui-query-v2-x64.log",
+      "bytes": 197507,
+      "sha256": "1db9913725bcd57ebfc8d47fdb5ff881515681ae311e4529fdc0ba4cf2559fb8"
+    },
+    {
+      "path": "native-mui-query-v2.cpp",
+      "bytes": 4416,
+      "sha256": "5fbe3f68518c144e46147bfe06b7ed30f455de664cf7427d30800578a0b95ce1"
+    },
+    {
+      "path": "run-native-mui-query-v2.py",
+      "bytes": 4777,
+      "sha256": "6760d2b78e5bacc6cdf57d5ab901fc42ccfd759cae3d03b1d574ff7972842b95"
+    },
+    {
+      "path": "native-mui-query-v2-receipt.json",
+      "bytes": 9503,
+      "sha256": "f55dbc79fefa26b96429433fe69ab78e72e4fc4d963cdaa88bce030352e1e716"
+    }
+  ]
+}

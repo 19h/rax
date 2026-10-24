@@ -16,6 +16,7 @@ pub(crate) struct EntryPoints {
     pub(crate) loader: u64,
     pub(crate) thread: u64,
     pub(crate) module: u64,
+    pub(crate) callback: Option<u64>,
 }
 
 fn entry_points(p: &mut Proc) -> Result<EntryPoints, u32> {
@@ -48,6 +49,7 @@ fn entry_points(p: &mut Proc) -> Result<EntryPoints, u32> {
     let entries = EntryPoints {
         loader: resolve(b"LdrInitializeThunk")?,
         thread: resolve(b"RtlUserThreadStart")?,
+        callback: resolve(b"KiUserCallbackDispatcher").ok(),
         module: base,
     };
     p.native.as_mut().ok_or(STATUS_INVALID_PARAMETER)?.startup = Some(entries);

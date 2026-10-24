@@ -179,7 +179,11 @@ fn duplicate(c: &mut Ctx) -> ApiResult {
         }
         Flow::bool(true)
     })();
-    if options & 1 != 0 && !pseudo(c, handle, 0) && !pseudo(c, handle, 1) {
+    if options & 1 != 0
+        && !pseudo(c, handle, 0)
+        && !pseudo(c, handle, 1)
+        && !c.p.objects.assigned_desktop_handle(handle)
+    {
         match c.p.objects.close(handle) {
             Ok(object) => {
                 if let Err(error) = super::files::finish_close(object) {

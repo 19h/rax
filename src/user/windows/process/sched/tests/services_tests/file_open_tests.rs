@@ -174,6 +174,8 @@ fn selection(h: &mut Harness) -> PathBuf {
         appcompat: Default::default(),
         wnf_catalog: Default::default(),
         startup: None,
+        code_integrity: Err("controlled absent code integrity metadata".into()),
+        gui: Default::default(),
     });
     Arc::make_mut(&mut p.cfg).host_filesystem = false;
     directory

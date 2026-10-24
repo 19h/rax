@@ -1,0 +1,7 @@
+# These native evidence files are bound by byte counts and SHA-256 identities.
+docs/specifications/windows/native-common-glob-user-settings/* -text whitespace=cr-at-eol
+docs/specifications/windows/native-mui-query/* -text whitespace=cr-at-eol
+docs/specifications/windows/native-mui-settings/* -text whitespace=cr-at-eol
+docs/specifications/windows/native-mui-system/* -text whitespace=cr-at-eol
+docs/specifications/windows/native-gui-version/* -text whitespace=cr-at-eol
+docs/specifications/windows/native-language-overlay/* -text whitespace=cr-at-eol

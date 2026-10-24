@@ -1,0 +1,1100 @@
+{
+  "schema": 1,
+  "scope": "ARM64 native callback controls and allocation geometry; selected scalar projection, no raw stack/TEB/desktop/GDI bytes or absolute host addresses.",
+  "units": "All sizes and offsets are bytes; NTSTATUS fields are unsigned32 values.",
+  "controls": [
+    {
+      "controller-version": 5,
+      "mode": "normal",
+      "native-exit-code": 0,
+      "original-private-log": {
+        "name": "native-win32k-callback-v5-normal.log",
+        "bytes": 83898,
+        "sha256": "dbe29c4727b76fa0356d985d849e6f2b4d82eec483aaeb6a6b1a0704cdcf352e"
+      },
+      "projection": {
+        "callbacks": [
+          {
+            "ordinal": 1,
+            "index": 84,
+            "length": 0,
+            "frame": {
+              "input-pointer-relative-to-sp": 48,
+              "length": 0,
+              "index": 84,
+              "interrupted-sp-relative-to-sp": 64,
+              "resume-win32u-rva": 49108
+            }
+          },
+          {
+            "ordinal": 2,
+            "index": 84,
+            "length": 0,
+            "frame": {
+              "input-pointer-relative-to-sp": 48,
+              "length": 0,
+              "index": 84,
+              "interrupted-sp-relative-to-sp": 64,
+              "resume-win32u-rva": 49108
+            }
+          }
+        ],
+        "returns": [
+          {
+            "ordinal": 1,
+            "buffer-class": "null",
+            "length": 0,
+            "status": 0
+          },
+          {
+            "ordinal": 2,
+            "buffer-class": "null",
+            "length": 0,
+            "status": 0
+          }
+        ],
+        "phases": [
+          {
+            "phase": "before-load-user32",
+            "callback-table-present": false,
+            "gdi-table-present": false
+          },
+          {
+            "phase": "before-first-init2-svc",
+            "callback-table-present": true,
+            "gdi-table-present": false
+          },
+          {
+            "phase": "callback-entry",
+            "callback-table-present": true,
+            "gdi-table-present": true
+          },
+          {
+            "phase": "callback-return",
+            "callback-table-present": true,
+            "gdi-table-present": true
+          },
+          {
+            "phase": "after-first-init2-svc",
+            "callback-table-present": true,
+            "gdi-table-present": true
+          },
+          {
+            "phase": "after-load-user32",
+            "callback-table-present": true,
+            "gdi-table-present": true
+          },
+          {
+            "phase": "worker-start",
+            "callback-table-present": true,
+            "gdi-table-present": true
+          },
+          {
+            "phase": "before-first-init2-svc",
+            "callback-table-present": true,
+            "gdi-table-present": true
+          },
+          {
+            "phase": "callback-entry",
+            "callback-table-present": true,
+            "gdi-table-present": true
+          },
+          {
+            "phase": "callback-return",
+            "callback-table-present": true,
+            "gdi-table-present": true
+          },
+          {
+            "phase": "after-first-init2-svc",
+            "callback-table-present": true,
+            "gdi-table-present": true
+          },
+          {
+            "phase": "worker-finished",
+            "callback-table-present": true,
+            "gdi-table-present": true
+          },
+          {
+            "phase": "main-after-worker",
+            "callback-table-present": true,
+            "gdi-table-present": true
+          }
+        ],
+        "guest-body-deltas": [
+          {
+            "record": "callback-peb",
+            "offset": 128,
+            "before-nonzero": true,
+            "after-nonzero": true,
+            "before-bit3": false,
+            "after-bit3": true
+          },
+          {
+            "record": "callback-teb",
+            "offset": 2048,
+            "before-nonzero": true,
+            "after-nonzero": true,
+            "before-bit3": false,
+            "after-bit3": true
+          },
+          {
+            "record": "callback-teb",
+            "offset": 2256,
+            "before-nonzero": false,
+            "after-nonzero": true
+          },
+          {
+            "record": "callback-teb",
+            "offset": 2320,
+            "before-nonzero": false,
+            "after-nonzero": true,
+            "after": 2
+          },
+          {
+            "record": "callback-teb",
+            "offset": 2328,
+            "before-nonzero": false,
+            "after-nonzero": true,
+            "after-relative-to-teb": 2336
+          },
+          {
+            "record": "callback-teb",
+            "offset": 2048,
+            "before-nonzero": false,
+            "after-nonzero": true,
+            "before-bit3": false,
+            "after-bit3": true
+          },
+          {
+            "record": "callback-teb",
+            "offset": 2256,
+            "before-nonzero": false,
+            "after-nonzero": true
+          },
+          {
+            "record": "callback-teb",
+            "offset": 2320,
+            "before-nonzero": false,
+            "after-nonzero": true,
+            "after": 2
+          },
+          {
+            "record": "callback-teb",
+            "offset": 2328,
+            "before-nonzero": false,
+            "after-nonzero": true,
+            "after-relative-to-teb": 2336
+          }
+        ],
+        "opaque-returns": [
+          {
+            "kind": "init2-return",
+            "nonzero": true,
+            "high32-nonzero": true,
+            "opaque-value-sha256": "cd5c0acf2ee42a53d77fc250f79ad12a9ef520b128e62597ad2f0f65e6954f83"
+          },
+          {
+            "kind": "repeat",
+            "nonzero": true,
+            "high32-nonzero": true,
+            "opaque-value-sha256": "cd5c0acf2ee42a53d77fc250f79ad12a9ef520b128e62597ad2f0f65e6954f83"
+          },
+          {
+            "kind": "repeat",
+            "nonzero": true,
+            "high32-nonzero": true,
+            "opaque-value-sha256": "cd5c0acf2ee42a53d77fc250f79ad12a9ef520b128e62597ad2f0f65e6954f83"
+          },
+          {
+            "kind": "repeat",
+            "nonzero": true,
+            "high32-nonzero": true,
+            "opaque-value-sha256": "cd5c0acf2ee42a53d77fc250f79ad12a9ef520b128e62597ad2f0f65e6954f83"
+          },
+          {
+            "kind": "repeat",
+            "nonzero": true,
+            "high32-nonzero": true,
+            "opaque-value-sha256": "cd5c0acf2ee42a53d77fc250f79ad12a9ef520b128e62597ad2f0f65e6954f83"
+          },
+          {
+            "kind": "init2-return",
+            "nonzero": true,
+            "high32-nonzero": true,
+            "opaque-value-sha256": "cd5c0acf2ee42a53d77fc250f79ad12a9ef520b128e62597ad2f0f65e6954f83"
+          },
+          {
+            "kind": "worker-repeat",
+            "nonzero": true,
+            "high32-nonzero": true,
+            "opaque-value-sha256": "cd5c0acf2ee42a53d77fc250f79ad12a9ef520b128e62597ad2f0f65e6954f83"
+          },
+          {
+            "kind": "worker-repeat",
+            "nonzero": true,
+            "high32-nonzero": true,
+            "opaque-value-sha256": "cd5c0acf2ee42a53d77fc250f79ad12a9ef520b128e62597ad2f0f65e6954f83"
+          },
+          {
+            "kind": "worker-repeat",
+            "nonzero": true,
+            "high32-nonzero": true,
+            "opaque-value-sha256": "cd5c0acf2ee42a53d77fc250f79ad12a9ef520b128e62597ad2f0f65e6954f83"
+          },
+          {
+            "kind": "worker-repeat",
+            "nonzero": true,
+            "high32-nonzero": true,
+            "opaque-value-sha256": "cd5c0acf2ee42a53d77fc250f79ad12a9ef520b128e62597ad2f0f65e6954f83"
+          }
+        ],
+        "finished-marker": {
+          "finished": 1,
+          "restored-instructions": 3,
+          "closed-module-references": 2,
+          "removed-observers": 1,
+          "callbacks": 2,
+          "returns": 2
+        }
+      }
+    },
+    {
+      "controller-version": 5,
+      "mode": "callback-success",
+      "native-exit-code": 0,
+      "original-private-log": {
+        "name": "native-win32k-callback-v5-callback-success.log",
+        "bytes": 41360,
+        "sha256": "9e857e2d3f78d9736c6cf37a1dd04cd6fb24b424f810c6f7fe9217c83f4b2c05"
+      },
+      "projection": {
+        "callbacks": [
+          {
+            "ordinal": 1,
+            "index": 84,
+            "length": 0,
+            "frame": {
+              "input-pointer-relative-to-sp": 48,
+              "length": 0,
+              "index": 84,
+              "interrupted-sp-relative-to-sp": 64,
+              "resume-win32u-rva": 49108
+            }
+          }
+        ],
+        "returns": [
+          {
+            "ordinal": 1,
+            "buffer-class": "null",
+            "length": 0,
+            "status": 0
+          }
+        ],
+        "phases": [
+          {
+            "phase": "before-load-user32",
+            "callback-table-present": false,
+            "gdi-table-present": false
+          },
+          {
+            "phase": "before-first-init2-svc",
+            "callback-table-present": true,
+            "gdi-table-present": false
+          },
+          {
+            "phase": "callback-entry",
+            "callback-table-present": true,
+            "gdi-table-present": true
+          },
+          {
+            "phase": "callback-return",
+            "callback-table-present": true,
+            "gdi-table-present": true
+          },
+          {
+            "phase": "after-first-init2-svc",
+            "callback-table-present": true,
+            "gdi-table-present": true
+          },
+          {
+            "phase": "after-load-user32",
+            "callback-table-present": true,
+            "gdi-table-present": true
+          }
+        ],
+        "guest-body-deltas": [],
+        "opaque-returns": [
+          {
+            "kind": "init2-return",
+            "nonzero": true,
+            "high32-nonzero": true,
+            "opaque-value-sha256": "c178364d48d9a4c1ae5c315fd55e84e213f22a83cf0b9f21dd916782e344dd5a"
+          },
+          {
+            "kind": "repeat",
+            "nonzero": true,
+            "high32-nonzero": true,
+            "opaque-value-sha256": "c178364d48d9a4c1ae5c315fd55e84e213f22a83cf0b9f21dd916782e344dd5a"
+          },
+          {
+            "kind": "repeat",
+            "nonzero": true,
+            "high32-nonzero": true,
+            "opaque-value-sha256": "c178364d48d9a4c1ae5c315fd55e84e213f22a83cf0b9f21dd916782e344dd5a"
+          },
+          {
+            "kind": "repeat",
+            "nonzero": true,
+            "high32-nonzero": true,
+            "opaque-value-sha256": "c178364d48d9a4c1ae5c315fd55e84e213f22a83cf0b9f21dd916782e344dd5a"
+          },
+          {
+            "kind": "repeat",
+            "nonzero": true,
+            "high32-nonzero": true,
+            "opaque-value-sha256": "c178364d48d9a4c1ae5c315fd55e84e213f22a83cf0b9f21dd916782e344dd5a"
+          }
+        ],
+        "finished-marker": {
+          "finished": 1,
+          "restored-instructions": 3,
+          "closed-module-references": 2,
+          "removed-observers": 1,
+          "callbacks": 1,
+          "returns": 1
+        }
+      }
+    },
+    {
+      "controller-version": 5,
+      "mode": "callback-failure",
+      "native-exit-code": 5,
+      "original-private-log": {
+        "name": "native-win32k-callback-v5-callback-failure.log",
+        "bytes": 40758,
+        "sha256": "c7397712f57a1b4d942ea0c22912aa4d34212de107f6d0e6679ccf6c7dab683b"
+      },
+      "projection": {
+        "callbacks": [
+          {
+            "ordinal": 1,
+            "index": 84,
+            "length": 0,
+            "frame": {
+              "input-pointer-relative-to-sp": 48,
+              "length": 0,
+              "index": 84,
+              "interrupted-sp-relative-to-sp": 64,
+              "resume-win32u-rva": 49108
+            }
+          }
+        ],
+        "returns": [
+          {
+            "ordinal": 1,
+            "buffer-class": "null",
+            "length": 0,
+            "status": 3221225473
+          }
+        ],
+        "phases": [
+          {
+            "phase": "before-load-user32",
+            "callback-table-present": false,
+            "gdi-table-present": false
+          },
+          {
+            "phase": "before-first-init2-svc",
+            "callback-table-present": true,
+            "gdi-table-present": false
+          },
+          {
+            "phase": "callback-entry",
+            "callback-table-present": true,
+            "gdi-table-present": true
+          },
+          {
+            "phase": "callback-return",
+            "callback-table-present": true,
+            "gdi-table-present": true
+          },
+          {
+            "phase": "after-first-init2-svc",
+            "callback-table-present": true,
+            "gdi-table-present": true
+          }
+        ],
+        "guest-body-deltas": [],
+        "opaque-returns": [
+          {
+            "kind": "init2-return",
+            "nonzero": false,
+            "high32-nonzero": false,
+            "opaque-value-sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc"
+          }
+        ],
+        "finished-marker": null
+      }
+    },
+    {
+      "controller-version": 6,
+      "mode": "normal",
+      "native-exit-code": 0,
+      "original-private-log": {
+        "name": "native-win32k-callback-v6-normal.log",
+        "bytes": 83898,
+        "sha256": "1e632d3d10cdfb44b5b35ba0c64bb51f146e753be615e13dffd1f82363339cb0"
+      },
+      "projection": {
+        "callbacks": [
+          {
+            "ordinal": 1,
+            "index": 84,
+            "length": 0,
+            "frame": {
+              "input-pointer-relative-to-sp": 48,
+              "length": 0,
+              "index": 84,
+              "interrupted-sp-relative-to-sp": 64,
+              "resume-win32u-rva": 49108
+            }
+          },
+          {
+            "ordinal": 2,
+            "index": 84,
+            "length": 0,
+            "frame": {
+              "input-pointer-relative-to-sp": 48,
+              "length": 0,
+              "index": 84,
+              "interrupted-sp-relative-to-sp": 64,
+              "resume-win32u-rva": 49108
+            }
+          }
+        ],
+        "returns": [
+          {
+            "ordinal": 1,
+            "buffer-class": "null",
+            "length": 0,
+            "status": 0
+          },
+          {
+            "ordinal": 2,
+            "buffer-class": "null",
+            "length": 0,
+            "status": 0
+          }
+        ],
+        "phases": [
+          {
+            "phase": "before-load-user32",
+            "callback-table-present": false,
+            "gdi-table-present": false
+          },
+          {
+            "phase": "before-first-init2-svc",
+            "callback-table-present": true,
+            "gdi-table-present": false
+          },
+          {
+            "phase": "callback-entry",
+            "callback-table-present": true,
+            "gdi-table-present": true
+          },
+          {
+            "phase": "callback-return",
+            "callback-table-present": true,
+            "gdi-table-present": true
+          },
+          {
+            "phase": "after-first-init2-svc",
+            "callback-table-present": true,
+            "gdi-table-present": true
+          },
+          {
+            "phase": "after-load-user32",
+            "callback-table-present": true,
+            "gdi-table-present": true
+          },
+          {
+            "phase": "worker-start",
+            "callback-table-present": true,
+            "gdi-table-present": true
+          },
+          {
+            "phase": "before-first-init2-svc",
+            "callback-table-present": true,
+            "gdi-table-present": true
+          },
+          {
+            "phase": "callback-entry",
+            "callback-table-present": true,
+            "gdi-table-present": true
+          },
+          {
+            "phase": "callback-return",
+            "callback-table-present": true,
+            "gdi-table-present": true
+          },
+          {
+            "phase": "after-first-init2-svc",
+            "callback-table-present": true,
+            "gdi-table-present": true
+          },
+          {
+            "phase": "worker-finished",
+            "callback-table-present": true,
+            "gdi-table-present": true
+          },
+          {
+            "phase": "main-after-worker",
+            "callback-table-present": true,
+            "gdi-table-present": true
+          }
+        ],
+        "guest-body-deltas": [
+          {
+            "record": "callback-peb",
+            "offset": 128,
+            "before-nonzero": true,
+            "after-nonzero": true,
+            "before-bit3": false,
+            "after-bit3": true
+          },
+          {
+            "record": "callback-teb",
+            "offset": 2048,
+            "before-nonzero": true,
+            "after-nonzero": true,
+            "before-bit3": false,
+            "after-bit3": true
+          },
+          {
+            "record": "callback-teb",
+            "offset": 2256,
+            "before-nonzero": false,
+            "after-nonzero": true
+          },
+          {
+            "record": "callback-teb",
+            "offset": 2320,
+            "before-nonzero": false,
+            "after-nonzero": true,
+            "after": 2
+          },
+          {
+            "record": "callback-teb",
+            "offset": 2328,
+            "before-nonzero": false,
+            "after-nonzero": true,
+            "after-relative-to-teb": 2336
+          },
+          {
+            "record": "callback-teb",
+            "offset": 2048,
+            "before-nonzero": false,
+            "after-nonzero": true,
+            "before-bit3": false,
+            "after-bit3": true
+          },
+          {
+            "record": "callback-teb",
+            "offset": 2256,
+            "before-nonzero": false,
+            "after-nonzero": true
+          },
+          {
+            "record": "callback-teb",
+            "offset": 2320,
+            "before-nonzero": false,
+            "after-nonzero": true,
+            "after": 2
+          },
+          {
+            "record": "callback-teb",
+            "offset": 2328,
+            "before-nonzero": false,
+            "after-nonzero": true,
+            "after-relative-to-teb": 2336
+          }
+        ],
+        "opaque-returns": [
+          {
+            "kind": "init2-return",
+            "nonzero": true,
+            "high32-nonzero": true,
+            "opaque-value-sha256": "f19da5c930b81be9e5b805ae7024d22d64580d6784f6c509b90cc131d20aa29f"
+          },
+          {
+            "kind": "repeat",
+            "nonzero": true,
+            "high32-nonzero": true,
+            "opaque-value-sha256": "f19da5c930b81be9e5b805ae7024d22d64580d6784f6c509b90cc131d20aa29f"
+          },
+          {
+            "kind": "repeat",
+            "nonzero": true,
+            "high32-nonzero": true,
+            "opaque-value-sha256": "f19da5c930b81be9e5b805ae7024d22d64580d6784f6c509b90cc131d20aa29f"
+          },
+          {
+            "kind": "repeat",
+            "nonzero": true,
+            "high32-nonzero": true,
+            "opaque-value-sha256": "f19da5c930b81be9e5b805ae7024d22d64580d6784f6c509b90cc131d20aa29f"
+          },
+          {
+            "kind": "repeat",
+            "nonzero": true,
+            "high32-nonzero": true,
+            "opaque-value-sha256": "f19da5c930b81be9e5b805ae7024d22d64580d6784f6c509b90cc131d20aa29f"
+          },
+          {
+            "kind": "init2-return",
+            "nonzero": true,
+            "high32-nonzero": true,
+            "opaque-value-sha256": "f19da5c930b81be9e5b805ae7024d22d64580d6784f6c509b90cc131d20aa29f"
+          },
+          {
+            "kind": "worker-repeat",
+            "nonzero": true,
+            "high32-nonzero": true,
+            "opaque-value-sha256": "f19da5c930b81be9e5b805ae7024d22d64580d6784f6c509b90cc131d20aa29f"
+          },
+          {
+            "kind": "worker-repeat",
+            "nonzero": true,
+            "high32-nonzero": true,
+            "opaque-value-sha256": "f19da5c930b81be9e5b805ae7024d22d64580d6784f6c509b90cc131d20aa29f"
+          },
+          {
+            "kind": "worker-repeat",
+            "nonzero": true,
+            "high32-nonzero": true,
+            "opaque-value-sha256": "f19da5c930b81be9e5b805ae7024d22d64580d6784f6c509b90cc131d20aa29f"
+          },
+          {
+            "kind": "worker-repeat",
+            "nonzero": true,
+            "high32-nonzero": true,
+            "opaque-value-sha256": "f19da5c930b81be9e5b805ae7024d22d64580d6784f6c509b90cc131d20aa29f"
+          }
+        ],
+        "finished-marker": {
+          "finished": 1,
+          "restored-instructions": 3,
+          "closed-module-references": 2,
+          "removed-observers": 1,
+          "callbacks": 2,
+          "returns": 2
+        }
+      }
+    },
+    {
+      "controller-version": 6,
+      "mode": "nested-success",
+      "native-exit-code": 0,
+      "original-private-log": {
+        "name": "native-win32k-callback-v6-nested-success.log",
+        "bytes": 40162,
+        "sha256": "bc36ea8a5fc182372ffd4f9cc0a079b3cd20dc1f2d7fa823ac5b77db4f2705b7"
+      },
+      "projection": {
+        "callbacks": [
+          {
+            "ordinal": 1,
+            "index": 84,
+            "length": 0,
+            "frame": {
+              "input-pointer-relative-to-sp": 48,
+              "length": 0,
+              "index": 84,
+              "interrupted-sp-relative-to-sp": 64,
+              "resume-win32u-rva": 49108
+            }
+          }
+        ],
+        "returns": [
+          {
+            "ordinal": 1,
+            "buffer-class": "null",
+            "length": 0,
+            "status": 0
+          }
+        ],
+        "phases": [
+          {
+            "phase": "before-load-user32",
+            "callback-table-present": false,
+            "gdi-table-present": false
+          },
+          {
+            "phase": "callback-entry",
+            "callback-table-present": true,
+            "gdi-table-present": true
+          },
+          {
+            "phase": "callback-return",
+            "callback-table-present": true,
+            "gdi-table-present": true
+          },
+          {
+            "phase": "after-load-user32",
+            "callback-table-present": true,
+            "gdi-table-present": true
+          }
+        ],
+        "guest-body-deltas": [],
+        "opaque-returns": [
+          {
+            "kind": "nested-init2-return",
+            "nonzero": true,
+            "high32-nonzero": true,
+            "opaque-value-sha256": "9234d85cde755e0ed5b04bf894d7010a5cc2d3e31a9d21fbdafc1dee346a157a"
+          },
+          {
+            "kind": "repeat",
+            "nonzero": true,
+            "high32-nonzero": true,
+            "opaque-value-sha256": "9234d85cde755e0ed5b04bf894d7010a5cc2d3e31a9d21fbdafc1dee346a157a"
+          },
+          {
+            "kind": "repeat",
+            "nonzero": true,
+            "high32-nonzero": true,
+            "opaque-value-sha256": "9234d85cde755e0ed5b04bf894d7010a5cc2d3e31a9d21fbdafc1dee346a157a"
+          },
+          {
+            "kind": "repeat",
+            "nonzero": true,
+            "high32-nonzero": true,
+            "opaque-value-sha256": "9234d85cde755e0ed5b04bf894d7010a5cc2d3e31a9d21fbdafc1dee346a157a"
+          },
+          {
+            "kind": "repeat",
+            "nonzero": true,
+            "high32-nonzero": true,
+            "opaque-value-sha256": "9234d85cde755e0ed5b04bf894d7010a5cc2d3e31a9d21fbdafc1dee346a157a"
+          }
+        ],
+        "finished-marker": {
+          "finished": 1,
+          "restored-instructions": 3,
+          "closed-module-references": 2,
+          "removed-observers": 1,
+          "callbacks": 1,
+          "returns": 1
+        }
+      }
+    },
+    {
+      "controller-version": 6,
+      "mode": "nested-failure",
+      "native-exit-code": 5,
+      "original-private-log": {
+        "name": "native-win32k-callback-v6-nested-failure.log",
+        "bytes": 39629,
+        "sha256": "07dc5a2ac3d3f48ca980e1a8e3d1e4ecc4424e0434d8bc8168f3d449bcd63736"
+      },
+      "projection": {
+        "callbacks": [
+          {
+            "ordinal": 1,
+            "index": 84,
+            "length": 0,
+            "frame": {
+              "input-pointer-relative-to-sp": 48,
+              "length": 0,
+              "index": 84,
+              "interrupted-sp-relative-to-sp": 64,
+              "resume-win32u-rva": 49108
+            }
+          }
+        ],
+        "returns": [
+          {
+            "ordinal": 1,
+            "buffer-class": "null",
+            "length": 0,
+            "status": 3221225473
+          }
+        ],
+        "phases": [
+          {
+            "phase": "before-load-user32",
+            "callback-table-present": false,
+            "gdi-table-present": false
+          },
+          {
+            "phase": "callback-entry",
+            "callback-table-present": true,
+            "gdi-table-present": true
+          },
+          {
+            "phase": "callback-return",
+            "callback-table-present": true,
+            "gdi-table-present": true
+          }
+        ],
+        "guest-body-deltas": [],
+        "opaque-returns": [
+          {
+            "kind": "nested-init2-return",
+            "nonzero": true,
+            "high32-nonzero": true,
+            "opaque-value-sha256": "f180dd0f99c2f4fe8baa194d24fcd5944fe1f4115102ed5adce21a88250fb1ce"
+          }
+        ],
+        "finished-marker": null
+      }
+    },
+    {
+      "controller-version": 6,
+      "mode": "output-invalid",
+      "native-exit-code": 0,
+      "original-private-log": {
+        "name": "native-win32k-callback-v6-output-invalid.log",
+        "bytes": 41454,
+        "sha256": "71bf668650aaec501fa3fdb5062f6118e32b21e01c5b79c2c2bf33ac429e4382"
+      },
+      "projection": {
+        "callbacks": [
+          {
+            "ordinal": 1,
+            "index": 84,
+            "length": 0,
+            "frame": {
+              "input-pointer-relative-to-sp": 48,
+              "length": 0,
+              "index": 84,
+              "interrupted-sp-relative-to-sp": 64,
+              "resume-win32u-rva": 49108
+            }
+          }
+        ],
+        "returns": [
+          {
+            "ordinal": 1,
+            "buffer-class": "invalid-one",
+            "length": 4294967295,
+            "status": 0
+          }
+        ],
+        "phases": [
+          {
+            "phase": "before-load-user32",
+            "callback-table-present": false,
+            "gdi-table-present": false
+          },
+          {
+            "phase": "before-first-init2-svc",
+            "callback-table-present": true,
+            "gdi-table-present": false
+          },
+          {
+            "phase": "callback-entry",
+            "callback-table-present": true,
+            "gdi-table-present": true
+          },
+          {
+            "phase": "callback-return",
+            "callback-table-present": true,
+            "gdi-table-present": true
+          },
+          {
+            "phase": "after-first-init2-svc",
+            "callback-table-present": true,
+            "gdi-table-present": true
+          },
+          {
+            "phase": "after-load-user32",
+            "callback-table-present": true,
+            "gdi-table-present": true
+          }
+        ],
+        "guest-body-deltas": [],
+        "opaque-returns": [
+          {
+            "kind": "init2-return",
+            "nonzero": true,
+            "high32-nonzero": true,
+            "opaque-value-sha256": "f8a997c45da688b3190bd2134a5135a4d86e81f963122a4e14a94234f8ea743c"
+          },
+          {
+            "kind": "repeat",
+            "nonzero": true,
+            "high32-nonzero": true,
+            "opaque-value-sha256": "f8a997c45da688b3190bd2134a5135a4d86e81f963122a4e14a94234f8ea743c"
+          },
+          {
+            "kind": "repeat",
+            "nonzero": true,
+            "high32-nonzero": true,
+            "opaque-value-sha256": "f8a997c45da688b3190bd2134a5135a4d86e81f963122a4e14a94234f8ea743c"
+          },
+          {
+            "kind": "repeat",
+            "nonzero": true,
+            "high32-nonzero": true,
+            "opaque-value-sha256": "f8a997c45da688b3190bd2134a5135a4d86e81f963122a4e14a94234f8ea743c"
+          },
+          {
+            "kind": "repeat",
+            "nonzero": true,
+            "high32-nonzero": true,
+            "opaque-value-sha256": "f8a997c45da688b3190bd2134a5135a4d86e81f963122a4e14a94234f8ea743c"
+          }
+        ],
+        "finished-marker": {
+          "finished": 1,
+          "restored-instructions": 3,
+          "closed-module-references": 2,
+          "removed-observers": 1,
+          "callbacks": 1,
+          "returns": 1
+        }
+      }
+    },
+    {
+      "controller-version": 6,
+      "mode": "output-warning",
+      "native-exit-code": 5,
+      "original-private-log": {
+        "name": "native-win32k-callback-v6-output-warning.log",
+        "bytes": 40851,
+        "sha256": "ce5ec1d67f367aa33bdb10a8c47e2029e4331d4751405a1e0e4906baba20aec0"
+      },
+      "projection": {
+        "callbacks": [
+          {
+            "ordinal": 1,
+            "index": 84,
+            "length": 0,
+            "frame": {
+              "input-pointer-relative-to-sp": 48,
+              "length": 0,
+              "index": 84,
+              "interrupted-sp-relative-to-sp": 64,
+              "resume-win32u-rva": 49108
+            }
+          }
+        ],
+        "returns": [
+          {
+            "ordinal": 1,
+            "buffer-class": "invalid-one",
+            "length": 4294967295,
+            "status": 2147483649
+          }
+        ],
+        "phases": [
+          {
+            "phase": "before-load-user32",
+            "callback-table-present": false,
+            "gdi-table-present": false
+          },
+          {
+            "phase": "before-first-init2-svc",
+            "callback-table-present": true,
+            "gdi-table-present": false
+          },
+          {
+            "phase": "callback-entry",
+            "callback-table-present": true,
+            "gdi-table-present": true
+          },
+          {
+            "phase": "callback-return",
+            "callback-table-present": true,
+            "gdi-table-present": true
+          },
+          {
+            "phase": "after-first-init2-svc",
+            "callback-table-present": true,
+            "gdi-table-present": true
+          }
+        ],
+        "guest-body-deltas": [],
+        "opaque-returns": [
+          {
+            "kind": "init2-return",
+            "nonzero": false,
+            "high32-nonzero": false,
+            "opaque-value-sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc"
+          }
+        ],
+        "finished-marker": null
+      }
+    }
+  ],
+  "allocation-control": {
+    "original": {
+      "name": "native-gui-views-v1.json",
+      "bytes": 2638,
+      "sha256": "2717b39098655c6bec7fec11d8655351b0456306bc56c37aaf6f7ceed38300cc"
+    },
+    "views": {
+      "gdi": {
+        "bytes": 1576960,
+        "regions": [
+          {
+            "offset": 0,
+            "allocation-protection": 2,
+            "partition": 0,
+            "size": 1576960,
+            "state": 4096,
+            "protection": 2,
+            "kind": 262144,
+            "sha256": "9cfdf02eb76538aca13b39e99ea50c490eb83de62174e2d54ab189c46bc54f7f",
+            "nonzero-bytes": 3684
+          }
+        ]
+      },
+      "desktop": {
+        "bytes": 790528,
+        "regions": [
+          {
+            "offset": 0,
+            "allocation-protection": 2,
+            "partition": 0,
+            "size": 106496,
+            "state": 4096,
+            "protection": 2,
+            "kind": 262144,
+            "sha256": "25c257cd551d82705bbb7f2388fd5723c2c6f9506638e4c1e88e70d75ff5f50d",
+            "nonzero-bytes": 14539
+          },
+          {
+            "offset": 106496,
+            "allocation-protection": 2,
+            "partition": 0,
+            "size": 684032,
+            "state": 8192,
+            "protection": 0,
+            "kind": 262144
+          }
+        ]
+      }
+    },
+    "client-scalars": {
+      "0x800": 536870920,
+      "0x810": 1538,
+      "0x890": 67699721,
+      "0x898": 1252
+    },
+    "client-desktop-relative-pointers": {
+      "0x820": 4160,
+      "0x828": 0,
+      "0x860": 5440
+    },
+    "seed": {
+      "observed-bytes": 32,
+      "zero-prefix-bytes": 20,
+      "clock-offset": 20,
+      "clock-bytes": 4,
+      "zero-suffix-bytes": 8,
+      "ABI-extent": "unknown"
+    }
+  }
+}

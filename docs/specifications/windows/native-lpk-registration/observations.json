@@ -1,0 +1,219 @@
+{
+  "scope": "Four executable views of one ARM64 Windows kernel. Native initial field state and independent x64 kernel remain unknown. Raw identifiers and private memory excluded.",
+  "fixed-call-count": 384,
+  "profiles": [
+    {
+      "profile": "arm64",
+      "calls": 96,
+      "arguments": [
+        "0x00000000",
+        "0x00000001",
+        "0x00000002",
+        "0x00000003",
+        "0x00000010",
+        "0x00000100",
+        "0x00010000",
+        "0x10000000",
+        "0x40000000",
+        "0x7FFFFFFF",
+        "0x80000000",
+        "0x80000001",
+        "0xFFFFFFFE",
+        "0xFFFFFFFF",
+        "0x13572468",
+        "0x00000000"
+      ],
+      "return-value": 1,
+      "last-error": "0x12345678",
+      "last-nt-status-preserved": true,
+      "private-log": {
+        "bytes": 11153,
+        "sha256": "cf156db2b930268be7b4c05d7958090b6081ec37d3a077b2b5484b28b04c035f"
+      },
+      "private-leaf": {
+        "bytes": 32,
+        "sha256": "0eaf315765f30d1de3d4649f6145a3340d64c4e60d27997f2906d382f1d795e1"
+      },
+      "x86-stack-cleanup-bytes": null
+    },
+    {
+      "profile": "x86",
+      "calls": 96,
+      "arguments": [
+        "0x00000000",
+        "0x00000001",
+        "0x00000002",
+        "0x00000003",
+        "0x00000010",
+        "0x00000100",
+        "0x00010000",
+        "0x10000000",
+        "0x40000000",
+        "0x7FFFFFFF",
+        "0x80000000",
+        "0x80000001",
+        "0xFFFFFFFE",
+        "0xFFFFFFFF",
+        "0x13572468",
+        "0x00000000"
+      ],
+      "return-value": 1,
+      "last-error": "0x12345678",
+      "last-nt-status-preserved": true,
+      "private-log": {
+        "bytes": 11151,
+        "sha256": "2d9d3094e5fb7b8b83f35e7a1b080c0665371b3d088fd26e09add319307c6df7"
+      },
+      "private-leaf": {
+        "bytes": 32,
+        "sha256": "aa6825a476f99d3d4e47b97a4f07253eff928ce8cfa223e27d58a6f26b6ae5c3"
+      },
+      "x86-stack-cleanup-bytes": 4
+    },
+    {
+      "profile": "x64",
+      "calls": 96,
+      "arguments": [
+        "0x00000000",
+        "0x00000001",
+        "0x00000002",
+        "0x00000003",
+        "0x00000010",
+        "0x00000100",
+        "0x00010000",
+        "0x10000000",
+        "0x40000000",
+        "0x7FFFFFFF",
+        "0x80000000",
+        "0x80000001",
+        "0xFFFFFFFE",
+        "0xFFFFFFFF",
+        "0x13572468",
+        "0x00000000"
+      ],
+      "return-value": 1,
+      "last-error": "0x12345678",
+      "last-nt-status-preserved": true,
+      "private-log": {
+        "bytes": 11151,
+        "sha256": "5a00286bc822c15a73d8a24fa1c2f6503e9b36b15ef5b6eeff5c395c04a59375"
+      },
+      "private-leaf": {
+        "bytes": 32,
+        "sha256": "6f16348438db67d60b5fcfff646f2980f32eab802ea5fc05f525eb69b21197d4"
+      },
+      "x86-stack-cleanup-bytes": null
+    },
+    {
+      "profile": "x86-laa",
+      "calls": 96,
+      "arguments": [
+        "0x00000000",
+        "0x00000001",
+        "0x00000002",
+        "0x00000003",
+        "0x00000010",
+        "0x00000100",
+        "0x00010000",
+        "0x10000000",
+        "0x40000000",
+        "0x7FFFFFFF",
+        "0x80000000",
+        "0x80000001",
+        "0xFFFFFFFE",
+        "0xFFFFFFFF",
+        "0x13572468",
+        "0x00000000"
+      ],
+      "return-value": 1,
+      "last-error": "0x12345678",
+      "last-nt-status-preserved": true,
+      "private-log": {
+        "bytes": 11155,
+        "sha256": "bcc82885f5a8a08c089fee517bfb490e5245373b38a9dad6511678541b918cbf"
+      },
+      "private-leaf": {
+        "bytes": 32,
+        "sha256": "aa6825a476f99d3d4e47b97a4f07253eff928ce8cfa223e27d58a6f26b6ae5c3"
+      },
+      "x86-stack-cleanup-bytes": 4
+    }
+  ],
+  "cold-controls": [
+    {
+      "mode": "normal",
+      "argument": "0x13572468",
+      "callback-index": 84,
+      "callback-input-bytes": 0,
+      "callback-status": "0x00000000",
+      "return-value": 1,
+      "conversion-marker-after": true,
+      "last-error": "0x12345678",
+      "native-exit-code": 0,
+      "private-log": {
+        "bytes": 83212,
+        "sha256": "b4e131ca6fb99f315fbbdd7e9e834f3116b3bc2e8b54b59390f11848662a3939"
+      }
+    },
+    {
+      "mode": "callback-success",
+      "argument": "0x13572468",
+      "callback-index": 84,
+      "callback-input-bytes": 0,
+      "callback-status": "0x00000000",
+      "return-value": 1,
+      "conversion-marker-after": true,
+      "last-error": "0x12345678",
+      "native-exit-code": 0,
+      "private-log": {
+        "bytes": 40957,
+        "sha256": "7b39931a857aa1688f3c11f49ffaab7f4ef9d34a49d6d731643ca8c63bafb243"
+      }
+    },
+    {
+      "mode": "callback-failure",
+      "argument": "0x13572468",
+      "callback-index": 84,
+      "callback-input-bytes": 0,
+      "callback-status": "0xC0000001",
+      "return-value": 0,
+      "conversion-marker-after": false,
+      "last-error": "0x12345678",
+      "native-exit-code": 5,
+      "private-log": {
+        "bytes": 79626,
+        "sha256": "b3fce67fb2264d4b8cb36f3c7e1a8e17cd781505e35863c1adc543a9f9570335"
+      }
+    },
+    {
+      "mode": "output-invalid",
+      "argument": "0x13572468",
+      "callback-index": 84,
+      "callback-input-bytes": 0,
+      "callback-status": "0x00000000",
+      "return-value": 1,
+      "conversion-marker-after": true,
+      "last-error": "0x12345678",
+      "native-exit-code": 0,
+      "private-log": {
+        "bytes": 41049,
+        "sha256": "c1db5b443001c0b9131980cab89e4a46b726f4d4cddfef6222c88eb8c9a133c8"
+      }
+    },
+    {
+      "mode": "output-warning",
+      "argument": "0x13572468",
+      "callback-index": 84,
+      "callback-input-bytes": 0,
+      "callback-status": "0x80000001",
+      "return-value": 0,
+      "conversion-marker-after": false,
+      "last-error": "0x12345678",
+      "native-exit-code": 5,
+      "private-log": {
+        "bytes": 79814,
+        "sha256": "ab11991963231b1b5ae14cc52d70340e5d343a9646403aab666dc7ace55a94c2"
+      }
+    }
+  ]
+}

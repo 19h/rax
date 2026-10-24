@@ -1,0 +1,45 @@
+{
+  "scope": "Four executable views on one ARM64 kernel; read-only fixed-root tree enumeration and key-open controls. All opened handles closed; no registry writes.",
+  "files": [
+    {
+      "path": "native-common-glob-v2-arm64.log",
+      "bytes": 43151,
+      "sha256": "7597466031658e948f1aa0a43c3f10c17ddbb2743a89e1e90545891fb0a832ab"
+    },
+    {
+      "path": "native-common-glob-v2-x64.log",
+      "bytes": 43149,
+      "sha256": "44549335b831b827ac7544b25fd85e7e93f3b01e3b74338813d754391118abf9"
+    },
+    {
+      "path": "native-common-glob-v2-x86.log",
+      "bytes": 43149,
+      "sha256": "faecc1e2932e2dd2e45e2855a9e77943e04ac232014b140d9aa3a2f65560c0fd"
+    },
+    {
+      "path": "native-common-glob-v2-x86-laa.log",
+      "bytes": 43153,
+      "sha256": "01c1988c32f13511ed5e51d6df5224c798912a807972c49877d2d0bfaf82c7b7"
+    },
+    {
+      "path": "native-common-glob-v2.cpp",
+      "bytes": 7983,
+      "sha256": "5d43dd6e2ab9ab44c9cd682913ad83a152b0538271a2f6a91cfdfa709f5e4fd8"
+    },
+    {
+      "path": "run-native-common-glob-v2.py",
+      "bytes": 5206,
+      "sha256": "fd181a0ac3745f6ef070e525e71b5e48f47d7ca9a8744d88859e6718d2470dc2"
+    },
+    {
+      "path": "receipt.json",
+      "bytes": 11602,
+      "sha256": "ccd21ac3e19c42659a8ec3f7c7826242d8ab7c868f33be53c56f506fbd1cf740"
+    },
+    {
+      "path": "profiles.json",
+      "bytes": 456,
+      "sha256": "f7583a06effddafc41c6b2920c6b84bc90265f8f22f85fba13c0b356464b8da6"
+    }
+  ]
+}

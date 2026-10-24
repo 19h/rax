@@ -34,6 +34,7 @@ fn entries() -> EntryPoints {
         loader: 0x50000,
         thread: 0x51000,
         module: 0x40000,
+        callback: Some(0x52000),
     }
 }
 
@@ -55,6 +56,8 @@ fn runtime(entries: Option<EntryPoints>) -> NativeRuntime {
         appcompat: Default::default(),
         wnf_catalog: Default::default(),
         startup: entries,
+        code_integrity: Err("controlled absent code integrity metadata".into()),
+        gui: Default::default(),
     }
 }
 

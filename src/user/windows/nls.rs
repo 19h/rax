@@ -8,11 +8,13 @@ pub(crate) const MAX_SECTION_BYTES: usize = 8 << 20;
 const MAX_TOTAL_BYTES: usize = 64 << 20;
 const MAX_SECTIONS: usize = 4102; // At most 4096 registry candidates plus 6 fixed tables.
 mod initialize;
+mod mui;
 
 #[derive(Debug, Clone)]
 pub(crate) struct Nls {
     sections: BTreeMap<(u32, u32), Arc<[u8]>>,
     initialize: Option<initialize::Initialize>,
+    mui: Option<Arc<[u8]>>,
 }
 impl Nls {
     pub(crate) fn new(sections: Vec<((u32, u32), Vec<u8>)>) -> io::Result<Self> {
@@ -22,6 +24,7 @@ impl Nls {
         let mut result = Self {
             sections: BTreeMap::new(),
             initialize: None,
+            mui: None,
         };
         let mut total = 0usize;
         for ((kind, data), mut bytes) in sections {

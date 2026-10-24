@@ -9,6 +9,7 @@ pub mod arch;
 pub mod context;
 pub mod dll;
 pub mod fs;
+pub(crate) mod gui;
 pub mod heap;
 pub mod hle;
 pub mod layout;

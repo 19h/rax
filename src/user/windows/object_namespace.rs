@@ -122,6 +122,27 @@ pub(crate) use named::Name as NativeName;
 pub(crate) use section::CapturedSection;
 pub(crate) use section::GrantError as SectionGrantError;
 pub use section::ImageSection;
+
+#[cfg(windows)]
+pub(crate) fn gui_snapshot(
+    arch: super::arch::WinArch,
+    user: &std::path::Path,
+    win32u: &std::path::Path,
+) -> io::Result<Arc<super::gui::Inputs>> {
+    installed::gui::snapshot(arch, user, win32u)
+}
+
+#[cfg(not(windows))]
+pub(crate) fn gui_snapshot(
+    _: super::arch::WinArch,
+    _: &std::path::Path,
+    _: &std::path::Path,
+) -> io::Result<Arc<super::gui::Inputs>> {
+    Err(io::Error::new(
+        io::ErrorKind::Unsupported,
+        "native GUI metadata requires a Windows host",
+    ))
+}
 pub(crate) const MAX_ENTRIES: usize = 8192;
 const MAX_UNITS: usize = 32766;
 const MAX_TOTAL_BYTES: usize = 16 << 20;

@@ -1,0 +1,45 @@
+{
+  "scope": "Selected captured ARM64 kernel disk image; matching public symbols. The disk image was rechecked after the native query cohorts. This is not an in-memory kernel measurement.",
+  "image": {
+    "name": "win32kfull.sys",
+    "bytes": 4051968,
+    "sha256": "b2460cb52f878cc784ade6b26cc778a09337780398279a1fcc090bb4e0bffe2d",
+    "image-base": "0x140000000",
+    "rsds-guid": "707B730D-64DB-B2C2-9A53-EBC18B04AFB0",
+    "rsds-age": 1
+  },
+  "pdb": {
+    "name": "win32kfull.pdb",
+    "bytes": 2592768,
+    "sha256": "c8fb713040437c99b44dbf74143cb4d92eb9448ea563752fa9cca1eb014a2b1c",
+    "guid": "707B730D-64DB-B2C2-9A53-EBC18B04AFB0",
+    "info-age": 3,
+    "dbi-age": 1
+  },
+  "functions": [
+    {
+      "name": "NtUserRemoteConnectState",
+      "section": 1,
+      "section-rva": "0x1000",
+      "section-offset": "0x95330",
+      "rva": "0x96330"
+    },
+    {
+      "name": "RemoteConnectState",
+      "section": 1,
+      "section-rva": "0x1000",
+      "section-offset": "0xD3660",
+      "rva": "0xD4660"
+    }
+  ],
+  "static-result-domain": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "native-observed-result-domain": [
+    0
+  ]
+}

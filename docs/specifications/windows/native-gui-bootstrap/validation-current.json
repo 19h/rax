@@ -1,0 +1,278 @@
+{
+  "recorded-utc": "2026-10-24T04:34:53.190551+00:00",
+  "scope": "Measured native GUI conversion and supporting MUI/registry queries. Whole process userland remains incomplete.",
+  "tested-source-parent": "b5cf29822290416904b354ff1e6d6c2dd01fa494",
+  "feature-gating-prerequisite": "b58a85bb19edebd345d5be77ca78712ed74d5452",
+  "source-frame": {
+    "file": "gui-bootstrap-integrated-source-manifest-candidate18-v2.json",
+    "bytes": 185731,
+    "sha256": "1914f5c96a42da703c9b2c46cd472a9719e4bae060212c0bd599e0b9cc2e7a31"
+  },
+  "public-c-api": {
+    "version": "1.14.0",
+    "header-bytes": 70196,
+    "header-sha256": "e8438269c7f9411da7c92dff70942dbb839570cda9a6ac1bec0b78ed731e829a"
+  },
+  "full-library": {
+    "macos": {
+      "passed": 8281,
+      "failed": 0,
+      "ignored": 2,
+      "test-threads": 2,
+      "record": {
+        "file": "gui-bootstrap-full-candidate18-v2-macos.json",
+        "bytes": 473,
+        "sha256": "a570ea7185e8f83ffaaff7acd2e6408a15159eff8406004ef3e75773cfc9f93d"
+      }
+    },
+    "linux": {
+      "passed": 8274,
+      "failed": 0,
+      "ignored": 2,
+      "test-threads": 1,
+      "record": {
+        "file": "gui-bootstrap-full-candidate18-v4-linux.json",
+        "bytes": 3194,
+        "sha256": "dcf23b819c2d511a97732c328336747e7c379a5e3d676321c6b07558dadb4e1a"
+      }
+    },
+    "linux-parallel-attempts": [
+      {
+        "test-threads": 2,
+        "passed": 8273,
+        "failed": 1,
+        "ignored": 2,
+        "failure": "user::readiness::tests::finite_empty_and_expired_waits",
+        "error": "EINTR",
+        "record": {
+          "file": "gui-bootstrap-full-candidate18-v2-linux.json",
+          "bytes": 1630,
+          "sha256": "5fee4354ad575e795b117c595a1c604953f3ca1e582ef452924675f3f3adec53"
+        }
+      },
+      {
+        "test-threads": 2,
+        "passed": 8273,
+        "failed": 1,
+        "ignored": 2,
+        "failure": "user::readiness::tests::error_only_socket_watch_waits_through_a_full_receive_buffer",
+        "error": "EINTR",
+        "record": {
+          "file": "gui-bootstrap-full-candidate18-v3-linux.json",
+          "bytes": 3487,
+          "sha256": "677ef4017535358ac552b9a09d2b20d12e4995cc936c1844286e7970e2f40dbf"
+        }
+      }
+    ],
+    "windows": {
+      "state": "completed-with-test-failures",
+      "exit-code": 101,
+      "passed": 7757,
+      "failed": 5,
+      "ignored": 2,
+      "measured": 0,
+      "filtered": 0,
+      "failures": [
+        "smir::lower::aarch64::tests::bit::lowers_bzhi_x_imm_index_at_width_with_flags_sets_carry",
+        "smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_all_ones_with_flags_as_movn_sets_carry",
+        "smir::lower::aarch64::tests::bit::lowers_bzhi_x_two_imms_with_flags_sets_carry",
+        "smir::lower::aarch64::tests::bit::lowers_bzhi_x_with_flags_and_low_byte_index_guards",
+        "smir::lower::aarch64::tests::vector::lowers_vector_fp16_arithmetic_runtime"
+      ],
+      "historical-failure-set-matches": true,
+      "record": {
+        "file": "gates.json",
+        "bytes": 5985,
+        "sha256": "8883e27c2808252a3930a4eff020b1473d4b21f8bb7438bb21a9dff12a1542e8"
+      }
+    }
+  },
+  "standalone": {
+    "macos": {
+      "record": {
+        "file": "macos-gui-bootstrap-integrated-standalone-candidate18-v1.json",
+        "bytes": 2237,
+        "sha256": "59b71a44b86deb78e15fd50ca4e743f9abfb7af6f35ffc9d6d745476f3e97592"
+      },
+      "state": "finished",
+      "steps": [
+        {
+          "name": "capi",
+          "exit-code": 0,
+          "test-results": [
+            "test result: ok. 185 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 9.51s"
+          ]
+        },
+        {
+          "name": "windows-integration",
+          "exit-code": 0,
+          "test-results": [
+            "test result: ok. 544 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 30.13s",
+            "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+          ]
+        },
+        {
+          "name": "all-targets",
+          "exit-code": 0,
+          "test-results": []
+        }
+      ]
+    },
+    "linux": {
+      "record": {
+        "file": "linux-gui-bootstrap-integrated-standalone-candidate18-v1.json",
+        "bytes": 5230,
+        "sha256": "45f0535c92141a41e01de52c939fcb36511b317c882c12bae47abca0de58bdb1"
+      },
+      "state": "finished",
+      "steps": [
+        {
+          "name": "capi",
+          "exit-code": 0,
+          "test-results": [
+            "test result: ok. 185 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.98s"
+          ]
+        },
+        {
+          "name": "windows-integration",
+          "exit-code": 0,
+          "test-results": [
+            "test result: ok. 544 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 107.61s",
+            "test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+          ]
+        },
+        {
+          "name": "all-targets",
+          "exit-code": 0,
+          "test-results": []
+        }
+      ]
+    },
+    "windows": {
+      "state": "finished",
+      "steps": [
+        {
+          "name": "capi",
+          "exit-code": 0
+        },
+        {
+          "name": "windows-integration",
+          "exit-code": 0
+        },
+        {
+          "name": "all-targets",
+          "exit-code": 0
+        }
+      ]
+    }
+  },
+  "native-focused": {
+    "alignment-tests": 4,
+    "code-integrity-tests": 5,
+    "gui-tests": 56,
+    "leaf-tests": 1,
+    "kernel-view-tests": 3,
+    "all-passed": true
+  },
+  "callback-integration": {
+    "execution-view": "ARM64 on one ARM64 Windows kernel",
+    "entry-observer-turn": 2875,
+    "return-observer-turn": 498987,
+    "terminal-observer-turn": 498994,
+    "saved-pc-restored": true,
+    "saved-sp-restored": true,
+    "nonzero-result": true,
+    "low-dword-matches-peb": true,
+    "guest-user32-writes": true,
+    "next-unimplemented-service": "NtUserSetProcessDpiAwarenessContext",
+    "ordinary-smoke-complete": true,
+    "ordinary-whoami-complete": false,
+    "private-bundle": {
+      "file": "native-gui-bootstrap-integrated-candidate18-v2-bundle-v1.zip",
+      "bytes": 789044,
+      "sha256": "04c5fdb3414d5735745c843853a22a44abdec21caac89ce8bbbc0f85cc40a22c"
+    }
+  },
+  "retained-owning": {
+    "abi": 184,
+    "current-root-abi": 275,
+    "current-root-shipping-covered": false,
+    "macos": {
+      "state": "passed",
+      "ctest": 7,
+      "record": {
+        "file": "macos-gui-bootstrap-integrated-candidate18-owning-gates-v1.json",
+        "bytes": 5707,
+        "sha256": "341f1888b8c5bae2bc1d543dc364fbf06b06fd2727998028f0b7a2a30254689a"
+      }
+    },
+    "linux": {
+      "state": "passed",
+      "cpp-consumers": 5,
+      "record": {
+        "file": "linux-gui-bootstrap-integrated-candidate18-owning-gates-v1.json",
+        "bytes": 11199,
+        "sha256": "dc75b4a117e20de4980abb3da6243eb34610c6090ef5b00a5ef2ebf5c22bd585"
+      }
+    },
+    "windows": {
+      "state": "passed",
+      "cpp-consumers": 5,
+      "record": {
+        "file": "gates.json",
+        "bytes": 8477,
+        "sha256": "e6d94a09dd5fb027fb2ca84c44e207e3b20a1ddbb1e9902c54961281c67a8ee9"
+      }
+    },
+    "archive-identities-stable": true,
+    "ordinary-capi": {
+      "smoke-complete": true,
+      "whoami-complete": false,
+      "gui-fields": {
+        "available": true,
+        "client-link-local": true,
+        "client-state-two": true,
+        "gdi-mapped": true,
+        "language-generation": 1,
+        "peb-user32-bit": true,
+        "teb-user32-bit": true,
+        "user32-pointer-present": true
+      },
+      "sampling-phase": "retained-failed-process",
+      "record": {
+        "file": "gates.json",
+        "bytes": 20897,
+        "sha256": "2b54309f8c8ed184692b1615b7d8c5d80f7d1b51ec1694f2053e709cd5c52ddd"
+      }
+    }
+  },
+  "limitations": [
+    "Linux x86-64 execution uses OrbStack/Rosetta on an ARM64 Mac, not an independent physical x64 host.",
+    "All four measured Windows executable views share one ARM64 kernel.",
+    "WoW64 paired GUI contexts, broader USER/GDI services, MUI mutation and full process completion remain incomplete.",
+    "Five later AArch32 upstream commits at b13a6978d1d882f340ed9dfd2b2621aba1655cc9 are not represented by this tested source frame."
+  ],
+  "new-primary-evidence": [
+    "../native-process-ui-context/",
+    "../native-system-code-integrity/",
+    "../native-lpk-registration/",
+    "../native-thread-desktop/",
+    "../native-remote-connect-state/"
+  ],
+  "earlier-fine-capi-observer": {
+    "state": "failed",
+    "native-exit-code": "0xC0000409",
+    "cause": "unknown",
+    "falsification-probe": "Repeat the immutable fine observer with a top-level exception diagnostic to distinguish its 600-second bound from another failure.",
+    "record": {
+      "file": "gates.json",
+      "bytes": 11297,
+      "sha256": "7cba369dd225a211a5f6d5037e10225c44ed97146afa497c5356f050ee21863a"
+    }
+  },
+  "extension-private-bundle": {
+    "file": "native-gui-bootstrap-integrated-candidate18-v2-extension-bundle-v1.zip",
+    "bytes": 285937,
+    "sha256": "b52f8975030f6490d428c9345af872b7a576b2dba44d8d6c0e4efa37ff995d78"
+  }
+}

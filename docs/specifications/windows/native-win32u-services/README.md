@@ -1,5 +1,16 @@
 # Selected installed Win32u service identities
 
+The observations below record the initial service-identity implementation and
+its original `NtGdiInit2` frontier. Subsequent
+[GUI conversion work](../native-gui-bootstrap/README.md) implements the measured
+entry effects, callback 84 and return restoration, together with the remote
+connection, assigned desktop, LPK registration and process UI-context queries
+needed by that callback. The selected installed USER32 now returns from the
+callback; ordinary `whoami` next stops at
+`NtUserSetProcessDpiAwarenessContext`. This does not establish full USER/GDI or
+whole-program support. The historical measurements and original boundaries
+below remain attributed to their original source state.
+
 This change identifies Win32k services from the selected installed `win32u.dll`.
 It does not implement USER/GDI kernel initialization. The ordinary ARM64
 `whoami.exe` frontier remains an explicit failure; its diagnostic can now name
@@ -102,7 +113,7 @@ without changing production source.
 | Native Windows ARM64 standalone | 7,684 passed, five exact pre-existing lowerer failures, two existing ignores; six focused and four ordinal tests passed; 183 C API tests; four integration tests; all targets checked |
 | Retained macOS owning consumers | Eight targets built; seven CTest checks passed; actual core/carrier archive identities stable |
 | Retained Linux owning consumers | Five C++ consumers linked and ran; actual core/carrier archive identities stable |
-| Retained Windows owning consumers and ordinary C API | Five C++ consumers linked and ran; owning archives stable; smoke guest reason 4 (EXITED), code 0; whoami reason 5 (INTERNAL), named NtGdiInit2 frontier |
+| Retained Windows owning consumers and ordinary C API | Five C++ consumers linked and ran; owning archives stable; smoke guest reason 4 (EXITED), code 0; whoami reason 5 (FAILED; Internal diagnostic), named NtGdiInit2 frontier |
 | Quality | Rustfmt 1.95.0, strict library Clippy and all-target Clippy passed |
 
 The initial Linux attempt could not reach Docker because OrbStack was stopped.

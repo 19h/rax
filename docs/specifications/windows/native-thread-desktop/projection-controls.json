@@ -1,0 +1,281 @@
+{
+  "state": "finished",
+  "positive": 3,
+  "negative": 36,
+  "rows": [
+    {
+      "optimizer": "normal",
+      "case": "positive",
+      "accepted": true,
+      "exit-code": 0,
+      "stderr-sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "optimizer": "normal",
+      "case": "source-identity",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "093eadf6fe16546e262c575fe6e49e6dd43553457659da7b7bbbe2e74d4c29f5"
+    },
+    {
+      "optimizer": "normal",
+      "case": "unhashed-log",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "bb30886880ad94ee3afbe04196e0b025a31ce1756fda04eecaed6f91fb8e8c32"
+    },
+    {
+      "optimizer": "normal",
+      "case": "query-error",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "bd54a359cba6f275c8788a412275d4043871cce8d5bc854ca19b25b2b80b642a"
+    },
+    {
+      "optimizer": "normal",
+      "case": "query-count",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "700b1e34fe146817b77ee226cb3c4fdcee3d70b6b23c75025744de305ada74a3"
+    },
+    {
+      "optimizer": "normal",
+      "case": "metadata-grant",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "443504fb769a1fcbfd6ad7e5543533f83476282ae94aff284ba1f2b9d7e5d112"
+    },
+    {
+      "optimizer": "normal",
+      "case": "handle-flags",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "748849b5d446197bf72bcdda77c8329dc1b9e20a3052d134c2da5fde707e70ea"
+    },
+    {
+      "optimizer": "normal",
+      "case": "assigned-close",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "b2f592040131a4f9ca43e896fe2533cb5469277d3069d1a7efcf07c641db522d"
+    },
+    {
+      "optimizer": "normal",
+      "case": "assigned-final-identity",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "0953f4d6bbf7adee0f7ade9f8a97b53841da2ff6384141548cd2273ee03a4704"
+    },
+    {
+      "optimizer": "normal",
+      "case": "worker-conversion",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "8da23a2bf6588a80c5c40c36a32d366d7e6d179088770489c2bb30d4a4ab1465"
+    },
+    {
+      "optimizer": "normal",
+      "case": "cold-failure-status",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "187364bd3bb10bfab57ba05c87c992ec719edd883e937cc13728fa4d0f197e71"
+    },
+    {
+      "optimizer": "normal",
+      "case": "cold-output-size",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "394619ab4888e3f7198c16f6284bb90ff1377123268151225bf91e51bfbf5f11"
+    },
+    {
+      "optimizer": "normal",
+      "case": "cold-error",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "6a651e4e9caff2004736f72d975619972e2435cdad2e329d51e1b8a195d10f39"
+    },
+    {
+      "optimizer": "-O",
+      "case": "positive",
+      "accepted": true,
+      "exit-code": 0,
+      "stderr-sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "optimizer": "-O",
+      "case": "source-identity",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "6f758c5544930b193efbdc22cc08bdedb20b9ada71c204076df40669b777677d"
+    },
+    {
+      "optimizer": "-O",
+      "case": "unhashed-log",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "638891d7f7c0613a499a86d9c501628cce9ce30b364342a611a944e9277476af"
+    },
+    {
+      "optimizer": "-O",
+      "case": "query-error",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "1685031869dc61e8a90239fda5a03b5367c0756fee10cb1299d461af20fb0450"
+    },
+    {
+      "optimizer": "-O",
+      "case": "query-count",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "b027b4eb97fd3d2997ed231a013c0e3bec252311a4f4a3f313130c0752e0f5b5"
+    },
+    {
+      "optimizer": "-O",
+      "case": "metadata-grant",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "7da870fc8ce81b7a035b30b40e47f286d9d2485e58669613804d7163d9eec107"
+    },
+    {
+      "optimizer": "-O",
+      "case": "handle-flags",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "d91b1d91c9f1d872d04df30438998a7e366550321e0c3b63793940458eef1889"
+    },
+    {
+      "optimizer": "-O",
+      "case": "assigned-close",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "5989e7ece54141395d1ed65b54c3723471dd243e97556e7c699a5cdb971fb707"
+    },
+    {
+      "optimizer": "-O",
+      "case": "assigned-final-identity",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "fc82ca0af797c9129ed4c77364d1d2c6bc82e0f666e79e59a1b608af8e6c3de8"
+    },
+    {
+      "optimizer": "-O",
+      "case": "worker-conversion",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "56f3549b12b843410ea0ab42ada5632dbd9eabd73a02855f26b45539b2310955"
+    },
+    {
+      "optimizer": "-O",
+      "case": "cold-failure-status",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "6fa4570656bff6cdf433255d8518e76af32f8bb2db23da35d8d8b6dc9598eaad"
+    },
+    {
+      "optimizer": "-O",
+      "case": "cold-output-size",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "505c16719eb21f4c2ffe1d04262e5b9d7f1b496413b0ff0c4a22f2d9c28dd6ed"
+    },
+    {
+      "optimizer": "-O",
+      "case": "cold-error",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "557e36e0038cf3c8379a43a43642aecf9dd4feaa0426d6b942b5ba9b1eedbffd"
+    },
+    {
+      "optimizer": "-OO",
+      "case": "positive",
+      "accepted": true,
+      "exit-code": 0,
+      "stderr-sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "optimizer": "-OO",
+      "case": "source-identity",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "b79d0cb7629784a033c3f97a3d8cc929e49abfa824be9da64c3a3da98f3a730d"
+    },
+    {
+      "optimizer": "-OO",
+      "case": "unhashed-log",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "74f7681955bd9e3738107dafa4d099253682c5666fbec3a5c81ac8d14e37a9ce"
+    },
+    {
+      "optimizer": "-OO",
+      "case": "query-error",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "00ecdc14810cc1558bd8337adb2ddc4550155b6d848e11e01cf97798358b5a63"
+    },
+    {
+      "optimizer": "-OO",
+      "case": "query-count",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "31d133089fd2f39f92fa82facb462341ed2414caf2437ebb1e99b250f098db22"
+    },
+    {
+      "optimizer": "-OO",
+      "case": "metadata-grant",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "c61d95743ec30bcfec2e6af00f283bf6b10eed99a9a655774a9a77198aedaf4d"
+    },
+    {
+      "optimizer": "-OO",
+      "case": "handle-flags",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "444b720924d9a354f5aeeb10b12642b735dc516d4e8e228a840f6208c1ab2d5f"
+    },
+    {
+      "optimizer": "-OO",
+      "case": "assigned-close",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "d7495e32841a32f1ee9f0a0395d64b95408a1d447f7ae02a70d00180eaf9c688"
+    },
+    {
+      "optimizer": "-OO",
+      "case": "assigned-final-identity",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "b7d36c45b680d90f7118f321f306c016fef4acde5cbdde4c14e6424fc6208ac6"
+    },
+    {
+      "optimizer": "-OO",
+      "case": "worker-conversion",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "6273016b2f7d2261bd3108d0d32db23eca40cb30762c63fb943d9b84719c159d"
+    },
+    {
+      "optimizer": "-OO",
+      "case": "cold-failure-status",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "7fcd3f04af7ac0a378b20c1915ef8e85532531a41c26182b815c7cca76f8e32e"
+    },
+    {
+      "optimizer": "-OO",
+      "case": "cold-output-size",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "392b03b5b0ae5f3e941af9d63fdcb3fd3f2f57ac101032aff8855a8d75ed3103"
+    },
+    {
+      "optimizer": "-OO",
+      "case": "cold-error",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "4fcc20100ad4251f19ce2a501bd380ef4adc479487a67688fa6f1513524e208b"
+    }
+  ],
+  "scope": "Integrity and semantic projection controls, not independent kernel-behavior proof."
+}

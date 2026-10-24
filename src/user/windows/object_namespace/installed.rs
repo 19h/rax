@@ -6,6 +6,7 @@ mod csr;
 mod data;
 mod directory_alias;
 pub(super) mod file_image;
+pub(super) mod gui;
 pub(super) mod image;
 mod section;
 type Handle = *mut c_void;

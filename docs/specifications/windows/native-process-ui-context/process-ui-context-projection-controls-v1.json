@@ -1,0 +1,387 @@
+{
+  "state": "finished",
+  "positive": 3,
+  "negative": 51,
+  "rows": [
+    {
+      "optimizer": "normal",
+      "case": "positive",
+      "accepted": true,
+      "exit-code": 0,
+      "stderr-sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "optimizer": "normal",
+      "case": "source-identity",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "2e33dd0ce663c51c7e7e60ee3c4dda4fe64a7fc1169b8e43ce8d89826a93eee0"
+    },
+    {
+      "optimizer": "normal",
+      "case": "unhashed-log",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "29bd0f9905981525a1d331e431685bdf89cc91da2e397c802f694239bd3af491"
+    },
+    {
+      "optimizer": "normal",
+      "case": "profile-missing",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "4f21bd83cd8b66b6935a45a172b08cd9a3dd912ce111ee92a210e5a170380f07"
+    },
+    {
+      "optimizer": "normal",
+      "case": "executable-identity",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "fbc6d7b781296c578cae712ec4c483e575299e37a077377a0441ed88120030b7"
+    },
+    {
+      "optimizer": "normal",
+      "case": "coverage",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "1fe89ea707a4de9e947e1eac8c02fb9b5765f0e70bbb76a85c64fc993e134d9b"
+    },
+    {
+      "optimizer": "normal",
+      "case": "return",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "732a275202c17a9b6f34c4a0e5f8360f109b2b1636a55bfce25c1ef0b4e58e49"
+    },
+    {
+      "optimizer": "normal",
+      "case": "error",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "232559ca93e444b3c6719a7b7950ec6308dbdf0cadc66dcc73c7c1a6922a0b96"
+    },
+    {
+      "optimizer": "normal",
+      "case": "extent",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "51e62db40e5f5c9314f34accdc7184a12a22d39927b344599dce71d99129dd02"
+    },
+    {
+      "optimizer": "normal",
+      "case": "output",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "cff6fb052c3af9a384f920ac9d0c552dffbe0a7d9c19a4b1151a9a99a0dd42ca"
+    },
+    {
+      "optimizer": "normal",
+      "case": "status",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "44350b15202b150b8f8dd9532d80d719a0051f43ed063083c2ab540cb4052783"
+    },
+    {
+      "optimizer": "normal",
+      "case": "guard-priority",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "47e7c17050e1d3b99b7e70f2ebca08c98209b980bfee702377b6923b47e183c6"
+    },
+    {
+      "optimizer": "normal",
+      "case": "unreadable-disclosure",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "ea11442790a67beab337ab0523e3359fb8bf46a3cc6d0f5a7aff0cbcee437d47"
+    },
+    {
+      "optimizer": "normal",
+      "case": "cold-status",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "a052b1e885f8e167cfd00e11976d2b104589c62b56de5de84e25be3e1ea68a10"
+    },
+    {
+      "optimizer": "normal",
+      "case": "cold-marker",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "1426a8c4aaa7ddf922de509fa87aa6b7fb3f9123abeffc3e270d6a5d0e9c944f"
+    },
+    {
+      "optimizer": "normal",
+      "case": "cold-callback",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "a673203f73555d43a02d61d93f0aff7bcba008bd24f57134cdae86842249d89b"
+    },
+    {
+      "optimizer": "normal",
+      "case": "rejected-mode",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "ab2696e8f81e0f3787a000bd4cab52ef11f6484c777f00a3c146b6dff065c72f"
+    },
+    {
+      "optimizer": "normal",
+      "case": "kernel-input",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "d11fb912572f4516cc5cb8665761ab6a6b03976a0c9cc056a04254731d691018"
+    },
+    {
+      "optimizer": "-O",
+      "case": "positive",
+      "accepted": true,
+      "exit-code": 0,
+      "stderr-sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "optimizer": "-O",
+      "case": "source-identity",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "82da37d4847607d6b86bac45adc7936a19b83a508aef692d68c12ad62d42675f"
+    },
+    {
+      "optimizer": "-O",
+      "case": "unhashed-log",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "64a85bdbf76c3f6f7120000d0af5d629d8d7ca7c260626e83ce3d5df5b929238"
+    },
+    {
+      "optimizer": "-O",
+      "case": "profile-missing",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "bb799ea5a093a772171e9f5c7971be52e83ca9429c423b7199567b6e41d1f044"
+    },
+    {
+      "optimizer": "-O",
+      "case": "executable-identity",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "628a21c755399e3201cee8de16f32cbd29dd3d26351e5abbe3fbf360326b6796"
+    },
+    {
+      "optimizer": "-O",
+      "case": "coverage",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "f8371f2b331961919aa96864b47ed5360c710bfcf6e7e24730fc3a1d6b641b4a"
+    },
+    {
+      "optimizer": "-O",
+      "case": "return",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "2464f2dbeba39f6ade894b5216971216ede382bae708719455b78f086b0f634a"
+    },
+    {
+      "optimizer": "-O",
+      "case": "error",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "44b45d726e1d501754227cdd74834414a10bc79e6a267813c9d2159e5d5a72ae"
+    },
+    {
+      "optimizer": "-O",
+      "case": "extent",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "5b0cad94b1e6608603e69c5899429a5f251a652cf0ae6cdeb45b270748c75e23"
+    },
+    {
+      "optimizer": "-O",
+      "case": "output",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "f46e22958f46a91eb163c3a5fd4e8742083736c356f284c17bfa9881184b9577"
+    },
+    {
+      "optimizer": "-O",
+      "case": "status",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "dbaf74a1b19121834154c1a1553011b6d70256598899856ee2570aa572e73c97"
+    },
+    {
+      "optimizer": "-O",
+      "case": "guard-priority",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "3e5f95d989e748269dbc737c7673ca17c848c4f7a2c53105fd227b61377e951b"
+    },
+    {
+      "optimizer": "-O",
+      "case": "unreadable-disclosure",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "cafd3ad7f24a7bcd560ecd6021217e85944ce44ac429bbe42884b8a7db533efa"
+    },
+    {
+      "optimizer": "-O",
+      "case": "cold-status",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "08f59ee643dbb300f05fe1cd9a87a06dda384f80ad2f4e15f42361b230d2c515"
+    },
+    {
+      "optimizer": "-O",
+      "case": "cold-marker",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "1adbd1202a509c4261ac974d9b646388f44f0a6c5005a07a61327198e3af4f0d"
+    },
+    {
+      "optimizer": "-O",
+      "case": "cold-callback",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "b4ce31587801cf552a10d65a7c1f3e2bfbbe6acf2da620925089fd492db03bde"
+    },
+    {
+      "optimizer": "-O",
+      "case": "rejected-mode",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "6f73f62688fe35ea1a9247f734f19867ceb017491650c4e5de9872bdb3714559"
+    },
+    {
+      "optimizer": "-O",
+      "case": "kernel-input",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "c1471229711b8ad4dec391c25e3cc377a52dc55c9731329c47f8de4e19285042"
+    },
+    {
+      "optimizer": "-OO",
+      "case": "positive",
+      "accepted": true,
+      "exit-code": 0,
+      "stderr-sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "optimizer": "-OO",
+      "case": "source-identity",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "571191f3dea741f9855d84ed42e4c0a21be55e971066099904995da9e0fe9663"
+    },
+    {
+      "optimizer": "-OO",
+      "case": "unhashed-log",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "7eff4df58a1ddeb4142b39e00b72bba696f6b737e324f6d52e05edb0c5b1377c"
+    },
+    {
+      "optimizer": "-OO",
+      "case": "profile-missing",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "31c6d10d467363a37989aece6515883aa21e1192befa870878df698f0a328d08"
+    },
+    {
+      "optimizer": "-OO",
+      "case": "executable-identity",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "907cea54c33d9b87119cdc8138e6ba219b7b334b71f712d6925dff5b15f5e0a5"
+    },
+    {
+      "optimizer": "-OO",
+      "case": "coverage",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "9c80f849be22941575565d6d867819edfde442908b388e9ea289ccbdcbeb973b"
+    },
+    {
+      "optimizer": "-OO",
+      "case": "return",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "06622be2ae887810c35318620f53dd546d24af44c05aa00293771320659dda23"
+    },
+    {
+      "optimizer": "-OO",
+      "case": "error",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "8e2e2c5d2ae1fa78f093e6b4fddf35e0257deaf777d3fa31bddbd3ad8718f730"
+    },
+    {
+      "optimizer": "-OO",
+      "case": "extent",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "afb9eb4e7fc91aa50edf660498c819b75108e701217d2e85d46280f01203aa93"
+    },
+    {
+      "optimizer": "-OO",
+      "case": "output",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "35916dce2e80ba6d17abba3c080011dd945e23bec5100b1b3c0a5c72a55957a9"
+    },
+    {
+      "optimizer": "-OO",
+      "case": "status",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "ba34d67a6918ed66962bff4a45c3e2bbdea37e5ec3113a1b1324477fb5b088a4"
+    },
+    {
+      "optimizer": "-OO",
+      "case": "guard-priority",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "be4ba6a83e5dc6385b6a0634e592d3a7420fd306b6511a542d375891c64862ee"
+    },
+    {
+      "optimizer": "-OO",
+      "case": "unreadable-disclosure",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "30b4ac76aac8f11603d6209e4e8228881a06592ad943a9246084422e984e2380"
+    },
+    {
+      "optimizer": "-OO",
+      "case": "cold-status",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "c38f64c4870b232eaaf81b3c5b35a2eaef6a076a931084097fb3114f6c634fa7"
+    },
+    {
+      "optimizer": "-OO",
+      "case": "cold-marker",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "649137c4472ca974c365b0f9f2a893f62d7dba62a7affc6adf6a1285a97cf173"
+    },
+    {
+      "optimizer": "-OO",
+      "case": "cold-callback",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "5bef5914dea0a3ee8251e48f1a8404721b71bf95c40f75d6a996f1cb74a256c9"
+    },
+    {
+      "optimizer": "-OO",
+      "case": "rejected-mode",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "56db90ccedfa565e87e9e245904da08de778b61dc9844e6e746ab65fc9b394b8"
+    },
+    {
+      "optimizer": "-OO",
+      "case": "kernel-input",
+      "accepted": false,
+      "exit-code": 1,
+      "stderr-sha256": "2157306416865246492c587b7872e92307711a352533ff9576a5051c818183f3"
+    }
+  ],
+  "scope": "Projection integrity only; not independent kernel proof.",
+  "generator-sha256": "a5150ad33c853bd654f6b72719cca3e433f91837c98a86d6d8d5cec19be5b672"
+}

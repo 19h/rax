@@ -1,0 +1,279 @@
+{
+  "state": "finished",
+  "pid": 4880,
+  "utc": "2026-10-23T19:18:43.074821+00:00",
+  "scope": "Observe normal main/worker conversion and controlled zero-input callback returns in separate native ARM64 processes. Nonzero controlled native exits remain explicit in native-outcomes; finished means recording completed. No on-disk DLL changes or guest import of host pointers.",
+  "steps": [
+    {
+      "name": "build",
+      "argv": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\arm64\\cl.exe",
+        "/nologo",
+        "/std:c++20",
+        "/EHsc",
+        "/MT",
+        "/GS",
+        "/Od",
+        "/we4473",
+        "/we4474",
+        "/we4477",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-win32k-callback-v6\\native-win32k-callback-v5.cpp",
+        "/link",
+        "/SUBSYSTEM:CONSOLE,10.0",
+        "/OUT:C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-win32k-callback-v6\\probe.exe"
+      ],
+      "exit-code": 0,
+      "log": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-win32k-callback-v6\\native-win32k-callback-v6-build.log",
+        "bytes": 31,
+        "sha256": "6368ecbdc81ac792a72f4d22bf884920e2f54e9e5b10700a292e5de68a226cb3"
+      }
+    },
+    {
+      "name": "normal",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-win32k-callback-v6\\probe.exe",
+        "normal"
+      ],
+      "exit-code": 0,
+      "log": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-win32k-callback-v6\\native-win32k-callback-v6-normal.log",
+        "bytes": 83898,
+        "sha256": "1e632d3d10cdfb44b5b35ba0c64bb51f146e753be615e13dffd1f82363339cb0"
+      }
+    },
+    {
+      "name": "nested-success",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-win32k-callback-v6\\probe.exe",
+        "nested-success"
+      ],
+      "exit-code": 0,
+      "log": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-win32k-callback-v6\\native-win32k-callback-v6-nested-success.log",
+        "bytes": 40162,
+        "sha256": "bc36ea8a5fc182372ffd4f9cc0a079b3cd20dc1f2d7fa823ac5b77db4f2705b7"
+      }
+    },
+    {
+      "name": "nested-failure",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-win32k-callback-v6\\probe.exe",
+        "nested-failure"
+      ],
+      "exit-code": 5,
+      "log": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-win32k-callback-v6\\native-win32k-callback-v6-nested-failure.log",
+        "bytes": 39629,
+        "sha256": "07dc5a2ac3d3f48ca980e1a8e3d1e4ecc4424e0434d8bc8168f3d449bcd63736"
+      }
+    },
+    {
+      "name": "output-invalid",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-win32k-callback-v6\\probe.exe",
+        "output-invalid"
+      ],
+      "exit-code": 0,
+      "log": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-win32k-callback-v6\\native-win32k-callback-v6-output-invalid.log",
+        "bytes": 41454,
+        "sha256": "71bf668650aaec501fa3fdb5062f6118e32b21e01c5b79c2c2bf33ac429e4382"
+      }
+    },
+    {
+      "name": "output-warning",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-win32k-callback-v6\\probe.exe",
+        "output-warning"
+      ],
+      "exit-code": 5,
+      "log": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-win32k-callback-v6\\native-win32k-callback-v6-output-warning.log",
+        "bytes": 40851,
+        "sha256": "ce5ec1d67f367aa33bdb10a8c47e2029e4331d4751405a1e0e4906baba20aec0"
+      }
+    }
+  ],
+  "source-before": {
+    "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-win32k-callback-v6\\native-win32k-callback-v5.cpp",
+    "bytes": 15223,
+    "sha256": "8885a4e8d30ba4de455b8354bde41e3b8fbbafa8e9bd1a4bf8bf2f851f42f777"
+  },
+  "environment": {
+    "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\win32u-validation-recovery-v2\\transfer\\mutant-native-compiler-env-epoch4.json",
+    "bytes": 4122,
+    "sha256": "e6ca43bcdcbd3067b5de05d051259d4d3abf0bfa5283a98daac14fd508a05fad"
+  },
+  "runtime-before": [
+    {
+      "file": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+    },
+    {
+      "file": "C:\\Windows\\System32\\kernel32.dll",
+      "bytes": 1500304,
+      "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0"
+    },
+    {
+      "file": "C:\\Windows\\System32\\KernelBase.dll",
+      "bytes": 7213728,
+      "sha256": "6b2fa508ac4f9bce5d7351676485d1dc5b5236cd9656034e2fec1eaba3b82bc9"
+    },
+    {
+      "file": "C:\\Windows\\System32\\user32.dll",
+      "bytes": 2799192,
+      "sha256": "bd104076063e3bc8ce65fb744a947f533b8ac6bc737c999b1d7beacbc1b6b058"
+    },
+    {
+      "file": "C:\\Windows\\System32\\win32u.dll",
+      "bytes": 387768,
+      "sha256": "e2aa1e93f5e45377922bf6e5525d9fc37a60494da1d602033974883987e9c7d4"
+    },
+    {
+      "file": "C:\\Windows\\System32\\gdi32full.dll",
+      "bytes": 1893296,
+      "sha256": "3f73ffd0d20b492cfc3302c7ba193138a96d6161c2bea0b6b6c559f104f7f70e"
+    },
+    {
+      "file": "C:\\Windows\\System32\\gdi32.dll",
+      "bytes": 462600,
+      "sha256": "55a43a68318f896557d8433d1094b0acce8c9ec05b7085bbce558fefa280d42a"
+    }
+  ],
+  "compiler": {
+    "file": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\arm64\\cl.exe",
+    "bytes": 787728,
+    "sha256": "5cba83692d533f6b3a6ac07c6b2cdce708e0445ed1ee36b5cb2d49a244a4c835"
+  },
+  "step": "output-warning",
+  "child": 5800,
+  "machine": 43620,
+  "executable-before": {
+    "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-win32k-callback-v6\\probe.exe",
+    "bytes": 155136,
+    "sha256": "150b95fd858789813bffbbdf9895f73c2ca2ec40335e35f0f5db97878bb1cc91"
+  },
+  "native-outcomes": [
+    {
+      "mode": "normal",
+      "exit-code": 0,
+      "before": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-win32k-callback-v6\\probe.exe",
+        "bytes": 155136,
+        "sha256": "150b95fd858789813bffbbdf9895f73c2ca2ec40335e35f0f5db97878bb1cc91"
+      },
+      "after": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-win32k-callback-v6\\probe.exe",
+        "bytes": 155136,
+        "sha256": "150b95fd858789813bffbbdf9895f73c2ca2ec40335e35f0f5db97878bb1cc91"
+      }
+    },
+    {
+      "mode": "nested-success",
+      "exit-code": 0,
+      "before": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-win32k-callback-v6\\probe.exe",
+        "bytes": 155136,
+        "sha256": "150b95fd858789813bffbbdf9895f73c2ca2ec40335e35f0f5db97878bb1cc91"
+      },
+      "after": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-win32k-callback-v6\\probe.exe",
+        "bytes": 155136,
+        "sha256": "150b95fd858789813bffbbdf9895f73c2ca2ec40335e35f0f5db97878bb1cc91"
+      }
+    },
+    {
+      "mode": "nested-failure",
+      "exit-code": 5,
+      "before": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-win32k-callback-v6\\probe.exe",
+        "bytes": 155136,
+        "sha256": "150b95fd858789813bffbbdf9895f73c2ca2ec40335e35f0f5db97878bb1cc91"
+      },
+      "after": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-win32k-callback-v6\\probe.exe",
+        "bytes": 155136,
+        "sha256": "150b95fd858789813bffbbdf9895f73c2ca2ec40335e35f0f5db97878bb1cc91"
+      }
+    },
+    {
+      "mode": "output-invalid",
+      "exit-code": 0,
+      "before": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-win32k-callback-v6\\probe.exe",
+        "bytes": 155136,
+        "sha256": "150b95fd858789813bffbbdf9895f73c2ca2ec40335e35f0f5db97878bb1cc91"
+      },
+      "after": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-win32k-callback-v6\\probe.exe",
+        "bytes": 155136,
+        "sha256": "150b95fd858789813bffbbdf9895f73c2ca2ec40335e35f0f5db97878bb1cc91"
+      }
+    },
+    {
+      "mode": "output-warning",
+      "exit-code": 5,
+      "before": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-win32k-callback-v6\\probe.exe",
+        "bytes": 155136,
+        "sha256": "150b95fd858789813bffbbdf9895f73c2ca2ec40335e35f0f5db97878bb1cc91"
+      },
+      "after": {
+        "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-win32k-callback-v6\\probe.exe",
+        "bytes": 155136,
+        "sha256": "150b95fd858789813bffbbdf9895f73c2ca2ec40335e35f0f5db97878bb1cc91"
+      }
+    }
+  ],
+  "executable-after": {
+    "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-win32k-callback-v6\\probe.exe",
+    "bytes": 155136,
+    "sha256": "150b95fd858789813bffbbdf9895f73c2ca2ec40335e35f0f5db97878bb1cc91"
+  },
+  "source-after": {
+    "file": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-win32k-callback-v6\\native-win32k-callback-v5.cpp",
+    "bytes": 15223,
+    "sha256": "8885a4e8d30ba4de455b8354bde41e3b8fbbafa8e9bd1a4bf8bf2f851f42f777"
+  },
+  "runtime-after": [
+    {
+      "file": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+    },
+    {
+      "file": "C:\\Windows\\System32\\kernel32.dll",
+      "bytes": 1500304,
+      "sha256": "329a45fa8c9c3f4d4fa0f4d1360597df2013a5e1d4aec205421e7b615fb630f0"
+    },
+    {
+      "file": "C:\\Windows\\System32\\KernelBase.dll",
+      "bytes": 7213728,
+      "sha256": "6b2fa508ac4f9bce5d7351676485d1dc5b5236cd9656034e2fec1eaba3b82bc9"
+    },
+    {
+      "file": "C:\\Windows\\System32\\user32.dll",
+      "bytes": 2799192,
+      "sha256": "bd104076063e3bc8ce65fb744a947f533b8ac6bc737c999b1d7beacbc1b6b058"
+    },
+    {
+      "file": "C:\\Windows\\System32\\win32u.dll",
+      "bytes": 387768,
+      "sha256": "e2aa1e93f5e45377922bf6e5525d9fc37a60494da1d602033974883987e9c7d4"
+    },
+    {
+      "file": "C:\\Windows\\System32\\gdi32full.dll",
+      "bytes": 1893296,
+      "sha256": "3f73ffd0d20b492cfc3302c7ba193138a96d6161c2bea0b6b6c559f104f7f70e"
+    },
+    {
+      "file": "C:\\Windows\\System32\\gdi32.dll",
+      "bytes": 462600,
+      "sha256": "55a43a68318f896557d8433d1094b0acce8c9ec05b7085bbce558fefa280d42a"
+    }
+  ],
+  "exit-code": 0,
+  "completed-utc": "2026-10-23T19:18:44.610605+00:00"
+}

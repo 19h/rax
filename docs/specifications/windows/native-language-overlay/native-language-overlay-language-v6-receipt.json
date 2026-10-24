@@ -1,0 +1,340 @@
+{
+  "state": "finished",
+  "pid": 10108,
+  "steps": [
+    {
+      "name": "build-arm64",
+      "argv": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\arm64\\cl.exe",
+        "/nologo",
+        "/std:c++20",
+        "/EHsc",
+        "/MT",
+        "/GS",
+        "/Od",
+        "/we4473",
+        "/we4474",
+        "/we4477",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-language-overlay-language-v6\\native-language-overlay-language-v6.cpp",
+        "/link",
+        "advapi32.lib",
+        "/LARGEADDRESSAWARE",
+        "/SUBSYSTEM:CONSOLE,10.0",
+        "/OUT:C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-language-overlay-language-v6\\arm64\\probe.exe"
+      ],
+      "exit-code": 0,
+      "log": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-language-overlay-language-v6\\arm64\\build-arm64.log",
+        "bytes": 41,
+        "sha256": "ae784e36e92b85e16dd1f00a03869ab293905ff50a9137e8bc6368183e4d7077"
+      }
+    },
+    {
+      "name": "native-arm64",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-language-overlay-language-v6\\arm64\\probe.exe",
+        "arm64"
+      ],
+      "exit-code": 0,
+      "log": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-language-overlay-language-v6\\arm64\\native-arm64.log",
+        "bytes": 20719,
+        "sha256": "a605d6d94bcaba4326ac818c40daac7e178e931322a584411a5e2e371d9e8a3e"
+      }
+    },
+    {
+      "name": "build-x86",
+      "argv": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\x86\\cl.exe",
+        "/nologo",
+        "/std:c++20",
+        "/EHsc",
+        "/MT",
+        "/GS",
+        "/Od",
+        "/we4473",
+        "/we4474",
+        "/we4477",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-language-overlay-language-v6\\native-language-overlay-language-v6.cpp",
+        "/link",
+        "advapi32.lib",
+        "/LARGEADDRESSAWARE:NO",
+        "/SUBSYSTEM:CONSOLE,10.0",
+        "/OUT:C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-language-overlay-language-v6\\x86\\probe.exe"
+      ],
+      "exit-code": 0,
+      "log": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-language-overlay-language-v6\\x86\\build-x86.log",
+        "bytes": 41,
+        "sha256": "ae784e36e92b85e16dd1f00a03869ab293905ff50a9137e8bc6368183e4d7077"
+      }
+    },
+    {
+      "name": "native-x86",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-language-overlay-language-v6\\x86\\probe.exe",
+        "x86"
+      ],
+      "exit-code": 0,
+      "log": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-language-overlay-language-v6\\x86\\native-x86.log",
+        "bytes": 20717,
+        "sha256": "f6e880c0ee9f2f68a4e6f10321c873d42afbd901d772c2d1c98bace56800dcf7"
+      }
+    },
+    {
+      "name": "build-x64",
+      "argv": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\x64\\cl.exe",
+        "/nologo",
+        "/std:c++20",
+        "/EHsc",
+        "/MT",
+        "/GS",
+        "/Od",
+        "/we4473",
+        "/we4474",
+        "/we4477",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-language-overlay-language-v6\\native-language-overlay-language-v6.cpp",
+        "/link",
+        "advapi32.lib",
+        "/LARGEADDRESSAWARE",
+        "/SUBSYSTEM:CONSOLE,10.0",
+        "/OUT:C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-language-overlay-language-v6\\x64\\probe.exe"
+      ],
+      "exit-code": 0,
+      "log": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-language-overlay-language-v6\\x64\\build-x64.log",
+        "bytes": 41,
+        "sha256": "ae784e36e92b85e16dd1f00a03869ab293905ff50a9137e8bc6368183e4d7077"
+      }
+    },
+    {
+      "name": "native-x64",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-language-overlay-language-v6\\x64\\probe.exe",
+        "x64"
+      ],
+      "exit-code": 0,
+      "log": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-language-overlay-language-v6\\x64\\native-x64.log",
+        "bytes": 20717,
+        "sha256": "b567d3f62bf18eae5c391edbadb49101a17535138334e373e448a6fc04f083f1"
+      }
+    },
+    {
+      "name": "build-x86",
+      "argv": [
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\x86\\cl.exe",
+        "/nologo",
+        "/std:c++20",
+        "/EHsc",
+        "/MT",
+        "/GS",
+        "/Od",
+        "/we4473",
+        "/we4474",
+        "/we4477",
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-language-overlay-language-v6\\native-language-overlay-language-v6.cpp",
+        "/link",
+        "advapi32.lib",
+        "/LARGEADDRESSAWARE",
+        "/SUBSYSTEM:CONSOLE,10.0",
+        "/OUT:C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-language-overlay-language-v6\\x86-laa\\probe.exe"
+      ],
+      "exit-code": 0,
+      "log": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-language-overlay-language-v6\\x86-laa\\build-x86.log",
+        "bytes": 41,
+        "sha256": "ae784e36e92b85e16dd1f00a03869ab293905ff50a9137e8bc6368183e4d7077"
+      }
+    },
+    {
+      "name": "native-x86-laa",
+      "argv": [
+        "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-language-overlay-language-v6\\x86-laa\\probe.exe",
+        "x86-laa"
+      ],
+      "exit-code": 0,
+      "log": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-language-overlay-language-v6\\x86-laa\\native-x86-laa.log",
+        "bytes": 20721,
+        "sha256": "74bb72014d61b9dd61fa357a23b100c3a6ea9fba671411f84436046c151b93c4"
+      }
+    }
+  ],
+  "architectures": [
+    {
+      "profile": "arm64",
+      "architecture": "arm64",
+      "compiler": {
+        "path": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\arm64\\cl.exe",
+        "bytes": 787728,
+        "sha256": "5cba83692d533f6b3a6ac07c6b2cdce708e0445ed1ee36b5cb2d49a244a4c835"
+      },
+      "machine": 43620,
+      "executable-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-language-overlay-language-v6\\arm64\\probe.exe",
+        "bytes": 184832,
+        "sha256": "3af450da0c8ff1ff2ec3f0c0f3f8bde7bcdbc5bdfdc561fe07d30f4c0d9631ff"
+      },
+      "executable-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-language-overlay-language-v6\\arm64\\probe.exe",
+        "bytes": 184832,
+        "sha256": "3af450da0c8ff1ff2ec3f0c0f3f8bde7bcdbc5bdfdc561fe07d30f4c0d9631ff"
+      }
+    },
+    {
+      "profile": "x86",
+      "architecture": "x86",
+      "compiler": {
+        "path": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\x86\\cl.exe",
+        "bytes": 761104,
+        "sha256": "cfed9e6fa19f430235f7fb75dbcd3200b7c1fa036462e3a73d76b5ea8e35c7ad"
+      },
+      "machine": 332,
+      "executable-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-language-overlay-language-v6\\x86\\probe.exe",
+        "bytes": 153088,
+        "sha256": "0dd9aac332ec64b12a03d8296d27c34cb376899ee9e02d7fd8b20a4843577428"
+      },
+      "executable-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-language-overlay-language-v6\\x86\\probe.exe",
+        "bytes": 153088,
+        "sha256": "0dd9aac332ec64b12a03d8296d27c34cb376899ee9e02d7fd8b20a4843577428"
+      }
+    },
+    {
+      "profile": "x64",
+      "architecture": "x64",
+      "compiler": {
+        "path": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\x64\\cl.exe",
+        "bytes": 762720,
+        "sha256": "d7a46c9d0d970fbeb4e803f1f0e9fec4217f8c833e6bb6a015e5b87299024466"
+      },
+      "machine": 34404,
+      "executable-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-language-overlay-language-v6\\x64\\probe.exe",
+        "bytes": 196608,
+        "sha256": "1c5c776abf3cbc89349a08dc42df309b1e3159645c9238e2c291e02ca8bd6949"
+      },
+      "executable-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-language-overlay-language-v6\\x64\\probe.exe",
+        "bytes": 196608,
+        "sha256": "1c5c776abf3cbc89349a08dc42df309b1e3159645c9238e2c291e02ca8bd6949"
+      }
+    },
+    {
+      "profile": "x86-laa",
+      "architecture": "x86",
+      "compiler": {
+        "path": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostarm64\\x86\\cl.exe",
+        "bytes": 761104,
+        "sha256": "cfed9e6fa19f430235f7fb75dbcd3200b7c1fa036462e3a73d76b5ea8e35c7ad"
+      },
+      "machine": 332,
+      "executable-before": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-language-overlay-language-v6\\x86-laa\\probe.exe",
+        "bytes": 153088,
+        "sha256": "a6a1dc22c6ff58450d0361e7962456c1a7f7360da084d3f1351cece780c6cadb"
+      },
+      "executable-after": {
+        "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-language-overlay-language-v6\\x86-laa\\probe.exe",
+        "bytes": 153088,
+        "sha256": "a6a1dc22c6ff58450d0361e7962456c1a7f7360da084d3f1351cece780c6cadb"
+      }
+    }
+  ],
+  "source-before": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-language-overlay-language-v6\\native-language-overlay-language-v6.cpp",
+    "bytes": 7985,
+    "sha256": "72fce07de2c1ac0fdd226498a59512b86fe64eabd0de9f3fbfc6ec8d8eeb28f9"
+  },
+  "native-version": {
+    "major": 10,
+    "minor": 0,
+    "build": 29683
+  },
+  "native-modules-before": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+    },
+    {
+      "path": "C:\\Windows\\System32\\kernelbase.dll",
+      "bytes": 7213728,
+      "sha256": "6b2fa508ac4f9bce5d7351676485d1dc5b5236cd9656034e2fec1eaba3b82bc9"
+    },
+    {
+      "path": "C:\\Windows\\System32\\advapi32.dll",
+      "bytes": 1390176,
+      "sha256": "55574d41274e407861a51574fb76fe36f02a8809da67255d45081fb435fe5018"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\kernelbase.dll",
+      "bytes": 3073488,
+      "sha256": "e9c414d7c6bd2c6fde608f31b2f31da3c2014c801b3764a30ee42abd1e9c2d58"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\advapi32.dll",
+      "bytes": 546256,
+      "sha256": "da0199c2cdf861b489e1de2a2abb13092b6ed6dc36a28908aaafa8f878eb5413"
+    },
+    {
+      "path": "C:\\Windows\\System32\\ntoskrnl.exe",
+      "bytes": 12436088,
+      "sha256": "7e3126b28ffa1c50381de7db89be60e25be784cd6cb85db9716db5743692bd5e"
+    }
+  ],
+  "step": "native-x86-laa",
+  "child": 5844,
+  "source-after": {
+    "path": "C:\\Windows\\Temp\\assist-native-rax-20261010\\src-display-candidate1\\target\\native-language-overlay-language-v6\\native-language-overlay-language-v6.cpp",
+    "bytes": 7985,
+    "sha256": "72fce07de2c1ac0fdd226498a59512b86fe64eabd0de9f3fbfc6ec8d8eeb28f9"
+  },
+  "native-modules-after": [
+    {
+      "path": "C:\\Windows\\System32\\ntdll.dll",
+      "bytes": 4609312,
+      "sha256": "502d4678206c8fd564972a3f82bfe63fe1a451cb5a6804ac0a9823b65fcbb61f"
+    },
+    {
+      "path": "C:\\Windows\\System32\\kernelbase.dll",
+      "bytes": 7213728,
+      "sha256": "6b2fa508ac4f9bce5d7351676485d1dc5b5236cd9656034e2fec1eaba3b82bc9"
+    },
+    {
+      "path": "C:\\Windows\\System32\\advapi32.dll",
+      "bytes": 1390176,
+      "sha256": "55574d41274e407861a51574fb76fe36f02a8809da67255d45081fb435fe5018"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\ntdll.dll",
+      "bytes": 1849976,
+      "sha256": "ffd2b7ff39889c5599c8a8451eef5c852acee9101da5ce5a6def8b8e60a6627e"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\kernelbase.dll",
+      "bytes": 3073488,
+      "sha256": "e9c414d7c6bd2c6fde608f31b2f31da3c2014c801b3764a30ee42abd1e9c2d58"
+    },
+    {
+      "path": "C:\\Windows\\SysWOW64\\advapi32.dll",
+      "bytes": 546256,
+      "sha256": "da0199c2cdf861b489e1de2a2abb13092b6ed6dc36a28908aaafa8f878eb5413"
+    },
+    {
+      "path": "C:\\Windows\\System32\\ntoskrnl.exe",
+      "bytes": 12436088,
+      "sha256": "7e3126b28ffa1c50381de7db89be60e25be784cd6cb85db9716db5743692bd5e"
+    }
+  ],
+  "exit-code": 0
+}

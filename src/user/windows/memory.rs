@@ -33,6 +33,7 @@ use crate::error::MemoryAccessKind;
 use crate::user::mm::{AddressSpace, Mapping, MmError, PAGE_SIZE, Perms};
 
 mod data_section;
+pub(crate) use data_section::KernelDataView;
 mod extended;
 mod region;
 pub use region::RegionInfo;
@@ -878,6 +879,16 @@ impl VirtualMemory {
     /// allocation with `protect`. Already committed pages keep their
     /// contents and take the new protection.
     pub fn commit(&mut self, start: u64, len: u64, protect: u32) -> Result<(u64, u64), VmError> {
+        self.commit_inner(start, len, protect, false)
+    }
+
+    fn commit_inner(
+        &mut self,
+        start: u64,
+        len: u64,
+        protect: u32,
+        kernel_data: bool,
+    ) -> Result<(u64, u64), VmError> {
         if !valid_protection(protect) {
             return Err(VmError::InvalidProtection);
         }
@@ -891,7 +902,7 @@ impl VirtualMemory {
             });
         }
         if self.section_views.contains_key(&a.base)
-            || self.data_views.contains_key(&a.base)
+            || (self.data_views.contains_key(&a.base) && !kernel_data)
             || self.is_shared_view(a.base)
         {
             return Err(VmError::AlreadyCommitted);

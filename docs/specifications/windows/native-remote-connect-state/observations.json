@@ -1,0 +1,171 @@
+{
+  "scope": "Four execution views of one Windows ARM64 10.0.29683 kernel; enum0 native controls, cold conversion and controlled callback failure. Independent x64 kernel and nonzero native session states remain unknown.",
+  "fixed-query-count": 512,
+  "fixed-profiles": [
+    {
+      "profile": "arm64",
+      "rows": 128,
+      "value": 0,
+      "last-error": "0x12345678",
+      "log": {
+        "path": "arm64/native-arm64.log",
+        "bytes": 8311,
+        "sha256": "b96f476938b01871800a2cfa4a47d1d13252edf2d0e3a8fd8816f63711053402"
+      }
+    },
+    {
+      "profile": "x86",
+      "rows": 128,
+      "value": 0,
+      "last-error": "0x12345678",
+      "log": {
+        "path": "x86/native-x86.log",
+        "bytes": 8309,
+        "sha256": "cf823ffdaec690940f8502e8ad125f723ec02ca947a90c5544be85aabdb5ea54"
+      }
+    },
+    {
+      "profile": "x64",
+      "rows": 128,
+      "value": 0,
+      "last-error": "0x12345678",
+      "log": {
+        "path": "x64/native-x64.log",
+        "bytes": 8309,
+        "sha256": "9f640e92ac4f5ae0af6fe5656bca2e13c197a0dc8ceca210f005c0a99a470f9c"
+      }
+    },
+    {
+      "profile": "x86-laa",
+      "rows": 128,
+      "value": 0,
+      "last-error": "0x12345678",
+      "log": {
+        "path": "x86-laa/native-x86-laa.log",
+        "bytes": 8313,
+        "sha256": "bcce1c94e7382bbf561269afc51120609c7304a5501091eb91cd7fb5e1054dbd"
+      }
+    }
+  ],
+  "cold-controls": [
+    {
+      "mode": "normal",
+      "native-exit-code": 0,
+      "cold-before": {
+        "win32-thread-present": false,
+        "callbacks": 0
+      },
+      "callback": {
+        "index": 84,
+        "input-bytes": 0,
+        "status": "0x00000000"
+      },
+      "query-return": {
+        "value": 0,
+        "last-error": "0x12345678",
+        "win32-thread-present": true,
+        "callbacks": 1
+      },
+      "original-private-log": {
+        "bytes": 83212,
+        "sha256": "7367e552771f34b8d39bb7d0ae5609a18e638ada194c426b5226b349f361d6e8"
+      }
+    },
+    {
+      "mode": "callback-success",
+      "native-exit-code": 0,
+      "cold-before": {
+        "win32-thread-present": false,
+        "callbacks": 0
+      },
+      "callback": {
+        "index": 84,
+        "input-bytes": 0,
+        "status": "0x00000000"
+      },
+      "query-return": {
+        "value": 0,
+        "last-error": "0x12345678",
+        "win32-thread-present": true,
+        "callbacks": 1
+      },
+      "original-private-log": {
+        "bytes": 40956,
+        "sha256": "c86fb33f86961379a6553fa93a649f113c47087f9fad093618532b72353775a5"
+      }
+    },
+    {
+      "mode": "callback-failure",
+      "native-exit-code": 5,
+      "cold-before": {
+        "win32-thread-present": false,
+        "callbacks": 0
+      },
+      "callback": {
+        "index": 84,
+        "input-bytes": 0,
+        "status": "0xC0000001"
+      },
+      "query-return": {
+        "value": 0,
+        "last-error": "0x12345678",
+        "win32-thread-present": false,
+        "callbacks": 1
+      },
+      "original-private-log": {
+        "bytes": 79555,
+        "sha256": "83d623d5c49fba120619ce5872dae9f9343593d6816f8ee7e6a5f2fff24ace60"
+      }
+    },
+    {
+      "mode": "output-warning",
+      "native-exit-code": 5,
+      "cold-before": {
+        "win32-thread-present": false,
+        "callbacks": 0
+      },
+      "callback": {
+        "index": 84,
+        "input-bytes": 0,
+        "status": "0x80000001"
+      },
+      "query-return": {
+        "value": 0,
+        "last-error": "0x12345678",
+        "win32-thread-present": false,
+        "callbacks": 1
+      },
+      "original-private-log": {
+        "bytes": 79744,
+        "sha256": "ebd4f2c6a8a53a8c8f8577c12d3fdaeb8235853df6c54bc72bf219318d926dd2"
+      }
+    },
+    {
+      "mode": "output-invalid",
+      "native-exit-code": 0,
+      "cold-before": {
+        "win32-thread-present": false,
+        "callbacks": 0
+      },
+      "callback": {
+        "index": 84,
+        "input-bytes": 0,
+        "status": "0x00000000",
+        "output-buffer-is-1": true,
+        "output-bytes": 4294967295
+      },
+      "query-return": {
+        "value": 0,
+        "last-error": "0x12345678",
+        "win32-thread-present": true,
+        "callbacks": 1
+      },
+      "original-private-log": {
+        "bytes": 41049,
+        "sha256": "d1d2e8df61fe1ddf8c9d627e7f09370a39b2530b2419de5cb7f932e993c33bba"
+      }
+    }
+  ],
+  "cold-private-log-policy": "Only relative/scalar fields are projected; original private memory logs are bound by producer receipts and original hashes.",
+  "whole-goal-complete": false
+}

@@ -8,6 +8,8 @@ use std::io;
 use std::path::Path;
 #[path = "installed/initialize.rs"]
 mod initialize;
+#[path = "installed/mui.rs"]
+mod mui;
 
 #[link(name = "ntdll")]
 unsafe extern "system" {
@@ -115,7 +117,8 @@ pub(crate) fn snapshot(
     let nls = Nls::new(sections)?;
     if version.major == 10 && version.minor == 0 && version.build == 29683 {
         let (locale, bytes) = initialize::capture()?;
-        nls.with_initialize(locale, bytes)
+        nls.with_initialize(locale, bytes)?
+            .with_mui(mui::capture()?)
     } else {
         Ok(nls)
     }
