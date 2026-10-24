@@ -28,7 +28,7 @@ CASE_BYTES = 268
 RESULT_BYTES = 260
 SAMPLES = 32
 CONTROLS = 64
-VERSION = 1
+VERSION = 2
 OWNER = ".rax-a32-fp-system-oracle"
 
 EDGES = (
@@ -137,6 +137,52 @@ INSTRUCTIONS = (
     'vfmsl.f16 d0,s4,s6[1]',
     'vfmal.f16 q0,d4,d6[3]',
     'vfmsl.f16 q0,d4,d6[3]',
+    'vcvtb.f16.f64 s0,d1',
+    'vcvtt.f16.f64 s0,d1',
+    'vcvtb.f64.f16 d0,s2',
+    'vcvtt.f64.f16 d0,s2',
+    'vcvt.f16.s16 q0,q1',
+    'vcvt.f16.u16 q0,q1',
+    'vcvt.s16.f16 q0,q1',
+    'vcvt.u16.f16 q0,q1',
+    'vcvt.f32.s32 q8,q9',
+    'vcvt.s32.f32 q8,q9',
+    'vcvt.f16.s16 s0,s0,#8',
+    'vcvt.s16.f16 s0,s0,#8',
+    'vcvt.f16.u16 s0,s0,#8',
+    'vcvt.u16.f16 s0,s0,#8',
+    'vcvt.f16.s32 s0,s0,#8',
+    'vcvt.s32.f16 s0,s0,#8',
+    'vcvt.f16.u32 s0,s0,#8',
+    'vcvt.u32.f16 s0,s0,#8',
+    'vcvt.f32.s16 s0,s0,#8',
+    'vcvt.s16.f32 s0,s0,#8',
+    'vcvt.f32.u16 s0,s0,#8',
+    'vcvt.u16.f32 s0,s0,#8',
+    'vcvt.f32.s32 s0,s0,#8',
+    'vcvt.s32.f32 s0,s0,#8',
+    'vcvt.f32.u32 s0,s0,#8',
+    'vcvt.u32.f32 s0,s0,#8',
+    'vcvt.f64.s16 d0,d0,#8',
+    'vcvt.s16.f64 d0,d0,#8',
+    'vcvt.f64.u16 d0,d0,#8',
+    'vcvt.u16.f64 d0,d0,#8',
+    'vcvt.f64.s32 d0,d0,#8',
+    'vcvt.s32.f64 d0,d0,#8',
+    'vcvt.f64.u32 d0,d0,#8',
+    'vcvt.u32.f64 d0,d0,#8',
+    'vfma.f16 q0,q1,q2',
+    'vfms.f16 q0,q1,q2',
+    'vmaxnm.f16 q0,q1,q2',
+    'vminnm.f16 q0,q1,q2',
+    'vfma.f32 q0,q1,q2',
+    'vfms.f32 q0,q1,q2',
+    'vmaxnm.f32 q0,q1,q2',
+    'vminnm.f32 q0,q1,q2',
+    'vcvt.f16.s16 q0,q1,#8',
+    'vcvt.f16.u16 q0,q1,#8',
+    'vcvt.s16.f16 q0,q1,#8',
+    'vcvt.u16.f16 q0,q1,#8',
 )
 
 
@@ -189,8 +235,8 @@ def command(args: list[str], work: Path, name: str, manifest: dict,
 
 
 def make_cases(work: Path, llvm: Path, manifest: dict) -> list[dict]:
-    if len(INSTRUCTIONS) != 94:
-        raise ValueError("Version 1 requires exactly 94 instruction pairs")
+    if len(INSTRUCTIONS) != 140:
+        raise ValueError("Version 2 requires exactly 140 instruction pairs")
     source = ".syntax unified\n.arm\n" + "\n".join(INSTRUCTIONS)
     source += "\n.thumb\n" + "\n".join(INSTRUCTIONS) + "\n"
     (work / "instructions.s").write_text(source)
@@ -261,7 +307,7 @@ SECTIONS {
     command([str(llvm / "ld.lld"), "-m", "armelf", "-T", "link.ld",
              "guest.o", "-o", "guest.elf"], work, "link", manifest)
     stdout = command([qemu, "-machine", "virt", "-cpu", "max", "-accel",
-                      "tcg,thread=single", "-m", "128M", "-nodefaults", "-display",
+                      "tcg,thread=single", "-m", "256M", "-nodefaults", "-display",
                       "none", "-monitor", "none", "-serial", "none",
                       "-semihosting-config", "enable=on,target=native",
                       "-kernel", str(work / "guest.elf")],
@@ -347,7 +393,7 @@ def main() -> int:
     marker = work / OWNER
     ownership = f"version={VERSION}\n"
     if any(work.iterdir()) and (not marker.is_file() or marker.read_text() != ownership):
-        raise ValueError("Use an empty work directory or an existing version 1 oracle directory")
+        raise ValueError("Use an empty work directory or an existing version 2 oracle directory")
     marker.write_text(ownership)
     if args.timeout <= 0:
         raise ValueError("Guest timeout must be positive")

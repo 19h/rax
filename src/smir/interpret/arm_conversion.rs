@@ -28,6 +28,18 @@ impl SmirInterpreter {
         );
         (bits as u32, status)
     }
+    pub(crate) fn arm_eval_half_double_precision_conversion(
+        raw: u64,
+        widen: bool,
+        control: u32,
+    ) -> (u64, u32) {
+        let (source, destination) = if widen {
+            (X86_SIMD_F16, X86_SIMD_F64)
+        } else {
+            (X86_SIMD_F64, X86_SIMD_F16)
+        };
+        Self::arm_eval_precision_conversion_formats(raw, source, destination, control)
+    }
     fn arm_eval_precision_conversion_formats(
         raw: u64,
         source: X86SimdFpFormat,

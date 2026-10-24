@@ -26,11 +26,11 @@ The RAX library is built with stable Cargo, `--locked --offline` and
 `--no-default-features --features x86_64-suite,smir-jit`. Cargo's reported
 library artifact supplies the standalone comparison runner.
 
-The version 1 corpus executes 94 instruction pairs, two instruction states,
+The version 2 corpus executes 140 instruction pairs, two instruction states,
 32 operand samples and 64 FPSCR control profiles:
 
 ```text
-94 * 2 * 32 * 64 = 385024 state comparisons
+140 * 2 * 32 * 64 = 573440 state comparisons
 ```
 
 It includes scalar binary16/32/64 arithmetic and integral rounding, precision
@@ -65,8 +65,8 @@ The binary protocol is little-endian:
 | Result | 256 | FPSCR | 4 |
 
 Each input is 268 bytes and each result is 260 bytes. The complete corpus has
-103186432 input bytes and 100106240 result bytes. The guest uses one writable
-RAM segment at `0x40010000` inside 128 MiB of emulated RAM. Each patched ARM or
+153681920 input bytes and 149094400 result bytes. The guest uses one writable
+RAM segment at `0x40010000` inside 256 MiB of emulated RAM. Each patched ARM or
 Thumb slot is followed by an interworking return. The instruction and data
 caches remain in their reset state.
 
@@ -84,4 +84,8 @@ remain separate validation. QEMU supplies an independent software oracle;
 native A64 numerical tests and the pinned Arm instruction/shared operations
 provide separate evidence.
 
-Python 3.10 or newer is required.
+Version 2 adds half/double precision conversion, scalar fixed conversion at
+16/32/64-bit floating precision and 16/32-bit integer width, SIMD half integer
+and fixed conversion, high SIMD register fields, half vector FMA, and half/single
+number min/max. The protocol is unchanged; the 140 instruction pairs require
+256 MiB guest RAM. Python 3.10 or newer is required.

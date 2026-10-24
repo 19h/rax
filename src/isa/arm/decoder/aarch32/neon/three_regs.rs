@@ -60,6 +60,27 @@ impl Aarch32Decoder {
         Some(DecodedInsn::new(mnemonic, ExecutionState::Aarch32, raw, 4))
     }
 
+    pub(crate) fn decode_neon_fp_number_minmax(raw: u32) -> Option<DecodedInsn> {
+        if raw >> 24 != 0xf3 || raw & (1 << 23) != 0 || (raw >> 8) & 15 != 15 || raw & (1 << 4) == 0
+        {
+            return None;
+        }
+        let half = raw & (1 << 20) != 0;
+        let minimum = raw & (1 << 21) != 0;
+        let q = raw & (1 << 6) != 0;
+        let mnemonic = if q && (((raw >> 12) | (raw >> 16) | raw) & 1) != 0 {
+            Mnemonic::UNDEFINED
+        } else {
+            match (half, minimum) {
+                (false, false) => Mnemonic::VMAXNM_F32,
+                (false, true) => Mnemonic::VMINNM_F32,
+                (true, false) => Mnemonic::VMAXNM_F16,
+                (true, true) => Mnemonic::VMINNM_F16,
+            }
+        };
+        Some(DecodedInsn::new(mnemonic, ExecutionState::Aarch32, raw, 4))
+    }
+
     pub(crate) fn decode_neon_fp_minmax(raw: u32) -> Option<DecodedInsn> {
         if (raw >> 24) != 0xF2
             || ((raw >> 23) & 1) != 0
@@ -189,7 +210,6 @@ impl Aarch32Decoder {
         if (raw >> 25) != 0b1111001
             || ((raw >> 24) & 1) != 0
             || ((raw >> 23) & 1) != 0
-            || ((raw >> 20) & 1) != 0
             || ((raw >> 8) & 0xF) != 0b1100
             || ((raw >> 4) & 1) != 1
         {

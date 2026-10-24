@@ -1595,7 +1595,7 @@ fn neon_directed_float_to_integer_conversions_round_f32_and_f16_lanes() {
     );
     assert_eq!(
         Aarch32Decoder::decode(0xF3B7_0002).unwrap().mnemonic,
-        Mnemonic::VCVTA_S32_F16
+        Mnemonic::VCVTA_S16_F16
     );
     assert_eq!(
         Aarch32Decoder::decode(0xF3B3_0002).unwrap().mnemonic,
@@ -7089,3 +7089,13 @@ fn disabled_vfp_injects_undefined_exception() {
         ExecResult::Exception(ExceptionType::UndefinedInstruction)
     ));
 }
+
+#[path = "fp_profile_decoded.rs"]
+mod fp_profile_decoded;
+
+#[cfg(all(target_arch = "aarch64", target_feature = "fp16"))]
+#[path = "fp_profile_native.rs"]
+mod fp_profile_native;
+
+#[path = "fp_profile_matrix.rs"]
+mod fp_profile_matrix;

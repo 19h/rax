@@ -359,6 +359,9 @@ impl Aarch32Decoder {
             return Ok(insn);
         }
 
+        if let Some(insn) = Self::decode_neon_fp_number_minmax(raw) {
+            return Ok(insn);
+        }
         if let Some(insn) = Self::decode_neon_fp_minmax(raw) {
             return Ok(insn);
         }
@@ -1247,3 +1250,5 @@ impl Aarch32Decoder {
         ))
     }
 }
+
+mod fp_conversion;

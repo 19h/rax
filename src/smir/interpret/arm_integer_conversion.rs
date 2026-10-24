@@ -36,6 +36,64 @@ impl SmirInterpreter {
         (bits as u32, status)
     }
 
+    /// A32 fixed conversion with explicit floating/integer widths and scale.
+    pub(crate) fn arm_eval_a32_fixed_conversion(
+        raw: u64,
+        fp_bits: u32,
+        integer_bits: u32,
+        fractional_bits: u32,
+        signed: bool,
+        to_fixed: bool,
+        control: u32,
+    ) -> (u64, u32) {
+        debug_assert!(matches!(integer_bits, 16 | 32));
+        let format = match fp_bits {
+            16 => super::X86_SIMD_F16,
+            32 => X86_SIMD_F32,
+            64 => X86_SIMD_F64,
+            _ => unreachable!(),
+        };
+        let control = if fp_bits == 16 {
+            super::arm_format::half_control(control)
+        } else {
+            control
+        };
+        if to_fixed {
+            let raw = if fp_bits < 64 {
+                raw & ((1u64 << fp_bits) - 1)
+            } else {
+                raw
+            };
+            Self::arm_eval_fp_to_fixed_format(
+                raw,
+                format,
+                signed,
+                integer_bits,
+                fractional_bits,
+                FpRoundMode::RoundTowardZero,
+                control,
+            )
+        } else {
+            let input = if integer_bits == 16 {
+                if signed {
+                    raw as u16 as i16 as i32 as u32
+                } else {
+                    u32::from(raw as u16)
+                }
+            } else {
+                raw as u32
+            };
+            // A32 fixed-to-floating conversion explicitly selects ties-to-even.
+            Self::arm_eval_integer_to_fp_format(
+                input,
+                format,
+                signed,
+                fractional_bits,
+                control & !(3 << 22),
+            )
+        }
+    }
+
     pub(super) fn arm_eval_fp_to_fixed(
         raw: u64,
         double: bool,

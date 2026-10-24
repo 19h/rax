@@ -10,11 +10,19 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
         if !self.cpu.vfp.is_enabled() {
             return ExecResult::Exception(ExceptionType::UndefinedInstruction);
         }
-        if (insn.raw >> 24) != 0xF2
-            || ((insn.raw >> 23) & 1) != 0
-            || ((insn.raw >> 8) & 0xF) != 0b1111
-            || ((insn.raw >> 4) & 1) != 0
-        {
+        let number = matches!(
+            insn.mnemonic,
+            Mnemonic::VMAXNM_F16
+                | Mnemonic::VMAXNM_F32
+                | Mnemonic::VMINNM_F16
+                | Mnemonic::VMINNM_F32
+        );
+        let decoded = if number {
+            crate::isa::arm::decoder::Aarch32Decoder::decode_neon_fp_number_minmax(insn.raw)
+        } else {
+            crate::isa::arm::decoder::Aarch32Decoder::decode_neon_fp_minmax(insn.raw)
+        };
+        if !decoded.is_some_and(|decoded| decoded.mnemonic == insn.mnemonic) {
             return ExecResult::Undefined;
         }
 
@@ -56,9 +64,18 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
                         let m_val = f32::from_bits(m_elem as u32);
                         (match insn.mnemonic {
                             Mnemonic::VMAX => Self::neon_fpmax_f32_bits(n_val, m_val, fpscr),
+                            Mnemonic::VMAXNM_F32 => vmaxnm_f32(n_val, m_val, fpscr).to_bits(),
+                            Mnemonic::VMINNM_F32 => vminnm_f32(n_val, m_val, fpscr).to_bits(),
                             Mnemonic::VMIN => Self::neon_fpmin_f32_bits(n_val, m_val, fpscr),
                             _ => return ExecResult::Undefined,
                         }) as u64
+                    }
+                    NeonSize::H16 if number => {
+                        u64::from(if insn.mnemonic == Mnemonic::VMAXNM_F16 {
+                            vmaxnm_f16_bits(n_elem as u16, m_elem as u16, fpscr)
+                        } else {
+                            vminnm_f16_bits(n_elem as u16, m_elem as u16, fpscr)
+                        })
                     }
                     NeonSize::H16 => {
                         let maximum = match insn.mnemonic {

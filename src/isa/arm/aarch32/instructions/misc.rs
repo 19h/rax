@@ -336,6 +336,17 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
             Mnemonic::VDIV => self.exec_vfp_binop(insn),
             Mnemonic::VNMUL => self.exec_vfp_binop(insn),
             Mnemonic::VMAXNM_F32
+            | Mnemonic::VMAXNM_F16
+            | Mnemonic::VMINNM_F32
+            | Mnemonic::VMINNM_F16
+                if crate::isa::arm::decoder::Aarch32Decoder::decode_neon_fp_number_minmax(
+                    insn.raw,
+                )
+                .is_some() =>
+            {
+                self.exec_neon_fp_minmax(insn)
+            }
+            Mnemonic::VMAXNM_F32
             | Mnemonic::VMAXNM_F64
             | Mnemonic::VMAXNM_F16
             | Mnemonic::VMINNM_F32
@@ -395,7 +406,15 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
             | Mnemonic::VRINTM_F16
             | Mnemonic::VRINTN_F16 => self.exec_vrint(insn),
             Mnemonic::VCMP | Mnemonic::VCMPE => self.exec_vcmp(insn),
-            Mnemonic::VCVTA_S32_F32
+            Mnemonic::VCVTA_S16_F16
+            | Mnemonic::VCVTA_U16_F16
+            | Mnemonic::VCVTN_S16_F16
+            | Mnemonic::VCVTN_U16_F16
+            | Mnemonic::VCVTP_S16_F16
+            | Mnemonic::VCVTP_U16_F16
+            | Mnemonic::VCVTM_S16_F16
+            | Mnemonic::VCVTM_U16_F16
+            | Mnemonic::VCVTA_S32_F32
             | Mnemonic::VCVTA_U32_F32
             | Mnemonic::VCVTA_S32_F16
             | Mnemonic::VCVTA_U32_F16
@@ -419,7 +438,31 @@ impl<'a, M: ArmMemory> Executor<'a, M> {
             {
                 self.exec_neon_directed_convert(insn)
             }
-            Mnemonic::VCVT_F32_S32
+            Mnemonic::VCVT_F16_S16
+            | Mnemonic::VCVT_F16_U16
+            | Mnemonic::VCVT_S16_F16
+            | Mnemonic::VCVT_U16_F16
+            | Mnemonic::VCVTB_F64_F16
+            | Mnemonic::VCVTT_F64_F16
+            | Mnemonic::VCVTB_F16_F64
+            | Mnemonic::VCVTT_F16_F64
+            | Mnemonic::VCVT_F16_S16_FIXED
+            | Mnemonic::VCVT_S16_F16_FIXED
+            | Mnemonic::VCVT_F16_U16_FIXED
+            | Mnemonic::VCVT_U16_F16_FIXED
+            | Mnemonic::VCVT_F16_S32_FIXED
+            | Mnemonic::VCVT_S32_F16_FIXED
+            | Mnemonic::VCVT_F16_U32_FIXED
+            | Mnemonic::VCVT_U32_F16_FIXED
+            | Mnemonic::VCVT_F32_S16_FIXED
+            | Mnemonic::VCVT_S16_F32_FIXED
+            | Mnemonic::VCVT_F32_U16_FIXED
+            | Mnemonic::VCVT_U16_F32_FIXED
+            | Mnemonic::VCVT_F64_S16_FIXED
+            | Mnemonic::VCVT_S16_F64_FIXED
+            | Mnemonic::VCVT_F64_U16_FIXED
+            | Mnemonic::VCVT_U16_F64_FIXED
+            | Mnemonic::VCVT_F32_S32
             | Mnemonic::VCVT_F32_U32
             | Mnemonic::VCVT_F16_S32
             | Mnemonic::VCVT_F16_U32

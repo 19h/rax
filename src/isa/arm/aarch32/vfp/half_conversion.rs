@@ -49,3 +49,24 @@ fn integer(value: u32, signed: bool, fpscr: &mut Fpscr) -> u16 {
     *fpscr = Fpscr::from_bits(fpscr.bits() | status);
     result
 }
+
+/// Precision-convert half to double, observing AHP and ignoring FZ16.
+pub fn vcvt_f64_f16_bits_with_fpscr(bits: u16, fpscr: &mut Fpscr) -> f64 {
+    let (result, status) = SmirInterpreter::arm_eval_half_double_precision_conversion(
+        u64::from(bits),
+        true,
+        fpscr.bits(),
+    );
+    *fpscr = Fpscr::from_bits(fpscr.bits() | status);
+    f64::from_bits(result)
+}
+/// Precision-convert double to half with guest rounding, AHP and cumulative status.
+pub fn vcvt_f16_bits_f64(value: f64, fpscr: &mut Fpscr) -> u16 {
+    let (result, status) = SmirInterpreter::arm_eval_half_double_precision_conversion(
+        value.to_bits(),
+        false,
+        fpscr.bits(),
+    );
+    *fpscr = Fpscr::from_bits(fpscr.bits() | status);
+    result as u16
+}

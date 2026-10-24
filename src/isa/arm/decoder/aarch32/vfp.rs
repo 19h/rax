@@ -351,6 +351,16 @@ impl Aarch32Decoder {
     }
 
     pub(crate) fn decode_vfp_data_processing(raw: u32) -> Option<DecodedInsn> {
+        if let Some(fields) = Self::scalar_fixed_fields(raw) {
+            let insn = DecodedInsn::new(fields.mnemonic, ExecutionState::Aarch32, raw, 4);
+            return Some(if fields.mnemonic == Mnemonic::UNDEFINED {
+                insn
+            } else {
+                insn.with_operand(Operand::Imm(Immediate::new(i64::from(
+                    fields.fractional_bits,
+                ))))
+            });
+        }
         if (raw & 0x0000_0810) != 0x0000_0800 {
             return None;
         }
@@ -387,9 +397,13 @@ impl Aarch32Decoder {
             (1, 1, 1, 0, 1, 1) => Mnemonic::VNEG,
             (1, 1, 1, 1, 1, 1) => Mnemonic::VSQRT,
             (1, 1, 1, 0, 1, 2) if size == 2 => Mnemonic::VCVTB_F32_F16,
+            (1, 1, 1, 0, 1, 2) if size == 3 => Mnemonic::VCVTB_F64_F16,
             (1, 1, 1, 1, 1, 2) if size == 2 => Mnemonic::VCVTT_F32_F16,
+            (1, 1, 1, 1, 1, 2) if size == 3 => Mnemonic::VCVTT_F64_F16,
             (1, 1, 1, 0, 1, 3) if size == 2 => Mnemonic::VCVTB_F16_F32,
+            (1, 1, 1, 0, 1, 3) if size == 3 => Mnemonic::VCVTB_F16_F64,
             (1, 1, 1, 1, 1, 3) if size == 2 => Mnemonic::VCVTT_F16_F32,
+            (1, 1, 1, 1, 1, 3) if size == 3 => Mnemonic::VCVTT_F16_F64,
             (1, 1, 1, 0, 1, 4 | 5) => Mnemonic::VCMP,
             (1, 1, 1, 0, 1, 6) if size == 1 => Mnemonic::VRINTR_F16,
             (1, 1, 1, 0, 1, 6) if size == 2 => Mnemonic::VRINTR_F32,
@@ -409,14 +423,6 @@ impl Aarch32Decoder {
             (1, 1, 1, 0, 1, 8) if size == 2 => Mnemonic::VCVT_F32_U32,
             (1, 1, 1, 1, 1, 8) if size == 3 => Mnemonic::VCVT_F64_S32,
             (1, 1, 1, 0, 1, 8) if size == 3 => Mnemonic::VCVT_F64_U32,
-            (1, 1, 1, 1, 1, 10) if size == 2 => Mnemonic::VCVT_F32_S32_FIXED,
-            (1, 1, 1, 1, 1, 11) if size == 2 => Mnemonic::VCVT_F32_U32_FIXED,
-            (1, 1, 1, 1, 1, 14) if size == 2 => Mnemonic::VCVT_S32_F32_FIXED,
-            (1, 1, 1, 1, 1, 15) if size == 2 => Mnemonic::VCVT_U32_F32_FIXED,
-            (1, 1, 1, 1, 1, 10) if size == 3 => Mnemonic::VCVT_F64_S32_FIXED,
-            (1, 1, 1, 1, 1, 11) if size == 3 => Mnemonic::VCVT_F64_U32_FIXED,
-            (1, 1, 1, 1, 1, 14) if size == 3 => Mnemonic::VCVT_S32_F64_FIXED,
-            (1, 1, 1, 1, 1, 15) if size == 3 => Mnemonic::VCVT_U32_F64_FIXED,
             (1, 1, 1, 1, 1, 12) if size == 2 => Mnemonic::VCVT_U32_F32,
             (1, 1, 1, 1, 1, 13) if size == 2 => Mnemonic::VCVT_S32_F32,
             (1, 1, 1, 0, 1, 12) if size == 1 => Mnemonic::VCVTR_U32_F16,
@@ -432,25 +438,6 @@ impl Aarch32Decoder {
             _ => return None,
         };
 
-        let mut insn = DecodedInsn::new(mnemonic, ExecutionState::Aarch32, raw, 4);
-        if matches!(
-            mnemonic,
-            Mnemonic::VCVT_F32_S32_FIXED
-                | Mnemonic::VCVT_F32_U32_FIXED
-                | Mnemonic::VCVT_S32_F32_FIXED
-                | Mnemonic::VCVT_U32_F32_FIXED
-                | Mnemonic::VCVT_F64_S32_FIXED
-                | Mnemonic::VCVT_F64_U32_FIXED
-                | Mnemonic::VCVT_S32_F64_FIXED
-                | Mnemonic::VCVT_U32_F64_FIXED
-        ) {
-            if op7 == 0 {
-                return None;
-            }
-            let imm5 = (((raw & 0xF) << 1) | ((raw >> 5) & 1)) as i64;
-            insn = insn.with_operand(Operand::Imm(Immediate::new(32 - imm5)));
-        }
-
-        Some(insn)
+        Some(DecodedInsn::new(mnemonic, ExecutionState::Aarch32, raw, 4))
     }
 }
